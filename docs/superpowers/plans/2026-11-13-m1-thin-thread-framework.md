@@ -819,7 +819,7 @@ export function createRenderer(options: { mount: HTMLElement; world: { w: number
   appears (no slide in from elsewhere), a `resync` delta drops everything first, and rotation blends the short way
   round.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
 ```ts
 test('an added entity is a view at its pose, whatever alpha is', ...)
@@ -846,12 +846,12 @@ test('a mount with no size yet does not throw, and draws once it has one', ...)
 test('destroy removes the canvas and stops watching', ...)
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `render.ts` does not exist.
-- [ ] **Step 3: Implement.** `stage.ts` owns the Pixi `Application` (WebGL preferred, `SKY_COLOR` background,
+- [x] **Step 2: Push; `check` fails** because `render.ts` does not exist.
+- [x] **Step 3: Implement.** `stage.ts` owns the Pixi `Application` (WebGL preferred, `SKY_COLOR` background,
   `resolution` from `devicePixelRatio`) and one `Graphics` per view inside a world container scaled and placed by
   `fitWorld`. If an engine in CI cannot create a WebGL context, stop and report: do not skip the engine.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(render): the scene drawn from sim deltas with Pixi`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(render): the scene drawn from sim deltas with Pixi`).
 
 ### Task 12: Keyboard and touch input
 
