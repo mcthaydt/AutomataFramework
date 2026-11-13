@@ -194,6 +194,22 @@ test.each(['pointerleave', 'pointercancel'])('a touch ending with %s lets go', (
   expect(i.poll(1)).toEqual([controlsCommand(1, 1, 1, [])])
 })
 
+test('a thumb sliding from one button onto the next holds the new one', () => {
+  const i = make()
+  firstTouch()
+  pointer(button('Left'), 'pointerdown', 1, 'touch', 1)
+  expect(i.poll(0)).toEqual([controlsCommand(0, 1, 0, ['left'])])
+  pointer(button('Left'), 'pointerleave', 1)
+  pointer(button('Right'), 'pointerenter', 1, 'touch', 1) // still touching the glass
+  expect(i.poll(1)).toEqual([controlsCommand(1, 1, 1, ['right'])])
+})
+
+test('a mouse passing over a button without being pressed holds nothing', () => {
+  const i = make()
+  pointer(button('Right'), 'pointerenter', 1, 'mouse', 0)
+  expect(i.poll(0)).toEqual([])
+})
+
 test('the window losing focus lets go of the buttons too', () => {
   const i = make()
   firstTouch()
