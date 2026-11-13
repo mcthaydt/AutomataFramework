@@ -62,7 +62,8 @@ The offer, in the order the pitch leads with it. Every claim must be true when t
    Firefox, physics included, and CI fails when it doesn't.
 4. **Change it yourself, without another prompt.** Free browser editors for every kind of content, usable on an iPad;
    what you save is what the game plays.
-5. **Get it in front of players.** One command publishes to the web, itch.io, or a desktop app.
+5. **Get it in front of players.** One command publishes to the web, itch.io, Wavedash (a web game portal), or a
+   desktop app.
 
 And one more, the way the project is paid for: **the editors as a paid app** for iPad, Android and desktop. The browser editors
 stay free.
@@ -75,7 +76,7 @@ stay free.
 - The editor suite: nine editors and two builders, browser and Tauri app.
 - A site modelled on pixijs.com: the claims, the game playable on the home page, guides, an examples gallery, the API
   reference, and the free browser editors.
-- Deployment: the site and web game live, `automata ship` to web, itch.io and desktop, the editor app built for iPad
+- Deployment: the site and web game live, `automata ship` to web, itch.io, Wavedash and desktop, the editor app built for iPad
   and desktop.
 
 ## Non-goals
@@ -212,10 +213,10 @@ direction):
 12. **ui**: the Svelte kit, mobile first: touch targets of at least 44 px, layout from container size, focus kept
     through rotation.
 13. **screens**: title, pause, settings (controls, volume, language), and the saves screen.
-14. **host**: the port a game talks to (saves, links, quit, locale). Targets are adapters: `web`, `itch`, `tauri`.
+14. **host**: the port a game talks to (saves, links, quit, locale). Targets are adapters: `web`, `itch`, `wavedash`, `tauri`.
     Only the Tauri adapter imports `@tauri-apps/*`.
 15. **cli**: the `automata` command (Node, Effect): `create` (a new game from a template), `check` (lint, types, schema
-    validation, the game's tests), `ship` (web, itch, desktop), and `mcp`, an MCP server through which an agent
+    validation, the game's tests), `ship` (web, itch, Wavedash, desktop), and `mcp`, an MCP server through which an agent
     creates, checks, runs and replays a game and reads its content schemas. *The MCP tool list is left to the plan.*
 
 Agent skills ship with the package (a `skills/` folder or a plugin, as the plan decides): where gameplay lives and the
@@ -272,6 +273,9 @@ Its own repo, a static site in the style of pixijs.com:
 - **Examples gallery**: the examples from AutomataFrameworkExamples, each live and with its source.
 - **API reference**: generated from the framework's API report.
 - **The free editors**, and where to buy the app.
+- **A price page with "notify me"** for the paid app, up from M2, before the app is built (the Owner, 2026-11-13), so
+  its clicks show whether and at what price people would pay. Sign-ups are stored by a Pages Function; the page says
+  plainly what is collected and why.
 
 Hosted as static files on Cloudflare Pages, with the Pages Function that does the editors' GitHub sign-in step.
 
@@ -330,14 +334,18 @@ CI checks it in four engines, and the site's game shows the crate where it was m
 - Story features (dialogue, behaviour rules, cutscenes) in the sim.
 - `automata create` and `automata check`, and the agent skills.
 - The demo game's full content (written by hand or by agent, before its editors exist).
+- The site's price page with "notify me" for the paid app.
 
 Done means: the demo game plays end to end with every built-in, in the four engines' parity and in journeys at phone,
 tablet and desktop sizes; `automata create` makes a new game that passes `automata check`.
 
 ### M3: the editors in full
 
-- The other eight editors and both builders, each editing the demo game's real content.
-- Problems listed as you edit; conflict handling on save.
+- **First, Feel and Tuner** (the Owner, 2026-11-13): with Levels from M1 they make the first editor slice, because game
+  feel is the most common reason agent-made games fail. This slice is planned and lands before the rest.
+- **Then the rest:** Tiles, Characters, Audio, Writer, Schematic, Sequence, and both builders. Every 2D editor is in
+  scope; only the order changes.
+- Each edits the demo game's real content. Problems listed as you edit; conflict handling on save.
 
 Done means: each editor changes the demo game on an iPad, the change commits and shows in play, and an agent can make
 the same change by editing the files.
@@ -345,11 +353,18 @@ the same change by editing the files.
 ### M4: the site and publishing
 
 - The site in full: home with the claims, guides, the examples gallery, the API reference, the free editors.
-- `automata ship` to web, itch.io and a desktop app (macOS, Windows, Linux via Tauri).
+- `automata ship` to web, itch.io, Wavedash and a desktop app (macOS, Windows, Linux via Tauri).
+- **Wavedash** (the Owner, 2026-11-13: "add Wavedash as portal if possible"). What was found on 2026-11-13, from its
+  docs' page list only, since the container's network refused the pages themselves: it has a CLI (commands, a
+  configuration file and environment variables, which suggests an upload from CI with a token), a JavaScript engine
+  guide, and an SDK. Not yet known: what its SDK must be called for (start-up, loading, saves, ads), its size and
+  format rules, and how developers are paid. The M4 plan starts by reading [docs.wavedash.com](https://docs.wavedash.com/getting-started/introduction)
+  in full; if its rules can be met through the host port (a `wavedash` adapter, the SDK imported by that adapter
+  only), it becomes a target; if not, the plan stops and reports why.
 - The editor app built for iPad, Android and desktop, signed and submitted for sale.
 
-Done means: every claim on the site is backed by something on `main`; the demo game is on itch.io and as a desktop
-download; the editor app passes App Store review for iPad and Play review for Android, and is on sale for desktop.
+Done means: every claim on the site is backed by something on `main`; the demo game is on itch.io and Wavedash (or the
+plan's report says why Wavedash can't be), and is a desktop download; the editor app passes App Store review for iPad and Play review for Android, and is on sale for desktop.
 
 ## CI and testing
 
@@ -398,6 +413,7 @@ Things only the Owner can decide or provide; each plan that needs one stops and 
    the simplest; the Mac App Store is an option). The App Store may question an editor that plays a game's
    JavaScript; the plan checks the current guideline before M4 starts. *Needed by M4.*
 7. **itch.io** account and API key for `automata ship`. *Needed by M4.*
+8. **A Wavedash developer account** and its upload token. *Needed by M4.*
 
 ## Left to the builder (the plans)
 
