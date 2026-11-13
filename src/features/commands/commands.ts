@@ -2,10 +2,12 @@
 // replays. Everything a game or another feature may use of them is exported from here.
 export { type Played, playReplay, type Verdict, verifyReplay } from './play.ts'
 export {
+  ACTION_NAME,
   ControlsCommand,
   commandsPlugin,
   controlsCommand,
   isHeld,
+  MAX_ACTIONS,
   MAX_PLAYERS,
   Player,
   wasPressed,

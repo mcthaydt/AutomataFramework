@@ -18,7 +18,10 @@ import {
 export const MAX_PLAYERS = 4
 
 /** An action is a lower-case word, or words joined by dashes: `jump`, `fire-left`. */
-const ActionName = z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/)
+export const ACTION_NAME: RegExp = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
+/** The most actions a player can hold down at once, and so the most a game's controls may define. */
+export const MAX_ACTIONS = 16
+const ActionName = z.string().regex(ACTION_NAME)
 
 const playerFields = { number: 'u32', held: 'string', pressed: 'string' } as const
 /**
@@ -30,7 +33,7 @@ export const Player: ComponentDef<typeof playerFields> = defineComponent('player
 })
 
 const controlsPayload: z.ZodObject<{ held: z.ZodArray<z.ZodString> }, z.core.$strict> = z.strictObject({
-  held: z.array(ActionName).max(16),
+  held: z.array(ActionName).max(MAX_ACTIONS),
 })
 /** Everything the player is holding down this tick. Sent only when it changes. */
 export const ControlsCommand: CommandDef<typeof controlsPayload> = defineCommand('controls', controlsPayload)
