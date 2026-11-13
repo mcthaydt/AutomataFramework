@@ -6,8 +6,8 @@ The tracker every stage reads first and updates last. One section per cycle; new
 
 Spec: [`specs/2026-11-13-2d-first-layer-design.md`](specs/2026-11-13-2d-first-layer-design.md)
 
-Overall: **36%** (stages 1 to 3 are 12 points, stage 4 is worth 18 and stage 5 is worth 8; stage 4 stands at 90% until the
-publish is confirmed, so the figure is 12 + 16 + 8)
+Overall: **42%** (stages 1 to 3 are 12 points, stage 4 is worth 18, stage 5 is worth 8 and stage 6 is worth 6; stage 4
+stands at 90% until the publish is confirmed, so the figure is 12 + 16 + 8 + 6)
 
 | Stage | State | Output |
 |---|---|---|
@@ -16,14 +16,14 @@ publish is confirmed, so the figure is 12 + 16 + 8)
 | 3. Plan audit | Done, 100% (merged) | `audits/2026-11-13-m1-framework-plan-audit.md` |
 | 4. Execution | 90% (merged, PR 6, `b7b672f`; the publish check is the last 10%, and waits on the Owner's `NPM_TOKEN`) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
 | 5. Implementation audit | Done, 100% (in review) | `audits/2026-11-13-m1-framework-implementation-audit.md` |
-| 6. Fixes | 90% (PR 9, draft; F1 to F3 and F5 to F8 done, F4's pictures added; the sideways layout is deferred to M2; waiting on CI) | `audits/2026-11-13-m1-framework-implementation-audit.md`, F1 to F8 |
+| 6. Fixes | Done, 100% (PR 9, green on all four engines; F4's layout deferred to M2) | `audits/2026-11-13-m1-framework-implementation-audit.md`, F1 to F8 |
 | 7. Owner review | Not started | |
 
 Milestones (each runs stages 2 to 7 per repo):
 
 | Milestone | State |
 |---|---|
-| M1 The thin thread | Framework: built and audited, on `main`; fixes next, then publishing. Examples, Editors, Site: waiting for their repos, then one plan each |
+| M1 The thin thread | Framework: built, audited and fixed (PR 9); publishing waits on `NPM_TOKEN`. Examples, Editors, Site: waiting for their repos, then one plan each |
 | M2 The framework in full | Not started |
 | M3 The editors in full | Not started |
 | M4 The site and publishing | Not started |
@@ -62,7 +62,14 @@ PR 9, branch `claude/project-thread-glweo1`, each fix with its test first. What 
   level or the buttons so they do not cover the hero) is the Owner's call; with no answer, it is **deferred to M2's
   layouts**, as the audit recommends (option A).
 
-Verified only through CI (tests are never run locally); lint, typecheck and knip were run locally and pass.
+CI on the PR's head `18b5317` (run 43510352137): `check` (lint, typecheck, knip, 376 Node tests in 58 files, up from
+370 in 56), `package`, and Chromium, WebKit and Firefox all passed; WebKit ran 113 tests in 13 files (up from 106).
+Tests were not run locally; lint, typecheck and knip were. The `screens-*` artifacts now hold four pictures per engine,
+which still need a person's eyes (the cloud network refuses the artifact host).
+
+Not done, on purpose: the sideways layout. The Owner's question about it (audit, "For the Owner" 1) had no answer when
+this stage ended, so option A stands: M2's layouts plan moves the level or the buttons. `NPM_TOKEN` is still the
+Owner's; once it exists, start `release` by hand from `main` (Actions, release, Run workflow).
 
 ### Stage 5: implementation audit (2026-11-13)
 
