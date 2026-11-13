@@ -31,6 +31,7 @@
     "vitest": "5.0.3"
   },
   "dependencies": {
+    "@dimforge/rapier2d-deterministic-compat": "0.21.0",
     "koota": "0.6.6",
     "zod": "4.6.6"
   }
