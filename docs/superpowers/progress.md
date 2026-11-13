@@ -65,6 +65,15 @@ Rulings in this session:
 - Task 15: `release.yml` sets a git identity and runs `git push origin --tags` (the checkout is detached and `main` is
   protected, so `--follow-tags` would fail). Provenance is switched on in `publishConfig` and in the job.
 
+Whole-branch review (a self-review: the project allows no subagents, so there was no fresh reader). One finding was
+fixed with a test first: a thumb sliding from one touch button onto the next let go of the first and never pressed the
+second (`pointerenter` now presses, while the finger is still down). Deferred minors:
+- `startGame` draws nothing until its second frame (the first only sets the clock), so a phone shows sky for about 16 ms.
+- `game.replay()` throws after `game.stop()`, because stopping disposes the sim; a "save what I just did" button must ask first.
+- The phone and tablet pictures exist as `screens-*` artifacts but were not looked at in this session (no download access
+  here); the implementation audit reads them for the drunk-grandma test.
+- Browser test counts per engine were not read from the logs; Node ran 370 tests in 56 files on the last full read.
+
 ### Handoff 1 (after Task 11, 2026-11-13)
 
 **State.** Tasks 1 to 11 of 15 are done and green on PR 6 (draft, branch `claude/project-thread-kcc4b8`), one commit
