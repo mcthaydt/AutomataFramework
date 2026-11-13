@@ -321,9 +321,9 @@ test('headless reaches nothing that needs a page', () =>
   `decodeUtf8Strict(bytes): string`, `xxhash64(bytes): bigint`, `hex64(hash): string`, `sortedKeys`, `sortedEntries`,
   `deepFreeze`, with the old signatures unchanged.
 
-- [ ] **Step 1: Lift the files in the table.**
-- [ ] **Step 2: Push; all jobs pass**, and the three engine jobs each report the xxhash64 parity test as run.
-- [ ] **Step 3: Commit** (`feat(lib): canonical JSON and xxhash64, lifted`).
+- [x] **Step 1: Lift the files in the table.**
+- [x] **Step 2: Push; all jobs pass**, and the three engine jobs each report the xxhash64 parity test as run.
+- [x] **Step 3: Commit** (`feat(lib): canonical JSON and xxhash64, lifted`).
 
 ### Task 3: The sim's definitions, schedule, RNG and math, lifted
 
@@ -354,10 +354,10 @@ against `package.json`'s version once that is `0.1.0` (Task 15), so until then i
   `SimContext`, `EntityRef`, `SpawnPart`, `CommandRecord`, `createRng`, `deriveSeed`, `Rng`, and the deterministic math
   in `dmath.ts`. Field types are `f32`, `f64`, `i32`, `u32`, `bool`, `entity`, `string`.
 
-- [ ] **Step 1: Lift the files and tests.** In comments, drop mentions of Ruken (the reason "no `new Function`" still
+- [x] **Step 1: Lift the files and tests.** In comments, drop mentions of Ruken (the reason "no `new Function`" still
   holds: a strict content security policy).
-- [ ] **Step 2: Push; all jobs pass.**
-- [ ] **Step 3: Commit** (`feat(sim): definitions, schedule, RNG and deterministic math, lifted`).
+- [x] **Step 2: Push; all jobs pass.**
+- [x] **Step 3: Commit** (`feat(sim): definitions, schedule, RNG and deterministic math, lifted`).
 
 ### Task 4: The sim's world, snapshot and `createSim`, lifted, with the first golden
 
