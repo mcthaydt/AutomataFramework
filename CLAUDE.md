@@ -44,10 +44,16 @@ package.
   layouts; languages.
 - **Editors:** all nine old 2D editors plus the figure and environment builders, which make 2D art only. In the
   browser, and as a Tauri app for iPad, Android and desktop.
+- **Agents working on the code are the primary way a game is made.** The editors change authorable content only:
+  the JSON files the coding agents produce.
 - **Edits live in the game's GitHub repo.** Save makes a commit; edits that collide merge the way GitHub does.
-  Sign-in runs through a Cloudflare Pages Function; the site is on Cloudflare Pages.
-- **Editors open pull requests.** `main` is protected in every repo, so an editor's Save commits to a branch and opens a
-  pull request; it never pushes to `main`, and never writes a golden.
+  Sign-in is a GitHub App, run through Cloudflare Pages Functions, which also do the editors' GitHub work as the
+  App; the site is on Cloudflare Pages.
+- **The editors are for teams,** technical people and not, working on their own games. People get levels of what
+  they may do (Look, Suggest, Approve, Edit, Owner), kept in `automata.access.toml` in the game's repo and set from
+  a Share screen. A Suggest-level save waits for approval; an Edit-level save goes straight in. People need GitHub
+  only to sign in. Anyone can use the editors freely without signing in and keep a copy; saving into a game and
+  working with others need a sign-in.
 - **Formats:** game content is JSON; everything else is TOML.
 - **Order inside the editors:** Levels, then Feel and Tuner (the first editor slice), then every other 2D editor.
 - **Releases are big and few** (the Owner, 2026-11-13). Release 1 is when 2D is finished (the framework in full and
@@ -108,6 +114,9 @@ implementations or incomplete integrations. Do your best work."
 
 - **The drunk-grandma test.** All copy and UX (every editor, the site, the game's screens) must let a drunk grandma
   tell what is happening and what to press. A screen that fails it is a defect.
+- **Onboarding comes first** (the Owner, 2026-11-13): it is one of the most important parts of any product. A
+  first-time player must learn what to do, how to do it and that they did it; a first-time developer or agent must
+  get from install to a working game by following the README.
 - No subagents unless the Owner says so.
 - **No AI attribution anywhere.** No `Co-Authored-By: Claude`, no session-link trailer and no "Generated with Claude Code" in
   commits, pull request bodies or docs (the Owner, 2026-11-13). Before any commit, set the author with

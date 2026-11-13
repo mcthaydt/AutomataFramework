@@ -45,6 +45,17 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
   Jump button were off the page, not missing from the game). The real problem under it, the buttons sitting over the
   level, is fixed in PR 14: the level is fitted above the buttons. Details in "F4 follow-up" below.
 
+- 2026-11-13: The spec follows the Owner's decisions made while the Editors' M1 plan was written: the editors are for
+  teams; sign-in is a GitHub App, which does the editors' GitHub work through Pages Functions; five access levels kept
+  in `automata.access.toml` with a Share screen, all in M1; Save commits straight in for Edit and Owner levels and
+  opens a suggestion for the rest. The plan is in AutomataFrameworkEditors (PR 1). Added the same day: the editors
+  change authorable content only (the JSON files); anyone can use them without signing in and keep a copy, and
+  saving or working with others needs a sign-in.
+- 2026-11-13: `package.json` gains `"prepare": "pnpm build"`. Found while planning Examples' M1: a git install of
+  this package had no `dist/` (it is not committed, and a package manager builds a git dependency only when it has a
+  `prepare` script). Tried with pnpm 10.34.6: with the script, `dist/` is built on install. The consuming repo must
+  also allow the build, by listing the pinned source in its `pnpm.onlyBuiltDependencies`. Every pin in Examples,
+  Editors and Site must be this change's merge commit or newer. `tests/package.test.ts` keeps the script there.
 - 2026-11-13: The Owner chose how Examples gets the framework before Release 1: a git dependency pinned to a commit on
   the framework's `main`, moved by pull request; npm from Release 1. Recorded in the spec's Releases section.
 - 2026-11-13: Release policy (the Owner): releases are big and few, Release 1 to 5 as above; small releases come back
@@ -108,8 +119,9 @@ Overall for this fix: **tests written 100%, code written 100%, CI pending**.
 - Fix: `Renderer.setInset(px)` keeps the bottom `px` free and fits the level into the rest (never more than half the
   height); `Input.inset()` and `Input.onInset()` give the height of the button strip (0 while hidden); `startGame`
   wires them. Sideways phone: the level is 523 by 294, above 96 px of buttons.
-- Also from the coordinator: `CLAUDE.md` gets the line "Editors open pull requests" (Examples' page has the matching
-  "Editors commit here" note; the wording here follows the protected `main`).
+- The coordinator also asked for an "editors open pull requests" line in `CLAUDE.md`. Not added: after the merge with
+  `main` the page already holds the Owner's rule (Edit and Owner levels save straight in, Suggest opens a suggestion),
+  and a blanket "open pull requests" line would contradict it. Raised with the coordinator.
 - The first CI run on the tests alone failed as it should: the two sideways screens said the level ended at 390 while
   the buttons began at 311 (and 742 against 741 on the tablet), upright passed, and the canvas filled the screen in
   all four, which is how the pictures' cut-off was shown not to be the game's.
