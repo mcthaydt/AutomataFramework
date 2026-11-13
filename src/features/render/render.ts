@@ -14,6 +14,11 @@ export interface Renderer {
   apply(delta: RenderDelta): void
   /** Draws the world posed between the last two steps: `alpha` 0 is the earlier, 1 the latest. */
   draw(alpha: number): void
+  /**
+   * Keeps this many CSS pixels at the bottom free of the world, so the touch buttons never sit on the play area. The
+   * world is fitted into what is left above. Default 0.
+   */
+  setInset(px: number): void
   /** Removes the canvas, stops watching the mount and frees Pixi. Safe to call twice. */
   destroy(): void
 }
@@ -51,6 +56,7 @@ export async function createRenderer(options: {
       started = true
       stage.draw(scene.views(alpha))
     },
+    setInset: (px) => stage.setInset(px),
     destroy() {
       watcher.disconnect()
       stage.destroy()

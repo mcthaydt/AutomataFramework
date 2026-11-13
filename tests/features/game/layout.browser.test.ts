@@ -59,7 +59,9 @@ for (const [name, w, h] of SCREENS) {
       frames,
     })
     // A finger on the screen brings up the buttons, as it does for a player on a phone.
-    window.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }))
+    window.dispatchEvent(
+      new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }),
+    )
     frames.at(0)
     for (let i = 0; i < 30; i++) frames.advance(FRAME)
     // The buttons showing changes the room the picture has; let that settle, then draw once more.

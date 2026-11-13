@@ -25,6 +25,11 @@ export interface Stage {
    * views drawn last are drawn again at once.
    */
   resize(w: number, h: number): void
+  /**
+   * Keeps this many CSS pixels at the bottom free of the world, for the touch buttons, and draws the last views again.
+   * Never more than half the height, so the world cannot be squeezed out of sight.
+   */
+  setInset(px: number): void
   /** Draws these views, fitted into the current size. Until the stage has a size they are kept and drawn on its first. */
   draw(views: readonly View[]): void
   destroy(): void
@@ -60,13 +65,15 @@ export async function createStage(world: { w: number; h: number }): Promise<Stag
   app.stage.addChild(root)
   const drawn = new Map<number, Drawn>()
   let box = { w: 0, h: 0 }
+  // Room kept clear at the bottom of the box (the touch buttons). The sky still fills the whole canvas.
+  let inset = 0
   let destroyed = false
   // The last views asked for. A resize wipes the canvas, and a game paused by hand asks for no more frames, so the
   // stage puts this picture back itself.
   let last: readonly View[] | undefined
 
   const paint = (views: readonly View[]): void => {
-    const fit = fitWorld(box, world)
+    const fit = fitWorld({ w: box.w, h: box.h - Math.min(inset, box.h / 2) }, world)
     root.scale.set(fit.scale)
     root.position.set(fit.left, fit.top)
     const live = new Set<number>()
@@ -107,6 +114,12 @@ export async function createStage(world: { w: number; h: number }): Promise<Stag
       box = { w, h }
       app.renderer.resize(w, h)
       if (last !== undefined) paint(last)
+    },
+    setInset(px) {
+      if (destroyed) return
+      // Not above zero, or not a number, is no room at all.
+      inset = px > 0 ? px : 0
+      if (last !== undefined && box.w > 0) paint(last)
     },
     draw(views) {
       if (destroyed) return
