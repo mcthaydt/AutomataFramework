@@ -6,14 +6,14 @@ The tracker every stage reads first and updates last. One section per cycle; new
 
 Spec: [`specs/2026-11-13-2d-first-layer-design.md`](specs/2026-11-13-2d-first-layer-design.md)
 
-Overall: **15%** (spec, plan and audit done; stage 4 is worth 18 points, so the overall figure is 12% plus 18% of the stage's own)
+Overall: **16%** (spec, plan and audit done; stage 4 is worth 18 points, so the overall figure is 12% plus 18% of the stage's own)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Done, 100% (merged, PR 1) | `specs/2026-11-13-2d-first-layer-design.md` |
 | 2. Plan (M1, framework) | Done, 100% (merged, PR 3) | `plans/2026-11-13-m1-thin-thread-framework.md` |
 | 3. Plan audit | Done, 100% (in review) | `audits/2026-11-13-m1-framework-plan-audit.md` |
-| 4. Execution | In progress, 18% (Task 3 of 15 done; PR 6, draft) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
+| 4. Execution | In progress, 24% (Task 4 of 15 done; PR 6, draft) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
 | 5. Implementation audit | Not started | `audits/<date>-m1-implementation-audit.md` |
 | 6. Fixes | Not started | |
 | 7. Owner review | Not started | |

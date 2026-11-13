@@ -105,6 +105,8 @@ implementations or incomplete integrations. Do your best work."
 - **The drunk-grandma test.** All copy and UX (every editor, the site, the game's screens) must let a drunk grandma
   tell what is happening and what to press. A screen that fails it is a defect.
 - No subagents unless the Owner says so.
+- **No AI attribution anywhere.** No `Co-Authored-By: Claude`, no session-link trailer and no "Generated with Claude Code" in
+  commits, pull request bodies or docs (the Owner, 2026-11-13).
 - Refresh sessions after 90 minutes.
 - Branches: `main` plus branches with CI running, five at most.
 - **Tests run only in GitHub-hosted CI, never locally.** Verify through the pull request's CI runs.

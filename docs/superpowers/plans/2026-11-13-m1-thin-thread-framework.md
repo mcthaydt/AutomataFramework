@@ -394,15 +394,15 @@ export function runGolden(sim: Sim, ticks: number, commandsAt: (tick: number) =>
 export function expectGolden(actual: Golden, golden: Golden): void
 ```
 
-- [ ] **Step 1: Lift the files and tests.** If `create-sim.ts` would pass 600 lines, move the error classes to
+- [x] **Step 1: Lift the files and tests.** If `create-sim.ts` would pass 600 lines, move the error classes to
   `errors.ts`.
-- [ ] **Step 2: Write `bounce.parity.test.ts`:** create the bounce sim with `BOUNCE_SEED`, run `bounceSetup`, then
+- [x] **Step 2: Write `bounce.parity.test.ts`:** create the bounce sim with `BOUNCE_SEED`, run `bounceSetup`, then
   `expectGolden(runGolden(sim, BOUNCE_TICKS, script), golden)` with `tests/golden/bounce.json` imported as JSON. A
   second test snapshots at tick 150, restores into a new sim, runs both to the end and expects equal hashes.
-- [ ] **Step 3: Commit `tests/golden/bounce.json`** as `{ "ticks": 300, "finalHash": "", "checks": [] }`. Push; Node
+- [x] **Step 3: Commit `tests/golden/bounce.json`** as `{ "ticks": 300, "finalHash": "", "checks": [] }`. Push; Node
   fails with `GOLDEN NOT RECORDED`. Copy the JSON from the Node log into the file.
-- [ ] **Step 4: Push; all jobs pass**, the three browsers matching Node's hash.
-- [ ] **Step 5: Commit** (`feat(sim): world, snapshot and createSim, lifted, with the bounce golden`).
+- [x] **Step 4: Push; all jobs pass**, the three browsers matching Node's hash.
+- [x] **Step 5: Commit** (`feat(sim): world, snapshot and createSim, lifted, with the bounce golden`).
 
 ### Task 5: Physics, lifted, with one new field
 
