@@ -319,6 +319,10 @@ download; the editor app passes App Store review for iPad and is on sale for des
 - A source file has at most 600 lines.
 - Touch targets are at least 44 px; primary actions 48 px.
 - Five branches at most across the project; one pull request per piece of work.
+- `main` is protected in every repo from the day the repo is created (the Owner, 2026-11-13): changes land only by pull
+  request; no direct pushes, no force pushes, no deletion; once a repo has CI, its checks must pass before a merge. No
+  human approving review is required, because the merge session merges passing pull requests. Setting the rule is the
+  Owner's (repo admin); a stage that finds a repo without it stops and says so.
 
 ## Open for the Owner
 
