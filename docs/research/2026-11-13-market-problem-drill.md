@@ -1,33 +1,37 @@
 # Is AutomataFramework solving a real problem? A market drill
 
 Written 2026-11-13, before any planning, at the Owner's request: critique and drill the idea using the "raw material,
-then hard questions, then steelman and tear down" method. It is a hypothesis to take into customer conversations, not a
-decision. Nothing here reopens a decision in the spec by itself; where the facts point against one, it says so once.
+then hard questions, then steelman and tear down" method. It is a hypothesis to check with public signals, not a decision.
+Nothing here reopens a decision in the spec by itself; where the facts point against one, it says so once.
+
+Two things are fixed by the Owner (2026-11-13) and are not treated as open questions here: **there will be no customer
+interviews**, and **the editors are iPad-first and also work on phones**, because the Owner wants them.
 
 ## The answer first
 
 - **The pain is real, but it is not the one the spec leads with.** People who make games with coding agents stall on
   game feel, state bugs and the agent losing the thread, and they give up. The "boring 80%" (saves, menus, settings,
   remapping, languages, layouts) is real but is the pain of people who already finish games. Nobody in the material
-  asks for cross-browser replay hashes or for editing on an iPad.
+  asks for cross-browser replay hashes. (Editing on an iPad is the Owner's requirement, not something this drill tests.)
 - **The best version of the idea is already being built by someone with a ten-year head start.** Phaser, the most used
   2D browser framework, has turned itself into "Describe a game. Play it today.": a Phaser Game Agent (June 2026, built
   on Claude Managed Agents), a new engine line, Phaser AE, behind "every new game", a CLI, an MCP server and paid
   "packs" (for example a preloader pack). On the Godot side there are at least five MCP servers and an AI-native Godot
   fork (Summer Engine, $20 to $200 a month). "Agent-first 2D web framework" is not an empty space.
-- **The paid editor app is the weakest part.** Its buyer must use AF, use an agent, *and* want to tweak content on an
-  iPad or phone badly enough to pay when the same editors are free in the browser. Demand for an editor follows
-  adoption of its framework; adoption has to come first, and it is free.
+- **Paying for the editor app is the weakest part.** The iPad-first editors are fixed; what is unproven is that people
+  will pay for the app when the same editors are free in the browser. Demand for an editor follows adoption of its
+  framework; adoption has to come first, and it is free.
 - **Where AF is genuinely different:** a replay that hashes the same in every engine is an *oracle an agent can test
   against*. That idea, "your agent can't quietly break your game", is the sharpest one in the pitch and the one nobody
   else sells. It is a strong feature and a weak company on its own.
 - **The most promising buyer found is not in the spec.** Agent-made browser games flood itch.io (new pages doubled in
   two months; downloads and purchases did not) and get deleted as slop. The places that pay for web games, the ad
   funded portals, have quality bars that look a lot like AF's claim 1. "Make an agent's game good enough to be accepted
-  and earn" is a pain with money attached. This needs checking with the portals before anything else.
-- **Recommended next step:** about 20 conversations (list at the end) before planning. If they come back the way this
-  drill guesses, the first layer should shrink to the framework, the built-ins, `automata check`, the replay oracle, one
-  game and web publishing, and the paid app should become a test, not a milestone.
+  and earn" is a pain with money attached. The portals publish their requirements, so this can be checked by reading.
+- **Recommended next step:** check the cheap public signals listed at the end (portal requirements, the unread reviews,
+  a fake-door page for the paid app) before planning. The thin thread should prove the framework, the built-ins,
+  `automata check`, the replay oracle, one game, web publishing and the iPad-first editors' save-to-GitHub path first;
+  the paid app's price and store listing can follow what the fake door shows.
 
 ## How this was made, and what it is missing
 
@@ -153,7 +157,7 @@ editors are for. None of them asks for an iPad.
 | An engine needs a big visual editor at its centre | Agents author most content, and the editor becomes a place to review and nudge, not to build | Yes, and this looks right |
 | Determinism only matters for fighting games, RTS and netcode | Agents need a regression oracle: a replay that must still hash the same after every change | Yes; AF's strongest bet |
 | Engines are free; money is made somewhere else | People pay per outcome (a game that passes a portal's QA, a shipped build) because agent compute makes outcomes cheap | Partly; the paid app is a different bet |
-| Serious creation happens on a computer | A real group makes games on iPads or phones, not just students and hobbyists | Yes, and the evidence is thin: Xogot exists, Construct on iPad has issue threads, hyperPad and Codea are niche |
+| Serious creation happens on a computer | A real group makes games on iPads or phones, not just students and hobbyists | Yes, by the Owner's choice. Others are there too: Xogot (Godot on iPad), Construct in the iPad browser (with issue threads), hyperPad and Codea. None owns "agent writes it, you tune it on the iPad" |
 | Web games do not make money | Ad-funded web portals and in-chat game platforms pay creators **[bk]** | Not yet; the spec publishes to web and itch, not to a portal |
 | The user is a developer | The user is a person with an idea who directs an agent | Yes |
 | Prompt-to-game replaces engines / engines absorb AI | Both are true at once: toys for players, agents inside engines for builders | AF is in the "engines absorb AI" camp, with Phaser and Godot |
@@ -192,23 +196,25 @@ promise **[bk]**; Godot's physics is not deterministic across machines (its own 
 its content-as-schema files are real differences.
 
 **The verdict.** The difference is real but it is a feature Phaser could add, and it answers a pain ("the agent breaks
-what worked") that users describe without asking for this cure. Unless conversations show people would switch
+what worked") that users describe without asking for this cure. Unless public signals show people would switch
 frameworks for it, AF's best move might be to be the thing that does it best and say so loudly, not to beat Phaser on
 everything else.
 
 ### Round 2: "Who pays, and for what?"
 
 **The attack.** The plan's revenue is the editors as paid apps on iPad, Android and desktop, while the same editors are
-free in the browser. The buyer has to (a) use AF, (b) make games with an agent, (c) want to edit on a tablet or phone,
-(d) find the browser version not good enough. Each is a small slice of the one before. Paid editors exist when the
+free in the browser. The buyer has to (a) use AF, (b) make games with an agent, (c) find the free browser editors not
+good enough on their tablet or phone. Each is a small slice of the one before. Paid editors exist when the
 framework is big (Unity's Asset Store, Phaser Editor) or the editor is the product (Procreate, Aseprite). Here,
 editors follow adoption, and adoption is free, so revenue is years out. Xogot, the closest thing, made itself free for
 students to get users.
 
-**The defence.** Tauri makes the apps cheap to build once the browser editors exist; a paid app is a low-cost option,
-not a big bet. iPad-first fits schools and young makers, who are on iPads.
+**The defence.** The iPad-first editors are being built anyway, so Tauri makes the apps cheap once they exist; a paid
+app is a low-cost option, not a big bet. iPad-first also fits schools and young makers, who are on iPads. And an app
+can do what a browser tab does poorly: work offline, keep files local until Save, and sit on the home screen.
 
-**The verdict.** Keep it as a cheap option, but it is not a business model yet. The search found two places with money
+**The verdict.** Keep it as a cheap option, and give it reasons to exist beyond the browser version (offline, files,
+Pencil, the home screen), but it is not a business model yet. The search found two places with money
 closer to AF's strengths: the web portals (whose quality bars resemble claim 1) and, later, a hosted "ship and keep it
 working" service (publish, run the replay check on every change, cloud saves). Both are hypotheses; neither is in the
 spec.
@@ -226,7 +232,9 @@ only that.
 **The verdict.** The thin thread is the right shape, but a thread through eleven editors and three platforms is still
 long. The single thing that must be true is: "a person using an agent finishes and ships a 2D game with AF that they
 would not have finished otherwise." That needs the framework, the built-ins, `automata check`, the replay oracle, one
-game and one publish target. The editors are the second thing to prove, not the first.
+game and one publish target, plus the iPad-first editors the Owner requires. Within the editors, the order matters:
+the save-to-GitHub path and the one or two editors that fix the pain with evidence (Feel and Tuner, for game feel)
+first; the rest widen after.
 
 ### Round 4: "Agent-made games do not find players."
 
@@ -259,14 +267,15 @@ it?" into a yes or no. Sell it as that, in the user's words ("your agent can't q
 
 The surviving thesis: **AF is the 2D framework where an agent can't quietly break your game, and where the boring
 parts a store asks for are already done.** It wins with people already making browser games with agents who have hit
-the wall of broken changes and unfinished polish. It does not win by having the most editors. Its money, if any, comes
+the wall of broken changes and unfinished polish. It does not win by having the most editors; its editors win by
+being the place a person tunes what the agent made, on the iPad, without another prompt. Its money, if any, comes
 from getting games accepted and kept working, not from selling an editor.
 
 ## A first GTM hypothesis
 
 - **Who:** solo makers already using Claude Code, Cursor or similar to make 2D browser games, who have abandoned at
   least one project after it started breaking, and who want it on the web where people play (itch.io and the portals).
-  Second group to test: teachers and clubs whose students make games on iPads.
+  Second group to watch: teachers and clubs whose students make games on iPads, where iPad-first editors are a reason to choose AF.
 - **The promise:** "Finish the game your agent started, and keep it working." Built-ins done, every change checked
   against a recorded play, one command to publish.
 - **How they find it:** where agents look. Agent skills and an MCP server, a template that Claude Code, Replit or
@@ -286,37 +295,34 @@ from getting games accepted and kept working, not from selling an editor.
 2. **They choose AF over Phaser AE or Godot with an MCP server.** Both are known to every model already.
 3. **"Your agent can't break your game" is a pain people name themselves.** The material shows the symptom (the code
    rots) but nobody asking for this cure.
-4. **Someone wants to edit game content on an iPad or phone, and would pay.** Weakest evidence of all.
+4. **People will pay for the editor app** when the browser editors are free. (The iPad-first editors themselves are the
+   Owner's requirement and are not on this list.)
 5. **Agent-made games can reach players and earn,** through portals or otherwise, so the makers have a reason to care
    about quality and to pay.
 6. **One person directing agents can build and keep up the scope.** The first attempt is evidence against.
 
-## Who to talk to, and what to ask
+## How to check without interviews
 
-About twenty conversations, before any plan. Ask about the past, not about AF ("tell me about the last game you
-abandoned", not "would you use..."). Reaching out is the Owner's call.
+There will be no customer interviews, so the checks are things that can be read or measured:
 
-| Who | How many | Where to find them | What to learn |
-|---|---|---|---|
-| People who wrote the post-mortems above | 5 | Their posts (Godot forum, itch devlog, Substack, dev.to, personal blogs) | Exactly where they stopped; whether a replay check would have saved it; what they did next |
-| Recent vibe-jam entrants who did and did not finish | 5 | Jam pages on itch.io | What separated finishers from the rest; what they would pay for |
-| Paying users of Rosebud, Phaser's agent or Summer Engine | 3 | Their Discords and showcases | What made them pay; what is still missing |
-| Web portal developer relations (CrazyGames, Poki) **[bk: names to confirm]** | 2 | Their developer pages | What makes them reject agent-made games; whether built-ins plus a quality check would change that |
-| People making games on an iPad (Xogot, Codea, hyperPad users) | 3 | App Store reviews, their forums | Whether they edit or build on iPad, and what they pay for |
-| A teacher or club lead using iPads for game making | 2 | School coding communities | Whether iPad editing is a must, and who pays |
+| Check | How | What it would show |
+|---|---|---|
+| The portals' requirements | Read the CrazyGames and Poki developer docs **[bk: confirm names and pages]** | Whether claim 1 is what a paying publisher asks for; if so, a portal belongs among the publish targets |
+| The unread reviews | On the Mac, where pages load: Construct and GameMaker on Capterra, Xogot's App Store reviews, r/gamedev, r/godot and r/aigamedev threads on vibe coding | Whether the pains ranked above hold in a larger sample, and what iPad users complain about in Xogot and Construct |
+| A fake door for the paid app | A store-style page on the site with a price and a "notify me" button, before the app is built | Whether anyone clicks to pay, and at what price |
+| Public use | Downloads of the package, installs of the agent skills, games published with AF, jam entries | Whether the "finish" wall is felt as a tool problem (assumption 1) |
+| The replay oracle in public | Devlogs and the demo game's CI showing an agent's breaking change caught | Whether the line "your agent can't quietly break your game" gets picked up (assumption 3) |
 
-Signs the thesis is right: two or more people describe a change from their agent breaking a working game and losing
-hours; a portal says the boring parts are why they reject games; anyone asks to try it now. Signs it is wrong: people
-abandoned for reasons no framework fixes; no one cares where the editor runs.
+Signs the thesis is right: the portals' bar matches claim 1; outside games appear without being asked for; the fake door
+gets clicks. Signs it is wrong: no outside use after launch; nobody clicks the price.
 
 ## What this means for the spec, said once
 
-The spec's decisions stand until the Owner changes them. The facts above suggest, for the Owner's judgement after the
-conversations:
+The spec's decisions stand until the Owner changes them. The facts above suggest, for the Owner's judgement:
 
 - Lead the pitch with claim 3, in user words, and claim 1; they are the pains with evidence.
 - Treat Phaser AE as the main competitor and name the difference plainly.
 - Make the first layer's must-have the framework, built-ins, `automata check`, the replay oracle, one game and web
-  publishing; let editors and the paid app follow what the conversations show.
-- Check the web portals' requirements; if they match claim 1, add a portal as a publish target to the conversation
-  list, not to the code.
+  publishing, together with the iPad-first editors' save path and the Feel and Tuner editors; let the other editors
+  widen after, and let the paid app's price follow the fake door.
+- Check the web portals' requirements; if they match claim 1, propose a portal as a publish target to the Owner.
