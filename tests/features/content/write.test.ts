@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { parseContent, writeContent } from '#src/features/content/content.ts'
-import { exampleLevel } from './level.test.ts'
+import { exampleLevel } from '../../fixtures/content/example-level.ts'
 
 test('writeContent is stable: schema order, two spaces, one tile row per line, a newline at the end', () => {
   // The keys arrive in another order than the schema's, and `upright` is left to its default.

@@ -1,14 +1,6 @@
 import { expect, test } from 'vitest'
 import { formatDiagnostic, parseContent } from '#src/features/content/content.ts'
-
-// The level file as an author writes it: 16 tiles wide, 3 tall, one crate and one start.
-export const exampleLevel = () => ({
-  format: 1,
-  id: 'level-1',
-  tiles: ['................', '................', '################'],
-  things: [{ id: 'crate-1', character: 'crate', x: 8.5, y: 1.5 }],
-  starts: [{ player: 1, x: 2.5, y: 1.5 }],
-})
+import { exampleLevel } from '../../fixtures/content/example-level.ts'
 
 const FILE = 'content/levels/a.json'
 
