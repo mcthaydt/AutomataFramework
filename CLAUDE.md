@@ -44,13 +44,16 @@ package.
   layouts; languages.
 - **Editors:** all nine old 2D editors plus the figure and environment builders, which make 2D art only. In the
   browser, and as a Tauri app for iPad, Android and desktop.
+- **Agents working on the code are the primary way a game is made.** The editors change authorable content only:
+  the JSON files the coding agents produce.
 - **Edits live in the game's GitHub repo.** Save makes a commit; edits that collide merge the way GitHub does.
   Sign-in is a GitHub App, run through Cloudflare Pages Functions, which also do the editors' GitHub work as the
   App; the site is on Cloudflare Pages.
 - **The editors are for teams,** technical people and not, working on their own games. People get levels of what
   they may do (Look, Suggest, Approve, Edit, Owner), kept in `automata.access.toml` in the game's repo and set from
   a Share screen. A Suggest-level save waits for approval; an Edit-level save goes straight in. People need GitHub
-  only to sign in.
+  only to sign in. Anyone can use the editors freely without signing in and keep a copy; saving into a game and
+  working with others need a sign-in.
 - **Formats:** game content is JSON; everything else is TOML.
 - **Order inside the editors:** Levels, then Feel and Tuner (the first editor slice), then every other 2D editor.
 - **Releases are big and few** (the Owner, 2026-11-13). Release 1 is when 2D is finished (the framework in full and

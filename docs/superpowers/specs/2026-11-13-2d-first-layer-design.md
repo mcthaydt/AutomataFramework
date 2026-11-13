@@ -82,7 +82,9 @@ The editors also ship as an app for iPad, Android and desktop.
 | Builders | 2D art only. |
 | Repos | AutomataFramework, AutomataFrameworkExamples (this game, later the 3D game, and the site's examples), editors, site. |
 | Biggest inspiration | PixiJS: a small core, examples that are one short runnable file each, a site with guides, live examples and the API. |
+| What the editors change | Authorable content only: the JSON files the coding agents produce (the Owner, 2026-11-13). Agents working on the code are the primary way a game is made; an editor never opens or changes code. |
 | Where an iPad edit lives | In the game's GitHub repo. Sign in with GitHub; Save makes a commit, straight into the game or as a suggestion someone approves, by the person's level. |
+| Using the editors without signing in | Anyone can use the editors freely and keep a copy of what they made (the Owner, 2026-11-13). Saving into a game and working with others need a sign-in. A "Change this game" link opens that game in the editor straight away. |
 | Who the editors are for | Teams working together on their own games, technical people and not (the Owner, 2026-11-13). People get levels of what they may do, like Google Docs, and need GitHub only to sign in. |
 | Access levels | Look, Suggest, Approve, Edit and Owner, kept in `automata.access.toml` in the game's repo and set from a Share screen. All five are in M1. |
 | Order of work | A thin thread through all four repos first, then widen. |
@@ -210,8 +212,18 @@ Release 1 that means a git dependency pinned to a commit on the framework's `mai
 One repo, one suite: nine editors and two builders, a browser build hosted on the site and a Tauri app. Each
 editor knows only the framework's content schemas, so it works on any game made with the framework.
 
-- **Who it is for.** A team working together on its own game, in its own repo (the Owner, 2026-11-13). People sign
-  in with a GitHub account, so they know who each other are, and need GitHub for nothing else: the editors' own
+- **What it changes.** A game's authorable content and nothing else: the JSON content files the coding agents
+  produce, which the project file lists (the Owner, 2026-11-13). Agents working on the code are the primary way a
+  game is made; an editor never opens or changes code.
+- **Without signing in.** Anyone can open a public game whose sharing file lets everyone look, change it freely on
+  the screen, and keep a copy of what they made (the content file, as the framework writes it). The API reads the
+  game for them and writes nothing. Signing in is asked for only when it is needed: to save into the game, to see
+  or approve waiting changes, to share, and to list your own games. What a person made before signing in is still
+  there when they come back from it.
+
+- **Who it is for.** A team working together on its own game, in its own repo (the Owner, 2026-11-13). To save and
+  to work together, people sign in with a GitHub account, so they know who each other are, and need GitHub for
+  nothing else: the editors' own
   GitHub App does the GitHub work, through an API on Cloudflare Pages Functions, and the page talks only to that API.
   The App asks for as little as it can: contents, pull requests, checks (read) and metadata.
 - **Access levels.** What a person may do is their level, as in Google Docs: **Look** (see the game), **Suggest**
@@ -221,7 +233,8 @@ editor knows only the framework's content schemas, so it works on any game made 
   GitHub names with a level each. The account that owns the repo is always an Owner. The Owner sets it from a Share
   screen; an agent can edit the same file. The API reads it afresh on every call and enforces it; GitHub's own
   roles are not used, so a personal account or an organization makes no difference.
-- **Opening a game.** Sign in with GitHub, pick a game or open a link someone shared, and the suite reads the game's
+- **Opening a game.** Open a link someone shared (a site's "Change this game" link is one), press "Try it now"
+  for the site's example game, or sign in and pick one of your own; the suite reads the game's
   project file (which lists its content files and the editor that opens each). An Owner adds the editor to a game
   once, on GitHub. The Tauri app signs in with GitHub's device flow from its native side.
 - **Saving.** Save sends the change to the API, which writes it as the framework writes it, with the file's last
@@ -234,8 +247,8 @@ editor knows only the framework's content schemas, so it works on any game made 
   per conflict, before the merge commits. Conflict markers are never committed, and the merged file must pass its
   schema before the save goes through. (M1 does not merge: it never overwrites, says the file changed elsewhere, and
   offers the other version. Merging arrives with M3.)
-- **The first run.** Each kind of person (an Owner starting out, someone sent a link) is walked from the first
-  screen to their first saved change.
+- **The first run.** Each kind of person (a visitor who has not signed in, an Owner starting out, someone sent a
+  link) is walked from the first screen to their first change, and to saving it.
 - **Problems** are listed as you edit, from the same validation `automata check` runs.
 - **Playing.** The suite plays the game from the repo's current files, so a change shows in play.
 
@@ -331,8 +344,8 @@ means" holds on each repo's `main`, proven by CI.
 - Framework: sim, physics, commands and replay, content (level and character only), render, keyboard and touch input,
   the web host. Ready to publish, but published only at Release 1 (the Owner, 2026-11-13; see Releases).
 - Examples: one level with the hero and one crate, from the framework pinned to a commit on its `main` (see Releases).
-- Editors: the suite shell, GitHub sign-in and save, the five access levels with the Share screen and approving in the
-  editor, the first run, and the Levels editor moving the crate, in the browser, at iPad size.
+- Editors: the suite shell, using it without signing in and keeping a copy, GitHub sign-in and save, the five access
+  levels with the Share screen and approving in the editor, the first run, and the Levels editor moving the crate, in the browser, at iPad size.
 - Site: one page with the game playing, deployed.
 - CI: the replay hash the same in Node, Chromium, WebKit and Firefox.
 
