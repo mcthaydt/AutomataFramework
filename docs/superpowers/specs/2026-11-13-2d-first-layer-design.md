@@ -10,7 +10,7 @@ Written 2026-11-13, from the Owner's brainstorm in the AF V2 project. Stage 1 (S
 | 2. iPad-first editors | All editors are designed and tested at iPad size first, with touch; the editor app ships on iPad before anything else mobile. |
 | 3. Layers in order | This is the 2D layer, built in full: runtime, editors, publishing. No 3D code. The 3D layer (a later spec) is the first to deploy multiplayer. |
 | 4. Separate repos | Four repos, each with its own release: framework, examples, editors, site. |
-| 5. Builders carry over | The figure builder and environment builder come over as editors, cut down to 2D art. |
+| 5. Builders carry over | The figure builder and environment builder come over inside the Characters and World editors, cut down to 2D art. |
 | 6. Stack carries over | The stack below is the old one, with a written reason beside each thing left out. Rapier and Colyseus move from opt-in extensions into the core. |
 | 7. Port in layer order | The old repo is a reference, not a template. Nothing is built before the milestone that uses it; networking is built and proven but not deployed, because its first real user is the 3D game. |
 
@@ -44,7 +44,8 @@ The editors also ship as an app for iPad, Android and desktop.
 - `@automataframework/framework`: a deterministic 2D runtime with ECS, physics and networking in the core.
 - A small original physics platformer in AutomataFrameworkExamples that carries everything in claim 1 and enough content
   for every editor to have real work.
-- The editor suite: nine editors and two builders, browser and Tauri app.
+- The editor suite: five editors (World, Characters, Feel, Sound and Story), which between them hold every old 2D
+  editor and both builders, browser and Tauri app.
 - A site modelled on pixijs.com: the claims, the game playable on the home page, guides, an examples gallery, the API
   reference, and the free browser editors.
 - Deployment: the site and web game live, `automata ship` to web, itch.io, Wavedash and desktop, the editor app built for iPad
@@ -78,7 +79,8 @@ The editors also ship as an app for iPad, Android and desktop.
 | The demo game | A small original physics platformer, single-player. |
 | How much networking now | Built and proven (CI test: a room server and two headless players end on the same hash), not deployed. |
 | Room server host, when deployed | Fly.io. |
-| Editors | All the old 2D editors return, plus the figure and environment builders. |
+| Editors | All the old 2D editors return, plus the figure and environment builders, combined into five editors (the Owner, 2026-11-13): World, Characters, Feel, Sound and Story. Each answers one question a teammate would ask: where, who, how it plays, how it sounds, what happens. |
+| 2D and 3D editors | World and Characters are the two editors that come in a 2D and a 3D version. The 2D versions work the way the old 3D builders did (art built from a figure or scene file), but in 2D; the 3D versions arrive with the 3D layer. Feel, Sound and Story are the same in both. |
 | Builders | 2D art only. |
 | Repos | AutomataFramework, AutomataFrameworkExamples (this game, later the 3D game, and the site's examples), editors, site. |
 | Biggest inspiration | PixiJS: a small core, examples that are one short runnable file each, a site with guides, live examples and the API. |
@@ -183,8 +185,8 @@ direction):
 9. **saves**: save slots through the host; never a silent fallback to device storage.
 10. **locale**: Paraglide messages and the language choice (the player's saved choice, then the host, the browser,
     the default).
-11. **story**: what the Writer, Schematic and Sequence editors author: dialogue, character behaviour rules and
-    cutscenes, run by the sim.
+11. **story**: what the Story editor (conversations and cutscenes) and the Characters editor (behaviour rules)
+    author: dialogue, character behaviour rules and cutscenes, run by the sim.
 12. **ui**: the Svelte kit, mobile first: touch targets of at least 44 px, layout from container size, focus kept
     through rotation.
 13. **screens**: title, pause, settings (controls, volume, language), and the saves screen.
@@ -209,7 +211,7 @@ Release 1 that means a git dependency pinned to a commit on the framework's `mai
 
 ### The editors
 
-One repo, one suite: nine editors and two builders, a browser build hosted on the site and a Tauri app. Each
+One repo, one suite: five editors, a browser build hosted on the site and a Tauri app. Each
 editor knows only the framework's content schemas, so it works on any game made with the framework.
 
 - **What it changes.** A game's authorable content and nothing else: the JSON content files the coding agents
@@ -254,21 +256,25 @@ editor knows only the framework's content schemas, so it works on any game made 
 - **Problems** are listed as you edit, from the same validation `automata check` runs.
 - **Playing.** The suite plays the game from the repo's current files, so a change shows in play.
 
-| Editor | What it edits |
-|---|---|
-| Levels | Placing tiles, bodies, items, characters and start points in a level |
-| Tiles | Tilesets and their auto-tiling rules |
-| Characters | A character's animation clips and what each kind of entity is |
-| Tuner | Controls and the movement numbers (run speed, jump height, gravity) |
-| Feel | Effects when something happens: dust, screen shake, a freeze |
-| Audio | Sounds made of tones and noise, music, and what plays when |
-| Writer | Branching conversations |
-| Schematic | How a character decides: its behaviour rules |
-| Sequence | Cutscenes: camera and actor keys on a timeline |
-| Figure builder | Characters painted as pixel art from a figure file, as sprite sheets |
-| Environment builder | Backdrops (parallax layers) and props painted as 2D art |
+The old repo's nine editors and two builders are combined into five (the Owner, 2026-11-13). Each part keeps what the
+old editor or builder did; it is a part of a bigger editor, not an editor of its own.
 
-The builders are free to run (no paid service, no model call) and write PNGs and atlases into the game repo beside the
+| Editor | Its parts (the old editor or builder) | What it edits |
+|---|---|---|
+| World: where | Levels | Placing tiles, bodies, items, characters and start points in a level |
+| | Tiles | Tilesets and their auto-tiling rules |
+| | Environment builder | Backdrops (parallax layers) and props painted as 2D art |
+| Characters: who, and how they act | Figure builder | Characters painted as pixel art from a figure file, as sprite sheets |
+| | Clips and kinds (the old Characters editor) | A character's animation clips and what each kind of entity is |
+| | Schematic | How a character decides: its behaviour rules |
+| Feel: how it plays | Tuner | Controls and the movement numbers (run speed, jump height, gravity) |
+| | Feel | Effects when something happens: dust, screen shake, a freeze |
+| Sound | Audio | Sounds made of tones and noise, music, and what plays when |
+| Story: what happens | Writer | Branching conversations |
+| | Sequence | Cutscenes: camera and actor keys on a timeline |
+
+World and Characters have a 2D and a 3D version; this layer builds the 2D ones, which work the way the old 3D builders
+did, but in 2D. The builders, inside World and Characters, are free to run (no paid service, no model call) and write PNGs and atlases into the game repo beside the
 figure or scene file that made them, so an agent can change a figure file and rebuild the same art.
 
 ### The site
@@ -293,19 +299,19 @@ sparks, and reach the door. Single-player, but every input is a numbered player'
 
 Content, so that every editor has real work:
 
-| Editor | Content in the game |
+| Editor (part) | Content in the game |
 |---|---|
-| Levels | Two short levels, each with tiles, crates, the seesaw, the swinging platform, sparks, the door and start points for 4 players |
-| Tiles | One tileset with its auto-tiling rules |
-| Characters | The hero's clips (idle, run, jump, fall, land, push), and the crate, spark, door, keeper and critter kinds |
-| Tuner | The controls and movement numbers |
-| Feel | Dust on landing, a shake when a crate drops, a short freeze on a spark |
-| Audio | Jump, land, spark, crate thud and door sounds, and one music track |
-| Writer | A keeper at the start of level one, with a short conversation and one choice (a hint about the seesaw) |
-| Schematic | A critter that wanders and runs away when the hero comes near |
-| Sequence | A camera pan across the level at its start, and the door opening at the end |
-| Figure builder | The hero, the keeper and the critter |
-| Environment builder | The backdrops and props of both levels |
+| World (Levels) | Two short levels, each with tiles, crates, the seesaw, the swinging platform, sparks, the door and start points for 4 players |
+| World (Tiles) | One tileset with its auto-tiling rules |
+| World (Environment builder) | The backdrops and props of both levels |
+| Characters (Figure builder) | The hero, the keeper and the critter |
+| Characters (clips and kinds) | The hero's clips (idle, run, jump, fall, land, push), and the crate, spark, door, keeper and critter kinds |
+| Characters (Schematic) | A critter that wanders and runs away when the hero comes near |
+| Feel (Tuner) | The controls and movement numbers |
+| Feel (Feel) | Dust on landing, a shake when a crate drops, a short freeze on a spark |
+| Sound | Jump, land, spark, crate thud and door sounds, and one music track |
+| Story (Writer) | A keeper at the start of level one, with a short conversation and one choice (a hint about the seesaw) |
+| Story (Sequence) | A camera pan across the level at its start, and the door opening at the end |
 
 And every built-in from claim 1: saves (progress and settings), title, pause and settings screens, keyboard, touch and
 gamepad with remapping, music and sound with volume, phone, tablet and desktop layouts upright and sideways, and three
@@ -347,7 +353,7 @@ means" holds on each repo's `main`, proven by CI.
   the web host. Ready to publish, but published only at Release 1 (the Owner, 2026-11-13; see Releases).
 - Examples: one level with the hero and one crate, from the framework pinned to a commit on its `main` (see Releases).
 - Editors: the suite shell, using it without signing in and keeping a copy, GitHub sign-in and save, the five access
-  levels with the Share screen and approving in the editor, the first run, and the Levels editor moving the crate, in the browser, at iPad size.
+  levels with the Share screen and approving in the editor, the first run, and the start of the World editor (its Levels part) moving the crate, in the browser, at iPad size.
 - Site: one page with the game playing, deployed.
 - CI: the replay hash the same in Node, Chromium, WebKit and Firefox.
 
@@ -369,10 +375,12 @@ tablet and desktop sizes; `automata create` makes a new game that passes `automa
 
 ### M3: the editors in full
 
-- **First, Feel and Tuner** (the Owner, 2026-11-13): with Levels from M1 they make the first editor slice, because game
-  feel is the most common reason agent-made games fail. This slice is planned and lands before the rest.
-- **Then the rest:** Tiles, Characters, Audio, Writer, Schematic, Sequence, and both builders. Every 2D editor is in
-  scope; only the order changes.
+- **First, Feel, with Tuner inside it** (the Owner, 2026-11-13): with World's Levels part from M1 it makes the first
+  editor slice, because game feel is the most common reason agent-made games fail. This slice is planned and lands
+  before the rest.
+- **Then the rest:** World in full (Tiles and the environment builder join Levels), Characters (the figure builder,
+  clips and entity kinds, and Schematic's behaviour rules), Sound, and Story (Writer and Sequence). Every old 2D
+  editor and both builders are in scope, as parts of the five; only the order changes.
 - Each edits the demo game's real content. Problems listed as you edit; conflict handling on save.
 
 Done means: each editor changes the demo game on an iPad, the change commits and shows in play, and an agent can make

@@ -40,6 +40,11 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
 
 ### Log
 
+- 2026-11-13: The spec combines the editors into five (the Owner): World (Levels, Tiles, the environment builder),
+  Characters (the figure builder, clips and entity kinds, Schematic), Feel (Feel, Tuner), Sound (Audio) and Story
+  (Writer, Sequence). World and Characters have a 2D and a 3D version; the 2D ones work the way the old 3D builders
+  did. M1's Levels editor is the start of World; M3's first slice is Feel, with Tuner inside it. Spec change only.
+
 - 2026-11-13: F4 pulled forward from M2 (the Owner: fix it now). Root cause of the cut-off pictures: Vitest's browser page
   is 414 by 896 by default, so the sideways and tablet pictures were clipped there (the white strip and the missing
   Jump button were off the page, not missing from the game). The real problem under it, the buttons sitting over the
