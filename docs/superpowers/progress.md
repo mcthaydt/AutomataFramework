@@ -6,7 +6,7 @@ The tracker every stage reads first and updates last. One section per cycle; new
 
 Spec: [`specs/2026-11-13-2d-first-layer-design.md`](specs/2026-11-13-2d-first-layer-design.md)
 
-Overall: **5%** (spec written; awaiting the Owner's answers to its "Open for the Owner" items and approval)
+Overall: **5%** (spec written; awaiting the Owner's approval)
 
 | Stage | State | Output |
 |---|---|---|
@@ -29,5 +29,6 @@ Milestones (each runs stages 2 to 7 per repo):
 
 ### Log
 
-- 2026-11-13: Stage 1. Spec written from the Owner's brainstorm. Open: the browser editor's GitHub sign-in step, the
+- 2026-11-13: Stage 1. Spec written from the Owner's brainstorm, then updated with the Owner's answers (sign-in on Cloudflare
+  Pages, file formats, languages, Android, GitHub-style merges, protected main). Open items are in the spec.
   domain and site host, npm publishing, the game's name, app stores and signing, itch.io.

@@ -34,7 +34,7 @@ The offer, as the old site put it, and every claim must be true when this layer 
    what you save is what the game plays.
 5. **Get it in front of players.** One command publishes to the web, itch.io, or a desktop app.
 
-And one more, the way the project is paid for: **the editors as a paid app** for iPad and desktop. The browser editors
+And one more, the way the project is paid for: **the editors as a paid app** for iPad, Android and desktop. The browser editors
 stay free.
 
 ## Goals
@@ -54,7 +54,6 @@ stay free.
 - Ruken as a target (the vision leaves it out).
 - Multiplayer in the demo game. It ships single-player, built as if it were multiplayer.
 - Deploying the room server. It is built and proven in CI; Fly.io hosts it once the 3D game uses it.
-- Android. iPad is the mobile platform that the principles name; Android waits for the Owner's word.
 - A port of the old packages. Old code may be read and lifted where it is the best answer, but each piece is judged
   fresh.
 
@@ -83,7 +82,12 @@ stay free.
 | Biggest inspiration | PixiJS: a small core, examples that are one short runnable file each, a site with guides, live examples and the API. |
 | Where an iPad edit lives | In the game's GitHub repo. Sign in with GitHub; Save makes a commit. |
 | Order of work | A thin thread through all four repos first, then widen. |
-| Paid product | The editors as Tauri apps for iPad and desktop. |
+| Paid product | The editors as Tauri apps for iPad, Android and desktop. Android stays because it is the Owner's phone, so phone layouts are tested too. |
+| File formats | Game content files are JSON; everything else (the project file, configs, manifests) is TOML. |
+| Languages | Games ship English, Spanish, Korean, Japanese, Chinese and Portuguese. The editors ship those six plus French, Russian and one more the Owner will name. |
+| Edits that collide | Handled the way GitHub does: a three-way merge, with conflicts shown and resolved before the save commits. |
+| Sign-in step and site host | A Cloudflare Pages Function does the browser editor's GitHub token exchange; the site is on Cloudflare Pages. |
+| New repo names | AutomataFrameworkEditors and AutomataFrameworkSite. |
 | Plans | Written in separate sessions (Fable 5.2, medium), one per plan, after this spec is committed. |
 
 ## Approaches considered
@@ -111,7 +115,8 @@ Carried over, at the old repo's pinned versions unless a plan moves one (one upg
 | Zod | 4.6.6 | The only schema language: content, commands, saves |
 | Paraglide | 2.25.4 | Typed messages per language |
 | Effect | 3.22.2 | Node tooling only (the `automata` command, the room server's host process). Never in the sim or browser code. |
-| Tauri 2 | 2.12.x line | Desktop game builds; the editor app on iPad and desktop |
+| Tauri 2 | 2.12.x line | Desktop game builds; the editor app on iPad, Android and desktop |
+| smol-toml | 1.9.0 | Parses the TOML files (project file, configs, manifests) |
 | Vite, Vitest, Playwright | 8.3.3, 5.0.3, 1.63.0 | Build, unit and parity tests, journeys |
 | Biome, knip, changesets | 2.5.15, 6.39.0, 3.0.3 | Lint and format, unused code, releases |
 | API reports | the old `api-report` approach | Each published package's public surface is reviewed in a committed report |
@@ -123,11 +128,21 @@ Left out, with the reason:
 | Ruken SDK | The vision leaves Ruken out as a target. |
 | Pixi 3D (`@pixi/3d`) | 3D is a later layer; it arrives with that layer's spec. |
 | Rapier 3D | Same. |
-| smol-toml, TOML content | Content is JSON (see Content files). JSON needs no parser, an editor writes it back exactly, and the project's structure rule already keeps library data as JSON. *My call; the Owner can overrule.* |
 | turbo, pnpm workspaces across packages | No monorepo: one package per repo. pnpm stays as the package manager. |
 | Self-hosted runners | CI is GitHub-hosted, which also installs WebKit and Firefox, so parity runs in CI for the first time. |
 
 No other new dependency is added without the Owner's yes; a plan that needs one stops and asks.
+
+## File formats
+
+Game content is JSON; everything else is TOML (the Owner's preference, 2026-11-13, with the reverse left open). This
+way round is the better one:
+
+- **Content is written by editors.** An editor must write a file back exactly, field for field, and a three-way merge
+  must line up; JSON round-trips with no parser library and Zod schemas export to JSON Schema, which agents read.
+  TOML written back by a program loses its comments and layout unless a careful editing library keeps them.
+- **Config is written by people and agents.** The project file, the ship config and the tools' settings are short,
+  hand-edited and worth commenting, which TOML allows and JSON does not.
 
 ## The four repos
 
@@ -192,8 +207,10 @@ editor knows only the framework's content schemas, so it works on any game made 
 - **Opening a game.** Sign in with GitHub, pick a repo, and the suite reads the game's project file (which lists its
   content files and the editor that opens each). The Tauri app signs in with GitHub's device flow from its native side.
 - **Saving.** Save commits the changed files to the repo's default branch through GitHub's API, with the file's last
-  known version. If the file changed since it was opened (an agent, another device), the editor says so in plain words
-  and offers to reload or to save to a new branch. *My call; the plan details the words and the flow.*
+  known version. If the file changed since it was opened (an agent, another device), the editor does what GitHub does:
+  a three-way merge against the version it opened. Changes that don't overlap merge on their own; overlapping ones are
+  shown side by side as conflicts, and the person keeps theirs, the other, or both, per conflict, before the merge
+  commits. Conflict markers are never committed, and the merged file must pass its schema before the save goes through.
 - **Problems** are listed as you edit, from the same validation `automata check` runs.
 - **Playing.** The suite plays the game from the repo's current files, so a change shows in play.
 
@@ -224,7 +241,7 @@ Its own repo, a static site in the style of pixijs.com:
 - **API reference**: generated from the framework's API report.
 - **The free editors**, and where to buy the app.
 
-Hosted as static files. *My call: GitHub Pages on the Owner's domain; see Open for the Owner.*
+Hosted as static files on Cloudflare Pages, with the Pages Function that does the editors' GitHub sign-in step.
 
 ## The demo game
 
@@ -250,7 +267,8 @@ Content, so that every editor has real work:
 
 And every built-in from claim 1: saves (progress and settings), title, pause and settings screens, keyboard, touch and
 gamepad with remapping, music and sound with volume, phone, tablet and desktop layouts upright and sideways, and three
-languages: English, Spanish and Japanese (Japanese proves a non-Latin font). *The languages are my call.*
+languages: English, Spanish, Korean, Japanese, Chinese and Portuguese, the set every game ships with. The editors
+ship those six plus French, Russian and one more the Owner will name.
 
 Its golden: a recorded play through level one that ends on the same hash in Node, Chromium, WebKit and Firefox.
 
@@ -296,15 +314,16 @@ the same change by editing the files.
 
 - The site in full: home with the claims, guides, the examples gallery, the API reference, the free editors.
 - `automata ship` to web, itch.io and a desktop app (macOS, Windows, Linux via Tauri).
-- The editor app built for iPad and desktop, signed and submitted for sale.
+- The editor app built for iPad, Android and desktop, signed and submitted for sale.
 
 Done means: every claim on the site is backed by something on `main`; the demo game is on itch.io and as a desktop
-download; the editor app passes App Store review for iPad and is on sale for desktop.
+download; the editor app passes App Store review for iPad and Play review for Android, and is on sale for desktop.
 
 ## CI and testing
 
 - GitHub-hosted runners only. Ubuntu for lint, types, unit tests, parity in Chromium, WebKit and Firefox, and journeys;
-  macOS for the iPad and macOS app builds; Windows for the Windows build.
+  macOS for the iPad and macOS app builds; Ubuntu for the Android and Linux builds; Windows for the Windows build.
+- Games and editors are tested at phone size (the Owner's Android phone) as well as iPad and desktop sizes.
 - Tests are never run locally (project rule); a change is verified by its pull request's CI.
 - A hash that moves is investigated, never re-recorded per engine. A golden moves only with the Owner seeing before and
   after.
@@ -328,17 +347,19 @@ download; the editor app passes App Store review for iPad and is on sale for des
 
 Things only the Owner can decide or provide; each plan that needs one stops and asks:
 
-1. **GitHub sign-in in the browser editor.** GitHub's token exchange can't be called from a browser page, so the
-   browser editors need a small server-side step. The Tauri app doesn't. Options: a free serverless function
-   (Cloudflare Pages Functions, which would also host the site), or a tiny service on Fly.io. *Needed by M1.*
-2. **The domain and the site's host.** The old site used automataframework.com. *Needed by M1.*
+1. **A Cloudflare account** for Pages and the sign-in function, and a GitHub OAuth app for the editors. *Needed by M1.*
+2. **The domain.** Not bought yet; the Owner will control its DNS. M1 deploys to the Cloudflare Pages address until
+   then. *Needed by M4.*
 3. **npm publishing** under the `@automata` scope (the Owner's `NPM_TOKEN`). *Needed by M1.*
-4. **The demo game's name.** *Needed by M4, for the site; a working name until then.*
-5. **Stores and signing for the editor app:** an Apple Developer account for iPad and macOS, Windows signing, and where
-   the desktop app is sold (itch.io paid page is the simplest; the Mac App Store is an option). The App Store may
-   question an editor that plays a game's JavaScript; the plan checks the current guideline before M4 starts.
-   *Needed by M4.*
-6. **itch.io** account and API key for `automata ship`. *Needed by M4.*
+4. **Creating the new repos** (AutomataFrameworkExamples, AutomataFrameworkEditors, AutomataFrameworkSite), with `main`
+   protected. *Needed by M1.*
+5. **The ninth editor language.** *Needed by M3.*
+6. **The demo game's name.** *Needed by M4, for the site; a working name until then.*
+7. **Stores and signing for the editor app:** an Apple Developer account for iPad and macOS, a Google Play developer
+   account and signing key for Android, Windows signing, and where the desktop app is sold (an itch.io paid page is
+   the simplest; the Mac App Store is an option). The App Store may question an editor that plays a game's
+   JavaScript; the plan checks the current guideline before M4 starts. *Needed by M4.*
+8. **itch.io** account and API key for `automata ship`. *Needed by M4.*
 
 ## Left to the builder (the plans)
 
