@@ -15,6 +15,9 @@ const BUTTON_PX = 64
 const GAP_PX = 12
 const EDGE_PX = 16
 
+// Dark enough that white 18 px bold words reach 4.5 to 1 over the lightest thing they can sit on, the sky.
+const RESTING_BACKGROUND = 'rgba(20,20,30,0.55)'
+
 const BUTTON_STYLE = [
   `min-width:${BUTTON_PX}px`,
   `min-height:${BUTTON_PX}px`,
@@ -22,7 +25,7 @@ const BUTTON_STYLE = [
   'box-sizing:border-box',
   'border:2px solid rgba(255,255,255,0.85)',
   'border-radius:16px',
-  'background:rgba(20,20,30,0.45)',
+  `background:${RESTING_BACKGROUND}`,
   'color:#fff',
   'font:700 18px/1.1 system-ui,sans-serif',
   'touch-action:none',
@@ -72,7 +75,7 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
     for (const [action, b] of buttons) {
       const pressed = held.has(action)
       b.setAttribute('aria-pressed', String(pressed))
-      b.style.background = pressed ? 'rgba(255,255,255,0.55)' : 'rgba(20,20,30,0.45)'
+      b.style.background = pressed ? 'rgba(255,255,255,0.55)' : RESTING_BACKGROUND
       b.style.color = pressed ? '#111' : '#fff'
     }
   }

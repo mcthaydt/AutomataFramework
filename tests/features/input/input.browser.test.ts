@@ -259,7 +259,9 @@ const luminance = (rgb: readonly number[]): number => {
 test('the words on a button can be read over the sky', () => {
   make()
   firstTouch()
-  const panel = getComputedStyle(button('Jump')).backgroundColor.match(/[\d.]+/g)?.map(Number)
+  const panel = getComputedStyle(button('Jump'))
+    .backgroundColor.match(/[\d.]+/g)
+    ?.map(Number)
   const [r = 0, g = 0, b = 0, alpha = 1] = panel ?? []
   const sky = [(SKY_COLOR >> 16) & 255, (SKY_COLOR >> 8) & 255, SKY_COLOR & 255]
   const under = [r, g, b].map((c, i) => c * alpha + (sky[i] ?? 0) * (1 - alpha))

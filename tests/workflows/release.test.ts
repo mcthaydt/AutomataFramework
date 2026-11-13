@@ -21,5 +21,5 @@ test("the job runs only after a green ci run of a push to main, and builds that 
   expect(release).toContain("github.event.workflow_run.conclusion == 'success'")
   expect(release).toContain("github.event.workflow_run.event == 'push'")
   expect(release).toContain("github.event.workflow_run.head_branch == 'main'")
-  expect(release).toContain('ref: ${{ github.event.workflow_run.head_sha }}')
+  expect(release).toMatch(/ref: \$\{\{ github\.event\.workflow_run\.head_sha \}\}/)
 })

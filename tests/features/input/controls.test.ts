@@ -51,7 +51,9 @@ test('a button is in the left or the right corner', () => {
   const wrong = { jump: { label: 'Jump', keys: ['Space'], side: 'Left' } } as unknown as Controls
   expect(() => checkControls(wrong)).toThrow('The action "jump" has side "Left". Use "left" or "right".')
   const missing = { jump: { label: 'Jump', keys: ['Space'] } } as unknown as Controls
-  expect(() => checkControls(missing)).toThrow('The action "jump" has side "undefined". Use "left" or "right".')
+  expect(() => checkControls(missing)).toThrow(
+    'The action "jump" has side "undefined". Use "left" or "right".',
+  )
 })
 
 test('the keys are a list of key names', () => {

@@ -37,6 +37,13 @@ export function checkControls(controls: Controls): void {
       throw new Error(
         `The label "${control.label}" is too long for a button. Use ${MAX_LABEL} letters or fewer.`,
       )
+    // A game written in JavaScript, or by an agent, can say anything; say what is wrong instead of crashing later.
+    if (control.side !== 'left' && control.side !== 'right')
+      throw new Error(`The action "${action}" has side "${String(control.side)}". Use "left" or "right".`)
+    if (!Array.isArray(control.keys) || control.keys.some((code) => typeof code !== 'string'))
+      throw new Error(
+        `The action "${action}" needs its keys as a list of key names, like ["Space"]. Use [] for none.`,
+      )
     for (const code of control.keys) {
       const other = owner.get(code)
       if (other !== undefined && other !== action)

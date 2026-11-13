@@ -37,10 +37,10 @@ path = "content/characters/hero.json"
 Load it, and start it in an element of your page:
 
 ```ts
-import { loadGame, startGame, webHost } from '@automataframework/framework'
+import { formatDiagnostic, loadGame, startGame, webHost } from '@automataframework/framework'
 
 const loaded = await loadGame((path) => fetch(`/game/${path}`).then((r) => r.text()))
-if (!loaded.ok) throw new Error(loaded.diagnostics.map((d) => `${d.file}: ${d.message}`).join('\n'))
+if (!loaded.ok) throw new Error(loaded.diagnostics.map(formatDiagnostic).join('\n'))
 
 const game = await startGame({
   content: loaded.value,
