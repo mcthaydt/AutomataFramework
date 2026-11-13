@@ -3,7 +3,7 @@
 Written 2026-11-13. Stage 3 (Plan audit) of cycle 1, for
 [`plans/2026-11-13-m1-thin-thread-framework.md`](../plans/2026-11-13-m1-thin-thread-framework.md), read against the
 [spec](../specs/2026-11-13-2d-first-layer-design.md), `CLAUDE.md`, the
-[market drill](../../research/2026-11-13-market-problem-drill.md), [`progress.md`](../progress.md) and the source the
+market drill (kept privately by the Owner), [`progress.md`](../progress.md) and the source the
 plan lifts from (`mcthaydt/AutomataFrameworkFailed` at `ed8592e8f81db71f114275e2d625a6d7a4a4f22c`, checked file by
 file).
 
