@@ -677,7 +677,7 @@ export function loadGame(read: (path: string) => Promise<string>): Promise<Parse
   The fixture game is the example under "What the other repos rely on", with a 16 by 9 level: the bottom row solid,
   the hero's start at `(2.5, 7.5)`, `crate-1` at `(6.5, 7.5)`, the crate 1 by 1 and not upright.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
 ```ts
 test('the fixture game loads', ...)   // ok; levels has 'level-1'; characters has 'crate' and 'hero'; the value is frozen
@@ -694,11 +694,11 @@ test('problems in several files all come back, in the order of the project file'
 test('a read that rejects with a non-Error is still a problem, not a throw', ...)
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `project.ts` does not exist.
-- [ ] **Step 3: Implement.** `parseProject` uses smol-toml, then `ProjectSchema`. `loadGame` reads files in project
+- [x] **Step 2: Push; `check` fails** because `project.ts` does not exist.
+- [x] **Step 3: Implement.** `parseProject` uses smol-toml, then `ProjectSchema`. `loadGame` reads files in project
   order, collects every problem, runs the cross-file checks only on files that parsed, and deep-freezes the result.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(content): the project file and loading a game`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(content): the project file and loading a game`).
 
 ### Task 10: A level in the sim, and the thin thread's golden
 
