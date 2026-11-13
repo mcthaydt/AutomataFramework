@@ -11,6 +11,10 @@ export { type Control, type Controls, checkControls } from './controls.ts'
 export interface Input {
   /** The commands to send this tick: one `controls` command when what is held has changed, otherwise none. */
   poll(tick: number): Command[]
+  /** How many CSS pixels the touch buttons take from the bottom of the mount: 0 while they are hidden. */
+  inset(): number
+  /** Calls `listener` with the new room whenever the buttons show, hide or change size. */
+  onInset(listener: (px: number) => void): void
   /** Removes the buttons and stops listening. Safe to call twice. */
   destroy(): void
 }
@@ -40,6 +44,8 @@ export function createInput(options: { mount: HTMLElement; controls: Controls; p
       sent = now
       return [controlsCommand(tick, player, seq++, held)]
     },
+    inset: touch.inset,
+    onInset: touch.onInset,
     destroy() {
       if (destroyed) return
       destroyed = true

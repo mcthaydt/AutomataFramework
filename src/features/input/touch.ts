@@ -7,6 +7,10 @@ import type { Controls } from './controls.ts'
 export interface Touch {
   /** The actions with at least one finger on their button. */
   held(): Set<string>
+  /** How many CSS pixels the buttons take from the bottom of the mount: 0 while they are hidden. */
+  inset(): number
+  /** Calls `listener` with the new room whenever the buttons show, hide or change size. Stops on `destroy`. */
+  onInset(listener: (px: number) => void): void
   destroy(): void
 }
 
@@ -79,6 +83,15 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
       b.style.color = pressed ? '#111' : '#fff'
     }
   }
+  // The overlay is anchored to the bottom and as tall as its padding and buttons, so its height is the room taken. Hidden
+  // (`display:none`) it has none.
+  const inset = (): number => overlay.offsetHeight
+  const insetListeners = new Set<(px: number) => void>()
+  const insetWatcher = new ResizeObserver(() => {
+    const px = inset()
+    for (const l of insetListeners) l(px)
+  })
+  insetWatcher.observe(overlay)
   const letGo = (e: PointerEvent): void => {
     if (fingers.delete(e.pointerId)) paint()
   }
@@ -133,7 +146,13 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
 
   return {
     held: () => new Set(fingers.values()),
+    inset,
+    onInset(listener) {
+      insetListeners.add(listener)
+    },
     destroy() {
+      insetWatcher.disconnect()
+      insetListeners.clear()
       win.removeEventListener('pointerdown', onFirstTouch, true)
       win.removeEventListener('blur', onBlur)
       fingers.clear()

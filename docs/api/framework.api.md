@@ -561,6 +561,8 @@ const Id: z.ZodString;
 ```ts
 interface Input {
     poll(tick: number): Command[];
+    inset(): number;
+    onInset(listener: (px: number) => void): void;
     destroy(): void;
 }
 ```
@@ -870,6 +872,7 @@ interface Renderer {
     readonly canvas: HTMLCanvasElement;
     apply(delta: RenderDelta): void;
     draw(alpha: number): void;
+    setInset(px: number): void;
     destroy(): void;
 }
 ```

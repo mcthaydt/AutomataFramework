@@ -61,6 +61,9 @@ export async function startGame(options: GameOptions): Promise<Game> {
       renderer.destroy()
       sim.dispose()
     }
+    // The touch buttons take the bottom of the screen; the level is fitted above them, so a thumb never hides it.
+    renderer.setInset(input.inset())
+    input.onInset((px) => renderer.setInset(px))
     const recorder = createRecorder(sim)
     const loop = createLoop({
       tickHz: sim.tickHz,

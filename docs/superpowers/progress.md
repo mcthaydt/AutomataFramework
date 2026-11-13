@@ -16,7 +16,7 @@ figure is 12 + 18 + 8 + 6; stage 4 is now whole, because publishing 0.1.0 is no 
 | 3. Plan audit | Done, 100% (merged) | `audits/2026-11-13-m1-framework-plan-audit.md` |
 | 4. Execution | Done, 100% (merged, PR 6, `b7b672f`; Task 15's publish step is deferred to Release 1) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
 | 5. Implementation audit | Done, 100% (in review) | `audits/2026-11-13-m1-framework-implementation-audit.md` |
-| 6. Fixes | Done, 100% (PR 9, green on all four engines; F4's layout deferred to M2) | `audits/2026-11-13-m1-framework-implementation-audit.md`, F1 to F8 |
+| 6. Fixes | Done, 100% (PR 9, green on all four engines; F4's layout in PR 14, green) | `audits/2026-11-13-m1-framework-implementation-audit.md`, F1 to F8 |
 | 7. Owner review | Not started | |
 
 Milestones (each runs stages 2 to 7 per repo):
@@ -39,6 +39,11 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
 | 5 | 3D, then the loop repeats for 3D | Not started |
 
 ### Log
+
+- 2026-11-13: F4 pulled forward from M2 (the Owner: fix it now). Root cause of the cut-off pictures: Vitest's browser page
+  is 414 by 896 by default, so the sideways and tablet pictures were clipped there (the white strip and the missing
+  Jump button were off the page, not missing from the game). The real problem under it, the buttons sitting over the
+  level, is fixed in PR 14: the level is fitted above the buttons. Details in "F4 follow-up" below.
 
 - 2026-11-13: The spec follows the Owner's answers to the Editors' plan audit: someone who has not signed in can
   open only the demo game (every other game is its team's), and keeping a copy gives the level's JSON to paste back
@@ -101,6 +106,28 @@ which still need a person's eyes (the cloud network refuses the artifact host).
 Not done, on purpose: the sideways layout. The Owner's question about it (audit, "For the Owner" 1) had no answer when
 this stage ended, so option A stands: M2's layouts plan moves the level or the buttons. `NPM_TOKEN` is still the
 Owner's; publishing now waits for Release 1 (see the log).
+
+### F4 follow-up: the sideways layout (2026-11-13, PR 14)
+
+Overall for this fix: **100%, green in CI on PR 14's head `a681062` (check, package, Chromium, WebKit, Firefox)**.
+
+- Cause one, found from the pictures themselves: every picture ends at x 414, and the tablet upright one at y 896, which
+  is Vitest's default browser page (414 by 896). The mount was wider than the page, so its right part, including the Jump
+  button, was never in the screenshot. Nothing was wrong with the canvas.
+- Cause two, from the audit: sideways, the level fills the height and the buttons sit on its lower corners.
+- Test first: `tests/features/game/layout.browser.test.ts` sets the real viewport at the four sizes (and checks the page
+  has it), then checks the canvas fills the screen, each of Left, Right and Jump is whole, at least 48 px, not covered
+  and not overlapping, and the drawn level ends above the buttons. It took over the four pictures from
+  `game.browser.test.ts`. Renderer and input got tests for the room the buttons take.
+- Fix: `Renderer.setInset(px)` keeps the bottom `px` free and fits the level into the rest (never more than half the
+  height); `Input.inset()` and `Input.onInset()` give the height of the button strip (0 while hidden); `startGame`
+  wires them. Sideways phone: the level is 523 by 294, above 96 px of buttons.
+- The coordinator also asked for an "editors open pull requests" line in `CLAUDE.md`. Not added: after the merge with
+  `main` the page already holds the Owner's rule (Edit and Owner levels save straight in, Suggest opens a suggestion),
+  and a blanket "open pull requests" line would contradict it. Raised with the coordinator.
+- The first CI run on the tests alone failed as it should: the two sideways screens said the level ended at 390 while
+  the buttons began at 311 (and 742 against 741 on the tablet), upright passed, and the canvas filled the screen in
+  all four, which is how the pictures' cut-off was shown not to be the game's.
 
 ### Stage 5: implementation audit (2026-11-13)
 
