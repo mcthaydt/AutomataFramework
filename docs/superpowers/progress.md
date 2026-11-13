@@ -31,4 +31,3 @@ Milestones (each runs stages 2 to 7 per repo):
 
 - 2026-11-13: Stage 1. Spec written from the Owner's brainstorm, then updated with the Owner's answers (sign-in on Cloudflare
   Pages, file formats, languages, Android, GitHub-style merges, protected main). Open items are in the spec.
-  domain and site host, npm publishing, the game's name, app stores and signing, itch.io.
