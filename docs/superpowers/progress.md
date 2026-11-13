@@ -45,6 +45,9 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
   Jump button were off the page, not missing from the game). The real problem under it, the buttons sitting over the
   level, is fixed in PR 14: the level is fitted above the buttons. Details in "F4 follow-up" below.
 
+- 2026-11-13: The spec follows the Owner's answers to the Editors' plan audit: someone who has not signed in can
+  open only the demo game (every other game is its team's), and keeping a copy gives the level's JSON to paste back
+  into an agent or a game's files. "Try it now" opens the demo game.
 - 2026-11-13: The spec follows the Owner's decisions made while the Editors' M1 plan was written: the editors are for
   teams; sign-in is a GitHub App, which does the editors' GitHub work through Pages Functions; five access levels kept
   in `automata.access.toml` with a Share screen, all in M1; Save commits straight in for Edit and Owner levels and

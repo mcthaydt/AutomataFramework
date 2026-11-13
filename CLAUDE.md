@@ -52,8 +52,8 @@ package.
 - **The editors are for teams,** technical people and not, working on their own games. People get levels of what
   they may do (Look, Suggest, Approve, Edit, Owner), kept in `automata.access.toml` in the game's repo and set from
   a Share screen. A Suggest-level save waits for approval; an Edit-level save goes straight in. People need GitHub
-  only to sign in. Anyone can use the editors freely without signing in and keep a copy; saving into a game and
-  working with others need a sign-in.
+  only to sign in. Anyone can try the editors on the demo game without signing in and keep a copy (the level's
+  JSON); every other game is its team's, and saving into a game and working with others need a sign-in.
 - **Formats:** game content is JSON; everything else is TOML.
 - **Order inside the editors:** Levels, then Feel and Tuner (the first editor slice), then every other 2D editor.
 - **Releases are big and few** (the Owner, 2026-11-13). Release 1 is when 2D is finished (the framework in full and
