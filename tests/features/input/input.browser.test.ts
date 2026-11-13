@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { controlsCommand } from '#src/features/commands/commands.ts'
 import { createInput, type Input } from '#src/features/input/input.ts'
+import { SKY_COLOR } from '#src/features/level/level.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 
 let mount: HTMLDivElement
@@ -242,4 +243,26 @@ test('a player who cannot exist, or controls that are wrong, stop it at the star
   expect(() =>
     createInput({ mount, controls: { 'Jump!': { label: 'Jump', keys: [], side: 'right' } } }),
   ).toThrow('"Jump!" cannot be an action name')
+})
+
+/** The WCAG relative luminance of an [r, g, b] colour, each 0 to 255. */
+const luminance = (rgb: readonly number[]): number => {
+  const [r = 0, g = 0, b = 0] = rgb.map((c) => {
+    const v = c / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+// The words on a button sit on a see-through panel over the sky, the lightest thing they can be over. 18 px bold is
+// just under "large text", so WCAG asks 4.5 to 1.
+test('the words on a button can be read over the sky', () => {
+  make()
+  firstTouch()
+  const panel = getComputedStyle(button('Jump')).backgroundColor.match(/[\d.]+/g)?.map(Number)
+  const [r = 0, g = 0, b = 0, alpha = 1] = panel ?? []
+  const sky = [(SKY_COLOR >> 16) & 255, (SKY_COLOR >> 8) & 255, SKY_COLOR & 255]
+  const under = [r, g, b].map((c, i) => c * alpha + (sky[i] ?? 0) * (1 - alpha))
+  const ratio = (luminance([255, 255, 255]) + 0.05) / (luminance(under) + 0.05)
+  expect(ratio).toBeGreaterThanOrEqual(4.5)
 })

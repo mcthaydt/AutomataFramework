@@ -46,3 +46,25 @@ test('there is a most number of actions', () => {
   )
   expect(() => checkControls(many)).toThrow('A game can have at most 16 actions; this one has 17.')
 })
+
+test('a button is in the left or the right corner', () => {
+  const wrong = { jump: { label: 'Jump', keys: ['Space'], side: 'Left' } } as unknown as Controls
+  expect(() => checkControls(wrong)).toThrow('The action "jump" has side "Left". Use "left" or "right".')
+  const missing = { jump: { label: 'Jump', keys: ['Space'] } } as unknown as Controls
+  expect(() => checkControls(missing)).toThrow('The action "jump" has side "undefined". Use "left" or "right".')
+})
+
+test('the keys are a list of key names', () => {
+  const none = { jump: { label: 'Jump', side: 'right' } } as unknown as Controls
+  expect(() => checkControls(none)).toThrow(
+    'The action "jump" needs its keys as a list of key names, like ["Space"]. Use [] for none.',
+  )
+  const text = { jump: { label: 'Jump', keys: 'Space', side: 'right' } } as unknown as Controls
+  expect(() => checkControls(text)).toThrow(
+    'The action "jump" needs its keys as a list of key names, like ["Space"]. Use [] for none.',
+  )
+  const numbers = { jump: { label: 'Jump', keys: [32], side: 'right' } } as unknown as Controls
+  expect(() => checkControls(numbers)).toThrow(
+    'The action "jump" needs its keys as a list of key names, like ["Space"]. Use [] for none.',
+  )
+})
