@@ -1,0 +1,33 @@
+{
+  "name": "@automataframework/framework",
+  "version": "0.0.0",
+  "description": "A deterministic 2D game runtime for agents and editors.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "packageManager": "pnpm@10.34.6",
+  "engines": {
+    "node": ">=24.21.0"
+  },
+  "imports": {
+    "#src/*": "./src/*"
+  },
+  "scripts": {
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc -p .",
+    "knip": "knip",
+    "test:node": "vitest run --project node",
+    "test:engine": "vitest run --passWithNoTests --project"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "24.19.1",
+    "@vitest/browser-playwright": "5.0.3",
+    "knip": "6.39.0",
+    "playwright": "1.63.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
+  }
+}

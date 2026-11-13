@@ -1,0 +1,2 @@
+# The one package of this repo. pnpm reads its install settings from here.
+saveExact: true
