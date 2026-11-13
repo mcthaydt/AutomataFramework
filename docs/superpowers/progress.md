@@ -16,7 +16,7 @@ figure is 12 + 18 + 8 + 6; stage 4 is now whole, because publishing 0.1.0 is no 
 | 3. Plan audit | Done, 100% (merged) | `audits/2026-11-13-m1-framework-plan-audit.md` |
 | 4. Execution | Done, 100% (merged, PR 6, `b7b672f`; Task 15's publish step is deferred to Release 1) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
 | 5. Implementation audit | Done, 100% (in review) | `audits/2026-11-13-m1-framework-implementation-audit.md` |
-| 6. Fixes | Done, 100% (PR 9, green on all four engines; F4's layout in PR 14, in CI) | `audits/2026-11-13-m1-framework-implementation-audit.md`, F1 to F8 |
+| 6. Fixes | Done, 100% (PR 9, green on all four engines; F4's layout in PR 14, green) | `audits/2026-11-13-m1-framework-implementation-audit.md`, F1 to F8 |
 | 7. Owner review | Not started | |
 
 Milestones (each runs stages 2 to 7 per repo):
@@ -106,7 +106,7 @@ Owner's; publishing now waits for Release 1 (see the log).
 
 ### F4 follow-up: the sideways layout (2026-11-13, PR 14)
 
-Overall for this fix: **tests written 100%, code written 100%, CI pending**.
+Overall for this fix: **100%, green in CI on PR 14's head `a681062` (check, package, Chromium, WebKit, Firefox)**.
 
 - Cause one, found from the pictures themselves: every picture ends at x 414, and the tablet upright one at y 896, which
   is Vitest's default browser page (414 by 896). The mount was wider than the page, so its right part, including the Jump
