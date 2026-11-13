@@ -180,7 +180,7 @@ test('bad controls stop the game from starting, with the plain message', async (
   expect(mount.children).toHaveLength(0)
 })
 
-/** A picture for a person to look at: the drunk-grandma check reads these from the `screens-*` artifacts. */
+/** A picture for a person to look at: the drunk-grandma check reads these from the `ci-screens` branch. */
 async function picture(name: string, w: number, h: number): Promise<void> {
   mount.style.width = `${w}px`
   mount.style.height = `${h}px`
