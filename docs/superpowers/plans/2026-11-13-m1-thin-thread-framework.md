@@ -750,7 +750,7 @@ export function createGameSim(options: GameSimOptions): Promise<Sim>
   game code and stands in for the Examples repo's hero. `script.ts` exports `PUSH_TICKS = 300` and
   `pushScript(tick): Command[]`: hold `right` from tick 10, add `jump` at tick 200, release everything at tick 260.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
 ```ts
 test('tileRuns joins neighbours in a row and keeps rows apart', () =>
@@ -777,12 +777,12 @@ test('with the crate moved in the level file, the replay says the content change
   // loadGame with crate-1 at x 9.5 -> verifyReplay reason 'content-changed'; playReplay still runs to PUSH_TICKS
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `level.ts` does not exist.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Record `tests/golden/push-crate.json`** from Node's log; push; all jobs pass, the three browsers
+- [x] **Step 2: Push; `check` fails** because `level.ts` does not exist.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Record `tests/golden/push-crate.json`** from Node's log; push; all jobs pass, the three browsers
   matching Node. This run is M1's framework proof: content, physics, commands and replay end on one hash in four
   engines.
-- [ ] **Step 5: Commit** (`feat(level): a level's tiles, things and heroes in the sim`).
+- [x] **Step 5: Commit** (`feat(level): a level's tiles, things and heroes in the sim`).
 
 ### Task 11: Rendering
 
