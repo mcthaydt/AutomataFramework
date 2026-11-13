@@ -6,23 +6,24 @@ The tracker every stage reads first and updates last. One section per cycle; new
 
 Spec: [`specs/2026-11-13-2d-first-layer-design.md`](specs/2026-11-13-2d-first-layer-design.md)
 
-Overall: **28%** (spec, plan and audit done; stage 4 is worth 18 points, so the overall figure is 12% plus 18% of the stage's own)
+Overall: **36%** (stages 1 to 3 are 12 points, stage 4 is worth 18 and stage 5 is worth 8; stage 4 stands at 90% until the
+publish is confirmed, so the figure is 12 + 16 + 8)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Done, 100% (merged, PR 1) | `specs/2026-11-13-2d-first-layer-design.md` |
 | 2. Plan (M1, framework) | Done, 100% (merged, PR 3) | `plans/2026-11-13-m1-thin-thread-framework.md` |
-| 3. Plan audit | Done, 100% (in review) | `audits/2026-11-13-m1-framework-plan-audit.md` |
-| 4. Execution | In progress, 90% (Tasks 1 to 15 done in the branch; the publish check after the merge is the last 10%; PR 6, draft) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
-| 5. Implementation audit | Not started | `audits/<date>-m1-implementation-audit.md` |
-| 6. Fixes | Not started | |
+| 3. Plan audit | Done, 100% (merged) | `audits/2026-11-13-m1-framework-plan-audit.md` |
+| 4. Execution | 90% (merged, PR 6, `b7b672f`; the publish check is the last 10%, and waits on the Owner's `NPM_TOKEN`) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
+| 5. Implementation audit | Done, 100% (in review) | `audits/2026-11-13-m1-framework-implementation-audit.md` |
+| 6. Fixes | Not started: F1 to F8 of the implementation audit | |
 | 7. Owner review | Not started | |
 
 Milestones (each runs stages 2 to 7 per repo):
 
 | Milestone | State |
 |---|---|
-| M1 The thin thread | Framework: planned and audited. Examples, Editors, Site: waiting for their repos, then one plan each |
+| M1 The thin thread | Framework: built and audited, on `main`; fixes next, then publishing. Examples, Editors, Site: waiting for their repos, then one plan each |
 | M2 The framework in full | Not started |
 | M3 The editors in full | Not started |
 | M4 The site and publishing | Not started |
@@ -41,6 +42,21 @@ Milestones (each runs stages 2 to 7 per repo):
   blocking findings (an unlifted fixture seven tests import, unnamed helpers, renames that move lifted hashes, 3D-only
   physics tests, rule tests that double-trip) and nine should-fix items, which the execution stage applies (the Owner).
   The spec and `CLAUDE.md` now say `@automataframework`. The stale branch `claude/project-thread-5h5fpo` still exists.
+
+### Stage 5: implementation audit (2026-11-13)
+
+[`audits/2026-11-13-m1-framework-implementation-audit.md`](audits/2026-11-13-m1-framework-implementation-audit.md),
+for `main` at `b7b672f`. The build matches the spec and the plan; `main` is green (370 Node tests in 56 files, 106 in 13
+files on Chromium, WebKit, Firefox and `package` passing); no golden moved after it was recorded; no attribution or
+strategy text. Nothing blocks M1. Eight should-fix findings for Stage 6: F1 a resize while paused leaves a blank
+canvas; F2 the release does not wait for CI; F3 boxes hard to see against the sky (add an outline); F4 sideways
+phone pictures missing, and the buttons cover the hero there; F5 the button words a little faint; F6 `checkControls`
+misses a bad `side` or `keys`; F7 the README's example drops the place of a problem; F8 `CLAUDE.md`'s Structure block.
+Nine minors (M1 to M9) are noted for later plans; Stage 4's deferred minors and rulings were reviewed and stand.
+
+Not done: the `screens-*` pictures were not looked at, because the container's network refuses the artifact host
+(`productionresultssa7.blob.core.windows.net`); the check was worked out from the code instead. The release failed
+with `ENEEDAUTH` (no `NPM_TOKEN`), which is the Owner's to add; F2 should land before it is re-run.
 
 ### Stage 4 close (Tasks 12 to 15, 2026-11-13)
 
