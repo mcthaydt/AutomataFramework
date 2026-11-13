@@ -40,6 +40,11 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
 
 ### Log
 
+- 2026-11-13: `package.json` gains `"prepare": "pnpm build"`. Found while planning Examples' M1: a git install of
+  this package had no `dist/` (it is not committed, and a package manager builds a git dependency only when it has a
+  `prepare` script). Tried with pnpm 10.34.6: with the script, `dist/` is built on install. The consuming repo must
+  also allow the build, by listing the pinned source in its `pnpm.onlyBuiltDependencies`. Every pin in Examples,
+  Editors and Site must be this change's merge commit or newer. `tests/package.test.ts` keeps the script there.
 - 2026-11-13: The Owner chose how Examples gets the framework before Release 1: a git dependency pinned to a commit on
   the framework's `main`, moved by pull request; npm from Release 1. Recorded in the spec's Releases section.
 - 2026-11-13: Release policy (the Owner): releases are big and few, Release 1 to 5 as above; small releases come back
