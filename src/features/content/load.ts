@@ -1,4 +1,4 @@
-import { deepFreeze } from '#src/lib/deep-freeze.ts'
+import { deepFreeze } from '../../lib/deep-freeze.ts'
 import type { Character } from './character.ts'
 import type { Diagnostic } from './diagnostics.ts'
 import type { Level } from './level.ts'

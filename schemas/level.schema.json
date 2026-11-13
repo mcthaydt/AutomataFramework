@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this level, like \"level-1\". It matches the file name."
+    },
+    "tiles": {
+      "minItems": 1,
+      "maxItems": 256,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "description": "The map, one text row per line, top to bottom. # is solid ground and . is empty air."
+    },
+    "things": {
+      "maxItems": 1024,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this thing, used once in this level, like \"crate-1\"."
+          },
+          "character": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "Which character this thing is, by the id in its character file, like \"crate\"."
+          },
+          "x": {
+            "type": "number",
+            "description": "Where the middle of the thing is, in tiles from the left edge."
+          },
+          "y": {
+            "type": "number",
+            "description": "Where the middle of the thing is, in tiles from the top edge."
+          }
+        },
+        "required": [
+          "id",
+          "character",
+          "x",
+          "y"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The things standing in the level, like crates. Can be empty."
+    },
+    "starts": {
+      "minItems": 1,
+      "maxItems": 4,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "player": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "Which player starts here: 1, 2, 3 or 4."
+          },
+          "x": {
+            "type": "number",
+            "description": "Where the hero starts, in tiles from the left edge."
+          },
+          "y": {
+            "type": "number",
+            "description": "Where the hero starts, in tiles from the top edge."
+          }
+        },
+        "required": [
+          "player",
+          "x",
+          "y"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Where each player begins. At least one is needed."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "tiles",
+    "things",
+    "starts"
+  ],
+  "additionalProperties": false,
+  "title": "Level"
+}

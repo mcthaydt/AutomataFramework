@@ -4,7 +4,21 @@
   "description": "A deterministic 2D game runtime for agents and editors.",
   "license": "MIT",
   "type": "module",
-  "sideEffects": false,
+  "files": [
+    "dist",
+    "schemas"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./headless": {
+      "types": "./dist/headless.d.ts",
+      "import": "./dist/headless.js"
+    },
+    "./schemas/*": "./schemas/*"
+  },
   "packageManager": "pnpm@10.34.6",
   "engines": {
     "node": ">=24.21.0"
@@ -18,7 +32,10 @@
     "typecheck": "tsc -p .",
     "knip": "knip",
     "test:node": "vitest run --project node",
-    "test:engine": "vitest run --passWithNoTests --project"
+    "test:engine": "vitest run --passWithNoTests --project",
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "schemas": "node scripts/write-schemas.ts",
+    "api-report": "node scripts/api-report.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
@@ -27,6 +44,7 @@
     "knip": "6.39.0",
     "playwright": "1.63.0",
     "typescript": "7.0.2",
+    "typescript-6": "npm:typescript@6.0.3",
     "vite": "8.3.3",
     "vitest": "5.0.3"
   },

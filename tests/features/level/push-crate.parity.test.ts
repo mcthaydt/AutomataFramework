@@ -8,7 +8,7 @@ import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 import { PUSH_TICKS, pushScript } from '../../fixtures/game/script.ts'
-import { expectGolden } from '../../fixtures/golden.ts'
+import { expectGolden, expectRecorded } from '../../fixtures/golden.ts'
 import golden from '../../golden/push-crate.json' with { type: 'json' }
 
 const made: Sim[] = []
@@ -53,4 +53,12 @@ test('with the crate moved in the level file, the replay says the content change
   // `playReplay` only plays: the same commands still run to the end on the changed game.
   const played = playReplay(await fresh({ 'content/levels/level-1.json': JSON.stringify(level) }), replay)
   expect(played.finalHash).not.toBe(replay.finalHash)
+})
+
+test('sixty idle ticks with only the framework plugins end on the recorded hash', async () => {
+  // No `heroPlugin`: this is the run tests/install/smoke.mjs repeats on the packed package, which has no game code.
+  const sim = await createGameSim({ content: await loadFixtureGame() })
+  made.push(sim)
+  for (let i = 0; i < 60; i++) sim.step([])
+  expectRecorded('idleHash60', sim.hash(), (golden as { idleHash60?: string }).idleHash60)
 })

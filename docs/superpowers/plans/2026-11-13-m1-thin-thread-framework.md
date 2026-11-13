@@ -885,7 +885,7 @@ export function createInput(options: { mount: HTMLElement; controls: Controls; p
   with `touch-action: none`, placed in the bottom corners inside the safe-area insets. They are hidden until the
   first `pointerdown` with `pointerType === 'touch'` or when `(pointer: coarse)` matches at creation.
 
-- [ ] **Step 1: Write the failing tests.** `controls.test.ts`: `checkControls` accepts the fixture controls
+- [x] **Step 1: Write the failing tests.** `controls.test.ts`: `checkControls` accepts the fixture controls
   (`left`: 'Left', ArrowLeft and KeyA, left side; `right`: 'Right', ArrowRight and KeyD, left side; `jump`: 'Jump',
   Space and ArrowUp, right side) and throws for `'Jump!'` as an action name, an empty label, and `Space` bound to two
   actions (message `The key Space is used for both "jump" and "fire". Give each action its own key.`).
@@ -909,10 +909,10 @@ test('destroy removes the buttons and the listeners', ...)
 test('player 2 input sends commands from source 2', ...)
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `input.ts` does not exist.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(input): keyboard and on-screen touch controls as commands`).
+- [x] **Step 2: Push; `check` fails** because `input.ts` does not exist.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(input): keyboard and on-screen touch controls as commands`).
 
 ### Task 13: The web host, the loop and `startGame`
 
@@ -961,7 +961,7 @@ export function startGame(options: GameOptions): Promise<Game>
   that; the first frame after `start()` only sets the clock. The game is paused while the host is not visible or
   `pause()` was called, and resuming starts the clock fresh. `startGame` plays local player 1.
 
-- [ ] **Step 1: Write the failing tests.** `loop.test.ts` with a hand-driven `Frames`:
+- [x] **Step 1: Write the failing tests.** `loop.test.ts` with a hand-driven `Frames`:
 
 ```ts
 test('one 60 Hz frame is one step', ...)                         // frames at 0, 16.667 -> 1 step
@@ -992,10 +992,10 @@ test('how it looks on a tablet', ...)                            // mount 820 x 
 
   The two screenshots are not compared with anything: they are what the implementation audit and the Owner look at for
   the drunk-grandma test, from the `screens-*` artifacts.
-- [ ] **Step 2: Push; `check` fails** because `loop.ts` does not exist.
-- [ ] **Step 3: Implement.** Each step: `input.poll(sim.tick)`, `recorder.step(commands)`, `renderer.apply(result.render)`.
-- [ ] **Step 4: Push; all jobs pass**, and each `screens-*` artifact holds both pictures.
-- [ ] **Step 5: Commit** (`feat(game): the web host, the fixed-step loop and startGame`).
+- [x] **Step 2: Push; `check` fails** because `loop.ts` does not exist.
+- [x] **Step 3: Implement.** Each step: `input.poll(sim.tick)`, `recorder.step(commands)`, `renderer.apply(result.render)`.
+- [x] **Step 4: Push; all jobs pass**, and each `screens-*` artifact holds both pictures.
+- [x] **Step 5: Commit** (`feat(game): the web host, the fixed-step loop and startGame`).
 
 ### Task 14: The public surface, the build, the API report and the install smoke
 
