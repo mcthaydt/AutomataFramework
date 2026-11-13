@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { Id } from './ids.ts'
 
 /** A thing standing in a level: one placed copy of a character. `x` and `y` are its centre, in tiles. */
-export interface Thing {
+export interface LevelThing {
   readonly id: string
   readonly character: string
   readonly x: number
@@ -10,7 +10,7 @@ export interface Thing {
 }
 
 /** Where a player's hero begins. `player` (1 to 4) is the number its commands carry as their source. */
-export interface Start {
+export interface LevelStart {
   readonly player: number
   readonly x: number
   readonly y: number
@@ -21,8 +21,8 @@ export interface Level {
   readonly format: 1
   readonly id: string
   readonly tiles: readonly string[]
-  readonly things: readonly Thing[]
-  readonly starts: readonly Start[]
+  readonly things: readonly LevelThing[]
+  readonly starts: readonly LevelStart[]
 }
 
 const MAX_SIDE = 256

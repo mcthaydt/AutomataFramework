@@ -3,5 +3,6 @@
 
 export * from './features/commands/commands.ts'
 export * from './features/content/content.ts'
+export * from './features/level/level.ts'
 export * from './features/physics/physics.ts'
 export * from './features/sim/sim.ts'
