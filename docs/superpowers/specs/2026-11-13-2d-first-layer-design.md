@@ -36,8 +36,7 @@ templates to start from. AF is the **taste-forward** version, YC-coded: fewer th
 editors, the demo game and the defaults a new game starts with are held to that bar, and a plain, confident voice
 replaces feature lists.
 
-What this means for the build, from the market drill
-([`docs/research/2026-11-13-market-problem-drill.md`](../../research/2026-11-13-market-problem-drill.md)):
+What this means for the build, from the market drill (2026-11-13, kept privately by the Owner):
 
 - **Phaser is the main competitor** (its Game Agent, the Phaser AE engine, CLI, MCP server and paid packs). The
   difference to say plainly: AF's replay check tells an agent "you broke it" with certainty; Phaser makes no
