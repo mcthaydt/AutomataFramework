@@ -50,7 +50,10 @@ export async function createRapier(setup: {
   await ready
   const queue = new RAPIER.EventQueue(true)
   // Rapier has no getter for a body's rotation lock, so the adapter remembers what it applied. After a restore it
-  // knows nothing about a body, and `lockRotations` does nothing when the lock already matches, so asking again is safe.
+  // knows nothing about a body and takes the entity's value as the one the snapshot's world holds: asking Rapier to lock
+  // again would wake every sleeping body and so change the state hash (the restore parity tests catch that). The one
+  // case this misses is `fixedRotation` edited after the last sync-in and before the snapshot; that edit is then lost
+  // for the restored sim until it is edited again.
   const rotationLocked = new Map<number, boolean>()
   const adapter: PhysicsAdapter<World> = {
     Transform,
@@ -137,7 +140,9 @@ export async function createRapier(setup: {
       }
       if (body.linearDamping() !== b.linearDamping) body.setLinearDamping(b.linearDamping)
       if (body.angularDamping() !== b.angularDamping) body.setAngularDamping(b.angularDamping)
-      if (rotationLocked.get(handle) !== b.fixedRotation) {
+      const locked = rotationLocked.get(handle)
+      if (locked === undefined) rotationLocked.set(handle, b.fixedRotation)
+      else if (locked !== b.fixedRotation) {
         body.lockRotations(b.fixedRotation, true)
         rotationLocked.set(handle, b.fixedRotation)
       }
