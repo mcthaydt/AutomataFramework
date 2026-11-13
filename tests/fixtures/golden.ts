@@ -53,3 +53,15 @@ export function expectGolden(actual: Golden, golden: Golden): void {
     )
   }
 }
+
+/**
+ * Checks one more recorded value that lives beside the hashes in a golden file (a replay's text hash, say). A value
+ * that is missing or empty fails with GOLDEN NOT RECORDED and the line to add, like a new golden does.
+ */
+export function expectRecorded(name: string, actual: string, recorded: string | undefined): void {
+  if (recorded === undefined || recorded === '') {
+    throw new Error(`GOLDEN NOT RECORDED. Add this to the golden file: "${name}": "${actual}"\n`)
+  }
+  if (actual !== recorded)
+    throw new Error(`GOLDEN MOVED. ${name} is "${recorded}" in the golden file, this run gave "${actual}".\n`)
+}
