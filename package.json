@@ -1,8 +1,17 @@
 {
   "name": "@automataframework/framework",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A deterministic 2D game runtime for agents and editors.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcthaydt/AutomataFramework.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/",
+    "provenance": true
+  },
   "type": "module",
   "files": [
     "dist",
@@ -39,6 +48,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
+    "@changesets/cli": "3.0.3",
     "@types/node": "24.19.1",
     "@vitest/browser-playwright": "5.0.3",
     "knip": "6.39.0",
