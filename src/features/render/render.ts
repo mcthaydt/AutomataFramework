@@ -10,7 +10,7 @@ export { createScene, type Scene, type View } from './scene.ts'
 /** What `createRenderer` gives back. */
 export interface Renderer {
   readonly canvas: HTMLCanvasElement
-  /** Takes the render delta of one sim step. Call once per step. */
+  /** Takes the render delta of one sim step. Call once per step. The first one is drawn at once. */
   apply(delta: RenderDelta): void
   /** Draws the world posed between the last two steps: `alpha` 0 is the earlier, 1 the latest. */
   draw(alpha: number): void
@@ -31,14 +31,24 @@ export async function createRenderer(options: {
   const scene = createScene()
   const stage = await createStage(world)
   mount.append(stage.canvas)
+  // `stage.resize` puts the last picture back, so a turned phone is never left blank, even when the game is paused.
   const refit = (): void => stage.resize(mount.clientWidth, mount.clientHeight)
   refit()
+  // The first step is drawn as it arrives: the loop's first frame only sets its clock, so waiting for the next frame
+  // would show sky alone for one frame.
+  let started = false
   const watcher = new ResizeObserver(refit)
   watcher.observe(mount)
   return {
     canvas: stage.canvas,
-    apply: (delta) => scene.apply(delta),
+    apply(delta) {
+      scene.apply(delta)
+      if (started) return
+      started = true
+      stage.draw(scene.views(1))
+    },
     draw(alpha) {
+      started = true
       stage.draw(scene.views(alpha))
     },
     destroy() {

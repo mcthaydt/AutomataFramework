@@ -122,3 +122,43 @@ test('destroy removes the canvas and stops watching', async () => {
   expect(() => renderer?.draw(1)).not.toThrow()
   renderer = undefined
 })
+
+/** Reads one pixel of the canvas as [r, g, b]. Must run in the same task as the draw, while the buffer is intact. */
+function pixel(canvas: HTMLCanvasElement, cssX: number, cssY: number): [number, number, number] {
+  const copy = document.createElement('canvas')
+  copy.width = canvas.width
+  copy.height = canvas.height
+  const context = copy.getContext('2d')
+  if (context === null) throw new Error('no 2D canvas to read pixels with')
+  context.drawImage(canvas, 0, 0)
+  const [r = 0, g = 0, b = 0] = context.getImageData(
+    Math.round(cssX * window.devicePixelRatio),
+    Math.round(cssY * window.devicePixelRatio),
+    1,
+    1,
+  ).data
+  return [r, g, b]
+}
+const brightness = ([r, g, b]: [number, number, number]): number => (r + g + b) / 3
+
+// A pale box on the pale sky must still be seen: every box has a dark edge, whatever its colour.
+test('a box has a dark edge, so a pale one shows against the sky', async () => {
+  size(320, 180) // 20 pixels a tile; the box is 4 tiles wide, from x 120 to 200
+  renderer = await createRenderer({ mount, world: WORLD })
+  renderer.apply({
+    ...ONE_BOX,
+    added: [
+      {
+        sid: 1,
+        components: { transform: { x: 8, y: 4.5, rotation: 0 }, look: { w: 4, h: 4, color: 0xffffff } },
+      },
+    ],
+  })
+  renderer.draw(1)
+  expect(pixel(renderer.canvas, 160, 90)).toEqual([255, 255, 255])
+  // Somewhere in the three pixels either side of the left edge there is a dark one.
+  const edge = [119, 120, 121, 122].map((x) =>
+    brightness(pixel(renderer?.canvas as HTMLCanvasElement, x, 90)),
+  )
+  expect(Math.min(...edge)).toBeLessThan(60)
+})
