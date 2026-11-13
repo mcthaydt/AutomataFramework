@@ -557,7 +557,7 @@ export type Verdict =
 export function verifyReplay(sim: Sim, replay: Replay): Verdict
 ```
 
-- [ ] **Step 1: Write the failing tests** with the bounce fixture:
+- [x] **Step 1: Write the failing tests** with the bounce fixture:
 
 ```ts
 test('a recorded run verifies on a fresh sim', ...)                    // verifyReplay -> { ok: true }
@@ -573,11 +573,11 @@ test('parseReplay refuses text that is not a replay', ...)             // '{', '
   `replay.parity.test.ts`: record the bounce run, `writeReplay` it, and expect the text's xxhash64 to equal the one
   in `tests/golden/bounce.json` under a new key `replayTextHash` (recorded from Node's log like any golden; adding a
   key to a golden is not moving it).
-- [ ] **Step 2: Push; `check` fails** because `replay.ts` does not exist.
-- [ ] **Step 3: Implement.** `verifyReplay` checks setup, then content, then each check hash in order, then the final
+- [x] **Step 2: Push; `check` fails** because `replay.ts` does not exist.
+- [x] **Step 3: Implement.** `verifyReplay` checks setup, then content, then each check hash in order, then the final
   hash.
-- [ ] **Step 4: Push; all jobs pass** once `replayTextHash` is recorded.
-- [ ] **Step 5: Commit** (`feat(commands): JSON replays: record, play and verify`).
+- [x] **Step 4: Push; all jobs pass** once `replayTextHash` is recorded.
+- [x] **Step 5: Commit** (`feat(commands): JSON replays: record, play and verify`).
 
 ### Task 8: Content files: schemas, problems, reading and writing
 
