@@ -106,6 +106,9 @@ implementations or incomplete integrations. Do your best work."
 
 - **The drunk-grandma test.** All copy and UX (every editor, the site, the game's screens) must let a drunk grandma
   tell what is happening and what to press. A screen that fails it is a defect.
+- **Onboarding comes first** (the Owner, 2026-11-13): it is one of the most important parts of any product. A
+  first-time player must learn what to do, how to do it and that they did it; a first-time developer or agent must
+  get from install to a working game by following the README.
 - No subagents unless the Owner says so.
 - **No AI attribution anywhere.** No `Co-Authored-By: Claude`, no session-link trailer and no "Generated with Claude Code" in
   commits, pull request bodies or docs (the Owner, 2026-11-13). Before any commit, set the author with
