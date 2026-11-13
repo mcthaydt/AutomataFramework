@@ -1,5 +1,6 @@
 // The commands feature's entry: numbered players, the one command a player sends (what they are holding down), and
 // replays. Everything a game or another feature may use of them is exported from here.
+export { type Played, playReplay, type Verdict, verifyReplay } from './play.ts'
 export {
   ControlsCommand,
   commandsPlugin,
@@ -9,3 +10,12 @@ export {
   Player,
   wasPressed,
 } from './players.ts'
+export { createRecorder, type Recorder } from './recorder.ts'
+export {
+  parseReplay,
+  type Replay,
+  type ReplayCheck,
+  ReplayFormatError,
+  ReplaySchema,
+  writeReplay,
+} from './replay.ts'
