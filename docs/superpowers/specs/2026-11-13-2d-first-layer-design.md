@@ -195,7 +195,8 @@ rules a game must keep.
 
 ### AutomataFrameworkExamples
 
-Uses `@automataframework/framework` only as published (pinned to a released version), like an outside game. It holds:
+Uses `@automataframework/framework` only as published (pinned to a released version), like an outside game; until
+Release 1 that means a git dependency pinned to a commit on the framework's `main` (see Releases). It holds:
 
 - **The demo game** (a working name until the Owner names it): see The demo game.
 - **The site's examples**: one short runnable file per feature, PixiJS-style, each the source of an examples-gallery
@@ -293,9 +294,9 @@ After Release 5 the loop repeats for 3D (its editors, site and distribution). Sm
 product is officially feature complete. The framework's `release.yml` never runs by itself; the Owner starts it by
 hand from `main` when a release is due, and it refuses a commit whose `ci` run on `main` did not pass.
 
-**Open for the Owner:** the Examples repo uses the framework "only as published", and M1 has it build from the published
-package, but nothing is published before Release 1. How Examples gets the framework until then is the Owner's call
-(see Open for the Owner, 3).
+**Before Release 1** (the Owner, 2026-11-13): the Examples repo depends on the framework through a git dependency
+pinned to a commit on the framework's `main` (`github:mcthaydt/AutomataFramework#<commit>`), never a branch. Moving the
+pin is a pull request in Examples, which its CI checks. At Release 1 it switches to the npm version.
 
 ## Milestones
 
@@ -307,7 +308,7 @@ means" holds on each repo's `main`, proven by CI.
 
 - Framework: sim, physics, commands and replay, content (level and character only), render, keyboard and touch input,
   the web host. Ready to publish, but published only at Release 1 (the Owner, 2026-11-13; see Releases).
-- Examples: one level with the hero and one crate, from the published package.
+- Examples: one level with the hero and one crate, from the framework pinned to a commit on its `main` (see Releases).
 - Editors: the suite shell, GitHub sign-in and save, and the Levels editor moving the crate, in the browser, at iPad size.
 - Site: one page with the game playing, deployed.
 - CI: the replay hash the same in Node, Chromium, WebKit and Firefox.
@@ -393,8 +394,8 @@ Things only the Owner can decide or provide; each plan that needs one stops and 
 2. **The domain.** Not bought yet; the Owner will control its DNS. M1 deploys to the Cloudflare Pages address until
    then. *Needed by M4.*
 3. **npm publishing** under the `@automataframework` scope (the Owner's `NPM_TOKEN`). *Needed by Release 1* (it was
-   M1, before releases became big and few). Also open: how the Examples repo gets the framework before then, since it
-   uses only the published package. *Needed by M1's Examples plan.*
+   M1, before releases became big and few). Until then Examples pins a framework commit on `main`
+   (the Owner, 2026-11-13; see Releases).
 4. **Creating the new repos** (AutomataFrameworkExamples, AutomataFrameworkEditors, AutomataFrameworkSite), with `main`
    protected; the first pull request in each adds its `CLAUDE.md`. *Needed by M1.*
 5. **The demo game's name.** *Needed by M4, for the site; a working name until then.*

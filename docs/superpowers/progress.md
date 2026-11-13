@@ -40,11 +40,13 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
 
 ### Log
 
+- 2026-11-13: The Owner chose how Examples gets the framework before Release 1: a git dependency pinned to a commit on
+  the framework's `main`, moved by pull request; npm from Release 1. Recorded in the spec's Releases section.
 - 2026-11-13: Release policy (the Owner): releases are big and few, Release 1 to 5 as above; small releases come back
   only once the product is feature complete. `release.yml` no longer starts when `ci` passes on `main`: it runs only by
   hand, from `main`, and first checks that `ci` passed for a push of that commit. Publishing 0.1.0 is no longer a
-  done-criterion of M1; Task 15's Step 5 (the publish) is deferred to Release 1. Open for the Owner: how the Examples
-  repo gets the framework before Release 1, since the spec has it use only the published package.
+  done-criterion of M1; Task 15's Step 5 (the publish) is deferred to Release 1. How the Examples repo gets the
+  framework before Release 1 was left to the Owner (answered, see above).
 - 2026-11-13: Stage 1. Spec written from the Owner's brainstorm, then updated with the Owner's answers (sign-in on Cloudflare
   Pages, file formats, languages, Android, GitHub-style merges, protected main). Open items are in the spec.
 - 2026-11-13: Stage 2. The framework's M1 plan written: 15 tasks, from the repo's skeleton and CI to publishing 0.1.0.
