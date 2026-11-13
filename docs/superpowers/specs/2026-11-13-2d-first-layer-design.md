@@ -21,13 +21,43 @@ shipped, and most claims on its site were true only on branches. This layer prov
 the smallest form that is still true: one game, made with the framework, changed in the editors on an iPad, checked in
 CI in four engines, and live at a link.
 
-The offer, as the old site put it, and every claim must be true when this layer is done:
+## Positioning
+
+The Owner, 2026-11-13: **your agent can build a demo in a weekend; turning it into a game takes weeks.** Two things eat
+those weeks, and AF answers both:
+
+- **Your agent quietly breaks what already worked.** Every change is checked against a recorded play, and the check
+  says yes or no (claim 3).
+- **The finishing work takes time:** languages, saves, menus, settings, remapping, layouts for every screen. AF has it
+  done before the agent starts (claim 1).
+
+The approach is close to Phaser's: a framework an agent drives through agent skills, a CLI and an MCP server, with
+templates to start from. AF is the **taste-forward** version, YC-coded: fewer things, each made with care. The site, the
+editors, the demo game and the defaults a new game starts with are held to that bar, and a plain, confident voice
+replaces feature lists.
+
+What this means for the build, from the market drill
+([`docs/research/2026-11-13-market-problem-drill.md`](../../research/2026-11-13-market-problem-drill.md)):
+
+- **Phaser is the main competitor** (its Game Agent, the Phaser AE engine, CLI, MCP server and paid packs). The
+  difference to say plainly: AF's replay check tells an agent "you broke it" with certainty; Phaser makes no
+  cross-engine promise. The built-ins, and editors where a person tunes what the agent made, are the rest.
+- **Say it in the user's words.** "Your agent can't quietly break your game", never "bit-exact across engines". Hashes
+  and engines are the proof underneath, not the pitch.
+- **Show the catch.** The site's home shows a change that breaks the demo game being caught by the replay check. That is
+  the demo of claim 3, and it doubles as devlog material.
+- **Be where agents look.** Agent skills and the MCP server ship with the framework; `automata create` templates are
+  the start point an agent reaches for.
+- **Game feel is the most common reason agent-made games fail**, so the Feel and Tuner editors are first-class, not an
+  afterthought.
+
+The offer, in the order the pitch leads with it. Every claim must be true when this layer is done:
 
 1. **The part after the demo is already done.** Every game starts with saves; title, pause and settings screens;
    keyboard, touch and gamepad with keys players can change; music and sound with volume; layouts for phone, tablet and
    computer, upright or sideways; menus in several languages; and it is built for multiplayer from the start.
-2. **Built for agents.** A game is small files with plain names; agent skills say where things live; `automata check`
-   runs the rules, the types and the tests.
+2. **Built for agents.** A game is small files with plain names; agent skills say where things live; an MCP server lets
+   an agent run and inspect the game; `automata check` runs the rules, the types and the tests.
 3. **Your agent can't quietly break your game.** A recorded play replays to the same hash in Node, Chrome, Safari and
    Firefox, physics included, and CI fails when it doesn't.
 4. **Change it yourself, without another prompt.** Free browser editors for every kind of content, usable on an iPad;
@@ -185,7 +215,8 @@ direction):
 14. **host**: the port a game talks to (saves, links, quit, locale). Targets are adapters: `web`, `itch`, `tauri`.
     Only the Tauri adapter imports `@tauri-apps/*`.
 15. **cli**: the `automata` command (Node, Effect): `create` (a new game from a template), `check` (lint, types, schema
-    validation, the game's tests), `ship` (web, itch, desktop).
+    validation, the game's tests), `ship` (web, itch, desktop), and `mcp`, an MCP server through which an agent
+    creates, checks, runs and replays a game and reads its content schemas. *The MCP tool list is left to the plan.*
 
 Agent skills ship with the package (a `skills/` folder or a plugin, as the plan decides): where gameplay lives and the
 rules a game must keep.
@@ -235,7 +266,8 @@ figure or scene file that made them, so an agent can change a figure file and re
 
 Its own repo, a static site in the style of pixijs.com:
 
-- **Home**: the five claims, each true today, with the demo game playable on the page.
+- **Home**: the positioning and the five claims, each true today; the demo game playable on the page; and the replay
+  check catching a change that breaks it.
 - **Guides**: start a game, make it with an agent, edit it, publish it.
 - **Examples gallery**: the examples from AutomataFrameworkExamples, each live and with its source.
 - **API reference**: generated from the framework's API report.
@@ -342,6 +374,9 @@ download; the editor app passes App Store review for iPad and Play review for An
   request; no direct pushes, no force pushes, no deletion; once a repo has CI, its checks must pass before a merge. No
   human approving review is required, because the merge session merges passing pull requests. Setting the rule is the
   Owner's (repo admin); a stage that finds a repo without it stops and says so.
+- **The drunk-grandma test** (the Owner, 2026-11-13): every piece of copy and UX, in every editor, on the site and on
+  the game's screens, must let a drunk grandma tell what is happening and what to press. Each plan names how its
+  screens are checked against it, and an audit that finds one failing treats it as a defect.
 - Every repo has a root `CLAUDE.md` from the day it is created (the Owner, 2026-11-13), carrying the project's
   principles, workflow, session and reporting rules, the CI-only test rule, the folder structure and the Owner's
   decisions, so any agent working in it picks them up. AutomataFramework's is the model; the others copy it and add

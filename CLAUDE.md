@@ -29,6 +29,10 @@ package.
 
 ## The Owner's decisions (2026-11-13)
 
+- **Positioning:** your agent can build a demo in a weekend; turning it into a game takes weeks, because the agent
+  quietly breaks what worked and because the finishing work (languages, saves, menus, layouts) takes time. AF fixes
+  both. The approach is close to Phaser's (agent skills, a CLI, an MCP server, templates); AF is the taste-forward,
+  YC-coded version. Say it in the user's words, never "bit-exact".
 - **The first layer** is a thin slice through the whole offering: the framework, a demo game, the editors, the site and
   deployment, built as a thin thread through all four repos first and then widened (milestones M1 to M4).
 - **Repos:** AutomataFramework (this one), AutomataFrameworkExamples (the demo game, later the 3D game, the site's
@@ -95,6 +99,8 @@ implementations or incomplete integrations. Do your best work."
 
 ## Rules
 
+- **The drunk-grandma test.** All copy and UX (every editor, the site, the game's screens) must let a drunk grandma
+  tell what is happening and what to press. A screen that fails it is a defect.
 - No subagents unless the Owner says so.
 - Refresh sessions after 90 minutes.
 - Branches: `main` plus branches with CI running, five at most.
