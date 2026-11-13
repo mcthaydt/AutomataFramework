@@ -439,11 +439,11 @@ pass their own (Task 10).
   `BodyKind`, `ShapeKind`, `transform(at)`, `body(kind, opts)`, `collider.ball|cuboid|capsule(...)`,
   `CollisionStarted`, `CollisionEnded`.
 
-- [ ] **Step 1: Lift the files and tests** with the renames.
-- [ ] **Step 2: Add `physics-scene.parity.test.ts`:** the lifted scene run for 300 ticks through `runGolden`,
+- [x] **Step 1: Lift the files and tests** with the renames.
+- [x] **Step 2: Add `physics-scene.parity.test.ts`:** the lifted scene run for 300 ticks through `runGolden`,
   against `tests/golden/physics-scene.json` (committed empty, recorded from Node's log as in Task 4).
-- [ ] **Step 3: Push; all jobs pass** once the golden is recorded.
-- [ ] **Step 4: Write the failing test** for the new field, in `tests/features/physics/fixed-rotation.test.ts`:
+- [x] **Step 3: Push; all jobs pass** once the golden is recorded.
+- [x] **Step 4: Write the failing test** for the new field, in `tests/features/physics/fixed-rotation.test.ts`:
 
 ```ts
 test('a body with fixedRotation never turns', async () => {
@@ -458,13 +458,13 @@ test('a body with fixedRotation never turns', async () => {
 })
 ```
 
-- [ ] **Step 5: Push; `check` fails** because `fixedRotation` is not a field of `Body`.
-- [ ] **Step 6: Add `fixedRotation`** to `Body`, to `body()`'s options (default `false`), and to `rapier.ts`
+- [x] **Step 5: Push; `check` fails** because `fixedRotation` is not a field of `Body`.
+- [x] **Step 6: Add `fixedRotation`** to `Body`, to `body()`'s options (default `false`), and to `rapier.ts`
   (`lockRotations` in `createBody`; applied in `updateBody` when it differs).
-- [ ] **Step 7: Push.** The new field changes `physics-scene.json`'s hashes (the component's schema is hashed). This
+- [x] **Step 7: Push.** The new field changes `physics-scene.json`'s hashes (the component's schema is hashed). This
   is the one planned golden move in this plan: the scene is days old and nothing depends on it. Re-record it from
   Node's log, say so in the commit message, and tell the coordinator in the task's line. All jobs pass.
-- [ ] **Step 8: Commit** (`feat(physics): Rapier 2D in the sim, lifted; bodies can be kept upright`).
+- [x] **Step 8: Commit** (`feat(physics): Rapier 2D in the sim, lifted; bodies can be kept upright`).
 
 ### Task 6: Players and the `controls` command
 
