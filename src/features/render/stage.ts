@@ -13,12 +13,19 @@ if (textureConfig === undefined)
   throw new Error('pixi.js loadTextures has no config, so the renderer cannot turn off its worker probe')
 textureConfig.preferWorkers = false
 
+// Every box gets a dark edge. The sky is a fixed light blue and a game picks its own colours, so without an edge a pale
+// box (or one close to the sky) can hardly be made out.
+const OUTLINE_COLOR = 0x1b1b24
+
 /** What the renderer needs of the Pixi stage. */
 export interface Stage {
   readonly canvas: HTMLCanvasElement
-  /** Sets the size in CSS pixels. Ignored for a size that is not above zero. */
+  /**
+   * Sets the size in CSS pixels. Ignored for a size that is not above zero. Setting the size clears the canvas, so the
+   * views drawn last are drawn again at once.
+   */
   resize(w: number, h: number): void
-  /** Draws these views, fitted into the current size. A no-op until the stage has a size. */
+  /** Draws these views, fitted into the current size. Until the stage has a size they are kept and drawn on its first. */
   draw(views: readonly View[]): void
   destroy(): void
 }
@@ -54,6 +61,44 @@ export async function createStage(world: { w: number; h: number }): Promise<Stag
   const drawn = new Map<number, Drawn>()
   let box = { w: 0, h: 0 }
   let destroyed = false
+  // The last views asked for. A resize wipes the canvas, and a game paused by hand asks for no more frames, so the
+  // stage puts this picture back itself.
+  let last: readonly View[] | undefined
+
+  const paint = (views: readonly View[]): void => {
+    const fit = fitWorld(box, world)
+    root.scale.set(fit.scale)
+    root.position.set(fit.left, fit.top)
+    const live = new Set<number>()
+    for (const v of views) {
+      live.add(v.sid)
+      let item = drawn.get(v.sid)
+      if (item === undefined) {
+        item = { shape: new Graphics(), look: '' }
+        root.addChild(item.shape)
+        drawn.set(v.sid, item)
+      }
+      // The edge is one screen pixel wide whatever the scale, so it is `1 / scale` tiles; the scale is part of the
+      // look because a refit changes it.
+      const look = `${v.w}|${v.h}|${v.color}|${fit.scale}`
+      if (item.look !== look) {
+        item.shape
+          .clear()
+          .rect(-v.w / 2, -v.h / 2, v.w, v.h)
+          .fill(v.color)
+          .stroke({ width: 1 / fit.scale, color: OUTLINE_COLOR, alignment: 1 })
+        item.look = look
+      }
+      item.shape.position.set(v.x, v.y)
+      item.shape.rotation = v.rotation
+    }
+    for (const [sid, item] of drawn) {
+      if (live.has(sid)) continue
+      item.shape.destroy()
+      drawn.delete(sid)
+    }
+    app.render()
+  }
 
   return {
     canvas,
@@ -61,38 +106,12 @@ export async function createStage(world: { w: number; h: number }): Promise<Stag
       if (destroyed || !(w > 0 && h > 0)) return
       box = { w, h }
       app.renderer.resize(w, h)
+      if (last !== undefined) paint(last)
     },
     draw(views) {
-      if (destroyed || box.w === 0) return
-      const fit = fitWorld(box, world)
-      root.scale.set(fit.scale)
-      root.position.set(fit.left, fit.top)
-      const live = new Set<number>()
-      for (const v of views) {
-        live.add(v.sid)
-        let item = drawn.get(v.sid)
-        if (item === undefined) {
-          item = { shape: new Graphics(), look: '' }
-          root.addChild(item.shape)
-          drawn.set(v.sid, item)
-        }
-        const look = `${v.w}|${v.h}|${v.color}`
-        if (item.look !== look) {
-          item.shape
-            .clear()
-            .rect(-v.w / 2, -v.h / 2, v.w, v.h)
-            .fill(v.color)
-          item.look = look
-        }
-        item.shape.position.set(v.x, v.y)
-        item.shape.rotation = v.rotation
-      }
-      for (const [sid, item] of drawn) {
-        if (live.has(sid)) continue
-        item.shape.destroy()
-        drawn.delete(sid)
-      }
-      app.render()
+      if (destroyed) return
+      last = views
+      if (box.w > 0) paint(views)
     },
     destroy() {
       if (destroyed) return

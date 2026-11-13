@@ -113,11 +113,16 @@ implementations or incomplete integrations. Do your best work."
 
 ```
 src/index.ts                  the public surface
+src/headless.ts               the entry for Node and editors: everything that needs no page
 src/lib/                      shared helpers, no feature logic
 src/features/<feature>/       <feature>.ts entry, <part>.ts one job per file, library/ JSON data
 scripts/                      thin CLI wrappers
 tests/architecture.test.ts    imports go down, no cycles, no tests in src
 tests/features/<feature>/     mirrors src/features
+tests/lib/                    tests of src/lib
+tests/fixtures/               shared test helpers and the example game's files
+tests/install/                installs the packed package in a clean folder and uses it
+tests/workflows/, tests/docs/ checks that read a workflow or the README
 tests/golden/                 recorded hashes and replays
 docs/superpowers/             specs/, plans/, audits/, progress.md
 ```
