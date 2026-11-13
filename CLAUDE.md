@@ -48,6 +48,11 @@ package.
   Sign-in runs through a Cloudflare Pages Function; the site is on Cloudflare Pages.
 - **Formats:** game content is JSON; everything else is TOML.
 - **Order inside the editors:** Levels, then Feel and Tuner (the first editor slice), then every other 2D editor.
+- **Releases are big and few** (the Owner, 2026-11-13). Release 1 is when 2D is finished (the framework in full and
+  the demo game), Release 2 the 2D editors, Release 3 the website, Release 4 distribution (shipping games and the
+  editor app), Release 5 3D, and the loop repeats for 3D. Milestones are not releases: nothing is published per
+  milestone, and `release.yml` runs only when the Owner starts it by hand. Small releases come back only once the
+  product is officially feature complete.
 - **Publish targets:** web, itch.io, Wavedash (if its rules fit the host port) and desktop.
 - **Languages:** games ship English, Spanish, Korean, Japanese, Chinese and Portuguese. Editors add French, Russian and
   German. The list follows the most popular languages for Godot.
