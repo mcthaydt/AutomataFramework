@@ -84,7 +84,7 @@ The editors also ship as an app for iPad, Android and desktop.
 | Biggest inspiration | PixiJS: a small core, examples that are one short runnable file each, a site with guides, live examples and the API. |
 | What the editors change | Authorable content only: the JSON files the coding agents produce (the Owner, 2026-11-13). Agents working on the code are the primary way a game is made; an editor never opens or changes code. |
 | Where an iPad edit lives | In the game's GitHub repo. Sign in with GitHub; Save makes a commit, straight into the game or as a suggestion someone approves, by the person's level. |
-| Using the editors without signing in | Anyone can use the editors freely and keep a copy of what they made (the Owner, 2026-11-13). Saving into a game and working with others need a sign-in. A "Change this game" link opens that game in the editor straight away. |
+| Using the editors without signing in | Anyone can try the editors freely on the demo game and keep a copy of what they made, as the JSON to paste back into their agent or their game's files (the Owner, 2026-11-13). Every other game is open only to its team, through sign-in and its sharing file. The site's "Change this game" link opens the demo game in the editor straight away. |
 | Who the editors are for | Teams working together on their own games, technical people and not (the Owner, 2026-11-13). People get levels of what they may do, like Google Docs, and need GitHub only to sign in. |
 | Access levels | Look, Suggest, Approve, Edit and Owner, kept in `automata.access.toml` in the game's repo and set from a Share screen. All five are in M1. |
 | Order of work | A thin thread through all four repos first, then widen. |
@@ -215,9 +215,11 @@ editor knows only the framework's content schemas, so it works on any game made 
 - **What it changes.** A game's authorable content and nothing else: the JSON content files the coding agents
   produce, which the project file lists (the Owner, 2026-11-13). Agents working on the code are the primary way a
   game is made; an editor never opens or changes code.
-- **Without signing in.** Anyone can open a public game whose sharing file lets everyone look, change it freely on
-  the screen, and keep a copy of what they made (the content file, as the framework writes it). The API reads the
-  game for them and writes nothing. Signing in is asked for only when it is needed: to save into the game, to see
+- **Without signing in.** Anyone can open the demo game, and only the demo game (the Owner, 2026-11-13): every other
+  game is open only to its team, through sign-in and its sharing file, whatever that file says about everyone. They
+  can change it freely on the screen and keep a copy of what they made: the level's JSON, exactly as the framework
+  writes it, to paste back into their agent or their game's files, or saved as a file. The API reads the demo game
+  for them and writes nothing. Signing in is asked for only when it is needed: to save into the game, to see
   or approve waiting changes, to share, and to list your own games. What a person made before signing in is still
   there when they come back from it.
 
@@ -234,7 +236,7 @@ editor knows only the framework's content schemas, so it works on any game made 
   screen; an agent can edit the same file. The API reads it afresh on every call and enforces it; GitHub's own
   roles are not used, so a personal account or an organization makes no difference.
 - **Opening a game.** Open a link someone shared (a site's "Change this game" link is one), press "Try it now"
-  for the site's example game, or sign in and pick one of your own; the suite reads the game's
+  for the demo game, or sign in and pick one of your own; the suite reads the game's
   project file (which lists its content files and the editor that opens each). An Owner adds the editor to a game
   once, on GitHub. The Tauri app signs in with GitHub's device flow from its native side.
 - **Saving.** Save sends the change to the API, which writes it as the framework writes it, with the file's last
