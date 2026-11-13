@@ -49,6 +49,9 @@ package.
 - **Edits live in the game's GitHub repo.** Save makes a commit; edits that collide merge the way GitHub does.
   Sign-in runs through a Cloudflare Pages Function; the site is on Cloudflare Pages.
 - **Formats:** game content is JSON; everything else is TOML.
+- **Order inside the editors:** Levels, then Feel and Tuner (the first editor slice), then every other 2D editor.
+- **Publish targets:** web, itch.io, Wavedash (if its rules fit the host port) and desktop. A "notify me" price page
+  tests the paid app before it is built.
 - **Languages:** games ship English, Spanish, Korean, Japanese, Chinese and Portuguese. Editors add French, Russian and
   German. The list follows the most popular languages for Godot.
 - **`main` is protected** in every repo: pull requests only, no force pushes or deletion, checks required once CI exists,
