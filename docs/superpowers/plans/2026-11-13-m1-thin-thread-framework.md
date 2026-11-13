@@ -614,7 +614,7 @@ export function jsonSchemaFor(type: ContentType): object   // z.toJSONSchema, wi
   distinct `player` numbers 1 to 4, inside the level. `size.w` and `size.h` are above 0 and at most 16. `color` is
   `#rrggbb`. `upright` defaults to `false`.
 
-- [ ] **Step 1: Write the failing tests.** The valid level and characters are the ones under "What the other repos
+- [x] **Step 1: Write the failing tests.** The valid level and characters are the ones under "What the other repos
   rely on". Problems are asserted through `formatDiagnostic`, word for word:
 
 ```ts
@@ -636,12 +636,12 @@ test('writeContent refuses a value that does not pass its schema', ...)  // thro
 test('the JSON Schema names every field', ...)  // jsonSchemaFor('level').properties has format, id, tiles, things, starts, each with a description
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `content.ts` does not exist.
-- [ ] **Step 3: Implement.** Problems come from one function that turns a Zod issue into the sentences above (by
+- [x] **Step 2: Push; `check` fails** because `content.ts` does not exist.
+- [x] **Step 3: Implement.** Problems come from one function that turns a Zod issue into the sentences above (by
   issue code and path); the cross-field ones (row lengths, duplicate ids, bounds) are `superRefine` checks with those
   messages. Every schema field carries `.describe(...)` in plain words, which is what the JSON Schema shows an agent.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(content): level and character files: schemas, plain problems, one writer`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(content): level and character files: schemas, plain problems, one writer`).
 
 ### Task 9: The project file and loading a whole game
 
