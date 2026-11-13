@@ -70,7 +70,7 @@ stay free.
 
 ## Goals
 
-- `@automata/framework`: a deterministic 2D runtime with ECS, physics and networking in the core.
+- `@automataframework/framework`: a deterministic 2D runtime with ECS, physics and networking in the core.
 - A small original physics platformer in AutomataFrameworkExamples that carries everything in claim 1 and enough content
   for every editor to have real work.
 - The editor suite: nine editors and two builders, browser and Tauri app.
@@ -183,7 +183,7 @@ Each repo has one package, its own release, and the project's structure rule: `s
 `tests/architecture.test.ts` (imports go down, no cycles, no tests in `src`) and `tests/golden/`. A feature imports only
 from features below it.
 
-### AutomataFramework: `@automata/framework`
+### AutomataFramework: `@automataframework/framework`
 
 Published to npm. Feature layers, lowest first (a plan may split or rename one, but not reorder the dependency
 direction):
@@ -195,7 +195,7 @@ direction):
    collision events as sim events; the Rapier world included in snapshot and restore, and in the hash.
 3. **commands**: every input reaches the sim as a command from a numbered player, recorded with its tick. One player is
    the single-player case of many: nothing in the sim may assume a single player. Replays are recorded command logs.
-4. **net**: the room server (a Node entry, `@automata/framework/server`, on Colyseus) and the client. Model: the server
+4. **net**: the room server (a Node entry, `@automataframework/framework/server`, on Colyseus) and the client. Model: the server
    relays each tick's commands and runs the same sim authoritatively; clients predict their own commands and roll back
    and replay when the server's tick differs; periodic hashes detect a desync. *My call on the model; the plan details
    it.*
@@ -224,7 +224,7 @@ rules a game must keep.
 
 ### AutomataFrameworkExamples
 
-Uses `@automata/framework` only as published (pinned to a released version), like an outside game. It holds:
+Uses `@automataframework/framework` only as published (pinned to a released version), like an outside game. It holds:
 
 - **The demo game** (a working name until the Owner names it): see The demo game.
 - **The site's examples**: one short runnable file per feature, PixiJS-style, each the source of an examples-gallery
@@ -404,7 +404,7 @@ Things only the Owner can decide or provide; each plan that needs one stops and 
 1. **A Cloudflare account** for Pages and the sign-in function, and a GitHub OAuth app for the editors. *Needed by M1.*
 2. **The domain.** Not bought yet; the Owner will control its DNS. M1 deploys to the Cloudflare Pages address until
    then. *Needed by M4.*
-3. **npm publishing** under the `@automata` scope (the Owner's `NPM_TOKEN`). *Needed by M1.*
+3. **npm publishing** under the `@automataframework` scope (the Owner's `NPM_TOKEN`). *Needed by M1.*
 4. **Creating the new repos** (AutomataFrameworkExamples, AutomataFrameworkEditors, AutomataFrameworkSite), with `main`
    protected; the first pull request in each adds its `CLAUDE.md`. *Needed by M1.*
 5. **The demo game's name.** *Needed by M4, for the site; a working name until then.*
