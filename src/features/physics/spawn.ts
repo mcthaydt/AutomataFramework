@@ -16,7 +16,7 @@ export function transform(at: { x?: number; y?: number; rotation?: number } = {}
 
 /**
  * The spawn part that gives an entity a rigid body of a `BodyKind`. Damping and velocities (`vx`, `vy` in
- * m/s, `angvel` in rad/s) are 0 unless given.
+ * m/s, `angvel` in rad/s) are 0 unless given; `fixedRotation` keeps the body upright and is false unless given.
  */
 export function body(
   kind: BodyKind,
@@ -26,10 +26,11 @@ export function body(
     vx?: number
     vy?: number
     angvel?: number
+    fixedRotation?: boolean
   } = {},
 ): SpawnPart {
-  const { linearDamping = 0, angularDamping = 0, vx = 0, vy = 0, angvel = 0 } = opts
-  return [Body, { kind, linearDamping, angularDamping, vx, vy, angvel }]
+  const { linearDamping = 0, angularDamping = 0, vx = 0, vy = 0, angvel = 0, fixedRotation = false } = opts
+  return [Body, { kind, linearDamping, angularDamping, vx, vy, angvel, fixedRotation }]
 }
 
 /**

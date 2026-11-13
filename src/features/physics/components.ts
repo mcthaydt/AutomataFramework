@@ -15,8 +15,12 @@ const bodyFields = {
   vx: 'f32',
   vy: 'f32',
   angvel: 'f32',
+  fixedRotation: 'bool',
 } as const
-/** A Rapier rigid body: its kind (`BodyKind`), damping, and linear (m/s) and angular (rad/s) velocity. */
+/**
+ * A Rapier rigid body: its kind (`BodyKind`), damping, linear (m/s) and angular (rad/s) velocity, and whether it is
+ * kept upright (`fixedRotation`: it never turns, so a hero can stand on a corner).
+ */
 export const Body: ComponentDef<typeof bodyFields> = defineComponent('physics.body', bodyFields, {
   render: false,
 })

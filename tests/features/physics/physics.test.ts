@@ -49,7 +49,7 @@ test('physics() is the physics plugin with its four systems; helpers give the de
   expect(transform({ x: 1 })).toEqual([Transform, { x: 1, y: 0, rotation: 0 }])
   expect(body(BodyKind.fixed)).toEqual([
     Body,
-    { kind: 1, linearDamping: 0, angularDamping: 0, vx: 0, vy: 0, angvel: 0 },
+    { kind: 1, linearDamping: 0, angularDamping: 0, vx: 0, vy: 0, angvel: 0, fixedRotation: false },
   ])
   expect(collider.capsule(0.45, 0.3)).toEqual([
     Collider,

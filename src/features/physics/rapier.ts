@@ -49,6 +49,9 @@ export async function createRapier(setup: {
   })
   await ready
   const queue = new RAPIER.EventQueue(true)
+  // Rapier has no getter for a body's rotation lock, so the adapter remembers what it applied. After a restore it
+  // knows nothing about a body, and `lockRotations` does nothing when the lock already matches, so asking again is safe.
+  const rotationLocked = new Map<number, boolean>()
   const adapter: PhysicsAdapter<World> = {
     Transform,
     RigidBody: Body,
@@ -72,6 +75,7 @@ export async function createRapier(setup: {
     },
     close() {
       queue.free()
+      rotationLocked.clear()
     },
     handles(world) {
       const bodies: number[] = []
@@ -103,7 +107,10 @@ export async function createRapier(setup: {
         .setAngvel(b.angvel)
         .setLinearDamping(b.linearDamping)
         .setAngularDamping(b.angularDamping)
-      return world.createRigidBody(desc).handle
+      if (b.fixedRotation) desc.lockRotations()
+      const handle = world.createRigidBody(desc).handle
+      rotationLocked.set(handle, b.fixedRotation)
+      return handle
     },
     createCollider(world, entity, body) {
       const desc = colliderDesc(entity)
@@ -114,6 +121,7 @@ export async function createRapier(setup: {
     },
     removeBody(world, body) {
       world.removeRigidBody(world.getRigidBody(body))
+      rotationLocked.delete(body)
     },
     removeCollider(world, collider) {
       world.removeCollider(world.getCollider(collider), true)
@@ -129,6 +137,10 @@ export async function createRapier(setup: {
       }
       if (body.linearDamping() !== b.linearDamping) body.setLinearDamping(b.linearDamping)
       if (body.angularDamping() !== b.angularDamping) body.setAngularDamping(b.angularDamping)
+      if (rotationLocked.get(handle) !== b.fixedRotation) {
+        body.lockRotations(b.fixedRotation, true)
+        rotationLocked.set(handle, b.fixedRotation)
+      }
       const p = body.translation()
       const samePosition = t.x === p.x && t.y === p.y
       const sameRotation = t.rotation === body.rotation()
