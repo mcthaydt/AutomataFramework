@@ -87,8 +87,9 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
     b.setAttribute('aria-label', control.label)
     b.setAttribute('aria-pressed', 'false')
     b.style.cssText = BUTTON_STYLE
-    b.addEventListener('pointerdown', (e) => {
-      e.preventDefault()
+    // A finger lands on the button, or slides onto it from the next one still touching the glass (a mouse only counts
+    // with its button down). Either way the finger holds this action.
+    const press = (e: PointerEvent): void => {
       // A touch is captured by the button it began on, which would hide a slide off it; let it go so `pointerleave`
       // tells us. Throws for a pointer the browser does not know, such as a made-up one.
       try {
@@ -96,6 +97,13 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
       } catch {}
       fingers.set(e.pointerId, action)
       paint()
+    }
+    b.addEventListener('pointerdown', (e) => {
+      e.preventDefault()
+      press(e)
+    })
+    b.addEventListener('pointerenter', (e) => {
+      if (e.buttons & 1) press(e)
     })
     for (const ending of ['pointerup', 'pointercancel', 'pointerleave'] as const)
       b.addEventListener(ending, letGo)

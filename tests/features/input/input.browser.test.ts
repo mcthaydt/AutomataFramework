@@ -31,9 +31,9 @@ const key = (type: 'keydown' | 'keyup', code: string, init: KeyboardEventInit = 
   window.dispatchEvent(event)
   return event.defaultPrevented
 }
-const pointer = (target: Element, type: string, id: number, pointerType = 'touch'): void => {
+const pointer = (target: Element, type: string, id: number, pointerType = 'touch', buttons = 0): void => {
   target.dispatchEvent(
-    new PointerEvent(type, { pointerId: id, pointerType, bubbles: true, cancelable: true }),
+    new PointerEvent(type, { pointerId: id, pointerType, buttons, bubbles: true, cancelable: true }),
   )
 }
 const button = (label: string): HTMLButtonElement => {
