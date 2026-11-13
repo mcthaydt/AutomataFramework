@@ -42,6 +42,12 @@ function valueAt(data: unknown, path: Place): unknown {
   return here
 }
 
+/** "character" or "characters", "item" or "items": what a limit on a text or a list counts. */
+function unit(origin: string, count: unknown): string {
+  const one = origin === 'string' ? 'character' : 'item'
+  return count === 1 ? one : `${one}s`
+}
+
 const TYPE_WORDS: Readonly<Record<string, string>> = {
   string: 'This must be text.',
   number: 'This must be a number.',
@@ -74,13 +80,13 @@ function sentence(issue: z.core.$ZodIssue, data: unknown, voice: Voice): string 
         return issue.inclusive
           ? `This must be ${String(issue.minimum)} or more.`
           : `This must be more than ${String(issue.minimum)}.`
-      return `This needs at least ${String(issue.minimum)} ${issue.origin === 'string' ? 'characters' : 'items'}.`
+      return `This needs at least ${String(issue.minimum)} ${unit(issue.origin, issue.minimum)}.`
     case 'too_big':
       if (issue.origin === 'number' || issue.origin === 'int')
         return issue.inclusive
           ? `This must be ${String(issue.maximum)} or less.`
           : `This must be less than ${String(issue.maximum)}.`
-      return `This has more than ${String(issue.maximum)} ${issue.origin === 'string' ? 'characters' : 'items'}, which is the most allowed.`
+      return `This has more than ${String(issue.maximum)} ${unit(issue.origin, issue.maximum)}, which is the most allowed.`
     default:
       return issue.message
   }
