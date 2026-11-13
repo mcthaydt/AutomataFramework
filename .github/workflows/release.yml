@@ -1,11 +1,15 @@
 # A release is a pull request that carries the version change (`pnpm changeset version`); nothing is pushed to `main`
-# by a bot. When such a pull request merges, this publishes the version if npm does not have it yet, then pushes its
-# tag. The package is published with provenance, so npm shows which commit and run built it.
+# by a bot. When such a pull request merges and `ci` then passes on `main`, this publishes the version if npm does not
+# have it yet, then pushes its tag. It starts from `ci` finishing, never from the push itself, so a commit whose checks
+# fail cannot reach npm. It can also be started by hand from `main` (for example once `NPM_TOKEN` exists). The package
+# is published with provenance, so npm shows which commit and run built it.
 name: release
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -15,9 +19,20 @@ concurrency: release
 
 jobs:
   release:
+    # `ci` also runs on pull requests, and a run can fail; only a green run of a push to `main` may publish. A manual
+    # start must be on `main` too.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
+      # The commit `ci` checked, not whatever `main` has moved to since. On a manual start the ref is empty, which
+      # checks out the branch it was started on.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
