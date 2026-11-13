@@ -6,12 +6,12 @@ The tracker every stage reads first and updates last. One section per cycle; new
 
 Spec: [`specs/2026-11-13-2d-first-layer-design.md`](specs/2026-11-13-2d-first-layer-design.md)
 
-Overall: **12%** (spec merged; the framework's M1 plan written and audited; plan fixes due before execution)
+Overall: **12%** (spec merged; the framework's M1 plan written and audited; execution applies the audit's findings)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Done, 100% (merged, PR 1) | `specs/2026-11-13-2d-first-layer-design.md` |
-| 2. Plan (M1, framework) | Done, 100% (merged, PR 3); fixes from the audit pending | `plans/2026-11-13-m1-thin-thread-framework.md` |
+| 2. Plan (M1, framework) | Done, 100% (merged, PR 3) | `plans/2026-11-13-m1-thin-thread-framework.md` |
 | 3. Plan audit | Done, 100% (in review) | `audits/2026-11-13-m1-framework-plan-audit.md` |
 | 4. Execution | Not started, 0% | |
 | 5. Implementation audit | Not started | `audits/<date>-m1-implementation-audit.md` |
@@ -39,5 +39,5 @@ Milestones (each runs stages 2 to 7 per repo):
   hosted-runner refusals came from it being private.
 - 2026-11-13: Stage 3. The plan audit: the plan matches the spec and every lift path exists at ed8592e8, but five
   blocking findings (an unlifted fixture seven tests import, unnamed helpers, renames that move lifted hashes, 3D-only
-  physics tests, rule tests that double-trip) must be fixed in the plan before execution, plus nine should-fix items.
+  physics tests, rule tests that double-trip) and nine should-fix items, which the execution stage applies (the Owner).
   The spec and `CLAUDE.md` now say `@automataframework`. The stale branch `claude/project-thread-5h5fpo` still exists.

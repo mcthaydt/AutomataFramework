@@ -18,8 +18,9 @@ pass without a change this plan does not name, stop". Read literally, that rule 
 push. Five blocking findings (B1 to B5) need a plan edit first. Each fix is a few lines. Then there are nine
 should-fix findings (S1 to S9) and six notes (N1 to N6).
 
-**Recommendation:** amend the plan for B1 to B5 and S1 to S9 in a short fix pass on this branch, or on the next one,
-before Stage 4 starts. Nothing here reopens a decision the Owner made.
+**How the findings are applied** (the Owner, 2026-11-13): the workflow runs as written, with no extra fix pass. Stage 4
+(Execution) reads this audit with the plan and applies B1 to B5 and S1 to S9 where they fall; where the two differ,
+this audit wins. Nothing here reopens a decision the Owner made.
 
 ## Method
 
@@ -208,18 +209,8 @@ The npm scope is `@automataframework` (the Owner, 2026-11-13). The spec (five pl
 `@automata`, and now say `@automataframework/framework`. The plan's note that the two still had the old scope is
 updated to say the audit fixed them.
 
-## Questions for the Owner
+## The Owner's answers (2026-11-13)
 
-**Q1. Who applies the plan fixes?** The workflow has no stage between the plan audit and execution.
-- (a) *Recommended:* a short fix pass amends the plan for B1 to B5 and S1 to S9, and execution starts from the
-  amended plan.
-- (b) Execution starts now and treats this audit as part of the plan.
-
-(b) is faster, but it gives the executor two documents to reconcile.
-
-**Q2. How should npm publishing work?** npm's publish tokens are now short-lived, and trusted publishing (OIDC from
-GitHub Actions, no token) is npm's recommended path. The workflow already asks for `id-token: write`. From memory,
-not checked here: a package must exist on npm before trusted publishing can be set up for it.
-- (a) *Recommended:* publish 0.1.0 once with `NPM_TOKEN`, as planned, then switch `release.yml` to trusted
-  publishing and remove the secret.
-- (b) Keep `NPM_TOKEN` for every release.
+- **Who applies the fixes:** the execution stage, as the workflow says. It reads this audit beside the plan and
+  applies each finding in the task it names.
+- **npm publishing:** keep `NPM_TOKEN` for now, as the plan has it. S9's tag-push and provenance wording still applies.
