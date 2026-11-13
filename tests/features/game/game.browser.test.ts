@@ -199,3 +199,13 @@ test('how it looks on a phone', async () => {
 test('how it looks on a tablet', async () => {
   await picture('tablet-820x1180', 820, 1180)
 })
+
+// Sideways, where the level fills the height and the buttons sit over its lower corners (audit F4). The layout is M2's;
+// these pictures are here so a person can see it.
+test('how it looks on a phone held sideways', async () => {
+  await picture('phone-844x390', 844, 390)
+})
+
+test('how it looks on a tablet held sideways', async () => {
+  await picture('tablet-1180x820', 1180, 820)
+})
