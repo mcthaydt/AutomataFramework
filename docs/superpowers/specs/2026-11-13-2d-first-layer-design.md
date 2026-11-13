@@ -342,6 +342,10 @@ download; the editor app passes App Store review for iPad and Play review for An
   request; no direct pushes, no force pushes, no deletion; once a repo has CI, its checks must pass before a merge. No
   human approving review is required, because the merge session merges passing pull requests. Setting the rule is the
   Owner's (repo admin); a stage that finds a repo without it stops and says so.
+- Every repo has a root `CLAUDE.md` from the day it is created (the Owner, 2026-11-13), carrying the project's
+  principles, workflow, session and reporting rules, the CI-only test rule, the folder structure and the Owner's
+  decisions, so any agent working in it picks them up. AutomataFramework's is the model; the others copy it and add
+  what is particular to them.
 
 ## Open for the Owner
 
@@ -352,7 +356,7 @@ Things only the Owner can decide or provide; each plan that needs one stops and 
    then. *Needed by M4.*
 3. **npm publishing** under the `@automata` scope (the Owner's `NPM_TOKEN`). *Needed by M1.*
 4. **Creating the new repos** (AutomataFrameworkExamples, AutomataFrameworkEditors, AutomataFrameworkSite), with `main`
-   protected. *Needed by M1.*
+   protected; the first pull request in each adds its `CLAUDE.md`. *Needed by M1.*
 5. **The demo game's name.** *Needed by M4, for the site; a working name until then.*
 6. **Stores and signing for the editor app:** an Apple Developer account for iPad and macOS, a Google Play developer
    account and signing key for Android, Windows signing, and where the desktop app is sold (an itch.io paid page is
