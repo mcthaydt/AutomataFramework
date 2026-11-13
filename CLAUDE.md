@@ -29,10 +29,8 @@ package.
 
 ## The Owner's decisions (2026-11-13)
 
-- **Positioning:** your agent can build a demo in a weekend; turning it into a game takes weeks, because the agent
-  quietly breaks what worked and because the finishing work (languages, saves, menus, layouts) takes time. AF fixes
-  both. The approach is close to Phaser's (agent skills, a CLI, an MCP server, templates); AF is the taste-forward,
-  YC-coded version. Say it in the user's words, never "bit-exact".
+- **Strategy and research stay private.** Positioning, competitors, pricing and market research never go in these
+  public repos; the Owner keeps them in the project's private files.
 - **The first layer** is a thin slice through the whole offering: the framework, a demo game, the editors, the site and
   deployment, built as a thin thread through all four repos first and then widened (milestones M1 to M4).
 - **Repos:** AutomataFramework (this one), AutomataFrameworkExamples (the demo game, later the 3D game, the site's
@@ -44,14 +42,13 @@ package.
 - **The demo game** is a small original physics platformer, single-player, with every built-in: saves; title, pause and
   settings screens; keyboard, touch and gamepad with remapping; music and sound with volume; phone, tablet and desktop
   layouts; languages.
-- **Editors:** all nine old 2D editors plus the figure and environment builders, which make 2D art only. Free in the
-  browser; a paid Tauri app for iPad, Android and desktop.
+- **Editors:** all nine old 2D editors plus the figure and environment builders, which make 2D art only. In the
+  browser, and as a Tauri app for iPad, Android and desktop.
 - **Edits live in the game's GitHub repo.** Save makes a commit; edits that collide merge the way GitHub does.
   Sign-in runs through a Cloudflare Pages Function; the site is on Cloudflare Pages.
 - **Formats:** game content is JSON; everything else is TOML.
 - **Order inside the editors:** Levels, then Feel and Tuner (the first editor slice), then every other 2D editor.
-- **Publish targets:** web, itch.io, Wavedash (if its rules fit the host port) and desktop. A "notify me" price page
-  tests the paid app before it is built.
+- **Publish targets:** web, itch.io, Wavedash (if its rules fit the host port) and desktop.
 - **Languages:** games ship English, Spanish, Korean, Japanese, Chinese and Portuguese. Editors add French, Russian and
   German. The list follows the most popular languages for Godot.
 - **`main` is protected** in every repo: pull requests only, no force pushes or deletion, checks required once CI exists,
