@@ -1,0 +1,83 @@
+# One replay hash must come out the same in Node, Chromium, WebKit and Firefox. `check` runs the static checks and the
+# Node tests; `engines` runs the parity and browser tests once per browser, in parallel, so a failing engine is named
+# by its job. Every action is pinned to a commit.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm knip
+      - run: pnpm test:node
+
+  engines:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit, firefox]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps ${{ matrix.engine }}
+      - run: pnpm test:engine ${{ matrix.engine }}
+      # Pictures a person looks at (the drunk-grandma check); nothing compares them.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: screens-${{ matrix.engine }}
+          path: tests/**/__screenshots__/**
+          if-no-files-found: ignore
+
+  # The package as a game gets it: built, packed, installed into an empty folder, run, and typechecked there.
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm schemas --check
+      - run: pnpm api-report
+      - run: pnpm pack --pack-destination "$RUNNER_TEMP/pack"
+      - name: Install the packed package in an empty folder, run it and typecheck against it
+        run: |
+          smoke="$RUNNER_TEMP/smoke"
+          mkdir "$smoke"
+          cp tests/install/* tests/golden/push-crate.json "$smoke"/
+          cp -r tests/fixtures/game "$smoke/game"
+          cd "$smoke"
+          echo '{ "private": true, "type": "module" }' > package.json
+          npm install --no-audit --no-fund "$RUNNER_TEMP"/pack/*.tgz
+          node smoke.mjs
+          "$GITHUB_WORKSPACE/node_modules/.bin/tsc" -p .

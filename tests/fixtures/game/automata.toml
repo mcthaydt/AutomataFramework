@@ -1,0 +1,16 @@
+format = 1
+name = "Crate Game"
+start = "level-1"
+hero = "hero"
+
+[[content]]
+type = "level"
+path = "content/levels/level-1.json"
+
+[[content]]
+type = "character"
+path = "content/characters/hero.json"
+
+[[content]]
+type = "character"
+path = "content/characters/crate.json"

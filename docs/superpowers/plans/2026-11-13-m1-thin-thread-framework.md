@@ -238,7 +238,7 @@ export interface Violation { readonly file: string; readonly rule: string; reado
 export function checkArchitecture(files: SourceFiles): Violation[]
 ```
 
-- [ ] **Step 1: Write the config.** `package.json`: name `@automataframework/framework`, version `0.0.0`, `"type": "module"`,
+- [x] **Step 1: Write the config.** `package.json`: name `@automataframework/framework`, version `0.0.0`, `"type": "module"`,
   `"sideEffects": false`, `packageManager` `pnpm@10.34.6`, `engines.node` `>=24.21.0`, imports `"#src/*": "./src/*"`,
   the dependencies of the Tech Stack line at those exact versions (runtime: `koota`, `zod`,
   `@dimforge/rapier2d-deterministic-compat`, `pixi.js`, `smol-toml`; the rest dev). Scripts: `lint` (`biome check .`),
@@ -246,10 +246,10 @@ export function checkArchitecture(files: SourceFiles): Violation[]
   `test:engine` (`vitest run --project`). `tsconfig.json`: strict, `noUncheckedIndexedAccess`,
   `exactOptionalPropertyTypes`, `allowImportingTsExtensions`, `noEmit`, `lib` ES2023 + DOM. `biome.json`: copy the old
   repo's formatter and linter settings (line width 120, single quotes, no semicolons).
-- [ ] **Step 2: Write `vitest.config.ts`** with four projects. `node`: `tests/**/*.test.ts` except
+- [x] **Step 2: Write `vitest.config.ts`** with four projects. `node`: `tests/**/*.test.ts` except
   `*.browser.test.ts`. `chromium`, `webkit`, `firefox`: `tests/**/*.parity.test.ts` and `tests/**/*.browser.test.ts`,
   browser mode, headless, the Playwright provider, one instance of that engine.
-- [ ] **Step 3: Write `.github/workflows/ci.yml`.** On `pull_request` and on `push` to `main`;
+- [x] **Step 3: Write `.github/workflows/ci.yml`.** On `pull_request` and on `push` to `main`;
   `permissions: contents: read`; `concurrency` per ref with `cancel-in-progress: true`; all jobs on `ubuntu-latest`.
   Job `check`: checkout, pnpm, Node 24.21.0, `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`,
   `pnpm knip`, `pnpm test:node`. Job `engines`: matrix `engine: [chromium, webkit, firefox]`, `fail-fast: false`,
@@ -257,7 +257,7 @@ export function checkArchitecture(files: SourceFiles): Violation[]
   upload `tests/**/__screenshots__/**` as an artifact named `screens-${{ matrix.engine }}` (`if: always()`). Pin
   `actions/checkout`, `pnpm/action-setup`, `actions/setup-node` and `actions/upload-artifact` to the commit SHAs the
   old repo's `.github/workflows/ci.yml` uses.
-- [ ] **Step 4: Write the failing tests.** `tests/architecture/rules.test.ts` feeds `checkArchitecture` made-up file
+- [x] **Step 4: Write the failing tests.** `tests/architecture/rules.test.ts` feeds `checkArchitecture` made-up file
   maps and expects one violation each, by `rule`:
 
 ```ts
@@ -284,17 +284,17 @@ test('headless reaches nothing that needs a page', () =>
 ```
 
   `tests/architecture.test.ts` reads every file under `src/` and expects `checkArchitecture(files)` to equal `[]`.
-- [ ] **Step 5: Push; the `check` job fails** because `checkArchitecture` is not defined. This run also answers
+- [x] **Step 5: Push; the `check` job fails** because `checkArchitecture` is not defined. This run also answers
   "Before starting" item 2: if it is refused or never starts, stop and report.
-- [ ] **Step 6: Implement `checkArchitecture`.** Imports are found with a regular expression over `import`/`export …
+- [x] **Step 6: Implement `checkArchitecture`.** Imports are found with a regular expression over `import`/`export …
   from` and `import(...)` specifiers. `sim-is-pure` covers `src/lib/` and the `sim`, `physics`, `commands` and `level`
   features and forbids `Math.random`, `Date.now`, `new Date`, `performance.now`, `setTimeout`, `setInterval` and
   `fetch(`. `package-confined`: `koota` only in `features/sim/`; `@dimforge/` only in `features/physics/rapier.ts`;
   `pixi.js` only in `features/render/`; `smol-toml` only in `features/content/`; `effect` nowhere under `src/`.
   `headless-is-headless`: nothing reachable from `src/headless.ts` is in `render`, `input`, `host` or `game`.
-- [ ] **Step 7: Push; all jobs pass** (the engine jobs have no tests yet and must say so, not fail: set
+- [x] **Step 7: Push; all jobs pass** (the engine jobs have no tests yet and must say so, not fail: set
   `passWithNoTests` for the three browser projects).
-- [ ] **Step 8: Commit** (`chore: repo skeleton, CI and the architecture test`), then open the stage's pull request
+- [x] **Step 8: Commit** (`chore: repo skeleton, CI and the architecture test`), then open the stage's pull request
   as a draft with a few lines saying what M1 builds.
 
 ### Task 2: `src/lib`, lifted
@@ -321,9 +321,9 @@ test('headless reaches nothing that needs a page', () =>
   `decodeUtf8Strict(bytes): string`, `xxhash64(bytes): bigint`, `hex64(hash): string`, `sortedKeys`, `sortedEntries`,
   `deepFreeze`, with the old signatures unchanged.
 
-- [ ] **Step 1: Lift the files in the table.**
-- [ ] **Step 2: Push; all jobs pass**, and the three engine jobs each report the xxhash64 parity test as run.
-- [ ] **Step 3: Commit** (`feat(lib): canonical JSON and xxhash64, lifted`).
+- [x] **Step 1: Lift the files in the table.**
+- [x] **Step 2: Push; all jobs pass**, and the three engine jobs each report the xxhash64 parity test as run.
+- [x] **Step 3: Commit** (`feat(lib): canonical JSON and xxhash64, lifted`).
 
 ### Task 3: The sim's definitions, schedule, RNG and math, lifted
 
@@ -354,10 +354,10 @@ against `package.json`'s version once that is `0.1.0` (Task 15), so until then i
   `SimContext`, `EntityRef`, `SpawnPart`, `CommandRecord`, `createRng`, `deriveSeed`, `Rng`, and the deterministic math
   in `dmath.ts`. Field types are `f32`, `f64`, `i32`, `u32`, `bool`, `entity`, `string`.
 
-- [ ] **Step 1: Lift the files and tests.** In comments, drop mentions of Ruken (the reason "no `new Function`" still
+- [x] **Step 1: Lift the files and tests.** In comments, drop mentions of Ruken (the reason "no `new Function`" still
   holds: a strict content security policy).
-- [ ] **Step 2: Push; all jobs pass.**
-- [ ] **Step 3: Commit** (`feat(sim): definitions, schedule, RNG and deterministic math, lifted`).
+- [x] **Step 2: Push; all jobs pass.**
+- [x] **Step 3: Commit** (`feat(sim): definitions, schedule, RNG and deterministic math, lifted`).
 
 ### Task 4: The sim's world, snapshot and `createSim`, lifted, with the first golden
 
@@ -394,15 +394,15 @@ export function runGolden(sim: Sim, ticks: number, commandsAt: (tick: number) =>
 export function expectGolden(actual: Golden, golden: Golden): void
 ```
 
-- [ ] **Step 1: Lift the files and tests.** If `create-sim.ts` would pass 600 lines, move the error classes to
+- [x] **Step 1: Lift the files and tests.** If `create-sim.ts` would pass 600 lines, move the error classes to
   `errors.ts`.
-- [ ] **Step 2: Write `bounce.parity.test.ts`:** create the bounce sim with `BOUNCE_SEED`, run `bounceSetup`, then
+- [x] **Step 2: Write `bounce.parity.test.ts`:** create the bounce sim with `BOUNCE_SEED`, run `bounceSetup`, then
   `expectGolden(runGolden(sim, BOUNCE_TICKS, script), golden)` with `tests/golden/bounce.json` imported as JSON. A
   second test snapshots at tick 150, restores into a new sim, runs both to the end and expects equal hashes.
-- [ ] **Step 3: Commit `tests/golden/bounce.json`** as `{ "ticks": 300, "finalHash": "", "checks": [] }`. Push; Node
+- [x] **Step 3: Commit `tests/golden/bounce.json`** as `{ "ticks": 300, "finalHash": "", "checks": [] }`. Push; Node
   fails with `GOLDEN NOT RECORDED`. Copy the JSON from the Node log into the file.
-- [ ] **Step 4: Push; all jobs pass**, the three browsers matching Node's hash.
-- [ ] **Step 5: Commit** (`feat(sim): world, snapshot and createSim, lifted, with the bounce golden`).
+- [x] **Step 4: Push; all jobs pass**, the three browsers matching Node's hash.
+- [x] **Step 5: Commit** (`feat(sim): world, snapshot and createSim, lifted, with the bounce golden`).
 
 ### Task 5: Physics, lifted, with one new field
 
@@ -439,11 +439,11 @@ pass their own (Task 10).
   `BodyKind`, `ShapeKind`, `transform(at)`, `body(kind, opts)`, `collider.ball|cuboid|capsule(...)`,
   `CollisionStarted`, `CollisionEnded`.
 
-- [ ] **Step 1: Lift the files and tests** with the renames.
-- [ ] **Step 2: Add `physics-scene.parity.test.ts`:** the lifted scene run for 300 ticks through `runGolden`,
+- [x] **Step 1: Lift the files and tests** with the renames.
+- [x] **Step 2: Add `physics-scene.parity.test.ts`:** the lifted scene run for 300 ticks through `runGolden`,
   against `tests/golden/physics-scene.json` (committed empty, recorded from Node's log as in Task 4).
-- [ ] **Step 3: Push; all jobs pass** once the golden is recorded.
-- [ ] **Step 4: Write the failing test** for the new field, in `tests/features/physics/fixed-rotation.test.ts`:
+- [x] **Step 3: Push; all jobs pass** once the golden is recorded.
+- [x] **Step 4: Write the failing test** for the new field, in `tests/features/physics/fixed-rotation.test.ts`:
 
 ```ts
 test('a body with fixedRotation never turns', async () => {
@@ -458,13 +458,13 @@ test('a body with fixedRotation never turns', async () => {
 })
 ```
 
-- [ ] **Step 5: Push; `check` fails** because `fixedRotation` is not a field of `Body`.
-- [ ] **Step 6: Add `fixedRotation`** to `Body`, to `body()`'s options (default `false`), and to `rapier.ts`
+- [x] **Step 5: Push; `check` fails** because `fixedRotation` is not a field of `Body`.
+- [x] **Step 6: Add `fixedRotation`** to `Body`, to `body()`'s options (default `false`), and to `rapier.ts`
   (`lockRotations` in `createBody`; applied in `updateBody` when it differs).
-- [ ] **Step 7: Push.** The new field changes `physics-scene.json`'s hashes (the component's schema is hashed). This
+- [x] **Step 7: Push.** The new field changes `physics-scene.json`'s hashes (the component's schema is hashed). This
   is the one planned golden move in this plan: the scene is days old and nothing depends on it. Re-record it from
   Node's log, say so in the commit message, and tell the coordinator in the task's line. All jobs pass.
-- [ ] **Step 8: Commit** (`feat(physics): Rapier 2D in the sim, lifted; bodies can be kept upright`).
+- [x] **Step 8: Commit** (`feat(physics): Rapier 2D in the sim, lifted; bodies can be kept upright`).
 
 ### Task 6: Players and the `controls` command
 
@@ -491,7 +491,7 @@ export const commandsPlugin: PluginDef  // name 'commands'; one system 'commands
 
   `ActionName` is `/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/`.
 
-- [ ] **Step 1: Write the failing tests** (a sim with `commandsPlugin`, two entities spawned with `Player` numbers
+- [x] **Step 1: Write the failing tests** (a sim with `commandsPlugin`, two entities spawned with `Player` numbers
   1 and 2):
 
 ```ts
@@ -510,11 +510,11 @@ test('a player number above MAX_PLAYERS or below 1 is rejected', ...)
   // source 0 and source 5 -> players unchanged
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `commands.ts` does not exist.
-- [ ] **Step 3: Implement.** The system clears `pressed` on every `Player`, then applies each tick's `controls`
+- [x] **Step 2: Push; `check` fails** because `commands.ts` does not exist.
+- [x] **Step 3: Implement.** The system clears `pressed` on every `Player`, then applies each tick's `controls`
   records in the order the sim gives them; when one player sent two in a tick, the later one wins.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(commands): numbered players and the controls command`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(commands): numbered players and the controls command`).
 
 ### Task 7: Replays
 
@@ -557,7 +557,7 @@ export type Verdict =
 export function verifyReplay(sim: Sim, replay: Replay): Verdict
 ```
 
-- [ ] **Step 1: Write the failing tests** with the bounce fixture:
+- [x] **Step 1: Write the failing tests** with the bounce fixture:
 
 ```ts
 test('a recorded run verifies on a fresh sim', ...)                    // verifyReplay -> { ok: true }
@@ -573,11 +573,11 @@ test('parseReplay refuses text that is not a replay', ...)             // '{', '
   `replay.parity.test.ts`: record the bounce run, `writeReplay` it, and expect the text's xxhash64 to equal the one
   in `tests/golden/bounce.json` under a new key `replayTextHash` (recorded from Node's log like any golden; adding a
   key to a golden is not moving it).
-- [ ] **Step 2: Push; `check` fails** because `replay.ts` does not exist.
-- [ ] **Step 3: Implement.** `verifyReplay` checks setup, then content, then each check hash in order, then the final
+- [x] **Step 2: Push; `check` fails** because `replay.ts` does not exist.
+- [x] **Step 3: Implement.** `verifyReplay` checks setup, then content, then each check hash in order, then the final
   hash.
-- [ ] **Step 4: Push; all jobs pass** once `replayTextHash` is recorded.
-- [ ] **Step 5: Commit** (`feat(commands): JSON replays: record, play and verify`).
+- [x] **Step 4: Push; all jobs pass** once `replayTextHash` is recorded.
+- [x] **Step 5: Commit** (`feat(commands): JSON replays: record, play and verify`).
 
 ### Task 8: Content files: schemas, problems, reading and writing
 
@@ -614,7 +614,7 @@ export function jsonSchemaFor(type: ContentType): object   // z.toJSONSchema, wi
   distinct `player` numbers 1 to 4, inside the level. `size.w` and `size.h` are above 0 and at most 16. `color` is
   `#rrggbb`. `upright` defaults to `false`.
 
-- [ ] **Step 1: Write the failing tests.** The valid level and characters are the ones under "What the other repos
+- [x] **Step 1: Write the failing tests.** The valid level and characters are the ones under "What the other repos
   rely on". Problems are asserted through `formatDiagnostic`, word for word:
 
 ```ts
@@ -636,12 +636,12 @@ test('writeContent refuses a value that does not pass its schema', ...)  // thro
 test('the JSON Schema names every field', ...)  // jsonSchemaFor('level').properties has format, id, tiles, things, starts, each with a description
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `content.ts` does not exist.
-- [ ] **Step 3: Implement.** Problems come from one function that turns a Zod issue into the sentences above (by
+- [x] **Step 2: Push; `check` fails** because `content.ts` does not exist.
+- [x] **Step 3: Implement.** Problems come from one function that turns a Zod issue into the sentences above (by
   issue code and path); the cross-field ones (row lengths, duplicate ids, bounds) are `superRefine` checks with those
   messages. Every schema field carries `.describe(...)` in plain words, which is what the JSON Schema shows an agent.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(content): level and character files: schemas, plain problems, one writer`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(content): level and character files: schemas, plain problems, one writer`).
 
 ### Task 9: The project file and loading a whole game
 
@@ -677,7 +677,7 @@ export function loadGame(read: (path: string) => Promise<string>): Promise<Parse
   The fixture game is the example under "What the other repos rely on", with a 16 by 9 level: the bottom row solid,
   the hero's start at `(2.5, 7.5)`, `crate-1` at `(6.5, 7.5)`, the crate 1 by 1 and not upright.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
 ```ts
 test('the fixture game loads', ...)   // ok; levels has 'level-1'; characters has 'crate' and 'hero'; the value is frozen
@@ -694,11 +694,11 @@ test('problems in several files all come back, in the order of the project file'
 test('a read that rejects with a non-Error is still a problem, not a throw', ...)
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `project.ts` does not exist.
-- [ ] **Step 3: Implement.** `parseProject` uses smol-toml, then `ProjectSchema`. `loadGame` reads files in project
+- [x] **Step 2: Push; `check` fails** because `project.ts` does not exist.
+- [x] **Step 3: Implement.** `parseProject` uses smol-toml, then `ProjectSchema`. `loadGame` reads files in project
   order, collects every problem, runs the cross-file checks only on files that parsed, and deep-freezes the result.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(content): the project file and loading a game`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(content): the project file and loading a game`).
 
 ### Task 10: A level in the sim, and the thin thread's golden
 
@@ -750,7 +750,7 @@ export function createGameSim(options: GameSimOptions): Promise<Sim>
   game code and stands in for the Examples repo's hero. `script.ts` exports `PUSH_TICKS = 300` and
   `pushScript(tick): Command[]`: hold `right` from tick 10, add `jump` at tick 200, release everything at tick 260.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
 ```ts
 test('tileRuns joins neighbours in a row and keeps rows apart', () =>
@@ -777,12 +777,12 @@ test('with the crate moved in the level file, the replay says the content change
   // loadGame with crate-1 at x 9.5 -> verifyReplay reason 'content-changed'; playReplay still runs to PUSH_TICKS
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `level.ts` does not exist.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Record `tests/golden/push-crate.json`** from Node's log; push; all jobs pass, the three browsers
+- [x] **Step 2: Push; `check` fails** because `level.ts` does not exist.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Record `tests/golden/push-crate.json`** from Node's log; push; all jobs pass, the three browsers
   matching Node. This run is M1's framework proof: content, physics, commands and replay end on one hash in four
   engines.
-- [ ] **Step 5: Commit** (`feat(level): a level's tiles, things and heroes in the sim`).
+- [x] **Step 5: Commit** (`feat(level): a level's tiles, things and heroes in the sim`).
 
 ### Task 11: Rendering
 
@@ -819,7 +819,7 @@ export function createRenderer(options: { mount: HTMLElement; world: { w: number
   appears (no slide in from elsewhere), a `resync` delta drops everything first, and rotation blends the short way
   round.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
 ```ts
 test('an added entity is a view at its pose, whatever alpha is', ...)
@@ -846,12 +846,12 @@ test('a mount with no size yet does not throw, and draws once it has one', ...)
 test('destroy removes the canvas and stops watching', ...)
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `render.ts` does not exist.
-- [ ] **Step 3: Implement.** `stage.ts` owns the Pixi `Application` (WebGL preferred, `SKY_COLOR` background,
+- [x] **Step 2: Push; `check` fails** because `render.ts` does not exist.
+- [x] **Step 3: Implement.** `stage.ts` owns the Pixi `Application` (WebGL preferred, `SKY_COLOR` background,
   `resolution` from `devicePixelRatio`) and one `Graphics` per view inside a world container scaled and placed by
   `fitWorld`. If an engine in CI cannot create a WebGL context, stop and report: do not skip the engine.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(render): the scene drawn from sim deltas with Pixi`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(render): the scene drawn from sim deltas with Pixi`).
 
 ### Task 12: Keyboard and touch input
 
@@ -885,7 +885,7 @@ export function createInput(options: { mount: HTMLElement; controls: Controls; p
   with `touch-action: none`, placed in the bottom corners inside the safe-area insets. They are hidden until the
   first `pointerdown` with `pointerType === 'touch'` or when `(pointer: coarse)` matches at creation.
 
-- [ ] **Step 1: Write the failing tests.** `controls.test.ts`: `checkControls` accepts the fixture controls
+- [x] **Step 1: Write the failing tests.** `controls.test.ts`: `checkControls` accepts the fixture controls
   (`left`: 'Left', ArrowLeft and KeyA, left side; `right`: 'Right', ArrowRight and KeyD, left side; `jump`: 'Jump',
   Space and ArrowUp, right side) and throws for `'Jump!'` as an action name, an empty label, and `Space` bound to two
   actions (message `The key Space is used for both "jump" and "fire". Give each action its own key.`).
@@ -909,10 +909,10 @@ test('destroy removes the buttons and the listeners', ...)
 test('player 2 input sends commands from source 2', ...)
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `input.ts` does not exist.
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(input): keyboard and on-screen touch controls as commands`).
+- [x] **Step 2: Push; `check` fails** because `input.ts` does not exist.
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(input): keyboard and on-screen touch controls as commands`).
 
 ### Task 13: The web host, the loop and `startGame`
 
@@ -961,7 +961,7 @@ export function startGame(options: GameOptions): Promise<Game>
   that; the first frame after `start()` only sets the clock. The game is paused while the host is not visible or
   `pause()` was called, and resuming starts the clock fresh. `startGame` plays local player 1.
 
-- [ ] **Step 1: Write the failing tests.** `loop.test.ts` with a hand-driven `Frames`:
+- [x] **Step 1: Write the failing tests.** `loop.test.ts` with a hand-driven `Frames`:
 
 ```ts
 test('one 60 Hz frame is one step', ...)                         // frames at 0, 16.667 -> 1 step
@@ -992,10 +992,10 @@ test('how it looks on a tablet', ...)                            // mount 820 x 
 
   The two screenshots are not compared with anything: they are what the implementation audit and the Owner look at for
   the drunk-grandma test, from the `screens-*` artifacts.
-- [ ] **Step 2: Push; `check` fails** because `loop.ts` does not exist.
-- [ ] **Step 3: Implement.** Each step: `input.poll(sim.tick)`, `recorder.step(commands)`, `renderer.apply(result.render)`.
-- [ ] **Step 4: Push; all jobs pass**, and each `screens-*` artifact holds both pictures.
-- [ ] **Step 5: Commit** (`feat(game): the web host, the fixed-step loop and startGame`).
+- [x] **Step 2: Push; `check` fails** because `loop.ts` does not exist.
+- [x] **Step 3: Implement.** Each step: `input.poll(sim.tick)`, `recorder.step(commands)`, `renderer.apply(result.render)`.
+- [x] **Step 4: Push; all jobs pass**, and each `screens-*` artifact holds both pictures.
+- [x] **Step 5: Commit** (`feat(game): the web host, the fixed-step loop and startGame`).
 
 ### Task 14: The public surface, the build, the API report and the install smoke
 
@@ -1017,7 +1017,7 @@ test('how it looks on a tablet', ...)                            // mount 820 x 
   dependency `"typescript-6": "npm:typescript@6.0.3"` and import from `typescript-6`. `scripts/` is meant for thin wrappers; these two files are the exception until the
   `cli` feature exists in M2, and say so in a comment.
 
-- [ ] **Step 1: Write the failing test** `tests/public-surface.test.ts`:
+- [x] **Step 1: Write the failing test** `tests/public-surface.test.ts`:
 
 ```ts
 test('headless exports what a game sim and an editor need', async () => {
@@ -1037,13 +1037,13 @@ test('the committed JSON Schemas are what the code produces', ...)   // schemas/
   equals `idleHash60` in `tests/golden/push-crate.json`. Add that key in this task: a new case in
   `push-crate.parity.test.ts` runs the same 60 idle ticks and expects `golden.idleHash60`, recorded from Node's log
   like any golden (a new key, not a moved hash).
-- [ ] **Step 2: Add the `package` job to CI:** `pnpm build`, `pnpm schemas --check`, `pnpm api-report`, `pnpm pack`,
+- [x] **Step 2: Add the `package` job to CI:** `pnpm build`, `pnpm schemas --check`, `pnpm api-report`, `pnpm pack`,
   the smoke. Push; `check` fails on the missing exports.
-- [ ] **Step 3: Fill the two entries, write the scripts, run** `pnpm schemas`, `pnpm build` and
+- [x] **Step 3: Fill the two entries, write the scripts, run** `pnpm schemas`, `pnpm build` and
   `pnpm api-report --update` locally and commit what they write. Write `README.md`: what the package is in the words of the spec's
   five claims, install, the smallest game (load, `startGame`), and where the schemas are.
-- [ ] **Step 4: Push; all jobs pass**, including `package`.
-- [ ] **Step 5: Commit** (`feat: the public surface, build, API report and install smoke`).
+- [x] **Step 4: Push; all jobs pass**, including `package`.
+- [x] **Step 5: Commit** (`feat: the public surface, build, API report and install smoke`).
 
 ### Task 15: Release 0.1.0
 
@@ -1051,17 +1051,17 @@ test('the committed JSON Schemas are what the code produces', ...)   // schemas/
 - Create: `.changeset/config.json`, `.changeset/first-release.md`, `.github/workflows/release.yml`, `CHANGELOG.md`
 - Modify: `package.json` (version `0.1.0`, `publishConfig`: public, npmjs.org)
 
-- [ ] **Step 1: Check "Before starting" item 3** with the coordinator. Without the Owner's `NPM_TOKEN`, finish Steps
+- [x] **Step 1: Check "Before starting" item 3** with the coordinator. Without the Owner's `NPM_TOKEN`, finish Steps
   2 to 4 and report that publishing waits on it.
-- [ ] **Step 2: Write `release.yml`** (a workflow file, as Task 1's was: both are named by this plan, which the
+- [x] **Step 2: Write `release.yml`** (a workflow file, as Task 1's was: both are named by this plan, which the
   Owner reviews)**:** on `push` to `main`, one job on `ubuntu-latest`, `permissions: contents:
   write, id-token: write`, `concurrency: release`. Install, `pnpm build`, then `pnpm changeset publish` with
   `NPM_TOKEN`, which publishes only when `package.json`'s version is not on npm yet and tags it. So a release is a
   pull request that carries the version change, and nothing is pushed to `main` by a bot.
-- [ ] **Step 3: Add the changeset** (`minor`: "The first release: the M1 thin thread."), run `pnpm changeset version`
+- [x] **Step 3: Add the changeset** (`minor`: "The first release: the M1 thin thread."), run `pnpm changeset version`
   locally, and commit (`chore(release): 0.1.0`) `package.json` at `0.1.0`, `CHANGELOG.md`, and `version.test.ts` now
   comparing `FRAMEWORK_VERSION` with `package.json`.
-- [ ] **Step 4: Push; all jobs pass.** Mark the pull request ready, set progress to the stage's 100%, and send the
+- [x] **Step 4: Push; all jobs pass.** Mark the pull request ready, set progress to the stage's 100%, and send the
   coordinator the end summary: commits, test counts per job, the three goldens' hashes, every deviation, what is open.
 - [ ] **Step 5: After the merge session merges,** read the `release` run and confirm with
   `npm view @automataframework/framework version` printing `0.1.0`. Report the result. The stage is done only then.

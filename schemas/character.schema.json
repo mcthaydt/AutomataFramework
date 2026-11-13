@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this character, like \"hero\". It matches the file name."
+    },
+    "body": {
+      "type": "string",
+      "enum": [
+        "dynamic",
+        "fixed"
+      ],
+      "description": "\"dynamic\" moves and falls; \"fixed\" stays where it is put."
+    },
+    "size": {
+      "type": "object",
+      "properties": {
+        "w": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 16,
+          "description": "How wide the character is, in tiles."
+        },
+        "h": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 16,
+          "description": "How tall the character is, in tiles."
+        }
+      },
+      "required": [
+        "w",
+        "h"
+      ],
+      "additionalProperties": false,
+      "description": "The size of the character, in tiles."
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "description": "The colour it is drawn in, as # and six digits, like #e4572e."
+    },
+    "upright": {
+      "default": false,
+      "description": "True if the character stays on its feet and cannot be tipped over. Left out means false.",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "body",
+    "size",
+    "color"
+  ],
+  "additionalProperties": false,
+  "title": "Character"
+}
