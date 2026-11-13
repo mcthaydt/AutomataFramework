@@ -35,12 +35,10 @@ export async function createRenderer(options: {
   refit()
   const watcher = new ResizeObserver(refit)
   watcher.observe(mount)
-  let last = 1
   return {
     canvas: stage.canvas,
     apply: (delta) => scene.apply(delta),
     draw(alpha) {
-      last = alpha
       stage.draw(scene.views(alpha))
     },
     destroy() {
