@@ -491,7 +491,7 @@ export const commandsPlugin: PluginDef  // name 'commands'; one system 'commands
 
   `ActionName` is `/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/`.
 
-- [ ] **Step 1: Write the failing tests** (a sim with `commandsPlugin`, two entities spawned with `Player` numbers
+- [x] **Step 1: Write the failing tests** (a sim with `commandsPlugin`, two entities spawned with `Player` numbers
   1 and 2):
 
 ```ts
@@ -510,11 +510,11 @@ test('a player number above MAX_PLAYERS or below 1 is rejected', ...)
   // source 0 and source 5 -> players unchanged
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `commands.ts` does not exist.
-- [ ] **Step 3: Implement.** The system clears `pressed` on every `Player`, then applies each tick's `controls`
+- [x] **Step 2: Push; `check` fails** because `commands.ts` does not exist.
+- [x] **Step 3: Implement.** The system clears `pressed` on every `Player`, then applies each tick's `controls`
   records in the order the sim gives them; when one player sent two in a tick, the later one wins.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(commands): numbered players and the controls command`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(commands): numbered players and the controls command`).
 
 ### Task 7: Replays
 
