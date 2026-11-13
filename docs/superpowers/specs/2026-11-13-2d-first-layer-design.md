@@ -7,7 +7,7 @@ Written 2026-11-13, from the Owner's brainstorm in the AF V2 project. Stage 1 (S
 | Principle | How this spec serves it |
 |---|---|
 | 1. Agent-first | Every piece of content is a documented JSON file with a published schema; editors read and write only those files, in the game's own GitHub repo, so an agent and a person edit the same thing. `automata check` is the one command that says whether a game is sound. |
-| 2. iPad-first editors | All editors are designed and tested at iPad size first, with touch; the paid editor app ships on iPad before anything else mobile. |
+| 2. iPad-first editors | All editors are designed and tested at iPad size first, with touch; the editor app ships on iPad before anything else mobile. |
 | 3. Layers in order | This is the 2D layer, built in full: runtime, editors, publishing. No 3D code. The 3D layer (a later spec) is the first to deploy multiplayer. |
 | 4. Separate repos | Four repos, each with its own release: framework, examples, editors, site. |
 | 5. Builders carry over | The figure builder and environment builder come over as editors, cut down to 2D art. |
@@ -21,36 +21,9 @@ shipped, and most claims on its site were true only on branches. This layer prov
 the smallest form that is still true: one game, made with the framework, changed in the editors on an iPad, checked in
 CI in four engines, and live at a link.
 
-## Positioning
+## The offer
 
-The Owner, 2026-11-13: **your agent can build a demo in a weekend; turning it into a game takes weeks.** Two things eat
-those weeks, and AF answers both:
-
-- **Your agent quietly breaks what already worked.** Every change is checked against a recorded play, and the check
-  says yes or no (claim 3).
-- **The finishing work takes time:** languages, saves, menus, settings, remapping, layouts for every screen. AF has it
-  done before the agent starts (claim 1).
-
-The approach is close to Phaser's: a framework an agent drives through agent skills, a CLI and an MCP server, with
-templates to start from. AF is the **taste-forward** version, YC-coded: fewer things, each made with care. The site, the
-editors, the demo game and the defaults a new game starts with are held to that bar, and a plain, confident voice
-replaces feature lists.
-
-What this means for the build, from the market drill (2026-11-13, kept privately by the Owner):
-
-- **Phaser is the main competitor** (its Game Agent, the Phaser AE engine, CLI, MCP server and paid packs). The
-  difference to say plainly: AF's replay check tells an agent "you broke it" with certainty; Phaser makes no
-  cross-engine promise. The built-ins, and editors where a person tunes what the agent made, are the rest.
-- **Say it in the user's words.** "Your agent can't quietly break your game", never "bit-exact across engines". Hashes
-  and engines are the proof underneath, not the pitch.
-- **Show the catch.** The site's home shows a change that breaks the demo game being caught by the replay check. That is
-  the demo of claim 3, and it doubles as devlog material.
-- **Be where agents look.** Agent skills and the MCP server ship with the framework; `automata create` templates are
-  the start point an agent reaches for.
-- **Game feel is the most common reason agent-made games fail**, so the Feel and Tuner editors are first-class, not an
-  afterthought.
-
-The offer, in the order the pitch leads with it. Every claim must be true when this layer is done:
+Every claim must be true when this layer is done:
 
 1. **The part after the demo is already done.** Every game starts with saves; title, pause and settings screens;
    keyboard, touch and gamepad with keys players can change; music and sound with volume; layouts for phone, tablet and
@@ -64,8 +37,7 @@ The offer, in the order the pitch leads with it. Every claim must be true when t
 5. **Get it in front of players.** One command publishes to the web, itch.io, Wavedash (a web game portal), or a
    desktop app.
 
-And one more, the way the project is paid for: **the editors as a paid app** for iPad, Android and desktop. The browser editors
-stay free.
+The editors also ship as an app for iPad, Android and desktop.
 
 ## Goals
 
@@ -112,7 +84,7 @@ stay free.
 | Biggest inspiration | PixiJS: a small core, examples that are one short runnable file each, a site with guides, live examples and the API. |
 | Where an iPad edit lives | In the game's GitHub repo. Sign in with GitHub; Save makes a commit. |
 | Order of work | A thin thread through all four repos first, then widen. |
-| Paid product | The editors as Tauri apps for iPad, Android and desktop. Android stays because it is the Owner's phone, so phone layouts are tested too. |
+| Editor app | The editors as Tauri apps for iPad, Android and desktop. Android stays because it is the Owner's phone, so phone layouts are tested too. |
 | File formats | Game content files are JSON; everything else (the project file, configs, manifests) is TOML. |
 | Languages | Games ship English, Spanish, Korean, Japanese, Chinese and Portuguese. The editors ship those six plus French, Russian and German. The list follows the most popular languages for Godot. |
 | Edits that collide | Handled the way GitHub does: a three-way merge, with conflicts shown and resolved before the save commits. |
@@ -232,7 +204,7 @@ Uses `@automataframework/framework` only as published (pinned to a released vers
 
 ### The editors
 
-One repo, one suite: nine editors and two builders, a free browser build hosted on the site and a paid Tauri app. Each
+One repo, one suite: nine editors and two builders, a browser build hosted on the site and a Tauri app. Each
 editor knows only the framework's content schemas, so it works on any game made with the framework.
 
 - **Opening a game.** Sign in with GitHub, pick a repo, and the suite reads the game's project file (which lists its
@@ -266,15 +238,12 @@ figure or scene file that made them, so an agent can change a figure file and re
 
 Its own repo, a static site in the style of pixijs.com:
 
-- **Home**: the positioning and the five claims, each true today; the demo game playable on the page; and the replay
+- **Home**: the five claims, each true today; the demo game playable on the page; and the replay
   check catching a change that breaks it.
 - **Guides**: start a game, make it with an agent, edit it, publish it.
 - **Examples gallery**: the examples from AutomataFrameworkExamples, each live and with its source.
 - **API reference**: generated from the framework's API report.
-- **The free editors**, and where to buy the app.
-- **A price page with "notify me"** for the paid app, up from M2, before the app is built (the Owner, 2026-11-13), so
-  its clicks show whether and at what price people would pay. Sign-ups are stored by a Pages Function; the page says
-  plainly what is collected and why.
+- **The browser editors**, and where to get the app.
 
 Hosted as static files on Cloudflare Pages, with the Pages Function that does the editors' GitHub sign-in step.
 
@@ -333,7 +302,6 @@ CI checks it in four engines, and the site's game shows the crate where it was m
 - Story features (dialogue, behaviour rules, cutscenes) in the sim.
 - `automata create` and `automata check`, and the agent skills.
 - The demo game's full content (written by hand or by agent, before its editors exist).
-- The site's price page with "notify me" for the paid app.
 
 Done means: the demo game plays end to end with every built-in, in the four engines' parity and in journeys at phone,
 tablet and desktop sizes; `automata create` makes a new game that passes `automata check`.
@@ -360,7 +328,7 @@ the same change by editing the files.
   format rules, and how developers are paid. The M4 plan starts by reading [docs.wavedash.com](https://docs.wavedash.com/getting-started/introduction)
   in full; if its rules can be met through the host port (a `wavedash` adapter, the SDK imported by that adapter
   only), it becomes a target; if not, the plan stops and reports why.
-- The editor app built for iPad, Android and desktop, signed and submitted for sale.
+- The editor app built for iPad, Android and desktop, signed and submitted to the stores.
 
 Done means: every claim on the site is backed by something on `main`; the demo game is on itch.io and Wavedash (or the
 plan's report says why Wavedash can't be), and is a desktop download; the editor app passes App Store review for iPad and Play review for Android, and is on sale for desktop.
@@ -408,7 +376,7 @@ Things only the Owner can decide or provide; each plan that needs one stops and 
    protected; the first pull request in each adds its `CLAUDE.md`. *Needed by M1.*
 5. **The demo game's name.** *Needed by M4, for the site; a working name until then.*
 6. **Stores and signing for the editor app:** an Apple Developer account for iPad and macOS, a Google Play developer
-   account and signing key for Android, Windows signing, and where the desktop app is sold (an itch.io paid page is
+   account and signing key for Android, Windows signing, and where the desktop app is distributed (an itch.io page is
    the simplest; the Mac App Store is an option). The App Store may question an editor that plays a game's
    JavaScript; the plan checks the current guideline before M4 starts. *Needed by M4.*
 7. **itch.io** account and API key for `automata ship`. *Needed by M4.*
