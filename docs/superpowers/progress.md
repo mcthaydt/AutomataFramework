@@ -40,6 +40,12 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
 
 ### Log
 
+- 2026-11-13: The spec follows the Owner's decisions made while the Editors' M1 plan was written: the editors are for
+  teams; sign-in is a GitHub App, which does the editors' GitHub work through Pages Functions; five access levels kept
+  in `automata.access.toml` with a Share screen, all in M1; Save commits straight in for Edit and Owner levels and
+  opens a suggestion for the rest. The plan is in AutomataFrameworkEditors (PR 1). Added the same day: the editors
+  change authorable content only (the JSON files); anyone can use them without signing in and keep a copy, and
+  saving or working with others needs a sign-in.
 - 2026-11-13: `package.json` gains `"prepare": "pnpm build"`. Found while planning Examples' M1: a git install of
   this package had no `dist/` (it is not committed, and a package manager builds a git dependency only when it has a
   `prepare` script). Tried with pnpm 10.34.6: with the script, `dist/` is built on install. The consuming repo must
