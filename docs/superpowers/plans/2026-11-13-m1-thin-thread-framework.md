@@ -1017,7 +1017,7 @@ test('how it looks on a tablet', ...)                            // mount 820 x 
   dependency `"typescript-6": "npm:typescript@6.0.3"` and import from `typescript-6`. `scripts/` is meant for thin wrappers; these two files are the exception until the
   `cli` feature exists in M2, and say so in a comment.
 
-- [ ] **Step 1: Write the failing test** `tests/public-surface.test.ts`:
+- [x] **Step 1: Write the failing test** `tests/public-surface.test.ts`:
 
 ```ts
 test('headless exports what a game sim and an editor need', async () => {
@@ -1037,13 +1037,13 @@ test('the committed JSON Schemas are what the code produces', ...)   // schemas/
   equals `idleHash60` in `tests/golden/push-crate.json`. Add that key in this task: a new case in
   `push-crate.parity.test.ts` runs the same 60 idle ticks and expects `golden.idleHash60`, recorded from Node's log
   like any golden (a new key, not a moved hash).
-- [ ] **Step 2: Add the `package` job to CI:** `pnpm build`, `pnpm schemas --check`, `pnpm api-report`, `pnpm pack`,
+- [x] **Step 2: Add the `package` job to CI:** `pnpm build`, `pnpm schemas --check`, `pnpm api-report`, `pnpm pack`,
   the smoke. Push; `check` fails on the missing exports.
-- [ ] **Step 3: Fill the two entries, write the scripts, run** `pnpm schemas`, `pnpm build` and
+- [x] **Step 3: Fill the two entries, write the scripts, run** `pnpm schemas`, `pnpm build` and
   `pnpm api-report --update` locally and commit what they write. Write `README.md`: what the package is in the spec's
   positioning words, install, the smallest game (load, `startGame`), and where the schemas are.
-- [ ] **Step 4: Push; all jobs pass**, including `package`.
-- [ ] **Step 5: Commit** (`feat: the public surface, build, API report and install smoke`).
+- [x] **Step 4: Push; all jobs pass**, including `package`.
+- [x] **Step 5: Commit** (`feat: the public surface, build, API report and install smoke`).
 
 ### Task 15: Release 0.1.0
 
@@ -1051,17 +1051,17 @@ test('the committed JSON Schemas are what the code produces', ...)   // schemas/
 - Create: `.changeset/config.json`, `.changeset/first-release.md`, `.github/workflows/release.yml`, `CHANGELOG.md`
 - Modify: `package.json` (version `0.1.0`, `publishConfig`: public, npmjs.org)
 
-- [ ] **Step 1: Check "Before starting" item 3** with the coordinator. Without the Owner's `NPM_TOKEN`, finish Steps
+- [x] **Step 1: Check "Before starting" item 3** with the coordinator. Without the Owner's `NPM_TOKEN`, finish Steps
   2 to 4 and report that publishing waits on it.
-- [ ] **Step 2: Write `release.yml`** (a workflow file, as Task 1's was: both are named by this plan, which the
+- [x] **Step 2: Write `release.yml`** (a workflow file, as Task 1's was: both are named by this plan, which the
   Owner reviews)**:** on `push` to `main`, one job on `ubuntu-latest`, `permissions: contents:
   write, id-token: write`, `concurrency: release`. Install, `pnpm build`, then `pnpm changeset publish` with
   `NPM_TOKEN`, which publishes only when `package.json`'s version is not on npm yet and tags it. So a release is a
   pull request that carries the version change, and nothing is pushed to `main` by a bot.
-- [ ] **Step 3: Add the changeset** (`minor`: "The first release: the M1 thin thread."), run `pnpm changeset version`
+- [x] **Step 3: Add the changeset** (`minor`: "The first release: the M1 thin thread."), run `pnpm changeset version`
   locally, and commit (`chore(release): 0.1.0`) `package.json` at `0.1.0`, `CHANGELOG.md`, and `version.test.ts` now
   comparing `FRAMEWORK_VERSION` with `package.json`.
-- [ ] **Step 4: Push; all jobs pass.** Mark the pull request ready, set progress to the stage's 100%, and send the
+- [x] **Step 4: Push; all jobs pass.** Mark the pull request ready, set progress to the stage's 100%, and send the
   coordinator the end summary: commits, test counts per job, the three goldens' hashes, every deviation, what is open.
 - [ ] **Step 5: After the merge session merges,** read the `release` run and confirm with
   `npm view @automataframework/framework version` printing `0.1.0`. Report the result. The stage is done only then.

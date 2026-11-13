@@ -6,14 +6,14 @@ The tracker every stage reads first and updates last. One section per cycle; new
 
 Spec: [`specs/2026-11-13-2d-first-layer-design.md`](specs/2026-11-13-2d-first-layer-design.md)
 
-Overall: **27%** (spec, plan and audit done; stage 4 is worth 18 points, so the overall figure is 12% plus 18% of the stage's own)
+Overall: **28%** (spec, plan and audit done; stage 4 is worth 18 points, so the overall figure is 12% plus 18% of the stage's own)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Done, 100% (merged, PR 1) | `specs/2026-11-13-2d-first-layer-design.md` |
 | 2. Plan (M1, framework) | Done, 100% (merged, PR 3) | `plans/2026-11-13-m1-thin-thread-framework.md` |
 | 3. Plan audit | Done, 100% (in review) | `audits/2026-11-13-m1-framework-plan-audit.md` |
-| 4. Execution | In progress, 86% (Task 13 of 15 done, 14 in CI; PR 6, draft) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
+| 4. Execution | In progress, 90% (Tasks 1 to 15 done in the branch; the publish check after the merge is the last 10%; PR 6, draft) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
 | 5. Implementation audit | Not started | `audits/<date>-m1-implementation-audit.md` |
 | 6. Fixes | Not started | |
 | 7. Owner review | Not started | |
@@ -41,6 +41,29 @@ Milestones (each runs stages 2 to 7 per repo):
   blocking findings (an unlifted fixture seven tests import, unnamed helpers, renames that move lifted hashes, 3D-only
   physics tests, rule tests that double-trip) and nine should-fix items, which the execution stage applies (the Owner).
   The spec and `CLAUDE.md` now say `@automataframework`. The stale branch `claude/project-thread-5h5fpo` still exists.
+
+### Stage 4 close (Tasks 12 to 15, 2026-11-13)
+
+Tasks 12 to 15 ran in a second session. Input (12), the loop, host and `startGame` (13) and the public surface, build,
+API report and install smoke (14) were green in CI; Task 15 added changesets, `release.yml`, the version 0.1.0 and the
+`version.test.ts` that ties `FRAMEWORK_VERSION` to `package.json`. `NPM_TOKEN` is a repository secret, which no session
+can read, so whether it exists is known only when the `release` run on `main` publishes (Task 15 Step 5, after the merge).
+
+Rulings in this session:
+- Task 12: `ACTION_NAME` and `MAX_ACTIONS` are now exported from `commands` so `checkControls` and the `controls` command
+  share one definition. A key press with Ctrl, Cmd or Alt held is left to the browser. Touch buttons are never smaller
+  than 64 px (the plan's test asserts 48).
+- Task 13: a loop frame that throws stops the loop and rethrows. `startGame` checks the controls before the sim is made.
+  The screenshots go to `tests/features/game/__screenshots__/`, which is git-ignored and uploaded by CI.
+- Task 14: the public surface and schemas already existed, so the red state was the unrecorded `idleHash60` (the Node job
+  printed `fa986edc200c5437`; the installed package printed the same). `load.ts` imported `#src/...`, which the emitted
+  declarations would keep; it is now a relative import. `package.json` no longer says `sideEffects: false`, because the
+  browser entry sets Zod's `jitless` when it loads. The api-report extractor is lifted without the break check, the
+  Svelte kind and the `.d.ts` reader (nothing to compare with before 0.1.0 is published; knip rejects unused exports).
+  `schemas/` and `docs/api/` are generated files and are left out of Biome. The packed `.d.ts` files keep `.ts` import
+  specifiers; TypeScript 7 resolves them, and the smoke typechecks a consumer against the tarball with `skipLibCheck` off.
+- Task 15: `release.yml` sets a git identity and runs `git push origin --tags` (the checkout is detached and `main` is
+  protected, so `--follow-tags` would fail). Provenance is switched on in `publishConfig` and in the job.
 
 ### Handoff 1 (after Task 11, 2026-11-13)
 
