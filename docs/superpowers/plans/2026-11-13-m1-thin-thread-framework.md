@@ -1040,8 +1040,8 @@ test('the committed JSON Schemas are what the code produces', ...)   // schemas/
 - [ ] **Step 2: Add the `package` job to CI:** `pnpm build`, `pnpm schemas --check`, `pnpm api-report`, `pnpm pack`,
   the smoke. Push; `check` fails on the missing exports.
 - [ ] **Step 3: Fill the two entries, write the scripts, run** `pnpm schemas`, `pnpm build` and
-  `pnpm api-report --update` locally and commit what they write. Write `README.md`: what the package is in the spec's
-  positioning words, install, the smallest game (load, `startGame`), and where the schemas are.
+  `pnpm api-report --update` locally and commit what they write. Write `README.md`: what the package is in the words of the spec's
+  five claims, install, the smallest game (load, `startGame`), and where the schemas are.
 - [ ] **Step 4: Push; all jobs pass**, including `package`.
 - [ ] **Step 5: Commit** (`feat: the public surface, build, API report and install smoke`).
 
