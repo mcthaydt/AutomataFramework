@@ -17,7 +17,7 @@ test('the release can be started by hand once the token exists', () => {
   expect(release).toMatch(/^ {2}workflow_dispatch:/m)
 })
 
-test('the job runs only after a green ci run of a push to main, and builds that run\'s commit', () => {
+test("the job runs only after a green ci run of a push to main, and builds that run's commit", () => {
   expect(release).toContain("github.event.workflow_run.conclusion == 'success'")
   expect(release).toContain("github.event.workflow_run.event == 'push'")
   expect(release).toContain("github.event.workflow_run.head_branch == 'main'")

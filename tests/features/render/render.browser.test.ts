@@ -1,4 +1,5 @@
 // The renderer in each real browser: a canvas that fills its mount, refits when the mount turns, and cleans up.
+import { Application } from 'pixi.js'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { createRenderer, type Renderer } from '#src/features/render/render.ts'
 import type { RenderDelta } from '#src/features/sim/sim.ts'
@@ -69,6 +70,44 @@ test('a mount with no size yet does not throw, and draws once it has one', async
   size(320, 180)
   await vi.waitFor(() => expect(renderer?.canvas.width).toBe(buffer(320)))
   expect(() => renderer?.draw(1)).not.toThrow()
+})
+
+// Pixi clears a WebGL canvas when its size is set, and a game that is paused by hand asks for no frames, so the picture
+// has to be put back by the renderer itself.
+test('turning the mount while nothing is drawing puts the picture back', async () => {
+  size(390, 844)
+  const render = vi.spyOn(Application.prototype, 'render')
+  renderer = await createRenderer({ mount, world: WORLD })
+  renderer.apply(ONE_BOX)
+  renderer.draw(1)
+  // Let the observer's first report (it fires when it starts watching) pass, so only the turn is counted.
+  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
+  render.mockClear()
+  size(844, 390)
+  await vi.waitFor(() => expect(renderer?.canvas.width).toBe(buffer(844)))
+  expect(render).toHaveBeenCalled()
+})
+
+test('a mount that gets its size after the last draw is drawn once it has one', async () => {
+  size(0, 0)
+  const render = vi.spyOn(Application.prototype, 'render')
+  renderer = await createRenderer({ mount, world: WORLD })
+  renderer.apply(ONE_BOX)
+  renderer.draw(1)
+  expect(render).not.toHaveBeenCalled()
+  size(320, 180)
+  await vi.waitFor(() => expect(render).toHaveBeenCalled())
+})
+
+test('the first step is drawn without waiting for the next frame', async () => {
+  size(390, 844)
+  const render = vi.spyOn(Application.prototype, 'render')
+  renderer = await createRenderer({ mount, world: WORLD })
+  renderer.apply(ONE_BOX)
+  expect(render).toHaveBeenCalledTimes(1)
+  // Later steps leave the drawing to the loop's frames.
+  renderer.apply({ resync: false, added: [], changed: [], removed: [] })
+  expect(render).toHaveBeenCalledTimes(1)
 })
 
 test('destroy removes the canvas and stops watching', async () => {
