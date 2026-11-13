@@ -6,5 +6,6 @@
     { "tick": 120, "hash": "2fed367cade68a67" },
     { "tick": 180, "hash": "3d13e0280c475970" },
     { "tick": 240, "hash": "2e089df8aa9c3f18" }
-  ]
+  ],
+  "replayTextHash": "68844c1b012fb4f3"
 }
