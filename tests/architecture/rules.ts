@@ -58,6 +58,8 @@ interface Source {
   readonly lines: number
   /** Resolved paths of relative imports; need not exist in the map. */
   readonly local: readonly string[]
+  /** The part of `local` that exists at run time: `import type` and `export type` are erased and cannot cycle. */
+  readonly runtime: readonly string[]
   /** Bare specifiers (packages, `node:` modules). */
   readonly packages: readonly string[]
 }
@@ -73,9 +75,19 @@ const IMPORT_PATTERNS: readonly RegExp[] = [
   /\bimport\(\s*['"]([^'"]+)['"]\s*\)/g,
 ]
 
-function specifiers(code: string): string[] {
-  const found: string[] = []
-  for (const pattern of IMPORT_PATTERNS) for (const m of code.matchAll(pattern)) found.push(m[1] ?? '')
+interface Specifier {
+  readonly spec: string
+  /** `import type ... from` or `export type ... from`: gone after compiling. */
+  readonly typeOnly: boolean
+}
+
+function specifiers(code: string): Specifier[] {
+  const found: Specifier[] = []
+  for (const pattern of IMPORT_PATTERNS) {
+    for (const m of code.matchAll(pattern)) {
+      found.push({ spec: m[1] ?? '', typeOnly: /^(?:import|export)\s+type\b/.test(m[0]) })
+    }
+  }
   return found
 }
 
@@ -93,15 +105,23 @@ function resolve(from: string, to: string): string {
 function read(file: string, text: string): Source {
   const code = withoutComments(text)
   const local: string[] = []
+  const runtime: string[] = []
   const packages: string[] = []
-  for (const spec of specifiers(code)) {
-    if (spec.startsWith('.')) local.push(resolve(file, spec))
-    else if (spec.startsWith('#src/')) local.push(`src/${spec.slice('#src/'.length)}`)
-    else packages.push(spec)
+  for (const { spec, typeOnly } of specifiers(code)) {
+    const path = spec.startsWith('.')
+      ? resolve(file, spec)
+      : spec.startsWith('#src/')
+        ? `src/${spec.slice(5)}`
+        : undefined
+    if (path === undefined) packages.push(spec)
+    else {
+      local.push(path)
+      if (!typeOnly) runtime.push(path)
+    }
   }
   const lines = text.split('\n')
   if (lines[lines.length - 1] === '') lines.pop()
-  return { file, text: code, lines: lines.length, local, packages }
+  return { file, text: code, lines: lines.length, local, runtime, packages }
 }
 
 /** The feature a path is in, or undefined (`src/features/<name>/...`). */
@@ -124,7 +144,7 @@ function cycles(sources: ReadonlyMap<string, Source>): string[][] {
     counter++
     stack.push(file)
     onStack.add(file)
-    for (const next of sources.get(file)?.local ?? []) {
+    for (const next of sources.get(file)?.runtime ?? []) {
       if (!sources.has(next)) continue
       if (!index.has(next)) {
         visit(next)
@@ -140,7 +160,7 @@ function cycles(sources: ReadonlyMap<string, Source>): string[][] {
         group.push(top)
         if (top === file) break
       }
-      if (group.length > 1 || sources.get(file)?.local.includes(file)) groups.push(group.sort())
+      if (group.length > 1 || sources.get(file)?.runtime.includes(file)) groups.push(group.sort())
     }
   }
   for (const file of [...sources.keys()].sort()) if (!index.has(file)) visit(file)

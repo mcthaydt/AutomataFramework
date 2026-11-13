@@ -19,6 +19,14 @@ test('no cycles', () =>
     'no-cycles',
   ]))
 
+test('a cycle that only types take part in is not a cycle', () =>
+  expect(
+    one({
+      'src/lib/a.ts': "import type { B } from './b.ts'\nexport type A = B",
+      'src/lib/b.ts': "import type { A } from './a.ts'\nexport type B = A",
+    }),
+  ).toEqual([]))
+
 test('no tests in src', () => expect(one({ 'src/lib/a.test.ts': '' })).toEqual(['no-tests-in-src']))
 
 test('the sim side has no clock, randomness or I/O', () =>
