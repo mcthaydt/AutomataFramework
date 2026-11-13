@@ -84,7 +84,7 @@ stay free.
 | Order of work | A thin thread through all four repos first, then widen. |
 | Paid product | The editors as Tauri apps for iPad, Android and desktop. Android stays because it is the Owner's phone, so phone layouts are tested too. |
 | File formats | Game content files are JSON; everything else (the project file, configs, manifests) is TOML. |
-| Languages | Games ship English, Spanish, Korean, Japanese, Chinese and Portuguese. The editors ship those six plus French, Russian and one more the Owner will name. |
+| Languages | Games ship English, Spanish, Korean, Japanese, Chinese and Portuguese. The editors ship those six plus French, Russian and German. The list follows the most popular languages for Godot. |
 | Edits that collide | Handled the way GitHub does: a three-way merge, with conflicts shown and resolved before the save commits. |
 | Sign-in step and site host | A Cloudflare Pages Function does the browser editor's GitHub token exchange; the site is on Cloudflare Pages. |
 | New repo names | AutomataFrameworkEditors and AutomataFrameworkSite. |
@@ -268,7 +268,7 @@ Content, so that every editor has real work:
 And every built-in from claim 1: saves (progress and settings), title, pause and settings screens, keyboard, touch and
 gamepad with remapping, music and sound with volume, phone, tablet and desktop layouts upright and sideways, and three
 languages: English, Spanish, Korean, Japanese, Chinese and Portuguese, the set every game ships with. The editors
-ship those six plus French, Russian and one more the Owner will name.
+ship those six plus French, Russian and German (the list follows the most popular languages for Godot).
 
 Its golden: a recorded play through level one that ends on the same hash in Node, Chromium, WebKit and Firefox.
 
@@ -353,13 +353,12 @@ Things only the Owner can decide or provide; each plan that needs one stops and 
 3. **npm publishing** under the `@automata` scope (the Owner's `NPM_TOKEN`). *Needed by M1.*
 4. **Creating the new repos** (AutomataFrameworkExamples, AutomataFrameworkEditors, AutomataFrameworkSite), with `main`
    protected. *Needed by M1.*
-5. **The ninth editor language.** *Needed by M3.*
-6. **The demo game's name.** *Needed by M4, for the site; a working name until then.*
-7. **Stores and signing for the editor app:** an Apple Developer account for iPad and macOS, a Google Play developer
+5. **The demo game's name.** *Needed by M4, for the site; a working name until then.*
+6. **Stores and signing for the editor app:** an Apple Developer account for iPad and macOS, a Google Play developer
    account and signing key for Android, Windows signing, and where the desktop app is sold (an itch.io paid page is
    the simplest; the Mac App Store is an option). The App Store may question an editor that plays a game's
    JavaScript; the plan checks the current guideline before M4 starts. *Needed by M4.*
-8. **itch.io** account and API key for `automata ship`. *Needed by M4.*
+7. **itch.io** account and API key for `automata ship`. *Needed by M4.*
 
 ## Left to the builder (the plans)
 
