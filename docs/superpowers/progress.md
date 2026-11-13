@@ -16,7 +16,7 @@ publish is confirmed, so the figure is 12 + 16 + 8)
 | 3. Plan audit | Done, 100% (merged) | `audits/2026-11-13-m1-framework-plan-audit.md` |
 | 4. Execution | 90% (merged, PR 6, `b7b672f`; the publish check is the last 10%, and waits on the Owner's `NPM_TOKEN`) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
 | 5. Implementation audit | Done, 100% (in review) | `audits/2026-11-13-m1-framework-implementation-audit.md` |
-| 6. Fixes | Not started: F1 to F8 of the implementation audit | |
+| 6. Fixes | 90% (PR 9, draft; F1 to F3 and F5 to F8 done, F4's pictures added; the sideways layout is deferred to M2; waiting on CI) | `audits/2026-11-13-m1-framework-implementation-audit.md`, F1 to F8 |
 | 7. Owner review | Not started | |
 
 Milestones (each runs stages 2 to 7 per repo):
@@ -42,6 +42,27 @@ Milestones (each runs stages 2 to 7 per repo):
   blocking findings (an unlifted fixture seven tests import, unnamed helpers, renames that move lifted hashes, 3D-only
   physics tests, rule tests that double-trip) and nine should-fix items, which the execution stage applies (the Owner).
   The spec and `CLAUDE.md` now say `@automataframework`. The stale branch `claude/project-thread-5h5fpo` still exists.
+
+### Stage 6: fixes (2026-11-13)
+
+PR 9, branch `claude/project-thread-glweo1`, each fix with its test first. What was done:
+
+- F2: `release.yml` now starts from the `ci` run finishing (`workflow_run`), only for a green run of a push to `main`,
+  checking out that run's commit; `workflow_dispatch` starts it by hand, from `main` only. `tests/workflows/release.test.ts`
+  reads the workflow's text. The Owner can now add `NPM_TOKEN` and start the release by hand.
+- F1: `stage.resize` draws the last views again after setting the size, and keeps views asked for before the mount had
+  a size. Minor M1 is closed with it: `Renderer.apply` draws the first delta at once. Three new browser tests.
+- F3: every box has a dark (`#1b1b24`) one-pixel edge, inside the box, one screen pixel wide at any scale. A browser
+  test reads canvas pixels of a white box.
+- F5: the button panel is `rgba(20,20,30,0.55)`; a browser test works out the contrast over the sky (at least 4.5 to 1).
+- F6: `checkControls` checks `side` and `keys` with plain messages; two tests.
+- F7: the README example uses `formatDiagnostic` (`tests/docs/readme.test.ts`). F8: `CLAUDE.md`'s Structure block lists
+  `src/headless.ts`, `tests/lib/`, `tests/fixtures/`, `tests/install/` and the new `tests/workflows/` and `tests/docs/`.
+- F4: the sideways pictures (`phone-844x390`, `tablet-1180x820`) are in `game.browser.test.ts`. The layout (moving the
+  level or the buttons so they do not cover the hero) is the Owner's call; with no answer, it is **deferred to M2's
+  layouts**, as the audit recommends (option A).
+
+Verified only through CI (tests are never run locally); lint, typecheck and knip were run locally and pass.
 
 ### Stage 5: implementation audit (2026-11-13)
 
