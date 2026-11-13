@@ -1065,3 +1065,5 @@ test('the committed JSON Schemas are what the code produces', ...)   // schemas/
   coordinator the end summary: commits, test counts per job, the three goldens' hashes, every deviation, what is open.
 - [ ] **Step 5: After the merge session merges,** read the `release` run and confirm with
   `npm view @automataframework/framework version` printing `0.1.0`. Report the result. The stage is done only then.
+  **Deferred to Release 1** (the Owner, 2026-11-13: releases are big and few, nothing is published per milestone).
+  `release.yml` now runs only by hand; this step is done when the Owner starts Release 1.

@@ -10,7 +10,7 @@ replays, level and character content, rendering (PixiJS), keyboard and touch inp
 ## Install
 
 ```sh
-npm install @automataframework/framework
+npm install @automataframework/framework   # not on npm yet: the first release is Release 1, when 2D is finished
 ```
 
 It needs a browser (or Node, for the headless entry) with ES2023 and WebAssembly.

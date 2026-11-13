@@ -6,15 +6,15 @@ The tracker every stage reads first and updates last. One section per cycle; new
 
 Spec: [`specs/2026-11-13-2d-first-layer-design.md`](specs/2026-11-13-2d-first-layer-design.md)
 
-Overall: **42%** (stages 1 to 3 are 12 points, stage 4 is worth 18, stage 5 is worth 8 and stage 6 is worth 6; stage 4
-stands at 90% until the publish is confirmed, so the figure is 12 + 16 + 8 + 6)
+Overall: **44%** (stages 1 to 3 are 12 points, stage 4 is worth 18, stage 5 is worth 8 and stage 6 is worth 6, so the
+figure is 12 + 18 + 8 + 6; stage 4 is now whole, because publishing 0.1.0 is no longer part of M1, see the log)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Done, 100% (merged, PR 1) | `specs/2026-11-13-2d-first-layer-design.md` |
 | 2. Plan (M1, framework) | Done, 100% (merged, PR 3) | `plans/2026-11-13-m1-thin-thread-framework.md` |
 | 3. Plan audit | Done, 100% (merged) | `audits/2026-11-13-m1-framework-plan-audit.md` |
-| 4. Execution | 90% (merged, PR 6, `b7b672f`; the publish check is the last 10%, and waits on the Owner's `NPM_TOKEN`) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
+| 4. Execution | Done, 100% (merged, PR 6, `b7b672f`; Task 15's publish step is deferred to Release 1) | `docs/superpowers/plans/2026-11-13-m1-thin-thread-framework.md`, ticked as it goes |
 | 5. Implementation audit | Done, 100% (in review) | `audits/2026-11-13-m1-framework-implementation-audit.md` |
 | 6. Fixes | Done, 100% (PR 9, green on all four engines; F4's layout deferred to M2) | `audits/2026-11-13-m1-framework-implementation-audit.md`, F1 to F8 |
 | 7. Owner review | Not started | |
@@ -23,13 +23,28 @@ Milestones (each runs stages 2 to 7 per repo):
 
 | Milestone | State |
 |---|---|
-| M1 The thin thread | Framework: built, audited and fixed (PR 9); publishing waits on `NPM_TOKEN`. Examples, Editors, Site: waiting for their repos, then one plan each |
+| M1 The thin thread | Framework: built, audited and fixed (PR 9); publishing deferred to Release 1. Examples, Editors, Site: waiting for their repos, then one plan each |
 | M2 The framework in full | Not started |
 | M3 The editors in full | Not started |
 | M4 The site and publishing | Not started |
 
+Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is published per milestone.
+
+| Release | What ships | State |
+|---|---|---|
+| 1 | 2D finished: framework in full and the demo game (M1, M2) | Not started; `release.yml` is manual-only until then |
+| 2 | The 2D editors (M3) | Not started |
+| 3 | The website (M4's site) | Not started |
+| 4 | Distribution (M4's publishing) | Not started |
+| 5 | 3D, then the loop repeats for 3D | Not started |
+
 ### Log
 
+- 2026-11-13: Release policy (the Owner): releases are big and few, Release 1 to 5 as above; small releases come back
+  only once the product is feature complete. `release.yml` no longer starts when `ci` passes on `main`: it runs only by
+  hand, from `main`, and first checks that `ci` passed for a push of that commit. Publishing 0.1.0 is no longer a
+  done-criterion of M1; Task 15's Step 5 (the publish) is deferred to Release 1. Open for the Owner: how the Examples
+  repo gets the framework before Release 1, since the spec has it use only the published package.
 - 2026-11-13: Stage 1. Spec written from the Owner's brainstorm, then updated with the Owner's answers (sign-in on Cloudflare
   Pages, file formats, languages, Android, GitHub-style merges, protected main). Open items are in the spec.
 - 2026-11-13: Stage 2. The framework's M1 plan written: 15 tasks, from the repo's skeleton and CI to publishing 0.1.0.
@@ -69,7 +84,7 @@ which still need a person's eyes (the cloud network refuses the artifact host).
 
 Not done, on purpose: the sideways layout. The Owner's question about it (audit, "For the Owner" 1) had no answer when
 this stage ended, so option A stands: M2's layouts plan moves the level or the buttons. `NPM_TOKEN` is still the
-Owner's; once it exists, start `release` by hand from `main` (Actions, release, Run workflow).
+Owner's; publishing now waits for Release 1 (see the log).
 
 ### Stage 5: implementation audit (2026-11-13)
 

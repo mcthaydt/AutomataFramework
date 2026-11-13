@@ -1,17 +1,19 @@
-# A release is a pull request that carries the version change (`pnpm changeset version`); nothing is pushed to `main`
-# by a bot. When such a pull request merges and `ci` then passes on `main`, this publishes the version if npm does not
-# have it yet, then pushes its tag. It starts from `ci` finishing, never from the push itself, so a commit whose checks
-# fail cannot reach npm. It can also be started by hand from `main` (for example once `NPM_TOKEN` exists). The package
-# is published with provenance, so npm shows which commit and run built it.
+# Releases are big and few (the Owner, 2026-11-13): Release 1 is the finished 2D framework, Release 2 the 2D editors,
+# Release 3 the website, Release 4 distribution, Release 5 3D, and that loop repeats for 3D. Small releases come back
+# only once the product is feature complete. So this never starts by itself: nothing reaches npm when `ci` passes on
+# `main`. The Owner starts it by hand from `main` (Actions, release, Run workflow) when a release is due.
+#
+# The version is carried by a pull request (`pnpm changeset version`); nothing is pushed to `main` by a bot. Before
+# anything is built, the job checks that `ci` passed for a push of this exact commit to `main`, so a commit whose checks
+# failed, or never ran, cannot reach npm. `changeset publish` then publishes the version only if npm does not have it
+# yet, with provenance, so npm shows which commit and run built it, and the tag is pushed.
 name: release
 
 on:
-  workflow_run:
-    workflows: [ci]
-    types: [completed]
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: write
   id-token: write
 
@@ -19,20 +21,23 @@ concurrency: release
 
 jobs:
   release:
-    # `ci` also runs on pull requests, and a run can fail; only a green run of a push to `main` may publish. A manual
-    # start must be on `main` too.
-    if: >-
-      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
-      (github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main')
+    # A manual start must be on `main`.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      # The commit `ci` checked, not whatever `main` has moved to since. On a manual start the ref is empty, which
-      # checks out the branch it was started on.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+      # The CI gate: the newest `ci` run for a push of this commit to `main` must have passed.
+      - name: Check ci passed on this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          conclusion="$(gh run list --workflow ci --branch main --event push --commit "$GITHUB_SHA" \
+            --limit 1 --json conclusion --jq '.[0].conclusion // ""')"
+          if [ "$conclusion" != "success" ]; then
+            echo "::error::ci has not passed on $GITHUB_SHA (its result: '${conclusion:-no run}'). Nothing was published."
+            exit 1
+          fi
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:

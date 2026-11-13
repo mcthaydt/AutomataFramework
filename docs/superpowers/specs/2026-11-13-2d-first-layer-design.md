@@ -276,6 +276,27 @@ ship those six plus French, Russian and German (the list follows the most popula
 
 Its golden: a recorded play through level one that ends on the same hash in Node, Chromium, WebKit and Firefox.
 
+## Releases
+
+Releases are big and few (the Owner, 2026-11-13). Milestones are steps of work, not releases: nothing is published
+when a milestone is done.
+
+| Release | What ships | Milestones it waits on |
+|---|---|---|
+| 1 | 2D finished: the framework in full, with the demo game | M1 and M2 |
+| 2 | The 2D editors | M3 |
+| 3 | The website | M4's site |
+| 4 | Distribution: `automata ship` and the editor app in the stores | M4's publishing |
+| 5 | 3D | The 3D layer's own spec |
+
+After Release 5 the loop repeats for 3D (its editors, site and distribution). Small releases come back only once the
+product is officially feature complete. The framework's `release.yml` never runs by itself; the Owner starts it by
+hand from `main` when a release is due, and it refuses a commit whose `ci` run on `main` did not pass.
+
+**Open for the Owner:** the Examples repo uses the framework "only as published", and M1 has it build from the published
+package, but nothing is published before Release 1. How Examples gets the framework until then is the Owner's call
+(see Open for the Owner, 3).
+
 ## Milestones
 
 Built in order. Each milestone is planned per repo; every plan goes through the project's stages (plan, plan audit,
@@ -285,7 +306,7 @@ means" holds on each repo's `main`, proven by CI.
 ### M1: the thin thread
 
 - Framework: sim, physics, commands and replay, content (level and character only), render, keyboard and touch input,
-  the web host. Published to npm.
+  the web host. Ready to publish, but published only at Release 1 (the Owner, 2026-11-13; see Releases).
 - Examples: one level with the hero and one crate, from the published package.
 - Editors: the suite shell, GitHub sign-in and save, and the Levels editor moving the crate, in the browser, at iPad size.
 - Site: one page with the game playing, deployed.
@@ -371,7 +392,9 @@ Things only the Owner can decide or provide; each plan that needs one stops and 
 1. **A Cloudflare account** for Pages and the sign-in function, and a GitHub OAuth app for the editors. *Needed by M1.*
 2. **The domain.** Not bought yet; the Owner will control its DNS. M1 deploys to the Cloudflare Pages address until
    then. *Needed by M4.*
-3. **npm publishing** under the `@automataframework` scope (the Owner's `NPM_TOKEN`). *Needed by M1.*
+3. **npm publishing** under the `@automataframework` scope (the Owner's `NPM_TOKEN`). *Needed by Release 1* (it was
+   M1, before releases became big and few). Also open: how the Examples repo gets the framework before then, since it
+   uses only the published package. *Needed by M1's Examples plan.*
 4. **Creating the new repos** (AutomataFrameworkExamples, AutomataFrameworkEditors, AutomataFrameworkSite), with `main`
    protected; the first pull request in each adds its `CLAUDE.md`. *Needed by M1.*
 5. **The demo game's name.** *Needed by M4, for the site; a working name until then.*
