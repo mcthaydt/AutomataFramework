@@ -37,7 +37,9 @@ test('the fixture level spawns one floor, the crate and the hero, in that order'
   expect(hero?.get(Player).number).toBe(1)
   expect(hero?.get(Thing)).toEqual({ id: 'player-1', character: 'hero' })
   expect(hero?.get(Body).fixedRotation).toBe(true)
-  expect(hero?.get(Collider)).toMatchObject({ hx: 0.4, hy: 0.5 })
+  // Collider sizes are stored as 32-bit floats, so 0.4 comes back as the nearest one.
+  expect(hero?.get(Collider).hx).toBeCloseTo(0.4, 6)
+  expect(hero?.get(Collider).hy).toBe(0.5)
   expect(hero?.get(Transform)).toMatchObject({ x: 2.5, y: 7.5 })
 })
 
