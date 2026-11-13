@@ -3,3 +3,4 @@ dist/
 coverage/
 .superpowers/
 *.tsbuildinfo
+__screenshots__/
