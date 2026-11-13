@@ -3,7 +3,7 @@ This codebase is yours: what it's for and how it's built are your call, and you'
 # AutomataFramework
 
 A framework and set of editors for making games, where agents do the authoring and every piece of authorable content
-can be edited on an iPad. This repo is the 2D runtime, `@automata/framework`. The first layer's design is
+can be edited on an iPad. This repo is the 2D runtime, `@automataframework/framework`. The first layer's design is
 [`docs/superpowers/specs/2026-11-13-2d-first-layer-design.md`](docs/superpowers/specs/2026-11-13-2d-first-layer-design.md);
 where this page is short, the spec has the detail.
 

@@ -45,7 +45,7 @@ Stop and report to the coordinator if any of these is not true. Do not work arou
 Decided by the Owner on 2026-11-13, while this plan was written:
 
 - **The npm scope is `@automataframework`**, so the package is `@automataframework/framework`. The spec and
-  `CLAUDE.md` still say `@automata/framework`; this plan does not edit them, and the coordinator has been told.
+  `CLAUDE.md` said `@automata/framework` when this plan was written; the plan audit corrected both.
 - **Two development dependencies outside the spec's stack table are approved:** `@types/node` 24.19.1 and
   `@vitest/browser-playwright` 5.0.3 (Vitest's own provider for browser mode).
 
