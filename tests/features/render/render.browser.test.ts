@@ -3,6 +3,7 @@ import { Application } from 'pixi.js'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { createRenderer, type Renderer } from '#src/features/render/render.ts'
 import type { RenderDelta } from '#src/features/sim/sim.ts'
+import { brightness, drawnRows, pixel } from '../../fixtures/game/pixels.ts'
 
 const WORLD = { w: 16, h: 9 }
 const ONE_BOX: RenderDelta = {
@@ -123,24 +124,6 @@ test('destroy removes the canvas and stops watching', async () => {
   renderer = undefined
 })
 
-/** Reads one pixel of the canvas as [r, g, b]. Must run in the same task as the draw, while the buffer is intact. */
-function pixel(canvas: HTMLCanvasElement, cssX: number, cssY: number): [number, number, number] {
-  const copy = document.createElement('canvas')
-  copy.width = canvas.width
-  copy.height = canvas.height
-  const context = copy.getContext('2d')
-  if (context === null) throw new Error('no 2D canvas to read pixels with')
-  context.drawImage(canvas, 0, 0)
-  const [r = 0, g = 0, b = 0] = context.getImageData(
-    Math.round(cssX * window.devicePixelRatio),
-    Math.round(cssY * window.devicePixelRatio),
-    1,
-    1,
-  ).data
-  return [r, g, b]
-}
-const brightness = ([r, g, b]: [number, number, number]): number => (r + g + b) / 3
-
 // A pale box on the pale sky must still be seen: every box has a dark edge, whatever its colour.
 test('a box has a dark edge, so a pale one shows against the sky', async () => {
   size(320, 180) // 20 pixels a tile; the box is 4 tiles wide, from x 120 to 200
@@ -161,4 +144,53 @@ test('a box has a dark edge, so a pale one shows against the sky', async () => {
     brightness(pixel(renderer?.canvas as HTMLCanvasElement, x, 90)),
   )
   expect(Math.min(...edge)).toBeLessThan(60)
+})
+
+// Touch buttons take room at the bottom; the world is fitted above them so a thumb never hides the play area.
+test('with room kept at the bottom, the whole world is drawn above it', async () => {
+  size(844, 390) // a phone held sideways: the world would fill the height
+  renderer = await createRenderer({ mount, world: WORLD })
+  renderer.setInset(96)
+  renderer.apply({
+    ...ONE_BOX,
+    added: [
+      {
+        sid: 1,
+        components: { transform: { x: 8, y: 8.5, rotation: 0 }, look: { w: 16, h: 1, color: 0x3b4a5a } },
+      },
+    ],
+  })
+  renderer.draw(1)
+  const rows = drawnRows(renderer.canvas)
+  expect(rows).toBeDefined()
+  // The floor is the world's bottom row, so where it ends is where the world ends.
+  expect(rows?.bottom).toBeLessThanOrEqual(390 - 96 + 1)
+  expect(rows?.bottom).toBeGreaterThan(390 - 96 - 40)
+})
+
+test('taking the room back puts the world back to the full height', async () => {
+  size(844, 390)
+  renderer = await createRenderer({ mount, world: WORLD })
+  renderer.apply({
+    ...ONE_BOX,
+    added: [
+      {
+        sid: 1,
+        components: { transform: { x: 8, y: 8.5, rotation: 0 }, look: { w: 16, h: 1, color: 0x3b4a5a } },
+      },
+    ],
+  })
+  renderer.setInset(96)
+  renderer.setInset(0)
+  renderer.draw(1)
+  expect(drawnRows(renderer.canvas)?.bottom).toBeGreaterThan(388)
+})
+
+test('room larger than half the mount is ignored, so the world never disappears', async () => {
+  size(320, 180)
+  renderer = await createRenderer({ mount, world: WORLD })
+  renderer.apply(ONE_BOX)
+  renderer.setInset(10_000)
+  renderer.draw(1)
+  expect(drawnRows(renderer.canvas)).toBeDefined()
 })

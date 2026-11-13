@@ -1,7 +1,6 @@
 // The whole game in each real browser: fixture content, the hero, real key events, hand-driven frames.
 
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { page } from 'vitest/browser'
 import { Player, verifyReplay } from '#src/features/commands/commands.ts'
 import { type Game, startGame } from '#src/features/game/game.ts'
 import type { Host } from '#src/features/host/host.ts'
@@ -178,34 +177,4 @@ test('bad controls stop the game from starting, with the plain message', async (
   const bad = { 'Jump!': { label: 'Jump', keys: ['Space'], side: 'right' as const } }
   await expect(start({ controls: bad })).rejects.toThrow('"Jump!" cannot be an action name')
   expect(mount.children).toHaveLength(0)
-})
-
-/** A picture for a person to look at: the drunk-grandma check reads these from the `ci-screens` branch. */
-async function picture(name: string, w: number, h: number): Promise<void> {
-  mount.style.width = `${w}px`
-  mount.style.height = `${h}px`
-  const { frames } = await start()
-  // A finger on the screen brings up the buttons, as it does for a player on a phone.
-  window.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }))
-  frames.at(0)
-  run(frames, 30)
-  await page.screenshot({ element: mount, path: `__screenshots__/${name}.png` })
-}
-
-test('how it looks on a phone', async () => {
-  await picture('phone-390x844', 390, 844)
-})
-
-test('how it looks on a tablet', async () => {
-  await picture('tablet-820x1180', 820, 1180)
-})
-
-// Sideways, where the level fills the height and the buttons sit over its lower corners (audit F4). The layout is M2's;
-// these pictures are here so a person can see it.
-test('how it looks on a phone held sideways', async () => {
-  await picture('phone-844x390', 844, 390)
-})
-
-test('how it looks on a tablet held sideways', async () => {
-  await picture('tablet-1180x820', 1180, 820)
 })

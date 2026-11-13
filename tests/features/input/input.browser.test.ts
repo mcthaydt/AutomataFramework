@@ -268,3 +268,37 @@ test('the words on a button can be read over the sky', () => {
   const ratio = (luminance([255, 255, 255]) + 0.05) / (luminance(under) + 0.05)
   expect(ratio).toBeGreaterThanOrEqual(4.5)
 })
+
+// The game fits its picture above the buttons, so it asks how much room they take: none while hidden, and the height of
+// the button strip once shown.
+test('the buttons take no room while hidden, and their strip once shown', () => {
+  const i = make()
+  expect(i.inset()).toBe(0)
+  firstTouch()
+  const top = Math.min(...[...mount.querySelectorAll('button')].map((b) => b.getBoundingClientRect().top))
+  expect(i.inset()).toBeGreaterThanOrEqual(mount.getBoundingClientRect().bottom - top)
+  expect(i.inset()).toBeGreaterThanOrEqual(64)
+})
+
+test('a listener hears the room change when the buttons appear', async () => {
+  const i = make()
+  const heard: number[] = []
+  i.onInset((px) => heard.push(px))
+  firstTouch()
+  await vi.waitFor(() => expect(heard.at(-1)).toBe(i.inset()))
+  expect(heard.at(-1)).toBeGreaterThan(0)
+})
+
+test('destroy stops the room listener', async () => {
+  const i = make()
+  const heard: number[] = []
+  i.onInset((px) => heard.push(px))
+  firstTouch()
+  await vi.waitFor(() => expect(heard.length).toBeGreaterThan(0))
+  i.destroy()
+  input = undefined
+  const count = heard.length
+  mount.style.width = '300px'
+  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
+  expect(heard).toHaveLength(count)
+})
