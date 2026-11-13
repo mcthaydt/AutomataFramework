@@ -46,6 +46,8 @@ package.
   browser, and as a Tauri app for iPad, Android and desktop.
 - **Edits live in the game's GitHub repo.** Save makes a commit; edits that collide merge the way GitHub does.
   Sign-in runs through a Cloudflare Pages Function; the site is on Cloudflare Pages.
+- **Editors open pull requests.** `main` is protected in every repo, so an editor's Save commits to a branch and opens a
+  pull request; it never pushes to `main`, and never writes a golden.
 - **Formats:** game content is JSON; everything else is TOML.
 - **Order inside the editors:** Levels, then Feel and Tuner (the first editor slice), then every other 2D editor.
 - **Releases are big and few** (the Owner, 2026-11-13). Release 1 is when 2D is finished (the framework in full and

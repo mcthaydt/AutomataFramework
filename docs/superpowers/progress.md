@@ -108,6 +108,11 @@ Overall for this fix: **tests written 100%, code written 100%, CI pending**.
 - Fix: `Renderer.setInset(px)` keeps the bottom `px` free and fits the level into the rest (never more than half the
   height); `Input.inset()` and `Input.onInset()` give the height of the button strip (0 while hidden); `startGame`
   wires them. Sideways phone: the level is 523 by 294, above 96 px of buttons.
+- Also from the coordinator: `CLAUDE.md` gets the line "Editors open pull requests" (Examples' page has the matching
+  "Editors commit here" note; the wording here follows the protected `main`).
+- The first CI run on the tests alone failed as it should: the two sideways screens said the level ended at 390 while
+  the buttons began at 311 (and 742 against 741 on the tablet), upright passed, and the canvas filled the screen in
+  all four, which is how the pictures' cut-off was shown not to be the game's.
 
 ### Stage 5: implementation audit (2026-11-13)
 
