@@ -238,7 +238,7 @@ export interface Violation { readonly file: string; readonly rule: string; reado
 export function checkArchitecture(files: SourceFiles): Violation[]
 ```
 
-- [ ] **Step 1: Write the config.** `package.json`: name `@automataframework/framework`, version `0.0.0`, `"type": "module"`,
+- [x] **Step 1: Write the config.** `package.json`: name `@automataframework/framework`, version `0.0.0`, `"type": "module"`,
   `"sideEffects": false`, `packageManager` `pnpm@10.34.6`, `engines.node` `>=24.21.0`, imports `"#src/*": "./src/*"`,
   the dependencies of the Tech Stack line at those exact versions (runtime: `koota`, `zod`,
   `@dimforge/rapier2d-deterministic-compat`, `pixi.js`, `smol-toml`; the rest dev). Scripts: `lint` (`biome check .`),
@@ -246,10 +246,10 @@ export function checkArchitecture(files: SourceFiles): Violation[]
   `test:engine` (`vitest run --project`). `tsconfig.json`: strict, `noUncheckedIndexedAccess`,
   `exactOptionalPropertyTypes`, `allowImportingTsExtensions`, `noEmit`, `lib` ES2023 + DOM. `biome.json`: copy the old
   repo's formatter and linter settings (line width 120, single quotes, no semicolons).
-- [ ] **Step 2: Write `vitest.config.ts`** with four projects. `node`: `tests/**/*.test.ts` except
+- [x] **Step 2: Write `vitest.config.ts`** with four projects. `node`: `tests/**/*.test.ts` except
   `*.browser.test.ts`. `chromium`, `webkit`, `firefox`: `tests/**/*.parity.test.ts` and `tests/**/*.browser.test.ts`,
   browser mode, headless, the Playwright provider, one instance of that engine.
-- [ ] **Step 3: Write `.github/workflows/ci.yml`.** On `pull_request` and on `push` to `main`;
+- [x] **Step 3: Write `.github/workflows/ci.yml`.** On `pull_request` and on `push` to `main`;
   `permissions: contents: read`; `concurrency` per ref with `cancel-in-progress: true`; all jobs on `ubuntu-latest`.
   Job `check`: checkout, pnpm, Node 24.21.0, `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`,
   `pnpm knip`, `pnpm test:node`. Job `engines`: matrix `engine: [chromium, webkit, firefox]`, `fail-fast: false`,
@@ -257,7 +257,7 @@ export function checkArchitecture(files: SourceFiles): Violation[]
   upload `tests/**/__screenshots__/**` as an artifact named `screens-${{ matrix.engine }}` (`if: always()`). Pin
   `actions/checkout`, `pnpm/action-setup`, `actions/setup-node` and `actions/upload-artifact` to the commit SHAs the
   old repo's `.github/workflows/ci.yml` uses.
-- [ ] **Step 4: Write the failing tests.** `tests/architecture/rules.test.ts` feeds `checkArchitecture` made-up file
+- [x] **Step 4: Write the failing tests.** `tests/architecture/rules.test.ts` feeds `checkArchitecture` made-up file
   maps and expects one violation each, by `rule`:
 
 ```ts
@@ -284,17 +284,17 @@ test('headless reaches nothing that needs a page', () =>
 ```
 
   `tests/architecture.test.ts` reads every file under `src/` and expects `checkArchitecture(files)` to equal `[]`.
-- [ ] **Step 5: Push; the `check` job fails** because `checkArchitecture` is not defined. This run also answers
+- [x] **Step 5: Push; the `check` job fails** because `checkArchitecture` is not defined. This run also answers
   "Before starting" item 2: if it is refused or never starts, stop and report.
-- [ ] **Step 6: Implement `checkArchitecture`.** Imports are found with a regular expression over `import`/`export …
+- [x] **Step 6: Implement `checkArchitecture`.** Imports are found with a regular expression over `import`/`export …
   from` and `import(...)` specifiers. `sim-is-pure` covers `src/lib/` and the `sim`, `physics`, `commands` and `level`
   features and forbids `Math.random`, `Date.now`, `new Date`, `performance.now`, `setTimeout`, `setInterval` and
   `fetch(`. `package-confined`: `koota` only in `features/sim/`; `@dimforge/` only in `features/physics/rapier.ts`;
   `pixi.js` only in `features/render/`; `smol-toml` only in `features/content/`; `effect` nowhere under `src/`.
   `headless-is-headless`: nothing reachable from `src/headless.ts` is in `render`, `input`, `host` or `game`.
-- [ ] **Step 7: Push; all jobs pass** (the engine jobs have no tests yet and must say so, not fail: set
+- [x] **Step 7: Push; all jobs pass** (the engine jobs have no tests yet and must say so, not fail: set
   `passWithNoTests` for the three browser projects).
-- [ ] **Step 8: Commit** (`chore: repo skeleton, CI and the architecture test`), then open the stage's pull request
+- [x] **Step 8: Commit** (`chore: repo skeleton, CI and the architecture test`), then open the stage's pull request
   as a draft with a few lines saying what M1 builds.
 
 ### Task 2: `src/lib`, lifted
