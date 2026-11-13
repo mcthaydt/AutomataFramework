@@ -33,8 +33,9 @@ test('text that is not TOML names the file and says what is wrong, on one line',
   expect(found[0]).toMatch(/^automata\.toml: This file is not valid TOML\. \S[^\n]*$/)
 })
 
+// Put first: a key written after a [[content]] block would belong to that block.
 test('an unknown key', () =>
-  expect(problems(`${FIXTURE}\ncolour = 1\n`)).toEqual([
+  expect(problems(`colour = 1\n${FIXTURE}`)).toEqual([
     'automata.toml: colour: This is not something a project has. Remove it or check the spelling.',
   ]))
 
