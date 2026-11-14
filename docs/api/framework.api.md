@@ -4783,3 +4783,61 @@ function writeContent<T extends ContentType>(type: T, value: z.input<(typeof CON
 ```ts
 function writeReplay(replay: Replay): string;
 ```
+
+## `./server`
+
+### `createRoomServer` (function)
+
+```ts
+function createRoomServer(options: RoomServerOptions): Promise<RoomServer>;
+```
+
+### `RoomServer` (interface)
+
+```ts
+interface RoomServer {
+    readonly port: number;
+    replays(): Record<string, Replay>;
+    readonly stats: {
+        readonly rooms: number;
+        readonly late: number;
+        readonly refused: number;
+    };
+    close(): Promise<void>;
+}
+```
+
+### `RoomServerOptions` (interface)
+
+```ts
+interface RoomServerOptions {
+    readonly game: RoomGame;
+    readonly port?: number;
+    readonly host?: string;
+    readonly maxRooms?: number;
+    readonly graceSeconds?: number;
+    readonly clock?: TickClock;
+}
+```
+
+### `runRoomServer` (function)
+
+```ts
+function runRoomServer(options: RoomServerOptions): Promise<never>;
+```
+
+### `startTickScheduler` (function)
+
+```ts
+function startTickScheduler(options: TickSchedulerOptions): TickScheduler;
+```
+
+### `TickClock` (interface)
+
+```ts
+interface TickClock {
+    now(): number;
+    setTimer(callback: () => void, delayMs: number): unknown;
+    clearTimer(handle: unknown): void;
+}
+```

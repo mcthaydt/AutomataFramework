@@ -18,6 +18,7 @@ const text = renderReport(
     entries: [
       { entryPoint: '.', file: `${root}src/index.ts` },
       { entryPoint: './headless', file: `${root}src/headless.ts` },
+      { entryPoint: './server', file: `${root}src/server.ts` },
     ],
   }),
 )

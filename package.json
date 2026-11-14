@@ -26,6 +26,10 @@
       "types": "./dist/headless.d.ts",
       "import": "./dist/headless.js"
     },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
     "./schemas/*": "./schemas/*"
   },
   "packageManager": "pnpm@10.34.6",
