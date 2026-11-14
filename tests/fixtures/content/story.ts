@@ -37,8 +37,8 @@ export const intro = (): Written => ({
     { at: 120, x: 8, y: 4, zoom: 1.5, ease: 'smooth' },
   ],
   actors: [
-    { at: 0, who: 'keeper', x: 8.5, y: 7.5, clip: 'idle' },
-    { at: 60, who: 'keeper', x: 8.5, y: 7.5, clip: 'talk' },
+    { at: 0, who: 'keeper', x: 8.5, y: 7.5 },
+    { at: 60, who: 'keeper', x: 8.5, y: 7.5 },
   ],
   lines: [{ at: 60, until: 180, line: 'keeper.hello', speaker: 'keeper' }],
 })

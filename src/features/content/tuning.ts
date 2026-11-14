@@ -63,11 +63,15 @@ const number = z.strictObject({
   step: z.number().gt(0).describe('How far one nudge moves it.'),
 })
 
-/** A gamepad name the game knows. The sentence is the input feature's own, with the name that was written. */
+/**
+ * A gamepad name the game knows. The sentence is the input feature's own, with the name that was written. The cast is
+ * the one place the schema is told what the type system cannot see: it reads text and refuses any that is not in
+ * `PAD_NAMES`, so what it lets through is a `PadInput`.
+ */
 const padName = z.string().refine((name) => PAD_NAMES.includes(name), {
   error: (issue) =>
     `"${String(issue.input)}" is not a gamepad button the game knows. Use a name like "south", "dpad-left" or "left-stick-up".`,
-})
+}) as unknown as z.ZodType<PadInput, PadInput>
 
 const control = z.strictObject({
   action: z
@@ -235,9 +239,7 @@ export const TuningSchema: z.ZodType<TuningFile, TuningFile> = z
         "The game's controls: keys, gamepad buttons and the touch button of each action. Left out means none.",
       ),
   })
-  .superRefine(checkTuning) as unknown as z.ZodType<TuningFile, TuningFile>
-// The cast: the schema reads gamepad names as text and refuses any that are not in `PAD_NAMES`, which the type system
-// cannot see, so `pad` is `string[]` to it and `PadInput[]` to everyone else.
+  .superRefine(checkTuning)
 
 /** Each number's value by its id: how a game's code reads a tuning. A frozen map with no prototype. */
 export function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>> {

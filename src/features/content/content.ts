@@ -1,4 +1,4 @@
-// The content feature: level and character files, read into values with plain problems and written one way.
+// The content feature: every kind of content file, read into values with plain problems and written one way.
 // Nothing here touches a file; callers hand in text and take text back.
 
 export {

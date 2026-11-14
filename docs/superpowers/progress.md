@@ -12,13 +12,15 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 |---|---|---|
 | 1. Spec | Written, in review | `specs/2026-11-14-m2-design.md` |
 | 2 to 7, per plan | Not started (plans C, I, V and N can start at once) | |
-| Plan C (content): 2. Plan | Written, in review: twelve tasks, twelve new kinds of file and the widened character and level | `plans/2026-11-14-m2-content.md` |
+| Plan C (content): 2. Plan | Done (merged, PR 33): twelve tasks, twelve new kinds of file and the widened character and level | `plans/2026-11-14-m2-content.md` |
 | Plan C (content): 3. Plan audit | Done, 100%: two critical faults (the content hash, the tileset test) and six important ones fixed in the plan; one Owner question open (the figure and backdrop formats), which holds those two halves of Tasks 3 and 4; plan C at 0% built | `audits/2026-11-14-m2-content-plan-audit.md` |
-| Plan C (content): 4. Execution | Built, in review (PR 43), 100% of the plan's tasks: twelve kinds of file, each with a schema, a test and a fixture, the tileset in a level, the full fixture game in four engines, the package and README; `figure` and `backdrop` go to plan A (the Owner's answer); no golden moved | PR 43 |
+| Plan C (content): 4. Execution | Done, merged (PR 43, `0c48f3e`), 100% of the plan's tasks: twelve kinds of file, each with a schema, a test and a fixture, the tileset in a level, the full fixture game in four engines, the package and README; `figure` and `backdrop` go to plan A (the Owner's answer); no golden moved | PR 43 |
+| Plan C (content): 5. Implementation audit | Written, in review; stage at 100%, plan C at 80%: no critical, two important (a cutscene's `clip` is unchecked and belongs to plan A; the duplicate-id sentence reads "a cues"), eight minor; nine fixes for stage 6; no Owner question | `audits/2026-11-14-m2-content-implementation-audit.md` |
 | Plan V (saves and the host port): 2. Plan | Done, 100% (merged, PR 32) | `plans/2026-11-14-m2-saves-host.md` |
 | Plan V: 3. Plan audit | Written, in review; stage at 100%, plan V at 20%. Ten findings, all applied to the plan | `audits/2026-11-14-m2-saves-host-plan-audit.md` |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
 | Plan I (input), stage 3: plan audit | Done, 100%: 3 blocking, 12 should-fix and 5 notes, all applied to the plan; ready for stage 4 | `audits/2026-11-14-m2-input-plan-audit.md` |
+| Plan I (input), stage 4: execution | Done, **100%** (all ten tasks built; Tasks 1 to 8 green in CI, Tasks 9 and 10 in CI at the last push), AutomataFramework PR 42 | `plans/2026-11-14-m2-input.md` |
 | Plan N, networking: 2. Plan, 3. Plan audit | Plan written; audit done (stage 3 at 100%), ten findings F1 to F10 applied to the plan, in review; 0% built (12 tasks; Task 11 waits for plan I's `join` and `leave`) | `plans/2026-11-14-m2-networking.md`, `audits/2026-11-14-m2-networking-plan-audit.md` |
 | Plan P (physics: joints and touch): 2. Plan | Written, in review; twelve tasks; stage at 100%, plan P at 10%; waits on plan C | `plans/2026-11-14-m2-physics.md` |
 | Plan P (physics: joints and touch): 3. Plan audit | Written, in review; stage at 100%, plan P at 20%: one critical (a rope's length through `Math.hypot`, now `dmath`'s `hypot`), eight important and nine minor findings, all but one minor applied to the plan; no Owner question; waits on plan C | `audits/2026-11-14-m2-physics-plan-audit.md` |

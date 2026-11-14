@@ -16,14 +16,13 @@ export interface CameraKey {
   readonly ease: Ease
 }
 
-/** Where an actor is at a tick: which thing, where, and what it is doing. */
+/** Where an actor is at a tick: which thing, where, and which way it faces. */
 export interface ActorKey {
   readonly at: number
   /** A thing's id in the level, or `player-1` to `player-4`. */
   readonly who: string
   readonly x: number
   readonly y: number
-  readonly clip?: string | undefined
   readonly face?: 'left' | 'right' | undefined
 }
 
@@ -70,7 +69,6 @@ const actor = z.strictObject({
   who: Id.describe("Which thing: its id in the level, or player-1 to player-4 for a player's hero."),
   x: tilesFromLeft('Where it stands'),
   y: tilesFromTop('Where it stands'),
-  clip: Id.optional().describe('The clip it plays, by name, like "talk". Left out means no change.'),
   face: z.enum(['left', 'right']).optional().describe('Which way it faces. Left out means no change.'),
 })
 
@@ -94,7 +92,8 @@ function checkCutscene(file: Partial<CutsceneFile>, ctx: z.core.$RefinementCtx):
       if (before !== undefined && key.at < before)
         add(
           [name, i, 'at'],
-          `This key is at tick ${key.at}, before the one above it (${before}). Keys go in time order.`,
+          // Two actors' keys may interleave, so the key above is the same actor's, and the words say whose.
+          `This key is at tick ${key.at}, before ${owner === '' ? 'the one above it' : `"${owner}"'s key above it`} (${before}). Keys go in time order.`,
         )
       else last.set(owner, key.at)
       if (key.at > end) add([name, i, 'at'], `This is after the cutscene ends, at tick ${end}.`)
@@ -107,6 +106,7 @@ function checkCutscene(file: Partial<CutsceneFile>, ctx: z.core.$RefinementCtx):
   ;(file.lines ?? []).forEach((l, i) => {
     if (l.at > end) add(['lines', i, 'at'], `This is after the cutscene ends, at tick ${end}.`)
     if (l.until <= l.at) add(['lines', i, 'until'], 'A line must end after it starts.')
+    if (l.until > end) add(['lines', i, 'until'], `This is after the cutscene ends, at tick ${end}.`)
   })
 }
 

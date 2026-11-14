@@ -1,9 +1,10 @@
-import { MAX_PLAYERS, Player } from '../commands/commands.ts'
+import { MAX_PLAYERS } from '../commands/commands.ts'
 import type { Character, GameContent } from '../content/content.ts'
 import { BodyKind, body, collider, transform } from '../physics/physics.ts'
-import type { Sim, SpawnPart } from '../sim/sim.ts'
-import { colourNumber, groundOf } from './colours.ts'
+import type { Sim } from '../sim/sim.ts'
+import { groundOf } from './colours.ts'
 import { Look, Thing } from './components.ts'
+import { characterParts, heroParts } from './hero.ts'
 import { jointParts, type Placed } from './joints.ts'
 import { tileRuns } from './tile-runs.ts'
 
@@ -14,19 +15,6 @@ export class LevelError extends Error {}
 function who(numbers: readonly number[]): string {
   const last = numbers[numbers.length - 1]
   return numbers.length === 1 ? `player ${last}` : `players ${numbers.slice(0, -1).join(', ')} and ${last}`
-}
-
-/** The parts every character-shaped entity gets: where, how it moves, its box and how it looks. */
-function characterParts(character: Character, at: { x: number; y: number }): SpawnPart[] {
-  return [
-    transform(at),
-    body(character.body === 'dynamic' ? BodyKind.dynamic : BodyKind.fixed, {
-      fixedRotation: character.upright,
-    }),
-    // A touched character lets things through: the game is told, and nothing is pushed.
-    collider.cuboid(character.size.w / 2, character.size.h / 2, { sensor: character.touch !== undefined }),
-    [Look, { w: character.size.w, h: character.size.h, color: colourNumber(character.color) }],
-  ]
 }
 
 /**
@@ -107,13 +95,7 @@ export function spawnLevel(
     const holder = j.holder === undefined ? (anchor as Placed) : find(j.holder, 'is held by')
     sim.spawn([jointParts(j, find(j.thing, 'holds'), holder)])
   }
-  const hero = character(content.project.hero, 'The hero')
-  for (const number of numbers) {
-    const start = level.starts.find((s) => s.player === number) as { x: number; y: number }
-    sim.spawn([
-      ...characterParts(hero, start),
-      [Thing, { id: `player-${number}`, character: content.project.hero }],
-      [Player, { number }],
-    ])
-  }
+  // The hero's character must exist; the level is known to have each player's start point, checked above.
+  character(content.project.hero, 'The hero')
+  for (const number of numbers) sim.spawn(heroParts(content, levelId, number) ?? [])
 }

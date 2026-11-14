@@ -6,6 +6,7 @@ import {
   parseContent,
   writeContent,
 } from '#src/features/content/content.ts'
+import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { fixtureFiles, readFixture } from '../../fixtures/game/read.ts'
 
 /** What a person reads when the game does not load: one sentence per problem, none when it loads. */
@@ -163,6 +164,27 @@ test('a read that throws at once, or rejects for the project file, never throws 
   }
 })
 
+const FOUR = (fixtureFiles['automata.toml'] ?? '').replace('hero = "hero"\n', 'hero = "hero"\nplayers = 4\n')
+
+test('a game for four whose level has two start points says which are missing', async () => {
+  const two = edited('content/levels/level-1.json', (level) => {
+    level.starts = [
+      { player: 1, x: 2.5, y: 7.5 },
+      { player: 2, x: 4.5, y: 7.5 },
+    ]
+  })
+  expect(await problems({ 'automata.toml': FOUR, 'content/levels/level-1.json': two })).toEqual(
+    [3, 4].map(
+      (n) =>
+        `content/levels/level-1.json: starts: This game is for up to 4 players, but this level has no start point for player ${n}. Add one to "starts", or lower players in automata.toml.`,
+    ),
+  )
+})
+
+test('a one-player game with one start point loads as before', async () => {
+  expect(await problems()).toEqual([])
+})
+
 test('a file listed as the wrong kind says so in one sentence', async () => {
   const toml = (fixtureFiles['automata.toml'] ?? '').replace(
     'type = "character"\npath = "content/characters/crate.json"',
@@ -183,4 +205,37 @@ test('a name every object has is an ordinary name', async () => {
   const loaded = await loadGame(readFixture())
   expect(loaded.ok).toBe(true)
   if (loaded.ok) expect('toString' in loaded.value.characters).toBe(false)
+})
+
+/** What a person reads when the full game, with these changes, does not load. */
+async function fullProblems(overrides: Record<string, string | undefined>): Promise<string[]> {
+  const loaded = await loadGame(readFullGame(overrides))
+  return loaded.ok ? [] : loaded.diagnostics.map(formatDiagnostic)
+}
+const listed = (type: string, path: string): string => `\n[[content]]\ntype = "${type}"\npath = "${path}"\n`
+
+test('two files of a new kind with one id say "a cue list" and "a messages file", not "a cues"', async () => {
+  const toml = fullGameFiles['automata.toml'] ?? ''
+  expect(
+    await fullProblems({
+      'automata.toml': toml + listed('cues', 'other/cues.json'),
+      'other/cues.json': fullGameFiles['content/cues/cues.json'],
+    }),
+  ).toEqual(['other/cues.json: id: There is already a cue list called "cues", in content/cues/cues.json.'])
+  expect(
+    await fullProblems({
+      'automata.toml': toml + listed('messages', 'other/en.json'),
+      'other/en.json': fullGameFiles['content/messages/en.json'],
+    }),
+  ).toEqual(['other/en.json: id: There is already a messages file called "en", in content/messages/en.json.'])
+})
+
+test('a sound listed as the wrong kind is one problem, and the cues that play it are not told it is missing', async () => {
+  const toml = (fullGameFiles['automata.toml'] ?? '').replace(
+    'type = "sound"\npath = "content/sounds/jump.json"',
+    'type = "music"\npath = "content/sounds/jump.json"',
+  )
+  expect(await fullProblems({ 'automata.toml': toml })).toEqual([
+    'content/sounds/jump.json: This file is listed as a music track, but it reads as a sound. Change its type in automata.toml.',
+  ])
 })

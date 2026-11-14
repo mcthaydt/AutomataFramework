@@ -41,9 +41,17 @@ interface ActorKey {
     readonly who: string;
     readonly x: number;
     readonly y: number;
-    readonly clip?: string | undefined;
     readonly face?: 'left' | 'right' | undefined;
 }
+```
+
+### `applySettings` (function)
+
+```ts
+function applySettings(defaults: Controls, saved: unknown): {
+    readonly controls: Controls;
+    readonly dropped: readonly string[];
+};
 ```
 
 ### `atan` (function)
@@ -82,6 +90,22 @@ interface BehaviourRule {
 
 ```ts
 const BehaviourSchema: z.ZodType<BehaviourFile, BehaviourFile>;
+```
+
+### `BindingOverride` (interface)
+
+```ts
+interface BindingOverride {
+    readonly keys?: readonly string[] | undefined;
+    readonly shared?: readonly [readonly string[], readonly string[]] | undefined;
+    readonly pad?: readonly PadInput[] | undefined;
+}
+```
+
+### `BindingSlot` (type)
+
+```ts
+type BindingSlot = 'keys' | 'shared-1' | 'shared-2' | 'pad';
 ```
 
 ### `Body` (const)
@@ -127,6 +151,27 @@ interface CameraKey {
 }
 ```
 
+### `Capture` (interface)
+
+```ts
+interface Capture {
+    readonly done: Promise<CaptureAnswer>;
+    cancel(): void;
+}
+```
+
+### `CaptureAnswer` (type)
+
+```ts
+type CaptureAnswer = {
+    readonly ok: true;
+    readonly input: string;
+} | {
+    readonly ok: false;
+    readonly reason: 'cancelled';
+};
+```
+
 ### `Character` (interface)
 
 ```ts
@@ -143,7 +188,6 @@ interface Character {
     readonly kind?: string | undefined;
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
-    readonly touch?: 'sense' | 'take' | undefined;
 }
 ```
 
@@ -165,6 +209,12 @@ const CharacterSchema: z.ZodType<Character, CharacterInput>;
 
 ```ts
 function checkControls(controls: Controls): void;
+```
+
+### `Claim` (type)
+
+```ts
+type Claim = 'keyboard' | 'pad-0' | 'pad-1' | 'pad-2' | 'pad-3';
 ```
 
 ### `Collider` (const)
@@ -318,6 +368,16 @@ interface Control {
     readonly label: string;
     readonly keys: readonly string[];
     readonly side: 'left' | 'right';
+    readonly pad?: readonly PadInput[] | undefined;
+    readonly shared?: readonly [readonly string[], readonly string[]] | undefined;
+}
+```
+
+### `ControlEntry` (interface)
+
+```ts
+interface ControlEntry extends Control {
+    readonly action: string;
 }
 ```
 
@@ -337,6 +397,12 @@ const ControlsCommand: CommandDef<typeof controlsPayload>;
 
 ```ts
 function controlsCommand(tick: number, player: number, seq: number, held: readonly string[]): Command;
+```
+
+### `controlsFromList` (function)
+
+```ts
+function controlsFromList(list: readonly ControlEntry[]): Controls;
 ```
 
 ### `ConversationChoice` (interface)
@@ -392,11 +458,7 @@ function createGameSim(options: GameSimOptions): Promise<Sim>;
 ### `createInput` (function)
 
 ```ts
-function createInput(options: {
-    mount: HTMLElement;
-    controls: Controls;
-    player?: number;
-}): Input;
+function createInput(options: InputOptions): Input;
 ```
 
 ### `createRecorder` (function)
@@ -431,6 +493,12 @@ function createRng(seed: number): Rng;
 
 ```ts
 function createScene(): Scene;
+```
+
+### `createSequence` (function)
+
+```ts
+function createSequence(): Sequence;
 ```
 
 ### `createSim` (function)
@@ -553,6 +621,18 @@ function defineSystem(spec: SystemSpec): SystemDef;
 
 ```ts
 function deriveSeed(rootSeed: number, name: string): number;
+```
+
+### `Device` (type)
+
+```ts
+type Device = 'keyboard' | 'keyboard-1' | 'keyboard-2' | 'touch' | 'pad-0' | 'pad-1' | 'pad-2' | 'pad-3';
+```
+
+### `DeviceKind` (type)
+
+```ts
+type DeviceKind = 'keyboard' | 'touch' | 'gamepad';
 ```
 
 ### `Diagnostic` (interface)
@@ -735,6 +815,10 @@ interface Freeze {
 ```ts
 interface Game {
     readonly sim: Sim;
+    readonly input: Input;
+    players(): readonly number[];
+    addPlayer(claim: Claim): JoinAnswer;
+    removePlayer(player: number): boolean;
     pause(): void;
     resume(): void;
     replay(): Replay;
@@ -770,6 +854,8 @@ interface GameOptions extends GameSimOptions {
     readonly controls: Controls;
     readonly host: Host;
     readonly frames?: Frames;
+    readonly settings?: unknown;
+    readonly gamepads?: () => readonly (PadLike | null)[];
 }
 ```
 
@@ -824,8 +910,60 @@ interface Input {
     poll(tick: number): Command[];
     inset(): number;
     onInset(listener: (px: number) => void): void;
+    setPlayers(players: readonly number[]): void;
+    claim(player: number, claim: ClaimType): void;
+    seats(): readonly Seat[];
+    onSeats(listener: (seats: readonly Seat[]) => void): () => void;
+    pads(): readonly ListedPad[];
+    silence(): () => void;
+    invite(onPad: (pad: number) => void): () => void;
+    onMenu(listener: (press: MenuPress, pad: number) => void): () => void;
+    device(player: number): DeviceKind;
+    onDevice(listener: (player: number, kind: DeviceKind) => void): () => void;
+    inputsFor(player: number, action: string): readonly string[];
+    controls(): Controls;
+    settings(): InputSettings;
+    dropped(): readonly string[];
+    rebind(action: string, slot: BindingSlot, input: string): Rebound;
+    resetBindings(): void;
+    onBindings(listener: (settings: InputSettings) => void): () => void;
+    capture(slot: BindingSlot): Capture;
     destroy(): void;
 }
+```
+
+### `INPUT_SETTINGS_DEFAULT` (const)
+
+```ts
+const INPUT_SETTINGS_DEFAULT: InputSettings;
+```
+
+### `InputOptions` (interface)
+
+```ts
+interface InputOptions {
+    readonly mount: HTMLElement;
+    readonly controls: Controls;
+    readonly settings?: unknown;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+    readonly frames?: Frames;
+    readonly sequence?: Sequence;
+}
+```
+
+### `InputSettings` (interface)
+
+```ts
+interface InputSettings {
+    readonly format: 1;
+    readonly bindings: Readonly<Record<string, BindingOverride>>;
+}
+```
+
+### `InputSettingsSchema` (const)
+
+```ts
+const InputSettingsSchema: z.ZodType<InputSettings, InputSettings>;
 ```
 
 ### `isHeld` (function)
@@ -834,32 +972,38 @@ interface Input {
 function isHeld(player: EntityRef, action: string): boolean;
 ```
 
-### `Joint` (const)
+### `JoinAnswer` (type)
 
 ```ts
-const Joint: ComponentDef<typeof jointFields>;
-```
-
-### `joint` (const)
-
-```ts
-const joint: {
-    pin(a: number, b: number, opts?: JointEnds & {
-        min?: number;
-        max?: number;
-    }): SpawnPart;
-    rope(a: number, b: number, length: number, opts?: JointEnds): SpawnPart;
+type JoinAnswer = {
+    readonly ok: true;
+    readonly player: number;
+} | {
+    readonly ok: false;
+    readonly reason: 'one-player-game' | 'full' | 'no-start' | 'taken' | 'no-shared';
+    readonly message: string;
 };
 ```
 
-### `JointKind` (const)
+### `JoinCommand` (const)
 
 ```ts
-const JointKind: {
-    readonly pin: 0;
-    readonly rope: 1;
-};
-type JointKind = (typeof JointKind)[keyof typeof JointKind];
+const JoinCommand: CommandDef<typeof emptyPayload>;
+```
+
+### `joinCommand` (function)
+
+```ts
+function joinCommand(tick: number, player: number, seq: number): Command;
+```
+
+### `joinPlugin` (function)
+
+```ts
+function joinPlugin(options: {
+    readonly level: string;
+    readonly max: number;
+}): PluginDef;
 ```
 
 ### `jsonSchemaFor` (function)
@@ -880,6 +1024,18 @@ type Language = (typeof LANGUAGES)[number];
 const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
 ```
 
+### `LeaveCommand` (const)
+
+```ts
+const LeaveCommand: CommandDef<typeof emptyPayload>;
+```
+
+### `leaveCommand` (function)
+
+```ts
+function leaveCommand(tick: number, player: number, seq: number): Command;
+```
+
 ### `Level` (interface)
 
 ```ts
@@ -892,7 +1048,6 @@ interface Level {
     readonly tiles: readonly string[];
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
-    readonly joints?: readonly LevelJoint[] | undefined;
 }
 ```
 
@@ -903,44 +1058,10 @@ class LevelError extends Error {
 }
 ```
 
-### `LevelJoint` (type)
-
-```ts
-type LevelJoint = {
-    readonly id: string;
-    readonly kind: 'pin';
-    readonly thing: string;
-    readonly holder?: string | undefined;
-    readonly x: number;
-    readonly y: number;
-    readonly turn?: {
-        readonly min: number;
-        readonly max: number;
-    } | undefined;
-} | {
-    readonly id: string;
-    readonly kind: 'rope';
-    readonly thing: string;
-    readonly holder?: string | undefined;
-    readonly from: LevelPoint;
-    readonly to: LevelPoint;
-    readonly slack?: number | undefined;
-};
-```
-
 ### `levelPlugin` (const)
 
 ```ts
 const levelPlugin: PluginDef;
-```
-
-### `LevelPoint` (interface)
-
-```ts
-interface LevelPoint {
-    readonly x: number;
-    readonly y: number;
-}
 ```
 
 ### `LevelSchema` (const)
@@ -1031,6 +1152,12 @@ const MAX_STEPS = 4096;
 const MAX_STEPS_PER_FRAME = 5;
 ```
 
+### `MenuPress` (type)
+
+```ts
+type MenuPress = 'up' | 'down' | 'left' | 'right' | 'accept' | 'back' | 'pause';
+```
+
 ### `MessagesFile` (interface)
 
 ```ts
@@ -1113,6 +1240,22 @@ const PAD_STICKS: readonly ["left-stick-up", "left-stick-down", "left-stick-left
 type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
 ```
 
+### `PadLike` (interface)
+
+```ts
+interface PadLike {
+    readonly id: string;
+    readonly index: number;
+    readonly connected: boolean;
+    readonly mapping: string;
+    readonly axes: readonly number[];
+    readonly buttons: readonly {
+        readonly pressed: boolean;
+        readonly value: number;
+    }[];
+}
+```
+
 ### `parseContent` (function)
 
 ```ts
@@ -1169,7 +1312,6 @@ interface PhysicsOptions {
         readonly x: number;
         readonly y: number;
     };
-    readonly joints?: boolean;
 }
 ```
 
@@ -1186,6 +1328,12 @@ interface Played {
 
 ```ts
 const Player: ComponentDef<typeof playerFields>;
+```
+
+### `playersIn` (function)
+
+```ts
+function playersIn(sim: Sim): number[];
 ```
 
 ### `playReplay` (function)
@@ -1252,6 +1400,7 @@ interface Project {
     readonly name: string;
     readonly start: string;
     readonly hero: string;
+    readonly players?: number | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -1266,6 +1415,26 @@ const PROJECT_FILE = "automata.toml";
 
 ```ts
 const ProjectSchema: z.ZodType<Project, Project>;
+```
+
+### `rebind` (function)
+
+```ts
+function rebind(current: Controls, action: string, slot: BindingSlot, input: string): Rebound;
+```
+
+### `Rebound` (type)
+
+```ts
+type Rebound = {
+    readonly ok: true;
+    readonly controls: Controls;
+    readonly swapped?: string;
+} | {
+    readonly ok: false;
+    readonly reason: 'unknown-action' | 'reserved' | 'no-shared' | 'other-half';
+    readonly message: string;
+};
 ```
 
 ### `Recorder` (interface)
@@ -1419,6 +1588,16 @@ interface Scene {
 }
 ```
 
+### `Seat` (interface)
+
+```ts
+interface Seat {
+    readonly player: number;
+    readonly devices: readonly Device[];
+    readonly connected: boolean;
+}
+```
+
 ### `Sense` (type)
 
 ```ts
@@ -1435,6 +1614,20 @@ type Sense = {
 } | {
     readonly sense: 'on-ground';
 };
+```
+
+### `Sequence` (interface)
+
+```ts
+interface Sequence {
+    next(source: number): number;
+}
+```
+
+### `settingsOf` (function)
+
+```ts
+function settingsOf(defaults: Controls, current: Controls): InputSettings;
 ```
 
 ### `Shake` (interface)
@@ -1508,9 +1701,6 @@ interface SimContext {
         of<Z extends z.ZodType>(def: CommandDef<Z>): ReadonlyArray<CommandRecord<z.output<Z>>>;
     };
     emit<Z extends z.ZodType>(def: EventDef<Z>, payload: z.input<Z>): void;
-    readonly events: {
-        of<Z extends z.ZodType>(def: EventDef<Z>): ReadonlyArray<z.output<Z>>;
-    };
     resource<Z extends z.ZodType>(def: ResourceDef<Z>): z.output<Z>;
     readonly pluginState: unknown;
 }
@@ -2042,7 +2232,6 @@ interface ActorKey {
     readonly who: string;
     readonly x: number;
     readonly y: number;
-    readonly clip?: string | undefined;
     readonly face?: 'left' | 'right' | undefined;
 }
 ```
@@ -2144,7 +2333,6 @@ interface Character {
     readonly kind?: string | undefined;
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
-    readonly touch?: 'sense' | 'take' | undefined;
 }
 ```
 
@@ -2381,6 +2569,12 @@ function createRecorder(sim: Sim, options?: {
 
 ```ts
 function createRng(seed: number): Rng;
+```
+
+### `createSequence` (function)
+
+```ts
+function createSequence(): Sequence;
 ```
 
 ### `createSim` (function)
@@ -2709,32 +2903,25 @@ const Id: z.ZodString;
 function isHeld(player: EntityRef, action: string): boolean;
 ```
 
-### `Joint` (const)
+### `JoinCommand` (const)
 
 ```ts
-const Joint: ComponentDef<typeof jointFields>;
+const JoinCommand: CommandDef<typeof emptyPayload>;
 ```
 
-### `joint` (const)
+### `joinCommand` (function)
 
 ```ts
-const joint: {
-    pin(a: number, b: number, opts?: JointEnds & {
-        min?: number;
-        max?: number;
-    }): SpawnPart;
-    rope(a: number, b: number, length: number, opts?: JointEnds): SpawnPart;
-};
+function joinCommand(tick: number, player: number, seq: number): Command;
 ```
 
-### `JointKind` (const)
+### `joinPlugin` (function)
 
 ```ts
-const JointKind: {
-    readonly pin: 0;
-    readonly rope: 1;
-};
-type JointKind = (typeof JointKind)[keyof typeof JointKind];
+function joinPlugin(options: {
+    readonly level: string;
+    readonly max: number;
+}): PluginDef;
 ```
 
 ### `jsonSchemaFor` (function)
@@ -2755,6 +2942,18 @@ type Language = (typeof LANGUAGES)[number];
 const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
 ```
 
+### `LeaveCommand` (const)
+
+```ts
+const LeaveCommand: CommandDef<typeof emptyPayload>;
+```
+
+### `leaveCommand` (function)
+
+```ts
+function leaveCommand(tick: number, player: number, seq: number): Command;
+```
+
 ### `Level` (interface)
 
 ```ts
@@ -2767,7 +2966,6 @@ interface Level {
     readonly tiles: readonly string[];
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
-    readonly joints?: readonly LevelJoint[] | undefined;
 }
 ```
 
@@ -2778,44 +2976,10 @@ class LevelError extends Error {
 }
 ```
 
-### `LevelJoint` (type)
-
-```ts
-type LevelJoint = {
-    readonly id: string;
-    readonly kind: 'pin';
-    readonly thing: string;
-    readonly holder?: string | undefined;
-    readonly x: number;
-    readonly y: number;
-    readonly turn?: {
-        readonly min: number;
-        readonly max: number;
-    } | undefined;
-} | {
-    readonly id: string;
-    readonly kind: 'rope';
-    readonly thing: string;
-    readonly holder?: string | undefined;
-    readonly from: LevelPoint;
-    readonly to: LevelPoint;
-    readonly slack?: number | undefined;
-};
-```
-
 ### `levelPlugin` (const)
 
 ```ts
 const levelPlugin: PluginDef;
-```
-
-### `LevelPoint` (interface)
-
-```ts
-interface LevelPoint {
-    readonly x: number;
-    readonly y: number;
-}
 ```
 
 ### `LevelSchema` (const)
@@ -3038,7 +3202,6 @@ interface PhysicsOptions {
         readonly x: number;
         readonly y: number;
     };
-    readonly joints?: boolean;
 }
 ```
 
@@ -3055,6 +3218,12 @@ interface Played {
 
 ```ts
 const Player: ComponentDef<typeof playerFields>;
+```
+
+### `playersIn` (function)
+
+```ts
+function playersIn(sim: Sim): number[];
 ```
 
 ### `playReplay` (function)
@@ -3121,6 +3290,7 @@ interface Project {
     readonly name: string;
     readonly start: string;
     readonly hero: string;
+    readonly players?: number | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -3285,6 +3455,14 @@ type Sense = {
 };
 ```
 
+### `Sequence` (interface)
+
+```ts
+interface Sequence {
+    next(source: number): number;
+}
+```
+
 ### `Shake` (interface)
 
 ```ts
@@ -3356,9 +3534,6 @@ interface SimContext {
         of<Z extends z.ZodType>(def: CommandDef<Z>): ReadonlyArray<CommandRecord<z.output<Z>>>;
     };
     emit<Z extends z.ZodType>(def: EventDef<Z>, payload: z.input<Z>): void;
-    readonly events: {
-        of<Z extends z.ZodType>(def: EventDef<Z>): ReadonlyArray<z.output<Z>>;
-    };
     resource<Z extends z.ZodType>(def: ResourceDef<Z>): z.output<Z>;
     readonly pluginState: unknown;
 }
