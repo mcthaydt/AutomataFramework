@@ -196,7 +196,9 @@ test('--source ko writes source = "ko", marks made against Korean, and a game th
   expect(sourceLines(memory)).toEqual(['source = "ko"'])
   expect(text(memory, `my-game/${READ_MARKS_FILE}`)).toBe('format = 2\nsource = "ko"\n')
   const printed = memory.out.join('\n')
-  expect(printed).toContain('Its words are written in Korean. To change that, change source in automata.toml.')
+  expect(printed).toContain(
+    'Its words are written in Korean. To change that, change source in automata.toml.',
+  )
   const report = await Effect.runPromise(
     Effect.provide(runCheck({ folder: 'my-game', only: 'files' }), memory.layer),
   )
@@ -211,21 +213,23 @@ test('--source ko writes source = "ko", marks made against Korean, and a game th
   expect(translationProblems(loaded.value)).toEqual([])
 })
 
-test('--source en keeps the template\'s own marks file, byte for byte', async () => {
+test("--source en keeps the template's own marks file, byte for byte", async () => {
   const memory = await made(['my-game', '--source', 'en'])
   expect(sourceLines(memory)).toEqual(['source = "en"'])
   expect(text(memory, `my-game/${READ_MARKS_FILE}`)).toBe(templateTree()[READ_MARKS_FILE])
 })
 
-test('the machine\'s own language is the source when none is given', async () => {
+test("the machine's own language is the source when none is given", async () => {
   const memory = memoryLayer(templateInMemory(), { deviceLanguages: ['ja_JP.UTF-8'] })
   expect(await main(['create', 'my-game'], memory.layer)).toBe(0)
   expect(sourceLines(memory)).toEqual(['source = "ja"'])
   expect(text(memory, `my-game/${READ_MARKS_FILE}`)).toBe('format = 2\nsource = "ja"\n')
 })
 
-test('the first of the machine\'s languages the framework has words in is used', async () => {
-  const memory = memoryLayer(templateInMemory(), { deviceLanguages: ['C.UTF-8', 'fr_FR.UTF-8', 'pt_BR.UTF-8'] })
+test("the first of the machine's languages the framework has words in is used", async () => {
+  const memory = memoryLayer(templateInMemory(), {
+    deviceLanguages: ['C.UTF-8', 'fr_FR.UTF-8', 'pt_BR.UTF-8'],
+  })
   expect(await main(['create', 'my-game', '--json'], memory.layer)).toBe(0)
   expect(sourceLines(memory)).toEqual(['source = "pt"'])
 })
@@ -250,7 +254,7 @@ test('a language that is not one of the six is refused in words, and nothing is 
   expect(memory.files.size).toBe(before)
 })
 
-test('a language asked for beats the machine\'s', async () => {
+test("a language asked for beats the machine's", async () => {
   const memory = memoryLayer(templateInMemory(), { deviceLanguages: ['ja_JP.UTF-8'] })
   expect(await main(['create', 'my-game', '--source', 'es'], memory.layer)).toBe(0)
   expect(sourceLines(memory)).toEqual(['source = "es"'])
