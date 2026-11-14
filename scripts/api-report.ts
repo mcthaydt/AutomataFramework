@@ -30,5 +30,6 @@ if (process.argv.includes('--update')) {
   console.error(
     'docs/api/framework.api.md does not match the source. Run `pnpm api-report --update` and review the diff.',
   )
+  console.error(`TEMPORARY-BEGIN\n${text}TEMPORARY-END`)
   process.exitCode = 1
 }

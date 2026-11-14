@@ -41,10 +41,7 @@ export interface GameFolder {
 const shown = (folder: string): string => (folder === '.' ? resolve('.') : folder)
 
 /** A `read` for `loadGame` over the files port: a file that is not there is a rejection, as `loadGame` expects. */
-function readerOver(
-  files: FilesService,
-  folder: string,
-): Effect.Effect<(path: string) => Promise<string>> {
+function readerOver(files: FilesService, folder: string): Effect.Effect<(path: string) => Promise<string>> {
   return Effect.map(Effect.runtime<never>(), (runtime) => async (path: string) => {
     const text = await Runtime.runPromise(runtime)(files.readText(join(folder, path)))
     if (text === undefined) throw new Error(`${path}: no such file`)
