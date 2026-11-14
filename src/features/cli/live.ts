@@ -131,8 +131,9 @@ function start(
   const bin = binOf(tool, cwd)
   const wiring: StdioOptions = stdio === 'inherit' ? 'inherit' : ['ignore', 'pipe', 'pipe']
   const options: SpawnOptions = { cwd, stdio: wiring }
+  // One string for the shell: Node warns about a list of arguments handed to a shell, which it only joins.
   return WINDOWS
-    ? spawn(quoteForWindows(bin), args.map(quoteForWindows), { ...options, shell: true, windowsHide: true })
+    ? spawn([bin, ...args].map(quoteForWindows).join(' '), { ...options, shell: true, windowsHide: true })
     : spawn(bin, args, options)
 }
 

@@ -55,7 +55,7 @@ function fail(sentence, output = '') {
 function run(command, args, cwd, env = NO_COLOUR) {
   const line = commandLine(command, args)
   const done = spawnSync(line, { cwd, env, shell: true, encoding: 'utf8', timeout: 900_000 })
-  return { status: done.status, output: `${done.stdout ?? ''}${done.stderr ?? ''}` }
+  return { status: done.status, output: `${done.stdout ?? ''}${done.stderr ?? ''}`, stdout: done.stdout ?? '' }
 }
 
 /** Runs it and requires this exit status. Returns what it said. */
@@ -144,7 +144,9 @@ step('a broken file is named, at its place')
 const movePath = join(game, 'src', 'features', 'hero', 'move.ts')
 const move = readFileSync(movePath, 'utf8')
 writeFileSync(movePath, `${move}\nexport const luck = Math.random()\n`)
-const broken = JSON.parse(checkOf('a broken rule', 1, '--json'))
+const brokenRun = run('npx', ['--no', 'automata', 'check', '--json'], game)
+if (brokenRun.status !== 1) fail('a broken rule: check --json did not exit with 1.', brokenRun.output)
+const broken = JSON.parse(brokenRun.stdout)
 const rules = broken.steps.find((s) => s.step === 'rules')
 if (rules === undefined || !JSON.stringify(rules.problems).includes('Math.random'))
   fail('a broken rule: the rules step does not name Math.random.', JSON.stringify(broken, null, 2))
@@ -186,7 +188,9 @@ async function playRight(ticks) {
 const ran = await playRight(60)
 if (ran.tick !== 60 || !(ran.x > 3)) fail(`a play session: the hero is at ${ran.x} after ${ran.tick} ticks.`)
 writeFileSync(join(game, 'replays', 'agent-run.json'), ran.recording)
-const replayed = must('replay of the agent run', 'npx', ['--no', 'automata', 'replay', '--json'], game)
+const replayRun = run('npx', ['--no', 'automata', 'replay', '--json'], game)
+if (replayRun.status !== 0) fail('replay of the agent run did not exit with 0.', replayRun.output)
+const replayed = replayRun.stdout
 const verdicts = JSON.parse(replayed).map((result) => `${result.file}: ${result.verdict}`)
 if (!verdicts.includes('replays/agent-run.json: ok') || !verdicts.includes('replays/level-1.json: ok'))
   fail(`replay: the recordings are ${verdicts.join(', ')}.`, replayed)
