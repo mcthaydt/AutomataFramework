@@ -17,6 +17,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan V: 3. Plan audit | Written, in review; stage at 100%, plan V at 20%. Ten findings, all applied to the plan | `audits/2026-11-14-m2-saves-host-plan-audit.md` |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
 | Plan N, networking: 2. Plan | Written, in review (12 tasks; Task 11 waits for plan I's `join` and `leave`; stages 3 to 7 not started) | `plans/2026-11-14-m2-networking.md` |
+| Plan P (physics: joints and touch): 2. Plan | Written, in review; twelve tasks; stage at 100%, plan P at 10%; waits on plan C | `plans/2026-11-14-m2-physics.md` |
 
 ### Log
 
