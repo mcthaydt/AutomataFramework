@@ -179,6 +179,17 @@ async function seatOf(spec: Spec, query: string, server = roomServer): Promise<S
   }
 }
 
+/** Waits for the page to have tried to join; if it could not, the failure is the page's own words. */
+async function opened(seat: Seat): Promise<void> {
+  await seat.page.waitForFunction(
+    () => document.querySelector('#game')?.getAttribute('data-state') !== 'starting',
+    undefined,
+    { timeout: 60_000 },
+  )
+  const state = await seat.data('state')
+  if (state === 'failed') throw new Error(`The page could not start: ${await seat.status()}`)
+}
+
 const POLL = { timeout: 60_000, intervals: [50, 100, 250] }
 const num = (value: string | null): number => (value === null || value === '' ? Number.NaN : Number(value))
 
@@ -196,6 +207,7 @@ async function checks(seat: Seat): Promise<Map<number, string>> {
 for (const [first, second] of PAIRS) {
   test(`${first.engine} (${first.width}x${first.height}) and ${second.engine} (${second.width}x${second.height}) play one room`, async () => {
     const one = await seatOf(first, '')
+    await opened(one)
     // 1. A new room waits, and says how to bring a friend.
     await expect.poll(() => one.data('code'), POLL).toMatch(/\S/)
     const code = (await one.data('code')) as string
@@ -264,6 +276,7 @@ test('co-op: a second player joins a game that is going, and when they go their 
     '&game=co-op',
     coopServer,
   )
+  await opened(one)
   // Nobody to wait for: it is playing at once, with nothing to read.
   await expect.poll(() => one.data('state'), POLL).toBe('playing')
   expect(await one.status()).toBe('')
