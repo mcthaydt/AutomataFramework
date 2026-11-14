@@ -5,6 +5,7 @@
 import { readFile } from 'node:fs/promises'
 import {
   CONTENT_TYPES,
+  createAudio,
   createGameSim,
   createSaves,
   defineSave,
@@ -12,6 +13,7 @@ import {
   loadGame,
   openSettings,
   testHost,
+  testSpeaker,
   z,
 } from '@automataframework/framework/headless'
 import { createRoomServer, runRoomServer } from '@automataframework/framework/server'
@@ -80,6 +82,18 @@ if (!rapierLicence.includes('Apache License')) {
   console.error("The installed package's rapier.LICENSE is not the Apache licence.")
   process.exit(1)
 }
+
+// Sound, from the packed package alone: over the full game's cues, a tapped test speaker is given one voice for the one
+// event, and the log says what was asked.
+const speaker = testSpeaker()
+const audio = createAudio({ content: full.value, speaker })
+speaker.tap()
+audio.hear({ tick: 1, events: [{ type: 'hero.jumped', payload: {} }] })
+if (audio.log().length !== 1 || audio.log()[0].on !== 'hero.jumped' || speaker.played.length !== 1) {
+  console.error('The installed package did not play a sound in Node.')
+  process.exit(1)
+}
+console.log('The installed package played a sound in Node.')
 
 const kinds = Object.keys(CONTENT_TYPES)
 const missing = kinds.filter((type) => Object.keys(full.value[CONTENT_TYPES[type].plural] ?? {}).length === 0)

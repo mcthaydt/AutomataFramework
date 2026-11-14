@@ -369,3 +369,27 @@ test('a player who joins a co-op room that is going starts from its state, never
   expect(playersIn(two.predicted)).toEqual([1, 2])
   expect(playersIn(one.predicted)).toEqual([1, 2])
 })
+
+test('each tick predicted for the first time is a step of its own, with its own tick and events', async () => {
+  const r = await room([ONE])
+  const p = r.players[0] as Player1
+  r.wire.pump() // the room's `seat` and `start` arrive
+  const steps: { tick: number; events: readonly unknown[] }[] = []
+  const events: unknown[] = []
+  let most = 0
+  for (let i = 0; i < 40; i++) {
+    r.wire.pump()
+    r.engine.step()
+    const hold = i === 5 ? [{ type: 'controls', payload: { held: ['right', 'jump'] } }] : []
+    const advance = p.session.advance(hold)
+    steps.push(...advance.steps)
+    events.push(...advance.events)
+    most = Math.max(most, advance.steps.length)
+  }
+  // The first advance steps twice (the lead it starts with): two steps on ticks 1 and 2, not one lump on tick 2.
+  expect(most).toBeGreaterThan(1)
+  expect(steps.map((s) => s.tick)).toEqual(Array.from({ length: steps.length }, (_, i) => i + 1))
+  expect(steps.at(-1)?.tick).toBe(p.session.sim.tick)
+  // The same events as the flat list, in the same order.
+  expect(steps.flatMap((s) => s.events)).toEqual(events)
+})

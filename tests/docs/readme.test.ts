@@ -137,3 +137,27 @@ test('the README has a Story section: the files, the code a game writes, the sav
   for (const name of ['startCutscene', 'startConversation', 'storyProgress', 'storyOfReplay'])
     expect(framework, name).toHaveProperty(name)
 })
+
+// A game finds out how to give itself sound from here, and copies an example that uses only what the entries export.
+test('the README has a Sound section: the states, the button, the page event, the three kinds of file and a real example', () => {
+  const sound = section('## Sound')
+  for (const word of [
+    'waiting',
+    'on',
+    'unavailable',
+    'Tap to start the sound',
+    'level.started',
+    'content/sounds/',
+    'content/music/',
+    'content/cues/',
+  ])
+    expect(sound, word).toContain(word)
+  const imported = /import \{([^}]+)\} from '@automataframework\/framework'/.exec(sound)?.[1]
+  expect(imported).toBeDefined()
+  const names = (imported ?? '').split(',').map((name) => name.trim())
+  for (const name of ['createAudio', 'startGame', 'webHost', 'webSpeaker']) expect(names).toContain(name)
+  // Everything the example imports from the main entry is on it: the browser entry is the headless one and the page's.
+  for (const name of names.filter((n) => n !== 'startGame' && n !== 'webHost' && n !== 'webSpeaker'))
+    expect(framework, name).toHaveProperty(name)
+  expect(section('## Without a page')).toContain('audio')
+})

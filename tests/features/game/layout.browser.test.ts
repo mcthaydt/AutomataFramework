@@ -12,19 +12,12 @@ import { manualFrames } from '../../fixtures/game/frames.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { drawnRows } from '../../fixtures/game/pixels.ts'
+import { SCREENS } from '../../fixtures/game/screens.ts'
 
 const FRAME = 1000 / 60
 
 /** A host that is always on screen: these tests drive the frames by hand. */
 const visibleHost = testHost()
-
-/** The screens: [name, width, height]. The names are the picture files a person looks at on the `ci-screens` branch. */
-const SCREENS = [
-  ['phone-390x844', 390, 844],
-  ['tablet-820x1180', 820, 1180],
-  ['phone-844x390', 844, 390],
-  ['tablet-1180x820', 1180, 820],
-] as const
 
 let mount: HTMLDivElement
 let game: Game | undefined

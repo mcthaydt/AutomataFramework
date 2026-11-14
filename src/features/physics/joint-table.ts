@@ -98,9 +98,15 @@ export class JointTable<World> {
   /**
    * Makes, lowest sid first, a joint for every entity with a `Joint` that has none. An end that is not alive yet
    * makes the joint wait, with no error; an end that is alive but has no body (`bodyOf` finds none) is an Error,
-   * because the joint would otherwise wait for ever with nothing to say why.
+   * because the joint would otherwise wait for ever with nothing to say why. `lack` names what that end is missing
+   * (a body is made only for an entity with both a body row and a transform), for the Error's sentence.
    */
-  createMissing(ctx: SimContext, world: World, bodyOf: (sid: number) => number | undefined): void {
+  createMissing(
+    ctx: SimContext,
+    world: World,
+    bodyOf: (sid: number) => number | undefined,
+    lack: (sid: number) => string,
+  ): void {
     for (const entity of ctx.query(this.adapter.Joint)) {
       if (this.rows.has(entity.sid)) continue
       this.adapter.validateJoint(entity)
@@ -111,10 +117,12 @@ export class JointTable<World> {
         ['b', spec.b],
       ] as const) {
         if (ctx.entity(end) === undefined) waiting = true
-        else if (bodyOf(end) === undefined)
+        else if (bodyOf(end) === undefined) {
+          const lacks = lack(end)
           throw new Error(
-            `entity ${entity.sid}: physics.joint.${field} is ${end}; entity ${end} has no physics.body, so nothing can be joined to it`,
+            `entity ${entity.sid}: physics.joint.${field} is ${end}; entity ${end} has no ${lacks}, so nothing can be joined to it`,
           )
+        }
       }
       if (waiting) continue
       const bodyA = bodyOf(spec.a) as number

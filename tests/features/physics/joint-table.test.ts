@@ -17,6 +17,8 @@ import type { ComponentDef, EntityRef, SimContext } from '#src/features/sim/sim.
 interface Pretend {
   body?: boolean
   collider?: boolean
+  /** A body row with no transform: no body can be made for it. */
+  noTransform?: boolean
   joint?: { a: number; b: number; max: number }
 }
 
@@ -37,7 +39,7 @@ function pretend(initial: Record<number, Pretend>, options?: { joints?: boolean 
     return {
       sid,
       has: (c: ComponentDef) =>
-        (c === Transform && (p.body === true || p.collider === true)) ||
+        (c === Transform && p.noTransform !== true && (p.body === true || p.collider === true)) ||
         (c === Body && p.body === true) ||
         (c === Collider && p.collider === true) ||
         (c === Joint && p.joint !== undefined),
@@ -184,6 +186,17 @@ test('a joint to a thing that is alive and has no body is an error naming the fi
   })
   expect(sync).toThrow(
     'entity 4: physics.joint.b is 3; entity 3 has no physics.body, so nothing can be joined to it',
+  )
+})
+
+test('a joint to a thing that has a body and no transform says it is the transform that is missing', () => {
+  const { sync } = pretend({
+    1: { body: true, collider: true },
+    3: { body: true, noTransform: true },
+    4: { joint: { a: 1, b: 3, max: 1 } },
+  })
+  expect(sync).toThrow(
+    'entity 4: physics.joint.b is 3; entity 3 has no transform, so nothing can be joined to it',
   )
 })
 

@@ -43,6 +43,19 @@ export interface Advance {
   readonly deltas: readonly RenderDelta[]
   /** Events of ticks predicted for the first time; a replayed tick's events are not given twice. */
   readonly events: readonly SimEvent[]
+  /**
+   * The same ticks, one entry for each tick predicted for the first time, with that tick's own events and its tick
+   * (the tick after the step). A page that listens for sound reads this, so two jumps that reach it in one `advance`
+   * are two entries on their own ticks, not one list on the last.
+   */
+  readonly steps: readonly { readonly tick: number; readonly events: readonly SimEvent[] }[]
+}
+
+/** What `advance` fills in while it steps: the same lists `Advance` gives out. */
+interface Filling {
+  deltas: RenderDelta[]
+  events: SimEvent[]
+  steps: { tick: number; events: readonly SimEvent[] }[]
 }
 
 export interface Session {
@@ -201,11 +214,7 @@ export function createSession(setup: SessionSetup): Session {
   link.listen(handlers)
 
   /** Steps `predicted` one tick with every pending command that is due and not yet stepped, in `seq` order. */
-  function stepPredicted(
-    tick: number,
-    fresh: boolean,
-    into: { deltas: RenderDelta[]; events: SimEvent[] },
-  ): void {
+  function stepPredicted(tick: number, fresh: boolean, into: Filling): void {
     const commands: Command[] = []
     for (const p of pending) {
       if (p.stepped || p.tick > tick) continue
@@ -215,7 +224,10 @@ export function createSession(setup: SessionSetup): Session {
     const result = predicted.step(commands)
     predictedAt.set(tick, commands)
     into.deltas.push(result.render)
-    if (fresh) into.events.push(...result.events)
+    if (fresh) {
+      into.events.push(...result.events)
+      into.steps.push({ tick: result.tick, events: result.events })
+    }
   }
 
   /** Takes the room's ticks that are waiting. Returns whether `predicted` no longer matches. */
@@ -286,7 +298,7 @@ export function createSession(setup: SessionSetup): Session {
     }),
 
     advance(local) {
-      const out = { deltas: [] as RenderDelta[], events: [] as SimEvent[] }
+      const out: Filling = { deltas: [], events: [], steps: [] }
       if (closed) return out
       for (const c of local) {
         const given = { type: c.type, payload: clone(c.payload) }

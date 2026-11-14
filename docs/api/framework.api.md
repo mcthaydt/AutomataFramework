@@ -45,29 +45,16 @@ interface ActorKey {
 }
 ```
 
-### `ActorPlace` (interface)
-
-```ts
-interface ActorPlace {
-    readonly who: string;
-    readonly x: number;
-    readonly y: number;
-    readonly face?: 'left' | 'right';
-}
-```
-
-### `actorsAt` (function)
-
-```ts
-function actorsAt(file: CutsceneFile, t: number): readonly ActorPlace[];
-```
-
 ### `Advance` (interface)
 
 ```ts
 interface Advance {
     readonly deltas: readonly RenderDelta[];
     readonly events: readonly SimEvent[];
+    readonly steps: readonly {
+        readonly tick: number;
+        readonly events: readonly SimEvent[];
+    }[];
 }
 ```
 
@@ -100,12 +87,6 @@ interface BehaviourFile {
     readonly id: string;
     readonly rules: readonly BehaviourRule[];
 }
-```
-
-### `behaviourPlugin` (const)
-
-```ts
-const behaviourPlugin: PluginDef;
 ```
 
 ### `BehaviourRule` (interface)
@@ -171,25 +152,16 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
-### `BoxWords` (interface)
+### `Bus` (type)
 
 ```ts
-interface BoxWords {
-    readonly next: string;
-    readonly skip: string;
-}
+type Bus = 'sound' | 'music';
 ```
 
 ### `BYTES_CHANNEL` (const)
 
 ```ts
 const BYTES_CHANNEL = "b";
-```
-
-### `cameraAt` (function)
-
-```ts
-function cameraAt(file: CutsceneFile, t: number): SceneCamera;
 ```
 
 ### `CameraKey` (interface)
@@ -242,8 +214,6 @@ interface Character {
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
     readonly touch?: 'sense' | 'take' | undefined;
-    readonly name?: string | undefined;
-    readonly conversation?: string | undefined;
 }
 ```
 
@@ -265,24 +235,6 @@ const CharacterSchema: z.ZodType<Character, CharacterInput>;
 
 ```ts
 function checkControls(controls: Controls): void;
-```
-
-### `ChooseCommand` (const)
-
-```ts
-const ChooseCommand: CommandDef<typeof choicePayload>;
-```
-
-### `chooseCommand` (function)
-
-```ts
-function chooseCommand(tick: number, player: number, seq: number, choice: number): Command;
-```
-
-### `choosePlace` (function)
-
-```ts
-function choosePlace(file: ConversationFile, place: TalkPlace, choice: number): TalkPlace | undefined;
 ```
 
 ### `Claim` (type)
@@ -502,18 +454,6 @@ interface ConversationChoice {
 }
 ```
 
-### `ConversationChosen` (const)
-
-```ts
-const ConversationChosen: EventDef<typeof chosenSchema>;
-```
-
-### `ConversationEnded` (const)
-
-```ts
-const ConversationEnded: EventDef<typeof endedSchema>;
-```
-
 ### `ConversationFile` (interface)
 
 ```ts
@@ -534,26 +474,13 @@ interface ConversationNode {
     readonly lines: readonly string[];
     readonly choices?: readonly Choice[] | undefined;
     readonly next?: string | undefined;
-    readonly cutscene?: string | undefined;
 }
-```
-
-### `ConversationSaid` (const)
-
-```ts
-const ConversationSaid: EventDef<typeof saidSchema>;
 ```
 
 ### `ConversationSchema` (const)
 
 ```ts
 const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
-```
-
-### `ConversationStarted` (const)
-
-```ts
-const ConversationStarted: EventDef<typeof startedSchema>;
 ```
 
 ### `coopSeats` (function)
@@ -570,6 +497,16 @@ function coopSeats(project: {
 
 ```ts
 function cos(x: number): number;
+```
+
+### `createAudio` (function)
+
+```ts
+function createAudio(options: {
+    readonly content: GameContent;
+    readonly speaker: Speaker;
+    readonly tickHz?: number;
+}): GameAudio;
 ```
 
 ### `createGameSim` (function)
@@ -660,16 +597,23 @@ function createSession(setup: SessionSetup): Session;
 function createSim(opts: SimOptions): Promise<Sim>;
 ```
 
-### `createStoryView` (function)
-
-```ts
-function createStoryView(options: StoryViewOptions): StoryView;
-```
-
 ### `Cue` (type)
 
 ```ts
 type Cue = SoundCue | MusicCue | StopMusicCue;
+```
+
+### `CueLogEntry` (interface)
+
+```ts
+interface CueLogEntry {
+    readonly tick: number;
+    readonly from: 'sim' | 'page';
+    readonly on: string;
+    readonly do: 'sound' | 'music' | 'stop-music';
+    readonly id?: string;
+    readonly skipped?: 'busy';
+}
 ```
 
 ### `CuesFile` (interface)
@@ -688,12 +632,6 @@ interface CuesFile {
 const CuesSchema: z.ZodType<CuesFile, CuesFile>;
 ```
 
-### `CutsceneEnded` (const)
-
-```ts
-const CutsceneEnded: EventDef<typeof sceneEndedSchema>;
-```
-
 ### `CutsceneFile` (interface)
 
 ```ts
@@ -705,7 +643,6 @@ interface CutsceneFile {
     readonly camera: readonly CameraKey[];
     readonly actors: readonly ActorKey[];
     readonly lines: readonly CutsceneLine[];
-    readonly opens?: true | undefined;
 }
 ```
 
@@ -724,12 +661,6 @@ interface CutsceneLine {
 
 ```ts
 const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
-```
-
-### `CutsceneStarted` (const)
-
-```ts
-const CutsceneStarted: EventDef<typeof sceneStartedSchema>;
 ```
 
 ### `Def` (type)
@@ -1010,6 +941,29 @@ interface Game {
 }
 ```
 
+### `GameAudio` (interface)
+
+```ts
+interface GameAudio {
+    readonly silent: boolean;
+    begin(): void;
+    hear(result: {
+        readonly tick: number;
+        readonly events: readonly SimEvent[];
+    }): void;
+    raise(event: string): void;
+    log(): readonly CueLogEntry[];
+    music(): string | undefined;
+    volumes(): SoundSettings;
+    setVolumes(volumes: SoundSettings): void;
+    sample(bus: Bus): void;
+    state(): SpeakerState;
+    onState(listener: (state: SpeakerState) => void): () => void;
+    stop(): void;
+    close(): void;
+}
+```
+
 ### `GameContent` (interface)
 
 ```ts
@@ -1040,8 +994,8 @@ interface GameOptions extends GameSimOptions {
     readonly frames?: Frames;
     readonly settings?: unknown;
     readonly gamepads?: () => readonly (PadLike | null)[];
-    readonly words?: Words;
-    readonly boxWords?: BoxWords;
+    readonly audio?: GameAudio;
+    readonly soundNotice?: string | false;
 }
 ```
 
@@ -1058,7 +1012,6 @@ interface GameSimOptions {
         readonly x: number;
         readonly y: number;
     };
-    readonly story?: StoryProgress;
 }
 ```
 
@@ -1072,6 +1025,12 @@ const groundOf: (level: Level) => number;
 
 ```ts
 const HASH_EVERY = 60;
+```
+
+### `hertzOf` (function)
+
+```ts
+function hertzOf(note: string): number | undefined;
 ```
 
 ### `Host` (interface)
@@ -1422,12 +1381,6 @@ interface LevelThing {
 }
 ```
 
-### `linesAt` (function)
-
-```ts
-function linesAt(file: CutsceneFile, t: number): readonly CutsceneLine[];
-```
-
 ### `Link` (interface)
 
 ```ts
@@ -1495,6 +1448,12 @@ type LoadResult<S> = {
 function log(x0: number): number;
 ```
 
+### `LOG_MAX` (const)
+
+```ts
+const LOG_MAX = 1024;
+```
+
 ### `Look` (const)
 
 ```ts
@@ -1547,6 +1506,18 @@ const MAX_PLAYERS = 4;
 
 ```ts
 const MAX_QUEUED_COMMANDS = 32;
+```
+
+### `MAX_SAME` (const)
+
+```ts
+const MAX_SAME = 4;
+```
+
+### `MAX_SOUNDS` (const)
+
+```ts
+const MAX_SOUNDS = 16;
 ```
 
 ### `MAX_STEPS` (const)
@@ -1610,12 +1581,6 @@ const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 const MIN_LEAD = 1;
 ```
 
-### `Mind` (const)
-
-```ts
-const Mind: ComponentDef<typeof mindFields>;
-```
-
 ### `MusicCue` (interface)
 
 ```ts
@@ -1652,24 +1617,6 @@ type MusicPart = TonePart | DrumPart;
 const MusicSchema: z.ZodType<MusicFile, MusicFile>;
 ```
 
-### `NextCommand` (const)
-
-```ts
-const NextCommand: CommandDef<typeof noPayload>;
-```
-
-### `nextCommand` (function)
-
-```ts
-function nextCommand(tick: number, player: number, seq: number): Command;
-```
-
-### `nextPlace` (function)
-
-```ts
-function nextPlace(file: ConversationFile, place: TalkPlace): TalkPlace | 'pick' | 'end';
-```
-
 ### `NoiseVoice` (interface)
 
 ```ts
@@ -1680,6 +1627,12 @@ interface NoiseVoice {
     readonly length: number;
     readonly volume: number;
 }
+```
+
+### `NOTICE_PROPERTIES` (const)
+
+```ts
+const NOTICE_PROPERTIES: readonly string[];
 ```
 
 ### `ONLINE_PROBLEMS` (const)
@@ -1753,12 +1706,6 @@ type OnlineStatus = {
 
 ```ts
 function onlineWords(status: OnlineStatus): string;
-```
-
-### `openAt` (function)
-
-```ts
-function openAt(file: ConversationFile): TalkPlace;
 ```
 
 ### `openSettings` (function)
@@ -1891,6 +1838,16 @@ interface Played {
 }
 ```
 
+### `PlayedVoice` (interface)
+
+```ts
+interface PlayedVoice {
+    readonly bus: Bus;
+    readonly voice: SoundVoice;
+    readonly when: number;
+}
+```
+
 ### `Player` (const)
 
 ```ts
@@ -1907,6 +1864,12 @@ function playersIn(sim: Sim): number[];
 
 ```ts
 function playReplay(sim: Sim, replay: Replay): Played;
+```
+
+### `playVoice` (function)
+
+```ts
+function playVoice(context: BaseAudioContext, out: AudioNode, voice: SoundVoice, when: number): void;
 ```
 
 ### `PluginDef` (interface)
@@ -2332,35 +2295,31 @@ interface Scene {
 }
 ```
 
-### `SceneCamera` (interface)
+### `Score` (interface)
 
 ```ts
-interface SceneCamera {
-    readonly x: number;
-    readonly y: number;
-    readonly zoom: number;
+interface Score {
+    readonly id: string;
+    readonly seconds: number;
+    readonly loop: boolean;
+    readonly notes: readonly ScoreNote[];
 }
 ```
 
-### `sceneOf` (function)
+### `ScoreNote` (interface)
 
 ```ts
-function sceneOf(sim: Sim, content: GameContent): SceneView | undefined;
+interface ScoreNote {
+    readonly part: string;
+    readonly at: number;
+    readonly voice: SoundVoice;
+}
 ```
 
-### `SceneView` (interface)
+### `scoreOf` (function)
 
 ```ts
-interface SceneView {
-    readonly cutscene: string;
-    readonly t: number;
-    readonly length: number;
-    readonly camera: SceneCamera;
-    readonly lines: readonly {
-        readonly speaker: string | undefined;
-        readonly line: string;
-    }[];
-}
+function scoreOf(music: MusicFile): Score;
 ```
 
 ### `Seat` (interface)
@@ -2584,6 +2543,12 @@ class SimCapacityError extends Error {
 }
 ```
 
+### `simContent` (function)
+
+```ts
+function simContent(content: GameContent): GameContent;
+```
+
 ### `SimContext` (interface)
 
 ```ts
@@ -2650,24 +2615,6 @@ interface SimOptions {
 
 ```ts
 function sin(x: number): number;
-```
-
-### `SKIP_AFTER` (const)
-
-```ts
-const SKIP_AFTER = 30;
-```
-
-### `SkipCommand` (const)
-
-```ts
-const SkipCommand: CommandDef<typeof noPayload>;
-```
-
-### `skipCommand` (function)
-
-```ts
-function skipCommand(tick: number, player: number, seq: number): Command;
 ```
 
 ### `SKY_COLOR` (const)
@@ -2750,6 +2697,12 @@ interface SnapshotView {
 }
 ```
 
+### `SOUND_SETTINGS_DEFAULT` (const)
+
+```ts
+const SOUND_SETTINGS_DEFAULT: SoundSettings;
+```
+
 ### `SoundCue` (interface)
 
 ```ts
@@ -2771,10 +2724,36 @@ interface SoundFile {
 }
 ```
 
+### `soundNotice` (function)
+
+```ts
+function soundNotice(options: {
+    readonly mount: HTMLElement;
+    readonly audio: Pick<GameAudio, 'state' | 'onState' | 'silent'>;
+    readonly words?: string;
+}): () => void;
+```
+
 ### `SoundSchema` (const)
 
 ```ts
 const SoundSchema: z.ZodType<SoundFile, SoundFile>;
+```
+
+### `SoundSettings` (interface)
+
+```ts
+interface SoundSettings {
+    readonly format: 1;
+    readonly music: number;
+    readonly sound: number;
+}
+```
+
+### `SoundSettingsSchema` (const)
+
+```ts
+const SoundSettingsSchema: z.ZodType<SoundSettings, SoundSettings>;
 ```
 
 ### `SoundVoice` (type)
@@ -2795,22 +2774,41 @@ function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: re
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
 ```
 
+### `Speaker` (interface)
+
+```ts
+interface Speaker {
+    state(): SpeakerState;
+    onState(listener: (state: SpeakerState) => void): () => void;
+    now(): number;
+    onClock(listener: () => void): () => void;
+    play(bus: Bus, voice: SoundVoice, when: number): void;
+    volume(bus: Bus, value: number): void;
+    cut(bus: Bus): void;
+    close(): void;
+}
+```
+
+### `SpeakerSeams` (interface)
+
+```ts
+interface SpeakerSeams {
+    readonly context: () => AudioContext;
+    readonly target: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>;
+    readonly every: (ms: number, run: () => void) => () => void;
+}
+```
+
+### `SpeakerState` (type)
+
+```ts
+type SpeakerState = 'waiting' | 'on' | 'unavailable';
+```
+
 ### `START_LEAD` (const)
 
 ```ts
 const START_LEAD = 2;
-```
-
-### `startConversation` (function)
-
-```ts
-function startConversation(ctx: SimContext, id: string, player: number, thing?: number): boolean;
-```
-
-### `startCutscene` (function)
-
-```ts
-function startCutscene(ctx: SimContext, id: string): boolean;
 ```
 
 ### `startGame` (function)
@@ -2864,95 +2862,6 @@ type StoreResult<T> = {
 };
 ```
 
-### `Story` (const)
-
-```ts
-const Story: ResourceDef<z.ZodType<StoryState, StoryState>>;
-```
-
-### `STORY_PROPERTIES` (const)
-
-```ts
-const STORY_PROPERTIES: readonly string[];
-```
-
-### `storyOfReplay` (function)
-
-```ts
-function storyOfReplay(replay: Replay): StoryProgress | undefined;
-```
-
-### `storyPlugin` (const)
-
-```ts
-const storyPlugin: PluginDef;
-```
-
-### `StoryProgress` (interface)
-
-```ts
-interface StoryProgress {
-    readonly ended: Readonly<Record<string, string>>;
-    readonly seen: readonly string[];
-}
-```
-
-### `storyProgress` (function)
-
-```ts
-function storyProgress(sim: Sim, content: GameContent): StoryProgress;
-```
-
-### `StoryProgressSchema` (const)
-
-```ts
-const StoryProgressSchema: z.ZodType<StoryProgress, StoryProgress>;
-```
-
-### `StoryState` (interface)
-
-```ts
-interface StoryState {
-    level: string;
-    talk: StoryTalk | null;
-    scene: StoryScene | null;
-    hands: Record<string, string>;
-    met: string[];
-    ended: Record<string, string>;
-    seen: string[];
-}
-```
-
-### `StoryView` (interface)
-
-```ts
-interface StoryView {
-    commands(tick: number): Command[];
-    update(): void;
-    hold(on: boolean): void;
-    setInset(px: number): void;
-    destroy(): void;
-}
-```
-
-### `StoryViewOptions` (interface)
-
-```ts
-interface StoryViewOptions {
-    readonly mount: HTMLElement;
-    readonly sim: Sim;
-    readonly content: GameContent;
-    readonly sequence: Sequence;
-    readonly words?: Words;
-    readonly boxWords?: BoxWords;
-    readonly onMenu?: Input['onMenu'];
-    readonly seats?: () => readonly Seat[];
-    readonly keysOf?: (player: number) => readonly string[];
-    readonly inset?: () => number;
-    readonly watching?: boolean;
-}
-```
-
 ### `SYNC_BEHIND` (const)
 
 ```ts
@@ -2981,39 +2890,6 @@ interface SystemSpec {
     before?: readonly string[];
     after?: readonly string[];
     run: (ctx: SimContext) => void;
-}
-```
-
-### `TALK_REACH` (const)
-
-```ts
-const TALK_REACH = 1.5;
-```
-
-### `talkOf` (function)
-
-```ts
-function talkOf(sim: Sim, content: GameContent): TalkView | undefined;
-```
-
-### `TalkPlace` (interface)
-
-```ts
-interface TalkPlace {
-    readonly node: string;
-    readonly line: number;
-}
-```
-
-### `TalkView` (interface)
-
-```ts
-interface TalkView {
-    readonly conversation: string;
-    readonly player: number;
-    readonly speaker: string | undefined;
-    readonly line: string;
-    readonly choices: readonly string[];
 }
 ```
 
@@ -3052,6 +2928,28 @@ interface TestHostOptions {
     readonly canQuit?: boolean;
     readonly blockLinks?: boolean;
 }
+```
+
+### `TestSpeaker` (interface)
+
+```ts
+interface TestSpeaker extends Speaker {
+    tap(): void;
+    interrupt(): void;
+    advance(seconds: number): void;
+    readonly played: readonly PlayedVoice[];
+    readonly cuts: readonly Bus[];
+    readonly levels: Readonly<Record<Bus, number>>;
+    readonly closed: boolean;
+}
+```
+
+### `testSpeaker` (function)
+
+```ts
+function testSpeaker(options?: {
+    readonly state?: SpeakerState;
+}): TestSpeaker;
 ```
 
 ### `Thing` (const)
@@ -3260,22 +3158,10 @@ function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
 const TuningSchema: z.ZodType<TuningFile, TuningFile>;
 ```
 
-### `usesBehaviours` (function)
-
-```ts
-function usesBehaviours(content: GameContent): boolean;
-```
-
 ### `usesJoints` (function)
 
 ```ts
 function usesJoints(content: GameContent): boolean;
-```
-
-### `usesStory` (function)
-
-```ts
-function usesStory(content: GameContent): boolean;
 ```
 
 ### `Verdict` (type)
@@ -3347,8 +3233,6 @@ interface WatchOptions extends GameSimOptions {
     readonly frames?: Frames;
     readonly rounds?: number;
     readonly restTicks?: number;
-    readonly words?: Words;
-    readonly boxWords?: BoxWords;
 }
 ```
 
@@ -3391,16 +3275,13 @@ interface WebSeams {
 }
 ```
 
-### `Words` (type)
+### `webSpeaker` (function)
 
 ```ts
-type Words = (key: string) => string;
-```
-
-### `wordsOf` (function)
-
-```ts
-function wordsOf(content: GameContent, language?: Language): Words;
+function webSpeaker(options?: {
+    readonly host?: Host;
+    readonly seams?: Partial<SpeakerSeams>;
+}): Speaker;
 ```
 
 ### `writeContent` (function)
@@ -3464,29 +3345,16 @@ interface ActorKey {
 }
 ```
 
-### `ActorPlace` (interface)
-
-```ts
-interface ActorPlace {
-    readonly who: string;
-    readonly x: number;
-    readonly y: number;
-    readonly face?: 'left' | 'right';
-}
-```
-
-### `actorsAt` (function)
-
-```ts
-function actorsAt(file: CutsceneFile, t: number): readonly ActorPlace[];
-```
-
 ### `Advance` (interface)
 
 ```ts
 interface Advance {
     readonly deltas: readonly RenderDelta[];
     readonly events: readonly SimEvent[];
+    readonly steps: readonly {
+        readonly tick: number;
+        readonly events: readonly SimEvent[];
+    }[];
 }
 ```
 
@@ -3510,12 +3378,6 @@ interface BehaviourFile {
     readonly id: string;
     readonly rules: readonly BehaviourRule[];
 }
-```
-
-### `behaviourPlugin` (const)
-
-```ts
-const behaviourPlugin: PluginDef;
 ```
 
 ### `BehaviourRule` (interface)
@@ -3565,16 +3427,16 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `Bus` (type)
+
+```ts
+type Bus = 'sound' | 'music';
+```
+
 ### `BYTES_CHANNEL` (const)
 
 ```ts
 const BYTES_CHANNEL = "b";
-```
-
-### `cameraAt` (function)
-
-```ts
-function cameraAt(file: CutsceneFile, t: number): SceneCamera;
 ```
 
 ### `CameraKey` (interface)
@@ -3606,8 +3468,6 @@ interface Character {
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
     readonly touch?: 'sense' | 'take' | undefined;
-    readonly name?: string | undefined;
-    readonly conversation?: string | undefined;
 }
 ```
 
@@ -3623,24 +3483,6 @@ interface CharacterInput extends Omit<Character, 'upright'> {
 
 ```ts
 const CharacterSchema: z.ZodType<Character, CharacterInput>;
-```
-
-### `ChooseCommand` (const)
-
-```ts
-const ChooseCommand: CommandDef<typeof choicePayload>;
-```
-
-### `chooseCommand` (function)
-
-```ts
-function chooseCommand(tick: number, player: number, seq: number, choice: number): Command;
-```
-
-### `choosePlace` (function)
-
-```ts
-function choosePlace(file: ConversationFile, place: TalkPlace, choice: number): TalkPlace | undefined;
 ```
 
 ### `ClientMessage` (type)
@@ -3822,18 +3664,6 @@ interface ConversationChoice {
 }
 ```
 
-### `ConversationChosen` (const)
-
-```ts
-const ConversationChosen: EventDef<typeof chosenSchema>;
-```
-
-### `ConversationEnded` (const)
-
-```ts
-const ConversationEnded: EventDef<typeof endedSchema>;
-```
-
 ### `ConversationFile` (interface)
 
 ```ts
@@ -3854,26 +3684,13 @@ interface ConversationNode {
     readonly lines: readonly string[];
     readonly choices?: readonly Choice[] | undefined;
     readonly next?: string | undefined;
-    readonly cutscene?: string | undefined;
 }
-```
-
-### `ConversationSaid` (const)
-
-```ts
-const ConversationSaid: EventDef<typeof saidSchema>;
 ```
 
 ### `ConversationSchema` (const)
 
 ```ts
 const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
-```
-
-### `ConversationStarted` (const)
-
-```ts
-const ConversationStarted: EventDef<typeof startedSchema>;
 ```
 
 ### `coopSeats` (function)
@@ -3890,6 +3707,16 @@ function coopSeats(project: {
 
 ```ts
 function cos(x: number): number;
+```
+
+### `createAudio` (function)
+
+```ts
+function createAudio(options: {
+    readonly content: GameContent;
+    readonly speaker: Speaker;
+    readonly tickHz?: number;
+}): GameAudio;
 ```
 
 ### `createGameSim` (function)
@@ -3961,6 +3788,19 @@ function createSim(opts: SimOptions): Promise<Sim>;
 type Cue = SoundCue | MusicCue | StopMusicCue;
 ```
 
+### `CueLogEntry` (interface)
+
+```ts
+interface CueLogEntry {
+    readonly tick: number;
+    readonly from: 'sim' | 'page';
+    readonly on: string;
+    readonly do: 'sound' | 'music' | 'stop-music';
+    readonly id?: string;
+    readonly skipped?: 'busy';
+}
+```
+
 ### `CuesFile` (interface)
 
 ```ts
@@ -3977,12 +3817,6 @@ interface CuesFile {
 const CuesSchema: z.ZodType<CuesFile, CuesFile>;
 ```
 
-### `CutsceneEnded` (const)
-
-```ts
-const CutsceneEnded: EventDef<typeof sceneEndedSchema>;
-```
-
 ### `CutsceneFile` (interface)
 
 ```ts
@@ -3994,7 +3828,6 @@ interface CutsceneFile {
     readonly camera: readonly CameraKey[];
     readonly actors: readonly ActorKey[];
     readonly lines: readonly CutsceneLine[];
-    readonly opens?: true | undefined;
 }
 ```
 
@@ -4013,12 +3846,6 @@ interface CutsceneLine {
 
 ```ts
 const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
-```
-
-### `CutsceneStarted` (const)
-
-```ts
-const CutsceneStarted: EventDef<typeof sceneStartedSchema>;
 ```
 
 ### `Def` (type)
@@ -4240,6 +4067,29 @@ interface Freeze {
 }
 ```
 
+### `GameAudio` (interface)
+
+```ts
+interface GameAudio {
+    readonly silent: boolean;
+    begin(): void;
+    hear(result: {
+        readonly tick: number;
+        readonly events: readonly SimEvent[];
+    }): void;
+    raise(event: string): void;
+    log(): readonly CueLogEntry[];
+    music(): string | undefined;
+    volumes(): SoundSettings;
+    setVolumes(volumes: SoundSettings): void;
+    sample(bus: Bus): void;
+    state(): SpeakerState;
+    onState(listener: (state: SpeakerState) => void): () => void;
+    stop(): void;
+    close(): void;
+}
+```
+
 ### `GameContent` (interface)
 
 ```ts
@@ -4273,7 +4123,6 @@ interface GameSimOptions {
         readonly x: number;
         readonly y: number;
     };
-    readonly story?: StoryProgress;
 }
 ```
 
@@ -4287,6 +4136,12 @@ const groundOf: (level: Level) => number;
 
 ```ts
 const HASH_EVERY = 60;
+```
+
+### `hertzOf` (function)
+
+```ts
+function hertzOf(note: string): number | undefined;
 ```
 
 ### `Host` (interface)
@@ -4560,12 +4415,6 @@ interface LevelThing {
 }
 ```
 
-### `linesAt` (function)
-
-```ts
-function linesAt(file: CutsceneFile, t: number): readonly CutsceneLine[];
-```
-
 ### `Link` (interface)
 
 ```ts
@@ -4623,6 +4472,12 @@ type LoadResult<S> = {
 function log(x0: number): number;
 ```
 
+### `LOG_MAX` (const)
+
+```ts
+const LOG_MAX = 1024;
+```
+
 ### `Look` (const)
 
 ```ts
@@ -4677,6 +4532,18 @@ const MAX_PLAYERS = 4;
 const MAX_QUEUED_COMMANDS = 32;
 ```
 
+### `MAX_SAME` (const)
+
+```ts
+const MAX_SAME = 4;
+```
+
+### `MAX_SOUNDS` (const)
+
+```ts
+const MAX_SOUNDS = 16;
+```
+
 ### `MAX_STEPS` (const)
 
 ```ts
@@ -4726,12 +4593,6 @@ const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 const MIN_LEAD = 1;
 ```
 
-### `Mind` (const)
-
-```ts
-const Mind: ComponentDef<typeof mindFields>;
-```
-
 ### `MusicCue` (interface)
 
 ```ts
@@ -4766,24 +4627,6 @@ type MusicPart = TonePart | DrumPart;
 
 ```ts
 const MusicSchema: z.ZodType<MusicFile, MusicFile>;
-```
-
-### `NextCommand` (const)
-
-```ts
-const NextCommand: CommandDef<typeof noPayload>;
-```
-
-### `nextCommand` (function)
-
-```ts
-function nextCommand(tick: number, player: number, seq: number): Command;
-```
-
-### `nextPlace` (function)
-
-```ts
-function nextPlace(file: ConversationFile, place: TalkPlace): TalkPlace | 'pick' | 'end';
 ```
 
 ### `NoiseVoice` (interface)
@@ -4841,12 +4684,6 @@ type OnlineStatus = {
 
 ```ts
 function onlineWords(status: OnlineStatus): string;
-```
-
-### `openAt` (function)
-
-```ts
-function openAt(file: ConversationFile): TalkPlace;
 ```
 
 ### `openSettings` (function)
@@ -4960,6 +4797,16 @@ interface PhysicsOptions {
 interface Played {
     readonly finalHash: string;
     readonly checks: readonly ReplayCheck[];
+}
+```
+
+### `PlayedVoice` (interface)
+
+```ts
+interface PlayedVoice {
+    readonly bus: Bus;
+    readonly voice: SoundVoice;
+    readonly when: number;
 }
 ```
 
@@ -5349,35 +5196,31 @@ interface SaveStore {
 }
 ```
 
-### `SceneCamera` (interface)
+### `Score` (interface)
 
 ```ts
-interface SceneCamera {
-    readonly x: number;
-    readonly y: number;
-    readonly zoom: number;
+interface Score {
+    readonly id: string;
+    readonly seconds: number;
+    readonly loop: boolean;
+    readonly notes: readonly ScoreNote[];
 }
 ```
 
-### `sceneOf` (function)
+### `ScoreNote` (interface)
 
 ```ts
-function sceneOf(sim: Sim, content: GameContent): SceneView | undefined;
+interface ScoreNote {
+    readonly part: string;
+    readonly at: number;
+    readonly voice: SoundVoice;
+}
 ```
 
-### `SceneView` (interface)
+### `scoreOf` (function)
 
 ```ts
-interface SceneView {
-    readonly cutscene: string;
-    readonly t: number;
-    readonly length: number;
-    readonly camera: SceneCamera;
-    readonly lines: readonly {
-        readonly speaker: string | undefined;
-        readonly line: string;
-    }[];
-}
+function scoreOf(music: MusicFile): Score;
 ```
 
 ### `Sense` (type)
@@ -5585,6 +5428,12 @@ class SimCapacityError extends Error {
 }
 ```
 
+### `simContent` (function)
+
+```ts
+function simContent(content: GameContent): GameContent;
+```
+
 ### `SimContext` (interface)
 
 ```ts
@@ -5651,24 +5500,6 @@ interface SimOptions {
 
 ```ts
 function sin(x: number): number;
-```
-
-### `SKIP_AFTER` (const)
-
-```ts
-const SKIP_AFTER = 30;
-```
-
-### `SkipCommand` (const)
-
-```ts
-const SkipCommand: CommandDef<typeof noPayload>;
-```
-
-### `skipCommand` (function)
-
-```ts
-function skipCommand(tick: number, player: number, seq: number): Command;
 ```
 
 ### `SKY_COLOR` (const)
@@ -5751,6 +5582,12 @@ interface SnapshotView {
 }
 ```
 
+### `SOUND_SETTINGS_DEFAULT` (const)
+
+```ts
+const SOUND_SETTINGS_DEFAULT: SoundSettings;
+```
+
 ### `SoundCue` (interface)
 
 ```ts
@@ -5778,6 +5615,22 @@ interface SoundFile {
 const SoundSchema: z.ZodType<SoundFile, SoundFile>;
 ```
 
+### `SoundSettings` (interface)
+
+```ts
+interface SoundSettings {
+    readonly format: 1;
+    readonly music: number;
+    readonly sound: number;
+}
+```
+
+### `SoundSettingsSchema` (const)
+
+```ts
+const SoundSettingsSchema: z.ZodType<SoundSettings, SoundSettings>;
+```
+
 ### `SoundVoice` (type)
 
 ```ts
@@ -5796,22 +5649,31 @@ function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: re
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
 ```
 
+### `Speaker` (interface)
+
+```ts
+interface Speaker {
+    state(): SpeakerState;
+    onState(listener: (state: SpeakerState) => void): () => void;
+    now(): number;
+    onClock(listener: () => void): () => void;
+    play(bus: Bus, voice: SoundVoice, when: number): void;
+    volume(bus: Bus, value: number): void;
+    cut(bus: Bus): void;
+    close(): void;
+}
+```
+
+### `SpeakerState` (type)
+
+```ts
+type SpeakerState = 'waiting' | 'on' | 'unavailable';
+```
+
 ### `START_LEAD` (const)
 
 ```ts
 const START_LEAD = 2;
-```
-
-### `startConversation` (function)
-
-```ts
-function startConversation(ctx: SimContext, id: string, player: number, thing?: number): boolean;
-```
-
-### `startCutscene` (function)
-
-```ts
-function startCutscene(ctx: SimContext, id: string): boolean;
 ```
 
 ### `StepResult` (interface)
@@ -5853,59 +5715,6 @@ type StoreResult<T> = {
 };
 ```
 
-### `Story` (const)
-
-```ts
-const Story: ResourceDef<z.ZodType<StoryState, StoryState>>;
-```
-
-### `storyOfReplay` (function)
-
-```ts
-function storyOfReplay(replay: Replay): StoryProgress | undefined;
-```
-
-### `storyPlugin` (const)
-
-```ts
-const storyPlugin: PluginDef;
-```
-
-### `StoryProgress` (interface)
-
-```ts
-interface StoryProgress {
-    readonly ended: Readonly<Record<string, string>>;
-    readonly seen: readonly string[];
-}
-```
-
-### `storyProgress` (function)
-
-```ts
-function storyProgress(sim: Sim, content: GameContent): StoryProgress;
-```
-
-### `StoryProgressSchema` (const)
-
-```ts
-const StoryProgressSchema: z.ZodType<StoryProgress, StoryProgress>;
-```
-
-### `StoryState` (interface)
-
-```ts
-interface StoryState {
-    level: string;
-    talk: StoryTalk | null;
-    scene: StoryScene | null;
-    hands: Record<string, string>;
-    met: string[];
-    ended: Record<string, string>;
-    seen: string[];
-}
-```
-
 ### `SYNC_BEHIND` (const)
 
 ```ts
@@ -5934,39 +5743,6 @@ interface SystemSpec {
     before?: readonly string[];
     after?: readonly string[];
     run: (ctx: SimContext) => void;
-}
-```
-
-### `TALK_REACH` (const)
-
-```ts
-const TALK_REACH = 1.5;
-```
-
-### `talkOf` (function)
-
-```ts
-function talkOf(sim: Sim, content: GameContent): TalkView | undefined;
-```
-
-### `TalkPlace` (interface)
-
-```ts
-interface TalkPlace {
-    readonly node: string;
-    readonly line: number;
-}
-```
-
-### `TalkView` (interface)
-
-```ts
-interface TalkView {
-    readonly conversation: string;
-    readonly player: number;
-    readonly speaker: string | undefined;
-    readonly line: string;
-    readonly choices: readonly string[];
 }
 ```
 
@@ -6005,6 +5781,28 @@ interface TestHostOptions {
     readonly canQuit?: boolean;
     readonly blockLinks?: boolean;
 }
+```
+
+### `TestSpeaker` (interface)
+
+```ts
+interface TestSpeaker extends Speaker {
+    tap(): void;
+    interrupt(): void;
+    advance(seconds: number): void;
+    readonly played: readonly PlayedVoice[];
+    readonly cuts: readonly Bus[];
+    readonly levels: Readonly<Record<Bus, number>>;
+    readonly closed: boolean;
+}
+```
+
+### `testSpeaker` (function)
+
+```ts
+function testSpeaker(options?: {
+    readonly state?: SpeakerState;
+}): TestSpeaker;
 ```
 
 ### `Thing` (const)
@@ -6213,22 +6011,10 @@ function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
 const TuningSchema: z.ZodType<TuningFile, TuningFile>;
 ```
 
-### `usesBehaviours` (function)
-
-```ts
-function usesBehaviours(content: GameContent): boolean;
-```
-
 ### `usesJoints` (function)
 
 ```ts
 function usesJoints(content: GameContent): boolean;
-```
-
-### `usesStory` (function)
-
-```ts
-function usesStory(content: GameContent): boolean;
 ```
 
 ### `Verdict` (type)

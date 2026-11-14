@@ -1,4 +1,5 @@
-// The browser entry: the headless entry plus render, input, story, web and game (host is headless).
+// The browser entry: the headless entry plus render, input, story, web and game (host and audio are headless; the
+// browser's speaker and the sound button are in web).
 // Features are re-exported here as they arrive.
 import './lib/zod.ts'
 

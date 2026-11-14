@@ -20,6 +20,7 @@ import {
 import { createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { createStoryView } from '../story/story.ts'
+import { soundNotice } from '../web/web.ts'
 import type { GameOptions } from './game.ts'
 import { createLoop } from './loop.ts'
 
@@ -77,6 +78,8 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     onCheck,
     wrapLink,
     join: joinRoom = joinSession,
+    audio,
+    soundNotice: noticeOption,
     ...simOptions
   } = options
   checkControls(controls)
@@ -217,11 +220,21 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       input.onInset((px) => story.setInset(px))
     }
 
+    // The room can put this page back on its own state (a sync): ticks heard before it are not the ticks after it.
+    let syncsHeard = session.stats().syncs
     const step = (): void => {
       const tick = session.sim.tick
-      for (const delta of session.advance([...(story?.commands(tick) ?? []), ...input.poll(tick)]).deltas)
-        renderer.apply(delta)
+      const advance = session.advance([...(story?.commands(tick) ?? []), ...input.poll(tick)])
+      for (const delta of advance.deltas) renderer.apply(delta)
       story?.update()
+      if (audio === undefined) return
+      const syncs = session.stats().syncs
+      if (syncs !== syncsHeard) {
+        syncsHeard = syncs
+        audio.begin()
+      }
+      // One step at a time, each on its own tick, so two jumps that reached this page together are two sounds.
+      for (const heard of advance.steps) audio.hear(heard)
     }
     const loop = createLoop({
       tickHz: session.sim.tickHz,
@@ -286,6 +299,17 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       tryAgain()
     }
 
+    // The level is on screen: a new sim is about to be heard, and the page says the level started.
+    audio?.begin()
+    audio?.raise('level.started')
+    const removeNotice =
+      audio !== undefined && noticeOption !== false
+        ? soundNotice({
+            mount,
+            audio,
+            ...(typeof noticeOption === 'string' ? { words: noticeOption } : {}),
+          })
+        : undefined
     sync()
     return {
       sim: session.sim,
@@ -300,6 +324,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
         loop.stop()
         unlisten()
         unsilence?.()
+        removeNotice?.()
         cleanup()
       },
     }

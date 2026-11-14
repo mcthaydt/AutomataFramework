@@ -5,6 +5,7 @@ import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
 import { behaviourPlugin, usesBehaviours } from './behaviour.ts'
 import { joinPlugin } from './join.ts'
 import { levelPlugin } from './plugin.ts'
+import { simContent } from './sim-content.ts'
 import { spawnLevel } from './spawn-level.ts'
 import { storyPlugin, usesStory } from './story.ts'
 import { Story, type StoryProgress } from './story-state.ts'
@@ -33,8 +34,9 @@ export interface GameSimOptions {
 
 /**
  * The sim a game runs: physics, commands, the level plugin and the game's own plugins, with the level spawned, at
- * tick 0. The content goes into the sim, so it is part of `contentHash` and a replay knows if it changed. If the
- * level cannot be spawned, the sim is disposed and the `LevelError` is thrown.
+ * tick 0. The content goes into the sim, but not its sound, music and cue files (`simContent`), so it is part of
+ * `contentHash` and a replay knows if it changed, except for what a game sounds like. If the level cannot be
+ * spawned, the sim is disposed and the `LevelError` is thrown.
  */
 export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const { content } = options
@@ -42,7 +44,7 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const kinds = touchKinds(content)
   const sim = await createSim({
     seed: options.seed ?? 1,
-    content,
+    content: simContent(content),
     plugins: [
       physics({ gravity: options.gravity ?? { x: 0, y: 30 }, joints: usesJoints(content) }),
       commandsPlugin,

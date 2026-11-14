@@ -13,6 +13,7 @@ export const LAYERS = [
   'server',
   'render',
   'input',
+  'audio',
   'saves',
   'host',
   'story',
@@ -32,10 +33,12 @@ export interface Violation {
 const MAX_LINES = 600
 /**
  * The features that must run the same on every machine: no clock, no randomness, no I/O.
+ * `audio` is one of them although it is not the sim: its only clock is its speaker's, so a test moves time by hand and
+ * the cue log cannot depend on when anything ran.
  * `net` is one of them although `colyseus-link.ts` talks to a socket: that file's only I/O is the SDK it loads on
  * demand, and it reads no clock, so nothing here can change what a sim computes.
  */
-const PURE_FEATURES: ReadonlySet<string> = new Set(['sim', 'physics', 'commands', 'net', 'level'])
+const PURE_FEATURES: ReadonlySet<string> = new Set(['sim', 'physics', 'commands', 'net', 'level', 'audio'])
 /** Features that need a page (a DOM, a canvas): the headless entry may not reach them. */
 const PAGE_FEATURES: ReadonlySet<string> = new Set(['render', 'input', 'story', 'web', 'game'])
 

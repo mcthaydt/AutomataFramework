@@ -4,6 +4,7 @@
 
 import { canonicalJson } from '../../lib/canonical.ts'
 import { type Frames, pageFrames } from '../../lib/frames.ts'
+import type { GameAudio } from '../audio/audio.ts'
 import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
 import {
@@ -18,6 +19,7 @@ import { createGameSim, type GameSimOptions, levelSize, skyOf, usesStory } from 
 import { createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { type BoxWords, createStoryView, type Words } from '../story/story.ts'
+import { soundNotice } from '../web/web.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
 
@@ -41,6 +43,16 @@ export interface GameOptions extends GameSimOptions {
   readonly words?: Words
   /** The words on the story box's own two buttons. Default: Next and Skip. */
   readonly boxWords?: BoxWords
+  /**
+   * The game's sound. Each step's tick and events are given to it, and `level.started` is raised once the level is on
+   * screen. The game never stops it: the code that made it owns it, so music can carry over to the next level.
+   */
+  readonly audio?: GameAudio
+  /**
+   * With `audio`, the button that says the sound is waiting for a tap. A string is its words; `false` shows none, for
+   * a game whose own screen says it. Default: the framework's button, "Tap to start the sound".
+   */
+  readonly soundNotice?: string | false
 }
 
 export interface Game {
@@ -137,12 +149,16 @@ export async function startGame(options: GameOptions): Promise<Game> {
       sequence,
       canShare: Object.values(input.controls()).every((control) => control.shared !== undefined),
     })
+    const { audio } = options
     const loop = createLoop({
       tickHz: sim.tickHz,
       step() {
         const tick = sim.tick
         const commands = [...people.commands(tick), ...(story?.commands(tick) ?? []), ...input.poll(tick)]
-        renderer.apply(recorder.step(commands).render)
+        const result = recorder.step(commands)
+        renderer.apply(result.render)
+        // Only the tick and the events: the audio is never handed the sim, the render delta or the commands.
+        audio?.hear({ tick: result.tick, events: result.events })
         people.afterStep()
         story?.update()
       },
@@ -162,6 +178,18 @@ export async function startGame(options: GameOptions): Promise<Game> {
       else loop.start()
     }
     const unlisten = host.onVisibility(sync)
+    // The level is on screen: a new sim is about to be heard, and the page says the level started.
+    audio?.begin()
+    audio?.raise('level.started')
+    // The notice is the last thing put on the page, so a failure above leaves nothing of it behind.
+    const removeNotice =
+      audio !== undefined && options.soundNotice !== false
+        ? soundNotice({
+            mount,
+            audio,
+            ...(typeof options.soundNotice === 'string' ? { words: options.soundNotice } : {}),
+          })
+        : undefined
     sync()
 
     return {
@@ -189,6 +217,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         stopped = true
         loop.stop()
         unlisten()
+        removeNotice?.()
         cleanup()
       },
     }

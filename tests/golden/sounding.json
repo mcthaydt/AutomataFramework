@@ -1,0 +1,19 @@
+{
+  "ticks": 240,
+  "finalHash": "50642563a3bd5003",
+  "checks": [
+    {
+      "tick": 60,
+      "hash": "55ea6afe3dd06857"
+    },
+    {
+      "tick": 120,
+      "hash": "8d932204d31db380"
+    },
+    {
+      "tick": 180,
+      "hash": "b4d5f15f2c71fbc4"
+    }
+  ],
+  "cueLog": "[{\"do\":\"music\",\"from\":\"page\",\"id\":\"meadow\",\"on\":\"level.started\",\"tick\":0},{\"do\":\"sound\",\"from\":\"sim\",\"id\":\"jump\",\"on\":\"hero.jumped\",\"tick\":11},{\"do\":\"sound\",\"from\":\"sim\",\"id\":\"land\",\"on\":\"hero.landed\",\"tick\":60},{\"do\":\"sound\",\"from\":\"sim\",\"id\":\"jump\",\"on\":\"hero.jumped\",\"tick\":121},{\"do\":\"sound\",\"from\":\"sim\",\"id\":\"land\",\"on\":\"hero.landed\",\"tick\":170}]"
+}

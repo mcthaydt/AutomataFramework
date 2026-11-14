@@ -82,3 +82,36 @@ test('an event no plugin registered is refused by name', async () => {
   )
   sim.dispose()
 })
+
+test('a payload a system reads cannot be changed: it throws, and what the step returns is unchanged', async () => {
+  const tried: string[] = []
+  const meddler = definePlugin({
+    name: 'meddler',
+    events: [Ping],
+    systems: [
+      defineSystem({
+        name: 'emit',
+        phase: 'gameplay',
+        run: (ctx) => ctx.emit(Ping, { n: 7 }),
+      }),
+      defineSystem({
+        name: 'meddle',
+        phase: 'gameplay',
+        after: ['emit'],
+        run: (ctx) => {
+          const [first] = ctx.events.of(Ping)
+          try {
+            ;(first as { n: number }).n = 0
+          } catch (error) {
+            tried.push((error as Error).name)
+          }
+        },
+      }),
+    ],
+  })
+  const sim = await createSim({ seed: 1, plugins: [meddler] })
+  const said = sim.step([]).events
+  expect(tried).toEqual(['TypeError'])
+  expect(said).toEqual([{ type: 'ping', payload: { n: 7 } }])
+  sim.dispose()
+})
