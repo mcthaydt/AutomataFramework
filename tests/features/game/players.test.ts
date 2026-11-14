@@ -79,7 +79,9 @@ test('a taken device, and a keyboard that cannot be shared', async () => {
   const players = await playersOf(await loadFixtureGame(coopFiles), { canShare: false })
   expect(players.addPlayer('pad-0').ok).toBe(true)
   expect(refused(players.addPlayer('pad-0'))).toBe('That gamepad already has a player.')
-  expect(refused(players.addPlayer('keyboard'))).toBe("This game's keys cannot be shared. Join with a gamepad.")
+  expect(refused(players.addPlayer('keyboard'))).toBe(
+    "This game's keys cannot be shared. Join with a gamepad.",
+  )
   sim?.dispose()
   const shared = await playersOf(await loadFixtureGame(coopFiles))
   expect(shared.addPlayer('keyboard').ok).toBe(true)
