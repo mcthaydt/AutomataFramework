@@ -129,6 +129,8 @@ The pictures for a level's tile letters: which letter is solid, and which frame 
 
 A picture made of blocks and rounds, and the poses it can take. A character names one with its `figure`, and a backdrop's props use them too. Put the files in `content/figures/`; the kind's rules are in `schemas/figure.schema.json`.
 
+After you change a figure, run `npx --no automata art`: it paints `content/figures/<id>.png` and `<id>.atlas.json` beside the file, and you commit them with it.
+
 ```json
 {
   "format": 1,
@@ -167,6 +169,8 @@ A picture made of blocks and rounds, and the poses it can take. A character name
 ## backdrop
 
 What is behind a level: strips of hills, mountains, clouds or flat colour that repeat sideways, with figures standing on them. A level names one with its `backdrop`. Put the files in `content/backdrops/`; the kind's rules are in `schemas/backdrop.schema.json`.
+
+After you change a backdrop, run `npx --no automata art` the same way.
 
 ```json
 {

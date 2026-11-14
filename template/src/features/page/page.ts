@@ -2,6 +2,7 @@
 // everything; this file only shows it. Whatever goes wrong becomes a few lines of plain words in the page, never a blank
 // screen and never an error nobody reads.
 import {
+  ArtError,
   createLocale,
   type Frames,
   followLanguage,
@@ -12,6 +13,7 @@ import {
   InputSettingsSchema,
   loadGame,
   openSettings,
+  type ReadPicture,
   startGame,
   type Words,
   webHost,
@@ -40,6 +42,8 @@ export const WORDS = {
 export interface PageOptions {
   /** Reads one of the game's files by its path from the game's root. Default: fetches it from beside the page. */
   readonly read?: (path: string) => Promise<string>
+  /** Reads one of the game's pictures by its path from the game's root. Default: fetches it from beside the page. */
+  readonly readPicture?: ReadPicture
   /** Default `webHost()`. */
   readonly host?: Host
   /** Default: the page's animation frames. A test hands its own. */
@@ -68,6 +72,15 @@ function fetchBeside(base: string | URL): (path: string) => Promise<string> {
   }
 }
 
+/** A `readPicture` that fetches `path` from beside the page: a picture that is not there is "no such file". */
+function fetchPictureBeside(base: string | URL): ReadPicture {
+  return async (path) => {
+    const response = await fetch(new URL(path, base))
+    if (!response.ok) throw new Error(`${path}: no such file`)
+    return response.blob()
+  }
+}
+
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string): HTMLElementTagNameMap[K] {
   const made = document.createElement(tag)
   if (text !== undefined) made.textContent = text
@@ -82,7 +95,8 @@ function loading(): HTMLParagraphElement {
 
 /** Loads the game and starts it in `root`. Never rejects: anything that goes wrong is words in `root`. */
 export async function startPage(root: HTMLElement, options: PageOptions = {}): Promise<Page> {
-  const { read = fetchBeside(new URL('./', location.href)), host = webHost() } = options
+  const here = new URL('./', location.href)
+  const { read = fetchBeside(here), readPicture = fetchPictureBeside(here), host = webHost() } = options
   const coarse = options.coarse ?? window.matchMedia('(pointer: coarse)').matches
   let game: Game | undefined
   let stopped = false
@@ -149,6 +163,7 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       controls: CONTROLS,
       host,
       locale,
+      readPicture,
       settings: controls.get(),
       ...(options.frames === undefined ? {} : { frames: options.frames }),
     })
@@ -186,6 +201,8 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
   } catch (error) {
     // `loadGame` reports a bad file as words; this is a read that failed some other way, or a browser that cannot play.
     const reason = error instanceof Error ? error.message : String(error)
+    // A picture that is missing or old says what to run itself; it is the game's files that need fixing, not the browser.
+    if (error instanceof ArtError) return problem(WORDS.problemTitle, [reason], WORDS.problemFix)
     return problem(say?.('page.cannot-start') ?? WORDS.cannotStart, [reason])
   }
 }

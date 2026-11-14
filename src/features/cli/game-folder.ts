@@ -5,6 +5,8 @@ import { join, resolve } from 'node:path'
 import { Effect, Runtime } from 'effect'
 import type * as Headless from '../../headless.ts'
 import {
+  artFiles,
+  artProblems,
   type Diagnostic,
   type GameContent,
   languageName,
@@ -22,6 +24,8 @@ import { CliError, Code, type CodeService, Files, type FilesService, type GameCo
 /** The part of the framework `check` reads files with: the game's own copy when it has one. */
 type ContentApi = Pick<
   typeof Headless,
+  | 'artFiles'
+  | 'artProblems'
   | 'languageName'
   | 'loadGame'
   | 'parseContent'
@@ -34,6 +38,8 @@ type ContentApi = Pick<
 
 /** This command's own copy, for a game that is not installed yet. */
 const OWN_CONTENT: ContentApi = {
+  artFiles,
+  artProblems,
   languageName,
   loadGame,
   parseContent,

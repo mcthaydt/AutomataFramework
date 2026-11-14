@@ -101,6 +101,12 @@ const made = must(
 )
 said('the new game', made, 'Made my-game.')
 said('the new game', made, 'npm run check says whether the game is sound.')
+// The pictures its figures make were painted by create, so the new game has them and nothing is missing at the start.
+const heroPicture = join(game, 'content', 'figures', 'hero.png')
+if (!existsSync(heroPicture) || readFileSync(heroPicture).subarray(1, 4).toString() !== 'PNG')
+  fail('create did not paint content/figures/hero.png.')
+if (!existsSync(join(game, 'content', 'figures', 'crate.atlas.json')))
+  fail('create did not paint content/figures/crate.atlas.json.')
 step('create makes a game')
 
 // 2. The README's next commands, as written (but `npm run dev`, which has its own step below).
@@ -112,6 +118,11 @@ for (const line of rest.filter((command) => command !== 'npm run dev' && !comman
   if (line === 'npm run check') said('npm run check', output, 'Everything passed.')
 }
 said('check', checkOf('check'), 'Everything passed.')
+said(
+  'the pictures',
+  must('automata art --check', 'npx', ['--no', 'automata', 'art', '--check'], game),
+  'Every picture is painted and up to date.',
+)
 // The new game has its words in six languages, and says that no native speaker has read the five translations yet.
 said('the words', checkOf('the words', 0, '--only', 'files'), 'Words no native speaker has read yet')
 step('npm install and npm run check pass in the new game')
@@ -297,7 +308,7 @@ if (hello.result?.serverInfo?.name !== 'automata')
   fail('automata mcp did not say its name.', JSON.stringify(hello))
 mcp.send({ method: 'notifications/initialized' })
 const listed = (await mcp.request('tools/list')).result.tools.map((one) => one.name)
-if (listed.length !== 11 || !listed.includes('play_step') || !listed.includes('check'))
+if (listed.length !== 12 || !listed.includes('play_step') || !listed.includes('check'))
   fail(`automata mcp lists ${listed.join(', ')}.`)
 const sound = await mcp.tool('check', { folder: '.' })
 if (sound.isError || JSON.parse(sound.text).ok !== true)
