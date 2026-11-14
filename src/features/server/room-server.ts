@@ -63,6 +63,7 @@ export async function createRoomServer(options: RoomServerOptions): Promise<Room
     graceSeconds: options.graceSeconds ?? RECONNECT_GRACE_SECONDS,
     clock: options.clock ?? realClock,
     rooms,
+    making: { count: 0 },
     closed,
   }
   const http = createServer()

@@ -32,7 +32,6 @@ function fakeRoom(code = 'ROOM') {
       onLeave(4000)
       return 4000
     },
-    removeAllListeners: () => undefined,
   }
   return { room, handlers, sent, closeFromServer: (c = 1006) => onLeave(c) }
 }

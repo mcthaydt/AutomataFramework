@@ -236,7 +236,7 @@ import { runRoomServer } from '@automataframework/framework/server'
 
 const loaded = await loadGame((path) => readFile(path, 'utf8'))
 if (!loaded.ok) throw new Error('The game did not load.')
-await runRoomServer({ game: { content: loaded.value, plugins: [heroPlugin] } })
+await runRoomServer({ game: { content: loaded.value, plugins: [/* your game's plugins */] } })
 ```
 
 `runRoomServer` listens on the port you give it, else `PORT`, else any free one. It prints one line,
@@ -246,12 +246,12 @@ test can use `createRoomServer` instead, which resolves with the port and a `clo
 The page starts the game in a room with `startOnlineGame`, instead of `startGame`:
 
 ```ts
-import { onlineWords, startOnlineGame } from '@automataframework/framework'
+import { onlineWords, startOnlineGame, webHost } from '@automataframework/framework'
 
 const online = await startOnlineGame({
   content, plugins, mount, controls, host: webHost(),
   server: 'ws://localhost:3000',
-  // room: 'K7QX',   // join a friend's room by its code; leave it out to make one
+  // room: friendsCode,   // the `online.code` a friend's page shows; leave it out to make a room
   onStatus: (status) => (message.textContent = onlineWords(status)),
 })
 online.code // to share with a friend

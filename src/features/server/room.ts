@@ -39,6 +39,8 @@ export interface RoomContext {
   readonly clock: TickClock
   /** Open rooms by code. */
   readonly rooms: Map<string, OpenRoom>
+  /** Rooms being made: a room counts against `maxRooms` from the moment it is asked for, not once its sim exists. */
+  readonly making: { count: number }
   /** What closed rooms did, added to what open ones are doing when the server reports. */
   readonly closed: { late: number; refused: number }
 }
@@ -60,8 +62,18 @@ export function roomClassFor(ctx: RoomContext): new () => Room {
     override async onCreate(given: unknown): Promise<void> {
       const options = parseRoomOptions(given)
       if (options === undefined) throw refusal('bad-room', 'The room options are not valid.')
-      if (ctx.rooms.size >= ctx.maxRooms)
+      if (ctx.rooms.size + ctx.making.count >= ctx.maxRooms)
         throw refusal('server-full', 'The server has no space for another room right now.')
+      ctx.making.count++
+      try {
+        await this.make(options)
+      } finally {
+        ctx.making.count--
+      }
+    }
+
+    /** Builds the room's sim and engine and opens it. */
+    private async make(options: RoomOptions): Promise<void> {
       // A co-op game's players come and go by the sim's own commands, so its room's sim starts with nobody, and its seats
       // are what its level has start points for.
       const { content } = ctx.game

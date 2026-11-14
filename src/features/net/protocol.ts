@@ -28,8 +28,6 @@ export const MIN_LEAD = 1
 export const MAX_CLIENT_LEAD = 30
 /** With no late command for this many ticks, a client's lead drops by 1. */
 export const LEAD_DECAY_TICKS = 300
-/** A client never predicts further past the confirmed tick than this; it waits. */
-export const MAX_AHEAD = 120
 /** New predicted steps in one advance, at most. */
 export const MAX_CATCH_UP = 4
 /** Confirmed ticks taken in one advance, at most. */

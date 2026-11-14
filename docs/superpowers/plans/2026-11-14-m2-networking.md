@@ -166,6 +166,7 @@ sim needs, a client builds its sims before it joins.
 | `{ t: 'refused', seq, reason }` | Your command `seq` was not taken: `too-far-ahead`, `out-of-order`, `too-many`, `not-started` or `not-valid`. |
 | `{ t: 'sync', tick }` then bytes on `b` | The sim's snapshot (format v1, as `sim.snapshot()` writes it) before `tick`. Tick messages from `tick` follow. |
 | `{ t: 'away', seat }` / `{ t: 'back', seat }` | That player's connection dropped, or returned. |
+| `{ t: 'gone', seat }` | That player has left for good (added in the build, audit M8): the others take them off the list of those who lost their connection. |
 
 **The numbers** (all exported from `protocol.ts`):
 
@@ -179,7 +180,6 @@ sim needs, a client builds its sims before it joins.
 | `HASH_EVERY` | 60 | Ticks between hashes; the recorder's interval, so the room's replay holds the same ones. |
 | `START_LEAD`, `MIN_LEAD`, `MAX_CLIENT_LEAD` | 2, 1, 30 | How many ticks ahead of the last confirmed tick a client runs. |
 | `LEAD_DECAY_TICKS` | 300 | With no late command for this long, the lead drops by 1. |
-| `MAX_AHEAD` | 120 | A client never predicts further past the confirmed tick; it waits. |
 | `MAX_CATCH_UP` | 4 | New predicted steps in one advance, at most. |
 | `MAX_CONFIRM_PER_ADVANCE` | 240 | Confirmed ticks taken in one advance, at most. |
 | `SYNC_BEHIND` | 600 | With more tick messages than this waiting, a client asks for `sync` instead. |
@@ -208,10 +208,11 @@ where to carry on, so their own next command is never refused `out-of-order` (au
 2. If the prediction is wrong: remember `predicted.tick`, restore `predicted` from `confirmed.snapshot()`, and step it
    back up to where it was with the `pending` commands, each on `max(its stamped tick, the tick being stepped)`, in
    `seq` order. Count one rollback if `predicted` had been ahead.
-3. Step `predicted` `clamp(confirmed.tick + lead - predicted.tick, 0, MAX_CATCH_UP)` new ticks, and none while
-   `predicted.tick - confirmed.tick >= MAX_AHEAD`. The local commands given to this advance go on the first new step:
-   the session gives each `source` (the seat), the next `seq` and that tick, keeps it in `pending` and sends it. With
-   no new step they wait for the next advance.
+3. Step `predicted` `clamp(confirmed.tick + lead - predicted.tick, 0, MAX_CATCH_UP)` new ticks. So a quiet room stops
+   the local game after `lead` ticks (audit I2: there is no separate `MAX_AHEAD`). The local commands given to this
+   advance go on the first new step: the session gives each `source` (the seat), the next `seq` and that tick, keeps
+   it in `pending` and sends it. With no new step they are still sent, stamped with the tick `predicted` is about to
+   step (a hand let go as the page is hidden must reach the room).
 4. With no late command for `LEAD_DECAY_TICKS`, lower the lead by 1, to `MIN_LEAD` at least.
 
 A `seat` message sets the session's next `seq` to its `nextSeq`. A `sync` restores both sims from its bytes, forgets
@@ -228,7 +229,9 @@ Which players and which level it needs go in `meta` (`players: "1,2"`, `level`, 
 Written down so the 3D layer's plan starts from a list: allowed origins; limits per address (joins, sockets,
 commands a second); who a player is (sessions); `/health` and `/ready`; draining rooms on a deploy; short room codes a
 person can read out; logs; the Fly.io config and region; batching tick messages; smoothing corrections; a room that
-keeps itself to one process's 16 worlds across machines.
+keeps itself to one process's 16 worlds across machines; predicting through a quiet room (a client that keeps
+running ahead through a jittery downlink); a build id of the game's own code in `RoomOptions`, since the version check
+sees the framework, the shapes and the content but not the game's systems.
 
 ## Handoff to plan D
 
@@ -278,8 +281,8 @@ What the spec implies and a person will meet, most likely first. Each has its te
    room refuses or ignores each, and the other player's game is untouched. Task 3, "rubbish in".
 4. **Joining with an older copy of the game.** Refused before a seat is taken, with words that say to reload. Task 7,
    "another version is refused".
-5. **A server that goes quiet.** The player's game waits after two seconds of prediction instead of running away from
-   the truth, and carries on when ticks return. Task 4, "a silent room".
+5. **A server that goes quiet.** The player's game waits after `lead` ticks of prediction (a few, not seconds) instead
+   of running away from the truth, and carries on when ticks return. Task 4, "a silent room".
 
 ---
 
@@ -452,6 +455,8 @@ interface Link {
   /** One listener; set by the session. `closed` is called once, when the connection ends for any reason. */
   listen(handlers: { message(m: ServerMessage): void; bytes(b: Uint8Array): void; closed(): void }): void
   close(): void
+  /** For tests and debug tools: ends the connection the way a network failure would, without leaving the room. */
+  drop?(): void
 }
 interface SessionStats {
   readonly confirmedTick: number; readonly predictedTick: number; readonly lead: number
@@ -514,8 +519,8 @@ function createSession(setup: {
   - "a late command is replayed where the room put it": with seat 1's `up` delay at 12 beats, its command lands later
     than stamped; `late` is 1, `rollbacks` goes up, `lead` rises above `START_LEAD`, and it ends agreeing with the room.
   - "the lead comes back down": 301 confirmed ticks with no late command lower `lead` by 1, and never below 1.
-  - "a silent room" (Review Focus 5): with the wire silenced, `predictedTick - confirmedTick` stops at 120 and
-    `advance` still returns; unsilenced, play continues and the hashes agree.
+  - "a silent room" (Review Focus 5): with the wire silenced, `predictedTick - confirmedTick` stops at the session's `lead`
+    and stays there, and `advance` still returns; unsilenced, play continues and the hashes agree.
   - "far behind asks for the state" (Review Focus 1): 700 beats of the room with no `advance`, then one `advance`:
     the session sends `sync`, `syncs` becomes 1 after the answer arrives, and `confirmedTick` is the room's within two
     advances, not after 700 single steps (assert it took at most `MAX_CONFIRM_PER_ADVANCE` steps on any advance by
@@ -879,9 +884,10 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
     sim, each frame) and `data-check-<tick>` for each hash that matched; `data-built-code` holds the JSON list from
     `attemptsToBuildCode` wrapped round the whole join (`tests/fixtures/strict-csp.ts`), so the SDK is held to the
     no-eval promise in each engine. `window.dropConnection()` closes the link without leaving, through `wrapLink`.
-  - The journey, in Node: starts `node tests/fixtures/online/server.ts` as a child process and reads its port; starts
-    Vite's dev server on `tests/fixtures/online/page` (port 0, no config file, `server.fs.allow` the repo's root so the
-    page can import `#src/index.ts`); launches browsers with Playwright;
+  - The journey, in Node: starts `node tests/fixtures/online/server.ts` as a child process and reads its port; builds
+    `tests/fixtures/online/page` with Vite (no config file, the Rapier plugin, `assetsDir: ''`) and serves the files with
+    Vite's preview server on port 0, as a game's page is served (a dev server reloads the page when it finds a
+    dependency late, in the middle of a play; audit M8); launches browsers with Playwright;
     stops all three after.
   - The `online` CI job: checkout, pnpm, Node 24.21.0, install, `pnpm exec playwright install --with-deps chromium
     webkit firefox`, `pnpm test:journeys`, and uploads `tests/journeys/__screenshots__/**` as `screens-online`
@@ -937,7 +943,11 @@ then says so.
 **Interfaces:**
 - Consumes: plan I's `JoinCommand`, `LeaveCommand`, `playersIn` and the project's optional `players` (from the level
   and content entries), and its fixture `tests/fixtures/game/co-op.ts` (`coopFiles`: `players = 4`, four starts).
-- Produces, with no new exported name:
+- Produces, with one new exported name, `coopSeats(project, starts)` (how many places a co-op game's room has: the
+  contiguous run of start points from 1), and the server message `gone`:
+  - **A place someone left is not given again** (audit M2): a gone seat stays in the table, so a room of four that lost a
+    player refuses a fifth person with "That room is full". Taking the same number again needs the sim to take a `join`
+    for a number that just had a `leave`, which plan I's audit I1 is about; plans U ("Add a player") and D should know.
   - **The engine with `seatCommands`.** The room starts on the first join: no `waiting`, `start` goes to the first
     player at once. Every join, the first included, queues the `join` command from that seat for the next tick, and
     the player gets `seat`, then `sync` and the bytes, exactly as `back` sends them (a room at tick 0 included).
