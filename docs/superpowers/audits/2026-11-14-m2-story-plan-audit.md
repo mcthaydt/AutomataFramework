@@ -4,14 +4,15 @@ Stage 3 of the workflow, for [`plans/2026-11-14-m2-story.md`](../plans/2026-11-1
 (PR 58), against the [M2 spec](../specs/2026-11-14-m2-design.md)'s "Story (plan T)", its content table, the showcase
 table's Story and Behaviour rules rows and its journeys, the code on `main` at `b352052`, and the other M2 plans as
 they stand there: C (content, built and fixed), I (input, built and fixed), V (saves and the host, built and fixed),
-P (joints and touch, planned and audited, not built), N (networking, planned and audited), A (art, planned and
+P (joints and touch, planned and audited, not built), N (networking, built; it merged as pull request 44 while this
+audit was written, and was read again on `main` after it), A (art, planned and
 audited, PR 56, not built) and S (audio, planned, PR 57). Written 2026-11-14.
 
 **Verdict:** sound, and ready for stage 4 once the Owner answers one question (Q1), which holds only Task 6's
 opening rule. The central call holds against the code: the part that decides lives in `level`, which every caller of
 `createGameSim` gets (a page, a replay check, plan N's room server), and it joins a sim only when the content asks
 for it, so no recorded hash moves. No critical fault was found. Five important ones were, the worst a jump fired by
-the very press that closes the speech box; all five are fixed in the plan. Ten minor ones are fixed or handed to the
+the very press that closes the speech box; all five are fixed in the plan. Eleven minor ones are fixed or handed to the
 plan they belong to, and the journeys gain five tests.
 
 How it was checked: the plan was read whole, and the spec's parts named above. On `main`, these were read for every
@@ -136,6 +137,10 @@ bound, and the talker picks with the digits, Tab and Enter. Task 12 gains the sh
 - **M8.** The default box background is 88% opaque over another team's art, so its contrast against itself alone
   says little. *Fixed:* the test lays it over white and over black.
 - **M9.** The touch buttons still show while the hero is held and do nothing. *Handed to plan U:* dim them then.
+- **M11.** Plan N merged while this audit was written (pull request 44), so `startOnlineGame` is on `main` in
+  `src/features/game/online.ts` and the plan's handoff ("`startOnlineGame` wires the view as `startGame` does") had
+  no one left to do it. Its room records `level`, `players` and `seats` in `meta`, the same way I2 records `story`.
+  *Fixed:* Task 10 wires the view into `online.ts`; a `story` room option waits for the first game that goes online.
 - **M10.** A game that opens each level in a new sim loses the keeper's `ended` and the seen cutscenes between
   levels unless it hands them on. *Handed to plan D:* its step passes `storyProgress` from one level's sim to the
   next.
