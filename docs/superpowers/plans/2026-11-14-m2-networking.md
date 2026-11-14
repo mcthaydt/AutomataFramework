@@ -43,7 +43,7 @@ Not covered, with the reason:
   `automata.toml` says `players = 2` or more. Tasks 1 to 10 do not need them: there a room starts when its seats are
   full and its players are fixed from tick 0, as `createGameSim` fixes them today. Task 11 makes a room of a co-op
   game use plan I's two commands, so a player can join a game that is already going and a player who leaves takes
-  their hero with them. **Task 11 starts only after plan I has merged**; the rest does not wait for it.
+  their hero with them. **Task 11 starts only after plan I's code is on `main`**; the rest does not wait for it.
 - **Smoothing a correction.** After a rollback the picture is redrawn from the corrected state at once. Hiding that
   with blending is tuning for real networks, and is the deploy plan's.
 - **`@colyseus/testing`.** Left out of the stack: it needs `@colyseus/tools`, which the spec's table does not name,
@@ -879,7 +879,8 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
 
 ### Task 11: Coming and going, with plan I's commands
 
-**Starts only after plan I (`docs/superpowers/plans/2026-11-14-m2-input.md`) has merged to `main`.** If it has not
+**Starts only after plan I's code (`docs/superpowers/plans/2026-11-14-m2-input.md`, its Task 5 at least: `join.ts`)
+is on `main`.** If it is not
 when Task 10 is done, report to the coordinator, go on to Task 12, and leave this task for a later session; the tracker
 then says so.
 

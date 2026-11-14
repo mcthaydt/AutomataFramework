@@ -12,7 +12,9 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 |---|---|---|
 | 1. Spec | Written, in review | `specs/2026-11-14-m2-design.md` |
 | 2 to 7, per plan | Not started (plans C, I, V and N can start at once) | |
+| Plan C (content): 2. Plan | Written, in review: twelve tasks, twelve new kinds of file and the widened character and level | `plans/2026-11-14-m2-content.md` |
 | Plan V (saves and the host port): 2. Plan | Written, in review; stage at 100%, plan V at 10% | `plans/2026-11-14-m2-saves-host.md` |
+| Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
 | Plan N, networking: 2. Plan | Written, in review (12 tasks; Task 11 waits for plan I's `join` and `leave`; stages 3 to 7 not started) | `plans/2026-11-14-m2-networking.md` |
 
 ### Log
