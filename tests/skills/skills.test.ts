@@ -11,6 +11,7 @@ import { CONTENT_TYPES, type ContentType, parseContent, writeContent } from '#sr
 import { createGameSim } from '#src/features/level/level.ts'
 import { Transform } from '#src/features/physics/physics.ts'
 import type { PluginDef, Sim } from '#src/features/sim/sim.ts'
+import * as framework from '#src/headless.ts'
 import { heroPlugin } from '../../template/src/features/hero/hero.ts'
 import { loadTemplateGame } from '../template/game.ts'
 import { doubleJumpPlugin } from './double-jump.ts'
@@ -126,6 +127,23 @@ test('the worked example in automata-rules is the committed file, and its double
   expect(double).toBeLessThan(single - 0.5)
   // A third press in the air does nothing either: the extra jump was spent.
   expect(await apex([heroPlugin, doubleJumpPlugin], [5, 15, 30])).toBeCloseTo(double, 6)
+})
+
+test('the answering-an-event section names things the framework has and the template uses', () => {
+  const rules = text('automata-rules')
+  const section = rules.slice(rules.indexOf('## Answering an event'), rules.indexOf('## A whole example'))
+  expect(section).toContain('src/features/hero/score.ts')
+  const score = readFileSync(join(ROOT, 'template/src/features/hero/score.ts'), 'utf8')
+  const hero = readFileSync(join(ROOT, 'template/src/features/hero/hero.ts'), 'utf8')
+  for (const name of ['touchEvent', 'defineResource']) {
+    expect(section, name).toContain(name)
+    expect(score, name).toContain(name)
+    expect(typeof (framework as Record<string, unknown>)[name], name).toBe('function')
+  }
+  expect(section).toContain('ctx.events.of')
+  expect(score).toContain('ctx.events.of')
+  expect(hero).toContain("dependsOn: ['physics', 'commands', 'level', 'touch']")
+  expect(hero).toContain('countSparks')
 })
 
 test('no skill says npx automata without --no', () => {

@@ -302,7 +302,11 @@ if (sound.isError || JSON.parse(sound.text).ok !== true)
   fail('mcp check: the new game is not sound.', sound.text)
 const firstStart = await mcp.tool('play_start', { folder: '.' })
 if (firstStart.isError) fail('mcp play_start did not start.', firstStart.text)
-const firstSession = JSON.parse(firstStart.text).session
+const firstStarted = JSON.parse(firstStart.text)
+const firstSession = firstStarted.session
+// The new game has a spark lying in the hero's way, for the hero's rules to count.
+if (!firstStarted.state.things.some((thing) => thing.character === 'spark'))
+  fail('mcp play_start: the new game has no spark to take.', firstStart.text)
 const firstStep = await mcp.tool('play_step', { session: firstSession, ticks: 60, hold: { 1: ['right'] } })
 const mcpRan = JSON.parse(firstStep.text).state
 if (firstStep.isError || mcpRan.tick !== 60 || heroX(mcpRan) !== ran.x)

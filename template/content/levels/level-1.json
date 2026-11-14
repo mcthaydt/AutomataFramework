@@ -18,6 +18,12 @@
       "character": "crate",
       "x": 6.5,
       "y": 7.5
+    },
+    {
+      "id": "spark-1",
+      "character": "spark",
+      "x": 4.5,
+      "y": 7.5
     }
   ],
   "starts": [
