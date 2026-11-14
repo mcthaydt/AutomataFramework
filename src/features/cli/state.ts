@@ -49,8 +49,6 @@ export function describeState(state: GameState): string {
       : `with ${state.players.length === 1 ? 'player' : 'players'} ${state.players.join(', ')}`
   return [
     `At tick ${state.tick} on ${state.level}, ${who}:`,
-    ...state.things.map(
-      (t) => `${t.id} (${t.character}) is at ${t.x}, ${t.y} and moving ${t.vx}, ${t.vy}`,
-    ),
+    ...state.things.map((t) => `${t.id} (${t.character}) is at ${t.x}, ${t.y} and moving ${t.vx}, ${t.vy}`),
   ].join('\n')
 }

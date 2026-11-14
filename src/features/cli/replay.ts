@@ -273,7 +273,12 @@ export function replaysStep(game: GameFolder): Effect.Effect<StepReport, never, 
   return Effect.gen(function* () {
     const ran = yield* Effect.either(replaysOf(game, {}))
     if (ran._tag === 'Left')
-      return { step: 'replays', state: 'could-not-run', problems: [], notes: [ran.left.message] } satisfies StepReport
+      return {
+        step: 'replays',
+        state: 'could-not-run',
+        problems: [],
+        notes: [ran.left.message],
+      } satisfies StepReport
     if (ran.right.length === 0)
       return { step: 'replays', state: 'skipped', problems: [], notes: [NO_RECORDINGS] } satisfies StepReport
     const fine = ran.right.filter((r) => r.verdict === 'ok')

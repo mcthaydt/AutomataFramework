@@ -109,7 +109,9 @@ test('--accept writes format 2 with the new hashes and keeps the commands and th
   const accept = await replays({ [FILE]: original }, { code: codeWith([fasterHero]) })
   expect(await play(accept, '--accept')).toBe(0)
   expect(accept.out).toHaveLength(1)
-  expect(accept.out[0]).toMatch(/^replays\/level-1\.json: Recorded again: 300 ticks, ending on [0-9a-f]{16}\.$/)
+  expect(accept.out[0]).toMatch(
+    /^replays\/level-1\.json: Recorded again: 300 ticks, ending on [0-9a-f]{16}\.$/,
+  )
   const written = accept.files.get(`game/${FILE}`) as string
   const again = parseReplay(written)
   const before = parseReplay(original)
