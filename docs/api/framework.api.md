@@ -297,6 +297,16 @@ function createRenderer(options: {
 function createRng(seed: number): Rng;
 ```
 
+### `createSaves` (function)
+
+```ts
+function createSaves<S>(options: {
+    readonly def: SaveDef<S>;
+    readonly store: SaveStore;
+    readonly now?: () => number;
+}): Saves<S>;
+```
+
 ### `createScene` (function)
 
 ```ts
@@ -592,6 +602,12 @@ function isHeld(player: EntityRef, action: string): boolean;
 function jsonSchemaFor(type: ContentType): object;
 ```
 
+### `latestSlot` (function)
+
+```ts
+function latestSlot(states: readonly SlotState[]): number | undefined;
+```
+
 ### `Level` (interface)
 
 ```ts
@@ -659,6 +675,20 @@ interface LevelThing {
 
 ```ts
 function loadGame(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>>;
+```
+
+### `LoadResult` (type)
+
+```ts
+type LoadResult<S> = {
+    readonly ok: true;
+    readonly data: S | null;
+    readonly savedAt?: number;
+    readonly label?: string;
+} | {
+    readonly ok: false;
+    readonly problem: SaveProblem;
+};
 ```
 
 ### `log` (function)
@@ -1015,6 +1045,32 @@ type SaveProblem = {
 };
 ```
 
+### `SaveResult` (type)
+
+```ts
+type SaveResult = {
+    readonly ok: true;
+} | {
+    readonly ok: false;
+    readonly problem: SaveProblem;
+};
+```
+
+### `Saves` (interface)
+
+```ts
+interface Saves<S> {
+    check(): Promise<StoreResult<void>>;
+    list(): Promise<StoreResult<readonly SlotState[]>>;
+    load(slot: number): Promise<LoadResult<S>>;
+    save(slot: number, data: S, options?: {
+        readonly label?: string;
+        readonly replace?: boolean;
+    }): Promise<SaveResult>;
+    erase(slot: number): Promise<StoreResult<void>>;
+}
+```
+
 ### `SaveStore` (interface)
 
 ```ts
@@ -1150,6 +1206,24 @@ const SKY_COLOR = 10474480;
 
 ```ts
 const skyOf: (level: Level) => number;
+```
+
+### `SlotState` (type)
+
+```ts
+type SlotState = {
+    readonly slot: number;
+    readonly kind: 'empty';
+} | {
+    readonly slot: number;
+    readonly kind: 'ready';
+    readonly savedAt: number;
+    readonly label?: string;
+} | {
+    readonly slot: number;
+    readonly kind: 'damaged' | 'newer' | 'too-old';
+    readonly problem: SaveProblem;
+};
 ```
 
 ### `SNAPSHOT_VERSION` (const)
@@ -1679,6 +1753,16 @@ function createRecorder(sim: Sim, options?: {
 function createRng(seed: number): Rng;
 ```
 
+### `createSaves` (function)
+
+```ts
+function createSaves<S>(options: {
+    readonly def: SaveDef<S>;
+    readonly store: SaveStore;
+    readonly now?: () => number;
+}): Saves<S>;
+```
+
 ### `createSim` (function)
 
 ```ts
@@ -1893,6 +1977,12 @@ function isHeld(player: EntityRef, action: string): boolean;
 function jsonSchemaFor(type: ContentType): object;
 ```
 
+### `latestSlot` (function)
+
+```ts
+function latestSlot(states: readonly SlotState[]): number | undefined;
+```
+
 ### `Level` (interface)
 
 ```ts
@@ -1960,6 +2050,20 @@ interface LevelThing {
 
 ```ts
 function loadGame(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>>;
+```
+
+### `LoadResult` (type)
+
+```ts
+type LoadResult<S> = {
+    readonly ok: true;
+    readonly data: S | null;
+    readonly savedAt?: number;
+    readonly label?: string;
+} | {
+    readonly ok: false;
+    readonly problem: SaveProblem;
+};
 ```
 
 ### `log` (function)
@@ -2298,6 +2402,32 @@ type SaveProblem = {
 };
 ```
 
+### `SaveResult` (type)
+
+```ts
+type SaveResult = {
+    readonly ok: true;
+} | {
+    readonly ok: false;
+    readonly problem: SaveProblem;
+};
+```
+
+### `Saves` (interface)
+
+```ts
+interface Saves<S> {
+    check(): Promise<StoreResult<void>>;
+    list(): Promise<StoreResult<readonly SlotState[]>>;
+    load(slot: number): Promise<LoadResult<S>>;
+    save(slot: number, data: S, options?: {
+        readonly label?: string;
+        readonly replace?: boolean;
+    }): Promise<SaveResult>;
+    erase(slot: number): Promise<StoreResult<void>>;
+}
+```
+
 ### `SaveStore` (interface)
 
 ```ts
@@ -2424,6 +2554,24 @@ const SKY_COLOR = 10474480;
 
 ```ts
 const skyOf: (level: Level) => number;
+```
+
+### `SlotState` (type)
+
+```ts
+type SlotState = {
+    readonly slot: number;
+    readonly kind: 'empty';
+} | {
+    readonly slot: number;
+    readonly kind: 'ready';
+    readonly savedAt: number;
+    readonly label?: string;
+} | {
+    readonly slot: number;
+    readonly kind: 'damaged' | 'newer' | 'too-old';
+    readonly problem: SaveProblem;
+};
 ```
 
 ### `SNAPSHOT_VERSION` (const)

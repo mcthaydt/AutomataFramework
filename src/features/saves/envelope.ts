@@ -1,7 +1,7 @@
 // The stored form of one save slot: a small envelope around the game's data. It is canonical JSON, so the same save is
 // the same bytes in every engine, and it carries the version of the data so a later build can upgrade it. This file
 // checks the envelope's shape only, never the data inside: that is the game's schema's job (define.ts).
-import { canonicalJson } from '../../lib/canonical.ts'
+import { CanonicalJsonError, canonicalJson } from '../../lib/canonical.ts'
 
 /** What is stored for one slot. */
 export interface Envelope {
@@ -19,9 +19,25 @@ export interface Envelope {
 /** The longest label, so a saves screen has a size to design for. */
 const MAX_LABEL = 80
 
-/** The text to store. Throws a `CanonicalJsonError` for data JSON cannot keep exactly; `slots.ts` turns that into plain words. */
+/**
+ * Canonical JSON for something a game or a setting stored. A value JSON cannot keep exactly (a Date, `undefined`,
+ * NaN, a class instance) is a mistake in the game, and is thrown as a `RangeError` in plain words, before anything
+ * is written, rather than as the hashing code's own error.
+ */
+export function plainJson(value: unknown): string {
+  try {
+    return canonicalJson(value)
+  } catch (error) {
+    if (!(error instanceof CanonicalJsonError)) throw error
+    throw new RangeError(
+      `A save holds plain data only (text, numbers, true or false, lists and objects). ${error.message.replace(/^canonicalJson: /, '')}.`,
+    )
+  }
+}
+
+/** The text to store. Throws a `RangeError` for data JSON cannot keep (see `plainJson`). */
 export function writeEnvelope(envelope: Envelope): string {
-  return canonicalJson(envelope)
+  return plainJson(envelope)
 }
 
 /** Why text could not be read as an envelope, in words a screen may show. */

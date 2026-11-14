@@ -3,6 +3,14 @@
 
 export { defineSave, type SaveDef, type SaveProblem } from './define.ts'
 export {
+  createSaves,
+  type LoadResult,
+  latestSlot,
+  type SaveResult,
+  type Saves,
+  type SlotState,
+} from './slots.ts'
+export {
   type MemoryStore,
   memoryStore,
   type SaveStore,
