@@ -174,3 +174,46 @@ test("state and onState are the speaker's", async () => {
   expect(audio.state()).toBe('on')
   expect(heard).toHaveBeenCalledWith('on')
 })
+
+test('raise("level.started") starts meadow and logs it from "page"', async () => {
+  const speaker = tapped()
+  const audio = createAudio({ content: await loadFull(), speaker })
+  audio.raise('level.started')
+  expect(audio.music()).toBe('meadow')
+  expect(audio.log()).toEqual([{ tick: 0, from: 'page', on: 'level.started', do: 'music', id: 'meadow' }])
+  expect(speaker.played.length).toBeGreaterThan(0)
+})
+
+test('a music cue for the track already wanted is logged and changes nothing', async () => {
+  const speaker = tapped()
+  const audio = createAudio({ content: await loadFull(), speaker })
+  audio.raise('level.started')
+  audio.raise('level.started')
+  expect(audio.log()).toHaveLength(2)
+  expect(speaker.cuts).toEqual([])
+  expect(speaker.played).toHaveLength(2)
+})
+
+test('a stop-music cue stops it', async () => {
+  const content = await contentWithCues([
+    { on: 'level.started', do: 'music', music: 'meadow' },
+    { on: 'level.ended', do: 'stop-music' },
+  ])
+  const audio = createAudio({ content, speaker: tapped() })
+  audio.raise('level.started')
+  audio.raise('level.ended')
+  expect(audio.music()).toBeUndefined()
+  expect(audio.log()[1]).toEqual({ tick: 0, from: 'page', on: 'level.ended', do: 'stop-music' })
+})
+
+test('of two music changes for one event the last one counts', async () => {
+  const full = await contentWithCues([])
+  const cues = {
+    a: { format: 1 as const, id: 'a', cues: [{ on: 'x', do: 'music' as const, music: 'meadow' }] },
+    b: { format: 1 as const, id: 'b', cues: [{ on: 'x', do: 'stop-music' as const }] },
+  }
+  const audio = createAudio({ content: { ...full, cues }, speaker: tapped() })
+  audio.raise('x')
+  expect(audio.music()).toBeUndefined()
+  expect(audio.log().map((e) => e.do)).toEqual(['music', 'stop-music'])
+})
