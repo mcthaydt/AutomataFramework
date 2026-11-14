@@ -6,12 +6,13 @@ The tracker every stage reads first and updates last. One section per cycle; new
 
 Spec: [`specs/2026-11-14-no-default-language-design.md`](specs/2026-11-14-no-default-language-design.md)
 
-Overall: **10%** (stage 1, the spec, is written and in review; one plan, plan W, then runs stages 2 to 7)
+Overall: **20%** (the spec is merged; plan W is written and in review; stages 3 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
-| 1. Spec | Written, in review, 100%. The Owner answered every question (2026-11-14): players and editor users only, an asked-for language with a flag-only picker on every first visit, the player's own language first, then by first-language speakers, the US flag for English and Mexico's for Spanish, US spelling. No golden moves | `specs/2026-11-14-no-default-language-design.md` |
-| 2 to 7 (plan W) | Not started | `plans/2026-11-14-no-default-language.md` |
+| 1. Spec | Merged (PR 89), 100%. The Owner answered every question (2026-11-14): players and editor users only, an asked-for language with a flag-only picker on every first visit, the player's own language first, then by first-language speakers, the US flag for English and Mexico's for Spanish, US spelling. No golden moves | `specs/2026-11-14-no-default-language-design.md` |
+| 2. Plan (plan W) | Written, in review, 100%. Ten tasks (9% each, 10% for the last green run): the speakers' order and US English; `source` in `automata.toml`; read marks format 2; a locale that answers a language or none, with the picker's rules; every caller passes the player's language (`startGame` now needs a `locale` and refuses to start before a language is chosen); six SVG flags and the picker screen; the template's page; `automata words` and the MCP `words` tool; `automata create --source`; the rule that fails on English named as a fallback, and the docs. No golden moves and no dependency is added. No Owner question is open. Found on the way and left for plan U: a refused `rebind` answers in English | `plans/2026-11-14-no-default-language.md` |
+| 3 to 7 (plan W) | Not started | |
 
 ## Cycle 4: M2, the 2D framework in full
 
