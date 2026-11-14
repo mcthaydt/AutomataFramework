@@ -6,6 +6,7 @@ and everything a game needs to be checked and played. Change it, make it yours, 
 ## Play it
 
 ```
+cd my-game
 npm install
 npm run dev
 ```

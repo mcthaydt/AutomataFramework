@@ -2,8 +2,8 @@
 // everything; this file only shows it. Whatever goes wrong becomes a few lines of plain words in the page, never a blank
 // screen and never an error nobody reads.
 import {
-  formatDiagnostic,
   type Frames,
+  formatDiagnostic,
   type Game,
   type Host,
   INPUT_SETTINGS_DEFAULT,
@@ -145,7 +145,10 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
 
     // A player at a keyboard is told which keys to press, until the first time they press one of them.
     if (!coarse) {
-      const hint = element('p', hintFor((action) => started.input.inputsFor(1, action)[0]))
+      const hint = element(
+        'p',
+        hintFor((action) => started.input.inputsFor(1, action)[0]),
+      )
       hint.className = 'hint'
       root.append(hint)
       const gone = (event: KeyboardEvent): void => {

@@ -22,9 +22,8 @@ test('README.md and AGENTS.md are short enough to read', () => {
 })
 
 test('README.md and AGENTS.md name only commands, files and skills that exist', () => {
-  const scripts = (
-    JSON.parse(tree['package.template.json'] ?? '{}') as { scripts: Record<string, string> }
-  ).scripts
+  const scripts = (JSON.parse(tree['package.template.json'] ?? '{}') as { scripts: Record<string, string> })
+    .scripts
   for (const page of PAGES) {
     for (const span of spans(tree[page] ?? '')) {
       // `automata <command>`: the word after it is one of the commands.

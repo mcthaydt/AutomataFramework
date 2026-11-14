@@ -4,8 +4,8 @@
 import { afterEach, expect, test } from 'vitest'
 import {
   createRecorder,
-  parseReplay,
   Player,
+  parseReplay,
   type Replay,
   verifyReplay,
   writeReplay,
