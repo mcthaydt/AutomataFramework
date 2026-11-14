@@ -73,4 +73,8 @@ test("the template's page says no language of its own: no lang on the page, no E
   expect(inCode.map(([path]) => path)).toEqual([])
   // Its one English: the language its own words are written in, named once in the project file.
   expect((tree['automata.toml'] ?? '').match(/^source = "en"$/gm)).toHaveLength(1)
+  // The game's own linter is told why the page has no lang, or `npm run check` would fail on a new game.
+  expect(JSON.parse(tree['biome.template.json'] ?? '{}').overrides).toEqual([
+    { includes: ['index.html'], linter: { rules: { a11y: { useHtmlLang: 'off' } } } },
+  ])
 })

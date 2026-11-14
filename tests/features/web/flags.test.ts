@@ -8,6 +8,9 @@ import { LANGUAGES } from '#src/features/content/content.ts'
 const LIBRARY = join(import.meta.dirname, '../../../src/features/web/library')
 const read = (path: string): string => readFileSync(join(LIBRARY, path), 'utf8')
 
+/** The drawing without its namespace, the one address every drawing has and no browser fetches. */
+const bare = (text: string): string => text.replace(' xmlns="http://www.w3.org/2000/svg"', '')
+
 /** What no drawing may hold: each a way to run code, show words or fetch something. */
 const FORBIDDEN: readonly [string, RegExp][] = [
   ['a style', /<style|\sstyle=/i],
@@ -33,7 +36,7 @@ describe.each(LANGUAGES)('the %s flag', (language) => {
 
   test('is under 2048 bytes', () => expect(Buffer.byteLength(text)).toBeLessThan(2048))
 
-  test.each(FORBIDDEN)('holds no %s', (_name, pattern) => expect(text).not.toMatch(pattern))
+  test.each(FORBIDDEN)('holds no %s', (_name, pattern) => expect(bare(text)).not.toMatch(pattern))
 
   test('has more than one colour', () => {
     expect(new Set(text.match(/#[0-9a-f]{6}/gi)).size).toBeGreaterThan(1)
@@ -53,6 +56,6 @@ describe.each(['globe', 'check'])('the %s icon', (name) => {
   })
   test('is under 2048 bytes and holds nothing that runs or reads', () => {
     expect(Buffer.byteLength(text)).toBeLessThan(2048)
-    for (const [, pattern] of FORBIDDEN) expect(text).not.toMatch(pattern)
+    for (const [, pattern] of FORBIDDEN) expect(bare(text)).not.toMatch(pattern)
   })
 })

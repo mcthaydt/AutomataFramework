@@ -389,7 +389,7 @@ const page: LocalePage = {
         .map((b) => b.dataset.language as Language),
       title: title?.textContent ?? '',
       titleVisible: title !== null && getComputedStyle(title).display !== 'none',
-      go: go?.textContent ?? '',
+      go: (go?.textContent ?? '').trim(),
       goDisabled: go?.getAttribute('aria-disabled') === 'true',
       text: shown.innerText,
       lang: shown.getAttribute('lang') ?? '',
@@ -455,6 +455,8 @@ const page: LocalePage = {
     await enter()
   },
   async tap(language) {
+    // The settings row is drawn once the game is on the screen.
+    await begun.promise
     flagOf(language).click()
     // `set` changes the words at once and then keeps the pick: wait for the keeping, not for a guess at how long.
     await picking
