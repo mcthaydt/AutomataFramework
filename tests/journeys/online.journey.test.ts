@@ -236,6 +236,9 @@ for (const [first, second] of PAIRS) {
     await two.hold('left')
     await expect.poll(async () => num(await one.data('p2-x')), POLL).toBeLessThan(12.5)
     await expect.poll(async () => num(await two.data('p1-x')), POLL).toBeGreaterThan(3.5)
+    // From here the friend's line is slow: their keys reach the room a quarter of a second late (the page's
+    // `slowLine`). It starts only now, so who reaches the crate first above is the same race it always was.
+    await two.page.evaluate(() => (window as unknown as { slowLine(ms: number): void }).slowLine(250))
     await one.release('right')
     await two.release('left')
     await two.tap('jump')
@@ -249,10 +252,10 @@ for (const [first, second] of PAIRS) {
     for (const seat of [one, two])
       await expect.poll(async () => (await checks(seat)).has(599), POLL).toBe(true)
     expect((await checks(one)).get(599)).toBe((await checks(two)).get(599))
-    // A key pressed by one arrives at the other after the tick it was meant for was already guessed, so at least one
-    // picture is put right; which of the two depends on the timing of the network, so the journey asks it of the pair.
-    const rollbacks = num(await one.data('rollbacks')) + num(await two.data('rollbacks'))
-    expect(rollbacks, 'rollbacks in the pair').toBeGreaterThan(0)
+    // The friend's keys reach the room a quarter of a second late, so the room puts each on a later tick than the one
+    // their page guessed, and their page puts its picture right. Without the slow line this depended on how fast each
+    // browser drew its frames, and once failed (job 132443000203).
+    expect(num(await two.data('rollbacks')), "rollbacks on the slow friend's page").toBeGreaterThan(0)
     for (const seat of [one, two]) {
       expect(
         await seat.data('built-code'),
