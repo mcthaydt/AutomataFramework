@@ -10,7 +10,8 @@ const file = 'content/tunings/hero.json'
 const NUMBER = { id: 'run-speed', about: 'How fast the hero runs.', value: 6, min: 1, max: 12, step: 0.5 }
 
 /** A tuning file that lists the fixture game's controls, written the way an author or an agent writes it. */
-const tuning = (controls: unknown): string => JSON.stringify({ format: 1, id: 'hero', numbers: [], controls })
+const tuning = (controls: unknown): string =>
+  JSON.stringify({ format: 1, id: 'hero', numbers: [NUMBER], controls })
 
 const listed: TuningControl[] = Object.entries(fixtureControls).map(([action, control]) => ({
   action,
