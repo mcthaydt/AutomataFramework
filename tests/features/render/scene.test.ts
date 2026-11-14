@@ -94,3 +94,75 @@ test('a size or colour that changes is drawn as the new one at once', () => {
   scene.apply(delta({ changed: [row(1, 1, 0, 0, { w: 3, h: 4, color: 0x00ff00 })] }))
   expect(scene.views(0)[0]).toMatchObject({ w: 3, h: 4, color: 0x00ff00 })
 })
+
+// Ropes and pins (plan P): a joint is drawn between where its two ends are, so a thing never hangs in the air
+// unexplained.
+
+/** A row for a joint, as the sim delivers it: physics.joint with every field. */
+function jointRow(sid: number, fields: Record<string, number | boolean>): RenderRow {
+  return {
+    sid,
+    components: {
+      'physics.joint': {
+        kind: 1,
+        a: 0,
+        b: 0,
+        ax: 0,
+        ay: 0,
+        bx: 0,
+        by: 0,
+        limited: false,
+        min: 0,
+        max: 1,
+        ...fields,
+      },
+    },
+  }
+}
+const places = (link: { x1: number; y1: number; x2: number; y2: number }): number[] =>
+  [link.x1, link.y1, link.x2, link.y2].map((n) => Math.round(n * 1e6) / 1e6)
+
+test('a rope is drawn from its end on a turned thing to its end on a thing that is not drawn', () => {
+  const scene = createScene()
+  scene.apply(
+    delta({
+      added: [
+        row(1, 0, 0, 0, null), // the level's anchor: a pose and no look
+        row(2, 2, 3, Math.PI / 2),
+        jointRow(3, { kind: 1, a: 2, b: 1, ax: 1, bx: 0.5 }),
+      ],
+    }),
+  )
+  const [link] = scene.links(1)
+  expect(link).toMatchObject({ sid: 3, kind: 'rope' })
+  expect(places(link as never)).toEqual([2, 4, 0.5, 0])
+  expect(scene.views(1).map((v) => v.sid)).toEqual([2])
+})
+
+test('a pin is a link of kind pin, and links are blended like views', () => {
+  const scene = createScene()
+  scene.apply(delta({ added: [row(1, 0, 0, 0, null), row(2, 2, 0), jointRow(3, { kind: 0, a: 2, b: 1 })] }))
+  scene.apply(delta({ changed: [row(2, 4, 0)] }))
+  expect(scene.links(1)[0]).toMatchObject({ kind: 'pin', x1: 4, y1: 0 })
+  expect(scene.links(0.5)[0]).toMatchObject({ x1: 3 })
+  expect(scene.links(0)[0]).toMatchObject({ x1: 2 })
+})
+
+test('a link goes when either end goes, and comes back on a resync', () => {
+  const scene = createScene()
+  const all = [row(1, 0, 0, 0, null), row(2, 2, 3), jointRow(3, { a: 2, b: 1 })]
+  scene.apply(delta({ added: all }))
+  expect(scene.links(1)).toHaveLength(1)
+  scene.apply(delta({ removed: [2] }))
+  expect(scene.links(1)).toEqual([])
+  scene.apply(delta({ resync: true, added: all }))
+  expect(scene.links(1)).toHaveLength(1)
+  scene.apply(delta({ removed: [3] }))
+  expect(scene.links(1)).toEqual([])
+})
+
+test('a scene with no joints has no links', () => {
+  const scene = createScene()
+  scene.apply(delta({ added: [row(1, 1), row(2, 2)] }))
+  expect(scene.links(1)).toEqual([])
+})

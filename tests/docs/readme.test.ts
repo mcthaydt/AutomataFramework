@@ -109,3 +109,11 @@ test('the README has a Play online section: the server, the page, the words, and
   expect(online.split('\n').length).toBeLessThan(60)
   for (const name of ['onlineWords', 'joinSession']) expect(framework, name).toHaveProperty(name)
 })
+
+// A game finds out how to hold things and how to hear a touch from this section.
+test('the README shows a pin, a rope, a touched character and the event a game reads', () => {
+  const joints = section('## Joints and touch')
+  for (const word of ['"kind": "pin"', '"kind": "rope"', '"touch": "take"', 'touchEvent('])
+    expect(joints, word).toContain(word)
+  expect(typeof framework.touchEvent).toBe('function')
+})

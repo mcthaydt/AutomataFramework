@@ -344,6 +344,72 @@ await copyFile(new URL(import.meta.resolve('@automataframework/framework/rapier.
 
 or paste its text into your game's own licence page. The demo game does the second.
 
+## Joints and touch
+
+A level can hold things with pins and ropes, and a character can say it is touched. Both are part of the replay, and a
+game that uses neither plays exactly as it did before.
+
+A `pin` holds a thing at one point and lets it turn about that point, here a seesaw's plank, which may tip 25 degrees
+either way. Leave `holder` out and the level holds it; name another thing and that thing does. This goes in the level
+file's `joints`:
+
+```json
+{
+  "id": "seesaw",
+  "thing": "plank-1",
+  "kind": "pin",
+  "x": 17,
+  "y": 4,
+  "turn": {
+    "min": -25,
+    "max": 25
+  }
+}
+```
+
+A `rope` lets a thing go no further than the rope reaches. A swing is a platform on two ropes, each tied to one end of
+the platform (`from`) and to the level above it (`to`); `slack` makes a rope longer than the gap between its ends:
+
+```json
+{
+  "id": "swing-left",
+  "thing": "platform-1",
+  "kind": "rope",
+  "from": { "x": 7.5, "y": 6 },
+  "to": { "x": 7.6, "y": 2 }
+}
+```
+
+A character with `touch` lets things pass through it, and the game is told when something touches it. `"touch":
+"sense"` only tells (a door); `"touch": "take"` also takes it away when a hero touches it (a spark). It needs a `kind`
+and a `fixed` body, and the events are named after the kind: `door.touched`, `door.left` and `spark.taken`.
+
+```json
+{
+  "format": 1,
+  "id": "spark",
+  "body": "fixed",
+  "size": { "w": 0.6, "h": 0.6 },
+  "color": "#f5d547",
+  "kind": "spark",
+  "touch": "take"
+}
+```
+
+A system counts them in the tick they happen:
+
+```ts
+import { defineSystem, touchEvent } from '@automataframework/framework/headless'
+
+export const count = defineSystem('game.count', (ctx) => {
+  const score = ctx.resource(Score)
+  score.sparks += ctx.events.of(touchEvent('spark', 'taken')).length
+})
+```
+
+A pinned thing turns about its pin, a roped thing can go no further than its rope, and every pin, rope and touch
+is on the same hash in Node, Chromium, WebKit and Firefox, so a replay of them verifies anywhere.
+
 ## The public API
 
 `docs/api/framework.api.md` lists every export of both entries. It is generated (`pnpm api-report --update`), and CI
