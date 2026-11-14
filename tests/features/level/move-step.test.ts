@@ -262,8 +262,8 @@ describe('the dash', () => {
     const airDash = tick({ ...AIR, dashPressed: true })
     const wait = repeat(3, tick(AIR))
     const results = run([airDash, ...wait, airDash, ...wait, tick(), tick(), airDash], quick, on, falling())
-    expect(saw(results.slice(0, 9), 'dashed')).toBe(1)
-    expect(results[9]?.events).toContain('dashed')
+    expect(saw(results.slice(0, 10), 'dashed')).toBe(1)
+    expect(results[10]?.events).toContain('dashed')
   })
 
   test('a dash into a wall ends at the wall', () => {

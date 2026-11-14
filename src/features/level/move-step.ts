@@ -204,8 +204,8 @@ export function stepMoves(
   s.walking = below && dir !== 0
 
   // 6. The wall slide: falling, held toward a wall. It is no faster than `wall-slide-speed`, and a wall gives the air
-  // jump back.
-  const sliding = on.wallJump && !below && wall !== 0 && dir === wall && vy > 0
+  // jump back. A tick with a press does not slide: it jumps, off the wall, in step 7.
+  const sliding = on.wallJump && !below && wall !== 0 && dir === wall && vy > 0 && s.press === 0
   if (sliding) {
     vy = Math.min(vy, n.wallSlideSpeed)
     s.airJumps = 0

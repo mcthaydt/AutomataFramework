@@ -127,14 +127,17 @@ describe('touching', () => {
     // taller than the fall, so the box leans on it the whole way down.
     stackedWall(sim)
     const sid = hero(sim, 1.05, -4)
-    // Pushed into the wall, a box clings to it: the push is the wall's friction. A hero the framework moves is never
-    // pushed into one (it holds its sideways speed at nothing), so the box is let go after a second and a half.
-    const seen = walk(sim, sid, 3, 90)
-    seen.push(...walk(sim, sid, 0, 90))
+    // Like a hero the framework moves: it leans on the wall (a push of 3 until the wall is felt, then none), so it
+    // hugs the wall on the way down and never clings to it by friction.
+    const seen: Seen[] = []
+    for (let i = 0; i < 150; i++) {
+      const leaning = seen.at(-1)?.right === true
+      seen.push(...walk(sim, sid, leaning ? 0 : 3, 1))
+    }
     // Until its feet are within a tenth of the floor, the box is in the air, whatever the seams under its side say.
     const falling = seen.filter((s) => s.y + 0.5 < FLOOR_TOP - 0.1)
     expect(falling.length).toBeGreaterThan(10)
-    expect(falling.every((s) => s.below === false)).toBe(true)
+    expect(falling.filter((s) => s.below !== false).map((s) => [s.x, s.y])).toEqual([])
     expect(seen.filter((s) => s.right).length).toBeGreaterThan(10) // not vacuous: it leaned on the wall
     expect(seen.at(-1)?.below).toBe(true)
     sim.dispose()
