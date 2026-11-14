@@ -31,6 +31,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan P (physics: joints and touch): 3. Plan audit | Written, in review; stage at 100%, plan P at 20%: one critical (a rope's length through `Math.hypot`, now `dmath`'s `hypot`), eight important and nine minor findings, all but one minor applied to the plan; no Owner question; waits on plan C | `audits/2026-11-14-m2-physics-plan-audit.md` |
 | Plan A (art): 2. Plan | Written, in review; fourteen tasks; stage at 100%, plan A at 10%. The `figure` and `backdrop` formats, their painter (our own PNG writer, the same bytes in four engines), clips, tiles, backdrops, the camera, and M1's minors M7 and M8. One Owner question open (these formats, or the old painter ported), which holds every task but 1, 8 and 11 | `plans/2026-11-14-m2-art.md` |
 | Plan A (art): 3. Plan audit | Written, in review; stage at 100%, plan A at 20%: no critical, eight important (the camera's limit from the spec, `view.most`; a watched replay's camera after a restore; `heroes()` out of reach of plan U; `sprites.json` on a game later plans grow; shimmer at a fractional scale; plan D's CI job would never merge as described; the painter's rule; and who repaints after an editor's save), twelve minor; all but one applied to the plan. Two Owner questions open: the format question (still holds every task but 1, 8 and 11) and who repaints a picture after an editor's save (holds nothing here) | `audits/2026-11-14-m2-art-plan-audit.md` |
+| Plan S (audio): 2. Plan | Written, in review; eleven tasks (9% each, 1% for the last green run); stage at 100%, plan S at 10%. A headless `audio` feature (cues, the cue log, sounds, one track, two volumes) over a `Speaker` port, the page's speaker and the "Tap to start the sound" button in `web`, and the three audio kinds taken out of what the sim hashes. No Owner question; three calls marked for the audit | `plans/2026-11-14-m2-audio.md` |
 | Plan T (story): 2. Plan | Written, in review; fourteen tasks; stage at 100%, plan T at 10%. Behaviour rules, conversations and cutscenes run in the sim (in `level`, switched on by content, so no recorded hash moves), stepped by three commands; a new page feature, `story`, shows the speech box and the cutscene's camera. Task 11 (the camera, and an actor's clip and face) waits for plan A to be built; no Owner question | `plans/2026-11-14-m2-story.md` |
 
 ### Log
@@ -42,10 +43,6 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
   What shows is the new page feature `story`: a speech box in plain words and the cutscene's camera, which read
   the sim's state and decide nothing. Four optional fields join content (`name` and `conversation` on a character,
   `cutscene` on a conversation's node, `opens` on a cutscene). Goldens are recorded on a story fixture of its own.
-| Plan S (audio): 2. Plan | Written, in review; eleven tasks (9% each, 1% for the last green run); stage at 100%, plan S at 10%. A headless `audio` feature (cues, the cue log, sounds, one track, two volumes) over a `Speaker` port, the page's speaker and the "Tap to start the sound" button in `web`, and the three audio kinds taken out of what the sim hashes. No Owner question; three calls marked for the audit | `plans/2026-11-14-m2-audio.md` |
-
-### Log
-
 - 2026-11-14, plan S (audio): the plan is written. `audio` is headless and is handed a step's events, never the
   sim, so it has nothing to change; it keeps a cue log of what was asked for and plays through a `Speaker` port
   (`testSpeaker` in Node, `webSpeaker` on Web Audio in `web`). Music is handed to the speaker a little ahead of the
