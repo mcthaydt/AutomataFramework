@@ -1,8 +1,8 @@
 // A game with words, made in memory: the M1 fixture game and one messages file per language a test names.
 import {
   type GameContent,
-  type Language,
   LANGUAGES,
+  type Language,
   loadGame,
   writeContent,
 } from '#src/features/content/content.ts'
