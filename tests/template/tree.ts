@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /** The template's folder. */
-export const TEMPLATE = fileURLToPath(new URL('../../template/', import.meta.url))
+export const TEMPLATE: string = fileURLToPath(new URL('../../template/', import.meta.url))
 
 /** Every file under `template/`, by its path from there. */
 export function templateTree(): Record<string, string> {
