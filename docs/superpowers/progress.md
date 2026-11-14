@@ -2,6 +2,23 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 2: M2, the 2D framework in full
+
+Spec: [`specs/2026-11-14-m2-design.md`](specs/2026-11-14-m2-design.md)
+
+Overall: **5%** (stage 1, the spec, is written and in review; M2 is about ten plans, each running stages 2 to 7)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Written, in review | `specs/2026-11-14-m2-design.md` |
+| 2 to 7, per plan | Not started (plans C, I, V and N can start at once) | |
+
+### Log
+
+- 2026-11-14: the M2 spec, with the Owner's answers: the demo has same-screen co-op for 2 to 4 players, and online
+  play is built and proven in CI, not deployed; the showcase is one short real game of three levels plus a "What's
+  inside" page. M2 is cut into small plans that can run side by side.
+
 ## Cycle 1: the 2D first layer
 
 Spec: [`specs/2026-11-13-2d-first-layer-design.md`](specs/2026-11-13-2d-first-layer-design.md)
