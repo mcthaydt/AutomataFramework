@@ -89,8 +89,9 @@ and WebKit before the fix.
 writes the files and `automata check` runs `artProblems`. On `main` there is no `art` command and `check` has no
 `art` step: they are plan K's Step A, which waited for this plan. Until it lands an author with the installed package
 is told to run a command that is not there. It is not fixed here: Step A is written and is the change that makes all
-three true at once. *Handed to plan K's Step A, which can start now;* until then, inside this repo, the painter is
-`pnpm art <folder>` (`scripts/art.ts`).
+three true at once. *Handed to plan K's Step A* — **resolved on `main`** while this audit was in review: Step A
+merged as `17a86d6` (PR 84), with `automata art` and an `art` step in `automata check`, and is merged into this
+pull request.
 
 **I3. An online game drew boxes and ignored `readPicture` and the level's `view`, without a word.** `OnlineOptions`
 extends `GameOptions`, so it accepted `readPicture`, and passed it on unread; `startOnlineGame` gave the renderer no
@@ -125,8 +126,8 @@ keeps the camera gliding, while the restore test still passes.
   clips need a figure, so it is unlikely. *Fixed* in the words only: both comments say when they can be called.
 - **M5. The tileset sentence always names `content/figures/meadow.png`.** `There is no picture at "art/meadow.png". Put
   one there, or use a figure's picture, like content/figures/meadow.png.` is the plan's sentence and reads as an
-  example, but in another game that file does not exist. *Noted*, not changed: plan K's Step A rewords the art
-  sentences when it adds the command, and is the place to name the game's own first painted picture.
+  example, but in another game that file does not exist. *Noted*, not changed: plan K's Step A kept the sentence as it
+  is; naming the game's own first painted picture is a small change for whichever plan next touches `artProblems`.
 
 ## Notes
 
