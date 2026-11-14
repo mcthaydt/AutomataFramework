@@ -24,15 +24,13 @@
       "at": 0,
       "who": "keeper",
       "x": 11.5,
-      "y": 7.5,
-      "clip": "idle"
+      "y": 7.5
     },
     {
       "at": 60,
       "who": "keeper",
       "x": 11.5,
-      "y": 7.5,
-      "clip": "talk"
+      "y": 7.5
     }
   ],
   "lines": [

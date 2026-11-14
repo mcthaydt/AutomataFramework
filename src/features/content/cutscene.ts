@@ -16,14 +16,13 @@ export interface CameraKey {
   readonly ease: Ease
 }
 
-/** Where an actor is at a tick: which thing, where, and what it is doing. */
+/** Where an actor is at a tick: which thing, where, and which way it faces. */
 export interface ActorKey {
   readonly at: number
   /** A thing's id in the level, or `player-1` to `player-4`. */
   readonly who: string
   readonly x: number
   readonly y: number
-  readonly clip?: string | undefined
   readonly face?: 'left' | 'right' | undefined
 }
 
@@ -70,7 +69,6 @@ const actor = z.strictObject({
   who: Id.describe("Which thing: its id in the level, or player-1 to player-4 for a player's hero."),
   x: tilesFromLeft('Where it stands'),
   y: tilesFromTop('Where it stands'),
-  clip: Id.optional().describe('The clip it plays, by name, like "talk". Left out means no change.'),
   face: z.enum(['left', 'right']).optional().describe('Which way it faces. Left out means no change.'),
 })
 

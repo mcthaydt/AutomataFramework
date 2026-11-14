@@ -75,6 +75,11 @@ test('an unknown key', () =>
     `${file}: music: This is not something a cutscene has. Remove it or check the spelling.`,
   ]))
 
+test('an actor has no clip yet: plan A adds clips with the characters that have them', () =>
+  expect(said(edit((v) => Object.assign((v.actors as Json[])[0] as Json, { clip: 'talk' })))).toEqual([
+    `${file}: actors[0].clip: This is not something a cutscene has. Remove it or check the spelling.`,
+  ]))
+
 const inGame = (scene: unknown, replace: Record<string, string | undefined> = {}) =>
   storyGame(
     [

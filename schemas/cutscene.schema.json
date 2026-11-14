@@ -99,12 +99,6 @@
             "type": "number",
             "description": "Where it stands, in tiles from the top edge of the level."
           },
-          "clip": {
-            "description": "The clip it plays, by name, like \"talk\". Left out means no change.",
-            "type": "string",
-            "maxLength": 64,
-            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
-          },
           "face": {
             "description": "Which way it faces. Left out means no change.",
             "type": "string",
