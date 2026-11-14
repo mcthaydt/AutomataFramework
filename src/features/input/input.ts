@@ -64,7 +64,10 @@ export interface InputOptions {
   readonly frames?: Frames
   /** Default: a new one. Share one with whoever else makes this game's commands, so no seq is used twice. */
   readonly sequence?: Sequence
-  /** The touch buttons' words (a `Locale`'s `words`): `controls.<action>` and `automata.touch.label`. Default: each control's own label. */
+  /**
+   * The player's words (a `Locale`'s `words`): the touch buttons' (`controls.<action>`, `automata.touch.label`) and a
+   * refused change's (`automata.rebind.*`). Default: each control's own label, and English.
+   */
   readonly words?: Words
 }
 
@@ -75,7 +78,10 @@ export interface Input {
   inset(): number
   /** Calls `listener` with the new room whenever the buttons show, hide or change size. Stops on `destroy`. */
   onInset(listener: (px: number) => void): void
-  /** Says the touch buttons' words again in other words (a new language). What is held stays held. */
+  /**
+   * Says the touch buttons' words again in other words (a new language), and says refusals in them from now on. What
+   * is held stays held.
+   */
   relabel(words: Words): void
   /** Who is in the game, from the sim. Starts as [1]. A player who arrives is holding nothing. */
   setPlayers(players: readonly number[]): void
@@ -107,7 +113,7 @@ export interface Input {
   settings(): InputSettings
   /** Saved actions that could not be applied when the input was made (`'*'`: none of it could be read). */
   dropped(): readonly string[]
-  /** Changes a binding now. On refusal nothing changes and the answer says why, in words for the person. */
+  /** Changes a binding now. On refusal nothing changes and the answer says why, in the input's words. */
   rebind(action: string, slot: BindingSlot, input: string): Rebound
   /** Back to the game's own controls. */
   resetBindings(): void
@@ -139,6 +145,8 @@ export function createInput(options: InputOptions): Input {
   const bindingListeners = new Set<(settings: InputSettings) => void>()
   const keyboard = createKeyboard(() => boundKeys(controls))
   const touch = createTouch(mount, controls, options.words === undefined ? {} : { words: options.words })
+  // The words a refusal is said in: the ones the input was given, and each new set `relabel` is given.
+  let words = options.words
   const pads = createPads(options.gamepads)
 
   let players: readonly number[] = [1]
@@ -255,7 +263,10 @@ export function createInput(options: InputOptions): Input {
     },
     inset: touch.inset,
     onInset: touch.onInset,
-    relabel: touch.relabel,
+    relabel(next) {
+      words = next
+      touch.relabel(next)
+    },
     setPlayers(next) {
       for (const player of next)
         if (!Number.isInteger(player) || player < 1 || player > MAX_PLAYERS)
@@ -327,8 +338,11 @@ export function createInput(options: InputOptions): Input {
       if (answer.ok) {
         controls = answer.controls
         for (const listener of [...bindingListeners]) listener(settingsOf(defaults, controls))
+        return answer
       }
-      return answer
+      // Said in the input's words; words that lack the sentence give back its key, and the English stands.
+      const said = words?.(answer.key, answer.values)
+      return said === undefined || said === answer.key ? answer : { ...answer, message: said }
     },
     resetBindings() {
       controls = defaults
