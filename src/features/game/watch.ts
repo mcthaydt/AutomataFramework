@@ -15,9 +15,10 @@ import {
   storyOfReplay,
   usesStory,
 } from '../level/level.ts'
+import type { Words } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Command, Sim } from '../sim/sim.ts'
-import { type BoxWords, createStoryView, type Words } from '../story/story.ts'
+import { type BoxWords, createStoryView } from '../story/story.ts'
 import { levelArt } from './art.ts'
 import { createLoop, type Frames } from './loop.ts'
 

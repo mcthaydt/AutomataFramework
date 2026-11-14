@@ -16,10 +16,10 @@ import {
   type PadLike,
 } from '../input/input.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf, usesStory } from '../level/level.ts'
-import type { Locale } from '../locale/locale.ts'
+import type { Locale, Words } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
-import { type BoxWords, createStoryView, type Words } from '../story/story.ts'
+import { type BoxWords, createStoryView } from '../story/story.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
 import { createLoop } from './loop.ts'

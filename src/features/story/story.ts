@@ -83,7 +83,7 @@ function talkState(content: GameContent, words: Words, talk: TalkView): BoxState
   return {
     ...(speaker === undefined ? {} : { speaker }),
     text: words(talk.line),
-    choices: talk.choices.map(words),
+    choices: talk.choices.map((choice) => words(choice)),
     next: talk.choices.length === 0,
     skip: false,
   }
@@ -112,7 +112,7 @@ function sceneState(content: GameContent, words: Words, scene: SceneView): BoxSt
 export function createStoryView(options: StoryViewOptions): StoryView {
   const { mount, sim, content, sequence, seats, onMenu } = options
   const watching = options.watching === true
-  const words = options.words ?? wordsOf(content)
+  const words = options.words ?? wordsOf(content, 'en')
   const local = (): readonly number[] => seats?.().map((seat) => seat.player) ?? []
   const pressed: Press[] = []
   /** The lowest-numbered player on this page: the one who skips, the same in every window of the same game. */
