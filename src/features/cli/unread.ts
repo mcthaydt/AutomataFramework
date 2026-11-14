@@ -107,10 +107,10 @@ export function runWords(options: {
       }
       marks = api.markRead(content, marks, language, keys.length === 0 ? undefined : keys)
       yield* files.write(marksPath, api.writeReadMarks(marks))
-      marked = {
-        language,
-        keys: keys.length === 0 ? Object.keys(theirs).filter((key) => Object.hasOwn(own, key)).sort() : keys,
-      }
+      const every = Object.keys(theirs)
+        .filter((key) => Object.hasOwn(own, key))
+        .sort()
+      marked = { language, keys: keys.length === 0 ? every : keys }
     }
 
     const unread = api.unreadWords(content, marks).map(

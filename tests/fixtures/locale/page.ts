@@ -331,6 +331,9 @@ if (watchMode) {
   ;(lines[1] as HTMLElement).textContent = levelName(locale.words, content.project.start)
 } else void enter()
 
+/** A player who already has a language is not asked: the game starts by itself, and a call waits until it has. */
+let starting = !watchMode && locale.asked()
+
 const heldKey = (type: 'keydown' | 'keyup'): void => {
   window.dispatchEvent(new KeyboardEvent(type, { code: 'ArrowRight', bubbles: true, cancelable: true }))
 }
@@ -447,6 +450,7 @@ const page: LocalePage = {
     if (watcher === undefined) throw new Error('This page is not watching.')
     watcher.stop()
     watcher = undefined
+    starting = false
     stopFollowing()
     // The watch had a locale that was never asked: a player taking over is asked, with a locale of their own.
     locale = createLocale({ content, host, settings })
@@ -556,6 +560,15 @@ const page: LocalePage = {
   async stored() {
     return (await host.store.check()).ok
   },
+}
+
+// Every call waits for the game to be on the screen when it starts by itself, so a test never meets a half-built page.
+for (const name of Object.keys(page) as (keyof LocalePage)[]) {
+  const method = page[name] as (...args: unknown[]) => Promise<unknown>
+  ;(page as unknown as Record<string, unknown>)[name] = async (...args: unknown[]) => {
+    if (starting) await begun.promise
+    return method(...args)
+  }
 }
 
 ;(window as unknown as { savesPage: LocalePage }).savesPage = page

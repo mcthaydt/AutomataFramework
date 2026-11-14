@@ -152,6 +152,15 @@ const tickOf = (page: Page): Promise<number> =>
 
 const POLL = { timeout: 30_000, intervals: [50, 100, 250] }
 
+/** A new game asks the player's language first, and plays nothing until Go is pressed: one flag, then Go. */
+async function pickLanguage(page: Page, flag: string): Promise<void> {
+  const go = page.locator('.automata-picker-go')
+  await go.waitFor({ state: 'visible', timeout: 30_000 })
+  expect(await tickOf(page), 'nothing plays before a language is chosen').toBe(-1)
+  await page.locator(`.automata-flag[data-language="${flag}"]`).click()
+  await go.click()
+}
+
 for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
   test(`${name}: a new game plays by key and by touch, and a broken file is put in words`, async () => {
     const browser: Browser = await ENGINES[name].launch()
@@ -181,6 +190,7 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
             pictures.push(response.url())
         })
         await page.goto(address)
+        await pickLanguage(page, 'en')
 
         // The game is on screen, and time passes in it.
         await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
@@ -252,6 +262,7 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
           try {
             const other = await japanese.newPage()
             await other.goto(address)
+            await pickLanguage(other, 'ja')
             const told = other.locator('.hint')
             await expect.poll(() => told.textContent(), POLL).toContain('矢印キー')
             expect(await other.evaluate(() => document.documentElement.lang), where).toBe('ja')
