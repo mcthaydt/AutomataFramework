@@ -11,7 +11,7 @@ import type { ContentTypeInfo, Listed, Report } from './type-info.ts'
 export const LANGUAGES = ['zh', 'es', 'en', 'pt', 'ja', 'ko'] as const
 
 /** The codes as a sentence lists them: `zh, es, en, pt, ja or ko`. */
-export const languageCodes = `${LANGUAGES.slice(0, -1).join(', ')} or ${LANGUAGES[LANGUAGES.length - 1]}`
+export const languageCodes: string = `${LANGUAGES.slice(0, -1).join(', ')} or ${LANGUAGES.at(-1)}`
 
 /** One of the languages a game ships in. */
 export type Language = (typeof LANGUAGES)[number]
