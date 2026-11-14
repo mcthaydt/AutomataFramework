@@ -23,7 +23,6 @@ const replayText = `${JSON.stringify(replaySchema, null, 2)}\n`
 if (!check) writeFileSync(replayFile, replayText)
 else if (!existsSync(replayFile) || readFileSync(replayFile, 'utf8') !== replayText) {
   stale.push('schemas/replay.schema.json')
-  console.error(`TEMPORARY, what schemas/replay.schema.json should hold:\n${replayText}`)
 }
 
 if (stale.length > 0) {
