@@ -8,7 +8,7 @@ import { type Art, ArtError, createRenderer, loadArt, type Renderer } from '#src
 import type { RenderDelta } from '#src/features/sim/sim.ts'
 import { fullGamePictures, readFullGamePicture } from '../../fixtures/full-game/pictures.ts'
 import { readFullGame } from '../../fixtures/full-game/read.ts'
-import { snapshot } from '../../fixtures/game/pixels.ts'
+import { snapshot } from '../../fixtures/game/snapshot.ts'
 
 /** The level is 16 tiles wide and 9 tall; 32 pixels a tile makes every texel of a 16-pixel tile two pixels. */
 const WORLD = { w: 16, h: 9 }
