@@ -173,6 +173,8 @@ test('the README has a Story section: the files, the code a game writes, the sav
     'startCutscene(',
     'StoryProgressSchema',
     'storyOfReplay(',
+    '"clip": "talk"',
+    '"face": "left"',
   ])
     expect(story, word).toContain(word)
   expect(STORY_PROPERTIES).toHaveLength(7)

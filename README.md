@@ -773,6 +773,11 @@ A cutscene is a camera that moves, actors that walk to places, and lines said at
 true` it plays when that level opens, and the player can skip it after half a second. A cutscene that was seen does not
 open its level again.
 
+While it plays, the game's camera does what the cutscene's `camera` keys say (where it looks, how close, and whether it
+cuts, glides or eases), and goes back to following the heroes when the cutscene ends or is skipped. An actor's key may
+also say which way it faces (`"face": "left"`) and name one of its character's clips (`"clip": "talk"`), which plays
+until the actor's next clip key or the end of the cutscene; the actor must be a character with a `figure` and `clips`.
+
 ```json
 {
   "format": 1,
