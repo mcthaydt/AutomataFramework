@@ -183,8 +183,9 @@ interface ComponentDef<S extends FieldSchema = FieldSchema> {
 
 ```ts
 const CONTENT_TYPES: {
-    readonly level: ContentTypeInfo<Level, Level, 'levels'>;
-    readonly character: ContentTypeInfo<Character, CharacterInput, 'characters'>;
+    readonly level: ContentTypeInfo<Level, Level>;
+    readonly character: ContentTypeInfo<Character, CharacterInput>;
+    readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
 };
 ```
 
@@ -206,10 +207,14 @@ type ContentType = keyof typeof CONTENT_TYPES;
 ### `ContentTypeInfo` (interface)
 
 ```ts
-interface ContentTypeInfo<Out, In, Editor extends string> extends Voice {
+interface ContentTypeInfo<Out, In> extends Voice {
     readonly schema: z.ZodType<Out, In>;
-    readonly editor: Editor;
     readonly title: string;
+    readonly plural: string;
+    readonly editor: EditorName;
+    readonly part: string;
+    readonly tidy?: (value: Out) => Out;
+    readonly check?: (value: Out, game: Listed, report: Report) => void;
 }
 ```
 
@@ -382,6 +387,12 @@ interface Diagnostic {
 }
 ```
 
+### `EditorName` (type)
+
+```ts
+type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
+```
+
 ### `EntityRef` (interface)
 
 ```ts
@@ -505,6 +516,7 @@ interface GameContent {
     readonly project: Project;
     readonly levels: Readonly<Record<string, Level>>;
     readonly characters: Readonly<Record<string, Character>>;
+    readonly tilesets?: Readonly<Record<string, TilesetFile>>;
 }
 ```
 
@@ -592,6 +604,7 @@ function jsonSchemaFor(type: ContentType): object;
 interface Level {
     readonly format: 1;
     readonly id: string;
+    readonly tileset?: string | undefined;
     readonly sky?: string | undefined;
     readonly ground?: string | undefined;
     readonly tiles: readonly string[];
@@ -646,6 +659,16 @@ interface LevelThing {
     readonly character: string;
     readonly x: number;
     readonly y: number;
+}
+```
+
+### `Listed` (interface)
+
+```ts
+interface Listed {
+    has(type: ContentType, id: string): boolean;
+    ids(type: ContentType): readonly string[];
+    get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
 }
 ```
 
@@ -935,6 +958,12 @@ class ReplayFormatError extends Error {
 const ReplaySchema: z.ZodType<Replay>;
 ```
 
+### `Report` (type)
+
+```ts
+type Report = (path: string, message: string) => void;
+```
+
 ### `ResourceDef` (interface)
 
 ```ts
@@ -1211,6 +1240,26 @@ const Thing: ComponentDef<typeof thingFields>;
 const TILE_COLOR = 3885658;
 ```
 
+### `TileKind` (interface)
+
+```ts
+interface TileKind {
+    readonly id: string;
+    readonly letter: string;
+    readonly solid: boolean;
+    readonly pictures: readonly TilePicture[];
+}
+```
+
+### `TilePicture` (interface)
+
+```ts
+interface TilePicture {
+    readonly frame: number;
+    readonly when?: TileWhen | undefined;
+}
+```
+
 ### `TileRun` (interface)
 
 ```ts
@@ -1225,6 +1274,36 @@ interface TileRun {
 
 ```ts
 function tileRuns(tiles: readonly string[]): TileRun[];
+```
+
+### `TilesetFile` (interface)
+
+```ts
+interface TilesetFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly image: string;
+    readonly tileSize: number;
+    readonly columns: number;
+    readonly tiles: readonly TileKind[];
+}
+```
+
+### `TilesetSchema` (const)
+
+```ts
+const TilesetSchema: z.ZodType<TilesetFile, TilesetFile>;
+```
+
+### `TileWhen` (interface)
+
+```ts
+interface TileWhen {
+    readonly up?: Neighbour | undefined;
+    readonly down?: Neighbour | undefined;
+    readonly left?: Neighbour | undefined;
+    readonly right?: Neighbour | undefined;
+}
 ```
 
 ### `Transform` (const)
@@ -1522,8 +1601,9 @@ interface ComponentDef<S extends FieldSchema = FieldSchema> {
 
 ```ts
 const CONTENT_TYPES: {
-    readonly level: ContentTypeInfo<Level, Level, 'levels'>;
-    readonly character: ContentTypeInfo<Character, CharacterInput, 'characters'>;
+    readonly level: ContentTypeInfo<Level, Level>;
+    readonly character: ContentTypeInfo<Character, CharacterInput>;
+    readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
 };
 ```
 
@@ -1545,10 +1625,14 @@ type ContentType = keyof typeof CONTENT_TYPES;
 ### `ContentTypeInfo` (interface)
 
 ```ts
-interface ContentTypeInfo<Out, In, Editor extends string> extends Voice {
+interface ContentTypeInfo<Out, In> extends Voice {
     readonly schema: z.ZodType<Out, In>;
-    readonly editor: Editor;
     readonly title: string;
+    readonly plural: string;
+    readonly editor: EditorName;
+    readonly part: string;
+    readonly tidy?: (value: Out) => Out;
+    readonly check?: (value: Out, game: Listed, report: Report) => void;
 }
 ```
 
@@ -1676,6 +1760,12 @@ interface Diagnostic {
 }
 ```
 
+### `EditorName` (type)
+
+```ts
+type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
+```
+
 ### `EntityRef` (interface)
 
 ```ts
@@ -1756,6 +1846,7 @@ interface GameContent {
     readonly project: Project;
     readonly levels: Readonly<Record<string, Level>>;
     readonly characters: Readonly<Record<string, Character>>;
+    readonly tilesets?: Readonly<Record<string, TilesetFile>>;
 }
 ```
 
@@ -1811,6 +1902,7 @@ function jsonSchemaFor(type: ContentType): object;
 interface Level {
     readonly format: 1;
     readonly id: string;
+    readonly tileset?: string | undefined;
     readonly sky?: string | undefined;
     readonly ground?: string | undefined;
     readonly tiles: readonly string[];
@@ -1865,6 +1957,16 @@ interface LevelThing {
     readonly character: string;
     readonly x: number;
     readonly y: number;
+}
+```
+
+### `Listed` (interface)
+
+```ts
+interface Listed {
+    has(type: ContentType, id: string): boolean;
+    ids(type: ContentType): readonly string[];
+    get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
 }
 ```
 
@@ -2136,6 +2238,12 @@ class ReplayFormatError extends Error {
 const ReplaySchema: z.ZodType<Replay>;
 ```
 
+### `Report` (type)
+
+```ts
+type Report = (path: string, message: string) => void;
+```
+
 ### `ResourceDef` (interface)
 
 ```ts
@@ -2397,6 +2505,26 @@ const Thing: ComponentDef<typeof thingFields>;
 const TILE_COLOR = 3885658;
 ```
 
+### `TileKind` (interface)
+
+```ts
+interface TileKind {
+    readonly id: string;
+    readonly letter: string;
+    readonly solid: boolean;
+    readonly pictures: readonly TilePicture[];
+}
+```
+
+### `TilePicture` (interface)
+
+```ts
+interface TilePicture {
+    readonly frame: number;
+    readonly when?: TileWhen | undefined;
+}
+```
+
 ### `TileRun` (interface)
 
 ```ts
@@ -2411,6 +2539,36 @@ interface TileRun {
 
 ```ts
 function tileRuns(tiles: readonly string[]): TileRun[];
+```
+
+### `TilesetFile` (interface)
+
+```ts
+interface TilesetFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly image: string;
+    readonly tileSize: number;
+    readonly columns: number;
+    readonly tiles: readonly TileKind[];
+}
+```
+
+### `TilesetSchema` (const)
+
+```ts
+const TilesetSchema: z.ZodType<TilesetFile, TilesetFile>;
+```
+
+### `TileWhen` (interface)
+
+```ts
+interface TileWhen {
+    readonly up?: Neighbour | undefined;
+    readonly down?: Neighbour | undefined;
+    readonly left?: Neighbour | undefined;
+    readonly right?: Neighbour | undefined;
+}
 ```
 
 ### `Transform` (const)
