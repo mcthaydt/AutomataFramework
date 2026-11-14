@@ -21,6 +21,13 @@
     "automata.online.reconnecting": "连接断了。正在帮你重新进入。",
     "automata.online.waiting.many": "还差 {count} 位玩家。把这个代码告诉朋友们，让他们加入：{code}",
     "automata.online.waiting.one": "还差 1 位玩家。把这个代码告诉朋友，让他加入：{code}",
+    "automata.rebind.no-shared": "这个游戏的键盘不能共用。",
+    "automata.rebind.other-half": "那个键是另一个人的。请选另一个键。",
+    "automata.rebind.reserved.button": "{input} 按钮留给游戏菜单用。请选另一个按钮。",
+    "automata.rebind.reserved.key": "{input} 键留给游戏菜单用。请选另一个键。",
+    "automata.rebind.unknown-action": "这个游戏没有叫“{action}”的操作。",
+    "automata.rebind.unknown-input": "那不是手柄上的按钮。请选另一个按钮。",
+    "automata.sound.start": "点一下打开声音",
     "automata.touch.label": "触屏按键"
   }
 }

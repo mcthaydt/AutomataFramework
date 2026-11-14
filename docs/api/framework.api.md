@@ -663,7 +663,7 @@ function createInput(options: InputOptions): Input;
 ```ts
 function createLocale(options: {
     readonly content: GameContent;
-    readonly host: Host;
+    readonly host: Pick<Host, 'language' | 'deviceLanguages'>;
     readonly settings: Settings;
 }): Locale;
 ```
@@ -2504,6 +2504,8 @@ type Rebound = {
     readonly ok: false;
     readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half';
     readonly message: string;
+    readonly key: string;
+    readonly values?: Values;
 };
 ```
 
@@ -3311,6 +3313,7 @@ function soundNotice(options: {
     readonly mount: HTMLElement;
     readonly audio: Pick<GameAudio, 'state' | 'onState' | 'silent'>;
     readonly words?: string;
+    readonly locale?: Pick<Locale, 'words' | 'onChange'>;
 }): () => void;
 ```
 
@@ -4536,7 +4539,7 @@ function createGameSim(options: GameSimOptions): Promise<Sim>;
 ```ts
 function createLocale(options: {
     readonly content: GameContent;
-    readonly host: Host;
+    readonly host: Pick<Host, 'language' | 'deviceLanguages'>;
     readonly settings: Settings;
 }): Locale;
 ```
