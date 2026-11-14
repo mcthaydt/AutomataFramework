@@ -89,6 +89,8 @@ export interface MiniGame {
   /** Where each player starts, from the left (the first is player 1), instead of the default places. */
   readonly starts?: readonly number[]
   readonly things?: readonly { id: string; character: string; x: number; y: number }[]
+  /** Fields to add to the hero's character file, like `conversation`. */
+  readonly hero?: Readonly<Record<string, unknown>>
   /** Levels beyond `level-1`, each a value `writeContent` accepts. */
   readonly levels?: readonly object[]
   readonly characters?: readonly object[]
@@ -121,6 +123,7 @@ export function miniFiles(game: MiniGame = {}): Record<string, string | undefine
     'content/characters/hero.json': writeContent('character', {
       ...(JSON.parse(fixtureFiles['content/characters/hero.json'] ?? '') as object),
       kind: 'hero',
+      ...game.hero,
     } as never),
   }
   return gameFiles(
