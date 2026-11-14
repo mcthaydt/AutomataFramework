@@ -63,9 +63,11 @@ test('the level is drawn in its own pictures: grass on the ground row, the crate
   const { picture: shown } = await opened()
   const fit = shown.fit()
   const at = snapshot(shown.canvas)
+  // The grass is the top of each ground tile, so look down the whole row for it.
   let grass = false
-  for (let x = 0; x < 16 * fit.scale && !grass; x += 2)
-    grass = near(at(fit.left + x, fit.top + 8.5 * fit.scale), GRASS, 8)
+  for (let y = 8 * fit.scale; y < 9 * fit.scale && !grass; y += 2)
+    for (let x = 0; x < 16 * fit.scale && !grass; x += 2)
+      grass = near(at(fit.left + x, fit.top + y), GRASS, 8)
   expect(grass).toBe(true)
   expect(near(colourAt(shown, 6.5, 7.5), CRATE)).toBe(true)
 })

@@ -328,7 +328,12 @@ export async function createStage(
     setRoom(next) {
       if (destroyed) return
       const side = (px: number): number => (px > 0 ? px : 0)
-      given = { top: side(next.top), right: side(next.right), bottom: side(next.bottom), left: side(next.left) }
+      given = {
+        top: side(next.top),
+        right: side(next.right),
+        bottom: side(next.bottom),
+        left: side(next.left),
+      }
       if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
     },
     fit: fitFor,

@@ -27,8 +27,12 @@ test('fitInRoom fits the level between the room kept on four sides', () => {
 
 test('no room is fitWorld, and a room as big as the box is scale 0, never NaN', () => {
   const none = { top: 0, right: 0, bottom: 0, left: 0 }
-  expect(fitInRoom({ w: 800, h: 450 }, none, { w: 16, h: 9 })).toEqual(fitWorld({ w: 800, h: 450 }, { w: 16, h: 9 }))
-  expect(fitInRoom({ w: 300, h: 300 }, { top: 0, right: 200, bottom: 0, left: 200 }, { w: 16, h: 9 })).toEqual({
+  expect(fitInRoom({ w: 800, h: 450 }, none, { w: 16, h: 9 })).toEqual(
+    fitWorld({ w: 800, h: 450 }, { w: 16, h: 9 }),
+  )
+  expect(
+    fitInRoom({ w: 300, h: 300 }, { top: 0, right: 200, bottom: 0, left: 200 }, { w: 16, h: 9 }),
+  ).toEqual({
     scale: 0,
     left: 0,
     top: 0,
@@ -85,7 +89,14 @@ test('a pin and a rope are links at their places, with the sim’s own sids', as
       ]
       l.joints = [
         { id: 'seesaw', kind: 'pin', thing: 'plank-1', x: 8, y: 6 },
-        { id: 'swing', kind: 'rope', thing: 'plank-1', holder: 'crate-1', from: { x: 7, y: 6 }, to: { x: 7, y: 3 } },
+        {
+          id: 'swing',
+          kind: 'rope',
+          thing: 'plank-1',
+          holder: 'crate-1',
+          from: { x: 7, y: 6 },
+          to: { x: 7, y: 3 },
+        },
       ]
     },
   })
