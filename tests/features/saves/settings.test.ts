@@ -163,3 +163,78 @@ test('a bad section name throws', async () => {
   expect(() => settings.section({ ...sound, name: 'Sound FX' })).toThrow(RangeError)
   expect(() => settings.section({ ...sound, name: '' })).toThrow(/1 to 40 of a-z/)
 })
+
+// Audit M2: openSettings promises not to reject for a host's "no", and a store that rejects is a "no".
+test('a store whose calls reject is a refusal: opening does not reject and a set answers failed', async () => {
+  const boom = (): Promise<never> => Promise.reject(new Error('boom'))
+  const opened = await open({ check: boom, get: boom, set: boom, remove: boom })
+  expect(opened.problem).toEqual({ kind: 'refused', refusal: 'failed', detail: 'boom' })
+  expect(await opened.section(sound).set({ music: 0.1 })).toEqual({
+    ok: false,
+    refusal: 'failed',
+    detail: 'boom',
+  })
+  expect(opened.section(sound).get()).toEqual({ music: 0.1 })
+})
+
+// Audit M3: two tabs of one game each hold a copy of the record; a write must not undo what the other tab set.
+test("two pages each set a different section and neither undoes the other's", async () => {
+  const controls: SettingsSection<{ jump: string }> = {
+    name: 'controls',
+    schema: z.strictObject({ jump: z.string() }),
+    initial: { jump: 'Space' },
+  }
+  const store = memoryStore()
+  const tabA = await open(store)
+  const tabB = await open(store)
+  await tabA.section(sound).set({ music: 0.2 })
+  await tabB.section(controls).set({ jump: 'KeyW' })
+  expect(store.entries()[KEY]).toBe(
+    '{"format":1,"sections":{"controls":{"jump":"KeyW"},"sound":{"music":0.2}}}',
+  )
+  // A section a page has set itself is its own to write, whatever the other page did since.
+  await tabA.section(sound).set({ music: 0.9 })
+  const next = await open(store)
+  expect(next.section(sound).get()).toEqual({ music: 0.9 })
+  expect(next.section(controls).get()).toEqual({ jump: 'KeyW' })
+})
+
+// Audit M4: the player's choice is kept even when something listening to it breaks.
+test('a listener that throws does not stop the write, and the others still hear it', async () => {
+  const store = memoryStore()
+  const handle = (await open(store)).section(sound)
+  const heard: number[] = []
+  handle.onChange(() => {
+    throw new Error('listener broke')
+  })
+  handle.onChange((value) => heard.push(value.music))
+  await expect(handle.set({ music: 0.3 })).rejects.toThrow('listener broke')
+  expect(heard).toEqual([0.3])
+  expect(handle.get()).toEqual({ music: 0.3 })
+  expect(store.entries()[KEY]).toBe('{"format":1,"sections":{"sound":{"music":0.3}}}')
+})
+
+// Audit M5: a schema that hands its input back must not freeze the game's own object.
+test("setting never freezes the game's own object", async () => {
+  const anything: SettingsSection<{ a: number }> = { name: 'anything', schema: z.any(), initial: { a: 1 } }
+  const handle = (await open()).section(anything)
+  const mine = { a: 2 }
+  await handle.set(mine)
+  expect(Object.isFrozen(mine)).toBe(false)
+  expect(handle.get()).toEqual({ a: 2 })
+  expect(Object.isFrozen(handle.get())).toBe(true)
+})
+
+// Audit M9: a record in a format this build does not know is named as such, whatever else its layout is.
+test('a record in a newer format says so', async () => {
+  const newer = await open(memoryStore({ [KEY]: '{"format":2,"sections":[]}' }))
+  expect(newer.problem).toEqual({
+    kind: 'damaged',
+    detail: 'These settings are in a format this game does not know (2).',
+  })
+  const shapeless = await open(memoryStore({ [KEY]: '{"sections":{}}' }))
+  expect(shapeless.problem).toEqual({
+    kind: 'damaged',
+    detail: 'These settings are not in a form this game knows.',
+  })
+})
