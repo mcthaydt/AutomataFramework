@@ -204,6 +204,6 @@ describe('in a game', () => {
         heroText({ ...withArt(), clips: [{ id: 'run', poses: ['run-1', 'sprint'], fps: 8, loop: true }] }),
       ),
     ).toEqual([
-      'content/characters/hero.json: clips[0].poses[1]: The figure "hero" has no pose called "sprint". It has: idle, run-1, run-2, jump, fall, land, push.',
+      'content/characters/hero.json: clips[0].poses[1]: The figure "hero" has no pose called "sprint". It has: fall, idle, jump, land, push, run-1, run-2.',
     ]))
 })

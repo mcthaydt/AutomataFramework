@@ -28,6 +28,26 @@ type = "character"
 path = "content/characters/critter.json"
 
 [[content]]
+type = "figure"
+path = "content/figures/hero.json"
+
+[[content]]
+type = "figure"
+path = "content/figures/keeper.json"
+
+[[content]]
+type = "figure"
+path = "content/figures/meadow.json"
+
+[[content]]
+type = "figure"
+path = "content/figures/tree.json"
+
+[[content]]
+type = "backdrop"
+path = "content/backdrops/valley.json"
+
+[[content]]
 type = "behaviour"
 path = "content/behaviours/critter.json"
 

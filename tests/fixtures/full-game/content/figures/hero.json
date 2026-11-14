@@ -1,0 +1,218 @@
+{
+  "format": 1,
+  "id": "hero",
+  "tile": 16,
+  "frame": {
+    "w": 24,
+    "h": 24
+  },
+  "outline": "#111314",
+  "paints": [
+    {
+      "id": "body",
+      "color": "#f37f94"
+    },
+    {
+      "id": "trim",
+      "color": "#fdd4bd"
+    },
+    {
+      "id": "ink",
+      "color": "#111314"
+    }
+  ],
+  "parts": [
+    {
+      "id": "foot-back",
+      "shape": "block",
+      "x": 9,
+      "y": 22,
+      "w": 4,
+      "h": 4,
+      "paint": "ink"
+    },
+    {
+      "id": "body",
+      "shape": "block",
+      "x": 12,
+      "y": 18,
+      "w": 10,
+      "h": 4,
+      "paint": "body"
+    },
+    {
+      "id": "head",
+      "shape": "round",
+      "x": 12,
+      "y": 13,
+      "w": 12,
+      "h": 10,
+      "paint": "trim"
+    },
+    {
+      "id": "eye",
+      "shape": "block",
+      "x": 16,
+      "y": 12,
+      "w": 2,
+      "h": 3,
+      "paint": "ink"
+    },
+    {
+      "id": "foot-front",
+      "shape": "block",
+      "x": 15,
+      "y": 22,
+      "w": 4,
+      "h": 4,
+      "paint": "ink"
+    }
+  ],
+  "poses": [
+    {
+      "id": "idle",
+      "moves": []
+    },
+    {
+      "id": "run-1",
+      "moves": [
+        {
+          "part": "foot-back",
+          "dx": -2
+        },
+        {
+          "part": "foot-front",
+          "dx": 2,
+          "dy": -2
+        }
+      ]
+    },
+    {
+      "id": "run-2",
+      "moves": [
+        {
+          "part": "foot-back",
+          "dx": 2,
+          "dy": -2
+        },
+        {
+          "part": "foot-front",
+          "dx": -2
+        }
+      ]
+    },
+    {
+      "id": "jump",
+      "moves": [
+        {
+          "part": "foot-back",
+          "dx": -1,
+          "dy": -3
+        },
+        {
+          "part": "foot-front",
+          "dx": 2,
+          "dy": -3
+        },
+        {
+          "part": "head",
+          "dy": -1
+        },
+        {
+          "part": "eye",
+          "dy": -1
+        }
+      ]
+    },
+    {
+      "id": "fall",
+      "moves": [
+        {
+          "part": "foot-back",
+          "dx": -2,
+          "dy": -1
+        },
+        {
+          "part": "foot-front",
+          "dx": 2,
+          "dy": -1
+        },
+        {
+          "part": "body",
+          "dy": -1
+        },
+        {
+          "part": "head",
+          "dy": -2
+        },
+        {
+          "part": "eye",
+          "dy": -2
+        }
+      ]
+    },
+    {
+      "id": "land",
+      "moves": [
+        {
+          "part": "body",
+          "dy": 1
+        },
+        {
+          "part": "head",
+          "dy": 3
+        },
+        {
+          "part": "eye",
+          "dy": 3
+        },
+        {
+          "part": "foot-back",
+          "dx": -2
+        },
+        {
+          "part": "foot-front",
+          "dx": 2
+        }
+      ]
+    },
+    {
+      "id": "push",
+      "moves": [
+        {
+          "part": "body",
+          "dx": 1
+        },
+        {
+          "part": "head",
+          "dx": 2,
+          "dy": 1
+        },
+        {
+          "part": "eye",
+          "dx": 2,
+          "dy": 1
+        },
+        {
+          "part": "foot-back",
+          "dx": -2
+        },
+        {
+          "part": "foot-front",
+          "dx": 2
+        }
+      ]
+    }
+  ],
+  "variants": [
+    {
+      "id": "two",
+      "paints": [
+        {
+          "id": "body",
+          "color": "#afd472"
+        }
+      ]
+    }
+  ]
+}

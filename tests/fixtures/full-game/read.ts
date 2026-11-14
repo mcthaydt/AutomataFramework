@@ -2,6 +2,7 @@
 // imported as text with Vite's `?raw`, so it loads in Node and in a browser. Do not edit them by hand: change the value,
 // write it again with writeContent, and commit the result.
 import automata from './automata.toml?raw'
+import backdropsValley from './content/backdrops/valley.json?raw'
 import behavioursCritter from './content/behaviours/critter.json?raw'
 import charactersCrate from './content/characters/crate.json?raw'
 import charactersCritter from './content/characters/critter.json?raw'
@@ -13,6 +14,10 @@ import cutscenesLevel1Intro from './content/cutscenes/level-1-intro.json?raw'
 import feelsCrateShake from './content/feels/crate-shake.json?raw'
 import feelsLandDust from './content/feels/land-dust.json?raw'
 import feelsSparkFreeze from './content/feels/spark-freeze.json?raw'
+import figuresHero from './content/figures/hero.json?raw'
+import figuresKeeper from './content/figures/keeper.json?raw'
+import figuresMeadow from './content/figures/meadow.json?raw'
+import figuresTree from './content/figures/tree.json?raw'
 import levelsLevel1 from './content/levels/level-1.json?raw'
 import messagesEn from './content/messages/en.json?raw'
 import messagesEs from './content/messages/es.json?raw'
@@ -35,6 +40,11 @@ export const fullGameFiles: Record<string, string> = {
   'content/characters/crate.json': charactersCrate,
   'content/characters/keeper.json': charactersKeeper,
   'content/characters/critter.json': charactersCritter,
+  'content/figures/hero.json': figuresHero,
+  'content/figures/keeper.json': figuresKeeper,
+  'content/figures/meadow.json': figuresMeadow,
+  'content/figures/tree.json': figuresTree,
+  'content/backdrops/valley.json': backdropsValley,
   'content/behaviours/critter.json': behavioursCritter,
   'content/tunings/hero.json': tuningsHero,
   'content/feels/land-dust.json': feelsLandDust,

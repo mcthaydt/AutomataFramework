@@ -9,5 +9,57 @@
   "color": "#e4572e",
   "upright": true,
   "kind": "hero",
+  "figure": "hero",
+  "clips": [
+    {
+      "id": "idle",
+      "poses": [
+        "idle"
+      ],
+      "fps": 1,
+      "loop": true
+    },
+    {
+      "id": "run",
+      "poses": [
+        "run-1",
+        "run-2"
+      ],
+      "fps": 8,
+      "loop": true
+    },
+    {
+      "id": "jump",
+      "poses": [
+        "jump"
+      ],
+      "fps": 1,
+      "loop": false
+    },
+    {
+      "id": "fall",
+      "poses": [
+        "fall"
+      ],
+      "fps": 1,
+      "loop": false
+    },
+    {
+      "id": "land",
+      "poses": [
+        "land"
+      ],
+      "fps": 12,
+      "loop": false
+    },
+    {
+      "id": "push",
+      "poses": [
+        "push"
+      ],
+      "fps": 1,
+      "loop": true
+    }
+  ],
   "tuning": "hero"
 }

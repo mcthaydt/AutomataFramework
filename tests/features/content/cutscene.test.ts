@@ -168,7 +168,7 @@ test('an actor whose character has no such clip', async () =>
 test('a player’s actor is the hero of the game, so its clips are the hero’s', async () => {
   expect(await gameProblems(inArt(withClip('run', 'player-1')))).toEqual([])
   expect(await gameProblems(inArt(withClip('talk', 'player-1')))).toEqual([
-    `${file}: actors[0].clip: The character "hero" has no clip called "talk". It has: idle, run, jump, fall, land, push.`,
+    `${file}: actors[0].clip: The character "hero" has no clip called "talk". It has: fall, idle, jump, land, push, run.`,
   ])
 })
 

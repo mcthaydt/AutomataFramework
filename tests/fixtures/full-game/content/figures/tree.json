@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "id": "tree",
+  "tile": 16,
+  "frame": {
+    "w": 24,
+    "h": 32
+  },
+  "outline": "#111314",
+  "paints": [
+    {
+      "id": "trunk",
+      "color": "#111314"
+    },
+    {
+      "id": "leaf",
+      "color": "#afd472"
+    }
+  ],
+  "parts": [
+    {
+      "id": "trunk",
+      "shape": "block",
+      "x": 12,
+      "y": 26,
+      "w": 4,
+      "h": 12,
+      "paint": "trunk"
+    },
+    {
+      "id": "crown",
+      "shape": "round",
+      "x": 12,
+      "y": 13,
+      "w": 20,
+      "h": 22,
+      "paint": "leaf"
+    }
+  ],
+  "poses": [
+    {
+      "id": "idle",
+      "moves": []
+    }
+  ]
+}
