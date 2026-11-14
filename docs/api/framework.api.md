@@ -237,6 +237,12 @@ interface BindingOverride {
 type BindingSlot = 'keys' | 'shared-1' | 'shared-2' | 'pad';
 ```
 
+### `bindParaglide` (function)
+
+```ts
+function bindParaglide(runtime: ParaglideRuntime, locale: Locale): void;
+```
+
 ### `Body` (const)
 
 ```ts
@@ -657,7 +663,7 @@ function createInput(options: InputOptions): Input;
 ```ts
 function createLocale(options: {
     readonly content: GameContent;
-    readonly host: Host;
+    readonly host: Pick<Host, 'language' | 'deviceLanguages'>;
     readonly settings: Settings;
 }): Locale;
 ```
@@ -2221,6 +2227,17 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 function paintFigure(figure: FigureFile): IndexedPicture;
 ```
 
+### `ParaglideRuntime` (interface)
+
+```ts
+interface ParaglideRuntime {
+    readonly locales: readonly string[];
+    readonly baseLocale: string;
+    overwriteGetLocale(fn: () => string): void;
+    overwriteSetLocale(fn: (locale: string) => void): void;
+}
+```
+
 ### `parseClientMessage` (function)
 
 ```ts
@@ -2487,6 +2504,8 @@ type Rebound = {
     readonly ok: false;
     readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half';
     readonly message: string;
+    readonly key: string;
+    readonly values?: Values;
 };
 ```
 
@@ -3294,6 +3313,7 @@ function soundNotice(options: {
     readonly mount: HTMLElement;
     readonly audio: Pick<GameAudio, 'state' | 'onState' | 'silent'>;
     readonly words?: string;
+    readonly locale?: Pick<Locale, 'words' | 'onChange'>;
 }): () => void;
 ```
 
@@ -4164,6 +4184,12 @@ interface BehaviourRule {
 const BehaviourSchema: z.ZodType<BehaviourFile, BehaviourFile>;
 ```
 
+### `bindParaglide` (function)
+
+```ts
+function bindParaglide(runtime: ParaglideRuntime, locale: Locale): void;
+```
+
 ### `Body` (const)
 
 ```ts
@@ -4513,7 +4539,7 @@ function createGameSim(options: GameSimOptions): Promise<Sim>;
 ```ts
 function createLocale(options: {
     readonly content: GameContent;
-    readonly host: Host;
+    readonly host: Pick<Host, 'language' | 'deviceLanguages'>;
     readonly settings: Settings;
 }): Locale;
 ```
@@ -5769,6 +5795,17 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 
 ```ts
 function paintFigure(figure: FigureFile): IndexedPicture;
+```
+
+### `ParaglideRuntime` (interface)
+
+```ts
+interface ParaglideRuntime {
+    readonly locales: readonly string[];
+    readonly baseLocale: string;
+    overwriteGetLocale(fn: () => string): void;
+    overwriteSetLocale(fn: (locale: string) => void): void;
+}
 ```
 
 ### `parseClientMessage` (function)

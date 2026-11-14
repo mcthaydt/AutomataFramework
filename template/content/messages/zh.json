@@ -14,6 +14,8 @@
     "key.arrow-up": "上箭头",
     "key.space": "空格键",
     "level.level-1.name": "第1关",
-    "page.cannot-start": "这个浏览器无法启动游戏。请换一个浏览器试试。"
+    "page.cannot-start": "这个浏览器无法启动游戏。请换一个浏览器试试。",
+    "page.paint-again": "请在游戏文件夹中运行 npm run art 重新绘制图片，然后重新加载此页面。",
+    "page.problem-title": "这个游戏有问题，无法启动。"
   }
 }

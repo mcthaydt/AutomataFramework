@@ -29,8 +29,9 @@ const GAME_ID = 'my-game'
 
 /**
  * The sentences the page says before it has any of the game's words: while the files are loading, and when they could not
- * be read at all (`cannotStart` is also in the messages, as `page.cannot-start`, and said in the player's language once
- * there is one). Everything else it says is in `content/messages/`, in six languages.
+ * be read at all. `problemTitle` and `cannotStart` are also in the messages (`page.problem-title`, `page.cannot-start`)
+ * and said in the player's language once there is one. Everything else it says is in `content/messages/`, in six
+ * languages.
  */
 export const WORDS = {
   loading: 'Loading the game…',
@@ -201,8 +202,14 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
   } catch (error) {
     // `loadGame` reports a bad file as words; this is a read that failed some other way, or a browser that cannot play.
     const reason = error instanceof Error ? error.message : String(error)
-    // A picture that is missing or old says what to run itself; it is the game's files that need fixing, not the browser.
-    if (error instanceof ArtError) return problem(WORDS.problemTitle, [reason], WORDS.problemFix)
+    // A picture that is missing or old: it is the game's pictures that need painting again, not the browser. The words
+    // are there by now, so the player reads it in their language.
+    if (error instanceof ArtError)
+      return problem(
+        say?.('page.problem-title') ?? WORDS.problemTitle,
+        [reason],
+        say?.('page.paint-again') ?? WORDS.problemFix,
+      )
     return problem(say?.('page.cannot-start') ?? WORDS.cannotStart, [reason])
   }
 }

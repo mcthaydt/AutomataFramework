@@ -293,7 +293,8 @@ await locale.set('ko') // the words change at once, every `locale.onChange` list
 
 A word a language lacks is said in English, and one English lacks is shown as its key, so a missing word never stops
 a game. Give `startGame` the locale (`startGame({ ..., locale })`) and the touch buttons say `controls.<action>`, a
-refused `addPlayer` explains itself in the player's language, and all of it changes when the player picks another.
+refused `addPlayer` or `input.rebind` explains itself in the player's language, the sound's button asks for a tap in it,
+and all of it changes when the player picks another.
 In a page, `followLanguage(locale)` keeps `<html lang>` right, so a screen reader speaks the words properly. The
 framework's own sentences (a room's status, why a player cannot join) are in all six languages, and
 `onlineWords(status, locale.words)` says the room's status in the player's. Changing a word, or the language,
@@ -314,6 +315,13 @@ nobody has read yet are a note with a count for each language, never a failure.
 
 Every translation the framework ships (the six languages' library, and the demo game's) waits for a native speaker's
 read before Release 1: machine-written words are a first draft, and the marks say which are still that.
+
+A game's own code can also call a word as a typed function, `m.keeper_hello()`, so a misspelt word is a mistake the
+compiler shows. Paraglide makes those functions from the same files. Give its generated `runtime.js` to
+`bindParaglide(runtime, locale)` and every function answers in the player's language, and changes with it, with no
+page reload. The package's own words compiler (`compileWords`, in the code behind the `automata` command; no command
+runs it yet) makes that folder from the messages files, and rewrites only the files that changed. Words made this way
+are for code: a conversation still names its lines by key, and the words stay content, read when the game starts.
 
 ## The host
 
@@ -415,8 +423,8 @@ that is already playing carries on, so the music can go on from one level to the
 audio: the code that made it owns it.
 
 A browser plays no sound until the player taps or presses a key. Until then `audio.state()` is `'waiting'` and the
-game shows a button that says "Tap to start the sound". Pass `soundNotice` your own words, or `false` if your own screen
-says it. Once the player has tapped, the state is `'on'`. On a device with no sound it is `'unavailable'`: the game
+game shows a button that says "Tap to start the sound", in the player's language when the game is given a `locale`.
+Pass `soundNotice` your own words, or `false` if your own screen says it. Once the player has tapped, the state is `'on'`. On a device with no sound it is `'unavailable'`: the game
 plays on in silence and shows no button.
 
 Two volumes, music and sound, are numbers from 0 to 1: `audio.setVolumes({ format: 1, music: 0.5, sound: 1 })`. They

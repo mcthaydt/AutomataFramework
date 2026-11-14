@@ -35,7 +35,7 @@ test('every word the template asks for is in its English file', async () => {
   const sources = Object.entries(tree).filter(([path]) => path.startsWith('src/') && path.endsWith('.ts'))
   const asked = new Set<string>()
   for (const [, text] of sources)
-    for (const m of text.matchAll(/words\(\s*['`]([\w.-]+)['`]/g)) asked.add(m[1] ?? '')
+    for (const m of text.matchAll(/(?:words|say\?\.)\(\s*['`]([\w.-]+)['`]/g)) asked.add(m[1] ?? '')
   // The names a key's code turns into: `key.arrow-left` for ArrowLeft and so on.
   for (const code of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'])
     asked.add(`key.arrow-${code.slice(5).toLowerCase()}`)

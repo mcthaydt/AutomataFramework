@@ -36,7 +36,8 @@ export interface Locale {
  */
 export function createLocale(options: {
   readonly content: GameContent
-  readonly host: Host
+  /** Only what the player speaks is asked of it, so a tool in Node gives these two and nothing more. */
+  readonly host: Pick<Host, 'language' | 'deviceLanguages'>
   readonly settings: Settings
 }): Locale {
   const { content, host } = options

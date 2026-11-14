@@ -164,6 +164,17 @@ test('Effect is only for the server process', () => {
   ).toEqual([])
 })
 
+test('Paraglide is named by the words compiler alone', () => {
+  expect(one({ 'src/features/locale/locale.ts': "import { compile } from '@inlang/paraglide-js'" })).toEqual([
+    'package-confined',
+  ])
+  const cli = { 'src/features/cli/cli.ts': '' }
+  expect(one({ ...cli, 'src/features/cli/check.ts': "import '@inlang/plugin-message-format'" })).toEqual([
+    'package-confined',
+  ])
+  expect(one({ ...cli, 'src/features/cli/words.ts': "import '@inlang/paraglide-js'" })).toEqual([])
+})
+
 test('only src/server.ts may import the server feature', () => {
   const server = { 'src/features/server/server.ts': '' }
   expect(one({ ...server, 'src/features/game/game.ts': "import '../server/server.ts'" })).toEqual([

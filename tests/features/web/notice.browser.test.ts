@@ -117,3 +117,45 @@ test('it does not take the focus', async () => {
   removeNotice = soundNotice({ mount, audio })
   expect(document.activeElement).toBe(before)
 })
+
+/** A locale's two parts the button uses: words from a table, and a change a test makes. */
+function fakeLocale(table: Record<string, string>) {
+  let words: Record<string, string> = table
+  const listeners = new Set<(language: 'en') => void>()
+  return {
+    words: (key: string) => (Object.hasOwn(words, key) ? (words[key] as string) : key),
+    onChange(listener: (language: 'en') => void) {
+      listeners.add(listener)
+      return () => listeners.delete(listener)
+    },
+    change(next: Record<string, string>) {
+      words = next
+      for (const listener of listeners) listener('en')
+    },
+    listening: () => listeners.size,
+  }
+}
+
+// Plan L's implementation audit, I1: the button speaks the player's language, and changes with it.
+test('with a locale, the button says automata.sound.start in its words, again on every change', async () => {
+  const { speaker, audio } = await setup()
+  const locale = fakeLocale({ 'automata.sound.start': '눌러서 소리를 켜세요' })
+  removeNotice = soundNotice({ mount, audio, locale })
+  expect(button()?.textContent).toBe('눌러서 소리를 켜세요')
+  locale.change({ 'automata.sound.start': 'タップして音を出す' })
+  expect(button()?.textContent).toBe('タップして音を出す')
+  // Gone and back: still the new words.
+  speaker.tap()
+  speaker.interrupt()
+  expect(button()?.textContent).toBe('タップして音を出す')
+  removeNotice()
+  removeNotice = undefined
+  expect(locale.listening()).toBe(0)
+})
+
+test("words given as a string win over the locale's", async () => {
+  const { audio } = await setup()
+  const locale = fakeLocale({ 'automata.sound.start': '눌러서 소리를 켜세요' })
+  removeNotice = soundNotice({ mount, audio, locale, words: 'Toca para oír el sonido' })
+  expect(button()?.textContent).toBe('Toca para oír el sonido')
+})
