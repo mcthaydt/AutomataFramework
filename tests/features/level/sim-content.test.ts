@@ -1,8 +1,8 @@
 // A game's words are not what the sim is given: a translation is content a replay never notices, two players with
 // different translations of one game can share a room, and a word changed in a file moves no hash.
 import { afterEach, expect, test } from 'vitest'
-import { loadGame } from '#src/features/content/content.ts'
 import { createRecorder, verifyReplay } from '#src/features/commands/commands.ts'
+import { loadGame } from '#src/features/content/content.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import { simContent } from '#src/features/level/sim-content.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
@@ -19,7 +19,8 @@ afterEach(() => {
 
 async function loadFull(overrides: Record<string, string | undefined> = {}) {
   const loaded = await loadGame(readFullGame(overrides))
-  if (!loaded.ok) throw new Error(`the full game did not load:\n${loaded.diagnostics.map((d) => d.message).join('\n')}`)
+  if (!loaded.ok)
+    throw new Error(`the full game did not load:\n${loaded.diagnostics.map((d) => d.message).join('\n')}`)
   return loaded.value
 }
 
@@ -39,7 +40,9 @@ function withoutLanguage(language: string): string {
 
 test('changing a word moves no hash', async () => {
   const before = await simOf(await loadFull())
-  const ko = JSON.parse(fullGameFiles['content/messages/ko.json'] ?? '') as { messages: Record<string, string> }
+  const ko = JSON.parse(fullGameFiles['content/messages/ko.json'] ?? '') as {
+    messages: Record<string, string>
+  }
   ko.messages['keeper.hello'] = '안녕하세요, 여행자님!'
   const after = await simOf(await loadFull({ 'content/messages/ko.json': JSON.stringify(ko) }))
   expect(after.contentHash).toBe(before.contentHash)
@@ -61,7 +64,7 @@ test('taking a language away, or every language but English, moves no hash', asy
     const block = `[[content]]\ntype = "messages"\npath = "content/messages/${language}.json"\n`
     onlyEnglish = onlyEnglish.replace(`${block}\n`, '').replace(block, '')
   }
-  const english = await simOf(await loadFull({ 'automata.toml': onlyEnglish.trimEnd() + '\n' }))
+  const english = await simOf(await loadFull({ 'automata.toml': `${onlyEnglish.trimEnd()}\n` }))
   expect(english.contentHash).toBe(full.contentHash)
   expect(english.hash()).toBe(full.hash())
 })
@@ -105,10 +108,16 @@ test('adding six words files to a game that had none moves no hash', async () =>
   const files: Record<string, string> = {
     'automata.toml':
       (fixtureFiles['automata.toml'] ?? '') +
-      languages.map((l) => `\n[[content]]\ntype = "messages"\npath = "content/messages/${l}.json"\n`).join(''),
+      languages
+        .map((l) => `\n[[content]]\ntype = "messages"\npath = "content/messages/${l}.json"\n`)
+        .join(''),
   }
   for (const l of languages)
-    files[`content/messages/${l}.json`] = JSON.stringify({ format: 1, id: l, messages: { 'game.title': `Title ${l}` } })
+    files[`content/messages/${l}.json`] = JSON.stringify({
+      format: 1,
+      id: l,
+      messages: { 'game.title': `Title ${l}` },
+    })
   const withWords = await simOf(await loadFixtureGame(files))
   expect(withWords.contentHash).toBe((await simOf(await loadFixtureGame())).contentHash)
   for (let i = 0; i < 60; i++) withWords.step([])
@@ -119,7 +128,9 @@ test('a replay recorded before a word changed still plays', async () => {
   const recorder = createRecorder(await simOf(await loadFull()))
   for (let i = 0; i < 60; i++) recorder.step([])
   const replay = recorder.replay()
-  const es = JSON.parse(fullGameFiles['content/messages/es.json'] ?? '') as { messages: Record<string, string> }
+  const es = JSON.parse(fullGameFiles['content/messages/es.json'] ?? '') as {
+    messages: Record<string, string>
+  }
   es.messages['keeper.hello'] = '¡Hola, viajero!'
   const changed = await simOf(await loadFull({ 'content/messages/es.json': JSON.stringify(es) }))
   expect(verifyReplay(changed, replay)).toEqual({ ok: true })

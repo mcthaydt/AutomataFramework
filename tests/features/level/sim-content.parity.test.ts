@@ -4,8 +4,8 @@ import { afterEach, expect, test } from 'vitest'
 import { createGameSim } from '#src/features/level/level.ts'
 import { simContent } from '#src/features/level/sim-content.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
-import { expectRecorded } from '../../fixtures/golden.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
+import { expectRecorded } from '../../fixtures/golden.ts'
 import golden from '../../golden/push-crate.json' with { type: 'json' }
 
 const made: Sim[] = []
