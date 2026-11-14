@@ -1803,6 +1803,7 @@ interface Listed {
     has(type: ContentType, id: string): boolean;
     ids(type: ContentType): readonly string[];
     readonly hero: string;
+    readonly source: Language | undefined;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
 }
 ```
@@ -2441,6 +2442,7 @@ interface Project {
     readonly start: string;
     readonly hero: string;
     readonly players?: number | undefined;
+    readonly source?: Language | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -5467,6 +5469,7 @@ interface Listed {
     has(type: ContentType, id: string): boolean;
     ids(type: ContentType): readonly string[];
     readonly hero: string;
+    readonly source: Language | undefined;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
 }
 ```
@@ -6005,6 +6008,7 @@ interface Project {
     readonly start: string;
     readonly hero: string;
     readonly players?: number | undefined;
+    readonly source?: Language | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
