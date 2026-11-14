@@ -246,7 +246,8 @@ editor knows only the framework's content schemas, so it works on any game made 
   known version. For an Edit or Owner level, the App commits it to the default branch. For Suggest and Approve
   levels, the App commits it to that person's branch (`automata/<login>`) and opens a pull request: a suggestion.
   Someone who may approve sees it in the editor and approves it (the App merges it, once the game's checks pass) or
-  turns it down; nobody approves their own. If the file changed since it was opened (an agent, another device), the
+  turns it down; nobody below Edit approves their own (an Edit or Owner may, since their own saves go straight in
+  anyway). If the file changed since it was opened (an agent, another device), the
   editor does what GitHub does: a three-way merge against the version it opened. Changes that don't overlap merge on
   their own; overlapping ones are shown side by side as conflicts, and the person keeps theirs, the other, or both,
   per conflict, before the merge commits. Conflict markers are never committed, and the merged file must pass its
