@@ -1703,6 +1703,12 @@ function playersIn(sim: Sim): number[];
 function playReplay(sim: Sim, replay: Replay): Played;
 ```
 
+### `playVoice` (function)
+
+```ts
+function playVoice(context: BaseAudioContext, out: AudioNode, voice: SoundVoice, when: number): void;
+```
+
 ### `PluginDef` (interface)
 
 ```ts
@@ -1767,12 +1773,6 @@ interface Project {
 ```
 
 ### `PROJECT_FILE` (const)
-
-### `playVoice` (function)
-
-```ts
-function playVoice(context: BaseAudioContext, out: AudioNode, voice: SoundVoice, when: number): void;
-```
 
 ```ts
 const PROJECT_FILE = "automata.toml";
@@ -2535,6 +2535,16 @@ function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: re
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
 ```
 
+### `SpeakerSeams` (interface)
+
+```ts
+interface SpeakerSeams {
+    readonly context: () => AudioContext;
+    readonly target: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>;
+    readonly every: (ms: number, run: () => void) => () => void;
+}
+```
+
 ### `START_LEAD` (const)
 
 ```ts
@@ -2617,16 +2627,6 @@ interface SystemDef {
 interface SystemSpec {
     name: string;
     phase: Phase;
-### `SpeakerSeams` (interface)
-
-```ts
-interface SpeakerSeams {
-    readonly context: () => AudioContext;
-    readonly target: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>;
-    readonly every: (ms: number, run: () => void) => () => void;
-}
-```
-
     before?: readonly string[];
     after?: readonly string[];
     run: (ctx: SimContext) => void;
@@ -2950,6 +2950,15 @@ interface WebSeams {
 }
 ```
 
+### `webSpeaker` (function)
+
+```ts
+function webSpeaker(options?: {
+    readonly host?: Host;
+    readonly seams?: Partial<SpeakerSeams>;
+}): Speaker;
+```
+
 ### `writeContent` (function)
 
 ```ts
@@ -3073,15 +3082,6 @@ function body(kind: BodyKind, opts?: {
     vx?: number;
     vy?: number;
     angvel?: number;
-```
-
-### `webSpeaker` (function)
-
-```ts
-function webSpeaker(options?: {
-    readonly host?: Host;
-    readonly seams?: Partial<SpeakerSeams>;
-}): Speaker;
     fixedRotation?: boolean;
 }): SpawnPart;
 ```
