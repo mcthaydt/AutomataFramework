@@ -86,6 +86,16 @@ test('headless exports what a game sim and an editor need', async () => {
     'OnlineError',
     'PROTOCOL_VERSION',
     'onlineWords',
+    'createAudio',
+    'testSpeaker',
+    'scoreOf',
+    'hertzOf',
+    'SoundSettingsSchema',
+    'SOUND_SETTINGS_DEFAULT',
+    'MAX_SAME',
+    'MAX_SOUNDS',
+    'LOG_MAX',
+    'simContent',
   ])
     expect(api, name).toHaveProperty(name)
 })
@@ -99,6 +109,8 @@ test("the server entry exports what a game's own server file needs", async () =>
 test('the browser entry adds the web host, and headless does not have it', async () => {
   const api = await import('#src/headless.ts')
   expect(api).not.toHaveProperty('webHost')
+  // Sound that needs a page (Web Audio, the button) is the browser entry's; the audio itself is headless.
+  for (const name of ['webSpeaker', 'playVoice', 'soundNotice']) expect(api, name).not.toHaveProperty(name)
   const entry = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
   expect(entry).toContain("export * from './features/web/web.ts'")
   expect(entry).toContain("export * from './headless.ts'")

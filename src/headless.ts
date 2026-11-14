@@ -1,9 +1,12 @@
-// The headless entry: everything that runs without a page (sim, physics, commands, net, content, level, saves, host).
+// The headless entry: everything that runs without a page (sim, physics, commands, net, content, level, audio, saves,
+// host). Audio is here because a game's sound is a plain object over a `Speaker`: a test or a Node script can build one
+// with `testSpeaker`; the browser's speaker and the button are the page's (`web`).
 // Safe in Node and in an editor that only validates. Features are re-exported here as they arrive.
 
 // First, before any module below builds a schema: see lib/zod.ts.
 import './lib/zod.ts'
 
+export * from './features/audio/audio.ts'
 export * from './features/commands/commands.ts'
 export * from './features/content/content.ts'
 export * from './features/host/host.ts'
