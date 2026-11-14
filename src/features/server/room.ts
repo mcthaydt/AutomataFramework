@@ -3,9 +3,10 @@
 // `engine.step()`. A refusal is an `Error` whose message is `<problem>: <words>`, which the client reads back.
 import { type Client, CloseCode, Room } from '@colyseus/core'
 import type { GameContent } from '../content/content.ts'
-import { createGameSim, LevelError } from '../level/level.ts'
+import { createGameSim, JoinCommand, LeaveCommand, LevelError } from '../level/level.ts'
 import {
   BYTES_CHANNEL,
+  coopSeats,
   createRoomEngine,
   MESSAGE_CHANNEL,
   type OnlineProblem,
@@ -61,13 +62,19 @@ export function roomClassFor(ctx: RoomContext): new () => Room {
       if (options === undefined) throw refusal('bad-room', 'The room options are not valid.')
       if (ctx.rooms.size >= ctx.maxRooms)
         throw refusal('server-full', 'The server has no space for another room right now.')
+      // A co-op game's players come and go by the sim's own commands, so its room's sim starts with nobody, and its seats
+      // are what its level has start points for.
+      const { content } = ctx.game
+      const coop = coopSeats(content.project, content.levels[options.level]?.starts ?? [])
+      if (coop !== undefined && options.seats !== coop)
+        throw refusal('bad-room', `This game's room has ${coop} places, not ${options.seats}.`)
       let sim: Sim
       try {
         sim = await createGameSim({
           ...ctx.game,
           level: options.level,
           seed: options.seed,
-          players: players(options.seats),
+          players: coop === undefined ? players(options.seats) : [],
         })
       } catch (error) {
         throw error instanceof LevelError ? refusal('bad-room', error.message) : error
@@ -76,7 +83,12 @@ export function roomClassFor(ctx: RoomContext): new () => Room {
       this.maxClients = options.seats
       this.sim = sim
       this.options = options
-      this.engine = createRoomEngine({ sim, level: options.level, seats: options.seats })
+      this.engine = createRoomEngine({
+        sim,
+        level: options.level,
+        seats: options.seats,
+        ...(coop === undefined ? {} : { seatCommands: { join: JoinCommand.id, leave: LeaveCommand.id } }),
+      })
       ctx.rooms.set(this.roomId, { engine: this.engine, sim })
       this.onMessage(MESSAGE_CHANNEL, (client, raw: unknown) => {
         const seat = this.seats.get(client.sessionId)

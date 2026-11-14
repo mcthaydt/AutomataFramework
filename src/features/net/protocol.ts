@@ -117,6 +117,8 @@ export type ServerMessage =
   | { readonly t: 'sync'; readonly tick: number }
   | { readonly t: 'away'; readonly seat: number }
   | { readonly t: 'back'; readonly seat: number }
+  /** In a co-op room: the player left for good, and their hero goes by the sim's own `leave`. Nobody is away for them. */
+  | { readonly t: 'gone'; readonly seat: number }
 
 /**
  * What a player joins with. It also describes the room it would make, so a client builds its sims before it joins,
@@ -160,6 +162,7 @@ const ServerMessageSchema = z.discriminatedUnion('t', [
   z.strictObject({ t: z.literal('sync'), tick: U32 }),
   z.strictObject({ t: z.literal('away'), seat: Seat }),
   z.strictObject({ t: z.literal('back'), seat: Seat }),
+  z.strictObject({ t: z.literal('gone'), seat: Seat }),
 ]) as unknown as z.ZodType<ServerMessage>
 
 const RoomOptionsSchema = z.strictObject({
@@ -189,6 +192,24 @@ export function parseServerMessage(raw: unknown): ServerMessage | undefined {
 export function parseRoomOptions(raw: unknown): RoomOptions | undefined {
   const parsed = RoomOptionsSchema.safeParse(raw)
   return parsed.success ? parsed.data : undefined
+}
+
+/**
+ * How many seats a room of a co-op game has, or `undefined` for a game that is not one (no `players`, or just one).
+ * A seat is a player number from 1, and needs a start point in the level: so it is the run of start points numbered 1,
+ * 2, 3 ... up to the project's `players`, and nobody is ever seated with no hero to play. A server and a page both
+ * reckon it with this, so they always agree.
+ */
+export function coopSeats(
+  project: { readonly players?: number | undefined },
+  starts: readonly { readonly player: number }[],
+): number | undefined {
+  const players = project.players ?? 1
+  if (players < 2) return undefined
+  const have = new Set(starts.map((start) => start.player))
+  let seats = 0
+  while (seats < players && have.has(seats + 1)) seats++
+  return seats
 }
 
 /** The options for a room that plays `room.level` on `sim`'s game: every field a room checks a joiner against. */

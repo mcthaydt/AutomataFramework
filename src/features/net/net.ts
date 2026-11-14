@@ -7,6 +7,7 @@ export type { Link } from './link.ts'
 export {
   BYTES_CHANNEL,
   type ClientMessage,
+  coopSeats,
   DEFAULT_MAX_ROOMS,
   HASH_EVERY,
   LEAD_DECAY_TICKS,

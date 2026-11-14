@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from 'vitest'
 import { verifyReplay } from '#src/features/commands/commands.ts'
+import { JoinCommand, LeaveCommand, playersIn } from '#src/features/level/level.ts'
 import {
   createRoomEngine,
   MAX_LEAD_TICKS,
@@ -10,7 +11,7 @@ import {
   type ServerMessage,
 } from '#src/features/net/net.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
-import { onlineSim } from '../../fixtures/online/game.ts'
+import { coopSim, onlineSim } from '../../fixtures/online/game.ts'
 
 const made: Sim[] = []
 afterEach(() => {
@@ -262,4 +263,115 @@ test("the room's play is an ordinary replay", async () => {
   const fresh = await onlineSim()
   made.push(fresh)
   expect(verifyReplay(fresh, replay)).toEqual({ ok: true })
+})
+
+// A co-op game: nobody is in the sim at the start, and heroes come and go by the sim's own `join` and `leave`.
+async function coop(): Promise<{ sim: Sim; engine: RoomEngine; options: RoomOptions }> {
+  const sim = await coopSim()
+  made.push(sim)
+  const engine = createRoomEngine({
+    sim,
+    level: 'level-1',
+    seats: 4,
+    seatCommands: { join: JoinCommand.id, leave: LeaveCommand.id },
+  })
+  return { sim, engine, options: engine.options }
+}
+const commandsOf = (f: Fake, type: string) =>
+  ticks(f).flatMap((m) => m.commands.filter((c) => c.type === type))
+
+test('a co-op room starts with one player, who joins by the sim’s own command', async () => {
+  const { sim, engine, options } = await coop()
+  const a = fake()
+  expect(engine.join(a, options, 'ROOM')).toEqual({ seat: 1 })
+  expect(a.got).toEqual([{ t: 'seat', seat: 1, code: 'ROOM', nextSeq: 1 }, { t: 'start' }])
+  expect(engine.started).toBe(true)
+  engine.step()
+  expect(commandsOf(a, 'join')).toMatchObject([{ tick: 0, source: 1, seq: 0 }])
+  expect(playersIn(sim)).toEqual([1])
+})
+
+test('a second player joins a game that is going, from its state', async () => {
+  const { sim, engine, options } = await coop()
+  const a = fake()
+  const b = fake()
+  engine.join(a, options, 'ROOM')
+  steps(engine, 90)
+  expect(engine.join(b, options, 'ROOM')).toEqual({ seat: 2 })
+  expect(b.got).toEqual([
+    { t: 'seat', seat: 2, code: 'ROOM', nextSeq: 1 },
+    { t: 'sync', tick: 90 },
+  ])
+  expect(b.bytes).toHaveLength(1)
+  const fresh = await coopSim()
+  made.push(fresh)
+  fresh.restore(b.bytes[0] as Uint8Array)
+  expect(fresh.hash()).toBe(sim.hash())
+  engine.step()
+  expect(commandsOf(a, 'join')).toMatchObject([{ source: 1 }, { tick: 90, source: 2, seq: 0 }])
+  expect(commandsOf(b, 'join')).toMatchObject([{ tick: 90, source: 2 }])
+  expect(playersIn(sim)).toEqual([1, 2])
+})
+
+test('leaving takes the hero out, and the others are not told it lost its connection', async () => {
+  const { sim, engine, options } = await coop()
+  const a = fake()
+  const b = fake()
+  engine.join(a, options, 'ROOM')
+  engine.join(b, options, 'ROOM')
+  steps(engine, 30)
+  engine.leave(2)
+  steps(engine, 2)
+  expect(commandsOf(a, 'leave')).toMatchObject([{ source: 2 }])
+  expect(playersIn(sim)).toEqual([1])
+  expect(ofType(a, 'away')).toEqual([])
+  expect(ofType(a, 'gone')).toEqual([{ t: 'gone', seat: 2 }])
+})
+
+test('a player who is away keeps their hero until the room is told they are gone', async () => {
+  const { sim, engine, options } = await coop()
+  const a = fake()
+  const b = fake()
+  engine.join(a, options, 'ROOM')
+  engine.join(b, options, 'ROOM')
+  steps(engine, 30)
+  engine.away(2)
+  steps(engine, 30)
+  expect(ofType(a, 'away')).toEqual([{ t: 'away', seat: 2 }])
+  expect(commandsOf(a, 'leave')).toEqual([])
+  expect(playersIn(sim)).toEqual([1, 2])
+  engine.leave(2)
+  steps(engine, 2)
+  expect(commandsOf(a, 'leave')).toHaveLength(1)
+  expect(ofType(a, 'gone')).toEqual([{ t: 'gone', seat: 2 }])
+  expect(playersIn(sim)).toEqual([1])
+})
+
+test('the fifth player is told the room is full', async () => {
+  const { engine, options } = await coop()
+  for (let i = 0; i < 4; i++) expect(engine.join(fake(), options, 'ROOM')).toEqual({ seat: i + 1 })
+  expect(engine.join(fake(), options, 'ROOM')).toEqual({ problem: 'room-full' })
+})
+
+test('the play of a co-op room is a replay, with its joins and leaves in it', async () => {
+  const { engine, options } = await coop()
+  const a = fake()
+  const b = fake()
+  engine.join(a, options, 'ROOM')
+  steps(engine, 30)
+  engine.join(b, options, 'ROOM')
+  engine.receive(1, cmd(1, 35))
+  steps(engine, 60)
+  engine.leave(2)
+  steps(engine, 60)
+  const replay = engine.replay()
+  expect(replay.meta.players).toBe('')
+  expect(replay.commands.map((c) => c.type).filter((t) => t === 'join' || t === 'leave')).toEqual([
+    'join',
+    'join',
+    'leave',
+  ])
+  const again = await coopSim()
+  made.push(again)
+  expect(verifyReplay(again, replay)).toEqual({ ok: true })
 })

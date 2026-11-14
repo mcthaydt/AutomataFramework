@@ -2,6 +2,7 @@
 import { type GameContent, loadGame } from '#src/features/content/content.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
+import { coopFiles } from '../game/co-op.ts'
 import { heroPlugin } from '../game/hero.ts'
 import { fixtureFiles, readFixture } from '../game/read.ts'
 import { twoPlayerLevel } from './two-player-level.ts'
@@ -24,4 +25,17 @@ export async function onlineSim(seats = 2): Promise<Sim> {
     plugins: [heroPlugin],
     players: Array.from({ length: seats }, (_, i) => i + 1),
   })
+}
+
+/** The co-op game (`../game/co-op.ts`: `players = 4`, four starts) as a room plays it. */
+export async function loadCoopGame(): Promise<GameContent> {
+  const loaded = await loadGame(readFixture(coopFiles))
+  if (!loaded.ok)
+    throw new Error(`The co-op game did not load:\n${loaded.diagnostics.map((d) => d.message).join('\n')}`)
+  return loaded.value
+}
+
+/** A sim of the co-op game with nobody in it, as the room's and every page's starts: heroes come by `join`. */
+export async function coopSim(): Promise<Sim> {
+  return createGameSim({ content: await loadCoopGame(), plugins: [heroPlugin], players: [] })
 }

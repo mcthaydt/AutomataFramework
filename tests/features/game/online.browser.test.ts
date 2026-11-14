@@ -203,8 +203,8 @@ test('my key moves me before the room answers', async () => {
   const before = x(game.sim, 1)
   const room1 = x(s.engineSim, 1)
   key('keydown', 'ArrowRight')
-  // One beat: the page's frame sends the command and has predicted it, and the command has not reached the room yet.
-  s.beat()
+  // Two beats: the page has sent the command and predicted it, and the room, two ticks behind, has not stepped it.
+  s.beat(2)
   expect(x(game.sim, 1)).toBeGreaterThan(before)
   expect(x(s.engineSim, 1)).toBe(room1)
   key('keyup', 'ArrowRight')

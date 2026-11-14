@@ -60,6 +60,7 @@ const every: ServerMessage[] = [
   { t: 'sync', tick: 90 },
   { t: 'away', seat: 2 },
   { t: 'back', seat: 2 },
+  { t: 'gone', seat: 2 },
 ]
 
 test('every message the room sends round-trips', () => {

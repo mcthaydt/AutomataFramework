@@ -185,6 +185,7 @@ export function createSession(setup: SessionSetup): Session {
           if (started) setState({ state: 'playing', away })
           break
         case 'back':
+        case 'gone':
           away = away.filter((s) => s !== m.seat)
           if (started) setState({ state: 'playing', away })
           break

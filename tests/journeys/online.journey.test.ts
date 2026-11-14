@@ -42,8 +42,9 @@ const PAIRS: readonly (readonly [Spec, Spec])[] = [
   ],
 ]
 
-let serverProcess: ChildProcess | undefined
+const processes: ChildProcess[] = []
 let roomServer = ''
+let coopServer = ''
 let pageServer: PreviewServer | undefined
 let pageUrl = ''
 let outDir = ''
@@ -52,20 +53,24 @@ const browsers: Browser[] = []
 beforeAll(async () => {
   if (!existsSync(`${root}dist/server.js`))
     throw new Error('dist/server.js is missing: run `pnpm build` first.')
-  // The room server, as a process, and the port it says it listens on.
-  const child = spawn(process.execPath, [`${root}tests/fixtures/online/server.ts`], {
-    stdio: ['ignore', 'pipe', 'inherit'],
-  })
-  serverProcess = child
-  const port = await new Promise<number>((resolve, reject) => {
-    child.once('exit', (code) =>
-      reject(new Error(`The room server ended with code ${code} before it listened.`)),
-    )
-    createInterface({ input: child.stdout }).once('line', (line) =>
-      resolve((JSON.parse(line) as { port: number }).port),
-    )
-  })
-  roomServer = `ws://127.0.0.1:${port}`
+  // The room servers, as processes, and the port each says it listens on: the lobby game and the co-op game.
+  const start = async (...args: string[]): Promise<string> => {
+    const child = spawn(process.execPath, [`${root}tests/fixtures/online/server.ts`, ...args], {
+      stdio: ['ignore', 'pipe', 'inherit'],
+    })
+    processes.push(child)
+    const port = await new Promise<number>((resolve, reject) => {
+      child.once('exit', (code) =>
+        reject(new Error(`The room server ended with code ${code} before it listened.`)),
+      )
+      createInterface({ input: child.stdout }).once('line', (line) =>
+        resolve((JSON.parse(line) as { port: number }).port),
+      )
+    })
+    return `ws://127.0.0.1:${port}`
+  }
+  roomServer = await start()
+  coopServer = await start('--co-op')
 
   // The page, built as a game would be and served from files: a dev server would reload the page when it found a
   // dependency late, in the middle of a play.
@@ -94,9 +99,10 @@ beforeAll(async () => {
 afterAll(async () => {
   for (const browser of browsers.splice(0)) await browser.close().catch(() => undefined)
   await pageServer?.close()
-  if (serverProcess !== undefined && serverProcess.exitCode === null) {
-    const ended = new Promise((resolve) => serverProcess?.once('close', resolve))
-    serverProcess.kill('SIGTERM')
+  for (const child of processes.splice(0)) {
+    if (child.exitCode !== null) continue
+    const ended = new Promise((resolve) => child.once('close', resolve))
+    child.kill('SIGTERM')
     await ended
   }
   if (outDir !== '') rmSync(outDir, { recursive: true, force: true })
@@ -116,7 +122,7 @@ interface Seat {
 
 const KEYS = { left: 'ArrowLeft', right: 'ArrowRight', jump: 'Space' } as const
 
-async function seatOf(spec: Spec, query: string): Promise<Seat> {
+async function seatOf(spec: Spec, query: string, server = roomServer): Promise<Seat> {
   const browser = await ENGINES[spec.engine].launch()
   browsers.push(browser)
   const context = await browser.newContext({
@@ -140,7 +146,7 @@ async function seatOf(spec: Spec, query: string): Promise<Seat> {
       window.matchMedia = (media: string) => (media.includes('pointer: coarse') ? coarse(media) : real(media))
     })
   const page = await context.newPage()
-  await page.goto(`${pageUrl}?server=${encodeURIComponent(roomServer)}${query}`)
+  await page.goto(`${pageUrl}?server=${encodeURIComponent(server)}${query}`)
   const button = (action: string) => page.locator(`[data-action='${action}']`)
   const finger = { pointerType: 'touch', pointerId: 7, isPrimary: true, bubbles: true } as const
   return {
@@ -247,3 +253,46 @@ for (const [first, second] of PAIRS) {
       .toBe('No room has that code. Check the code and try again.')
   })
 }
+
+test('co-op: a second player joins a game that is going, and when they go their hero goes', async () => {
+  const one = await seatOf(
+    { engine: 'chromium', width: 1280, height: 720, touch: false },
+    '&game=co-op',
+    coopServer,
+  )
+  // Nobody to wait for: it is playing at once, with nothing to read.
+  await expect.poll(() => one.data('state'), POLL).toBe('playing')
+  expect(await one.status()).toBe('')
+  await expect.poll(() => one.data('players'), POLL).toBe('1')
+  const code = (await one.data('code')) as string
+  // A few seconds of play on its own, then a friend comes by the code.
+  await expect.poll(async () => (await checks(one)).has(179), POLL).toBe(true)
+  const two = await seatOf(
+    { engine: 'webkit', width: 390, height: 844, touch: true },
+    `&game=co-op&room=${encodeURIComponent(code)}`,
+    coopServer,
+  )
+  await expect.poll(() => two.data('state'), POLL).toBe('playing')
+  expect(await two.data('seat')).toBe('2')
+  for (const seat of [one, two]) await expect.poll(() => seat.data('players'), POLL).toBe('2')
+
+  // Each sees the other's hero move.
+  await one.hold('left')
+  await two.hold('right')
+  await expect.poll(async () => num(await two.data('p1-x')), POLL).toBeLessThan(1.9)
+  await expect.poll(async () => num(await one.data('p2-x')), POLL).toBeGreaterThan(6)
+  await one.release('left')
+  await two.release('right')
+  const movedAt = Math.max(...(await checks(one)).keys())
+  await expect
+    .poll(async () => {
+      const [a, b] = [await checks(one), await checks(two)]
+      return [...a].some(([tick, hash]) => tick > movedAt && b.get(tick) === hash)
+    }, POLL)
+    .toBe(true)
+
+  // The second player closes the page: after the grace the room takes their hero out, and nobody is told of a loss.
+  await two.page.close()
+  await expect.poll(() => one.data('players'), POLL).toBe('1')
+  await expect.poll(() => one.status(), POLL).toBe('')
+})

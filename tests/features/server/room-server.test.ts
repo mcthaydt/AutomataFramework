@@ -2,12 +2,12 @@
 // Colyseus SDK end on one hash with a lag and a late command forced, a dropped connection gets back into its seat, and
 // every way a join can be refused is told in the problem a person reads.
 import { afterEach, expect, test, vi } from 'vitest'
-import { verifyReplay } from '#src/features/commands/commands.ts'
+import { controlsCommand, verifyReplay } from '#src/features/commands/commands.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import { OnlineError } from '#src/features/net/net.ts'
 import { createRoomServer, type RoomServer, type RoomServerOptions } from '#src/server.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
-import { loadOnlineGame, onlineSim } from '../../fixtures/online/game.ts'
+import { coopSim, loadCoopGame, loadOnlineGame, onlineSim } from '../../fixtures/online/game.ts'
 import {
   type HeadlessPlayer,
   type HeadlessSetup,
@@ -179,4 +179,48 @@ test('close frees the port', async () => {
   const again = await createRoomServer({ game: await game(), port })
   servers.push(again)
   expect(again.port).toBe(port)
+})
+
+// A co-op game: a room of four places, where players come and go while it is played.
+const coopGame = async () => ({ content: await loadCoopGame(), plugins: [heroPlugin] })
+/** What the third player holds from which tick; the first two do what the lobby's players do. */
+const THIRD: Record<number, readonly string[]> = { 200: ['right'], 320: ['jump', 'right'], 420: [] }
+const coopScript: HeadlessSetup['script'] = (seat, tick) => {
+  if (seat !== 3) return onlineScript(seat, tick)
+  const held = THIRD[tick]
+  return held === undefined ? [] : [controlsCommand(tick, 3, 0, held)]
+}
+const coopPlayer = (setup: Partial<HeadlessSetup> & { server: string }): Promise<HeadlessPlayer> =>
+  join({ seats: 4, makeSim: coopSim, script: coopScript, ...setup })
+
+test('a third player joins a game already going, and one leaves', async () => {
+  const { server, url } = await start({ game: await coopGame() })
+  const one = await coopPlayer({ server: url })
+  const two = await coopPlayer({ server: url, room: one.joined.code })
+  await until('both to play to the check for tick 119', () => one.checks.has(119) && two.checks.has(119))
+  const three = await coopPlayer({ server: url, room: one.joined.code, lagMs: 120 })
+  expect(three.joined.session.seat).toBeDefined()
+  await until('the check for tick 359', () => one.checks.has(359) && three.checks.has(359))
+  two.stop()
+  await until('the check for tick 599', () => one.checks.has(599) && three.checks.has(599))
+  expect(one.checks.get(599)).toBe(three.checks.get(599))
+  for (const p of [one, three]) expect(p.joined.session.stats().desyncs).toBe(0)
+  const replay = server.replays()[one.joined.code]
+  expect(replay).toBeDefined()
+  if (replay === undefined) return
+  expect(replay.checks.find((c) => c.tick === 600)?.hash).toBe(one.checks.get(599))
+  expect(replay.commands.filter((c) => c.type === 'join')).toHaveLength(3)
+  expect(replay.commands.filter((c) => c.type === 'leave')).toHaveLength(1)
+  one.stop()
+  three.stop()
+  const fresh = await coopSim()
+  expect(verifyReplay(fresh, replay)).toEqual({ ok: true })
+  fresh.dispose()
+})
+
+test('a room for two in a game for four cannot be made', async () => {
+  const { url } = await start({ game: await coopGame() })
+  const result = await join({ server: url, seats: 2, makeSim: coopSim }).catch((e: unknown) => e)
+  expect(result).toBeInstanceOf(OnlineError)
+  expect((result as OnlineError).problem).toBe('bad-room')
 })

@@ -7,6 +7,10 @@
 // A command the room makes for a seat (a let-go when the connection drops) takes that seat's next `seq`, so the
 // room's replay holds the seat's commands in one order, and the seat's next `seat` message tells the player where to
 // carry on.
+//
+// A game with `seatCommands` (a co-op game, where heroes come and go) has no lobby: the room starts on the first join,
+// and each player's hero appears when the room queues that seat's `join` command, and goes when it queues `leave`.
+// Everyone after the first is brought up to date the way a returning player is: `seat`, then the state.
 import { controlsCommand, createRecorder, type Recorder, type Replay } from '../commands/commands.ts'
 import type { Command, Sim } from '../sim/sim.ts'
 import {
@@ -45,7 +49,7 @@ export interface RoomEngine {
   away(seat: number): void
   /** The same player, on a new connection: `seat`, then `sync` and the bytes; tells the others `back`. */
   back(seat: number, peer: RoomPeer): void
-  /** The player is gone for good: the seat stays taken, and the hero stands still. */
+  /** The player is gone for good: the seat stays taken, and the hero stands still (or, with `seatCommands`, goes). */
   leave(seat: number): void
   /** One tick, if started: steps the commands due, sends `refused` for what the sim rejected, relays the rest. */
   step(): void
@@ -73,13 +77,15 @@ export function createRoomEngine(setup: {
   readonly sim: Sim
   readonly level: string
   readonly seats: number
+  /** The ids of the commands that put a player's hero in and take it out. Set for a game made with no players. */
+  readonly seatCommands?: { readonly join: string; readonly leave: string }
 }): RoomEngine {
-  const { sim, level, seats } = setup
+  const { sim, level, seats, seatCommands } = setup
   const options = roomOptionsOf(sim, { level, seats })
   const recorder: Recorder = createRecorder(sim, {
     meta: {
       level,
-      players: Array.from({ length: seats }, (_, i) => i + 1).join(','),
+      players: seatCommands === undefined ? Array.from({ length: seats }, (_, i) => i + 1).join(',') : '',
       seats: String(seats),
     },
   })
@@ -113,6 +119,13 @@ export function createRoomEngine(setup: {
     state.lastEffective = tick
     enqueue(tick, controlsCommand(tick, seat, state.lastSeq, []))
   }
+  /** The room's own `join` or `leave` for a seat, in the order the seat's other commands are in. */
+  const seatCommand = (seat: number, state: Seat, type: string): void => {
+    const tick = Math.max(sim.tick, state.lastEffective)
+    state.lastSeq += 1
+    state.lastEffective = tick
+    enqueue(tick, { tick, source: seat, seq: state.lastSeq, type, payload: {} })
+  }
   const sendState = (peer: RoomPeer): void => {
     peer.send({ t: 'sync', tick: sim.tick })
     peer.sendBytes(sim.snapshot())
@@ -135,7 +148,18 @@ export function createRoomEngine(setup: {
       while (table.has(seat) && seat <= seats) seat++
       if (seat > seats) return { problem: 'room-full' }
       code = joinCode
-      table.set(seat, { peer, away: false, gone: false, lastSeq: -1, lastEffective: 0, queued: 0 })
+      const state: Seat = { peer, away: false, gone: false, lastSeq: -1, lastEffective: 0, queued: 0 }
+      table.set(seat, state)
+      if (seatCommands !== undefined) {
+        // No lobby: the first player starts the room, and every player's hero comes by the sim's own command.
+        const first = !started
+        started = true
+        seatCommand(seat, state, seatCommands.join)
+        peer.send({ t: 'seat', seat, code, nextSeq: state.lastSeq + 1 })
+        if (first) peer.send({ t: 'start' })
+        else sendState(peer)
+        return { seat }
+      }
       peer.send({ t: 'seat', seat, code, nextSeq: 0 })
       if (table.size === seats) {
         started = true
@@ -204,6 +228,15 @@ export function createRoomEngine(setup: {
         // Nobody is playing yet, so the seat is free again and the others are told how many are still missing.
         table.delete(seat)
         for (const p of peers()) p.send({ t: 'waiting', missing: seats - table.size })
+        return
+      }
+      if (seatCommands !== undefined) {
+        // The hero goes by the sim's own command. A player who was away has already let go, and the others were told.
+        state.peer = undefined
+        state.gone = true
+        state.away = true
+        seatCommand(seat, state, seatCommands.leave)
+        tellOthers(seat, { t: 'gone', seat })
         return
       }
       // A player who leaves on purpose lets go like one whose connection dropped; one already away has done so.

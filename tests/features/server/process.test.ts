@@ -4,8 +4,8 @@ import { type ChildProcess, spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { createInterface } from 'node:readline'
 import { afterEach, beforeAll, expect, test, vi } from 'vitest'
-import { createGameSim } from '#src/features/level/level.ts'
-import { loadOnlineGame } from '../../fixtures/online/game.ts'
+import type { Sim } from '#src/features/sim/sim.ts'
+import { onlineSim } from '../../fixtures/online/game.ts'
 import { headlessPlayer, until } from '../../fixtures/online/headless-player.ts'
 
 vi.setConfig({ testTimeout: 60_000 })
@@ -53,8 +53,7 @@ test('it prints one line when it listens, serves a game, and stops on SIGTERM', 
 
   // The server is the built package (its own Rapier, on plain Node) and this sim is the source (under Vitest): the same
   // sixty idle ticks must end on the same hash in both, which a game's own server depends on.
-  const plain = (): ReturnType<typeof createGameSim> =>
-    loadOnlineGame().then((content) => createGameSim({ content, players: [1] }))
+  const plain = (): Promise<Sim> => onlineSim(1)
   const player = await headlessPlayer({
     server: `ws://127.0.0.1:${listening.port}`,
     seats: 1,

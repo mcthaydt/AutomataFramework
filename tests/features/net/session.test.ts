@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from 'vitest'
 import { Player } from '#src/features/commands/commands.ts'
+import { JoinCommand, LeaveCommand, playersIn } from '#src/features/level/level.ts'
 import {
   type ClientMessage,
   createRoomEngine,
@@ -16,7 +17,7 @@ import {
 } from '#src/features/net/net.ts'
 import { Transform } from '#src/features/physics/physics.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
-import { onlineSim } from '../../fixtures/online/game.ts'
+import { coopSim, onlineSim } from '../../fixtures/online/game.ts'
 import { createWire, type Delay, type Wire } from '../../fixtures/online/wire.ts'
 
 const made: Sim[] = []
@@ -331,4 +332,40 @@ test("a command the room refused is forgotten, so the next rollback doesn't repl
   expect(hero(p.predicted, 1)?.get(Player).held).toBe('left')
   expect(hero(r.engineSim, 1)?.get(Player).held).toBe('left')
   expect(p.confirmed.hash()).toBe(r.engineSim.hash())
+})
+
+test('a player who joins a co-op room that is going starts from its state, never from tick 0', async () => {
+  const engineSim = await coopSim()
+  made.push(engineSim)
+  const engine = createRoomEngine({
+    sim: engineSim,
+    level: 'level-1',
+    seats: 4,
+    seatCommands: { join: JoinCommand.id, leave: LeaveCommand.id },
+  })
+  const wire = createWire(engine)
+  const make = async (): Promise<{ session: Session; predicted: Sim }> => {
+    const confirmed = await coopSim()
+    const predicted = await coopSim()
+    made.push(confirmed, predicted)
+    return { session: createSession({ link: wire.link(ONE), confirmed, predicted }), predicted }
+  }
+  const one = await make()
+  const beat = (): void => {
+    wire.pump()
+    engine.step()
+    one.session.advance([])
+    two?.session.advance([])
+  }
+  let two: { session: Session; predicted: Sim } | undefined
+  for (let i = 0; i < 90; i++) beat()
+  expect(playersIn(one.predicted)).toEqual([1])
+  two = await make()
+  for (let i = 0; i < 6; i++) beat()
+  const stats = two.session.stats()
+  expect(stats.syncs).toBe(1)
+  expect(stats.confirmedTick).toBeGreaterThanOrEqual(90)
+  expect(two.session.seat).toBe(2)
+  expect(playersIn(two.predicted)).toEqual([1, 2])
+  expect(playersIn(one.predicted)).toEqual([1, 2])
 })

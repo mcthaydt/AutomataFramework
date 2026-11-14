@@ -1,6 +1,7 @@
 // The page the online journey opens in each browser: the fixture online game on a real page, joined to a real room
 // server. It shows what the journey reads and nothing else: `#status` holds the words a person would read, and `#game`
-// carries the numbers (`data-*`). The address says where: `?server=ws://…`, `?room=<code>`, `?seats=<n>`.
+// carries the numbers (`data-*`). The address says where: `?server=ws://…`, `?room=<code>`, `?seats=<n>`, and
+// `?game=co-op` for the game made for four players, whose heroes come and go while it is played.
 import { attemptsToBuildCode } from '../../strict-csp.ts'
 
 const params = new URLSearchParams(location.search)
@@ -26,14 +27,14 @@ const built = await attemptsToBuildCode(async () => {
   const { onlineWords, startOnlineGame, webHost } = framework
   const { fixtureControls } = await import('../../game/controls.ts')
   const { heroPlugin } = await import('../../game/hero.ts')
-  const { loadOnlineGame } = await import('../game.ts')
+  const { loadCoopGame, loadOnlineGame } = await import('../game.ts')
   const show = (text: string, state: string): void => {
     status.textContent = text
     game.dataset.state = state
   }
   try {
     online = await startOnlineGame({
-      content: await loadOnlineGame(),
+      content: await (params.get('game') === 'co-op' ? loadCoopGame() : loadOnlineGame()),
       plugins: [heroPlugin],
       mount,
       controls: fixtureControls,
@@ -59,7 +60,7 @@ const built = await attemptsToBuildCode(async () => {
 game.dataset.builtCode = JSON.stringify(built)
 
 if (framework !== undefined && online !== undefined) {
-  const { Player, Transform } = framework
+  const { Player, playersIn, Transform } = framework
   const playing = online
   game.dataset.seat = String(playing.seat)
   game.dataset.code = playing.code
@@ -71,6 +72,7 @@ if (framework !== undefined && online !== undefined) {
     game.dataset.rollbacks = String(playing.stats().rollbacks)
     game.dataset.p1X = x(1)
     game.dataset.p2X = x(2)
+    game.dataset.players = String(playersIn(playing.sim).length)
     requestAnimationFrame(tick)
   }
   tick()

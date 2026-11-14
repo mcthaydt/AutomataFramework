@@ -6,6 +6,7 @@ import { pageFrames } from '../../lib/frames.ts'
 import { checkControls, createInput } from '../input/input.ts'
 import { createGameSim, levelSize, skyOf } from '../level/level.ts'
 import {
+  coopSeats,
   type Joined,
   joinSession,
   type Link,
@@ -27,7 +28,7 @@ export interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
   readonly room?: string
   /** Default the project's start. */
   readonly level?: string
-  /** How many players the room is for; used when this page makes the room. Default 2. */
+  /** How many players the room is for; used when this page makes the room. Default 2, or the game's own count if it is a co-op game. */
   readonly seats?: number
   /** Called whenever what a person should be told about the room changes (`onlineWords` has the words). */
   readonly onStatus?: (status: OnlineStatus) => void
@@ -66,7 +67,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     gamepads,
     server,
     room,
-    seats = 2,
+    seats: seatsOption,
     level: levelOption,
     onStatus,
     onCheck,
@@ -79,8 +80,12 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
   const levelData = simOptions.content.levels[level]
   if (levelData === undefined) throw new Error('The level this game opens is missing.')
 
-  // Both sims have every player of the room: the room's sim does, and the three must start the same.
-  const players = Array.from({ length: seats }, (_, i) => i + 1)
+  // A co-op game's room has the places its level has starts for, and its heroes come by the sim's own `join`: both sims
+  // then start with nobody, as the room's does. Any other game's room is for two unless this page says, and all of its
+  // players are in from the start.
+  const coop = coopSeats(simOptions.content.project, levelData.starts)
+  const seats = coop ?? seatsOption ?? 2
+  const players = coop === undefined ? Array.from({ length: seats }, (_, i) => i + 1) : []
   const confirmed = await createGameSim({ ...simOptions, level, players })
   let predicted: Sim
   try {
@@ -94,7 +99,8 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     predicted.dispose()
   }
 
-  let status: OnlineStatus = { state: 'waiting', code: '', missing: seats - 1 }
+  let status: OnlineStatus =
+    coop === undefined ? { state: 'waiting', code: '', missing: seats - 1 } : { state: 'playing', away: [] }
   const setStatus = (next: OnlineStatus): void => {
     status = next
     onStatus?.(next)
