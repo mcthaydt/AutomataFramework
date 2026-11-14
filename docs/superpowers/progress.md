@@ -10,7 +10,8 @@ This repo has Part A only: one function.
 
 | Task | State |
 |---|---|
-| 1. `watchReplay` draws a replay with no input | Built and pushed, waiting for CI; the pin move in Examples (Task 2) waits for its merge |
+| 1. `watchReplay` draws a replay with no input | Done, 100% (merged, PR 29, `cc281c9`) |
+| The Owner's answers, Q1 (a), Q2 (a), Q3 (b), Q4 (a) | Recorded in the spec addendum, 2026-11-14 |
 
 ## Cycle 1: the 2D first layer
 
