@@ -5,7 +5,7 @@ import 'pixi.js/unsafe-eval'
 import { Application, Container, Graphics, loadTextures } from 'pixi.js'
 import { SKY_COLOR } from '../level/level.ts'
 import { fitWorld } from './fit.ts'
-import type { View } from './scene.ts'
+import type { RopeLine, View } from './scene.ts'
 
 // Pixi types the loader's config as optional; a Pixi without it would leave the probe on, so say so.
 const textureConfig = loadTextures.config
@@ -16,6 +16,12 @@ textureConfig.preferWorkers = false
 // Every box gets a dark edge. A level may pick its own sky and a game its own colours, so without an edge a pale
 // box (or one close to the sky) can hardly be made out.
 const OUTLINE_COLOR = 0x1b1b24
+
+/** A pin is a dot of this radius, in tiles; a rope is a line this many CSS pixels wide. */
+const PIN_RADIUS = 0.1
+/** On a phone a tile is a few pixels, so the dot never goes below this many CSS pixels across its radius. */
+const PIN_MIN_PX = 4
+const ROPE_WIDTH = 2
 
 /** What the renderer needs of the Pixi stage. */
 export interface Stage {
@@ -30,8 +36,11 @@ export interface Stage {
    * Never more than half the height, so the world cannot be squeezed out of sight.
    */
   setInset(px: number): void
-  /** Draws these views, fitted into the current size. Until the stage has a size they are kept and drawn on its first. */
-  draw(views: readonly View[]): void
+  /**
+   * Draws these views, fitted into the current size, and the links over them: a rope as a dark line two CSS pixels
+   * wide, a pin as a dark dot. Until the stage has a size they are kept and drawn on its first.
+   */
+  draw(views: readonly View[], links: readonly RopeLine[]): void
   destroy(): void
 }
 
@@ -62,7 +71,11 @@ export async function createStage(world: { w: number; h: number }, sky: number =
   // The canvas is as big as its mount; its drawing buffer is set to match by `resize`.
   canvas.style.cssText = 'display:block;width:100%;height:100%'
   const root = new Container()
-  app.stage.addChild(root)
+  // The ropes and pins sit over the boxes, so they have a layer of their own with the same fit.
+  const linkLayer = new Container()
+  const linkShape = new Graphics()
+  linkLayer.addChild(linkShape)
+  app.stage.addChild(root, linkLayer)
   const drawn = new Map<number, Drawn>()
   let box = { w: 0, h: 0 }
   // Room kept clear at the bottom of the box (the touch buttons). The sky still fills the whole canvas.
@@ -70,12 +83,14 @@ export async function createStage(world: { w: number; h: number }, sky: number =
   let destroyed = false
   // The last views asked for. A resize wipes the canvas, and a game paused by hand asks for no more frames, so the
   // stage puts this picture back itself.
-  let last: readonly View[] | undefined
+  let last: { readonly views: readonly View[]; readonly links: readonly RopeLine[] } | undefined
 
-  const paint = (views: readonly View[]): void => {
+  const paint = (views: readonly View[], links: readonly RopeLine[]): void => {
     const fit = fitWorld({ w: box.w, h: box.h - Math.min(inset, box.h / 2) }, world)
     root.scale.set(fit.scale)
     root.position.set(fit.left, fit.top)
+    linkLayer.scale.set(fit.scale)
+    linkLayer.position.set(fit.left, fit.top)
     const live = new Set<number>()
     for (const v of views) {
       live.add(v.sid)
@@ -104,6 +119,16 @@ export async function createStage(world: { w: number; h: number }, sky: number =
       item.shape.destroy()
       drawn.delete(sid)
     }
+    linkShape.clear()
+    for (const l of links) {
+      if (l.kind === 'pin')
+        linkShape.circle(l.x1, l.y1, Math.max(PIN_RADIUS, PIN_MIN_PX / fit.scale)).fill(OUTLINE_COLOR)
+      else
+        linkShape
+          .moveTo(l.x1, l.y1)
+          .lineTo(l.x2, l.y2)
+          .stroke({ width: ROPE_WIDTH / fit.scale, color: OUTLINE_COLOR })
+    }
     app.render()
   }
 
@@ -113,18 +138,18 @@ export async function createStage(world: { w: number; h: number }, sky: number =
       if (destroyed || !(w > 0 && h > 0)) return
       box = { w, h }
       app.renderer.resize(w, h)
-      if (last !== undefined) paint(last)
+      if (last !== undefined) paint(last.views, last.links)
     },
     setInset(px) {
       if (destroyed) return
       // Not above zero, or not a number, is no room at all.
       inset = px > 0 ? px : 0
-      if (last !== undefined && box.w > 0) paint(last)
+      if (last !== undefined && box.w > 0) paint(last.views, last.links)
     },
-    draw(views) {
+    draw(views, links) {
       if (destroyed) return
-      last = views
-      if (box.w > 0) paint(views)
+      last = { views, links }
+      if (box.w > 0) paint(views, links)
     },
     destroy() {
       if (destroyed) return

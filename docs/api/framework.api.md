@@ -207,6 +207,7 @@ interface Character {
     readonly kind?: string | undefined;
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
+    readonly touch?: 'sense' | 'take' | undefined;
 }
 ```
 
@@ -1153,6 +1154,34 @@ function joinPlugin(options: {
 function joinSession(options: JoinOptions): Promise<Joined>;
 ```
 
+### `Joint` (const)
+
+```ts
+const Joint: ComponentDef<typeof jointFields>;
+```
+
+### `joint` (const)
+
+```ts
+const joint: {
+    pin(a: number, b: number, opts?: JointEnds & {
+        min?: number;
+        max?: number;
+    }): SpawnPart;
+    rope(a: number, b: number, length: number, opts?: JointEnds): SpawnPart;
+};
+```
+
+### `JointKind` (const)
+
+```ts
+const JointKind: {
+    readonly pin: 0;
+    readonly rope: 1;
+};
+type JointKind = (typeof JointKind)[keyof typeof JointKind];
+```
+
 ### `jsonSchemaFor` (function)
 
 ```ts
@@ -1207,6 +1236,7 @@ interface Level {
     readonly tiles: readonly string[];
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
+    readonly joints?: readonly LevelJoint[] | undefined;
 }
 ```
 
@@ -1217,10 +1247,44 @@ class LevelError extends Error {
 }
 ```
 
+### `LevelJoint` (type)
+
+```ts
+type LevelJoint = {
+    readonly id: string;
+    readonly kind: 'pin';
+    readonly thing: string;
+    readonly holder?: string | undefined;
+    readonly x: number;
+    readonly y: number;
+    readonly turn?: {
+        readonly min: number;
+        readonly max: number;
+    } | undefined;
+} | {
+    readonly id: string;
+    readonly kind: 'rope';
+    readonly thing: string;
+    readonly holder?: string | undefined;
+    readonly from: LevelPoint;
+    readonly to: LevelPoint;
+    readonly slack?: number | undefined;
+};
+```
+
 ### `levelPlugin` (const)
 
 ```ts
 const levelPlugin: PluginDef;
+```
+
+### `LevelPoint` (interface)
+
+```ts
+interface LevelPoint {
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `LevelSchema` (const)
@@ -1685,6 +1749,7 @@ interface PhysicsOptions {
         readonly x: number;
         readonly y: number;
     };
+    readonly joints?: boolean;
 }
 ```
 
@@ -2053,6 +2118,19 @@ interface RoomPeer {
 }
 ```
 
+### `RopeLine` (interface)
+
+```ts
+interface RopeLine {
+    readonly sid: number;
+    readonly kind: 'pin' | 'rope';
+    readonly x1: number;
+    readonly y1: number;
+    readonly x2: number;
+    readonly y2: number;
+}
+```
+
 ### `SaveDef` (interface)
 
 ```ts
@@ -2127,6 +2205,7 @@ interface SaveStore {
 interface Scene {
     apply(delta: RenderDelta): void;
     views(alpha: number): View[];
+    links(alpha: number): RopeLine[];
 }
 ```
 
@@ -2373,6 +2452,9 @@ interface SimContext {
         of<Z extends z.ZodType>(def: CommandDef<Z>): ReadonlyArray<CommandRecord<z.output<Z>>>;
     };
     emit<Z extends z.ZodType>(def: EventDef<Z>, payload: z.input<Z>): void;
+    readonly events: {
+        of<Z extends z.ZodType>(def: EventDef<Z>): ReadonlyArray<z.output<Z>>;
+    };
     resource<Z extends z.ZodType>(def: ResourceDef<Z>): z.output<Z>;
     readonly pluginState: unknown;
 }
@@ -2796,6 +2878,43 @@ interface ToneVoice {
 }
 ```
 
+### `Touch` (interface)
+
+```ts
+interface Touch {
+    readonly thing: string;
+    readonly sid: number;
+    readonly by: string;
+    readonly bySid: number;
+    readonly byKind: string;
+    readonly player: number;
+}
+```
+
+### `touchEvent` (function)
+
+```ts
+function touchEvent(kind: string, what: 'touched' | 'left' | 'taken'): EventDef<z.ZodType<Touch>>;
+```
+
+### `touchKinds` (function)
+
+```ts
+function touchKinds(content: GameContent): {
+    readonly sense: readonly string[];
+    readonly take: readonly string[];
+};
+```
+
+### `touchPlugin` (function)
+
+```ts
+function touchPlugin(kinds: {
+    readonly sense: readonly string[];
+    readonly take: readonly string[];
+}): PluginDef;
+```
+
 ### `Transform` (const)
 
 ```ts
@@ -2859,6 +2978,12 @@ function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
 
 ```ts
 const TuningSchema: z.ZodType<TuningFile, TuningFile>;
+```
+
+### `usesJoints` (function)
+
+```ts
+function usesJoints(content: GameContent): boolean;
 ```
 
 ### `Verdict` (type)
@@ -3158,6 +3283,7 @@ interface Character {
     readonly kind?: string | undefined;
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
+    readonly touch?: 'sense' | 'take' | undefined;
 }
 ```
 
@@ -3884,6 +4010,34 @@ function joinPlugin(options: {
 function joinSession(options: JoinOptions): Promise<Joined>;
 ```
 
+### `Joint` (const)
+
+```ts
+const Joint: ComponentDef<typeof jointFields>;
+```
+
+### `joint` (const)
+
+```ts
+const joint: {
+    pin(a: number, b: number, opts?: JointEnds & {
+        min?: number;
+        max?: number;
+    }): SpawnPart;
+    rope(a: number, b: number, length: number, opts?: JointEnds): SpawnPart;
+};
+```
+
+### `JointKind` (const)
+
+```ts
+const JointKind: {
+    readonly pin: 0;
+    readonly rope: 1;
+};
+type JointKind = (typeof JointKind)[keyof typeof JointKind];
+```
+
 ### `jsonSchemaFor` (function)
 
 ```ts
@@ -3938,6 +4092,7 @@ interface Level {
     readonly tiles: readonly string[];
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
+    readonly joints?: readonly LevelJoint[] | undefined;
 }
 ```
 
@@ -3948,10 +4103,44 @@ class LevelError extends Error {
 }
 ```
 
+### `LevelJoint` (type)
+
+```ts
+type LevelJoint = {
+    readonly id: string;
+    readonly kind: 'pin';
+    readonly thing: string;
+    readonly holder?: string | undefined;
+    readonly x: number;
+    readonly y: number;
+    readonly turn?: {
+        readonly min: number;
+        readonly max: number;
+    } | undefined;
+} | {
+    readonly id: string;
+    readonly kind: 'rope';
+    readonly thing: string;
+    readonly holder?: string | undefined;
+    readonly from: LevelPoint;
+    readonly to: LevelPoint;
+    readonly slack?: number | undefined;
+};
+```
+
 ### `levelPlugin` (const)
 
 ```ts
 const levelPlugin: PluginDef;
+```
+
+### `LevelPoint` (interface)
+
+```ts
+interface LevelPoint {
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `LevelSchema` (const)
@@ -4344,6 +4533,7 @@ interface PhysicsOptions {
         readonly x: number;
         readonly y: number;
     };
+    readonly joints?: boolean;
 }
 ```
 
@@ -4969,6 +5159,9 @@ interface SimContext {
         of<Z extends z.ZodType>(def: CommandDef<Z>): ReadonlyArray<CommandRecord<z.output<Z>>>;
     };
     emit<Z extends z.ZodType>(def: EventDef<Z>, payload: z.input<Z>): void;
+    readonly events: {
+        of<Z extends z.ZodType>(def: EventDef<Z>): ReadonlyArray<z.output<Z>>;
+    };
     resource<Z extends z.ZodType>(def: ResourceDef<Z>): z.output<Z>;
     readonly pluginState: unknown;
 }
@@ -5360,6 +5553,43 @@ interface ToneVoice {
 }
 ```
 
+### `Touch` (interface)
+
+```ts
+interface Touch {
+    readonly thing: string;
+    readonly sid: number;
+    readonly by: string;
+    readonly bySid: number;
+    readonly byKind: string;
+    readonly player: number;
+}
+```
+
+### `touchEvent` (function)
+
+```ts
+function touchEvent(kind: string, what: 'touched' | 'left' | 'taken'): EventDef<z.ZodType<Touch>>;
+```
+
+### `touchKinds` (function)
+
+```ts
+function touchKinds(content: GameContent): {
+    readonly sense: readonly string[];
+    readonly take: readonly string[];
+};
+```
+
+### `touchPlugin` (function)
+
+```ts
+function touchPlugin(kinds: {
+    readonly sense: readonly string[];
+    readonly take: readonly string[];
+}): PluginDef;
+```
+
 ### `Transform` (const)
 
 ```ts
@@ -5423,6 +5653,12 @@ function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
 
 ```ts
 const TuningSchema: z.ZodType<TuningFile, TuningFile>;
+```
+
+### `usesJoints` (function)
+
+```ts
+function usesJoints(content: GameContent): boolean;
 ```
 
 ### `Verdict` (type)

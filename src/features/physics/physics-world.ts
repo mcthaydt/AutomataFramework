@@ -12,9 +12,11 @@ import {
   type SimContext,
   SnapshotFormatError,
 } from '../sim/sim.ts'
+import { handleBits, sameHandles } from './handle-bits.ts'
+import { type JointAdapter, type JointRow, JointTable } from './joint-table.ts'
 
 /** Rapier, as the world code needs it. `World` is Rapier's own world. */
-export interface PhysicsAdapter<World> {
+export interface PhysicsAdapter<World> extends JointAdapter<World> {
   readonly Transform: ComponentDef
   readonly RigidBody: ComponentDef
   readonly Collider: ComponentDef
@@ -30,8 +32,8 @@ export interface PhysicsAdapter<World> {
   free(world: World): void
   /** Frees what the adapter holds for its sim besides worlds (its event queue). Called once, on dispose. */
   close(): void
-  /** Every body and collider handle the world holds, as Rapier reports them. */
-  handles(world: World): { bodies: number[]; colliders: number[] }
+  /** Every body, collider and joint handle the world holds, as Rapier reports them. */
+  handles(world: World): { bodies: number[]; colliders: number[]; joints: number[] }
   /**
    * Throws an Error naming the sid and field when the entity's physics fields are invalid. Called
    * before anything is built from the fields; `updateBody` checks the fields it applies itself.
@@ -77,24 +79,13 @@ interface Contact {
 const contactKey = (a: number, b: number): string => `${a}:${b}`
 const byPair = (x: Contact, y: Contact): number => x.a - y.a || x.b - y.b
 
-// Version 2 added the contact list, so events stay paired across a restore.
+// Version 2 added the contact list, so events stay paired across a restore. Version 3 is version 2 with the joint
+// table after the contacts; a world made with joints writes 3 and one made without writes 2, and each refuses the
+// other's bytes.
 const PHYSICS_BYTES_VERSION = 2
+const PHYSICS_BYTES_VERSION_WITH_JOINTS = 3
 const HAS_BODY = 1
 const HAS_COLLIDER = 2
-
-/** The exact 64 bits of a handle, so two handles compare equal only when Rapier would treat them the same. */
-function handleBits(handle: number): bigint {
-  const view = new DataView(new ArrayBuffer(8))
-  view.setFloat64(0, handle, true)
-  return view.getBigUint64(0, true)
-}
-
-function sameHandles(a: readonly number[], b: readonly number[]): boolean {
-  if (a.length !== b.length) return false
-  const left = a.map(handleBits).sort((x, y) => (x < y ? -1 : x > y ? 1 : 0))
-  const right = b.map(handleBits).sort((x, y) => (x < y ? -1 : x > y ? 1 : 0))
-  return left.every((bits, i) => bits === right[i])
-}
 
 /** The per-sim physics state: the plugin's `PluginState`, read by its systems through `ctx.pluginState`. */
 export class PhysicsWorld<World> implements PluginState {
@@ -110,11 +101,24 @@ export class PhysicsWorld<World> implements PluginState {
   private touching = new Map<string, Contact>()
   /** Contacts sync-in ended this tick by removing or rebuilding a collider; emitted with this tick's events. */
   private ending: Contact[] = []
+  /** Present only in a world made with `joints: true`. */
+  private joints: JointTable<World> | undefined
   private disposed = false
 
-  constructor(private readonly rapier: PhysicsAdapter<World>) {
+  /** `options.joints` is whether the sim has the `Joint` component; left out, there are none. */
+  constructor(
+    private readonly rapier: PhysicsAdapter<World>,
+    options: { readonly joints?: boolean } = {},
+  ) {
     this.world = rapier.createWorld()
+    this.joints = options.joints ? new JointTable(rapier) : undefined
   }
+
+  private get bytesVersion(): number {
+    return this.joints ? PHYSICS_BYTES_VERSION_WITH_JOINTS : PHYSICS_BYTES_VERSION
+  }
+
+  private bodyOf = (sid: number): number | undefined => this.rows.get(sid)?.body
 
   /** What the entity qualifies for: a body, a collider, both or nothing. */
   private wants(entity: EntityRef | undefined): { body: boolean; collider: boolean } {
@@ -153,16 +157,21 @@ export class PhysicsWorld<World> implements PluginState {
   }
 
   /**
-   * sync-in. Removals first, then creations, then updates, each in ascending sid order: Rapier
-   * reuses freed slots, so this fixed order is what keeps handles, and so the solver, identical everywhere.
+   * sync-in. Joint removals, then body and collider removals, creations and updates, then joint creations, each
+   * in ascending sid order: Rapier reuses freed slots, so this fixed order is what keeps handles, and so the
+   * solver, identical everywhere. Joints go first because Rapier removes a body's joints itself when the body
+   * goes, and then the joint table and the world would disagree; they come last because a joint needs both bodies.
    */
   syncIn(ctx: SimContext): void {
+    const doomed: number[] = []
     for (const sid of this.sortedSids()) {
       const row = this.rows.get(sid) as Row
       const want = this.wants(ctx.entity(sid))
       if (want.body !== (row.body !== undefined) || want.collider !== (row.collider !== undefined))
-        this.removeRow(sid, row)
+        doomed.push(sid)
     }
+    this.joints?.removeBroken(ctx, this.world, new Set(doomed))
+    for (const sid of doomed) this.removeRow(sid, this.rows.get(sid) as Row)
     for (const entity of ctx.query(this.rapier.Transform)) {
       if (this.rows.has(entity.sid)) continue
       const want = this.wants(entity)
@@ -190,6 +199,13 @@ export class PhysicsWorld<World> implements PluginState {
         this.rapier.updateLoneCollider(this.world, row.collider, entity)
       }
     }
+    // A body is made only for an entity with both a body row and a transform: a joint to one without says which is missing.
+    const lack = (sid: number): string =>
+      ctx.entity(sid)?.has(this.rapier.RigidBody) === true &&
+      ctx.entity(sid)?.has(this.rapier.Transform) !== true
+        ? 'transform'
+        : 'physics.body'
+    this.joints?.createMissing(ctx, this.world, this.bodyOf, lack)
   }
 
   step(): void {
@@ -246,12 +262,15 @@ export class PhysicsWorld<World> implements PluginState {
     this.collisions = []
   }
 
-  /** Section 6 bytes: version, the sid -> handle table, the contacts, then Rapier's snapshot. */
+  /**
+   * Section 6 bytes: version, the sid -> handle table, the contacts, the joint table (version 3 only), then Rapier's
+   * snapshot.
+   */
   snapshot(): Uint8Array {
     const world = this.rapier.takeSnapshot(this.world)
     const sids = this.sortedSids()
     const contacts = [...this.touching.values()].sort(byPair)
-    let size = 1 + 4 + 4 + contacts.length * 9 + 4 + world.length
+    let size = 1 + 4 + 4 + contacts.length * 9 + (this.joints?.byteLength() ?? 0) + 4 + world.length
     for (const sid of sids) {
       const row = this.rows.get(sid) as Row
       size += 4 + 1 + (row.body !== undefined ? 8 : 0) + (row.collider !== undefined ? 8 : 0)
@@ -259,7 +278,7 @@ export class PhysicsWorld<World> implements PluginState {
     const out = new Uint8Array(size)
     const view = new DataView(out.buffer)
     let at = 0
-    view.setUint8(at, PHYSICS_BYTES_VERSION)
+    view.setUint8(at, this.bytesVersion)
     view.setUint32(at + 1, sids.length, true)
     at += 5
     for (const sid of sids) {
@@ -288,6 +307,7 @@ export class PhysicsWorld<World> implements PluginState {
       view.setUint8(at + 8, contact.sensor ? 1 : 0)
       at += 9
     }
+    if (this.joints) at = this.joints.write(view, at)
     view.setUint32(at, world.length, true)
     out.set(world, at + 4)
     return out
@@ -306,7 +326,7 @@ export class PhysicsWorld<World> implements PluginState {
       return start
     }
     const version = view.getUint8(need(1))
-    if (version !== PHYSICS_BYTES_VERSION) fail(`unsupported version ${version}`)
+    if (version !== this.bytesVersion) fail(`unsupported version ${version}`)
     const count = view.getUint32(need(4), true)
     const rows = new Map<number, Row>()
     let previous = 0
@@ -336,6 +356,7 @@ export class PhysicsWorld<World> implements PluginState {
       touching.set(contactKey(a, b), contact)
       last = contact
     }
+    const jointRows = this.joints ? JointTable.read(view, need, fail) : undefined
     const worldLength = view.getUint32(need(4), true)
     const worldBytes = bytes.subarray(need(worldLength), at)
     if (at !== bytes.length) fail(`${bytes.length - at} trailing bytes`)
@@ -351,7 +372,7 @@ export class PhysicsWorld<World> implements PluginState {
     // Rapier's restoreSnapshot returns null, rather than throwing, for some bytes it cannot decode.
     if (world == null) throw new SnapshotFormatError('physics: Rapier made no world from the world bytes')
     try {
-      this.checkTable(world, rows)
+      this.checkTable(world, rows, jointRows)
     } catch (err) {
       this.rapier.free(world)
       throw err
@@ -364,6 +385,7 @@ export class PhysicsWorld<World> implements PluginState {
         this.colliderOwner = new Map()
         for (const [sid, row] of rows)
           if (row.collider !== undefined) this.colliderOwner.set(row.collider, sid)
+        if (this.joints && jointRows) this.joints.rows = jointRows
         this.touching = touching
         this.ending = []
         this.collisions = []
@@ -377,7 +399,11 @@ export class PhysicsWorld<World> implements PluginState {
    * does: a wrong pairing would report contacts against the wrong entity. Rapier's own lookup is not enough
    * (it resolves some malformed handles to a live object), so every comparison uses exact handle bits.
    */
-  private checkTable(world: World, rows: ReadonlyMap<number, Row>): void {
+  private checkTable(
+    world: World,
+    rows: ReadonlyMap<number, Row>,
+    jointRows: ReadonlyMap<number, JointRow> | undefined,
+  ): void {
     const inWorld = this.rapier.handles(world)
     const inTable = { bodies: [] as number[], colliders: [] as number[] }
     for (const row of rows.values()) {
@@ -396,6 +422,8 @@ export class PhysicsWorld<World> implements PluginState {
       if (row.body !== undefined && (parent === undefined || handleBits(parent) !== handleBits(row.body)))
         throw new SnapshotFormatError(`physics: row ${sid}: collider is not attached to the row’s body`)
     }
+    if (this.joints && jointRows)
+      this.joints.check(world, jointRows, inWorld.joints, (sid) => rows.get(sid)?.body)
   }
 
   /** Frees the Rapier world and the adapter's queue. Safe to call more than once. */

@@ -6,6 +6,8 @@ import { joinPlugin } from './join.ts'
 import { levelPlugin } from './plugin.ts'
 import { simContent } from './sim-content.ts'
 import { spawnLevel } from './spawn-level.ts'
+import { touchPlugin } from './touch.ts'
+import { touchKinds, usesJoints } from './uses.ts'
 
 /** What `createGameSim` takes. Only the content is required. */
 export interface GameSimOptions {
@@ -31,15 +33,18 @@ export interface GameSimOptions {
 export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const { content } = options
   const players = content.project.players ?? 1
+  const kinds = touchKinds(content)
   const sim = await createSim({
     seed: options.seed ?? 1,
     content: simContent(content),
     plugins: [
-      physics({ gravity: options.gravity ?? { x: 0, y: 30 } }),
+      physics({ gravity: options.gravity ?? { x: 0, y: 30 }, joints: usesJoints(content) }),
       commandsPlugin,
       levelPlugin,
       // Only a game for two or more players can have people join and leave (see join.ts).
       ...(players >= 2 ? [joinPlugin({ level: options.level ?? content.project.start, max: players })] : []),
+      // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
+      ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
       ...(options.plugins ?? []),
     ],
   })

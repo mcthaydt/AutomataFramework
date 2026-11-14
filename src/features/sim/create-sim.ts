@@ -318,7 +318,15 @@ export async function createSim(opts: SimOptions): Promise<Sim> {
           throw new Error(`unknown event "${def.id}": register it in a plugin`)
         const parsed = def.schema.safeParse(payload)
         if (!parsed.success) throw new Error(`event "${def.id}" payload invalid: ${parsed.error.message}`)
-        events.push({ type: def.id, payload: parsed.data })
+        // Frozen, so a system that reads it through `ctx.events.of` cannot change what later systems and the step see.
+        events.push({ type: def.id, payload: Object.freeze(parsed.data) })
+      },
+      events: {
+        of: <Z extends z.ZodType>(def: EventDef<Z>) => {
+          if (eventDefs.get(def.id) !== def)
+            throw new Error(`unknown event "${def.id}": register it in a plugin`)
+          return events.filter((e) => e.type === def.id).map((e) => e.payload as z.output<Z>)
+        },
       },
       resource: resourceOf,
       pluginState: stateOfSystem.get(system.name),
