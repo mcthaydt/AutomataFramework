@@ -32,8 +32,10 @@ Not in this plan, each with its reason:
 - **Screens and words.** The saves screen, "Continue" on the title screen and the sentence a player reads when saving
   is refused belong to plans U (screens) and L (languages). This plan gives them the answers to show (see "What the
   other plans rely on") and draws nothing.
-- **What goes in the settings.** Volumes are plan S's, key bindings plan I's, the language plan L's. Each adds its
-  own section with `settings.section(...)`; this plan ships the record they share and no section of its own.
+- **What goes in the settings.** Volumes are plan S's, key bindings plan I's, the language plan L's. Each of those
+  plans exports a section's schema and first values as plain data; `input` and `audio` sit below `saves` in the
+  layers, so they never import it. Whoever wires a game together (plan U's screens) turns each into a
+  `settings.section(...)`. This plan ships the record they share and no section of its own. (Audit F3.)
 - **The demo using saves.** That is plan D's step for V, in AutomataFrameworkExamples, after this plan has merged and
   the pin has moved. Its journey ("a save is continued", across a real reload of the built page) is named below.
 - **A sim snapshot inside a save.** Left out because nothing in M2 uses one: the demo continues from the level
@@ -53,8 +55,19 @@ Stop and report to the coordinator if either is not true. Do not work around one
 
 Other M2 plans (C, I, N) are being built in this repo at the same time. Three files are shared and will collide:
 `tests/architecture/rules.ts` (`LAYERS`, `PAGE_FEATURES`), `src/headless.ts` and `src/index.ts`. Merge `main` into
-your branch before each push; on a collision keep both sides, with the features in the first spec's layer order
-(`... input, audio, saves, locale, story, ui, screens, host, web, game`, with `net` after `commands`).
+your branch before each push; on a collision keep both sides, with the features in this order (plan N adds `net`
+and `server`, plans S, L, T and U the rest as they land):
+
+```
+sim, physics, commands, net, content, level, server, render, input, audio, saves, host, locale, story, ui, screens, web, game
+```
+
+`host` sits right above `saves` and below `locale`, `ui` and `screens`, not after `screens` as the first spec's list
+has it: plan L reads `host.language()` and plan U reads `host.canQuit`, and a feature may import (even a type) only
+from features below it. `web` sits just below `game`, the only feature that may choose an adapter. In
+`PAGE_FEATURES`, `host` is out and `web` is in; a merge that keeps both sides must not put `host` back. In
+`src/index.ts`, the `host` line goes (headless carries it); a merge that brings it back is harmless but is removed.
+(Audit F1.)
 
 ## Global Constraints
 
@@ -63,7 +76,9 @@ your branch before each push; on a collision keep both sides, with the features 
 - Effect is never imported under `src/`. Zod is the only schema language.
 - A refused or missing way of saving is an answer the game is given. It is never replaced by another way of saving,
   and never by memory that looks like a save (the spec: "it never falls back quietly").
-- Only `src/features/web/` touches `document`, `navigator`, `localStorage` or `window`.
+- `saves` and `host` touch no page API at all: they run in Node. Of the page, only `src/features/web/` reads
+  `localStorage`, `navigator`, `window.open` and the document's visibility (`render` and `input` keep their own
+  canvas, keys and buttons, as today). (Audit F7.)
 - A source file has at most 600 lines. Features import only features below them, through the entry file.
 - Comments say why. Every exported name has a doc comment (the API report prints them).
 - Tests run only in GitHub-hosted CI. Never run a test locally; `pnpm lint`, `pnpm typecheck`, `pnpm knip` and
@@ -200,6 +215,7 @@ export interface SettingsSection<T> {
   readonly initial: T
 }
 export interface SettingsHandle<T> {
+  /** Frozen (`src/lib/deep-freeze.ts`): a screen changes a setting only through `set`. */
   get(): T
   /** Keeps the value at once and writes it; writes go out in the order they were asked for. */
   set(value: T): Promise<StoreResult<void>>
@@ -226,8 +242,8 @@ export interface Host {
   readonly target: HostTarget
   visible(): boolean
   onVisibility(listener: (visible: boolean) => void): () => void
-  /** Where this host keeps saves. */
-  readonly saves: SaveStore
+  /** Where this host keeps the game's saves and settings. */
+  readonly store: SaveStore
   /** The language the host itself says the player uses (a store or a desktop setting); `undefined` when it has no say. */
   language(): string | undefined
   /** The device's own languages, best first (a browser's list). May be empty. */
@@ -243,7 +259,7 @@ export function isOpenableLink(url: string): boolean
 
 export interface TestHostOptions {
   readonly visible?: boolean                      // default true
-  readonly saves?: SaveStore                      // default memoryStore()
+  readonly store?: SaveStore                      // default memoryStore()
   readonly language?: string                      // default undefined
   readonly deviceLanguages?: readonly string[]    // default []
   readonly canQuit?: boolean                      // default false
@@ -286,13 +302,22 @@ Facts the other plans may rely on:
   or use `testHost()`. `webHost(doc)` (a test seam) becomes `webHost({ document: doc })`.
 - **Both entries export `saves` and `host`** (`@automataframework/framework/headless` too); only the browser entry
   exports `webHost`.
+- **Both entries export `z`**, the framework's own Zod, so a game writes its save's schema (and later its commands'
+  and settings' schemas) without a Zod of its own. AutomataFrameworkExamples may import nothing but the framework's
+  two entries (its `tests/architecture.test.ts`), so without this the demo could not call `defineSave`; and one Zod
+  means a game's schemas are never checked by a second copy. (Audit F2.)
 - **Plan L** picks the language as: the `language` settings section, then `host.language()`, then
   `host.deviceLanguages()`, then English. On the web `host.language()` is `undefined`.
+- **Settings sections' names** are kept for their plans: `controls` (plan I: `InputSettingsSchema`,
+  `INPUT_SETTINGS_DEFAULT`, as plan I says), `sound` (plan S) and `language` (plan L). Plan U wires each into
+  `settings.section(...)`. (Audit F3.)
 - **Plan U** shows `StoreRefusal` and `SaveProblem` in plain words in all six languages, hides Quit when
   `host.canQuit` is false, calls `saves.check()` on the title screen and says so there if saving is refused, and
   asks before passing `replace: true`.
 - **Plan D's step for V** (Examples): the demo saves when a level is finished and "Continue" opens the level reached;
   its journey reloads the built page for real and continues, at phone, tablet and desktop sizes in three browsers.
+  Moving the pin past this plan also changes Examples' `tests/features/play/play.browser.test.ts`, whose hand-made
+  `Host` lacks the new members: it becomes `testHost()`. (Audit F9.)
 
 ## File structure
 
@@ -482,12 +507,19 @@ test('a refused store: list, load, save and erase all say so', ...)
   // store.refuse('unavailable') -> list { ok: false, refusal: 'unavailable', ... }; load and save { ok: false, problem: { kind: 'refused', refusal: 'unavailable', ... } }
 test('a slot number that is not one of the slots throws', ...)     // load(3), save(-1, ...), erase(1.5): RangeError 'This game has slots 0 to 2. Got 3.'
 test('data that is not what the game saves throws before anything is written', ...)   // save(0, { level: 7 } as never)
+test('data JSON cannot keep throws in plain words before anything is written', ...)   // Audit F5
+  // a def whose schema allows it: { level: 'a', at: new Date() } or doors NaN -> RangeError
+  // whose message starts 'A save holds plain data only (text, numbers, true or false, lists and objects).' and
+  // ends with canonicalJson's own words ('unsupported Date; ...')
+test('save finishes without waiting on a timer, an event or a frame', ...)   // Audit F4
+  // vi.useFakeTimers() and never advance them: await saves.save(0, data) resolves and the store holds it
 test('latestSlot picks the ready slot saved last', ...)            // none ready -> undefined; a tie -> the lower slot
 ```
 
 - [ ] **Step 2: Push; `check` fails** because `slots.ts` does not exist.
-- [ ] **Step 3: Implement.** `save` parses `data` with the schema first, then reads the slot to decide whether it may
-  write, then writes.
+- [ ] **Step 3: Implement.** `save` parses `data` with the schema first, writes the envelope's text (so a value
+  `canonicalJson` refuses throws here, as a `RangeError`, before the store is touched), then reads the slot to decide
+  whether it may write, then writes. No step waits on anything but the store.
 - [ ] **Step 4: Push; all jobs pass.**
 - [ ] **Step 5: Commit** (`feat(saves): save slots that never lose a save by themselves`).
 
@@ -520,6 +552,8 @@ test('a refused write says so, and the value is still the one set', ...)   // th
 test('two sets in a row leave the second one stored', ...)                 // Review Focus 5
   // a store whose first set resolves after its second: void handle.set(a); await handle.set(b); the stored value is b
 test('a value its schema refuses throws and changes nothing', ...)
+test('a value JSON cannot keep throws and changes nothing', ...)          // Audit F5: the RangeError of Task 3
+test('get gives a frozen value', ...)                                      // Audit F10
 test('a bad section name throws', ...)                                     // 'Sound FX' -> RangeError naming the rule
 ```
 
@@ -557,14 +591,18 @@ export function webStore(storage: () => Storage): SaveStore
   the error's own message. `check` sets and then removes the key `automata.check`.
 
 - [ ] **Step 1: Write the failing tests.** `storage.browser.test.ts`, against the real `localStorage` of each browser
-  unless a test says otherwise (each test clears the keys it used):
+  unless a test says otherwise (each test clears the keys it used). Test files can run at the same time in one
+  browser and share its `localStorage`, so this file's keys start `automata.web-storage-test.` and no test here reads
+  a key another file writes (Audit F6):
 
 ```ts
 test('a value set is in the real localStorage under that key, and comes back', ...)
 test('a key never set is null; remove makes it null again', ...)
-test('check says yes, and leaves nothing behind', ...)                    // localStorage.getItem('automata.check') is null
+test('check says yes, and leaves nothing behind', ...)
+  // over a Storage that passes each call to the real localStorage and records it: setItem('automata.check', ...)
+  // then removeItem('automata.check'). (Reading the real key back would race Task 7's pages, which call check too.)
 test('the write is done before the promise is', ...)
-  // const pending = store.set('automata.t.a', '1'); expect(localStorage.getItem('automata.t.a')).toBe('1'); await pending
+  // const pending = store.set('automata.web-storage-test.a', '1'); expect(localStorage.getItem(...)).toBe('1'); await pending
 test('a browser that will not hand over its storage: every call answers unavailable', ...)   // Review Focus 1
   // webStore(() => { throw new DOMException('The operation is insecure.', 'SecurityError') })
 test('nothing is kept when the browser refuses', ...)                     // after a refused set, get is refused too: no memory copy
@@ -588,8 +626,8 @@ test('any other error answers failed with the error\'s words', ...)
 **Files:**
 - Create: `src/features/host/link.ts`, `src/features/host/test.ts`
 - Modify: `src/features/host/host.ts`, `src/features/web/web.ts`, `src/headless.ts` (adds
-  `export * from './features/host/host.ts'` and `export * from './features/saves/saves.ts'`; update its first
-  comment line), `src/index.ts` (drops its own `host` line, which headless now carries; update its comment)
+  `export * from './features/host/host.ts'`, `export * from './features/saves/saves.ts'` and, after the `no-eval`
+  import, `export { z } from 'zod'` with a comment saying why (Audit F2); update its first comment line), `src/index.ts` (drops its own `host` line, which headless now carries; update its comment)
 - Modify tests: `tests/features/game/game.browser.test.ts`, `layout.browser.test.ts`, `watch.browser.test.ts` (each
   hand-made host becomes `testHost()`), `tests/features/web/web.browser.test.ts` (`webHost(doc)` becomes
   `webHost({ document: doc })`)
@@ -607,7 +645,7 @@ test('any other error answers failed with the error\'s words', ...)
   answers `'opened'`. (`noopener` in the features string would make `open` return `null` even when the tab opened, so
   a blocked popup could not be told from an open one.) On the web `language()` is `undefined`, `deviceLanguages()` is
   `navigator.languages`, or `[navigator.language]` when that list is empty, `canQuit` is `false` and `quit()` answers
-  `false`. `saves` is `webStore(storage)`.
+  `false`. `store` is `webStore(storage)`.
 
 - [ ] **Step 1: Write the failing tests.** `link.test.ts`:
 
@@ -628,7 +666,7 @@ test('its saves keep what they are given; a store passed in is the one used', ..
 test('an https link is opened and remembered; anything else is refused and not remembered', ...)
 test('told to block links, it answers blocked', ...)
 test('quit counts when it can quit, and answers false when it cannot', ...)
-test('a game runs on it', ...)                       // createSaves({ def: progress, store: testHost().saves }): save then load
+test('a game runs on it', ...)                       // createSaves({ def: progress, store: testHost().store }): save then load
 ```
 
   `web.browser.test.ts`, added to the moved tests, each with made-up seams:
@@ -639,7 +677,7 @@ test('with an empty list it gives the browser\'s one language', ...)
 test('an https link opens in a new tab and the tab cannot reach back', ...)     // open called with (url, '_blank'); opener set to null; 'opened'
 test('a blocked tab answers blocked; an address that is not https opens nothing', ...)
 test('there is nowhere to quit to', ...)                                        // canQuit false; quit() false
-test('its saves are the browser\'s storage', ...)                               // set through host.saves, read from the seam's Storage
+test('its saves are the browser\'s storage', ...)                               // set through host.store, read from the seam's Storage
 test('with no seams it reads the real page', ...)                               // webHost(): visible() is a boolean, deviceLanguages() is an array
 ```
 
@@ -690,6 +728,12 @@ export function openPage(size?: { width: number; height: number }): Promise<{ pa
   builds everything from `webHost()` with no seams, and puts its `SavesPage` on the frame's `window` for the opener to
   read. The canvas mounts in the frame's own body.
 
+  Why "a save made as the page closes" yields one task before closing (Audit F4): a player closing a tab is a later
+  task than the tap that saved, and a browser runs every promise step of the earlier task first. Removing a frame in
+  the middle of those steps is not something a player can do, and browsers skip the promise steps of a removed
+  frame, so closing with no yield would pass or fail on how many `await`s `save` has. Task 3's fake-timer test proves
+  the other half: no step of a save waits on a timer, an event or a frame.
+
 - [ ] **Step 1: Write the failing test.** `beforeEach` and `afterEach` remove every `localStorage` key starting
   `automata.fixture-game.`.
 
@@ -701,7 +745,8 @@ test('play, save, close the page: a new page continues from the save', async () 
   //         play(120, 'level-1') -> the same hash page A's play gave (the save changed nothing in the sim)
 })
 test('a save made as the page closes is kept', ...)                 // Review Focus 3
-  // page A: save(1, ..., { wait: false }); close at once. page B: load(1) is the data
+  // page A: save(1, ..., { wait: false }); the opener yields one task (a MessageChannel message), then closes.
+  // page B: load(1) is the data
 test('the music volume set on one page is the volume on the next', ...)   // setMusic(0.25); close; new page: music() is 0.25
 test('a save from the game\'s last version is upgraded on the next page', ...)
   // the test writes a version 1 envelope into localStorage itself; page: slots[0] ready; load(0) has doors 0
@@ -734,26 +779,28 @@ test.each([[390, 844], [844, 390], [820, 1180], [1180, 820], [1280, 720]])('at %
 
 - [ ] **Step 1: Write the failing tests.**
   - `public-surface.test.ts`: the headless list gains `'memoryStore'`, `'defineSave'`, `'createSaves'`,
-    `'latestSlot'`, `'openSettings'`, `'testHost'`, `'isOpenableLink'`; a new test,
+    `'latestSlot'`, `'openSettings'`, `'testHost'`, `'isOpenableLink'`, `'z'`; a new test,
     `'the browser entry adds the web host, and headless does not have it'`, asserts `#src/headless.ts` has no
     `webHost` and that the text of `src/index.ts` exports `./features/web/web.ts` (the entry itself needs a page, so
     a Node test reads it instead of importing it).
-  - `tests/install/smoke.mjs`, after the hash check: with `testHost`, `defineSave`, `createSaves` and `openSettings`
-    from `@automataframework/framework/headless`, save `{ level: 'level-1' }` to slot 0 of a one-slot save for game
+  - `tests/install/smoke.mjs`, after the hash check: with `z`, `testHost`, `defineSave`, `createSaves` and
+    `openSettings` from `@automataframework/framework/headless` (never from `zod`, which npm's flat folder would let
+    it import and so prove nothing), save `{ level: 'level-1' }` to slot 0 of a one-slot save for game
     `smoke`, load it back, and exit non-zero unless it is equal and the host's store holds the key
     `automata.smoke.save.0`. It prints `The installed package saved and loaded a game in Node.`
-  - `tests/install/consumer.ts`: the `used` tuple gains `webHost`, `testHost`, `createSaves` and `openSettings`, and a
-    line that types a hand-written `Host` (`const _host: Host = testHost()`), so the declarations resolve from the
-    tarball.
+  - `tests/install/consumer.ts`: the `used` tuple gains `webHost`, `testHost`, `createSaves` and `openSettings`, a
+    line that types a hand-written `Host` (`const _host: Host = testHost()`), and a `defineSave` whose schema is
+    built with the package's `z`, so the declarations resolve from the tarball.
   - `readme.test.ts`: the README names every `StoreRefusal` (`unavailable`, `full`, `failed`) and both stored key
     patterns (`automata.<game>.save.<slot>`, `automata.<game>.settings`), and its saves example uses only names the
-    headless entry exports (`defineSave`, `createSaves`, `openSettings`, `latestSlot`).
+    headless entry exports (`z`, `defineSave`, `createSaves`, `openSettings`, `latestSlot`).
 - [ ] **Step 2: Push; `check` and `package` fail** on the new assertions.
 - [ ] **Step 3: Write the README** and run `pnpm api-report --update`. Two new sections after "Watch a recorded
   play", and one line changed in "Without a page" (it now lists saves and the host port too):
 
-  **"## Saves"**: a save definition (`defineSave` with a game id, a version, a schema, slots and one upgrade), then
-  `createSaves({ def, store: host.saves })`, `list`, `latestSlot` for "Continue", `save` and `load`; then settings
+  **"## Saves"**: a save definition (`z` and `defineSave` imported from the framework, with a game id, a version, a
+  schema, slots and one upgrade), then
+  `createSaves({ def, store: host.store })`, `list`, `latestSlot` for "Continue", `save` and `load`; then settings
   (`openSettings`, one section, `get` and `set`). In plain words, in this order: where saves go ("On the web, saves
   are kept in this browser, under `automata.<game>.save.<slot>` and `automata.<game>.settings`. Clearing the
   browser's data removes them, and a browser can clear its own storage."); what happens when the browser says no
@@ -761,12 +808,12 @@ test.each([[390, 844], [844, 390], [820, 1180], [1180, 820], [1280, 720]])('at %
   player."); and the three rules ("A save from a newer version of your game is never changed. A save that cannot be
   read is kept and listed as damaged. Raise `version` and add an upgrade when you change what a save holds.").
 
-  **"## The host"**: the game asks its host, never the page: `visible`, `saves`, `language` and `deviceLanguages`,
+  **"## The host"**: the game asks its host, never the page: `visible`, `store`, `language` and `deviceLanguages`,
   `openLink` (only `https:`), `canQuit` and `quit`. `webHost()` for a page; `testHost()` for Node and for tests, with
   a short example that hides it and reads what it opened.
 
 - [ ] **Step 4: Push; all jobs pass**, `package` among them. Read the diff of `docs/api/framework.api.md`: it must
-  add only the names in "What the other plans rely on" and move `webHost`'s argument. Anything else is a stop.
+  add only the names in "What the other plans rely on" (`z` among them) and move `webHost`'s argument. Anything else is a stop.
 - [ ] **Step 5: Commit** (`feat: saves and the host port on the public surface`), update the tracker to 100% for
   this stage, and send the coordinator the summary: the eight commits, the test count, every deviation, and the
   contract section's link for plans L, U, I, S and D.
