@@ -37,6 +37,10 @@ const failure = async (memory: Memory, outdir = OUTDIR): Promise<string> => {
   return result.left.message
 }
 
+/** A file as text: the compile writes bytes. */
+const textOf = (data: string | Uint8Array | undefined): string =>
+  typeof data === 'string' ? data : new TextDecoder().decode(data)
+
 const written = (memory: Memory): string[] =>
   [...memory.files.keys()].filter((key) => key.startsWith(`game/${OUTDIR}/`)).sort()
 
@@ -48,7 +52,7 @@ test(
     expect(files).toEqual([...files].sort())
     expect(files).toContain('runtime.js')
     expect(files).toContain('messages.js')
-    expect(memory.files.get(`game/${OUTDIR}/runtime.js`)).toMatch(/baseLocale = "en"/)
+    expect(textOf(memory.files.get(`game/${OUTDIR}/runtime.js`))).toMatch(/baseLocale = "en"/)
     expect(written(memory).some((key) => key.includes('keeper_hello'))).toBe(true)
     expect(written(memory).some((key) => key.includes('level_level_1_name'))).toBe(true)
   },
