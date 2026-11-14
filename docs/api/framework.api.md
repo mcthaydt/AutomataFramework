@@ -1292,6 +1292,43 @@ interface View {
 function wasPressed(player: EntityRef, action: string): boolean;
 ```
 
+### `Watch` (interface)
+
+```ts
+interface Watch {
+    readonly sim: Sim;
+    readonly rounds: number;
+    stop(): void;
+}
+```
+
+### `WatchOptions` (interface)
+
+```ts
+interface WatchOptions extends GameSimOptions {
+    readonly mount: HTMLElement;
+    readonly host: Host;
+    readonly replay: Replay;
+    readonly frames?: Frames;
+    readonly rounds?: number;
+    readonly restTicks?: number;
+}
+```
+
+### `watchReplay` (function)
+
+```ts
+function watchReplay(options: WatchOptions): Promise<Watch>;
+```
+
+### `WatchSetupError` (class)
+
+```ts
+class WatchSetupError extends Error {
+    constructor(message: string);
+}
+```
+
 ### `webHost` (function)
 
 ```ts

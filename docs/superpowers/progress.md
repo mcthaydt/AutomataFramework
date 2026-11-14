@@ -2,11 +2,11 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
-## Cycle 2: M2, the 2D framework in full
+## Cycle 4: M2, the 2D framework in full
 
 Spec: [`specs/2026-11-14-m2-design.md`](specs/2026-11-14-m2-design.md)
 
-Overall: **5%** (stage 1, the spec, is written and in review; M2 is about ten plans, each running stages 2 to 7)
+Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans, each running stages 2 to 7)
 
 | Stage | State | Output |
 |---|---|---|
@@ -18,6 +18,16 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is about ten pl
 - 2026-11-14: the M2 spec, with the Owner's answers: the demo has same-screen co-op for 2 to 4 players, and online
   play is built and proven in CI, not deployed; the showcase is one short real game of three levels plus a "What's
   inside" page. M2 is cut into small plans that can run side by side.
+
+## Cycle 3: the demo game plays itself (watch mode)
+
+Spec: [`specs/2026-11-14-watch-mode-design.md`](specs/2026-11-14-watch-mode-design.md). The plan, its audit and the
+tracker for the other three parts are in AutomataFrameworkExamples (`docs/superpowers/plans/2026-11-14-watch-mode.md`).
+This repo has Part A only: one function.
+
+| Task | State |
+|---|---|
+| 1. `watchReplay` draws a replay with no input | Built and pushed, waiting for CI; the pin move in Examples (Task 2) waits for its merge |
 
 ## Cycle 1: the 2D first layer
 

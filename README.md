@@ -94,6 +94,23 @@ What a hero does with the controls (run, jump) is the game's own code, a plugin 
 whether it ends where it was recorded, and if not whether the game's content changed or the play diverged.
 `playReplay` only plays and returns the hashes, so two machines can compare them with each other.
 
+### Watch a recorded play
+
+`watchReplay` puts a replay on a page and plays it by itself, with no keyboard, no touch buttons and nobody to press
+Play: a game uses it to show what it is like before the player starts. It takes what `startGame` takes, less the
+controls, plus the recording (`replay`) and, if you want it to stop, `rounds`.
+
+```ts
+const watch = await watchReplay({ content, plugins, mount, host: webHost(), replay: parseReplay(text) })
+// later: watch.stop()
+```
+
+It plays the recording on the content as it is now, not as it was when the recording was made. If a level was edited
+since, the same keys lead somewhere new and that is what you see; `verifyReplay` is the check that says "nothing
+changed". A recording made with another seed or tick rate is refused with a `WatchSetupError` that says which. By
+default it plays again and again, resting `restTicks` (one second) on the last picture between rounds; `rounds: 1`
+holds the last picture for good. It stands still while the page is hidden and does not catch up when it comes back.
+
 ## Without a page
 
 `@automataframework/framework/headless` has everything that needs no page (the simulation, physics, commands, content
