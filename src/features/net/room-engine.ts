@@ -7,14 +7,8 @@
 // A command the room makes for a seat (a let-go when the connection drops) takes that seat's next `seq`, so the
 // room's replay holds the seat's commands in one order, and the seat's next `seat` message tells the player where to
 // carry on.
-import {
-  type Command,
-  controlsCommand,
-  createRecorder,
-  type Recorder,
-  type Replay,
-} from '../commands/commands.ts'
-import type { Sim } from '../sim/sim.ts'
+import { controlsCommand, createRecorder, type Recorder, type Replay } from '../commands/commands.ts'
+import type { Command, Sim } from '../sim/sim.ts'
 import {
   HASH_EVERY,
   MAX_LEAD_TICKS,
