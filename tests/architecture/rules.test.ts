@@ -120,9 +120,7 @@ test('the Colyseus server packages are only for the server feature', () => {
 })
 
 test('Effect is only for the server process', () => {
-  expect(one({ 'src/features/net/net.ts': "import { Effect } from 'effect'" })).toEqual([
-    'package-confined',
-  ])
+  expect(one({ 'src/features/net/net.ts': "import { Effect } from 'effect'" })).toEqual(['package-confined'])
   expect(
     one({
       'src/features/server/server.ts': '',
@@ -133,9 +131,9 @@ test('Effect is only for the server process', () => {
 
 test('only src/server.ts may import the server feature', () => {
   const server = { 'src/features/server/server.ts': '' }
-  expect(
-    one({ ...server, 'src/features/game/game.ts': "import '../server/server.ts'" }),
-  ).toEqual(['server-is-node-only'])
+  expect(one({ ...server, 'src/features/game/game.ts': "import '../server/server.ts'" })).toEqual([
+    'server-is-node-only',
+  ])
   // A direct import from either page entry is the same fault.
   expect(one({ ...server, 'src/headless.ts': "export * from './features/server/server.ts'" })).toEqual([
     'server-is-node-only',
