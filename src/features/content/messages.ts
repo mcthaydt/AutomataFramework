@@ -9,6 +9,37 @@ export const LANGUAGES = ['en', 'es', 'ko', 'ja', 'zh', 'pt'] as const
 /** One of the languages a game ships in. */
 export type Language = (typeof LANGUAGES)[number]
 
+const LANGUAGE_NAMES_IN_ENGLISH: Readonly<Record<Language, string>> = {
+  en: 'English',
+  es: 'Spanish',
+  ko: 'Korean',
+  ja: 'Japanese',
+  zh: 'Chinese',
+  pt: 'Portuguese',
+}
+
+/** A language's name in English, for a check's sentence: `Korean`. A player's own names are `locale`'s. */
+export function languageName(language: Language): string {
+  return LANGUAGE_NAMES_IN_ENGLISH[language]
+}
+
+/**
+ * A name between braces: lower-case first, then letters and digits, at most 32. One expression with no nested
+ * repeat, so a text of thousands of braces is read in one pass.
+ */
+const PLACEHOLDER = /\{([a-z][a-zA-Z0-9]{0,31})\}/g
+
+/**
+ * The names a text asks for, each once, in the order they first come: `Waiting for {count}` gives `['count']`. A brace
+ * that does not hold a name (`{}`, `{ count }`, `{Count}`) is an ordinary character, so every messages file that read
+ * before still reads.
+ */
+export function placeholdersOf(text: string): readonly string[] {
+  const names = new Set<string>()
+  for (const match of text.matchAll(PLACEHOLDER)) names.add(match[1] as string)
+  return [...names]
+}
+
 /** The most messages one language's file may hold. */
 const MAX_MESSAGES = 5000
 
