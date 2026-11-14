@@ -20,7 +20,7 @@ test('every content file is exactly what writeContent writes', () => {
   const project = parseProject(tree['automata.toml'] ?? '')
   expect(project.ok).toBe(true)
   if (!project.ok) return
-  expect(project.value.content.length).toBe(4)
+  expect(project.value.content.length).toBe(10)
   for (const ref of project.value.content) {
     const parsed = parseContent(ref.type, tree[ref.path] ?? '', ref.path)
     expect(parsed.ok, ref.path).toBe(true)

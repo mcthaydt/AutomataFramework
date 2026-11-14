@@ -7,18 +7,42 @@ import type * as Headless from '../../headless.ts'
 import {
   type Diagnostic,
   type GameContent,
+  languageName,
   loadGame,
   type Parsed,
   parseContent,
+  parseReadMarks,
+  READ_MARKS_FILE,
+  translationProblems,
+  unreadWords,
   writeContent,
 } from '../content/content.ts'
 import { CliError, Code, type CodeService, Files, type FilesService, type GameCode } from './ports.ts'
 
 /** The part of the framework `check` reads files with: the game's own copy when it has one. */
-type ContentApi = Pick<typeof Headless, 'loadGame' | 'parseContent' | 'writeContent'>
+type ContentApi = Pick<
+  typeof Headless,
+  | 'languageName'
+  | 'loadGame'
+  | 'parseContent'
+  | 'parseReadMarks'
+  | 'READ_MARKS_FILE'
+  | 'translationProblems'
+  | 'unreadWords'
+  | 'writeContent'
+>
 
 /** This command's own copy, for a game that is not installed yet. */
-const OWN_CONTENT: ContentApi = { loadGame, parseContent, writeContent }
+const OWN_CONTENT: ContentApi = {
+  languageName,
+  loadGame,
+  parseContent,
+  parseReadMarks,
+  READ_MARKS_FILE,
+  translationProblems,
+  unreadWords,
+  writeContent,
+}
 
 export interface GameFolder {
   /** The folder as the command was given it. Every path below is from here. */

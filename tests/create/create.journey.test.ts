@@ -236,6 +236,21 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
           }
           await page.reload()
           await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+
+          // A player whose device speaks Japanese is told the keys in Japanese, and the page says it is Japanese.
+          const japanese = await browser.newContext({
+            viewport: { width: size.width, height: size.height },
+            locale: 'ja-JP',
+          })
+          try {
+            const other = await japanese.newPage()
+            await other.goto(address)
+            const told = other.locator('.hint')
+            await expect.poll(() => told.textContent(), POLL).toContain('矢印キー')
+            expect(await other.evaluate(() => document.documentElement.lang), where).toBe('ja')
+          } finally {
+            await japanese.close()
+          }
         }
         await context.close()
       }
