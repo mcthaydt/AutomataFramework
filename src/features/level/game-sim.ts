@@ -6,6 +6,8 @@ import { behaviourPlugin, usesBehaviours } from './behaviour.ts'
 import { joinPlugin } from './join.ts'
 import { levelPlugin } from './plugin.ts'
 import { spawnLevel } from './spawn-level.ts'
+import { Story, type StoryProgress } from './story-state.ts'
+import { storyPlugin, usesStory } from './story.ts'
 
 /** What `createGameSim` takes. Only the content is required. */
 export interface GameSimOptions {
@@ -20,6 +22,11 @@ export interface GameSimOptions {
   readonly players?: readonly number[]
   /** Default `{ x: 0, y: 30 }`: y points down, so this pulls things down the screen, a little harder than Earth. */
   readonly gravity?: { readonly x: number; readonly y: number }
+  /**
+   * What an earlier play of this game finished: a cutscene in `seen` does not open its level again. A start condition,
+   * like `level` and `players`.
+   */
+  readonly story?: StoryProgress
 }
 
 /**
@@ -41,11 +48,20 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
       ...(players >= 2 ? [joinPlugin({ level: options.level ?? content.project.start, max: players })] : []),
       // Only a game with a character that has a behaviour gets the rules' system, for the same reason.
       ...(usesBehaviours(content) ? [behaviourPlugin] : []),
+      // The same for a game with a conversation or a cutscene.
+      ...(usesStory(content) ? [storyPlugin] : []),
       ...(options.plugins ?? []),
     ],
   })
   try {
-    spawnLevel(sim, content, options.level ?? content.project.start, options.players ?? [1])
+    const level = options.level ?? content.project.start
+    spawnLevel(sim, content, level, options.players ?? [1])
+    if (usesStory(content)) {
+      const story = sim.resource(Story)
+      story.level = level
+      story.ended = { ...options.story?.ended }
+      story.seen = [...new Set(options.story?.seen)].sort()
+    }
   } catch (error) {
     sim.dispose()
     throw error

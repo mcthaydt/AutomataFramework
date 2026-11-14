@@ -7,6 +7,27 @@ export { JoinCommand, joinCommand, joinPlugin, LeaveCommand, leaveCommand, playe
 export { Mind } from './mind.ts'
 export { levelPlugin } from './plugin.ts'
 export { LevelError, spawnLevel } from './spawn-level.ts'
+export {
+  ChooseCommand,
+  chooseCommand,
+  ConversationChosen,
+  ConversationEnded,
+  ConversationSaid,
+  ConversationStarted,
+  CutsceneEnded,
+  CutsceneStarted,
+  NextCommand,
+  nextCommand,
+  SKIP_AFTER,
+  SkipCommand,
+  skipCommand,
+  Story,
+  type StoryProgress,
+  StoryProgressSchema,
+  type StoryState,
+  TALK_REACH,
+} from './story-state.ts'
+export { startCutscene, storyPlugin, usesStory } from './story.ts'
 export { choosePlace, nextPlace, openAt, type TalkPlace } from './talk.ts'
 export { levelSize, type TileRun, tileRuns } from './tile-runs.ts'
 export { type ActorPlace, actorsAt, cameraAt, linesAt, type SceneCamera } from './timeline.ts'
