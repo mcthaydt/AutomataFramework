@@ -396,16 +396,34 @@ and a `fixed` body, and the events are named after the kind: `door.touched`, `do
 }
 ```
 
-A system counts them in the tick they happen:
+A system counts them in the tick they happen. This one keeps a score in a resource and goes in a plugin that needs the
+level and the touch plugin (`dependsOn`), which the game's sim has whenever a character is touched:
 
 ```ts
-import { defineSystem, touchEvent } from '@automataframework/framework/headless'
+import {
+  defineResource,
+  definePlugin,
+  defineSystem,
+  touchEvent,
+  z,
+} from '@automataframework/framework/headless'
 
-export const count = defineSystem('game.count', (ctx) => {
-  const score = ctx.resource(Score)
-  score.sparks += ctx.events.of(touchEvent('spark', 'taken')).length
+const Score = defineResource('game.score', z.object({ sparks: z.number().int() }), () => ({ sparks: 0 }))
+
+const count = defineSystem('game.count', (ctx) => {
+  ctx.resource(Score).sparks += ctx.events.of(touchEvent('spark', 'taken')).length
+})
+
+export const scorePlugin = definePlugin({
+  name: 'game.score',
+  dependsOn: ['level', 'touch'],
+  resources: [Score],
+  systems: [count],
 })
 ```
+
+A system made with `defineSystem(name, run)` runs in `gameplay`, after the touches of this tick are made, so it hears
+them. One placed in `postPhysics` must say `after: ['level.touch']`, or it sees none.
 
 A pinned thing turns about its pin, a roped thing can go no further than its rope, and every pin, rope and touch
 is on the same hash in Node, Chromium, WebKit and Firefox, so a replay of them verifies anywhere.
