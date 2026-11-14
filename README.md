@@ -53,6 +53,7 @@ fetch an unrelated package of that name from npm.
 | `automata play` | Plays the game in your browser, and shows your changes as you make them. |
 | `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
 | `automata art` | Paints the game's pictures from its figure and backdrop files. |
+| `automata words` | Lists the translated words nobody has read, and marks them read. |
 | `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
 ## Install
@@ -315,7 +316,8 @@ in Korean still loads and plays:
   were read, so changing a word makes it unread again.
 
 `automata check` runs both for you, in its `files` step: a missing word fails it with the sentence above, and the words
-nobody has read yet are a note with a count for each language, never a failure.
+nobody has read yet are one note for each language, never a failure. `automata words` lists them, each beside the game's
+own text, and marks a language read once a native speaker has read it.
 
 Every translation the framework ships (the six languages' library, and the demo game's) waits for a native speaker's
 read before Release 1: machine-written words are a first draft, and the marks say which are still that.
@@ -654,6 +656,37 @@ and names the command to run.
 - `--json`: print the answer as JSON: `ok`, the `painted` paths and the `problems` (each a `file`, a `path` and a
   `message`). A game that does not load is not painted, and says so in `sentence`.
 
+### automata words
+
+`automata words [folder]` lists the translated words no native speaker has read yet. A translation made by a machine is
+a first draft that plays fine; this is the list of what still needs a person. For each language that has some, it names
+the key and puts the game's own text (the language in `source`) beside the translation:
+
+```
+Checked against Korean (ko).
+
+Spanish (es): 2 words wait for a native speaker.
+  keeper.hello
+    Korean:  안녕하세요!
+    Spanish: ¡Hola!
+  keeper.bye
+    Korean:  안녕히 가세요!
+    Spanish: ¡Adiós!
+
+Once a native speaker has read a language, mark it: automata words --read es
+```
+
+Once a person who speaks the language has read the words, `--read` writes that into `automata.translations.toml`, the
+only file this command ever writes. A mark is of the exact texts that were read, so a word changed afterwards waits
+again. The exit code is `0` whenever the command ran: words that wait are not a fault.
+
+- `--read <language>`: mark every listed word of that language as read. The game's own language is never read against
+  anything, so it cannot be marked.
+- `--read <language> <key> …`: mark only those words. A key the language does not have is refused, and nothing is
+  written.
+- `--json`: print the answer as JSON: the `source` language, the `unread` words (each a `language`, a `key`, the game's
+  own `source` text and the translation's `text`) and, after `--read`, what was `marked`.
+
 ### automata mcp
 
 `automata mcp` lets an agent use these commands as tools, over the [Model Context Protocol](https://modelcontextprotocol.io).
@@ -679,6 +712,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 | `check` | `folder`, `only?`, `fix?` | `automata check <folder> --json` |
 | `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
 | `art` | `folder`, `check?` | `automata art <folder> --json` |
+| `words` | `folder`, `read?`, `keys?` | `automata words <folder> --json`, and `--read <read> <keys>` when `read` is given |
 | `content_types` | none | the table of content kinds above |
 | `schema` | `type` | reading `schemas/<type>.schema.json` |
 | `skill` | `name?` | reading `skills/<name>/SKILL.md` |
@@ -691,7 +725,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
 and `automata://skills/<name>`.
 
-The server never loads a game's rules itself. `create`, `check`, `replay` and `art` each run the command in a process of their
+The server never loads a game's rules itself. `create`, `check`, `replay`, `art` and `words` each run the command in a process of their
 own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
 keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
 goes to standard error, never into the messages.

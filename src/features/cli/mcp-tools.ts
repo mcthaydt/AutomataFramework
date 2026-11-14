@@ -1,8 +1,8 @@
-// The tools `automata mcp` offers an agent. `create`, `check`, `replay` and `art` are the commands themselves, run as a child
-// process through `Runner.command` with `--json` (audit C1: this long-lived server never loads a game's code, so every
-// answer comes from the files as they are now); `content_types`, `schema` and `skill` read what the package ships; the
-// `play_` tools run a game a few ticks at a time (`session.ts`). Every description is one sentence that says when to use
-// the tool, and every answer is one text block.
+// The tools `automata mcp` offers an agent. `create`, `check`, `replay`, `art` and `words` are the commands themselves,
+// run as a child process through `Runner.command` with `--json` (audit C1: this long-lived server never loads a game's
+// code, so every answer comes from the files as they are now); `content_types`, `schema` and `skill` read what the
+// package ships; the `play_` tools run a game a few ticks at a time (`session.ts`). Every description is one sentence
+// that says when to use the tool, and every answer is one text block.
 import { basename, join } from 'node:path'
 import { Effect } from 'effect'
 import { z } from '../../lib/zod.ts'
@@ -113,6 +113,27 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
           .describe('Paint nothing; only say which pictures are missing or older than their file.'),
       }),
       (input) => command(['art', input.folder, ...(input.check === true ? ['--check'] : [])]),
+    ),
+    tool(
+      'words',
+      "List a game's translated words that no native speaker has read, beside the game's own text, or mark them read: use it after you add or change a word.",
+      z.object({
+        folder,
+        read: z.string().optional().describe('A language to mark as read: zh, es, en, pt, ja or ko.'),
+        keys: z
+          .array(z.string())
+          .optional()
+          .describe('Only these words; leave it out for every listed word of that language.'),
+      }),
+      (input) => {
+        if (input.keys !== undefined && input.read === undefined)
+          return Effect.fail(new CliError('keys needs read: name the language whose words these are.'))
+        return command([
+          'words',
+          input.folder,
+          ...(input.read === undefined ? [] : ['--read', input.read, ...(input.keys ?? [])]),
+        ])
+      },
     ),
     tool(
       'content_types',

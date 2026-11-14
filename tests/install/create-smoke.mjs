@@ -123,8 +123,18 @@ said(
   must('automata art --check', 'npx', ['--no', 'automata', 'art', '--check'], game),
   'Every picture is painted and up to date.',
 )
-// The new game has its words in six languages, and says that no native speaker has read the five translations yet.
-said('the words', checkOf('the words', 0, '--only', 'files'), 'Words no native speaker has read yet')
+// The new game has its words in six languages, and says that no native speaker has read the translations yet; the
+// command it names lists them, each beside the game's own text.
+said(
+  'the words',
+  checkOf('the words', 0, '--only', 'files'),
+  'wait for a native speaker. See them with automata words.',
+)
+said(
+  'automata words',
+  must('automata words', 'npx', ['--no', 'automata', 'words'], game),
+  'Checked against English (en).',
+)
 step('npm install and npm run check pass in the new game')
 
 // 3. Change a number with the framework's own writer: the check says the content changed, and does not fail.

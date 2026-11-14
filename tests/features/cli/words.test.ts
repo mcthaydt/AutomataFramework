@@ -49,7 +49,7 @@ const written = (memory: Memory): string[] =>
   [...memory.files.keys()].filter((key) => key.startsWith(`game/${OUTDIR}/`)).sort()
 
 test(
-  'the words compile to a runtime with English as the base language and a function for each word',
+  "the words compile to a runtime with the game's own language as the base and a function for each word",
   async () => {
     const memory = memoryLayer(under('game', GAME))
     const files = await run(memory)
@@ -143,7 +143,9 @@ test(
 
 test('a game with no words gets a sentence that says what to add', async () => {
   const memory = memoryLayer(under('game', smallGame()))
-  expect(await failure(memory)).toContain('This game has no words to compile')
+  expect(await failure(memory)).toBe(
+    'This game has no words to compile. Add a messages file, list it in automata.toml, and write source.',
+  )
   expect(written(memory)).toEqual([])
 })
 

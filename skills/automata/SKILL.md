@@ -40,7 +40,9 @@ files. Read this page, then the skill for the kind of change you are making.
   pictures, and commit them with it. `check` fails for a picture that is missing or older than its file.
 - A new thing a character can do: a rule, in `src/features/<name>/`. Skill `automata-rules`.
 - A word a player reads: content, in `content/messages/`, one file for each language. Change it in every language's
-  file, under the same key; `check` names any language that is missing it.
+  file, under the same key; `check` names any language that is missing it. `npx --no automata words` lists the
+  translations no native speaker has read, beside the game's own text. Mark a language read (`--read <language>`) only
+  once a native speaker has read it.
 - How the game looks on the page: `src/features/page/` and `src/style.css`.
 - A new kind of file: see `automata-content` for the kinds there are. A kind that is not there is not built yet.
 

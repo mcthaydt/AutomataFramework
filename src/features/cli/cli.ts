@@ -15,6 +15,7 @@ import { CliError, Out, type OutService, type Ports } from './ports.ts'
 import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
 import { printToStderr } from './stderr.ts'
+import { describeWords, runWords } from './unread.ts'
 
 type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
 
@@ -67,6 +68,20 @@ const art: Command = (input) =>
       for (const line of said.err) yield* out.error(line)
     }
     return report.ok ? 0 : 1
+  })
+
+/** `automata words`: the translated words nobody has read, or (with `--read`) those marked read, as words or JSON. */
+const words: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const [language, ...keys] = input.lists.read ?? []
+    const report = yield* runWords({
+      folder: input.folder ?? '.',
+      ...(language === undefined ? {} : { read: { language, keys } }),
+    })
+    if (input.flags.json === true) yield* out.line(JSON.stringify(report, null, 2))
+    else for (const line of describeWords(report)) yield* out.line(line)
+    return 0
   })
 
 /** A folder as a person can paste it after `cd`: in quotes when it has a space or a quote in it. */
@@ -132,6 +147,7 @@ const COMMANDS: Readonly<Record<CommandName, Command>> = {
   play,
   replay,
   art,
+  words,
   mcp,
 }
 

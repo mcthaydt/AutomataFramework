@@ -27,6 +27,9 @@ Run them as `npx --no automata <command>`, which never fetches anything. A perso
   records them again.
 - `npx --no automata art` paints the pictures of the figures and backdrops. Run it after you change a figure, and commit the
   pictures. `--check` paints nothing and says which are missing or old.
+- `npx --no automata words` lists the translated words no native speaker has read yet, each beside the game's own text.
+  Run it after you add or change a word. `--read <language>` marks a language's words read once a person has read
+  them, and only then; `--json` prints the answer as JSON.
 - `npx --no automata play` serves the game for a browser.
 - `npx --no automata create <name>` makes a new game.
 

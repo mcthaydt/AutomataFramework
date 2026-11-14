@@ -14,7 +14,8 @@ import {
 } from '#src/features/content/content.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, type MemoryOptions, memoryLayer } from '../../fixtures/cli/memory.ts'
-import { withSource } from '../../fixtures/content/kind.ts'
+import { wordsGame } from '../../fixtures/cli/words.ts'
+import { readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const LEVEL = 'content/levels/level-1.json'
@@ -203,12 +204,40 @@ test('a word a language lacks is a problem that names the file, the key and what
   expect(step?.problems.some((p) => p.file === 'content/messages/es.json')).toBe(true)
 })
 
-test('words nobody has read yet are a note with the count for each language, and never a failure', async () => {
+test('words nobody has read yet are one note for each language, and never a failure', async () => {
   const { report } = await filesStep(withWords(false))
   const [step] = report.steps
-  const words = step?.notes.filter((note) => note.startsWith('Words no native speaker has read yet')) ?? []
-  expect(words).toEqual(['Words no native speaker has read yet (a first draft plays fine): Spanish 2.'])
+  expect(step?.notes).toEqual(['2 words in Spanish wait for a native speaker. See them with automata words.'])
   expect(step?.problems.filter((p) => p.file === 'content/messages/es.json')).toEqual([])
+})
+
+test('the notes are in the order of the languages, and one word is said in the singular', async () => {
+  const korean = await filesStep(wordsGame('ko', ['ko', 'es', 'pt']))
+  expect(korean.report.steps[0]?.notes).toEqual([
+    '3 words in Spanish wait for a native speaker. See them with automata words.',
+    '3 words in Portuguese wait for a native speaker. See them with automata words.',
+  ])
+  const english = wordsGame('en', ['en', 'es'])
+  const loaded = await loadGame(readFiles(english))
+  if (!loaded.ok) throw new Error('the words game does not load')
+  const marks = writeReadMarks(markRead(loaded.value, undefined, 'es', ['keeper.bye', 'keeper.hello']))
+  const one = await filesStep({ ...english, [READ_MARKS_FILE]: marks })
+  expect(one.report.steps[0]?.notes).toEqual([
+    '1 word in Spanish waits for a native speaker. See them with automata words.',
+  ])
+})
+
+test('marks made against another language say why every word waits again', async () => {
+  const english = wordsGame('en', ['en', 'es', 'pt'])
+  const loaded = await loadGame(readFiles(english))
+  if (!loaded.ok) throw new Error('the words game does not load')
+  const marks = writeReadMarks(markRead(loaded.value, undefined, 'es'))
+  const { report } = await filesStep({ ...wordsGame('ko', ['ko', 'es', 'pt']), [READ_MARKS_FILE]: marks })
+  expect(report.steps[0]?.notes).toEqual([
+    'The read marks were made against English, and this game is now written in Korean, so every word waits again. See them with automata words.',
+    '3 words in Spanish wait for a native speaker. See them with automata words.',
+    '3 words in Portuguese wait for a native speaker. See them with automata words.',
+  ])
 })
 
 test('a read mark takes a word off the note, and a marks file that does not read is a problem', async () => {

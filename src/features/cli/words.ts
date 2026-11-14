@@ -4,8 +4,8 @@
 // is the second way into the same files, for code.
 //
 // A game commits no inlang project: it is made in a temporary folder for each compile, from the messages files the game
-// loaded (the game's own language first, `source`, so it is Paraglide's base language). Paraglide's own strategies never run (`bindParaglide`
-// answers `getLocale`). Paraglide empties the folder it writes to, so it writes to a temporary one and what differs is
+// loaded (the game's own language first, `source`, so it is Paraglide's base language). Paraglide's own strategies never
+// run (`bindParaglide` answers `getLocale`). Paraglide empties the folder it writes to, so it writes to a temporary one and what differs is
 // copied into the game's `outdir`: an unchanged compile touches nothing, and a dev server watching `outdir` never sees
 // it empty. Ported from AutomataFrameworkFailed@ed8592e8: packages/content/src/shared/locale/compile-messages.ts and
 // sync-folder.ts.

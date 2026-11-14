@@ -47,7 +47,7 @@ test('the official client connects, and is told our name, our version and our tw
   expect(client.getServerCapabilities()).toMatchObject({ tools: {}, resources: {} })
 })
 
-test('the official client lists the twelve tools, and reads a tool that needs no game', {
+test('the official client lists the thirteen tools, and reads a tool that needs no game', {
   timeout: 60_000,
 }, async () => {
   const { tools } = await client.listTools()
@@ -56,6 +56,7 @@ test('the official client lists the twelve tools, and reads a tool that needs no
     'check',
     'replay',
     'art',
+    'words',
     'content_types',
     'schema',
     'skill',
@@ -101,4 +102,22 @@ test('a game is made and its files checked through the real command, and a game 
   const nowhere = await client.callTool({ name: 'check', arguments: { folder: 'nowhere' } })
   expect(nowhere.isError).toBe(true)
   expect(textOf(nowhere)).toMatch(/^nowhere is not a game: it has no automata\.toml\./)
+})
+
+test('words answers through the real command the same JSON automata words --json prints', {
+  timeout: 120_000,
+}, async () => {
+  await client.callTool({ name: 'create', arguments: { folder: 'words-game' } })
+  const listed = await client.callTool({ name: 'words', arguments: { folder: 'words-game' } })
+  expect(listed.isError).toBeFalsy()
+  const report = JSON.parse(textOf(listed)) as { source: string; unread: { language: string; key: string }[] }
+  expect(report.source).toBe('en')
+  expect(Array.isArray(report.unread)).toBe(true)
+  // Marking Spanish read leaves none of it waiting, and writes the marks file the command writes.
+  const marked = await client.callTool({ name: 'words', arguments: { folder: 'words-game', read: 'es' } })
+  expect(marked.isError).toBeFalsy()
+  const after = JSON.parse(textOf(marked)) as { unread: { language: string }[]; marked: { language: string } }
+  expect(after.marked.language).toBe('es')
+  expect(after.unread.some((word) => word.language === 'es')).toBe(false)
+  expect(existsSync(join(work, 'words-game', 'automata.translations.toml'))).toBe(true)
 })

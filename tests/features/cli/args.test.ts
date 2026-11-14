@@ -63,3 +63,34 @@ test('an option that needs a value and has none is a problem', () => {
     problem: '--port needs a value after it, like --port <value>.',
   })
 })
+
+// `automata words --read es keeper.hello`: a flag that takes a language and then the words it applies to.
+test('--read takes a language and every word after it up to the next option', () => {
+  expect(parseArgs(['words', '--read', 'es', 'keeper.hello', 'keeper.bye', '--json'])).toEqual({
+    command: 'words',
+    flags: { json: true },
+    lists: { read: ['es', 'keeper.hello', 'keeper.bye'] },
+    rest: [],
+  })
+  expect(parseArgs(['words', 'my-game', '--read', 'es'])).toMatchObject({
+    folder: 'my-game',
+    lists: { read: ['es'] },
+  })
+  expect(parseArgs(['words', '--read=es', 'keeper.hello'])).toMatchObject({
+    lists: { read: ['es', 'keeper.hello'] },
+  })
+})
+
+test('--read with no language is a problem, and so is a list flag on a command that has none', () => {
+  expect(parseArgs(['words', '--read'])).toEqual({
+    problem: '--read needs a language after it, like --read es.',
+  })
+  expect(parseArgs(['words', '--read', '--json'])).toEqual({
+    problem: '--read needs a language after it, like --read es.',
+  })
+  expect(parseArgs(['check', '--read', 'es'])).toMatchObject({ problem: expect.stringContaining('--read') })
+})
+
+test('every command has a lists table, empty unless it has a list flag', () => {
+  expect(parseArgs(['check'])).toMatchObject({ lists: {} })
+})
