@@ -46,9 +46,13 @@ const SOURCE_LINE = /^source = "[a-z]+"$/gm
 
 /**
  * The language the new game is written in, settled before anything is written: the one asked for, else the first of the
- * machine's own languages the framework has words in, else a sentence that says to ask. Nobody is given English.
+ * machine's own languages the framework has words in, else a sentence that says to ask, written with the folder as it
+ * was typed so the person can copy it whole. Nobody is given English.
  */
-const settleSource = (asked: string | undefined): Effect.Effect<Language, CliError, DeviceService> =>
+const settleSource = (
+  asked: string | undefined,
+  folder: string,
+): Effect.Effect<Language, CliError, DeviceService> =>
   Effect.gen(function* () {
     if (asked !== undefined) {
       const language = LANGUAGES.find((one) => one === asked)
@@ -67,7 +71,7 @@ const settleSource = (asked: string | undefined): Effect.Effect<Language, CliErr
     }
     return yield* Effect.fail(
       new CliError(
-        `Say which language you write the game's words in: add --source with one of ${CODES}, like automata create my-game --source es.`,
+        `Say which language you write the game's words in: add --source with one of ${CODES}, like automata create ${folder} --source es.`,
       ),
     )
   })
@@ -130,7 +134,7 @@ export function createGame(options: {
         ),
       )
 
-    const source = yield* settleSource(options.source)
+    const source = yield* settleSource(options.source, folder)
 
     const template = yield* templateFiles()
     // A template that cannot be given a language is found out before the first file is written.

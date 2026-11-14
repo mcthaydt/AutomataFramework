@@ -91,7 +91,14 @@ export function languagePicker(options: {
   title.className = 'automata-picker-title'
   title.style.cssText = 'margin:0;font:inherit'
 
-  dialog.append(globe, title)
+  // The globe (before a flag is chosen) and the title (after) share one box of the same height, so choosing a flag does
+  // not move the flags: a player's finger is still on the one they just tapped.
+  const heading = document.createElement('div')
+  heading.className = 'automata-picker-heading'
+  heading.style.cssText = 'display:flex;align-items:center;justify-content:center;min-height:56px'
+  heading.append(globe, title)
+
+  dialog.append(heading)
   const row = languageRow({
     mount: dialog,
     languages: core.flags,

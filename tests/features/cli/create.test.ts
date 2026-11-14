@@ -186,8 +186,8 @@ test('a path before the name says where, and a name beside is fine', async () =>
 })
 
 // The language the game's own words are written in: asked for, or the machine's, and never English by default.
-const ASK =
-  "Say which language you write the game's words in: add --source with one of zh, es, en, pt, ja, ko, like automata create my-game --source es."
+const ask = (folder: string): string =>
+  `Say which language you write the game's words in: add --source with one of zh, es, en, pt, ja, ko, like automata create ${folder} --source es.`
 const sourceLines = (memory: Memory, folder = 'my-game'): string[] =>
   text(memory, `${folder}/automata.toml`).match(/^source = .*$/gm) ?? []
 
@@ -239,9 +239,15 @@ test('with no language asked for and none the machine speaks, it stops and asks,
     const memory = memoryLayer(templateInMemory(), { deviceLanguages })
     const before = memory.files.size
     expect(await main(['create', 'my-game'], memory.layer), deviceLanguages.join()).toBe(2)
-    expect(memory.err, deviceLanguages.join()).toEqual([ASK])
+    expect(memory.err, deviceLanguages.join()).toEqual([ask('my-game')])
     expect(memory.files.size, deviceLanguages.join()).toBe(before)
   }
+})
+
+test('the sentence that asks for a language names the folder that was typed, so it can be copied as it is', async () => {
+  const memory = memoryLayer(templateInMemory(), { deviceLanguages: [] })
+  expect(await main(['create', 'games/crate-pusher'], memory.layer)).toBe(2)
+  expect(memory.err).toEqual([ask('games/crate-pusher')])
 })
 
 test('a language that is not one of the six is refused in words, and nothing is written', async () => {

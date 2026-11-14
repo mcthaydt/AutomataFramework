@@ -67,6 +67,8 @@ test('the three files with another name are there, and the real names are not', 
 test("the template's page says no language of its own: no lang on the page, no English in its code", () => {
   expect(tree['index.html']).toBeDefined()
   expect(tree['index.html']).not.toMatch(/<html[^>]*\blang=/)
+  // A developer who meets a page with no `lang` is told why, where they look.
+  expect(tree['index.html']).toContain('No `lang` on purpose')
   const inCode = Object.entries(tree).filter(
     ([path, text]) => path.startsWith('src/') && /(['"])en\1/.test(text),
   )

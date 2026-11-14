@@ -328,18 +328,24 @@ test.each([
   ['type Translated = Exclude<Language, "en">', 'src/features/content/other.ts'],
   ['const english = files.en', 'src/features/content/translations.ts'],
   ["const tag = language === 'x' ? 'en-GB' : tag", 'src/features/locale/fill.ts'],
+  ["const tag = navigator.language ?? 'en-US'", 'src/features/web/picker.ts'],
+  ["const tag = language === 'x' ? 'en-US' : tag", 'src/features/locale/fill.ts'],
   ["if (file.id === 'en') return", 'src/features/content/messages.ts'],
   ['const english = files.en', 'src/features/content/read-marks.ts'],
 ])('a file that names English as a fallback breaks no-default-language: %s', (text, file) => {
   expect(one({ [file]: text })).toContain('no-default-language')
 })
 
-test('the list of languages, the format 1 marks and a comment may name English', () => {
+test('the list of languages, the format 1 marks, the page tag and a comment may name English', () => {
   const rules = (file: string, text: string): string[] => one({ [file]: text })
   const list = "export const LANGUAGES = ['zh', 'en'] as const"
   expect(rules('src/features/content/messages.ts', list)).not.toContain('no-default-language')
   const marks = "const FORMAT_1_SOURCE: Language = 'en'"
   expect(rules('src/features/content/read-marks.ts', marks)).not.toContain('no-default-language')
+  const tags = "export const LANGUAGE_TAGS = {\n  zh: 'zh-Hans',\n  en: 'en-US',\n}"
+  expect(rules('src/features/locale/names.ts', tags)).not.toContain('no-default-language')
+  // The allowance is one line of one file: the same tag anywhere else is a default.
+  expect(rules('src/features/locale/other.ts', tags)).toContain('no-default-language')
   const words = "// never 'en'\nimport en from './library/en.json'\nconst L = { en: held(en) }"
   expect(rules('src/features/locale/words.ts', words)).not.toContain('no-default-language')
 })

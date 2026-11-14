@@ -67,6 +67,8 @@ interface PickerShown {
   /** The dialog's `lang`, empty until a flag is chosen. */
   readonly lang: string
   readonly flagNames: Readonly<Record<string, { readonly name: string; readonly lang: string }>>
+  /** How far from the top of the page each flag, and then Go, stands: choosing a flag must not move them. */
+  readonly tops: { readonly flags: readonly number[]; readonly go: number }
 }
 
 /** How a flag or Go sits on the screen: its size, and whether the thing at its middle is itself. */
@@ -396,6 +398,10 @@ const page: LocalePage = {
       goDisabled: go?.getAttribute('aria-disabled') === 'true',
       text: shown.innerText,
       lang: shown.getAttribute('lang') ?? '',
+      tops: {
+        flags: flagButtons().map((b) => b.getBoundingClientRect().top),
+        go: go?.getBoundingClientRect().top ?? Number.NaN,
+      },
       flagNames: Object.fromEntries(
         flagButtons().map((b) => [
           b.dataset.language as string,

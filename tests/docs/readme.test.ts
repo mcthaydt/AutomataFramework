@@ -112,6 +112,8 @@ test('the README has a Languages section: the files, the values, the pick, the t
     'locale.words',
     'locale.set',
     'startGame({ ..., locale })',
+    'languagePicker',
+    'locale.asked()',
     'followLanguage',
     'onlineWords(status, locale.words)',
     'translationProblems',
@@ -136,6 +138,34 @@ test('the README has a Languages section: the files, the values, the pick, the t
   // Its messages file is exactly what `writeContent` writes, so an agent that copies it makes the bytes the check wants.
   const block = /```json\n([\s\S]*?)```/.exec(languages)?.[1]
   expect(framework.writeContent('messages', JSON.parse(block ?? '') as never)).toBe(block)
+})
+
+// A first-time developer copies the first example and gets a running page: the language is asked, then the game starts.
+test("the README's first example makes a locale and shows the picker before it starts the game", () => {
+  const start = readme.indexOf('import {\n  createLocale,')
+  expect(start).toBeGreaterThan(-1)
+  const example = readme.slice(start, readme.indexOf('```', start))
+  const order = ['createLocale({', 'languagePicker({', 'startGame({'].map((word) => example.indexOf(word))
+  for (const at of order) expect(at).toBeGreaterThan(-1)
+  expect(order).toEqual([...order].sort((a, b) => a - b))
+  expect(framework).toHaveProperty('createLocale')
+  expect(framework).toHaveProperty('openSettings')
+})
+
+// No sentence of the README makes English the default: the game's own language is the one `source` names.
+test('the README never says English comes first or that the room says its status in plain English', () => {
+  expect(readme).not.toMatch(/English \(`en\.json`\) comes first/)
+  expect(readme).not.toContain('plain English')
+  expect(readme).toContain('`source` in `automata.toml` names the one the team writes in')
+})
+
+// The online example needs a locale and the words, or it throws and does not type-check.
+test("the README's online example passes a locale and says the room in the player's words", () => {
+  const online = section('## Play online')
+  const call = online.slice(online.indexOf('await startOnlineGame({'))
+  expect(call).toContain('\n  locale,')
+  expect(online).not.toContain('onlineWords(status)')
+  expect(call).toContain('onlineWords(status, locale.words)')
 })
 
 // A game finds out how to host a room and put a page in it from here, and is told that nothing is deployed.

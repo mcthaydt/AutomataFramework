@@ -89,17 +89,37 @@ path = "content/characters/hero.json"
 Load it, and start it in an element of your page:
 
 ```ts
-import { formatDiagnostic, loadGame, startGame, webHost } from '@automataframework/framework'
+import {
+  createLocale,
+  formatDiagnostic,
+  languagePicker,
+  loadGame,
+  openSettings,
+  startGame,
+  webHost,
+} from '@automataframework/framework'
 
 const loaded = await loadGame((path) => fetch(`/game/${path}`).then((r) => r.text()))
 if (!loaded.ok) throw new Error(loaded.diagnostics.map(formatDiagnostic).join('\n'))
 
-// `locale` is the player's language (see "Languages"): the game starts only once the player has chosen one.
+const mount = document.getElementById('game') as HTMLElement
+const host = webHost()
+
+// The player's language (see "Languages") is asked once, on the first visit, with flags, and kept with the settings.
+// `startGame` refuses to start until the player has chosen one.
+const settings = await openSettings({ game: 'my-game', store: host.store })
+const locale = createLocale({ content: loaded.value, host, settings })
+if (!locale.asked()) {
+  const picker = languagePicker({ mount, locale })
+  await picker.done
+  picker.destroy()
+}
+
 const game = await startGame({
   content: loaded.value,
   locale,
-  mount: document.getElementById('game') as HTMLElement,
-  host: webHost(),
+  mount,
+  host,
   controls: {
     left: { label: 'Left', keys: ['ArrowLeft', 'KeyA'], side: 'left' },
     right: { label: 'Right', keys: ['ArrowRight', 'KeyD'], side: 'left' },
@@ -299,6 +319,20 @@ levelName(locale.words, 'level-1') // the level's own name, or its id if no word
 await locale.set('ko') // the words change at once, every `locale.onChange` listener hears it, and the pick is kept
 ```
 
+The flags come from `languagePicker`, in the browser entry. It fills the `mount` you give it with the six flags, the
+device's language already chosen when the game has it, and a Go button that works by touch, keyboard and gamepad. Its
+`done` resolves with the language once Go is pressed (the pick is kept for next time), and `destroy()` takes it away:
+
+```ts
+import { languagePicker } from '@automataframework/framework'
+
+if (!locale.asked()) {
+  const picker = languagePicker({ mount, locale })
+  const language = await picker.done // 'ja', say
+  picker.destroy()
+}
+```
+
 A word a language lacks is said in the language the game is written in (`source` in `automata.toml`), and one that
 language lacks is shown as its key, so a missing word never stops a game. `startGame` needs the locale
 (`startGame({ ..., locale })`) and throws until the player has chosen a language. With it, the touch buttons say `controls.<action>`, a
@@ -385,19 +419,18 @@ import { onlineWords, startOnlineGame, webHost } from '@automataframework/framew
 const online = await startOnlineGame({
   content, plugins, mount, controls, host: webHost(),
   server: 'ws://localhost:3000',
+  locale, // the player's language, chosen as in "Languages": the game starts only once there is one
   // room: friendsCode,   // the `online.code` a friend's page shows; leave it out to make a room
-  onStatus: (status) => (message.textContent = onlineWords(status)),
+  onStatus: (status) => (message.textContent = onlineWords(status, locale.words)),
 })
 online.code // to share with a friend
 ```
 
-`onlineWords(status)` is the plain English for the room (waiting for a friend, someone lost their connection, the room
-is full) and an empty string while everyone is playing; a game puts it on its own screen. A refused join rejects with an
+`onlineWords(status, locale.words)` says the room's status in the player's language (waiting for a friend, someone lost
+their connection, the room is full) and is an empty string while everyone is playing; a game puts it on its own screen. A refused join rejects with an
 `OnlineError` and leaves nothing on the page. A game with `players = 4` in `automata.toml` has no waiting: the room
 starts with whoever is first, and the others join and leave while it is played, as many as its level has start points
 for. Hiding the page lets go of the keys, so the hero does not run on for everyone else.
-
-Pass `locale.words` as a second argument, `onlineWords(status, locale.words)`, for the player's language.
 
 ## Sound
 
@@ -775,7 +808,7 @@ Each schema is at `@automataframework/framework/schemas/<kind>.schema.json`. Thr
 
 - One thing per file, and the file's `id` is its name: `content/sounds/door.json` holds the sound `door`.
 - `writeContent(type, value)` is the only writer, so two writers of the same value make the same bytes.
-- A game's words live in `messages` files, one per language, and English (`en.json`) comes first.
+- A game's words live in `messages` files, one per language, and `source` in `automata.toml` names the one the team writes in.
 
 A file is listed in `automata.toml` with its kind and its path. This lists a sound called `door`:
 
