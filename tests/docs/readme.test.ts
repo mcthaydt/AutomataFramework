@@ -45,3 +45,12 @@ test('the README names every kind of content file, its schema and its folder', (
     expect(readme, type).toContain(`content/${info.plural}/`)
   }
 })
+
+// The README's example is the file `writeContent` writes, so an agent that copies it makes the bytes the check wants.
+test("the README's door.json is exactly what writeContent makes of it", () => {
+  const section = readme.slice(readme.indexOf('## Content files'))
+  const block = /```json\n([\s\S]*?)```/.exec(section)?.[1]
+  expect(block).toBeDefined()
+  const written = framework.writeContent('sound', JSON.parse(block ?? '') as never)
+  expect(written).toBe(block)
+})

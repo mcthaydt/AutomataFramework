@@ -41,7 +41,6 @@ interface ActorKey {
     readonly who: string;
     readonly x: number;
     readonly y: number;
-    readonly clip?: string | undefined;
     readonly face?: 'left' | 'right' | undefined;
 }
 ```
@@ -2233,7 +2232,6 @@ interface ActorKey {
     readonly who: string;
     readonly x: number;
     readonly y: number;
-    readonly clip?: string | undefined;
     readonly face?: 'left' | 'right' | undefined;
 }
 ```
