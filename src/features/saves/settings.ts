@@ -3,8 +3,8 @@
 // into a `SettingsSection`. Unlike progress, a preference may be lost: a section that cannot be read starts again from
 // its first values, and a value the player just chose stays in the game even when the host will not keep it.
 
-import type { z } from 'zod'
 import { deepFreeze } from '../../lib/deep-freeze.ts'
+import type { z } from '../../lib/zod.ts'
 import { type SaveProblem, settingsKey } from './define.ts'
 import { plainJson } from './envelope.ts'
 import { guardStore, type SaveStore, type StoreResult } from './store.ts'

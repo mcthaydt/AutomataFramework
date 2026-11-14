@@ -1,7 +1,7 @@
 // Players and the `controls` command. A game never reads a keyboard or a finger: input becomes one `controls` command
 // per change, saying everything the player is holding down, and the sim keeps it on that player's entity. That one
 // command is also all a replay has to record, and all a second player on another machine would send.
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import {
   type Command,
   type CommandDef,

@@ -29,7 +29,6 @@ export interface SdkRoom {
   send(type: string, payload: unknown): void
   /** A consented leave frees the seat at once. */
   leave(consented?: boolean): Promise<number>
-  removeAllListeners(): void
 }
 
 /** The part of the SDK's client a page uses: make a room, join one by its code, get back into a seat. */
@@ -44,7 +43,10 @@ export interface Connection {
   readonly link: Link
   /** The room's code, to share with a friend. */
   readonly code: string
-  /** Gets back into the seat with the token of the last connection. Rejects with `OnlineError('lost')`. */
+  /**
+   * Gets back into the seat with the token of the last connection. Rejects with `OnlineError('lost')` when the room no
+   * longer holds the seat, and `OnlineError('no-server')` when nothing answered, which may be tried again.
+   */
   reconnect(): Promise<Link>
 }
 
@@ -71,6 +73,19 @@ function problemOf(error: unknown): OnlineError {
   if (/is locked/.test(message)) return new OnlineError('room-full', 'The room is full.')
   if (/not found/.test(message)) return new OnlineError('no-room', 'No room has that code.')
   // Everything else is a server that did not answer: a refused connection, a failed fetch, a closed socket.
+  return new OnlineError('no-server', message === '' ? 'The server did not answer.' : message)
+}
+
+/**
+ * What a failed reconnect means. The matchmaker says when a seat is gone for good: its token is invalid or expired, or
+ * its room has been disposed. Anything else is a server that did not answer (a phone with no signal, a fetch that
+ * failed), and the next try may get in while the room still holds the seat.
+ */
+function reconnectProblemOf(error: unknown): OnlineError {
+  const message = messageOf(error)
+  if (/reconnection token invalid or expired|has been disposed/.test(message)) {
+    return new OnlineError('lost', 'The seat could not be got back.')
+  }
   return new OnlineError('no-server', message === '' ? 'The server did not answer.' : message)
 }
 
@@ -151,7 +166,7 @@ export async function connect(
       try {
         current = await client.reconnect(current.reconnectionToken)
       } catch (error) {
-        throw new OnlineError('lost', messageOf(error) || 'The seat could not be got back.')
+        throw reconnectProblemOf(error)
       }
       return linkOf(current)
     },

@@ -1332,12 +1332,6 @@ const Look: ComponentDef<typeof lookFields>;
 const MAX_ACTIONS = 16;
 ```
 
-### `MAX_AHEAD` (const)
-
-```ts
-const MAX_AHEAD = 120;
-```
-
 ### `MAX_CATCH_UP` (const)
 
 ```ts
@@ -2955,7 +2949,7 @@ function writeReplay(replay: Replay): string;
 ### `z` (unresolved)
 
 ```ts
-from 'zod'
+from './lib/zod.ts'
 ```
 
 ## `./headless`
@@ -4012,12 +4006,6 @@ const Look: ComponentDef<typeof lookFields>;
 
 ```ts
 const MAX_ACTIONS = 16;
-```
-
-### `MAX_AHEAD` (const)
-
-```ts
-const MAX_AHEAD = 120;
 ```
 
 ### `MAX_CATCH_UP` (const)
@@ -5442,7 +5430,7 @@ function writeReplay(replay: Replay): string;
 ### `z` (unresolved)
 
 ```ts
-from 'zod'
+from './lib/zod.ts'
 ```
 
 ## `./server`
@@ -5485,12 +5473,6 @@ interface RoomServerOptions {
 
 ```ts
 function runRoomServer(options: RoomServerOptions): Promise<never>;
-```
-
-### `startTickScheduler` (function)
-
-```ts
-function startTickScheduler(options: TickSchedulerOptions): TickScheduler;
 ```
 
 ### `TickClock` (interface)

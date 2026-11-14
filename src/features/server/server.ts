@@ -5,4 +5,4 @@ export {
   type RoomServer,
   type RoomServerOptions,
 } from './room-server.ts'
-export { startTickScheduler, type TickClock } from './tick-scheduler.ts'
+export type { TickClock } from './tick-scheduler.ts'

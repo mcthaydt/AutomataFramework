@@ -3,7 +3,7 @@
 // parse is `undefined`, never a throw: a client that sends rubbish costs the room nothing.
 //
 // Messages are plain objects on the channel `m`; a snapshot's bytes follow their header on the channel `b`.
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { MAX_PLAYERS } from '../commands/commands.ts'
 import { FRAMEWORK_VERSION, type Sim } from '../sim/sim.ts'
 
@@ -28,8 +28,6 @@ export const MIN_LEAD = 1
 export const MAX_CLIENT_LEAD = 30
 /** With no late command for this many ticks, a client's lead drops by 1. */
 export const LEAD_DECAY_TICKS = 300
-/** A client never predicts further past the confirmed tick than this; it waits. */
-export const MAX_AHEAD = 120
 /** New predicted steps in one advance, at most. */
 export const MAX_CATCH_UP = 4
 /** Confirmed ticks taken in one advance, at most. */

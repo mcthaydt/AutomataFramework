@@ -1,7 +1,7 @@
 // A game's save definition and the rules that turn stored data into data this build can use: the keys it is stored
 // under, and upgrading it one version at a time. Policy, kept from the first attempt because it was learned the hard
 // way: a save from a newer build is never touched, and a save that cannot be read is never read as empty.
-import type { z } from 'zod'
+import type { z } from '../../lib/zod.ts'
 import type { Envelope } from './envelope.ts'
 import type { StoreRefusal } from './store.ts'
 

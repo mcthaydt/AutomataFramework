@@ -1,4 +1,4 @@
-import type { z } from 'zod'
+import type { z } from '../../lib/zod.ts'
 import { type BehaviourFile, behaviourInfo } from './behaviour.ts'
 import { type Character, type CharacterInput, characterInfo } from './character.ts'
 import { type ConversationFile, conversationInfo } from './conversation.ts'

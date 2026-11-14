@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import {
   ACTION_NAME,
   MAX_ACTIONS,

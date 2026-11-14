@@ -1,4 +1,4 @@
-import type { z } from 'zod'
+import type { z } from '../../lib/zod.ts'
 
 /** One problem in one file: which file, where in it (`''` for the whole file) and what to do about it. */
 export interface Diagnostic {

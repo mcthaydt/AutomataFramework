@@ -32,7 +32,6 @@ function fakeRoom(code = 'ROOM') {
       onLeave(4000)
       return 4000
     },
-    removeAllListeners: () => undefined,
   }
   return { room, handlers, sent, closeFromServer: (c = 1006) => onLeave(c) }
 }
@@ -150,4 +149,26 @@ test('reconnect gives a new line from the stored token', async () => {
   second.handlers.get('m')?.({ t: 'start' })
   expect(calls).toContain('reconnect token-1')
   expect(got).toEqual([{ t: 'start' }])
+})
+
+// Colyseus says when a seat is gone for good: the matchmaker answers that the token is invalid or expired, or that the
+// room has been disposed. Anything else is a server that did not answer (a phone with no signal), and a try later may do.
+test('a reconnect that gets no answer is not a lost seat, and one the room refuses is', async () => {
+  const cases: [string, string][] = [
+    ['Failed to fetch', 'no-server'],
+    ['connect ECONNREFUSED 127.0.0.1:2567', 'no-server'],
+    ['reconnection token invalid or expired.', 'lost'],
+    ['room "ABC123" has been disposed.', 'lost'],
+  ]
+  for (const [message, problem] of cases) {
+    const fake = fakeRoom()
+    const { client } = fakeClient(fake.room)
+    client.reconnect = async () => {
+      throw new Error(message)
+    }
+    const conn = await connect('ws://x', undefined, OPTIONS, async () => client)
+    const result = await conn.reconnect().catch((e: unknown) => e)
+    expect(result, message).toBeInstanceOf(OnlineError)
+    expect((result as OnlineError).problem, message).toBe(problem)
+  }
 })
