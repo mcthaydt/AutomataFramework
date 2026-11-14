@@ -24,7 +24,8 @@ const make = (settings?: unknown): Input => {
 /** A key event on the window; says whether the page's default was stopped. */
 const key = (type: 'keydown' | 'keyup', code: string, init: KeyboardEventInit = {}): boolean => {
   const event = new KeyboardEvent(type, { code, bubbles: true, cancelable: true, ...init })
-  window.dispatchEvent(event)
+  // From the page, as a browser sends it: the capture phase of the window comes before everything else.
+  document.body.dispatchEvent(event)
   return event.defaultPrevented
 }
 
@@ -136,6 +137,18 @@ test('the game is silent while a capture waits and plays again after', () => {
   input.poll(3)
   fake.press('dpad-right')
   expect(input.poll(4)).toEqual([controlsCommand(4, 1, 2, ['right'])])
+})
+
+test("the answer's key coming up is swallowed once, and a later press of it plays", async () => {
+  const capture = input.capture('keys')
+  key('keydown', 'KeyK')
+  await capture.done
+  input.rebind('jump', 'keys', 'KeyK')
+  expect(key('keyup', 'KeyK')).toBe(true)
+  key('keydown', 'KeyK')
+  expect(input.poll(0)).toEqual([controlsCommand(0, 1, 0, ['jump'])])
+  key('keyup', 'KeyK')
+  expect(input.poll(1)).toEqual([controlsCommand(1, 1, 1, [])])
 })
 
 test('rebind changes what the keys do at once', () => {

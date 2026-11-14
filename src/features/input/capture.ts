@@ -31,6 +31,8 @@ export interface CaptureEnv {
   readonly silence: () => () => void
   /** Hides everything held on every pad until it is let go. */
   readonly maskPads: () => void
+  /** Where a listener that outlives the capture (the answer's key, still down) is kept, so `destroy` can remove it. */
+  readonly lingering: Set<() => void>
 }
 
 /** The gamepad button that backs out of a pad capture. */
@@ -65,14 +67,27 @@ export function startCapture(slot: BindingSlot, env: CaptureEnv): RunningCapture
       if (e.ctrlKey || e.metaKey || e.altKey) return
       stop(e)
       if (e.repeat) return
-      // The key's release is swallowed too: a button activates on Space's keyup, and the answer must not press it.
+      // The key's release is swallowed too: a button activates on Space's keyup, and the answer must not press it. It
+      // goes when that key comes up, is pressed afresh, or the window loses focus, so it never eats a later release.
       const code = e.code
-      const swallowUp = (up: KeyboardEvent): void => {
+      const drop = (): void => {
+        win.removeEventListener('keyup', onUp, true)
+        win.removeEventListener('keydown', onAgain, true)
+        win.removeEventListener('blur', drop)
+        env.lingering.delete(drop)
+      }
+      const onUp = (up: KeyboardEvent): void => {
         if (up.code !== code) return
         stop(up)
-        win.removeEventListener('keyup', swallowUp, true)
+        drop()
       }
-      win.addEventListener('keyup', swallowUp, true)
+      const onAgain = (down: KeyboardEvent): void => {
+        if (down.code === code && !down.repeat) drop()
+      }
+      win.addEventListener('keyup', onUp, true)
+      win.addEventListener('keydown', onAgain, true)
+      win.addEventListener('blur', drop)
+      env.lingering.add(drop)
       end(code === 'Escape' ? { ok: false, reason: 'cancelled' } : { ok: true, input: code })
     }
     win.addEventListener('keydown', onKeyDown, true)

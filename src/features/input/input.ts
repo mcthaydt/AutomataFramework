@@ -140,6 +140,8 @@ export function createInput(options: InputOptions): Input {
   let lastSeats = ''
   let silent = 0
   let waiting: RunningCapture | undefined
+  // Listeners a finished capture left behind, waiting for its key to come up.
+  const lingering = new Set<() => void>()
   const invites = createInvites()
   const menu = createMenu()
   const coarse = (): boolean => window.matchMedia?.('(pointer: coarse)').matches === true
@@ -319,6 +321,7 @@ export function createInput(options: InputOptions): Input {
         win: window,
         silence: () => api.silence(),
         maskPads: () => pads.mask(),
+        lingering,
       })
       waiting = running
       // What is held now is not an answer: the wait starts from here.
@@ -329,6 +332,7 @@ export function createInput(options: InputOptions): Input {
       if (destroyed) return
       destroyed = true
       waiting?.cancel()
+      for (const drop of [...lingering]) drop()
       if (frame !== undefined) frames.cancel(frame)
       keyboard.destroy()
       touch.destroy()
