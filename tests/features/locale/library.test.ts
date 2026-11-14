@@ -96,7 +96,8 @@ test('every automata.* key written in src/ is in en.json, and every key of en.js
       const key = match[2] as string
       // A file's name is not a key: `automata.translations.toml`.
       if (/\.(toml|json)$/.test(key)) continue
-      ;(match[3] === '$' + '{' ? stems : written).add(key)
+      // Ended by its own quote: a whole key. Ended by a `${`: the start of one.
+      ;(match[3] === match[1] ? written : stems).add(key)
     }
   const keys = Object.keys(wordsIn('en'))
   for (const key of written) expect(keys, `${key} is written in src/ but not in en.json`).toContain(key)
