@@ -249,3 +249,12 @@ test('Effect may be imported under src/features/cli/ and in server/process.ts, a
   ).toEqual([])
   expect(one({ 'src/features/net/net.ts': "import { Effect } from 'effect'" })).toEqual(['package-confined'])
 })
+
+test('audio may import nothing above it', () =>
+  expect(one({ 'src/features/audio/audio.ts': "import '../saves/saves.ts'" })).toEqual(['imports-go-down']))
+
+test('the sim side may not import audio', () =>
+  expect(one({ 'src/features/level/level.ts': "import '../audio/audio.ts'" })).toEqual(['imports-go-down']))
+
+test('audio keeps no clock of its own: its speaker has the only one', () =>
+  expect(one({ 'src/features/audio/audio.ts': 'setTimeout(() => {}, 1)' })).toEqual(['sim-is-pure']))

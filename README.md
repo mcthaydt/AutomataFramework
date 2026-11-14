@@ -272,10 +272,60 @@ is full) and an empty string while everyone is playing; a game puts it on its ow
 starts with whoever is first, and the others join and leave while it is played, as many as its level has start points
 for. Hiding the page lets go of the keys, so the hero does not run on for everyone else.
 
+## Sound
+
+A game ships no audio files. A sound is a few numbers in `content/sounds/`, a track is rows of notes in
+`content/music/`, and a cue list in `content/cues/` says what plays when. Change a number and the sound changes.
+
+```toml
+[[content]]
+type = "sound"
+path = "content/sounds/jump.json"
+
+[[content]]
+type = "music"
+path = "content/music/meadow.json"
+
+[[content]]
+type = "cues"
+path = "content/cues/cues.json"
+```
+
+The smallest wiring is one audio, handed to `startGame`:
+
+```ts
+import { createAudio, startGame, webHost, webSpeaker } from '@automataframework/framework'
+
+const host = webHost()
+const audio = createAudio({ content: loaded.value, speaker: webSpeaker({ host }) })
+const game = await startGame({ content: loaded.value, mount, host, controls, audio })
+```
+
+Events come from three places: your own plugin (`defineEvent`, then `ctx.emit(Jumped, {})` in a system), the
+framework's `level.started`, which `startGame` raises once the level is on screen, and `audio.raise('menu.opened')` for
+anything outside the sim. A cue names an event and what to do: play a sound, start a track, or stop the music. A track
+that is already playing carries on, so the music can go on from one level to the next. `game.stop()` does not stop the
+audio: the code that made it owns it.
+
+A browser plays no sound until the player taps or presses a key. Until then `audio.state()` is `'waiting'` and the
+game shows a button that says "Tap to start the sound". Pass `soundNotice` your own words, or `false` if your own screen
+says it. Once the player has tapped, the state is `'on'`. On a device with no sound it is `'unavailable'`: the game
+plays on in silence and shows no button.
+
+Two volumes, music and sound, are numbers from 0 to 1: `audio.setVolumes({ format: 1, music: 0.5, sound: 1 })`. They
+fit the `sound` section of the game's settings, `SoundSettingsSchema` with `SOUND_SETTINGS_DEFAULT` as its first
+values. `audio.sample('sound')` plays a short tone, so a slider can be heard when it is let go.
+
+To check a game's sound with no ears, give `createAudio` a `testSpeaker()` and read `audio.log()`: what every cue asked
+for, in order, with the tick. Too many of one sound at once (`MAX_SAME`, 4) or in all (`MAX_SOUNDS`, 16) are logged as
+`skipped: 'busy'` and not played, counted in ticks so every device agrees; the log keeps the newest `LOG_MAX` (1024).
+Sound never changes the game: the sim does not see it, and changing a sound file moves no replay.
+
 ## Without a page
 
 `@automataframework/framework/headless` has everything that needs no page (the simulation, physics, commands, content,
-levels, saves and the host port with its test host). It is safe in Node and in an editor that only checks and writes files:
+levels, audio with its test speaker, saves and the host port with its test host). It is safe in Node and in an editor
+that only checks and writes files:
 
 ```ts
 import { createGameSim, loadGame } from '@automataframework/framework/headless'
