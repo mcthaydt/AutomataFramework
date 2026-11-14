@@ -246,7 +246,7 @@ for (const [first, second] of PAIRS) {
     }
     const report = async (): Promise<void> => {
       const seen = async (seat: Seat) =>
-        `cmd=${await seat.data('first-cmd')} p1moved=${await seat.data('p1-moved')} p2moved=${await seat.data('p2-moved')}`
+        `playing=${await seat.data('playing-at')} resolved=${await seat.data('resolved-at')} gaps=${await seat.data('gaps')} cmd=${await seat.data('first-cmd')} p1moved=${await seat.data('p1-moved')} p2moved=${await seat.data('p2-moved')}`
       console.log(
         `CRATE RACE ${first.engine}-${first.width} vs ${second.engine}-${second.width}: t0=${t0} oneHeld=+${t1 - t0} twoHeld=+${t2 - t0}\n one: ${await seen(one)}\n two: ${await seen(two)}\n one.p2-x=${await one.data('p2-x')} two.p2-x=${await two.data('p2-x')} one.p1-x=${await one.data('p1-x')}\n${timeline.join('\n')}`,
       )

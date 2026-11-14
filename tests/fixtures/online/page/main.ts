@@ -85,7 +85,11 @@ const built = await attemptsToBuildCode(async () => {
       onCheck: (tick, hash, ok) => {
         if (ok) game.setAttribute(`data-check-${tick}`, hash)
       },
-      onStatus: (next) => show(onlineWords(next, words), next.state),
+      onStatus: (next) => {
+        // DIAGNOSTIC (crate race): when the page first heard it was playing.
+        if (next.state === 'playing' && game.dataset.playingAt === undefined) game.dataset.playingAt = String(Date.now())
+        show(onlineWords(next, words), next.state)
+      },
     })
   } catch (error) {
     const problem = (error as { problem?: string }).problem
@@ -106,7 +110,14 @@ if (framework !== undefined && online !== undefined) {
     return hero === undefined ? '' : String(hero.get(Transform).x)
   }
   let frames = 0
+  game.dataset.resolvedAt = String(Date.now())
+  let last = performance.now()
+  const gaps: number[] = []
   const tick = (): void => {
+    const now = performance.now()
+    if (gaps.length < 16) gaps.push(Math.round(now - last))
+    last = now
+    game.dataset.gaps = gaps.join(',')
     const stats = playing.stats()
     // DIAGNOSTIC (crate race): frames drawn, the sims' ticks, and when each hero first moved as this page sees it.
     frames++
