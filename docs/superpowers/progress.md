@@ -42,6 +42,16 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
   What shows is the new page feature `story`: a speech box in plain words and the cutscene's camera, which read
   the sim's state and decide nothing. Four optional fields join content (`name` and `conversation` on a character,
   `cutscene` on a conversation's node, `opens` on a cutscene). Goldens are recorded on a story fixture of its own.
+| Plan S (audio): 2. Plan | Written, in review; eleven tasks (9% each, 1% for the last green run); stage at 100%, plan S at 10%. A headless `audio` feature (cues, the cue log, sounds, one track, two volumes) over a `Speaker` port, the page's speaker and the "Tap to start the sound" button in `web`, and the three audio kinds taken out of what the sim hashes. No Owner question; three calls marked for the audit | `plans/2026-11-14-m2-audio.md` |
+
+### Log
+
+- 2026-11-14, plan S (audio): the plan is written. `audio` is headless and is handed a step's events, never the
+  sim, so it has nothing to change; it keeps a cue log of what was asked for and plays through a `Speaker` port
+  (`testSpeaker` in Node, `webSpeaker` on Web Audio in `web`). Music is handed to the speaker a little ahead of the
+  speaker's own clock. Task 1 leaves `sounds`, `music` and `cues` out of the content the sim hashes, so changing a
+  sound moves no hash; no recorded golden is from a game with audio files. The framework draws the "Tap to start
+  the sound" button until plan U's screens take it over. No new dependency.
 - 2026-11-14, plan A (art): the plan audit. The no-golden-moves claims and the PNG writer's determinism hold. Fixed in the plan: the camera stops at `view.most` (the spec's limit), which plan D's pull-along reads; a restore puts the camera straight on its shot; `Game.heroes()` for plan U; `sprites.json` on a game of its own; the level's offset in whole pixels; the painter's rule covers the clock and I/O; plan D's pictures go through a `ci-art` branch the thread fetches. Asked of the Owner: whether painted pictures are committed, and so who repaints one after an editor's save.
 - 2026-11-14: plan V's implementation audit. Nothing critical; all six of the build's deviations are accepted. V1: `save`
   writes any label, but the reader refuses one that is empty or over 80 characters, so the new save lists as damaged
