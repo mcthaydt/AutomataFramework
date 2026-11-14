@@ -38,6 +38,18 @@ test('a command with --help prints its own help', async () => {
   expect(memory.out[0]).toContain('--only <step>  Run one step.')
 })
 
+test('automata mcp --help says what an agent’s program does with it', async () => {
+  const memory = memoryLayer({})
+  expect(await main(['mcp', '--help'], memory.layer)).toBe(0)
+  expect(memory.out).toEqual([
+    `automata mcp
+
+Lets an agent use automata's commands as tools, over the Model Context Protocol. An agent's own program starts
+this; it waits for messages and prints nothing a person reads. A game made by automata create is already set up
+for it, in .mcp.json.`,
+  ])
+})
+
 test('automata --version prints the framework version', async () => {
   const memory = memoryLayer({})
   expect(await main(['--version'], memory.layer)).toBe(0)

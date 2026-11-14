@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
 
 // Until Release 1 a game gets this package as a git dependency pinned to a commit on `main`, not from npm. `dist/` is
@@ -10,6 +10,7 @@ const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.
   files: string[]
   exports: Record<string, { types?: string; import?: string } | string>
   dependencies: Record<string, string>
+  devDependencies?: Record<string, string>
 }
 
 // `node --run`, not `pnpm`: a game installs this package from git with npm, on a machine that may have no pnpm.
@@ -61,4 +62,17 @@ test('the package has one bin, automata, built from src/cli.ts', () => {
 
 test('the package ships the template and the skills', () => {
   expect(manifest.files).toEqual(expect.arrayContaining(['template', 'skills', 'docs/api/framework.api.md']))
+})
+
+// The Owner's answer to Q1 (2026-11-14): `automata mcp` is our own server, and the official MCP SDK is only the client a
+// test checks it with, so the package's users never install it.
+test('the MCP SDK is a development dependency at one exact version, and the package never imports it', () => {
+  expect(manifest.devDependencies?.['@modelcontextprotocol/sdk']).toBe('1.32.2')
+  expect(manifest.dependencies['@modelcontextprotocol/sdk']).toBeUndefined()
+  const sources = readdirSync(new URL('../src/', import.meta.url), { recursive: true, encoding: 'utf8' })
+  for (const file of sources.filter((name) => name.endsWith('.ts'))) {
+    expect(readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), file).not.toContain(
+      '@modelcontextprotocol',
+    )
+  }
 })

@@ -116,12 +116,20 @@ export interface SessionWorker {
   readonly end: () => Promise<void>
 }
 
+/** What `automata <words> --json` printed, and its exit status. */
+export interface CommandAnswer {
+  readonly code: number
+  readonly json: unknown
+}
+
 /**
  * Runs a game's code in a fresh place (audit C1): Node keeps every module it has imported, so a long-lived
- * `automata mcp` never imports a game's rules itself. `worker` starts a play session's own Worker, which loads the game
- * as it is when the session starts.
+ * `automata mcp` never imports a game's rules itself. `command` runs `automata` with these words and `--json` as a child
+ * process, and gives back the JSON it printed and its exit status; a child that printed none fails with the sentence it
+ * said. `worker` starts a play session's own Worker, which loads the game as it is when the session starts.
  */
 export interface RunnerService {
+  readonly command: (args: readonly string[], cwd: string) => Effect.Effect<CommandAnswer, CliError>
   readonly worker: (folder: string) => Effect.Effect<SessionWorker, CliError>
 }
 export const Runner: Context.Tag<RunnerService, RunnerService> =

@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
 import { COMMAND_NAMES } from '#src/features/cli/args.ts'
 import { helpFor } from '#src/features/cli/help.ts'
+import { PROTOCOL_VERSIONS } from '#src/features/cli/mcp.ts'
+import { mcpTools } from '#src/features/cli/mcp-tools.ts'
+import { createSessions } from '#src/features/cli/session.ts'
 import { CONTENT_TYPES } from '#src/features/content/content-types.ts'
 import { TOUCH_PROPERTIES } from '#src/features/input/touch.ts'
 import { FRAMEWORK_VERSION } from '#src/features/sim/sim.ts'
@@ -186,4 +189,15 @@ test('the README gives the exit codes, and every verdict of a replay', () => {
   for (const word of ['`0`', '`1`', '`2`']) expect(ref, word).toContain(word)
   for (const verdict of ['ok', 'content-changed', 'code-changed', 'diverged', 'wrong-setup', 'not-a-replay'])
     expect(ref, verdict).toContain(`\`${verdict}\``)
+})
+
+test('the README names every tool automata mcp has, the protocol versions it speaks, and the .mcp.json a game has', () => {
+  const start = readme.indexOf('### automata mcp')
+  expect(start).toBeGreaterThan(-1)
+  const mcp = readme.slice(start, readme.indexOf('\n## ', start))
+  const rows = [...mcp.matchAll(/^\| `([a-z_]+)` \|/gm)].map((m) => m[1])
+  expect(rows).toEqual(mcpTools(createSessions()).map((tool) => tool.name))
+  for (const version of PROTOCOL_VERSIONS) expect(mcp, version).toContain(`\`${version}\``)
+  const config = readFileSync(new URL('../../template/.mcp.json', import.meta.url), 'utf8')
+  expect(JSON.parse(/```json\n([\s\S]*?)```/.exec(mcp)?.[1] ?? '')).toEqual(JSON.parse(config))
 })
