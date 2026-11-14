@@ -109,6 +109,11 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
   - **The other repos' `CLAUDE.md` pages** list the languages in the old order; each is corrected with that repo's next pull
     request.
 
+- 2026-11-14, the editors' Blueprint redesign, Task 2 (AutomataFrameworkEditors plan): `createLevelPicture`, a level drawn
+  still with room kept clear on four sides, for the editors' level screen and card pictures. The same pull request fixes
+  a break found moving the editors' pin: `scripts/fix-dts.ts` ran in a package installed from git, which unpacks under
+  `node_modules`, where Node refuses to strip types, so no commit since that script landed could be a git dependency. It
+  is `fix-dts.mjs` now.
 - 2026-11-14, plan L (languages): implementation audit written, AutomataFramework PR 88. `automata.sound.start` and six
   `automata.rebind.*` sentences join the library in six languages: the sound's button follows the locale, and a refused
   `rebind` is a key and values said in the input's words. `createLocale` asks its host for its two languages only; the
