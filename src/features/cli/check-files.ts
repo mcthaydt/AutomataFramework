@@ -3,6 +3,7 @@
 import { join } from 'node:path'
 import { Effect } from 'effect'
 import { type Diagnostic, type GameContent, type Language, parseProject } from '../content/content.ts'
+import { paintedPaths } from './art.ts'
 import type { GameFolder } from './game-folder.ts'
 import { type CliError, Files, type FilesService } from './ports.ts'
 import type { StepReport } from './report.ts'
@@ -50,10 +51,12 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
       }
     }
 
-    // A `.json` under content/ that the project does not list is a file the game never reads.
+    // A `.json` under content/ that the project does not list is a file the game never reads, unless it is one a figure or
+    // a backdrop paints (an atlas), which is part of the game because the file that makes it is.
+    const painted = paintedPaths(game)
     for (const name of yield* files.list(join(game.folder, 'content'))) {
       const path = `content/${name}`
-      if (name.endsWith('.json') && !listed.has(path))
+      if (name.endsWith('.json') && !listed.has(path) && !painted.has(path))
         problems.push({
           file: path,
           path: '',

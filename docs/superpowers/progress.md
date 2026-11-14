@@ -54,6 +54,15 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 
 ### Log
 
+- 2026-11-14, plan K, Part 2 step A: `automata art` is the sixth command (`src/features/cli/art.ts`, from plan A's
+  `scripts/art.ts`, which is removed with its `package.json` script; its test is `tests/features/cli/art.test.ts` with every
+  assertion kept, now over files in memory). `check` has an `art` step after `files`, `play` and `create` paint first, and the
+  files step does not call a painted atlas unlisted. The MCP server has an `art` tool (twelve now). The template's hero and crate
+  each have a figure (`content/figures/`), the page passes `readPicture`, and an `ArtError` is shown as a problem, not as "try
+  another browser". The Owner's answer was (a), pictures committed in a game: the template's `gitignore` does not list them and
+  its `AGENTS.md` says to commit them; in this repo they are ignored, since `create` paints them. Skills: `automata` names the
+  command, and `automata-content` says to run it after a figure or a backdrop. The recording moves (`Sprite` joins the sim);
+  re-recorded in CI in a commit that names it, with the hashes sent to the coordinator.
 - 2026-11-14, plan K (the `automata` command): the implementation audit is written and its fixes applied. A game's
   rules that print now leave `--json` and `automata mcp` alone: `main` points `console.log` at stderr under `--json`,
   and a play session's Worker writes its output to stderr, not into the protocol; the smoke's rule change now prints

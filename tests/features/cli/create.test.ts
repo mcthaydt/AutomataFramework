@@ -50,6 +50,28 @@ test('the new game passes the files and rules steps as it is', async () => {
   }
 })
 
+test('it paints the pictures its figures make, so the new game has them and the art step passes', async () => {
+  const memory = await made(['my-game'])
+  const files = written(memory, 'my-game')
+  expect(files).toEqual(
+    expect.arrayContaining([
+      'content/figures/hero.png',
+      'content/figures/hero.atlas.json',
+      'content/figures/crate.png',
+      'content/figures/crate.atlas.json',
+    ]),
+  )
+  const report = await Effect.runPromise(
+    Effect.provide(runCheck({ folder: 'my-game', only: 'art' }), memory.layer),
+  )
+  expect(report.steps[0]).toEqual({ step: 'art', state: 'passed', problems: [], notes: [] })
+  // And the files step does not call an atlas a file nobody lists.
+  const filesReport = await Effect.runPromise(
+    Effect.provide(runCheck({ folder: 'my-game', only: 'files' }), memory.layer),
+  )
+  expect(filesReport.steps[0]?.problems).toEqual([])
+})
+
 test('its recording still says "as recorded"', async () => {
   const code: GameCode = { framework, rules: { plugins: gamePlugins } }
   const memory = await made(['my-game'], withTemplate({}, code))

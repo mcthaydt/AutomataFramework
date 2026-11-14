@@ -10,7 +10,7 @@ import style from '../../template/src/style.css?raw'
 import { FRAME, key, run } from '../fixtures/game/co-op-game.ts'
 import { type ManualFrames, manualFrames } from '../fixtures/game/frames.ts'
 import { SCREENS } from '../fixtures/game/screens.ts'
-import { readFiles, templateFiles } from './game.ts'
+import { readFiles, readPicture, templateFiles } from './game.ts'
 
 let root: HTMLElement
 let started: Page | undefined
@@ -41,6 +41,7 @@ async function open(
   const frames = manualFrames()
   const shown = await startPage(root, {
     read: readFiles(options.files),
+    readPicture,
     host: options.host ?? testHost(),
     frames,
     coarse: options.coarse ?? false,

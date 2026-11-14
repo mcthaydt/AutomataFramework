@@ -108,7 +108,15 @@ test('the steps run in order and a failed step does not stop the next', async ()
   const failing = { code: 1, output: 'no' }
   const tools = { biome: failing, tsc: failing, vitest: failing }
   const { report, memory } = await check(WITH_TESTS, { tools })
-  expect(report.steps.map((s) => s.step)).toEqual(['files', 'rules', 'lint', 'types', 'replays', 'tests'])
+  expect(report.steps.map((s) => s.step)).toEqual([
+    'files',
+    'art',
+    'rules',
+    'lint',
+    'types',
+    'replays',
+    'tests',
+  ])
   expect(stateOf(report)).toMatchObject({ lint: 'failed', types: 'failed', tests: 'failed' })
   expect(memory.ran.map((r) => r.tool)).toEqual(['biome', 'tsc', 'vitest'])
 })

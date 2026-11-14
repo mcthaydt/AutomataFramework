@@ -24,6 +24,17 @@ path = "content/characters/hero.json"
 type = "character"
 path = "content/characters/crate.json"
 
+# The hero's picture, made of blocks and rounds. `automata art` paints it into `content/figures/hero.png`, and you commit that
+# picture with this file.
+[[content]]
+type = "figure"
+path = "content/figures/hero.json"
+
+# The crate's picture.
+[[content]]
+type = "figure"
+path = "content/figures/crate.json"
+
 # The spark: something for the hero to take. It is taken when the hero touches it, and the game keeps count.
 [[content]]
 type = "character"

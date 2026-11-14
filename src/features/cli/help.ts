@@ -8,6 +8,7 @@ export const ROOT_HELP = `automata: make a game, check it, play it.
   automata check           Say whether this game is sound, and what to fix if it is not.
   automata play            Play this game in your browser.
   automata replay          Play this game's recordings and check they end where they did.
+  automata art             Paint this game's pictures from its figure and backdrop files.
   automata mcp             Let an agent use these commands (an MCP server).
 
 Run a command with --help to see its options. Each works on the game in this folder, or in the folder you name.`
@@ -16,7 +17,8 @@ const CHECK_HELP = `automata check [folder]
 
 Says whether the game is sound, one step after another, and what to fix if it is not.
 
-  files     every content file reads, is listed, and is written the standard way
+  files     every content file reads, is listed, and is written the standard way; every language has every word
+  art       every picture is painted, and none is older than the figure or backdrop file it comes from
   rules     the game's rules can be replayed: no clock, no dice of their own, no files
   lint      the code's style (Biome)
   types     the code's types (TypeScript)
@@ -51,6 +53,15 @@ Plays the game in your browser. It stays running and shows your changes as you m
   --no-open     Do not open the browser: just print the address.
   --port <n>    Use this port.`
 
+const ART_HELP = `automata art [folder]
+
+Paints this game's pictures: one picture, and an atlas that says where each pose is in it, for every figure and
+backdrop file. They are written beside the file that makes them, and you commit them with it. Run it after you
+change a figure or a backdrop; it paints only what is missing or old.
+
+  --check   Paint nothing: say which pictures are missing or old, and exit 1 if any is.
+  --json    Print the answer as JSON, for an agent or another tool.`
+
 const MCP_HELP = `automata mcp
 
 Lets an agent use automata's commands as tools, over the Model Context Protocol. An agent's own program starts
@@ -61,6 +72,7 @@ const HELP: Readonly<Record<CommandName | 'root', string>> = {
   root: ROOT_HELP,
   check: CHECK_HELP,
   replay: REPLAY_HELP,
+  art: ART_HELP,
   create: CREATE_HELP,
   play: PLAY_HELP,
   mcp: MCP_HELP,
