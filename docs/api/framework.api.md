@@ -10,6 +10,15 @@
 const ACTION_NAME: RegExp;
 ```
 
+### `Advance` (interface)
+
+```ts
+interface Advance {
+    readonly deltas: readonly RenderDelta[];
+    readonly events: readonly SimEvent[];
+}
+```
+
 ### `atan` (function)
 
 ```ts
@@ -325,6 +334,12 @@ function createRoomEngine(setup: {
 
 ```ts
 function createScene(): Scene;
+```
+
+### `createSession` (function)
+
+```ts
+function createSession(setup: SessionSetup): Session;
 ```
 
 ### `createSim` (function)
@@ -688,6 +703,20 @@ interface LevelThing {
     readonly character: string;
     readonly x: number;
     readonly y: number;
+}
+```
+
+### `Link` (interface)
+
+```ts
+interface Link {
+    send(message: ClientMessage): void;
+    listen(handlers: {
+        message(message: ServerMessage): void;
+        bytes(bytes: Uint8Array): void;
+        closed(): void;
+    }): void;
+    close(): void;
 }
 ```
 
@@ -1221,6 +1250,64 @@ type ServerMessage = {
 };
 ```
 
+### `Session` (interface)
+
+```ts
+interface Session {
+    readonly seat: number | undefined;
+    readonly sim: Sim;
+    state(): SessionState;
+    stats(): SessionStats;
+    advance(local: readonly Pick<Command, 'type' | 'payload'>[]): Advance;
+    resume(link: Link): void;
+    close(): void;
+}
+```
+
+### `SessionSetup` (interface)
+
+```ts
+interface SessionSetup {
+    readonly link: Link;
+    readonly confirmed: Sim;
+    readonly predicted: Sim;
+    readonly resendAfterSync?: readonly string[];
+    readonly onCheck?: (tick: number, hash: string, ok: boolean) => void;
+    readonly onState?: (state: SessionState) => void;
+    readonly onLinkClosed?: () => void;
+}
+```
+
+### `SessionState` (type)
+
+```ts
+type SessionState = {
+    readonly state: 'waiting';
+    readonly code: string;
+    readonly missing: number;
+} | {
+    readonly state: 'playing';
+    readonly away: readonly number[];
+} | {
+    readonly state: 'closed';
+};
+```
+
+### `SessionStats` (interface)
+
+```ts
+interface SessionStats {
+    readonly confirmedTick: number;
+    readonly predictedTick: number;
+    readonly lead: number;
+    readonly rollbacks: number;
+    readonly late: number;
+    readonly desyncs: number;
+    readonly syncs: number;
+    readonly checked: number;
+}
+```
+
 ### `ShapeKind` (const)
 
 ```ts
@@ -1616,6 +1703,15 @@ function writeReplay(replay: Replay): string;
 const ACTION_NAME: RegExp;
 ```
 
+### `Advance` (interface)
+
+```ts
+interface Advance {
+    readonly deltas: readonly RenderDelta[];
+    readonly events: readonly SimEvent[];
+}
+```
+
 ### `atan` (function)
 
 ```ts
@@ -1880,6 +1976,12 @@ function createRoomEngine(setup: {
     readonly level: string;
     readonly seats: number;
 }): RoomEngine;
+```
+
+### `createSession` (function)
+
+```ts
+function createSession(setup: SessionSetup): Session;
 ```
 
 ### `createSim` (function)
@@ -2168,6 +2270,20 @@ interface LevelThing {
     readonly character: string;
     readonly x: number;
     readonly y: number;
+}
+```
+
+### `Link` (interface)
+
+```ts
+interface Link {
+    send(message: ClientMessage): void;
+    listen(handlers: {
+        message(message: ServerMessage): void;
+        bytes(bytes: Uint8Array): void;
+        closed(): void;
+    }): void;
+    close(): void;
 }
 ```
 
@@ -2672,6 +2788,64 @@ type ServerMessage = {
     readonly t: 'back';
     readonly seat: number;
 };
+```
+
+### `Session` (interface)
+
+```ts
+interface Session {
+    readonly seat: number | undefined;
+    readonly sim: Sim;
+    state(): SessionState;
+    stats(): SessionStats;
+    advance(local: readonly Pick<Command, 'type' | 'payload'>[]): Advance;
+    resume(link: Link): void;
+    close(): void;
+}
+```
+
+### `SessionSetup` (interface)
+
+```ts
+interface SessionSetup {
+    readonly link: Link;
+    readonly confirmed: Sim;
+    readonly predicted: Sim;
+    readonly resendAfterSync?: readonly string[];
+    readonly onCheck?: (tick: number, hash: string, ok: boolean) => void;
+    readonly onState?: (state: SessionState) => void;
+    readonly onLinkClosed?: () => void;
+}
+```
+
+### `SessionState` (type)
+
+```ts
+type SessionState = {
+    readonly state: 'waiting';
+    readonly code: string;
+    readonly missing: number;
+} | {
+    readonly state: 'playing';
+    readonly away: readonly number[];
+} | {
+    readonly state: 'closed';
+};
+```
+
+### `SessionStats` (interface)
+
+```ts
+interface SessionStats {
+    readonly confirmedTick: number;
+    readonly predictedTick: number;
+    readonly lead: number;
+    readonly rollbacks: number;
+    readonly late: number;
+    readonly desyncs: number;
+    readonly syncs: number;
+    readonly checked: number;
+}
 ```
 
 ### `ShapeKind` (const)

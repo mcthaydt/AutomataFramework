@@ -1,6 +1,8 @@
 // The net feature's entry: the wire between players and a room, the room's own rules, and the client that predicts
 // and rolls back. Nothing here reads a clock or sets a timer: time reaches it only as "advance once", from whoever
 // owns the loop, so the same messages in give the same state out on every machine.
+
+export type { Link } from './link.ts'
 export {
   type ClientMessage,
   DEFAULT_MAX_ROOMS,
@@ -32,3 +34,11 @@ export {
   SYNC_BEHIND,
 } from './protocol.ts'
 export { createRoomEngine, type RoomEngine, type RoomPeer } from './room-engine.ts'
+export {
+  type Advance,
+  createSession,
+  type Session,
+  type SessionSetup,
+  type SessionState,
+  type SessionStats,
+} from './session.ts'

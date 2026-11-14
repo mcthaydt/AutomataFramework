@@ -67,7 +67,10 @@ async function room(delays: readonly Delay[], wrap: Wrap = (l) => l): Promise<Ro
     const inner = wire.link(delay)
     const link = wrap({
       ...inner,
-      send: (m) => (sent.push(m), inner.send(m)),
+      send: (m) => {
+        sent.push(m)
+        inner.send(m)
+      },
       listen: (h) => inner.listen(h),
     })
     const confirmed = await sim(seats)
