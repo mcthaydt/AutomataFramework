@@ -99,6 +99,75 @@ test('setRoom moves the level where fit says, and the sky still fills the room',
   expect(near(snapshot(shown.canvas)(590, 10), SKY)).toBe(true)
 })
 
+/** The mount is 600 by 300, so the whole level is fitted at 33.33 pixels a tile. */
+async function openedWide(): Promise<{ level: Level; picture: LevelPicture }> {
+  mount.style.width = '600px'
+  mount.style.height = '300px'
+  const { level, picture: shown } = await opened()
+  return { level, picture: shown }
+}
+
+test('setView draws the level exactly there: the crate is where the view puts it, and the canvas is as big as before', async () => {
+  const { picture: shown } = await openedWide()
+  const size = { w: shown.canvas.width, h: shown.canvas.height }
+  shown.setView({ scale: 66.6667, left: -200, top: -300 })
+  expect(shown.fit()).toEqual(expect.objectContaining({ scale: 66.6667 }))
+  expect(shown.fit().left).toBeCloseTo(-200, 0)
+  expect(near(snapshot(shown.canvas)(233, 200), CRATE)).toBe(true)
+  expect({ w: shown.canvas.width, h: shown.canvas.height }).toEqual(size)
+})
+
+test('a view that leaves the level off the canvas shows sky or backdrop, never an empty canvas', async () => {
+  const { picture: shown } = await openedWide()
+  shown.setView({ scale: 10, left: 400, top: 200 })
+  const [r, g, b] = snapshot(shown.canvas)(10, 10)
+  expect(r + g + b).toBeGreaterThan(0)
+})
+
+test('setView(undefined) gives back the fit in the room, and the same picture', async () => {
+  const { picture: shown } = await openedWide()
+  const fit = shown.fit()
+  const before = shown.canvas.toDataURL()
+  shown.setView({ scale: 66.6667, left: -200, top: -300 })
+  expect(shown.fit()).not.toEqual(fit)
+  shown.setView(undefined)
+  expect(shown.fit()).toEqual(fit)
+  expect(shown.canvas.toDataURL()).toBe(before)
+})
+
+test('a mount that changes size, and setRoom, leave the view where it is set', async () => {
+  const { picture: shown } = await openedWide()
+  shown.setView({ scale: 50, left: -10, top: -20 })
+  const set = shown.fit()
+  mount.style.width = '500px'
+  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
+  expect(shown.fit()).toEqual(set)
+  shown.setRoom({ top: 0, right: 100, bottom: 0, left: 0 })
+  expect(shown.fit()).toEqual(set)
+})
+
+test('a view with no scale, or a scale that is not a number, is no view', async () => {
+  const { picture: shown } = await openedWide()
+  const fit = shown.fit()
+  shown.setView({ scale: Number.NaN, left: 0, top: 0 })
+  expect(shown.fit()).toEqual(fit)
+  shown.setView({ scale: 0, left: 5, top: 5 })
+  expect(shown.fit()).toEqual(fit)
+})
+
+test('show draws a changed level in the view that is set', async () => {
+  const { level, picture: shown } = await openedWide()
+  shown.setView({ scale: 66.6667, left: -200, top: -300 })
+  const set = shown.fit()
+  shown.show({
+    ...level,
+    things: level.things.map((thing) => (thing.id === 'crate-1' ? { ...thing, x: thing.x + 2 } : thing)),
+  })
+  expect(shown.fit()).toEqual(set)
+  expect(near(snapshot(shown.canvas)(233, 200), CRATE)).toBe(false)
+  expect(near(snapshot(shown.canvas)(233 + 2 * 66.6667, 200), CRATE)).toBe(true)
+})
+
 test('a game with no pictures draws each thing as its character’s box', async () => {
   const { content, level } = await loaded()
   picture = await createLevelPicture({ mount, content, level, keep: true })

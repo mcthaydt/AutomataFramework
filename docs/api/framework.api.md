@@ -1803,6 +1803,7 @@ interface LevelPicture {
     readonly canvas: HTMLCanvasElement;
     show(level: Level): void;
     setRoom(room: Room): void;
+    setView(view: Fit | undefined): void;
     fit(): Fit;
     destroy(): void;
 }
