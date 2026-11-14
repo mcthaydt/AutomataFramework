@@ -47,7 +47,10 @@ test('its recording still says "as recorded"', async () => {
   const code: GameCode = { framework, rules: { plugins: gamePlugins } }
   const memory = await made(['my-game'], withTemplate({}, code))
   const results = await Effect.runPromise(Effect.provide(runReplays({ folder: 'my-game' }), memory.layer))
-  expect(results.map((result) => result.verdict)).toEqual(['ok'])
+  // The message rides along, so a failure says why the play could not start.
+  expect(results.map((result) => `${result.verdict}: ${result.message}`)).toEqual([
+    expect.stringMatching(/^ok: Played 300 ticks and ended on [0-9a-f]{16}, as recorded\.$/),
+  ])
 })
 
 test('the name goes into package.json, the saves id and the README, and nowhere else', async () => {

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, expect, test } from 'vitest'
 import { COMMAND_NAMES } from '#src/features/cli/args.ts'
 import { helpFor } from '#src/features/cli/help.ts'
-import { controlsCommand } from '#src/features/commands/commands.ts'
+import { controlsCommand, Player } from '#src/features/commands/commands.ts'
 import { CONTENT_TYPES, type ContentType, parseContent, writeContent } from '#src/features/content/content.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import { Transform } from '#src/features/physics/physics.ts'
@@ -110,7 +110,7 @@ async function apex(plugins: readonly PluginDef[], presses: readonly number[]): 
     const release = presses.some((press) => start + press + 1 === tick)
     const held = at >= 0 ? ['jump'] : release ? [] : undefined
     sim.step(held === undefined ? [] : [controlsCommand(tick, 1, seq++, held)])
-    for (const entity of sim.query(Transform)) top = Math.min(top, entity.get(Transform).y)
+    for (const entity of sim.query(Player, Transform)) top = Math.min(top, entity.get(Transform).y)
   }
   return top
 }

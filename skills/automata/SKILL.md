@@ -56,4 +56,4 @@ npx --no automata replay
 Exit codes, for every command: 0 everything is fine, 1 the game has something to fix, 2 the command could not do its
 work (a folder that is not a game, a tool that is not installed). Add `--json` to read the answer as JSON.
 
-Always write `npx --no automata`. A bare `npx automata` can fetch an unrelated package of that name from npm.
+Always write `npx --no automata`, with `--no`. Without it, the command can fetch an unrelated package of that name from npm.

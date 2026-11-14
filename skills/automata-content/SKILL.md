@@ -5,7 +5,7 @@ description: Use when you create or change a content file, such as a level, a ch
 
 # Content files
 
-Content is JSON, one thing in each file. The file's `id` is its name without `.json`, and `format` is always `1`. Each
+Content is JSON, one thing in each file. The file's `id` is its name without the file ending, and `format` is always `1`. Each
 file is listed in `automata.toml`:
 
 ```toml
