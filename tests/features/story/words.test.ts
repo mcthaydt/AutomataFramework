@@ -7,9 +7,9 @@ test('Spanish when asked and it has the key, English when it has not, the key wh
   const content = await loadStory()
   expect(wordsOf(content, 'es')('keeper.hello')).toBe(es['keeper.hello'])
   expect(wordsOf(content, 'en')('keeper.hello')).toBe(en['keeper.hello'])
-  // Without a language: English.
-  expect(wordsOf(content)('keeper.hello')).toBe(en['keeper.hello'])
-  expect(wordsOf(content)('no.such')).toBe('no.such')
+  // English asked for by name.
+  expect(wordsOf(content, 'en')('keeper.hello')).toBe(en['keeper.hello'])
+  expect(wordsOf(content, 'en')('no.such')).toBe('no.such')
 
   const { 'keeper.hello': _gone, ...rest } = es
   const withoutKey = await loadStory({
@@ -24,7 +24,7 @@ test('a language the game has no file for falls back to English', async () => {
 
 test('a game with no messages shows the key', async () => {
   const { messages: _gone, ...content } = await loadStory()
-  expect(wordsOf(content)('keeper.hello')).toBe('keeper.hello')
+  expect(wordsOf(content, 'en')('keeper.hello')).toBe('keeper.hello')
 })
 
 test('a key like "constructor" is an ordinary key, not every object’s own', async () => {

@@ -41,7 +41,7 @@ export interface GameOptions extends GameSimOptions {
   readonly settings?: unknown
   /** Only for tests: stands in for the browser's gamepads. */
   readonly gamepads?: () => readonly (PadLike | null)[]
-  /** The words a player reads, by key. Default: the game's English messages (`wordsOf(content)`). */
+  /** The words a player reads, by key. Default: the game's English messages (`wordsOf(content, 'en')`). */
   readonly words?: Words
   /** The words on the story box's own two buttons. Default: Next and Skip. */
   readonly boxWords?: BoxWords

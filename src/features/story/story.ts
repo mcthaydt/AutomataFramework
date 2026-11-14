@@ -44,7 +44,7 @@ export interface StoryViewOptions {
   readonly content: GameContent
   /** The game's one count of command numbers, shared with the input and the players' joins. */
   readonly sequence: Sequence
-  /** Default: `wordsOf(content)`. */
+  /** Default: `wordsOf(content, 'en')`. */
   readonly words?: Words
   /** The words on the box's own two buttons. Default: Next and Skip. */
   readonly boxWords?: BoxWords

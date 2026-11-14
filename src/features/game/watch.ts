@@ -33,7 +33,7 @@ export interface WatchOptions extends GameSimOptions {
   readonly rounds?: number
   /** How many ticks the last picture is held before the next round. Default: one second (`tickHz`). */
   readonly restTicks?: number
-  /** The words a player reads, by key. Default: the game's English messages (`wordsOf(content)`). */
+  /** The words a player reads, by key. Default: the game's English messages (`wordsOf(content, 'en')`). */
   readonly words?: Words
   /** The words on the story box's own two buttons. Default: Next and Skip. */
   readonly boxWords?: BoxWords
