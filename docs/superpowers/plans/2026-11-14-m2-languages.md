@@ -381,7 +381,7 @@ Today the whole content is hashed into every snapshot, so a comma changed in `ko
 game, says "content changed" to every replay, and stops two players sharing a room. `GameContent.messages` is
 there only when a game lists a messages file, so a game with none hashes as it does today.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 ```ts
 // tests/features/level/sim-content.test.ts (the full game: tests/fixtures/full-game/read.ts)
@@ -405,18 +405,18 @@ test('a replay recorded before a word changed still plays', ...)
 test('the M1 fixture still ends sixty idle ticks on the recorded hash', ...)   // push-crate.json's idleHash60
 ```
 
-- [ ] **Step 2: Push; `check` fails** with "simContent is not exported" (or, with plan S merged, the first test
+- [x] **Step 2: Push; `check` fails** with "simContent is not exported" (or, with plan S merged, the first test
   fails on unequal hashes).
-- [ ] **Step 3: Implement.** `simContent` returns `content` itself when it has none of the left-out maps, else a
+- [x] **Step 3: Implement.** `simContent` returns `content` itself when it has none of the left-out maps, else a
   frozen copy without them and with `project` copied without the `project.content` entries of those kinds (audit C1:
   the list names every file by path, so keeping it would move every hash when a language is added or dropped). If
   plan S's `simContent` is on `main`, widen it so the list entries of its kinds go too, keep its tests, and say so. In `createGameSim`, only `createSim` is given `simContent(content)`; `spawnLevel`,
   `joinPlugin` and `touchKinds` keep the content they have today. Correct `createGameSim`'s doc comment, which says
   all the content goes into the sim. Search `src/` for every other `createSim(` and `content:` handed to a sim and
   report any that does not go through `createGameSim`.
-- [ ] **Step 4: Push; every job passes;** `git diff main -- tests/golden` is empty (or shows only `story.json`,
+- [x] **Step 4: Push; every job passes;** `git diff main -- tests/golden` is empty (or shows only `story.json`,
   handled as the Global Constraints say).
-- [ ] **Step 5: Commit** (`feat(level): a game's words are not in what the sim hashes`).
+- [x] **Step 5: Commit** (`feat(level): a game's words are not in what the sim hashes`).
 
 ### Task 2: Values in a text, and a message with no language yet
 
@@ -427,7 +427,7 @@ test('the M1 fixture still ends sixty idle ticks on the recorded hash', ...)   /
 **Interfaces:**
 - Produces: `Value`, `Values`, `Message`; `placeholdersOf`; `languageName`.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 ```ts
 test('the names in a text, each once, in order', () => {
@@ -441,12 +441,12 @@ test('a text of 2000 braces is read without trouble', ...)           // '{'.repe
 test('each language has an English name', ...)   // English, Spanish, Korean, Japanese, Chinese, Portuguese
 ```
 
-- [ ] **Step 2: Push; `check` fails** on the missing exports.
-- [ ] **Step 3: Implement.** One regular expression with no nested repeat: `/\{([a-z][a-zA-Z0-9]{0,31})\}/g`.
+- [x] **Step 2: Push; `check` fails** on the missing exports.
+- [x] **Step 3: Implement.** One regular expression with no nested repeat: `/\{([a-z][a-zA-Z0-9]{0,31})\}/g`.
   The schema does not change: a brace that is not a name is an ordinary character, so every messages file that
   reads today still reads and `schemas/messages.schema.json` stays as it is.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** (`feat(content): the values a text asks for`).
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** (`feat(content): the values a text asks for`).
 
 ### Task 3: The check for a missing translation
 
@@ -481,7 +481,7 @@ The missing file's path is English's own path with the file name changed. An Eng
 characters is cut in the sentence to 60 and "...". Order: the missing files in `LANGUAGES` order, then each listed
 language in that order, its keys sorted.
 
-- [ ] **Step 1: Write the failing tests:** one per row, each on content made in memory
+- [x] **Step 1: Write the failing tests:** one per row, each on content made in memory
   (`tests/fixtures/content/`); and
 
 ```ts
@@ -493,14 +493,14 @@ test('a level name of exactly 40 characters passes, and English is held to it to
 test('a thousand missing words are a thousand sentences, sorted', ...)
 ```
 
-- [ ] **Step 2: Push; `check` fails** on the missing export.
-- [ ] **Step 3: Implement** `translationProblems`. Keys are looked up with `Object.hasOwn`. Add
+- [x] **Step 2: Push; `check` fails** on the missing export.
+- [x] **Step 3: Implement** `translationProblems`. Keys are looked up with `Object.hasOwn`. Add
   `"level.level-1.name"` to the full game's six files (`Level 1`, `Nivel 1`, `레벨 1`, `レベル1`, `第 1 关`,
   `Fase 1`), and the fixture controls' words (audit I1): `controls.left`, `controls.right`, `controls.jump` as
   `Left`/`Right`/`Jump`, `Izquierda`/`Derecha`/`Saltar`, `왼쪽`/`오른쪽`/`점프`, `左`/`右`/`ジャンプ`, `左`/`右`/`跳`,
   `Esquerda`/`Direita`/`Pular`, each in the place `writeContent` puts it; the parity test's byte check holds them.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** (`feat(content): a check that says which words are not translated`).
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** (`feat(content): a check that says which words are not translated`).
 
 ### Task 4: The marks for a native speaker's read
 
@@ -517,7 +517,7 @@ test('a thousand missing words are a thousand sentences, sorted', ...)
 The spec: "M2's translations are written by an agent and marked for a native speaker's read before Release 1."
 The mark is kept by what was read, not by a flag, so it cannot go stale.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 ```ts
 test('with no marks, every translated word waits for a read, and English never does', ...)
@@ -536,13 +536,13 @@ test('a [read.en] or [read.fr] table is refused in words', ...)
   // 'read.fr: This is not a language a game has words in. Use es, ko, ja, zh or pt.'
 ```
 
-- [ ] **Step 2: Push; `check` fails** on the missing exports.
-- [ ] **Step 3: Implement.** Parse with `smol-toml` through the same `withoutMark` and `checkData` as
+- [x] **Step 2: Push; `check` fails** on the missing exports.
+- [x] **Step 3: Implement.** Parse with `smol-toml` through the same `withoutMark` and `checkData` as
   `parseProject`, with a strict Zod schema. `writeReadMarks` writes the text itself (keys are message keys, values
   are hex, so each line is `"<key>" = "<mark>"`); a language with no marks has no table. Commit the full game's
   marks file as `format = 1` and a newline.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** (`feat(content): marks for the words a native speaker has read`).
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** (`feat(content): marks for the words a native speaker has read`).
 
 ### Task 5: The `locale` layer and picking a language
 
@@ -554,7 +554,7 @@ test('a [read.en] or [read.fr] table is refused in words', ...)
 - Consumes: `LANGUAGES`, `Language`.
 - Produces: `matchLanguage`, `pickLanguage`, `LANGUAGE_NAMES`, `LANGUAGE_TAGS`.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 ```ts
 // rules.test.ts
@@ -573,12 +573,12 @@ test('each language is named in its own words, and has a tag for a page', ...)
   // English, Español, 한국어, 日本語, 中文, Português; en, es, ko, ja, zh-Hans, pt-BR
 ```
 
-- [ ] **Step 2: Push; `check` fails** ("locale is not a feature" and the missing exports).
-- [ ] **Step 3: Implement.** `LAYERS` gains `'locale'` after `'host'`. `matchLanguage` drops what follows a `.`, reads `_` as `-`
+- [x] **Step 2: Push; `check` fails** ("locale is not a feature" and the missing exports).
+- [x] **Step 3: Implement.** `LAYERS` gains `'locale'` after `'host'`. `matchLanguage` drops what follows a `.`, reads `_` as `-`
   (audit M1), lower-cases the tag and takes what is before the first `-`; a tag over 35 characters or with a character outside `a-z`, `0-9` and `-`
   finds nothing. `pickLanguage` tries saved, host, then each device tag, and ends on `'en'`.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** (`feat(locale): the layer, and which language a player gets`).
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** (`feat(locale): the layer, and which language a player gets`).
 
 ### Task 6: Words: the game's, the framework's own, and their values
 
@@ -598,7 +598,7 @@ is a messages file, in the bytes `writeContent` gives. They are imported as
 `import en from './library/en.json' with { type: 'json' }`, so the scripts that Node runs read them too; nothing
 typed from a JSON file is exported (each import is held in a `MessagesFile`), so no `.d.ts` names one.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 ```ts
 // fill.test.ts
@@ -635,15 +635,15 @@ test('how many of the framework's words wait for a native read is printed, and n
   // console.log(`native read: ${n} of ${total} framework words wait`); with an empty marks file n === total
 ```
 
-- [ ] **Step 2: Push; `check` fails** on the missing exports.
-- [ ] **Step 3: Implement.** `fill` replaces with one pass of `placeholdersOf`'s expression and `Object.hasOwn`. A
+- [x] **Step 2: Push; `check` fails** on the missing exports.
+- [x] **Step 3: Implement.** `fill` replaces with one pass of `placeholdersOf`'s expression and `Object.hasOwn`. A
   list is formatted with `new Intl.ListFormat(tag, { style: 'long', type: 'conjunction' })`, where the tag is
   `LANGUAGE_TAGS` but `en-GB` for English ("1, 2 and 4", as the level's own errors say it), and with `', '` when
   the engine has no `Intl.ListFormat`. `wordsOf` looks up, in order: the game's file for the language, the
   framework's for it, the game's English, the framework's English, then gives the key; the text found is filled in
   the language asked for.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** (`feat(locale): words by key, with their values, in six languages`).
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** (`feat(locale): words by key, with their values, in six languages`).
 
 ### Task 7: The player's language: the service, its settings, names for saves
 
@@ -657,7 +657,7 @@ test('how many of the framework's words wait for a native read is printed, and n
 - Produces: `LanguageSettings`, `LanguageSettingsSchema`, `LANGUAGE_SETTINGS_DEFAULT`, `Locale`, `createLocale`,
   `levelName`, `fitLabel`.
 
-- [ ] **Step 1: Write the failing tests** (the full game, `testHost`, `memoryStore`).
+- [x] **Step 1: Write the failing tests** (the full game, `testHost`, `memoryStore`).
 
 ```ts
 test('a first visit takes the device's language; with none, English', ...)
@@ -686,14 +686,14 @@ test('a cut label is one a save takes', ...)                          // createS
 test('an engine with no Intl.Segmenter cuts between code points', ...)
 ```
 
-- [ ] **Step 2: Push; `check` fails** on the missing exports.
-- [ ] **Step 3: Implement.** `createLocale` is not async: it takes the section with
+- [x] **Step 2: Push; `check` fails** on the missing exports.
+- [x] **Step 3: Implement.** `createLocale` is not async: it takes the section with
   `settings.section({ name: 'language', schema: LanguageSettingsSchema, initial: LANGUAGE_SETTINGS_DEFAULT })`,
   and listens to that handle's `onChange`, so a choice set by anyone holding the same handle is followed too.
   `set` passes the write's answer back. `words` reads the language on every call. `fitLabel` counts as a save does
   (`length`, UTF-16 units) and walks `Intl.Segmenter`'s graphemes, or code points where there is none.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** (`feat(locale): the player's language, kept with their settings`).
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** (`feat(locale): the player's language, kept with their settings`).
 
 ### Task 8: The features below speak in keys
 
@@ -727,7 +727,7 @@ A feature below `locale` cannot ask it for words, so it must not hold a sentence
 | the touch overlay's `aria-label` | `automata.touch.label` | |
 | a touch button's words (audit I1) | the game's `controls.<action>`, else the control's own `label` | |
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 ```ts
 // tests/features/net/words.test.ts: each case that quoted a sentence now expects its key and values
@@ -748,8 +748,8 @@ test('the page says which language it is in, and keeps saying so', ...)
 test('with no element it is the page's own <html>', ...)                  // and the test puts back what was there
 ```
 
-- [ ] **Step 2: Push; `check` and the `engines` jobs fail** on the missing exports.
-- [ ] **Step 3: Implement.** `net/words.ts` keeps `OnlineStatus` and answers with `onlineMessage`; its sentences
+- [x] **Step 2: Push; `check` and the `engines` jobs fail** on the missing exports.
+- [x] **Step 3: Implement.** `net/words.ts` keeps `OnlineStatus` and answers with `onlineMessage`; its sentences
   go (they are in `library/en.json`). `locale/online.ts` is
   `onlineWords(status, words = frameworkWords('en'))`: the message said by `words`, or `''`. `players.ts` takes
   `words: Words` in its options and builds each `message` with it when the answer is made; `startGame` and
@@ -758,8 +758,8 @@ test('with no element it is the page's own <html>', ...)                  // and
   `Object.hasOwn` on the key, so a game that names no `controls.*` shows its labels as today. `followLanguage` is exported by
   `src/index.ts` only. `tests/fixtures/online/page/main.ts` and the README's online example import `onlineWords`
   from the same entry as before and need no change; if either fails, stop and report.
-- [ ] **Step 4: Push; every job passes,** the `online` job too.
-- [ ] **Step 5: Commit** (`feat(locale): the framework's own sentences in the player's language`).
+- [x] **Step 4: Push; every job passes,** the `online` job too.
+- [x] **Step 5: Commit** (`feat(locale): the framework's own sentences in the player's language`).
 
 ### Task 9: Journeys in three real browsers
 
@@ -783,7 +783,7 @@ and shows three things as text a test can read: the keeper's greeting (`keeper.h
 answer to an `addPlayer` that must be refused. It has one real `<button>` per language, named with
 `LANGUAGE_NAMES`, each at least 48 px tall, and posts the same three messages as the saves page.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 ```ts
 // language.browser.test.ts, at 390x844, 844x390, 820x1180, 1180x820 and 1280x720
@@ -808,12 +808,12 @@ test('with storage refused the pick still shows, and the next page is the device
 test('a player whose page is in Spanish is told in Spanish who the room waits for', ...)
 ```
 
-- [ ] **Step 2: Push; the `engines` jobs fail** because the page fixture does not exist.
-- [ ] **Step 3: Implement** the page fixture. No change under `src/`: if a test needs one, the earlier task was
+- [x] **Step 2: Push; the `engines` jobs fail** because the page fixture does not exist.
+- [x] **Step 3: Implement** the page fixture. No change under `src/`: if a test needs one, the earlier task was
   wrong; fix it there and say so in the report.
-- [ ] **Step 4: Push; every job passes** in Chromium, WebKit and Firefox. Look at the six pictures on the
+- [x] **Step 4: Push; every job passes** in Chromium, WebKit and Firefox. Look at the six pictures on the
   `ci-screens` branch: each language's letters are drawn (no empty boxes), and say what you saw in the report.
-- [ ] **Step 5: Commit** (`test: a player picks a language and keeps it, in three browsers`).
+- [x] **Step 5: Commit** (`test: a player picks a language and keeps it, in three browsers`).
 
 ### Task 10: An agent's journey, the package and the README
 
@@ -821,7 +821,7 @@ test('a player whose page is in Spanish is told in Spanish who the room waits fo
 - Modify: `tests/features/content/agent-journey.test.ts`, `tests/public-surface.test.ts`, `tests/install/smoke.mjs`,
   `tests/install/consumer.ts`, `README.md`, `tests/docs/readme.test.ts`, `docs/api/framework.api.md`
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 ```ts
 // agent-journey.test.ts: an agent adds a line, with nothing but the files and the sentences it is given
@@ -835,8 +835,8 @@ test('an agent misspells a value in one language and is told which', ...)
 // readme.test.ts: the README has "## Languages"; every name it uses is exported; its code blocks are checked as the others are
 ```
 
-- [ ] **Step 2: Push; `check` and `package` fail** on the surface and the README.
-- [ ] **Step 3: Write.** `smoke.mjs`, on the full game it already loads: `createLocale` with `testHost({ deviceLanguages: ['ja-JP'] })`
+- [x] **Step 2: Push; `check` and `package` fail** on the surface and the README.
+- [x] **Step 3: Write.** `smoke.mjs`, on the full game it already loads: `createLocale` with `testHost({ deviceLanguages: ['ja-JP'] })`
   and `memoryStore()` greets in Japanese, and `translationProblems` is empty. `consumer.ts` uses `typed` on a
   messages object and `Locale`. The README's "Languages" section, after "Saves", in plain words: where words live
   (one file per language, one line per word), `{name}` values, how the language is picked, `createLocale` and
@@ -844,22 +844,22 @@ test('an agent misspells a value in one language and is told which', ...)
   what their sentences look like, the marks file and that every translation here waits for a native speaker's
   read, and that changing a word changes no replay. "Play online" keeps `onlineWords` and gains one line: pass
   `locale.words` for the player's language. Take the API report's text from the `package` job's log.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** (`docs: languages in the README, the package and an agent's journey`).
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** (`docs: languages in the README, the package and an agent's journey`).
 
 ### Task 11: The whole branch, the tracker and the handoff
 
-- [ ] **Step 1:** Whole-branch self-review (no subagents): every sentence in this plan's tables appears in a test;
+- [x] **Step 1:** Whole-branch self-review (no subagents): every sentence in this plan's tables appears in a test;
   each Review Focus line has its test; `git diff main -- tests/golden` is empty (or only `story.json`, named in its
   commit); `git diff main -- schemas` is empty; no file under `src/` is over 600 lines; nothing in `sim`,
   `physics`, `commands`, `net` or `level` imports `locale`.
-- [ ] **Step 2:** `docs/superpowers/progress.md`: plan L's execution at 100%, a log line with the test count and
+- [x] **Step 2:** `docs/superpowers/progress.md`: plan L's execution at 100%, a log line with the test count and
   how many of the framework's words wait for a native read, and (audit M8) a "Before Release 1" line in plan L's
   row: every framework and demo word has a read mark, so `unreadWords` is empty.
-- [ ] **Step 3:** Report to the coordinator: the merge commit to move pins to; which of plans S, T and U must now
+- [x] **Step 3:** Report to the coordinator: the merge commit to move pins to; which of plans S, T and U must now
   add their keys to the library; that plan K's Step L and plan D's step for L can start; anything the journeys'
   pictures showed.
-- [ ] **Step 4: Push; the last run is green on the head.**
+- [x] **Step 4: Push; the last run is green on the head.**
 
 ### Task 12 (held: only if the Owner answers "use Paraglide"): typed messages for a game's code
 
