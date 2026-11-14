@@ -80,7 +80,7 @@ test('a broken level is shown in words, in the page', async () => {
   expect(root.querySelector('canvas')).toBeNull()
 })
 
-test('a picture that was never painted is said in the player\'s language, with the command that paints it', async () => {
+test("a picture that was never painted is said in the player's language, with the command that paints it", async () => {
   const frames = manualFrames()
   const unpainted = async (path: string): Promise<Blob> => {
     if (path === 'content/figures/hero.png') throw new Error(`${path}: no such file`)

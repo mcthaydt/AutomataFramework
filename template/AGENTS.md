@@ -13,7 +13,7 @@ the skills below.
 | Every word a player reads, one file for each language (English says what a word is for) | `content/messages/` |
 | The list of the game's rules | `src/headless.ts` |
 | One feature's rules (a plugin and its systems) | `src/features/<name>/` |
-| The page: loading, controls, words on screen | `src/features/page/` |
+| The page: loading, controls, and how it looks | `src/features/page/` |
 | Tests of the rules | `tests/features/<name>/` |
 | A recorded play, replayed on every check | `replays/` |
 
