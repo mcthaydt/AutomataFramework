@@ -133,14 +133,14 @@ test('the Colyseus server packages are only for the server feature', () => {
 // reports even that caught attempt. `lib/zod.ts` turns the probe off before anything is built; a file that reached Zod
 // by another way could run first, in a bundler's chunk order.
 test('Zod is only reached through lib/zod.ts', () => {
-  expect(one({ 'src/features/content/shared.ts': "import { z } from 'zod'" })).toEqual(['package-confined'])
-  expect(one({ 'src/features/content/shared.ts': "import type { z } from 'zod'" })).toEqual([
+  expect(one({ 'src/features/content/content.ts': "import { z } from 'zod'" })).toEqual(['package-confined'])
+  expect(one({ 'src/features/content/content.ts': "import type { z } from 'zod'" })).toEqual([
     'package-confined',
   ])
   expect(
     one({
       'src/lib/zod.ts': "import { config, z } from 'zod'",
-      'src/features/content/shared.ts': "import { z } from '../../lib/zod.ts'",
+      'src/features/content/content.ts': "import { z } from '../../lib/zod.ts'",
     }),
   ).toEqual([])
 })
