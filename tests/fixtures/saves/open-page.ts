@@ -3,6 +3,9 @@
 // browser stored. (A second `webHost()` in this same page would prove less, since it would share this page's memory.)
 import type { SavesPage } from './page.ts'
 
+/** How long a page may take to load before the test says so, well inside the test's own limit. */
+const LOAD_LIMIT_MS = 20_000
+
 /** Where `page.ts` is served from, worked out from this file's own address so the test server's layout never matters. */
 const PAGE_URL = new URL('./page.ts', import.meta.url).href
 
@@ -16,10 +19,25 @@ export async function openPage(
   try {
     // The page tells this one when it is ready, or why it is not. Listening starts before the frame exists.
     const ready = new Promise<Window>((resolve, reject) => {
-      const heard = (event: MessageEvent): void => {
-        if (frame.contentWindow === null || event.source !== frame.contentWindow) return
+      let started = false
+      // A page that never answers is named, not left to the test's own timeout, which says nothing.
+      const gaveUp = setTimeout(() => {
         window.removeEventListener('message', heard)
-        const data = event.data as { savesPage: 'ready' } | { savesPage: 'error'; error: string }
+        reject(
+          new Error(
+            `The page did not answer in ${LOAD_LIMIT_MS} ms (its script ${started ? 'started' : 'never started'}).`,
+          ),
+        )
+      }, LOAD_LIMIT_MS)
+      function heard(event: MessageEvent): void {
+        if (frame.contentWindow === null || event.source !== frame.contentWindow) return
+        const data = event.data as { savesPage: 'started' | 'ready' } | { savesPage: 'error'; error: string }
+        if (data.savesPage === 'started') {
+          started = true
+          return
+        }
+        clearTimeout(gaveUp)
+        window.removeEventListener('message', heard)
         if (data.savesPage === 'ready') resolve(frame.contentWindow)
         else reject(new Error(`The page did not load: ${data.error}`))
       }
@@ -31,6 +49,8 @@ export async function openPage(
     // gets the plain version of it (the one Vitest itself uses where it has no runner): load the module, nothing more.
     frame.srcdoc = `<!doctype html><html><body style="margin:0"><script type="module">
 globalThis.__vitest_browser_runner__ = { wrapDynamicImport: (load) => load() }
+parent.postMessage({ savesPage: 'started' }, '*')
+addEventListener('error', (event) => parent.postMessage({ savesPage: 'error', error: 'script error: ' + event.message }, '*'))
 import(${JSON.stringify(PAGE_URL)}).then(
   () => parent.postMessage({ savesPage: 'ready' }, '*'),
   (error) => parent.postMessage({ savesPage: 'error', error: String((error && error.stack) || error) }, '*'),
