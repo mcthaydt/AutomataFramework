@@ -37,7 +37,8 @@ export function runPlay(options: {
     if (code === 'missing')
       return yield* Effect.fail(
         new CliError(
-          game.codeError ?? `This game's tools are not installed yet. Run npm install in ${folder}, then try again.`,
+          game.codeError ??
+            `This game's tools are not installed yet. Run npm install in ${folder}, then try again.`,
         ),
       )
     return code

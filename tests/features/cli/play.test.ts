@@ -38,7 +38,9 @@ test('not a game: the sentence, and vite is never started', async () => {
 test('vite not installed: the npm install sentence, exit 2', async () => {
   const memory = memoryLayer(under('game', game()), { tools: { vite: 'missing' } })
   expect(await main(['play', 'game'], memory.layer)).toBe(2)
-  expect(memory.err).toEqual(["This game's tools are not installed yet. Run npm install in game, then try again."])
+  expect(memory.err).toEqual([
+    "This game's tools are not installed yet. Run npm install in game, then try again.",
+  ])
 })
 
 test('a broken content file is printed first, and the game still starts', async () => {
