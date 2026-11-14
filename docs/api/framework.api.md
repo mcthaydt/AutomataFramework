@@ -311,6 +311,16 @@ function createRenderer(options: {
 function createRng(seed: number): Rng;
 ```
 
+### `createRoomEngine` (function)
+
+```ts
+function createRoomEngine(setup: {
+    readonly sim: Sim;
+    readonly level: string;
+    readonly seats: number;
+}): RoomEngine;
+```
+
 ### `createScene` (function)
 
 ```ts
@@ -1109,6 +1119,32 @@ type RngState = [number, number, number, number];
 const ROOM_NAME = "game";
 ```
 
+### `RoomEngine` (interface)
+
+```ts
+interface RoomEngine {
+    readonly options: RoomOptions;
+    readonly started: boolean;
+    readonly tick: number;
+    readonly stats: {
+        readonly late: number;
+        readonly refused: number;
+        readonly ignored: number;
+    };
+    join(peer: RoomPeer, options: unknown, code: string): {
+        readonly seat: number;
+    } | {
+        readonly problem: 'different-version' | 'room-full';
+    };
+    receive(seat: number, raw: unknown): void;
+    away(seat: number): void;
+    back(seat: number, peer: RoomPeer): void;
+    leave(seat: number): void;
+    step(): void;
+    replay(): Replay;
+}
+```
+
 ### `RoomOptions` (interface)
 
 ```ts
@@ -1131,6 +1167,15 @@ function roomOptionsOf(sim: Sim, room: {
     readonly level: string;
     readonly seats: number;
 }): RoomOptions;
+```
+
+### `RoomPeer` (interface)
+
+```ts
+interface RoomPeer {
+    send(message: ServerMessage): void;
+    sendBytes(bytes: Uint8Array): void;
+}
 ```
 
 ### `Scene` (interface)
@@ -1825,6 +1870,16 @@ function createRecorder(sim: Sim, options?: {
 
 ```ts
 function createRng(seed: number): Rng;
+```
+
+### `createRoomEngine` (function)
+
+```ts
+function createRoomEngine(setup: {
+    readonly sim: Sim;
+    readonly level: string;
+    readonly seats: number;
+}): RoomEngine;
 ```
 
 ### `createSim` (function)
@@ -2526,6 +2581,32 @@ type RngState = [number, number, number, number];
 const ROOM_NAME = "game";
 ```
 
+### `RoomEngine` (interface)
+
+```ts
+interface RoomEngine {
+    readonly options: RoomOptions;
+    readonly started: boolean;
+    readonly tick: number;
+    readonly stats: {
+        readonly late: number;
+        readonly refused: number;
+        readonly ignored: number;
+    };
+    join(peer: RoomPeer, options: unknown, code: string): {
+        readonly seat: number;
+    } | {
+        readonly problem: 'different-version' | 'room-full';
+    };
+    receive(seat: number, raw: unknown): void;
+    away(seat: number): void;
+    back(seat: number, peer: RoomPeer): void;
+    leave(seat: number): void;
+    step(): void;
+    replay(): Replay;
+}
+```
+
 ### `RoomOptions` (interface)
 
 ```ts
@@ -2548,6 +2629,15 @@ function roomOptionsOf(sim: Sim, room: {
     readonly level: string;
     readonly seats: number;
 }): RoomOptions;
+```
+
+### `RoomPeer` (interface)
+
+```ts
+interface RoomPeer {
+    send(message: ServerMessage): void;
+    sendBytes(bytes: Uint8Array): void;
+}
 ```
 
 ### `ServerMessage` (type)

@@ -31,3 +31,4 @@ export {
   START_LEAD,
   SYNC_BEHIND,
 } from './protocol.ts'
+export { createRoomEngine, type RoomEngine, type RoomPeer } from './room-engine.ts'
