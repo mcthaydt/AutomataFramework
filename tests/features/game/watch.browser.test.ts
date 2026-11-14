@@ -152,6 +152,19 @@ test('rounds: 1 holds the last picture and asks for no more frames', async () =>
   expect(w.sim.hash()).toBe(replay.finalHash)
 })
 
+// The loop gives a late frame several ticks at once; the one that ends the recording must be the last of them.
+test("rounds: 1 stops on the recording's last tick when one frame carries several", async () => {
+  const { watch: w, frames, replay } = await start({ rounds: 1 })
+  frames.at(0)
+  run(frames, TICKS - 1)
+  expect(w.sim.tick).toBe(TICKS - 1)
+  frames.advance(4 * FRAME)
+  expect(w.sim.tick).toBe(TICKS)
+  expect(w.rounds).toBe(1)
+  expect(w.sim.hash()).toBe(replay.finalHash)
+  expect(frames.pending).toBe(false)
+})
+
 test('it is still while the host is hidden, and does not fast-forward after', async () => {
   const { watch: w, frames, host } = await start()
   frames.at(0)

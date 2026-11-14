@@ -21,13 +21,19 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan V: 4. Execution | In progress, 84% (Tasks 1 to 7 of 8 green on PR 40; each task is 12%, the last 4% is the final green run) | `plans/2026-11-14-m2-saves-host.md`, ticked as it goes |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
 | Plan I (input), stage 3: plan audit | Done, 100%: 3 blocking, 12 should-fix and 5 notes, all applied to the plan; ready for stage 4 | `audits/2026-11-14-m2-input-plan-audit.md` |
-| Plan I (input), stage 4: execution | Done, **100%** (all ten tasks built; Tasks 1 to 8 green in CI, Tasks 9 and 10 in CI at the last push), AutomataFramework PR 42 | `plans/2026-11-14-m2-input.md` |
+| Plan I (input), stage 4: execution | Done, 100%: all ten tasks built, merged (PR 42, `2aa020b`), green on `eb7e32e` | `plans/2026-11-14-m2-input.md` |
+| Plan I (input), stage 5: implementation audit | Done, 100%, in review: no critical, two important (both in `addPlayer`), ten minor, five notes; thirteen fixes for stage 6; no Owner question | `audits/2026-11-14-m2-input-implementation-audit.md` |
+| Plan I (input), stage 6: fixes | Done, **100%** (the audit's 13 fixes; each test pushed red first, then its fix; CI green), AutomataFramework PR 51 | `audits/2026-11-14-m2-input-implementation-audit.md` |
 | Plan N, networking: 2. Plan, 3. Plan audit | Plan written; audit done (stage 3 at 100%), ten findings F1 to F10 applied to the plan, in review; 0% built (12 tasks; Task 11 waits for plan I's `join` and `leave`) | `plans/2026-11-14-m2-networking.md`, `audits/2026-11-14-m2-networking-plan-audit.md` |
 | Plan P (physics: joints and touch): 2. Plan | Written, in review; twelve tasks; stage at 100%, plan P at 10%; waits on plan C | `plans/2026-11-14-m2-physics.md` |
 | Plan P (physics: joints and touch): 3. Plan audit | Written, in review; stage at 100%, plan P at 20%: one critical (a rope's length through `Math.hypot`, now `dmath`'s `hypot`), eight important and nine minor findings, all but one minor applied to the plan; no Owner question; waits on plan C | `audits/2026-11-14-m2-physics-plan-audit.md` |
 
 ### Log
 
+- 2026-11-14: plan I's implementation audit. Nothing critical. I1: removing a player and adding one before the
+  game steps answers "yes" and adds nobody; I2: `addPlayer` cannot see a claim made through `game.input.claim`, so one
+  gamepad can drive two heroes. Ten minor fixes (touch through a pause, triggers, a reason, `ListedPad`, and tests)
+  go in the same fixes branch; fixes 1 to 3 come before plan U's pause and "Add a player" screens.
 - 2026-11-14: plan V's audit. Three major findings, fixed in the plan: `host` moves below `locale`, `ui` and
   `screens` in the layers (they read it); both entries export `z`, so a game that may import only the framework can
   write a save's schema; `input` and `audio` export their settings' schemas and plan U makes the sections. The
@@ -50,6 +56,8 @@ This repo has Part A only: one function.
 |---|---|
 | 1. `watchReplay` draws a replay with no input | Done, 100% (merged, PR 29, `cc281c9`) |
 | The Owner's answers, Q1 (a), Q2 (a), Q3 (b), Q4 (a) | Recorded in the spec addendum, 2026-11-14 |
+| Stage 6, F1: `rounds` stops on the recording's last tick even when a late frame carries several ticks | Done, 100% (a guard at the top of `step`, and a test that delivers the end in one frame of four ticks), in review |
+| Stage 6, F4 (the Owner chose to swap the package): Rapier's binary is its own file, not base64 in a script | Written, in review: the plain `@dimforge/rapier2d-deterministic` 0.21.0 (a development dependency now, since its code is built into the framework's files) replaces `-compat`; `vite-rapier-wasm.ts` answers the package's wasm import and emits `dist/rapier_wasm2d_bg.wasm` (2.4 MB, 933 kB gzipped) and `dist/rapier.LICENSE`; `physics/rapier-wasm.ts` gives the instance to the package, with the bytes read by a module the plugin writes (from disk in Node, fetched elsewhere; I/O stays out of `src`, as the sim's purity rule needs). Same Rapier, same version, same binary, so no golden may move; CI's four engines and the packed install are the proof |
 
 ## Cycle 1: the 2D first layer
 
