@@ -8,7 +8,7 @@ import { Effect } from 'effect'
 import { importsOf, resolveImport, withoutComments } from '../../lib/imports.ts'
 import type { Diagnostic } from '../content/content.ts'
 import type { GameFolder } from './game-folder.ts'
-import { Files } from './ports.ts'
+import { Files, type FilesService } from './ports.ts'
 import type { StepReport } from './report.ts'
 
 const HEADLESS = 'src/headless.ts'
@@ -186,7 +186,7 @@ export function ruleProblems(files: Readonly<Record<string, string>>): Diagnosti
 }
 
 /** The rules step: every `.ts` under `src/` and the `package.json` are read, and `ruleProblems` says what is wrong. */
-export function rulesStep(game: GameFolder): Effect.Effect<StepReport, never, Files> {
+export function rulesStep(game: GameFolder): Effect.Effect<StepReport, never, FilesService> {
   return Effect.gen(function* () {
     const files = yield* Files
     const texts: Record<string, string> = {}

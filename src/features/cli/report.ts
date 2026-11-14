@@ -1,7 +1,6 @@
 // What `automata check` says: one report of steps, and the words and the exit status that follow from it. The report is
 // plain data, so the command prints it, `--json` gives it as it is, and an agent's tool reads it the same way.
-import type { Diagnostic } from '../content/content.ts'
-import { formatDiagnostic } from '../content/content.ts'
+import { type Diagnostic, formatDiagnostic } from '../content/content.ts'
 
 /** The steps of `automata check`, in the order they run. */
 export type StepName = 'files' | 'rules' | 'lint' | 'types' | 'replays' | 'tests'

@@ -4,7 +4,7 @@
 import { fixtureFiles } from '../game/read.ts'
 
 /** The hero's rules, written the way a game's own would be: imports the headless entry and nothing else. */
-export const HERO_SOURCE = `import {
+const HERO_SOURCE = `import {
   Body,
   definePlugin,
   defineSystem,

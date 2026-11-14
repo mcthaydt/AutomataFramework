@@ -12,10 +12,10 @@ import {
   parseContent,
   writeContent,
 } from '../content/content.ts'
-import { CliError, Code, Files, type FilesService, type GameCode } from './ports.ts'
+import { CliError, Code, type CodeService, Files, type FilesService, type GameCode } from './ports.ts'
 
 /** The part of the framework `check` reads files with: the game's own copy when it has one. */
-export type ContentApi = Pick<typeof Headless, 'loadGame' | 'parseContent' | 'writeContent'>
+type ContentApi = Pick<typeof Headless, 'loadGame' | 'parseContent' | 'writeContent'>
 
 /** This command's own copy, for a game that is not installed yet. */
 const OWN_CONTENT: ContentApi = { loadGame, parseContent, writeContent }
@@ -56,7 +56,7 @@ function readerOver(
  * Reads the game in `folder`. A folder with no `automata.toml` is not a game and is the one failure. A game that is not
  * installed, or whose rules do not load, is still read: its files can be checked, and the report says what is missing.
  */
-export function readGame(folder: string): Effect.Effect<GameFolder, CliError, Files | Code> {
+export function readGame(folder: string): Effect.Effect<GameFolder, CliError, CodeService | FilesService> {
   return Effect.gen(function* () {
     const files = yield* Files
     const project = yield* files.readText(join(folder, 'automata.toml'))

@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { Effect } from 'effect'
 import { type Diagnostic, parseProject } from '../content/content.ts'
 import type { GameFolder } from './game-folder.ts'
-import { type CliError, Files } from './ports.ts'
+import { type CliError, Files, type FilesService } from './ports.ts'
 import type { StepReport } from './report.ts'
 
 const NOT_INSTALLED_NOTE =
@@ -14,7 +14,7 @@ const NOT_INSTALLED_NOTE =
  * The files step. `fix` rewrites a file that reads but is not in the standard form; it never touches a file that does
  * not read, since whatever is wrong in it is for a person to say.
  */
-export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepReport, CliError, Files> {
+export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepReport, CliError, FilesService> {
   return Effect.gen(function* () {
     const files = yield* Files
     const problems: Diagnostic[] = game.loaded.ok ? [] : [...game.loaded.diagnostics]
@@ -57,7 +57,8 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
         problems.push({
           file: path,
           path: '',
-          message: 'This file is not listed in automata.toml, so the game does not use it. List it, or delete it.',
+          message:
+            'This file is not listed in automata.toml, so the game does not use it. List it, or delete it.',
         })
     }
 
