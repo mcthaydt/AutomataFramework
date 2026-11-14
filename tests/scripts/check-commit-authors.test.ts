@@ -89,6 +89,14 @@ describe('Claude credits', () => {
     expect(findProblems([commit(owner)], 'Generated with Claude Code', '')).toHaveLength(1)
   })
 
+  test('a sentence that only mentions a credit passes', () => {
+    const prose =
+      'It fails on a Co-Authored-By: Claude line, a Claude-Session line or Generated with Claude Code.'
+    expect(findProblems([commit(owner, { message: `ci: a check\n\n${prose}` })], 'A check', prose)).toEqual(
+      [],
+    )
+  })
+
   test('a person who co-authored with someone else passes', () => {
     const message = 'feat: a change\n\nCo-Authored-By: Sam Rivers <sam@example.com>'
     expect(findProblems([commit(owner, { message })], 'A change', '')).toEqual([])

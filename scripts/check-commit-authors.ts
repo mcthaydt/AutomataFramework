@@ -78,11 +78,14 @@ function isExactOwner(person: Person): boolean {
   return person.name === OWNER.name && lower(person.email) === OWNER.email
 }
 
-/** The Claude credits that must not appear. Each is matched on a line of its own, wherever it sits. */
+/**
+ * The Claude credits that must not appear. Each is matched as a line of its own (a footer may start with an emoji
+ * or a bullet), so a sentence that only talks about them, like this check's own description, is let through.
+ */
 const CREDITS: readonly { readonly pattern: RegExp; readonly label: string }[] = [
   { pattern: /^\s*co-authored-by:.*\b(claude|anthropic)\b/im, label: 'a "Co-Authored-By: Claude" line' },
   { pattern: /^\s*claude-session:/im, label: 'a "Claude-Session" line' },
-  { pattern: /generated with \[?claude code/i, label: 'a "Generated with Claude Code" line' },
+  { pattern: /^[^\p{L}\p{N}]*generated with \[?claude code/iu, label: 'a "Generated with Claude Code" line' },
 ]
 
 /** The first credit found in `text`, with the line it is on, or null. */
