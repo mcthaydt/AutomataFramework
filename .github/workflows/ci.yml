@@ -85,7 +85,7 @@ jobs:
   # each pull request. Only this job may write, only to that branch (branch protection covers `main`), and never for a
   # pull request from a fork.
   screens:
-    needs: [engines, online]
+    needs: [engines, online, create-play]
     if: always() && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
@@ -155,3 +155,87 @@ jobs:
           node smoke.mjs
           node server-smoke.mjs
           "$GITHUB_WORKSPACE/node_modules/.bin/tsc" -p .
+          # The same file again with the older TypeScript and NodeNext resolution, the way a game on either would read it.
+          node "$GITHUB_WORKSPACE/node_modules/typescript-6/bin/tsc" -p tsconfig.ts6.json
+      - name: The packed package holds the command, the template and the skills
+        run: node tests/install/tarball.mjs "$RUNNER_TEMP"/pack/*.tgz
+
+  # The package once, as a release would ship it: the next two jobs install these very bytes, never the working folder.
+  create-pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm pack --pack-destination "$RUNNER_TEMP/pack"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: create-tarball
+          path: ${{ runner.temp }}/pack/*.tgz
+          if-no-files-found: error
+
+  # The README's "Start here" in a clean folder, on each system a person may use: a new game is made, installed,
+  # checked, changed, broken and served, using only Node and the tarball. One key in the matrix and no `name:`, so the
+  # checks are called `create (ubuntu-latest)`, `create (windows-latest)` and `create (macos-latest)`.
+  create:
+    needs: create-pack
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      # The commit the game's `github:` route installs, on the one system that tries it.
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+      - name: Get the tarball create-pack made
+        shell: bash
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name create-tarball --dir "$RUNNER_TEMP/tarball"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: node tests/install/create-smoke.mjs "${{ runner.temp }}/tarball"
+
+  # The same new game in real browsers: Chromium, WebKit and Firefox, at five sizes, by key and by touch.
+  create-play:
+    needs: create-pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium webkit firefox
+      - name: Get the tarball create-pack made
+        shell: bash
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name create-tarball --dir "$RUNNER_TEMP/tarball"
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: pnpm test:create
+        env:
+          CREATE_TARBALL: ${{ runner.temp }}/tarball
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: screens-create
+          path: tests/create/__screenshots__/**
+          if-no-files-found: ignore

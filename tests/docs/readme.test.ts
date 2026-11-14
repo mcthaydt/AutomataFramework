@@ -1,8 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
+import { COMMAND_NAMES } from '#src/features/cli/args.ts'
+import { helpFor } from '#src/features/cli/help.ts'
 import { CONTENT_TYPES } from '#src/features/content/content-types.ts'
 import { TOUCH_PROPERTIES } from '#src/features/input/touch.ts'
+import { FRAMEWORK_VERSION } from '#src/features/sim/sim.ts'
 import * as framework from '#src/headless.ts'
+import { GAME_FOLDER, PACKAGE_NAME, START_HERE } from '../install/create-commands.ts'
 
 const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8')
 
@@ -140,4 +144,46 @@ test('the README has a Sound section: the states, the button, the page event, th
   for (const name of names.filter((n) => n !== 'startGame' && n !== 'webHost' && n !== 'webSpeaker'))
     expect(framework, name).toHaveProperty(name)
   expect(section('## Without a page')).toContain('audio')
+})
+
+// The page a new person reads first and the commands CI runs are the same list.
+test('"Start here" is the first section, and its commands are the ones the create journey runs', () => {
+  expect(readme.indexOf('## ')).toBe(readme.indexOf('## Start here'))
+  const block = /```sh\n([\s\S]*?)```/.exec(section('## Start here'))?.[1] ?? ''
+  expect(block.trimEnd().split('\n')).toEqual(START_HERE)
+  // The smoke swaps one thing in the first line, the package for the tarball, so the rest is the README's.
+  expect(START_HERE[0]).toContain(PACKAGE_NAME)
+  expect(START_HERE[1]).toBe(`cd ${GAME_FOLDER}`)
+  expect(section('## Start here')).toContain('24.21.0')
+})
+
+test('nothing in the README says npx automata without --no', () => {
+  expect(readme).not.toMatch(/npx\s+automata\b/)
+  expect(readme).toContain('npx --no automata')
+})
+
+test('while the package is not on npm, the README says so, and how to make a game meanwhile', () => {
+  expect(FRAMEWORK_VERSION).toBe('0.1.0')
+  expect(section('## Start here')).toContain('Not on npm yet')
+  expect(section('## Start here')).toContain('--framework github:mcthaydt/AutomataFramework#<commit>')
+})
+
+// Each command and each flag a help text has is in the README, and the README names no flag a help text lacks.
+test('the README names every command and every flag its help has, and no other', () => {
+  const ref = section('## The automata command')
+  const flagsInReadme = new Set([...ref.matchAll(/- `(--[a-z-]+)/g)].map((m) => m[1]))
+  const flagsInHelp = new Set<string>()
+  for (const name of COMMAND_NAMES) {
+    expect(ref, name).toContain(`automata ${name}`)
+    for (const m of helpFor(name).matchAll(/^ {2}(--[a-z-]+)/gm)) flagsInHelp.add(m[1] ?? '')
+  }
+  expect([...flagsInReadme].sort()).toEqual([...flagsInHelp].sort())
+  expect(readme).toContain('--help')
+})
+
+test('the README gives the exit codes, and every verdict of a replay', () => {
+  const ref = section('## The automata command')
+  for (const word of ['`0`', '`1`', '`2`']) expect(ref, word).toContain(word)
+  for (const verdict of ['ok', 'content-changed', 'code-changed', 'diverged', 'wrong-setup', 'not-a-replay'])
+    expect(ref, verdict).toContain(`\`${verdict}\``)
 })
