@@ -11,6 +11,7 @@ import {
   Transform,
 } from '@automataframework/framework/headless'
 import { afterEach, expect, test } from 'vitest'
+import { Score } from '../../../src/features/hero/score.ts'
 import { gamePlugins } from '../../../src/headless.ts'
 
 const GAME = new URL('../../../', import.meta.url)
@@ -54,4 +55,15 @@ test('jump lifts the hero off the floor', async () => {
   sim.step([controlsCommand(sim.tick, 1, 0, ['jump'])])
   for (let i = 0; i < 10; i++) sim.step([])
   expect(hero(sim).y).toBeLessThan(floor - 0.5)
+})
+
+test('touching the spark takes it, and the score counts it once', async () => {
+  const sim = await newGame()
+  expect(sim.resource(Score).sparks).toBe(0)
+  sim.step([controlsCommand(sim.tick, 1, 0, ['right'])])
+  for (let i = 0; i < 40; i++) sim.step([])
+  expect(sim.resource(Score).sparks).toBe(1)
+  // The spark is gone, so running on does not count it again.
+  for (let i = 0; i < 60; i++) sim.step([])
+  expect(sim.resource(Score).sparks).toBe(1)
 })

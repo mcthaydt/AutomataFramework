@@ -23,3 +23,8 @@ path = "content/characters/hero.json"
 [[content]]
 type = "character"
 path = "content/characters/crate.json"
+
+# The spark: something for the hero to take. It is taken when the hero touches it, and the game keeps count.
+[[content]]
+type = "character"
+path = "content/characters/spark.json"

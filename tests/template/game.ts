@@ -4,6 +4,7 @@ import { type GameContent, loadGame } from '#src/features/content/content.ts'
 import automata from '../../template/automata.toml?raw'
 import crate from '../../template/content/characters/crate.json?raw'
 import hero from '../../template/content/characters/hero.json?raw'
+import spark from '../../template/content/characters/spark.json?raw'
 import level1 from '../../template/content/levels/level-1.json?raw'
 
 /** Every content file of the template, by its path from the game's root. */
@@ -12,6 +13,7 @@ export const templateFiles: Readonly<Record<string, string>> = {
   'content/levels/level-1.json': level1,
   'content/characters/hero.json': hero,
   'content/characters/crate.json': crate,
+  'content/characters/spark.json': spark,
 }
 
 /** A `read` over the template, as `loadGame` and the page take it. An override replaces a file. */

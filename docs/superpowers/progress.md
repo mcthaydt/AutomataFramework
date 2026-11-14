@@ -51,6 +51,12 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 
 ### Log
 
+- 2026-11-14, plan K, Part 2 step P: the template's level gains a spark (`content/characters/spark.json`, `"touch": "take"`),
+  and the hero's rules count it from `spark.taken` into a `hero.score` resource (`template/src/features/hero/score.ts`).
+  `automata-rules` gains "Answering an event". The recorded play `template/replays/level-1.json` moves (the hero now takes
+  the spark on the way; before: `caf2ae13ae5ba7d4`), re-recorded in CI in a commit that names it. Tests: the template's
+  own, the parity replay, the skill, one assertion in `create-smoke.mjs` and one in the create journey. Part 2 is now 5%
+  of 30% done.
 - 2026-11-14, plan S (audio): the implementation audit is written. The `online` journey's one failure was real: a
   page whose frame took longer than its lead confirmed past its own guess, and the old rule counted no rollback, so
   the count is now of guesses the room put right, and the journey's friend has a slow line from the let-go on, so a correction is certain. A second sighting of
