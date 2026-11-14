@@ -82,6 +82,9 @@ test(
     expect(keeper.length).toBeGreaterThan(0)
     // A stray file of the game's own beside the generated ones is left alone.
     memory.files.set(`game/${OUTDIR}/notes.txt`, 'mine')
+    // So is one of the game's own under messages/ that is not a word's code: only `messages/<word>.js` is Paraglide's.
+    memory.files.set(`game/${OUTDIR}/messages/notes.txt`, 'mine too')
+    memory.files.set(`game/${OUTDIR}/messages/drafts/keeper.js`, 'a draft')
 
     for (const [path, text] of Object.entries(under('game', GAME))) memory.files.set(path, text)
     const second = await run(memory)
@@ -89,6 +92,8 @@ test(
     expect(written(memory).some((key) => key.includes('keeper_joke'))).toBe(false)
     expect(written(memory).some((key) => key.includes('keeper_hello'))).toBe(true)
     expect(memory.files.get(`game/${OUTDIR}/notes.txt`)).toBe('mine')
+    expect(memory.files.get(`game/${OUTDIR}/messages/notes.txt`)).toBe('mine too')
+    expect(memory.files.get(`game/${OUTDIR}/messages/drafts/keeper.js`)).toBe('a draft')
   },
   SLOW,
 )

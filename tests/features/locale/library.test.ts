@@ -59,9 +59,11 @@ test('the six files are translated in full', async () => {
   expect(translationProblems(await everyLanguage())).toEqual([])
 })
 
-test('no sentence names a colour or says locale, key, fallback, socket or tick', () => {
+// A key on a keyboard is a word a player knows ("Pick another key"); the key of a message is not, and is said as
+// "a word's name" if ever. So "key" is not banned here, and "message key", "translation" and "fallback" are.
+test('no sentence names a colour or says locale, message key, translation, fallback, socket or tick', () => {
   const banned =
-    /\b(red|green|blue|yellow|orange|purple|pink|black|white|gr[ae]y|colou?rs?|locale|key|fallback|socket|ticks?)\b/i
+    /\b(red|green|blue|yellow|orange|purple|pink|black|white|gr[ae]y|colou?rs?|locale|message keys?|translations?|fallback|socket|ticks?)\b/i
   for (const [key, text] of Object.entries(wordsIn('en'))) expect(text, key).not.toMatch(banned)
 })
 

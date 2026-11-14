@@ -94,3 +94,24 @@ test('relabel says every word again, the aria-label too, and keeps what is held'
   expect(button('jump').textContent).toBe('Jump')
   expect(overlay().getAttribute('aria-label')).toBe('Touch controls')
 })
+
+// Plan L's implementation audit, I2: a change of key that is refused is said in the input's words, and in the new
+// words after `relabel`; with none, in English.
+test('a refused change is said in the words the input has now', () => {
+  const english = make()
+  expect(english.rebind('jump', 'keys', 'Escape')).toMatchObject({
+    ok: false,
+    message: "Escape is kept for the game's menus. Pick another key.",
+  })
+  english.destroy()
+  const made = make(said({ 'automata.rebind.reserved.key': '{input} es para los menús.' }))
+  expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({ ok: false, message: 'Escape es para los menús.' })
+  // Words that do not have the sentence leave it in English.
+  made.relabel(said({}))
+  expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({
+    ok: false,
+    message: "Escape is kept for the game's menus. Pick another key.",
+  })
+  made.relabel(said({ 'automata.rebind.reserved.key': '{input}はメニュー用です。' }))
+  expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({ ok: false, message: 'Escapeはメニュー用です。' })
+})
