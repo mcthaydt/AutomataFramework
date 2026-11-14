@@ -352,7 +352,7 @@ test('a joint with a field missing, or a kind that is not one', () => {
   ])
 })
 
-/** The fixture game with a fixed wall character, a level that has one wall and a crate, and these joints. */
+/** The fixture game with a fixed wall character, a level that has two walls and a crate, and these joints. */
 function wallGame(...joints: unknown[]) {
   const wall = writeContent('character', {
     format: 1,
@@ -364,6 +364,7 @@ function wallGame(...joints: unknown[]) {
   })
   const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] as string)
   level.things.push({ id: 'wall-1', character: 'wall', x: 4.5, y: 7.5 })
+  level.things.push({ id: 'wall-2', character: 'wall', x: 12.5, y: 7.5 })
   level.joints = joints
   return gameFiles(fixtureFiles, [{ type: 'character', path: 'content/characters/wall.json', text: wall }], {
     'content/levels/level-1.json': writeContent('level', level),
@@ -375,7 +376,7 @@ test('a fixed thing cannot be joined to the level or to another fixed thing', as
     'content/levels/level-1.json: joints[0].thing: The character "wall" is "fixed", so it never moves and cannot be joined to the level. Make it "dynamic", or remove this joint.'
   const tie = { id: 'tie', kind: 'pin', thing: 'wall-1', x: 4.5, y: 7.5 }
   expect(await gameProblems(wallGame(tie))).toEqual([sentence])
-  expect(await gameProblems(wallGame({ ...tie, holder: 'wall-1' }))).not.toEqual([])
+  expect(await gameProblems(wallGame({ ...tie, holder: 'wall-2' }))).not.toEqual([])
   // a fixed thing may be the holder of a thing that moves
   expect(
     await gameProblems(

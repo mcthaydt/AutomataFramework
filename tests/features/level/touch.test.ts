@@ -120,8 +120,8 @@ test('two heroes on a spark in one tick: both touched, taken once', async () => 
   const said = play(sim, 5, () => [])
   expect(said.map((e) => [e.type, e.payload.player])).toEqual([
     ['spark.touched', 1],
-    ['spark.touched', 2],
     ['spark.taken', 1],
+    ['spark.touched', 2],
   ])
 })
 
