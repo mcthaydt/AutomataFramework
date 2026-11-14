@@ -3,7 +3,8 @@ import { z } from 'zod'
 import { CONTENT_TYPES, type ContentType } from './content-types.ts'
 import type { Voice } from './diagnostics.ts'
 import { Id } from './ids.ts'
-import { checkData, type Parsed } from './parse.ts'
+import { checkData, type Parsed, withoutMark } from './parse.ts'
+import { isGamePath } from './shared.ts'
 
 /** The project file's name: it sits at the top of a game's repository and lists everything else. */
 export const PROJECT_FILE = 'automata.toml'
@@ -27,18 +28,12 @@ export interface Project {
 
 const PATH_HINT = 'Use a path inside the game, like content/levels/level-1.json.'
 
-/** Relative, with `/`, no `.` or `..` part, ending in `.json`: nothing that could reach outside the game. */
-function isGamePath(path: string): boolean {
-  if (!path.endsWith('.json') || path.includes('\\') || path.includes(':')) return false
-  return path.split('/').every((part) => part !== '' && part !== '.' && part !== '..')
-}
-
 /** Every kind in the table: `z.enum` wants a non-empty list, and the table always has rows. */
 const KINDS = Object.keys(CONTENT_TYPES) as [ContentType, ...ContentType[]]
 
 const ref = z.strictObject({
   type: z.enum(KINDS),
-  path: z.string().refine(isGamePath, PATH_HINT),
+  path: z.string().refine((path) => isGamePath(path, '.json'), PATH_HINT),
 })
 
 /** The rules for the project file; unknown keys are refused, and a file may be listed only once. */
@@ -80,7 +75,7 @@ const VOICE: Voice = {
 export function parseProject(text: string): Parsed<Project> {
   let data: unknown
   try {
-    data = parseToml(text)
+    data = parseToml(withoutMark(text))
   } catch (error) {
     const first = (error instanceof Error ? error.message : String(error)).split('\n')[0]?.trim()
     return {

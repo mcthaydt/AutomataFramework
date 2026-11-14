@@ -27,6 +27,11 @@ export function checkData<T>(schema: z.ZodType, data: unknown, file: string, voi
   }
 }
 
+/** An editor on Windows may start a file with a byte-order mark (U+FEFF); it is not part of the content. */
+export function withoutMark(text: string): string {
+  return text.startsWith('\uFEFF') ? text.slice(1) : text
+}
+
 /**
  * Reads the text of a content file. Never throws: text that is not JSON, or JSON that is not a valid file,
  * comes back as plain problems naming `file` and the place, all of them at once.
@@ -39,7 +44,7 @@ export function parseContent<T extends ContentType>(
   const entry = CONTENT_TYPES[type]
   let data: unknown
   try {
-    data = JSON.parse(text)
+    data = JSON.parse(withoutMark(text))
   } catch {
     return {
       ok: false,

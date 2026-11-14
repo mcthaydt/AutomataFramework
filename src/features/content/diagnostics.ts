@@ -75,6 +75,19 @@ function sentence(issue: z.core.$ZodIssue, data: unknown, voice: Voice): string 
       return issue.values.length === 1
         ? `This must be ${String(issue.values[0])}.`
         : `This must be one of: ${issue.values.map(String).join(', ')}.`
+    case 'invalid_union': {
+      // A shape told apart by one field: the issue names the field's choices, and its path ends in the field.
+      if (issue.discriminator === undefined || !('options' in issue) || !Array.isArray(issue.options))
+        return issue.message
+      const choices = `This must be one of: ${issue.options.map(String).join(', ')}.`
+      return valueAt(data, issue.path) === undefined ? `This is missing. ${choices}` : choices
+    }
+    case 'invalid_key': {
+      const inner = issue.issues[0]
+      return inner === undefined
+        ? 'This name cannot be used.'
+        : `This name cannot be used. ${sentence(inner, data, voice)}`
+    }
     case 'too_small':
       if (issue.origin === 'number' || issue.origin === 'int')
         return issue.inclusive
