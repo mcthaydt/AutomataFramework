@@ -1252,6 +1252,24 @@ function jsonSchemaFor(type: ContentType): object;
 type Language = (typeof LANGUAGES)[number];
 ```
 
+### `LANGUAGE_NAMES` (const)
+
+```ts
+const LANGUAGE_NAMES: Readonly<Record<Language, string>>;
+```
+
+### `LANGUAGE_TAGS` (const)
+
+```ts
+const LANGUAGE_TAGS: Readonly<Record<Language, string>>;
+```
+
+### `languageName` (function)
+
+```ts
+function languageName(language: Language): string;
+```
+
 ### `LANGUAGES` (const)
 
 ```ts
@@ -1458,6 +1476,18 @@ const LOG_MAX = 1024;
 
 ```ts
 const Look: ComponentDef<typeof lookFields>;
+```
+
+### `markRead` (function)
+
+```ts
+function markRead(content: GameContent, marks: ReadMarks, language: Translated, keys?: readonly string[]): ReadMarks;
+```
+
+### `matchLanguage` (function)
+
+```ts
+function matchLanguage(tag: string, shipped: readonly Language[]): Language | undefined;
 ```
 
 ### `MAX_ACTIONS` (const)
@@ -1781,6 +1811,12 @@ type Parsed<T> = {
 function parseProject(text: string): Parsed<Project>;
 ```
 
+### `parseReadMarks` (function)
+
+```ts
+function parseReadMarks(text: string): Parsed<ReadMarks>;
+```
+
 ### `parseReplay` (function)
 
 ```ts
@@ -1827,6 +1863,23 @@ interface PhysicsOptions {
     };
     readonly joints?: boolean;
 }
+```
+
+### `pickLanguage` (function)
+
+```ts
+function pickLanguage(options: {
+    readonly saved?: string | undefined;
+    readonly host?: string | undefined;
+    readonly device: readonly string[];
+    readonly shipped: readonly Language[];
+}): Language;
+```
+
+### `placeholdersOf` (function)
+
+```ts
+function placeholdersOf(text: string): readonly string[];
 ```
 
 ### `Played` (interface)
@@ -1951,6 +2004,24 @@ const ProjectSchema: z.ZodType<Project, Project>;
 
 ```ts
 const PROTOCOL_VERSION: 1;
+```
+
+### `READ_MARKS_FILE` (const)
+
+```ts
+const READ_MARKS_FILE = "automata.translations.toml";
+```
+
+### `readMark` (function)
+
+```ts
+function readMark(english: string, translated: string): string;
+```
+
+### `ReadMarks` (type)
+
+```ts
+type ReadMarks = Readonly<Partial<Record<Translated, Readonly<Record<string, string>>>>>;
 ```
 
 ### `rebind` (function)
@@ -3110,6 +3181,12 @@ function transform(at?: {
 }): SpawnPart;
 ```
 
+### `translationProblems` (function)
+
+```ts
+function translationProblems(content: GameContent): readonly Diagnostic[];
+```
+
 ### `TuningControl` (interface)
 
 ```ts
@@ -3157,6 +3234,15 @@ function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
 
 ```ts
 const TuningSchema: z.ZodType<TuningFile, TuningFile>;
+```
+
+### `unreadWords` (function)
+
+```ts
+function unreadWords(content: GameContent, marks: ReadMarks): readonly {
+    readonly language: Language;
+    readonly key: string;
+}[];
 ```
 
 ### `usesJoints` (function)
@@ -3295,6 +3381,12 @@ function webSpeaker(options?: {
 
 ```ts
 function writeContent<T extends ContentType>(type: T, value: z.input<(typeof CONTENT_TYPES)[T]['schema']>): string;
+```
+
+### `writeReadMarks` (function)
+
+```ts
+function writeReadMarks(marks: ReadMarks): string;
 ```
 
 ### `writeReplay` (function)
@@ -4293,6 +4385,24 @@ function jsonSchemaFor(type: ContentType): object;
 type Language = (typeof LANGUAGES)[number];
 ```
 
+### `LANGUAGE_NAMES` (const)
+
+```ts
+const LANGUAGE_NAMES: Readonly<Record<Language, string>>;
+```
+
+### `LANGUAGE_TAGS` (const)
+
+```ts
+const LANGUAGE_TAGS: Readonly<Record<Language, string>>;
+```
+
+### `languageName` (function)
+
+```ts
+function languageName(language: Language): string;
+```
+
 ### `LANGUAGES` (const)
 
 ```ts
@@ -4489,6 +4599,18 @@ const LOG_MAX = 1024;
 
 ```ts
 const Look: ComponentDef<typeof lookFields>;
+```
+
+### `markRead` (function)
+
+```ts
+function markRead(content: GameContent, marks: ReadMarks, language: Translated, keys?: readonly string[]): ReadMarks;
+```
+
+### `matchLanguage` (function)
+
+```ts
+function matchLanguage(tag: string, shipped: readonly Language[]): Language | undefined;
 ```
 
 ### `MAX_ACTIONS` (const)
@@ -4750,6 +4872,12 @@ type Parsed<T> = {
 function parseProject(text: string): Parsed<Project>;
 ```
 
+### `parseReadMarks` (function)
+
+```ts
+function parseReadMarks(text: string): Parsed<ReadMarks>;
+```
+
 ### `parseReplay` (function)
 
 ```ts
@@ -4796,6 +4924,23 @@ interface PhysicsOptions {
     };
     readonly joints?: boolean;
 }
+```
+
+### `pickLanguage` (function)
+
+```ts
+function pickLanguage(options: {
+    readonly saved?: string | undefined;
+    readonly host?: string | undefined;
+    readonly device: readonly string[];
+    readonly shipped: readonly Language[];
+}): Language;
+```
+
+### `placeholdersOf` (function)
+
+```ts
+function placeholdersOf(text: string): readonly string[];
 ```
 
 ### `Played` (interface)
@@ -4914,6 +5059,24 @@ const ProjectSchema: z.ZodType<Project, Project>;
 
 ```ts
 const PROTOCOL_VERSION: 1;
+```
+
+### `READ_MARKS_FILE` (const)
+
+```ts
+const READ_MARKS_FILE = "automata.translations.toml";
+```
+
+### `readMark` (function)
+
+```ts
+function readMark(english: string, translated: string): string;
+```
+
+### `ReadMarks` (type)
+
+```ts
+type ReadMarks = Readonly<Partial<Record<Translated, Readonly<Record<string, string>>>>>;
 ```
 
 ### `RECONNECT_DELAYS_MS` (const)
@@ -5970,6 +6133,12 @@ function transform(at?: {
 }): SpawnPart;
 ```
 
+### `translationProblems` (function)
+
+```ts
+function translationProblems(content: GameContent): readonly Diagnostic[];
+```
+
 ### `TuningControl` (interface)
 
 ```ts
@@ -6017,6 +6186,15 @@ function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
 
 ```ts
 const TuningSchema: z.ZodType<TuningFile, TuningFile>;
+```
+
+### `unreadWords` (function)
+
+```ts
+function unreadWords(content: GameContent, marks: ReadMarks): readonly {
+    readonly language: Language;
+    readonly key: string;
+}[];
 ```
 
 ### `usesJoints` (function)
@@ -6076,6 +6254,12 @@ type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
 
 ```ts
 function writeContent<T extends ContentType>(type: T, value: z.input<(typeof CONTENT_TYPES)[T]['schema']>): string;
+```
+
+### `writeReadMarks` (function)
+
+```ts
+function writeReadMarks(marks: ReadMarks): string;
 ```
 
 ### `writeReplay` (function)

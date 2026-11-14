@@ -38,15 +38,18 @@ test('English alone: five sentences, one for each language it lacks, in order', 
   ]))
 
 describe('one language is missing words', () => {
-  const others = { es: en, ja: en, zh: en, pt: en }
+  // English has a second word so that Korean can have a file with one word of its own and still lack the other.
+  const base = { ...en, 'keeper.bye': 'Take care.' }
+  const others = { es: base, ja: base, zh: base, pt: base }
   test('a file lacks an English key', async () =>
-    expect(await sayWords({ en, ko: { 'keeper.bye': 'x' }, ...others })).toEqual([
+    expect(await sayWords({ en: base, ko: { 'keeper.bye': 'x' }, ...others })).toEqual([
       'content/messages/ko.json: messages: This file has no "keeper.hello". English says "Hello there!". Write it in Korean.',
     ]))
 
   test('an English text longer than 60 characters is cut in the sentence', async () => {
     const long = 'a'.repeat(70)
-    expect(await sayWords({ en: { 'keeper.hello': long }, ko: { 'keeper.bye': 'x' }, ...others })).toContain(
+    const words = { en: { ...base, 'keeper.hello': long }, ko: { 'keeper.bye': 'x' }, ...others }
+    expect(await sayWords(words)).toContain(
       `content/messages/ko.json: messages: This file has no "keeper.hello". English says "${'a'.repeat(60)}...". Write it in Korean.`,
     )
   })
@@ -129,7 +132,7 @@ describe('lengths and level names', () => {
 })
 
 test('a key named "constructor" or "toString" is a key like any other', async () => {
-  const words = { constructor: 'Hello' }
+  const words = { constructor: 'Hello', 'keeper.bye': 'Take care.' }
   expect(await sayWords({ en: words, es: words, ko: words, ja: words, zh: words, pt: words })).toEqual([])
   // English has `constructor` and Korean does not: the sentence is the ordinary one, not "every object has one".
   expect(

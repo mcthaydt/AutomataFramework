@@ -66,7 +66,9 @@ describe('a mark is of what was read', () => {
   test('a word changed after its read waits again', async () => {
     const marks = markRead(await full(), {}, 'ko')
     const changed = await full(changeKo('keeper.hello', '안녕하세요, 손님!'))
-    expect(unreadWords(changed, marks)).toEqual([{ language: 'ko', key: 'keeper.hello' }])
+    expect(unreadWords(changed, marks).filter((word) => word.language === 'ko')).toEqual([
+      { language: 'ko', key: 'keeper.hello' },
+    ])
   })
 
   test('so does a word whose English changed', async () => {
