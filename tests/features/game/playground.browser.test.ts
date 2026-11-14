@@ -68,14 +68,30 @@ async function expectPlayed(g: Game): Promise<void> {
   expect(g.sim.resource(Score).sparks).toBe(1)
   expect(thing(g, 'spark-1')).toBeUndefined()
   expect(thing(g, 'plank-1')?.get(Transform).rotation).toBeGreaterThan(0.1)
+  const replay = g.replay()
   const fresh = await createGameSim({
     content: await loadPlayground(),
     plugins: [heroPlugin, playgroundPlugin],
   })
   try {
-    expect(verifyReplay(fresh, g.replay())).toEqual({ ok: true })
+    expect(verifyReplay(fresh, replay)).toEqual({ ok: true })
   } finally {
     fresh.dispose()
+  }
+  // The door is checked too: `Score.inDoor` is false before the door and after it, so only the events say the hero
+  // went through. A second fresh sim plays the recorded commands and reports every touch it hears.
+  const again = await createGameSim({
+    content: await loadPlayground(),
+    plugins: [heroPlugin, playgroundPlugin],
+  })
+  try {
+    const touches: string[] = []
+    for (let tick = 0; tick < replay.ticks; tick++)
+      for (const e of again.step(replay.commands.filter((c) => c.tick === tick)).events)
+        if (/\.(touched|left|taken)$/.test(e.type)) touches.push(e.type)
+    expect(touches).toEqual(['spark.touched', 'spark.taken', 'door.touched', 'door.left'])
+  } finally {
+    again.dispose()
   }
 }
 

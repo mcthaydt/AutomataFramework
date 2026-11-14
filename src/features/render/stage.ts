@@ -19,6 +19,8 @@ const OUTLINE_COLOR = 0x1b1b24
 
 /** A pin is a dot of this radius, in tiles; a rope is a line this many CSS pixels wide. */
 const PIN_RADIUS = 0.1
+/** On a phone a tile is a few pixels, so the dot never goes below this many CSS pixels across its radius. */
+const PIN_MIN_PX = 4
 const ROPE_WIDTH = 2
 
 /** What the renderer needs of the Pixi stage. */
@@ -119,7 +121,8 @@ export async function createStage(world: { w: number; h: number }, sky: number =
     }
     linkShape.clear()
     for (const l of links) {
-      if (l.kind === 'pin') linkShape.circle(l.x1, l.y1, PIN_RADIUS).fill(OUTLINE_COLOR)
+      if (l.kind === 'pin')
+        linkShape.circle(l.x1, l.y1, Math.max(PIN_RADIUS, PIN_MIN_PX / fit.scale)).fill(OUTLINE_COLOR)
       else
         linkShape
           .moveTo(l.x1, l.y1)

@@ -362,13 +362,28 @@ function wallGame(...joints: unknown[]) {
     color: '#444444',
     upright: false,
   })
+  const pillar = writeContent('character', {
+    format: 1,
+    id: 'pillar',
+    body: 'fixed',
+    size: { w: 1, h: 1 },
+    color: '#555555',
+    upright: false,
+  })
   const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] as string)
   level.things.push({ id: 'wall-1', character: 'wall', x: 4.5, y: 7.5 })
-  level.things.push({ id: 'wall-2', character: 'wall', x: 12.5, y: 7.5 })
+  level.things.push({ id: 'pillar-1', character: 'pillar', x: 12.5, y: 7.5 })
   level.joints = joints
-  return gameFiles(fixtureFiles, [{ type: 'character', path: 'content/characters/wall.json', text: wall }], {
-    'content/levels/level-1.json': writeContent('level', level),
-  })
+  return gameFiles(
+    fixtureFiles,
+    [
+      { type: 'character', path: 'content/characters/wall.json', text: wall },
+      { type: 'character', path: 'content/characters/pillar.json', text: pillar },
+    ],
+    {
+      'content/levels/level-1.json': writeContent('level', level),
+    },
+  )
 }
 
 test('a fixed thing cannot be joined to the level or to another fixed thing', async () => {
@@ -376,11 +391,32 @@ test('a fixed thing cannot be joined to the level or to another fixed thing', as
     'content/levels/level-1.json: joints[0].thing: The character "wall" is "fixed", so it never moves and cannot be joined to the level. Make it "dynamic", or remove this joint.'
   const tie = { id: 'tie', kind: 'pin', thing: 'wall-1', x: 4.5, y: 7.5 }
   expect(await gameProblems(wallGame(tie))).toEqual([sentence])
-  expect(await gameProblems(wallGame({ ...tie, holder: 'wall-2' }))).not.toEqual([])
+  // held by another fixed thing: the sentence says who holds it, not "the level"
+  expect(await gameProblems(wallGame({ ...tie, holder: 'pillar-1' }))).toEqual([
+    'content/levels/level-1.json: joints[0].thing: The characters "wall" and "pillar" are both "fixed", so neither moves and this joint holds nothing. Make one of them "dynamic", or remove this joint.',
+  ])
   // a fixed thing may be the holder of a thing that moves
   expect(
     await gameProblems(
       wallGame({ id: 'hang', kind: 'pin', thing: 'crate-1', holder: 'wall-1', x: 4.5, y: 7.5 }),
     ),
   ).toEqual([])
+})
+
+test('a pin on a character that is upright cannot turn, and the sentence says so', async () => {
+  const crate = JSON.parse(fixtureFiles['content/characters/crate.json'] as string)
+  const upright = writeContent('character', { ...crate, upright: true })
+  const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] as string)
+  const files = (joint: unknown) =>
+    gameFiles(fixtureFiles, [], {
+      'content/characters/crate.json': upright,
+      'content/levels/level-1.json': writeContent('level', { ...level, joints: [joint] }),
+    })
+  const pinned = { id: 'seesaw', kind: 'pin', thing: 'crate-1', x: 6.5, y: 7.5 }
+  expect(await gameProblems(files(pinned))).toEqual([
+    'content/levels/level-1.json: joints[0].thing: The character "crate" is "upright", so it cannot turn on a pin. Set "upright" to false, or hold it with a rope.',
+  ])
+  // a rope holds an upright thing without trouble
+  const roped = { id: 'tie', kind: 'rope', thing: 'crate-1', from: { x: 6.5, y: 7 }, to: { x: 6.5, y: 4 } }
+  expect(await gameProblems(files(roped))).toEqual([])
 })

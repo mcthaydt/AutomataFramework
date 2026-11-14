@@ -68,3 +68,28 @@ test('a rope is a dark line on the sky and a pin a dark dot', async () => {
   expect(darkestAround(canvas, 4 * TILE, 4 * TILE)).toBeLessThan(90)
   expect(brightness(pixel(canvas, 4 * TILE + TILE / 2, 4 * TILE))).toBeGreaterThan(150)
 })
+
+// On a phone the world is small, and a pin of a tenth of a tile would be a dot of three pixels: it has a smallest size.
+test('a pin stays big enough to see when a tile is only 16 pixels', async () => {
+  mount.style.width = '390px'
+  mount.style.height = '300px'
+  renderer = await createRenderer({ mount, world: { w: 24, h: 10 } })
+  renderer.apply({
+    resync: true,
+    added: [
+      { sid: 4, components: { transform: { x: 12, y: 5, rotation: 0 } } },
+      { sid: 5, components: { transform: { x: 12, y: 5, rotation: 0 } } },
+      { sid: 6, components: { 'physics.joint': joint(0, 4, 5) } },
+    ],
+    changed: [],
+    removed: [],
+  })
+  renderer.draw(1)
+  const canvas = renderer.canvas
+  const scale = Math.min(390 / 24, 300 / 10)
+  const x = (390 - 24 * scale) / 2 + 12 * scale
+  const y = (300 - 10 * scale) / 2 + 5 * scale
+  expect(brightness(pixel(canvas, x, y))).toBeLessThan(90)
+  // 3 CSS pixels from the centre is still inside the dot (its radius is at least 4)
+  expect(brightness(pixel(canvas, x + 3, y))).toBeLessThan(90)
+})
