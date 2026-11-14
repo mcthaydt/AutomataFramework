@@ -155,7 +155,7 @@ test('the mixed 2D scene, with its spawns, despawns and component edits, reports
 })
 
 test('a rotated lone collider is not re-rotated every tick (audit: Rapier stores the angle as cos/sin)', async () => {
-  const RAPIER = (await import('@dimforge/rapier2d-deterministic-compat')).default
+  const RAPIER = (await import('@dimforge/rapier2d-deterministic')).default
   const sim = await world()
   for (let i = 0; i < 200; i++)
     sim.spawn([transform({ x: i, rotation: i * 0.0314 - Math.PI }), collider.cuboid(0.4, 0.2)])

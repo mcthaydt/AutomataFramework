@@ -1,5 +1,5 @@
 // Lifted from AutomataFrameworkFailed@ed8592e8: packages/sim/src/shared/define/context.ts
-import type { z } from 'zod'
+import type { z } from '../../lib/zod.ts'
 import type { CommandDef, ComponentDef, EventDef, ResourceDef } from './definitions.ts'
 import type { FieldSchema, FieldValues } from './fields.ts'
 import type { Rng } from './rng.ts'

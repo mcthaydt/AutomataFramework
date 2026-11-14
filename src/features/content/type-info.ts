@@ -1,6 +1,6 @@
 // The shape of one row of the content table. Types only: every kind's own file builds its row from this, and the
 // table in content-types.ts is the one place that lists them.
-import type { z } from 'zod'
+import type { z } from '../../lib/zod.ts'
 import type { ContentType, ContentValue } from './content-types.ts'
 import type { Voice } from './diagnostics.ts'
 

@@ -26,6 +26,11 @@
       "types": "./dist/headless.d.ts",
       "import": "./dist/headless.js"
     },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
+    "./rapier.LICENSE": "./dist/rapier.LICENSE",
     "./schemas/*": "./schemas/*"
   },
   "packageManager": "pnpm@10.34.6",
@@ -41,6 +46,7 @@
     "typecheck": "tsc -p .",
     "knip": "knip",
     "test:node": "vitest run --project node",
+    "test:journeys": "vitest run --project journeys",
     "test:engine": "vitest run --passWithNoTests --project",
     "build": "vite build && tsc -p tsconfig.build.json",
     "prepare": "pnpm build",
@@ -50,6 +56,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@changesets/cli": "3.0.3",
+    "@dimforge/rapier2d-deterministic": "0.21.0",
     "@types/node": "24.19.1",
     "@vitest/browser-playwright": "5.0.3",
     "knip": "6.39.0",
@@ -60,7 +67,11 @@
     "vitest": "5.0.3"
   },
   "dependencies": {
-    "@dimforge/rapier2d-deterministic-compat": "0.21.0",
+    "@colyseus/core": "0.18.18",
+    "@colyseus/schema": "5.0.36",
+    "@colyseus/sdk": "0.18.5",
+    "@colyseus/ws-transport": "0.18.4",
+    "effect": "3.22.2",
     "koota": "0.6.6",
     "pixi.js": "8.22.0",
     "smol-toml": "1.9.0",

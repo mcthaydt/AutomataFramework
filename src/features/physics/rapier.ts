@@ -2,13 +2,14 @@
 // The Rapier adapter: the only file that calls Rapier. Loaded with a dynamic import from physics.ts, so the wasm loads
 // inside createSim and never at import time.
 
-import RAPIER from '@dimforge/rapier2d-deterministic-compat'
+import RAPIER from '@dimforge/rapier2d-deterministic'
 import type { EntityRef } from '../sim/sim.ts'
 import { checkBody, checkCollider, checkJoint } from './checks.ts'
 import { Body, Collider, Joint, Transform } from './components.ts'
 import { CollisionEnded, CollisionStarted } from './events.ts'
 import { BodyKind, JointKind, ShapeKind } from './kinds.ts'
 import type { PhysicsAdapter } from './physics-world.ts'
+import { loadRapier } from './rapier-wasm.ts'
 
 type World = RAPIER.World
 
@@ -43,7 +44,7 @@ export async function createRapier(setup: {
   dt: number
 }): Promise<PhysicsAdapter<World>> {
   // A rejected init is not kept: the next createSim retries it (a wasm fetch can fail transiently).
-  ready ??= RAPIER.init().catch((err: unknown) => {
+  ready ??= loadRapier().catch((err: unknown) => {
     ready = undefined
     throw err
   })

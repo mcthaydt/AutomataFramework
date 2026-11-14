@@ -18,16 +18,68 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan C (content): 5. Implementation audit | Written, in review; stage at 100%, plan C at 80%: no critical, two important (a cutscene's `clip` is unchecked and belongs to plan A; the duplicate-id sentence reads "a cues"), eight minor; nine fixes for stage 6; no Owner question | `audits/2026-11-14-m2-content-implementation-audit.md` |
 | Plan V (saves and the host port): 2. Plan | Done, 100% (merged, PR 32) | `plans/2026-11-14-m2-saves-host.md` |
 | Plan V: 3. Plan audit | Written, in review; stage at 100%, plan V at 20%. Ten findings, all applied to the plan | `audits/2026-11-14-m2-saves-host-plan-audit.md` |
+| Plan V: 4. Execution | Done, 100% (all eight tasks, PR 40, green in Node and in Chromium, WebKit and Firefox, and the packed package; merged as `8811935`) | `plans/2026-11-14-m2-saves-host.md`, ticked |
+| Plan V: 5. Implementation audit | Written, in review; stage at 100%, plan V at 80%: no critical, one important (a save's label is not checked on write, so a save can be written that its own reader calls damaged, losing the save it replaced), ten minor, five notes; eleven fixes for stage 6; no Owner question | `audits/2026-11-14-m2-saves-host-implementation-audit.md` |
+| Plan V: 6. Fixes | Done, **100%** (the implementation audit's 11 fixes; the tests pushed red first, then the fixes; CI green), AutomataFramework PR 55 | `audits/2026-11-14-m2-saves-host-implementation-audit.md` |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
 | Plan I (input), stage 3: plan audit | Done, 100%: 3 blocking, 12 should-fix and 5 notes, all applied to the plan; ready for stage 4 | `audits/2026-11-14-m2-input-plan-audit.md` |
 | Plan I (input), stage 4: execution | Done, 100%: all ten tasks built, merged (PR 42, `2aa020b`), green on `eb7e32e` | `plans/2026-11-14-m2-input.md` |
 | Plan I (input), stage 5: implementation audit | Done, 100%, in review: no critical, two important (both in `addPlayer`), ten minor, five notes; thirteen fixes for stage 6; no Owner question | `audits/2026-11-14-m2-input-implementation-audit.md` |
+| Plan I (input), stage 6: fixes | Done, **100%** (the audit's 13 fixes; each test pushed red first, then its fix; CI green), AutomataFramework PR 51 | `audits/2026-11-14-m2-input-implementation-audit.md` |
 | Plan N, networking: 2. Plan, 3. Plan audit | Plan written; audit done (stage 3 at 100%), ten findings F1 to F10 applied to the plan, in review; 0% built (12 tasks; Task 11 waits for plan I's `join` and `leave`) | `plans/2026-11-14-m2-networking.md`, `audits/2026-11-14-m2-networking-plan-audit.md` |
+| Plan N, networking: 4. Execution | Done, 100% (all 12 tasks built, in PR 44 with every check green: the layers and rules, the wire, the room engine, the client session, proof 1 with the golden `online-two-players`, the room server, the process, the words, `startOnlineGame`, the `online` job with real browsers playing one room, the four-player co-op room, the README); waits for the implementation audit and the owner's `online` required check | PR 44 |
+| Plan N, networking: 5. Implementation audit | Done, 100%, in review: no critical; three important (a dropped line tries once to get back in, a quiet room stops the hero after `lead` ticks and `MAX_AHEAD` is never reached, the no-eval promise rests on chunk order: `lib/zod.ts`); eight minor; six notes; all eight rulings accepted; nine fixes for stage 6; no Owner question | `audits/2026-11-14-m2-networking-implementation-audit.md` |
+| Plan N, networking: 6. Fixes | Done, 100%: I1, I2 and M1 to M8 merged in PR 63; I3 in its own pull request (`src/lib/no-eval.ts` is now `src/lib/zod.ts`, which sets `jitless` and re-exports `z`; every file under `src/` that names Zod imports it from there; an architecture rule holds them to it; the online journey's page is no longer forced into one script) | PR 63, the I3 pull request |
 | Plan P (physics: joints and touch): 2. Plan | Written, in review; twelve tasks; stage at 100%, plan P at 10%; waits on plan C | `plans/2026-11-14-m2-physics.md` |
 | Plan P (physics: joints and touch): 3. Plan audit | Written, in review; stage at 100%, plan P at 20%: one critical (a rope's length through `Math.hypot`, now `dmath`'s `hypot`), eight important and nine minor findings, all but one minor applied to the plan; no Owner question; waits on plan C | `audits/2026-11-14-m2-physics-plan-audit.md` |
+| Plan A (art): 2. Plan | Written, in review; fourteen tasks; stage at 100%, plan A at 10%. The `figure` and `backdrop` formats, their painter (our own PNG writer, the same bytes in four engines), clips, tiles, backdrops, the camera, and M1's minors M7 and M8. One Owner question open (these formats, or the old painter ported), which holds every task but 1, 8 and 11 | `plans/2026-11-14-m2-art.md` |
+| Plan A (art): 3. Plan audit | Written, in review; stage at 100%, plan A at 20%: no critical, eight important (the camera's limit from the spec, `view.most`; a watched replay's camera after a restore; `heroes()` out of reach of plan U; `sprites.json` on a game later plans grow; shimmer at a fractional scale; plan D's CI job would never merge as described; the painter's rule; and who repaints after an editor's save), twelve minor; all but one applied to the plan. Two Owner questions open: the format question (still holds every task but 1, 8 and 11) and who repaints a picture after an editor's save (holds nothing here) | `audits/2026-11-14-m2-art-plan-audit.md` |
+| Plan S (audio): 2. Plan | Written, in review; eleven tasks (9% each, 1% for the last green run); stage at 100%, plan S at 10%. A headless `audio` feature (cues, the cue log, sounds, one track, two volumes) over a `Speaker` port, the page's speaker and the "Tap to start the sound" button in `web`, and the three audio kinds taken out of what the sim hashes. No Owner question; three calls marked for the audit | `plans/2026-11-14-m2-audio.md` |
+| Plan S (audio): 3. Plan audit | Written, in review; stage at 100%, plan S at 20%: no critical, five important (`sounding.json` on a game of its own; plan A's order no longer applies, the stop rule rewritten; the online game's audio and plan N's `advance` giving steps one by one; the fixture hero's landing at the top of a jump; the three rules the cue log's determinism rests on), ten minor; all applied to the plan. No Owner question | `audits/2026-11-14-m2-audio-plan-audit.md` |
+| Plan T (story): 2. Plan | Written, in review; fourteen tasks; stage at 100%, plan T at 10%. Behaviour rules, conversations and cutscenes run in the sim (in `level`, switched on by content, so no recorded hash moves), stepped by three commands; a new page feature, `story`, shows the speech box and the cutscene's camera. Task 11 (the camera, and an actor's clip and face) waits for plan A to be built; no Owner question | `plans/2026-11-14-m2-story.md` |
+| Plan T (story): 3. Plan audit | Written, in review; stage at 100%, plan T at 20%: no critical, five important (the press that closes the box jumped; a continued game's start was not in its replay, and `watchReplay` dropped it; a fast Enter skipped the cutscene after the lines; four choices could not fit a sideways phone; the box's keys fought the game's), eleven minor, five journeys added; all applied to the plan or handed on. One Owner question open (when the keeper talks: every visit, until finished once, or a Talk button), which holds only Task 6's opening rule | `audits/2026-11-14-m2-story-plan-audit.md` |
 
 ### Log
 
+- 2026-11-14, plan T (story): the plan audit is written. The sim's part in `level` holds and no golden moves. Fixed in
+  the plan: a player let go takes this tick's controls with no press; `meta.story` records where a continued game
+  started; a skip counts only after `SKIP_AFTER` ticks; the box's buttons always fit; the box hears its own keys and
+  leaves a sharing player's alone. Q1 (when the keeper talks) is with the Owner.
+- 2026-11-14, plan S (audio): the plan audit. Task 1 is sound and has no order to keep: plan A's `sprites.json` is no
+  longer on the full game, and no golden on `main` or a branch is from a game with audio files. Audio cannot reach
+  the sim or move a golden. Fixed in the plan: the sounding run and its golden play a game of their own; the fixture
+  hero lands only after falling; page sounds are not counted by the limits, waiting ones are, and a page event before
+  any step is tick 0; an online game calls `hear` once per fresh step (passed to plan N); `audio` joins the pure
+  features. No Owner question.
+- 2026-11-14, plan T (story): the plan is written. What decides is in `level`, beside `join`: a `Mind` component
+  and a behaviour system for a character with a `behaviour`, and a `Story` resource for conversations and
+  cutscenes, moved by the commands `story.next`, `story.choose` and `story.skip`, so a replay has every press. A
+  conversation opens when a hero walks up; the sim holds the talker's hands itself, and everyone's in a cutscene.
+  What shows is the new page feature `story`: a speech box in plain words and the cutscene's camera, which read
+  the sim's state and decide nothing. Four optional fields join content (`name` and `conversation` on a character,
+  `cutscene` on a conversation's node, `opens` on a cutscene). Goldens are recorded on a story fixture of its own.
+- 2026-11-14, plan S (audio): the plan is written. `audio` is headless and is handed a step's events, never the
+  sim, so it has nothing to change; it keeps a cue log of what was asked for and plays through a `Speaker` port
+  (`testSpeaker` in Node, `webSpeaker` on Web Audio in `web`). Music is handed to the speaker a little ahead of the
+  speaker's own clock. Task 1 leaves `sounds`, `music` and `cues` out of the content the sim hashes, so changing a
+  sound moves no hash; no recorded golden is from a game with audio files. The framework draws the "Tap to start
+  the sound" button until plan U's screens take it over. No new dependency.
+- 2026-11-14, plan A (art): the plan audit. The no-golden-moves claims and the PNG writer's determinism hold. Fixed in the plan: the camera stops at `view.most` (the spec's limit), which plan D's pull-along reads; a restore puts the camera straight on its shot; `Game.heroes()` for plan U; `sprites.json` on a game of its own; the level's offset in whole pixels; the painter's rule covers the clock and I/O; plan D's pictures go through a `ci-art` branch the thread fetches. Asked of the Owner: whether painted pictures are committed, and so who repaints one after an editor's save.
+- 2026-11-14: plan V's implementation audit. Nothing critical; all six of the build's deviations are accepted. V1: `save`
+  writes any label, but the reader refuses one that is empty or over 80 characters, so the new save lists as damaged
+  and the one it replaced is gone. Ten minor fixes (storage switched off answers `failed`, a rejecting store, two tabs
+  undoing each other's settings, a throwing listener, freezing the caller's object, words in a doc and the README,
+  the journey's damaged case, the settings format check, the contract's two type names) go in the fixes branch.
+- 2026-11-14, plan A (art): the plan is written. A `figure` is parts with poses and paints anything (a character,
+  a tile, a prop); a `backdrop` is layers that repeat and drift, with figures as props. Both are painted by the
+  `content` feature with no page and no Node in it, into a PNG our own writer makes, so `automata art`, a browser
+  and the M3 builders give the same bytes. Which pose shows is sim state (`Sprite`), switched on by content, so no
+  recorded hash moves. Asked of the Owner through the coordinator: these formats, or the old painter ported.
+- 2026-11-14: plan V executed (PR 40). `saves` (slots, one settings record, versions and upgrades), the grown `Host`
+  port with `testHost`, and the `web` feature (`webHost` with seams, saves in `localStorage`). Two things differ from
+  the plan, both recorded in the plan's Task 7 and the PR: a frame's page is loaded with a `<script src>` (WebKit
+  never settled an inline `import()` in a `srcdoc` frame), and every task that changed the public surface also
+  regenerated `docs/api/framework.api.md`, since CI checks it on every pull request.
 - 2026-11-14: plan I's implementation audit. Nothing critical. I1: removing a player and adding one before the
   game steps answers "yes" and adds nobody; I2: `addPlayer` cannot see a claim made through `game.input.claim`, so one
   gamepad can drive two heroes. Ten minor fixes (touch through a pause, triggers, a reason, `ListedPad`, and tests)
@@ -54,6 +106,8 @@ This repo has Part A only: one function.
 |---|---|
 | 1. `watchReplay` draws a replay with no input | Done, 100% (merged, PR 29, `cc281c9`) |
 | The Owner's answers, Q1 (a), Q2 (a), Q3 (b), Q4 (a) | Recorded in the spec addendum, 2026-11-14 |
+| Stage 6, F1: `rounds` stops on the recording's last tick even when a late frame carries several ticks | Done, 100% (a guard at the top of `step`, and a test that delivers the end in one frame of four ticks), in review |
+| Stage 6, F4 (the Owner chose to swap the package): Rapier's binary is its own file, not base64 in a script | Written, in review: the plain `@dimforge/rapier2d-deterministic` 0.21.0 (a development dependency now, since its code is built into the framework's files) replaces `-compat`; `vite-rapier-wasm.ts` answers the package's wasm import and emits `dist/rapier_wasm2d_bg.wasm` (2.4 MB, 933 kB gzipped) and `dist/rapier.LICENSE`; `physics/rapier-wasm.ts` gives the instance to the package, with the bytes read by a module the plugin writes (from disk in Node, fetched elsewhere; I/O stays out of `src`, as the sim's purity rule needs). Same Rapier, same version, same binary, so no golden may move; CI's four engines and the packed install are the proof |
 
 ## Cycle 1: the 2D first layer
 

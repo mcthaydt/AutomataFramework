@@ -48,6 +48,16 @@ test('headless reaches nothing that needs a page', () =>
     'headless-is-headless',
   ]))
 
+test('saves may import nothing above it', () =>
+  expect(one({ 'src/features/saves/saves.ts': "import '../host/host.ts'" })).toEqual(['imports-go-down']))
+
+test('headless may reach the host port but not the web host', () => {
+  expect(one({ 'src/headless.ts': "export * from './features/web/web.ts'" })).toEqual([
+    'headless-is-headless',
+  ])
+  expect(one({ 'src/headless.ts': "export * from './features/host/host.ts'" })).toEqual([])
+})
+
 // The rules also have to stay quiet on honest code.
 test('a clean map has no violations', () =>
   expect(
@@ -69,4 +79,100 @@ test('a feature may import itself and an unknown feature is named', () => {
     one({ 'src/features/sim/sim.ts': "export * from './rng.ts'", 'src/features/sim/rng.ts': '' }),
   ).toEqual([])
   expect(one({ 'src/features/zzz/zzz.ts': '' })).toEqual(['unknown-feature'])
+})
+
+// Plan N: the networking layers. `net` is pure and sits just above `commands`; `server` needs Node and sits above `level`.
+// Each case names the entry files it needs, so only the rule under test can fire.
+test('net may not import content, which is above it; server may import level and net', () => {
+  expect(
+    one({
+      'src/features/net/net.ts': "import '../content/content.ts'",
+      'src/features/content/content.ts': '',
+    }),
+  ).toEqual(['imports-go-down'])
+  expect(
+    one({
+      'src/features/server/server.ts': "import '../level/level.ts'\nimport '../net/net.ts'",
+      'src/features/level/level.ts': '',
+      'src/features/net/net.ts': '',
+    }),
+  ).toEqual([])
+})
+
+test('net is pure: no timers', () =>
+  expect(one({ 'src/features/net/net.ts': 'setTimeout(() => {}, 1)' })).toEqual(['sim-is-pure']))
+
+test('the Colyseus SDK is only for the one file that loads it on demand', () => {
+  expect(
+    one({
+      'src/features/net/net.ts': '',
+      'src/features/net/session.ts': "import '@colyseus/sdk'",
+    }),
+  ).toEqual(['package-confined'])
+  expect(
+    one({
+      'src/features/net/net.ts': '',
+      'src/features/net/colyseus-link.ts': "await import('@colyseus/sdk')",
+    }),
+  ).toEqual([])
+})
+
+test('the Colyseus server packages are only for the server feature', () => {
+  expect(
+    one({ 'src/features/net/net.ts': "import '@colyseus/core'\nimport '@colyseus/ws-transport'" }),
+  ).toEqual(['package-confined', 'package-confined'])
+  expect(
+    one({
+      'src/features/server/server.ts': '',
+      'src/features/server/room.ts': "import '@colyseus/core'\nimport '@colyseus/schema'",
+    }),
+  ).toEqual([])
+})
+
+// Zod probes whether it may compile validators with `new Function` the first time a schema is built, and a strict CSP
+// reports even that caught attempt. `lib/zod.ts` turns the probe off before anything is built; a file that reached Zod
+// by another way could run first, in a bundler's chunk order.
+test('Zod is only reached through lib/zod.ts', () => {
+  expect(one({ 'src/features/content/content.ts': "import { z } from 'zod'" })).toEqual(['package-confined'])
+  expect(one({ 'src/features/content/content.ts': "import type { z } from 'zod'" })).toEqual([
+    'package-confined',
+  ])
+  expect(
+    one({
+      'src/lib/zod.ts': "import { config, z } from 'zod'",
+      'src/features/content/content.ts': "import { z } from '../../lib/zod.ts'",
+    }),
+  ).toEqual([])
+})
+
+test('Effect is only for the server process', () => {
+  expect(one({ 'src/features/net/net.ts': "import { Effect } from 'effect'" })).toEqual(['package-confined'])
+  expect(
+    one({
+      'src/features/server/server.ts': '',
+      'src/features/server/process.ts': "import { Effect } from 'effect'",
+    }),
+  ).toEqual([])
+})
+
+test('only src/server.ts may import the server feature', () => {
+  const server = { 'src/features/server/server.ts': '' }
+  expect(one({ ...server, 'src/features/game/game.ts': "import '../server/server.ts'" })).toEqual([
+    'server-is-node-only',
+  ])
+  // A direct import from either page entry is the same fault.
+  expect(one({ ...server, 'src/headless.ts': "export * from './features/server/server.ts'" })).toEqual([
+    'server-is-node-only',
+  ])
+  // The Node entry itself is the one door.
+  expect(one({ ...server, 'src/server.ts': "export * from './features/server/server.ts'" })).toEqual([])
+})
+
+test('headless and the page entry never reach src/server.ts, through any chain', () => {
+  const node = {
+    'src/features/server/server.ts': '',
+    'src/server.ts': "export * from './features/server/server.ts'",
+  }
+  expect(one({ ...node, 'src/headless.ts': "export * from './server.ts'" })).toEqual(['server-is-node-only'])
+  expect(one({ ...node, 'src/index.ts': "export * from './server.ts'" })).toEqual(['server-is-node-only'])
 })

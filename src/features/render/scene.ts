@@ -17,7 +17,7 @@ export interface View {
  * One joint to draw, in tiles: a rope from (x1, y1) on its thing to (x2, y2) on what holds it; a pin at (x1, y1),
  * where the two ends meet.
  */
-export interface Link {
+export interface RopeLine {
   readonly sid: number
   readonly kind: 'pin' | 'rope'
   readonly x1: number
@@ -37,7 +37,7 @@ export interface Scene {
    * pose plus the joint's offset turned by the entity's turn. An entity with a pose and no look is not a view but
    * can still be an end (the level's anchor).
    */
-  links(alpha: number): Link[]
+  links(alpha: number): RopeLine[]
 }
 
 interface Pose {

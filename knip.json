@@ -1,7 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@6.39.0/schema.json",
   "ignoreExportsUsedInFile": true,
-  "entry": ["scripts/*.ts", "tests/**/*.test.ts"],
+  "entry": [
+    "scripts/*.ts",
+    "tests/**/*.test.ts",
+    "tests/fixtures/online/server.ts",
+    "tests/fixtures/online/page/main.ts"
+  ],
   "project": ["src/**/*.ts", "tests/**/*.ts"],
   "ignore": ["tests/install/**"]
 }

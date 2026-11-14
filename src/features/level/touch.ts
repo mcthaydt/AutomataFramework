@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { Player } from '../commands/commands.ts'
 import type { Character, GameContent } from '../content/content.ts'
 import { CollisionEnded, CollisionStarted } from '../physics/physics.ts'

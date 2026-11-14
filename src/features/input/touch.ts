@@ -5,8 +5,10 @@ import type { Controls } from './controls.ts'
 
 /** What the game holds with the screen. */
 export interface Touch {
-  /** The actions with at least one finger on their button. */
+  /** The actions with at least one finger on their button, not counting fingers that `mask` is holding back. */
   held(): Set<string>
+  /** Fingers on a button now do nothing until they lift or slide onto another button: a press that ended a screen. */
+  mask(): void
   /** How many CSS pixels the buttons take from the bottom of the mount: 0 while they are hidden. */
   inset(): number
   /** Calls `listener` with the new room whenever the buttons show, hide or change size. Stops on `destroy`. */
@@ -88,6 +90,8 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
 
   // Pointer id -> the action its finger is on.
   const fingers = new Map<number, string>()
+  // Fingers `mask` is holding back, by pointer id: still on their button, but not pressing it.
+  const masked = new Set<number>()
   const buttons = new Map<string, HTMLButtonElement>()
   const show = (visible: boolean): void => {
     overlay.hidden = !visible
@@ -112,6 +116,7 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
   })
   insetWatcher.observe(overlay)
   const letGo = (e: PointerEvent): void => {
+    masked.delete(e.pointerId)
     if (fingers.delete(e.pointerId)) paint()
   }
 
@@ -134,6 +139,7 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
         b.releasePointerCapture(e.pointerId)
       } catch {}
       fingers.set(e.pointerId, action)
+      masked.delete(e.pointerId)
       paint()
     }
     b.addEventListener('pointerdown', (e) => {
@@ -162,12 +168,16 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
   win.addEventListener('pointerdown', onFirstTouch, true)
   const onBlur = (): void => {
     fingers.clear()
+    masked.clear()
     paint()
   }
   win.addEventListener('blur', onBlur)
 
   return {
-    held: () => new Set(fingers.values()),
+    held: () => new Set([...fingers].filter(([id]) => !masked.has(id)).map(([, action]) => action)),
+    mask() {
+      for (const id of fingers.keys()) masked.add(id)
+    },
     inset,
     onInset(listener) {
       insetListeners.add(listener)
@@ -178,6 +188,7 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
       win.removeEventListener('pointerdown', onFirstTouch, true)
       win.removeEventListener('blur', onBlur)
       fingers.clear()
+      masked.clear()
       overlay.remove()
       if (restorePosition !== undefined) mount.style.position = restorePosition
     },

@@ -154,10 +154,119 @@ changed". A recording made with another seed or tick rate is refused with a `Wat
 default it plays again and again, resting `restTicks` (one second) on the last picture between rounds; `rounds: 1`
 holds the last picture for good. It stands still while the page is hidden and does not catch up when it comes back.
 
+## Saves
+
+A game keeps progress in save slots and its settings in one record. Both go through the host (see "The host" below), so
+the game never reads the browser's storage itself. Everything here also runs in Node, with no page.
+
+```ts
+import { createSaves, defineSave, latestSlot, openSettings, z } from '@automataframework/framework/headless'
+
+const progress = defineSave({
+  game: 'crate-game', // a short id: 1 to 40 of a-z, 0-9 and "-". Never the display name, which may change.
+  version: 2, // raise it whenever `schema` changes shape
+  slots: 3,
+  schema: z.strictObject({ level: z.string(), doors: z.number().int().min(0) }),
+  upgrades: { 1: (old) => ({ ...(old as { level: string }), doors: 0 }) }, // makes version 1 into version 2
+})
+const saves = createSaves({ def: progress, store: host.store }) // `host` is `webHost()` in a page, `testHost()` in Node
+
+const listed = await saves.list() // { ok: true, value: [{ slot: 0, kind: 'empty' }, ...] }
+const continueFrom = listed.ok ? latestSlot(listed.value) : undefined // the slot a "Continue" button opens
+await saves.save(0, { level: 'level-2', doors: 1 })
+const loaded = await saves.load(0) // { ok: true, data: { level: 'level-2', doors: 1 }, savedAt: 1700000000000 }
+
+// Settings are one record with a section for each part of the game (sound, controls, language).
+const settings = await openSettings({ game: 'crate-game', store: host.store })
+const sound = settings.section({
+  name: 'sound',
+  schema: z.strictObject({ music: z.number().min(0).max(1) }),
+  initial: { music: 0.8 }, // what a new player starts with
+})
+await sound.set({ music: 0.5 }) // `sound.get()` says 0.5 at once; the answer says whether the host kept it
+```
+
+On the web, saves are kept in this browser, under `automata.<game>.save.<slot>` and `automata.<game>.settings`.
+Clearing the browser's data removes them, and a browser can clear its own storage.
+
+A browser can say no to storing anything (a private window, storage turned off, no room left). The game is told, with
+one of `unavailable`, `full` or `failed`, and nothing is kept anywhere else. Tell the player: `saves.check()` asks
+before they have played for five minutes, and every `save` answers `{ ok: false, problem }` when it was not kept.
+
+Three rules keep a player's progress safe. A save from a newer version of your game is never changed. A save that
+cannot be read is kept and listed as damaged, never read as empty; `save` does not write over it, or over a slot a
+newer or older version of your game made, unless you pass `replace: true` after the player has said yes. `save` rejects
+with a `RangeError`, before it writes anything, for a slot your game does not have, a label that is not 1 to 80
+characters, or data your schema refuses or JSON cannot keep; a host's "no" is an answer, never a rejection. Raise `version` and add an upgrade when you change what a save holds,
+and a save from an older version is brought up to date when it is loaded. Settings are gentler on purpose: a setting
+that cannot be read starts again from its first values.
+
+## The host
+
+A game asks its host about where it runs, never the page: `visible()` and `onVisibility` (is the game on screen),
+`store` (where saves and settings are kept), `language()` and `deviceLanguages()` (what the player speaks, if the host
+knows), `openLink(url)` (opens a web page outside the game, only `https:` addresses; answers `'opened'`, `'blocked'` or
+`'refused'`), and `canQuit` with `quit()` (a web page has nowhere to go back to, so `canQuit` is false there and a
+screen shows no Quit button).
+
+`webHost()` is the host for a page and comes from the main entry. `testHost()` is for Node and for tests, and comes from
+both entries. You can make it say anything and look at what the game did:
+
+```ts
+import { testHost } from '@automataframework/framework/headless'
+
+const host = testHost({ language: 'ko', canQuit: true })
+host.hide() // the game hears that the page went to the background
+await host.openLink('https://example.com/help') // 'opened'
+host.opened // ['https://example.com/help']
+```
+
+## Play online
+
+Online play is built and checked in CI. It is not deployed anywhere yet.
+
+A game plays in a room: each player is on their own device, and one server decides what happened. Your own key moves
+your hero at once, and the picture is put right if the room saw it differently. The server is a Node file next to your
+game. It loads the game as a page does, and hands it to `runRoomServer`:
+
+```ts
+import { readFile } from 'node:fs/promises'
+import { loadGame } from '@automataframework/framework/headless'
+import { runRoomServer } from '@automataframework/framework/server'
+
+const loaded = await loadGame((path) => readFile(path, 'utf8'))
+if (!loaded.ok) throw new Error('The game did not load.')
+await runRoomServer({ game: { content: loaded.value, plugins: [/* your game's plugins */] } })
+```
+
+`runRoomServer` listens on the port you give it, else `PORT`, else any free one. It prints one line,
+`{"event":"listening","port":3000}`, and on SIGTERM it closes every room, prints `{"event":"stopped"}` and exits 0. A
+test can use `createRoomServer` instead, which resolves with the port and a `close()`.
+
+The page starts the game in a room with `startOnlineGame`, instead of `startGame`:
+
+```ts
+import { onlineWords, startOnlineGame, webHost } from '@automataframework/framework'
+
+const online = await startOnlineGame({
+  content, plugins, mount, controls, host: webHost(),
+  server: 'ws://localhost:3000',
+  // room: friendsCode,   // the `online.code` a friend's page shows; leave it out to make a room
+  onStatus: (status) => (message.textContent = onlineWords(status)),
+})
+online.code // to share with a friend
+```
+
+`onlineWords(status)` is the plain English for the room (waiting for a friend, someone lost their connection, the room
+is full) and an empty string while everyone is playing; a game puts it on its own screen. A refused join rejects with an
+`OnlineError` and leaves nothing on the page. A game with `players = 4` in `automata.toml` has no waiting: the room
+starts with whoever is first, and the others join and leave while it is played, as many as its level has start points
+for. Hiding the page lets go of the keys, so the hero does not run on for everyone else.
+
 ## Without a page
 
-`@automataframework/framework/headless` has everything that needs no page (the simulation, physics, commands, content
-and levels). It is safe in Node and in an editor that only checks and writes files:
+`@automataframework/framework/headless` has everything that needs no page (the simulation, physics, commands, content,
+levels, saves and the host port with its test host). It is safe in Node and in an editor that only checks and writes files:
 
 ```ts
 import { createGameSim, loadGame } from '@automataframework/framework/headless'
@@ -220,6 +329,20 @@ and this is the whole file `content/sounds/door.json`:
 
 A mistake is reported with the file, the place in it and what to write, for example `content/cues/cues.json:
 cues[3].sound: There is no sound called "dor". This game has: door, jump, land.`
+
+## Shipping a game: Rapier's licence
+
+The physics engine, Rapier, is Apache-2.0, and its code is built into this package's files (its binary comes out as
+`rapier_wasm2d_bg.wasm` beside them, which a bundler such as Vite copies into your game). The licence asks that a copy
+of it travels with the game you ship. The package exports that copy by name, so put it where your game keeps its other
+notices, for example:
+
+```js
+import { copyFile } from 'node:fs/promises'
+await copyFile(new URL(import.meta.resolve('@automataframework/framework/rapier.LICENSE')), 'dist/rapier.LICENSE')
+```
+
+or paste its text into your game's own licence page. The demo game does the second.
 
 ## Joints and touch
 

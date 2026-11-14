@@ -5,7 +5,7 @@ import { createScene } from './scene.ts'
 import { createStage } from './stage.ts'
 
 export { type Fit, fitWorld } from './fit.ts'
-export { createScene, type Link, type Scene, type View } from './scene.ts'
+export { createScene, type RopeLine, type Scene, type View } from './scene.ts'
 
 /** What `createRenderer` gives back. */
 export interface Renderer {

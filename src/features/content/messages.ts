@@ -1,5 +1,5 @@
-import { z } from 'zod'
 import { sortedKeys } from '../../lib/sorted.ts'
+import { z } from '../../lib/zod.ts'
 import { MessageKey } from './shared.ts'
 import type { ContentTypeInfo, Listed, Report } from './type-info.ts'
 

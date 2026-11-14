@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { Id } from './ids.ts'
 import { EventName, noSuch, variants } from './shared.ts'
 import type { ContentTypeInfo, Listed, Report } from './type-info.ts'

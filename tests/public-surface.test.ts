@@ -64,6 +64,14 @@ test('headless exports what a game sim and an editor need', async () => {
     'PAD_STICKS',
     'RESERVED_KEYS',
     'RESERVED_PAD',
+    'memoryStore',
+    'defineSave',
+    'createSaves',
+    'latestSlot',
+    'openSettings',
+    'testHost',
+    'isOpenableLink',
+    'z',
     'FRAMEWORK_VERSION',
     'Joint',
     'JointKind',
@@ -72,8 +80,28 @@ test('headless exports what a game sim and an editor need', async () => {
     'touchPlugin',
     'usesJoints',
     'touchKinds',
+    'joinSession',
+    'createSession',
+    'createRoomEngine',
+    'OnlineError',
+    'PROTOCOL_VERSION',
+    'onlineWords',
   ])
     expect(api, name).toHaveProperty(name)
+})
+
+test("the server entry exports what a game's own server file needs", async () => {
+  const api = await import('#src/server.ts')
+  for (const name of ['createRoomServer', 'runRoomServer']) expect(api, name).toHaveProperty(name)
+})
+
+// The browser entry needs a page to be imported, so a Node test reads its text instead of loading it.
+test('the browser entry adds the web host, and headless does not have it', async () => {
+  const api = await import('#src/headless.ts')
+  expect(api).not.toHaveProperty('webHost')
+  const entry = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
+  expect(entry).toContain("export * from './features/web/web.ts'")
+  expect(entry).toContain("export * from './headless.ts'")
 })
 
 test('the committed JSON Schemas are what the code produces', () => {

@@ -5,7 +5,7 @@ import 'pixi.js/unsafe-eval'
 import { Application, Container, Graphics, loadTextures } from 'pixi.js'
 import { SKY_COLOR } from '../level/level.ts'
 import { fitWorld } from './fit.ts'
-import type { Link, View } from './scene.ts'
+import type { RopeLine, View } from './scene.ts'
 
 // Pixi types the loader's config as optional; a Pixi without it would leave the probe on, so say so.
 const textureConfig = loadTextures.config
@@ -38,7 +38,7 @@ export interface Stage {
    * Draws these views, fitted into the current size, and the links over them: a rope as a dark line two CSS pixels
    * wide, a pin as a dark dot. Until the stage has a size they are kept and drawn on its first.
    */
-  draw(views: readonly View[], links: readonly Link[]): void
+  draw(views: readonly View[], links: readonly RopeLine[]): void
   destroy(): void
 }
 
@@ -81,9 +81,9 @@ export async function createStage(world: { w: number; h: number }, sky: number =
   let destroyed = false
   // The last views asked for. A resize wipes the canvas, and a game paused by hand asks for no more frames, so the
   // stage puts this picture back itself.
-  let last: { readonly views: readonly View[]; readonly links: readonly Link[] } | undefined
+  let last: { readonly views: readonly View[]; readonly links: readonly RopeLine[] } | undefined
 
-  const paint = (views: readonly View[], links: readonly Link[]): void => {
+  const paint = (views: readonly View[], links: readonly RopeLine[]): void => {
     const fit = fitWorld({ w: box.w, h: box.h - Math.min(inset, box.h / 2) }, world)
     root.scale.set(fit.scale)
     root.position.set(fit.left, fit.top)

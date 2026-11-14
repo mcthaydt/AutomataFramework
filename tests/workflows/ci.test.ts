@@ -15,7 +15,7 @@ test('the workflow as a whole can only read the repository', () => {
 test('only the screens job may write, and only after the engines made the pictures', () => {
   expect(jobs.match(/contents: write/g)).toHaveLength(1)
   expect(screens).toMatch(/^ {6}contents: write$/m)
-  expect(screens).toContain('needs: engines')
+  expect(screens).toMatch(/needs: \[engines, online\]/)
   expect(screens).toContain('if: always() &&')
 })
 

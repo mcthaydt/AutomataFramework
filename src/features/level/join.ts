@@ -1,7 +1,7 @@
 // Players joining and leaving a running game. Both are commands, so a replay records who came when and a room on
 // another machine can send the same two. Only a game that says `players = 2` or more gets the plugin: the sim's schema
 // hash covers every command and system, so adding these to every game would move every recorded hash.
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { MAX_PLAYERS, Player } from '../commands/commands.ts'
 import type { GameContent } from '../content/content.ts'
 import {

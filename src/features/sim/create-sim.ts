@@ -1,8 +1,9 @@
 // Lifted from AutomataFrameworkFailed@ed8592e8: packages/sim/src/shared/world/sim.ts
-import { z } from 'zod'
+
 import { canonicalJson, utf8 } from '../../lib/canonical.ts'
 import { deepFreeze } from '../../lib/deep-freeze.ts'
 import { hex64, xxhash64 } from '../../lib/xxhash64.ts'
+import { z } from '../../lib/zod.ts'
 import type { CommandRecord, EntityRef, SimContext, SpawnPart } from './context.ts'
 import {
   type CommandDef,

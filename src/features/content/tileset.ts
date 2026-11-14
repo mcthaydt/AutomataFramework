@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { Id } from './ids.ts'
 import { picturePath, unique } from './shared.ts'
 import type { ContentTypeInfo } from './type-info.ts'

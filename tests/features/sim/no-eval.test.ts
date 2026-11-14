@@ -7,8 +7,8 @@ import { defineCommand, defineComponent, definePlugin, defineSystem } from '#src
 // Portals and hosts serve games under a CSP with no 'unsafe-eval' (script-src 'self' 'wasm-unsafe-eval'), so nothing the
 // sim does may build code from strings. Koota generates accessors with `new Function` for schema-object
 // (structure-of-arrays) traits; this pins that the sim never reaches it. Here the Function constructor throws,
-// as it does under that CSP. (Zod's own probe is turned off by `config({ jitless: true })` in a game's no-eval
-// entry; z.object parsing is exercised below with that mode set.)
+// as it does under that CSP. (Zod's own probe is turned off by `config({ jitless: true })`, which `src/lib/zod.ts`
+// sets for the framework; z.object parsing is exercised below with that mode set.)
 
 const RealFunction = globalThis.Function
 beforeEach(async () => {

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page } from 'vitest/browser'
 import { verifyReplay } from '#src/features/commands/commands.ts'
 import { type Game, startGame } from '#src/features/game/game.ts'
-import type { Host } from '#src/features/host/host.ts'
+import { testHost } from '#src/features/host/host.ts'
 import { createGameSim, Thing } from '#src/features/level/level.ts'
 import { Transform } from '#src/features/physics/physics.ts'
 import { fitWorld } from '#src/features/render/fit.ts'
@@ -20,8 +20,6 @@ const FRAME = 1000 / 60
 /** Long enough for the hero to run to the wall at the end of the level: the key is held past the script's own 200 ticks. */
 const FRAMES = 260
 const WORLD = { w: 24, h: 10 }
-
-const visibleHost: Host = { target: 'web', visible: () => true, onVisibility: () => () => {} }
 
 let mount: HTMLDivElement
 let game: Game | undefined
@@ -51,7 +49,7 @@ async function start(w: number, h: number): Promise<{ game: Game; frames: Return
     plugins: [heroPlugin, playgroundPlugin],
     mount,
     controls: fixtureControls,
-    host: visibleHost,
+    host: testHost(),
     frames,
   })
   return { game, frames }

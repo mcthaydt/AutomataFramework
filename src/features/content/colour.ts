@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 
 /**
  * A colour in a content file: `#` and six digits. `what` says what the colour is for, and `example` is shown in the
