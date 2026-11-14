@@ -368,6 +368,141 @@ for, in order, with the tick. Too many of one sound at once (`MAX_SAME`, 4) or i
 `skipped: 'busy'` and not played, counted in ticks so every device agrees; the log keeps the newest `LOG_MAX` (1024).
 Sound never changes the game: the sim does not see it, and changing a sound file moves no replay.
 
+## Art
+
+A game's art is made from a few lines of JSON, and the pictures are kept beside the file that makes them. A **figure** is
+a character or a prop drawn from blocks and rounds in a small frame, one picture for each **pose** (idle, jump). A
+**backdrop** is what is behind a level: strips that repeat sideways (`flat`, `hills`, `mountains` or `clouds`), each with
+a height in tiles and a `drift` from 0 (it stays still on the screen, like far mountains) to 1 (it moves with the level),
+and figures that stand on them. Both are listed in `automata.toml` like any other file (`type = "figure"`,
+`type = "backdrop"`), and this is a whole small figure, `content/figures/hero.json`:
+
+```json
+{
+  "format": 1,
+  "id": "hero",
+  "tile": 16,
+  "frame": {
+    "w": 24,
+    "h": 24
+  },
+  "outline": "#111314",
+  "paints": [
+    {
+      "id": "body",
+      "color": "#f37f94"
+    },
+    {
+      "id": "trim",
+      "color": "#fdd4bd"
+    },
+    {
+      "id": "ink",
+      "color": "#111314"
+    }
+  ],
+  "parts": [
+    {
+      "id": "foot",
+      "shape": "block",
+      "x": 12,
+      "y": 22,
+      "w": 6,
+      "h": 4,
+      "paint": "ink"
+    },
+    {
+      "id": "body",
+      "shape": "block",
+      "x": 12,
+      "y": 18,
+      "w": 10,
+      "h": 4,
+      "paint": "body"
+    },
+    {
+      "id": "head",
+      "shape": "round",
+      "x": 12,
+      "y": 13,
+      "w": 12,
+      "h": 10,
+      "paint": "trim"
+    },
+    {
+      "id": "eye",
+      "shape": "block",
+      "x": 15,
+      "y": 12,
+      "w": 2,
+      "h": 4,
+      "paint": "ink"
+    }
+  ],
+  "poses": [
+    {
+      "id": "idle",
+      "moves": []
+    },
+    {
+      "id": "jump",
+      "moves": [
+        {
+          "part": "foot",
+          "dy": -3
+        },
+        {
+          "part": "head",
+          "dy": -1
+        },
+        {
+          "part": "eye",
+          "dy": -1
+        }
+      ]
+    }
+  ]
+}
+```
+
+A character says which figure it is with `"figure": "hero"`, and the clips it plays with
+`"clips": [{ "id": "idle", "poses": ["idle"], "fps": 1, "loop": true }]`. A clip is a list of poses and how fast they
+change. The framework plays `idle`, `run`, `jump`, `fall` and `land` by itself from how the character moves, and falls
+back to the nearest clip it has when a character lacks one. A game that wants another (`wave`, `hurt`) names it in the
+character's `clips` and asks for it from its own code with `setClip(entity, 'wave')`; `setClip(entity, undefined)` goes
+back to the character's own motion, and `setFacing(entity, 'left')` turns it round.
+
+**Where the pictures are kept.** `content/figures/hero.json` is painted into `content/figures/hero.png`, with
+`hero.atlas.json` beside it that says where each pose is in the picture. A picture is committed with the file that made
+it. `artFiles(content)` gives every picture and atlas the game's files paint, as bytes and the path each goes to, and
+`artProblems(content, read)` says which of those files are missing or older than their figure or backdrop, in words
+that name the command to run. `automata art` writes the files and `automata check` runs the check, so an agent, CI and
+an editor all make and judge the same bytes. A level's tileset can use a figure's picture: write the figure's picture
+as the tileset's `image`, and `"columns": 8` when the figure has more than eight poses (the picture is eight poses
+wide). Solid tiles that sit directly under one another join into one box when the level has a tileset, so a hero slides
+down a wall without catching on a seam.
+
+**The level.** A level says which backdrop is behind it with `"backdrop": "valley"`. Add a `view` to switch the camera
+on: `"view": { "w": 16, "h": 9 }` is how many tiles the screen shows, and the camera follows every hero and pulls back to
+hold two who are apart, as far as `"most": { "w": 24, "h": 12 }` (the whole level when it is left out). A level with no
+`view` is always shown whole, as before.
+
+**On the page.** A game with pictures is given a way to fetch them, and checks them before anything is drawn:
+
+```ts
+const game = await startGame({
+  content: loaded.value,
+  mount,
+  host: webHost(),
+  controls,
+  readPicture: (path) => fetch(`/game/${path}`).then((response) => response.blob()),
+})
+```
+
+A picture that is missing, older than its file or the wrong size stops the game with one sentence that says what to run
+(an `ArtError`), and nothing is left on the page. `game.heroes()` gives each hero's box on the canvas, in CSS pixels, so a
+tutorial can point at one. A game with no figure, no tileset and no backdrop needs no `readPicture`.
+
 ## The automata command
 
 `automata` is the package's command. A game's own scripts call it, so a person types `npm run check` and an agent types
@@ -450,6 +585,8 @@ Each kind has a JSON Schema, shipped in the package so an agent can read the for
 | `level` | a map of tiles, the things standing on it and where each player starts | `content/levels/` | `schemas/level.schema.json` |
 | `character` | a body, its size and colour, and the kind, behaviour and tuning it uses | `content/characters/` | `schemas/character.schema.json` |
 | `tileset` | the letters a level's map may use, and which of them are solid | `content/tilesets/` | `schemas/tileset.schema.json` |
+| `backdrop` | what is behind a level: layers that repeat sideways, and the figures that stand on them | `content/backdrops/` | `schemas/backdrop.schema.json` |
+| `figure` | a character or a prop drawn from blocks in poses, painted into a picture | `content/figures/` | `schemas/figure.schema.json` |
 | `behaviour` | rules for what a character does: flee, follow, wander, jump | `content/behaviours/` | `schemas/behaviour.schema.json` |
 | `tuning` | numbers that decide how something plays, each with its range, and the controls | `content/tunings/` | `schemas/tuning.schema.json` |
 | `feel` | a burst of dust, a shake or a freeze for a moment in the game | `content/feels/` | `schemas/feel.schema.json` |

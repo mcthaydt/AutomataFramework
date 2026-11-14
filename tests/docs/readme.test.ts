@@ -187,3 +187,31 @@ test('the README gives the exit codes, and every verdict of a replay', () => {
   for (const verdict of ['ok', 'content-changed', 'code-changed', 'diverged', 'wrong-setup', 'not-a-replay'])
     expect(ref, verdict).toContain(`\`${verdict}\``)
 })
+
+// A game finds out how to make a figure and keep its picture from here, and copies a figure that works.
+test('the README has an Art section whose figure reads, paints, and whose names are the package\'s', () => {
+  const art = section('## Art')
+  for (const word of [
+    'schemas/figure.schema.json',
+    'artFiles',
+    'artProblems',
+    'automata art',
+    'readPicture',
+    'setClip',
+    'setFacing',
+    '"columns": 8',
+    'view',
+    'most',
+    'ArtError',
+    'heroes()',
+  ])
+    expect(art + readme, word).toContain(word)
+  const block = /```json\n([\s\S]*?)```/.exec(art)?.[1]
+  expect(block).toBeDefined()
+  const parsed = framework.parseContent('figure', block ?? '', 'content/figures/hero.json')
+  expect(parsed.ok ? [] : parsed.diagnostics.map(framework.formatDiagnostic)).toEqual([])
+  if (!parsed.ok) return
+  expect(() => framework.paintFigure(parsed.value as framework.FigureFile)).not.toThrow()
+  for (const name of ['artFiles', 'artProblems', 'setClip', 'setFacing', 'paintFigure'])
+    expect(framework, name).toHaveProperty(name)
+})

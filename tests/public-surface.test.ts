@@ -58,6 +58,12 @@ test('headless exports what a game sim and an editor need', async () => {
     'artFiles',
     'artProblems',
     'paintedPath',
+    'Sprite',
+    'spritesPlugin',
+    'usesSprites',
+    'setClip',
+    'setFacing',
+    'tileBoxes',
     'PROJECT_FILE',
     'spawnLevel',
     'createGameSim',
@@ -125,6 +131,18 @@ test('the browser entry adds the web host, and headless does not have it', async
   const entry = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
   expect(entry).toContain("export * from './features/web/web.ts'")
   expect(entry).toContain("export * from './headless.ts'")
+})
+
+// A game draws its pictures through the page entry, which needs a page, so the headless entry has none of it.
+test('the page entry loads and checks pictures, and headless does not have that', async () => {
+  const api = await import('#src/headless.ts')
+  for (const name of ['loadArt', 'needsPictures', 'ArtError', 'createRenderer'])
+    expect(api, name).not.toHaveProperty(name)
+  const render = readFileSync(new URL('../src/features/render/render.ts', import.meta.url), 'utf8')
+  for (const name of ['loadArt', 'needsPictures', 'ArtError', 'type ReadPicture', 'type Shot'])
+    expect(render, name).toContain(name)
+  const entry = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
+  expect(entry).toContain("export * from './features/render/render.ts'")
 })
 
 test('the committed JSON Schemas are what the code produces', () => {
