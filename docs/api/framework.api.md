@@ -573,6 +573,10 @@ const FRAMEWORK_VERSION: string;
 ```ts
 interface Game {
     readonly sim: Sim;
+    readonly input: Input;
+    players(): readonly number[];
+    addPlayer(claim: Claim): JoinAnswer;
+    removePlayer(player: number): boolean;
     pause(): void;
     resume(): void;
     replay(): Replay;
@@ -598,6 +602,8 @@ interface GameOptions extends GameSimOptions {
     readonly controls: Controls;
     readonly host: Host;
     readonly frames?: Frames;
+    readonly settings?: unknown;
+    readonly gamepads?: () => readonly (PadLike | null)[];
 }
 ```
 
@@ -712,6 +718,19 @@ const InputSettingsSchema: z.ZodType<InputSettings, InputSettings>;
 
 ```ts
 function isHeld(player: EntityRef, action: string): boolean;
+```
+
+### `JoinAnswer` (type)
+
+```ts
+type JoinAnswer = {
+    readonly ok: true;
+    readonly player: number;
+} | {
+    readonly ok: false;
+    readonly reason: 'one-player-game' | 'full' | 'no-start' | 'taken' | 'no-shared';
+    readonly message: string;
+};
 ```
 
 ### `JoinCommand` (const)

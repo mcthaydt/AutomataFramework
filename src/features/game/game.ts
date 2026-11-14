@@ -3,15 +3,18 @@
 // changed. The sim decides everything; this file decides when.
 
 import { type Frames, pageFrames } from '../../lib/frames.ts'
-import { createRecorder, type Replay } from '../commands/commands.ts'
+import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
-import { type Controls, checkControls, createInput } from '../input/input.ts'
+import type { PadLike } from '../input/gamepad.ts'
+import { type Claim, type Controls, checkControls, createInput, type Input } from '../input/input.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import { createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { createLoop } from './loop.ts'
+import { createPlayers, type JoinAnswer } from './players.ts'
 
 export { type Frames, MAX_STEPS_PER_FRAME } from './loop.ts'
+export type { JoinAnswer } from './players.ts'
 export { type Watch, type WatchOptions, WatchSetupError, watchReplay } from './watch.ts'
 
 export interface GameOptions extends GameSimOptions {
@@ -21,10 +24,22 @@ export interface GameOptions extends GameSimOptions {
   readonly host: Host
   /** Default: the page's animation frames. */
   readonly frames?: Frames
+  /** Saved bindings (`game.input.settings()` from an earlier run). */
+  readonly settings?: unknown
+  /** Only for tests: stands in for the browser's gamepads. */
+  readonly gamepads?: () => readonly (PadLike | null)[]
 }
 
 export interface Game {
   readonly sim: Sim
+  /** Bindings, capture, invite, seats and hints: everything a settings or "Add a player" screen needs. */
+  readonly input: Input
+  /** Who is playing, lowest number first. */
+  players(): readonly number[]
+  /** Adds a player who brings `claim`. Their hero appears on the next tick the game runs. */
+  addPlayer(claim: Claim): JoinAnswer
+  /** Takes a player out. False, and nothing happens, for the last player or one who is not playing. */
+  removePlayer(player: number): boolean
   /** Holds the game still until `resume`. The game is also still while the host says it is not on screen. */
   pause(): void
   resume(): void
@@ -53,7 +68,16 @@ export async function startGame(options: GameOptions): Promise<Game> {
       renderer.destroy()
       sim.dispose()
     }
-    const input = createInput({ mount, controls })
+    // One count of command numbers for the input's `controls` and the game's `join` and `leave`.
+    const sequence = createSequence()
+    const input = createInput({
+      mount,
+      controls,
+      frames,
+      sequence,
+      ...(options.settings === undefined ? {} : { settings: options.settings }),
+      ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
+    })
     cleanup = () => {
       input.destroy()
       renderer.destroy()
@@ -62,17 +86,30 @@ export async function startGame(options: GameOptions): Promise<Game> {
     // The touch buttons take the bottom of the screen; the level is fitted above them, so a thumb never hides it.
     renderer.setInset(input.inset())
     input.onInset((px) => renderer.setInset(px))
+    input.setPlayers(options.players ?? [1])
     const recorder = createRecorder(sim)
+    const people = createPlayers({
+      sim,
+      content: options.content,
+      level: options.level ?? options.content.project.start,
+      input,
+      sequence,
+      canShare: Object.values(input.controls()).every((control) => control.shared !== undefined),
+    })
     const loop = createLoop({
       tickHz: sim.tickHz,
       step() {
-        renderer.apply(recorder.step(input.poll(sim.tick)).render)
+        const tick = sim.tick
+        renderer.apply(recorder.step([...people.commands(tick), ...input.poll(tick)]).render)
+        people.afterStep()
       },
       draw: (alpha) => renderer.draw(alpha),
       frames,
     })
 
     let pausedByHand = false
+    // While held, nobody is holding anything: what is down when the game comes back waits for a fresh press.
+    let unsilence: (() => void) | undefined
     let stopped = false
     // Still while paused by hand or off screen. Starting the loop afresh each time means the time spent still is
     // never counted, so coming back never fast-forwards.
@@ -86,12 +123,19 @@ export async function startGame(options: GameOptions): Promise<Game> {
 
     return {
       sim,
+      input,
+      players: people.players,
+      addPlayer: people.addPlayer,
+      removePlayer: people.removePlayer,
       pause() {
         pausedByHand = true
+        unsilence ??= input.silence()
         sync()
       },
       resume() {
         pausedByHand = false
+        unsilence?.()
+        unsilence = undefined
         sync()
       },
       replay: () => recorder.replay(),
