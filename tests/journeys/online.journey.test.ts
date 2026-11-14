@@ -236,13 +236,16 @@ for (const [first, second] of PAIRS) {
     for (const [n, seat] of [one, two].entries())
       await seat.page.screenshot({ path: `${shots}online-${first.engine}-${second.engine}-p${n + 1}.png` })
 
-    // 5. Both reach the check for tick 599 and agree; both had to put their picture right at least once; and nothing
+    // 5. Both reach the check for tick 599 and agree; the pair had to put a picture right at least once; and nothing
     // in either page tried to build code from a string.
     for (const seat of [one, two])
       await expect.poll(async () => (await checks(seat)).has(599), POLL).toBe(true)
     expect((await checks(one)).get(599)).toBe((await checks(two)).get(599))
+    // A key pressed by one arrives at the other after the tick it was meant for was already guessed, so at least one
+    // picture is put right; which of the two depends on the timing of the network, so the journey asks it of the pair.
+    const rollbacks = num(await one.data('rollbacks')) + num(await two.data('rollbacks'))
+    expect(rollbacks, 'rollbacks in the pair').toBeGreaterThan(0)
     for (const seat of [one, two]) {
-      expect(num(await seat.data('rollbacks'))).toBeGreaterThan(0)
       expect(
         await seat.data('built-code'),
         `built from a string, at: ${await seat.data('built-stack')}`,
