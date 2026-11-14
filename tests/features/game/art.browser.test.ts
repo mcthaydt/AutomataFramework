@@ -177,7 +177,11 @@ test('holding right runs: the pose changes, the hero moves, and the camera goes 
   expect((box.x + box.w / 2) / width).toBeGreaterThan(0.2)
   expect((box.x + box.w / 2) / width).toBeLessThan(0.8)
   expect(box.x).not.toBeCloseTo(before, 0)
-  const buttons = [...mount.querySelectorAll('button')].map((b) => b.getBoundingClientRect().top)
+  // The touch buttons only: the story's own buttons are hidden until it has something to say.
+  const buttons = [...mount.querySelectorAll('button')]
+    .map((b) => b.getBoundingClientRect())
+    .filter((rect) => rect.height > 0)
+    .map((rect) => rect.top)
   expect(buttons.length).toBeGreaterThan(0)
   expect(box.y + box.h).toBeLessThanOrEqual(Math.min(...buttons) + 1)
 })
