@@ -78,7 +78,7 @@ export function createPlayers(options: {
         return {
           ok: false,
           reason: 'no-start',
-          message: `This level has room for ${starts.length} players.`,
+          message: `This level has room for ${starts.length === 1 ? 'one player' : `${starts.length} players`}.`,
         }
       // Taken by a joiner whose `join` is still queued, or by anyone the input says holds it, whoever gave it to them
       // (`addPlayer`, or `game.input.claim` for a game started with several players).

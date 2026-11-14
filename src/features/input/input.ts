@@ -82,6 +82,8 @@ export interface Input {
   onSeats(listener: (seats: readonly Seat[]) => void): () => void
   /** Every gamepad the browser shows, and whether the game can read it. */
   pads(): readonly ListedPad[]
+  /** Calls `listener` with the pads when one arrives, goes, or turns out to be one the game cannot read. */
+  onPads(listener: (pads: readonly ListedPad[]) => void): () => void
   /** Every player lets go until the returned function is called; what is down then does nothing until let go. */
   silence(): () => void
   /** Waits for people to pick up a gamepad: calls `onPad` with the index of each free pad a button is pressed on. Returns stop. */
@@ -115,6 +117,7 @@ export interface Input {
 export type { Capture, CaptureAnswer } from './capture.ts'
 export type { PadLike } from './gamepad.ts'
 export type { MenuPress } from './menu.ts'
+export type { ListedPad } from './pads.ts'
 export type { Claim, Device, Seat } from './seats.ts'
 export type { DeviceKind } from './use.ts'
 
@@ -138,6 +141,7 @@ export function createInput(options: InputOptions): Input {
   /** What the last command said for each player, as one string; a player starts holding nothing. */
   const sent = new Map<number, string>([[1, '']])
   const seatListeners = new Set<(seats: readonly Seat[]) => void>()
+  const padListeners = new Set<(pads: readonly ListedPad[]) => void>()
   let lastSeats = ''
   let silent = 0
   let waiting: RunningCapture | undefined
@@ -155,14 +159,13 @@ export function createInput(options: InputOptions): Input {
   })
   let destroyed = false
 
-  const usable = (): number[] =>
-    pads
-      .list()
-      .filter((pad) => pad.usable)
-      .map((pad) => pad.index)
-  const seats = (): Seat[] => seatsFor(players, claims, usable())
-  const announce = (): void => {
-    const now = seats()
+  const usableIn = (listed: readonly ListedPad[]): number[] =>
+    listed.filter((pad) => pad.usable).map((pad) => pad.index)
+  /** Who holds what, from `listed`: the pads one frame or one tick already looked at, or the browser's own now. */
+  const seats = (listed: readonly ListedPad[] = pads.list()): Seat[] =>
+    seatsFor(players, claims, usableIn(listed))
+  const announce = (listed?: readonly ListedPad[]): void => {
+    const now = seats(listed)
     const text = JSON.stringify(now)
     if (text === lastSeats) return
     lastSeats = text
@@ -172,9 +175,10 @@ export function createInput(options: InputOptions): Input {
 
   // A pad that arrives goes to the player who lost theirs, the lowest first, and the press that plugged it in does
   // nothing until let go. A pad that goes changes nothing here: its player simply holds nothing until it is back.
-  let before = new Set(usable())
+  let before = new Set(usableIn(pads.list()))
   pads.onChange(() => {
-    const present = new Set(usable())
+    for (const listener of [...padListeners]) listener(pads.last())
+    const present = new Set(usableIn(pads.last()))
     const claimed = new Set(claims.values())
     for (const index of [...present].filter((i) => !before.has(i)).sort((a, b) => a - b)) {
       if (claimed.has(`pad-${index}` as ClaimType)) continue
@@ -201,8 +205,8 @@ export function createInput(options: InputOptions): Input {
     const claimed = [...claims].some(([player, claim]) => player !== first && claim === `pad-${pad}`)
     return !claimed && (first === undefined || use.lastPad(first) !== pad)
   }
-  const observe = (held: ReadonlyMap<number, ReadonlySet<PadInput>>): void =>
-    use.observe(seats(), controls, { keys: keyboard.down(), touch: touch.held(), pads: held })
+  const observe = (held: ReadonlyMap<number, ReadonlySet<PadInput>>, listed: readonly ListedPad[]): void =>
+    use.observe(seats(listed), controls, { keys: keyboard.down(), touch: touch.held(), pads: held })
   const onFrame = (ms: number): void => {
     frame = undefined
     if (destroyed) return
@@ -211,10 +215,15 @@ export function createInput(options: InputOptions): Input {
     waiting?.step(held)
     if (waiting?.ended) waiting = undefined
     // A press that answers a capture, or joins an invite, is that and nothing else: the menu does not hear it too.
+    // This frame callback must run before the game loop's step in every frame (it asks for frames first, and both ask
+    // again in the same order). The invite refuses "the pad the first player used last", and that is only known to be
+    // the first player's own pad when the loop has not yet polled this press as theirs. Polled first, a joining press
+    // would count as the first player's and be refused.
     const taken = capturing ? new Set(held.keys()) : invites.step(held, free)
     menu.step(held, ms, pads.leftStick, taken)
-    observe(held)
-    announce()
+    const listed = pads.last()
+    observe(held, listed)
+    announce(listed)
     frame = frames.request(onFrame)
   }
   frame = frames.request(onFrame)
@@ -223,9 +232,12 @@ export function createInput(options: InputOptions): Input {
     poll(tick) {
       if (destroyed) return []
       const down = { keys: keyboard.down(), touch: touch.held(), pads: pads.read() }
-      use.observe(seats(), controls, down)
+      // The seats and what each seat holds come from the same look at the pads.
+      const listed = pads.last()
+      const now = seats(listed)
+      use.observe(now, controls, down)
       const commands: Command[] = []
-      for (const seat of seats()) {
+      for (const seat of now) {
         // Sorted, so the same hands always make the same command, whichever finger or key came first.
         const held = silent > 0 ? [] : heldBy(seat, controls, down)
         const now = held.join(',')
@@ -233,7 +245,7 @@ export function createInput(options: InputOptions): Input {
         sent.set(seat.player, now)
         commands.push(controlsCommand(tick, seat.player, sequence.next(seat.player), held))
       }
-      announce()
+      announce(listed)
       return commands
     },
     inset: touch.inset,
@@ -259,6 +271,10 @@ export function createInput(options: InputOptions): Input {
       announce()
     },
     seats,
+    onPads(listener) {
+      padListeners.add(listener)
+      return () => padListeners.delete(listener)
+    },
     onSeats(listener) {
       seatListeners.add(listener)
       return () => seatListeners.delete(listener)
