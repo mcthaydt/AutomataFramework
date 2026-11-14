@@ -4,7 +4,7 @@ Stage 3 of the workflow, for [`plans/2026-11-14-m2-cli.md`](../plans/2026-11-14-
 (PR 67), against the [M2 spec](../specs/2026-11-14-m2-design.md)'s "The agent tools (plan K)", its Goals, anti-goals,
 Testing and "Done means", M1's minors M4, M5 and M9, the first-layer spec's layer 15 and "Agent skills ship with the
 package", the code on `main` at `641584b`, and the other M2 plans as they stand there: C, I, V and N (built and fixed),
-P (built, its implementation audit merged, its fixes not yet), and A, S and T (planned and audited, not built).
+P (built and audited; its fixes merged as PR 68 while this audit was written), and A, S and T (planned and audited, not built).
 AutomataFrameworkExamples (`main`), AutomataFrameworkSite (`facts`) and AutomataFrameworkEditors were read where the
 plan touches them. Written 2026-11-14.
 
@@ -43,8 +43,8 @@ S and T for every name Part 2 calls, and plan A's audit I7. In Examples: `src/he
   E3).
 - **Part 2's steps after plans A, P, S, T, L and U.** Right in kind: one step per built-in, never ahead of it. Every
   name Steps A, S and T call is in those plans' contracts (`artFiles`, `artProblems`, `paintedPath`, `readPicture`,
-  `Listed.hero`, `GameAudio`, `webSpeaker`, `testSpeaker`, `audio.log()`). Three corrections: Step P waits for plan
-  P's fixes stage, not only PR 46 (M12); Steps L and U are written against plans that do not exist yet (M20); saves
+  `Listed.hero`, `GameAudio`, `webSpeaker`, `testSpeaker`, `audio.log()`). Three corrections: each step waits for its
+  plan's fixes stage, not only its build (M12); Steps L and U are written against plans that do not exist yet (M20); saves
   and online play, both on `main`, had no step and no line saying why (M13).
 - **Does the template work under either answer to plan A's pictures question?** Yes, with one fix. The sim never
   reads a painted file (plan A's atlases are "for people and other tools"; clips and `Sprite` use the sheet the painter
@@ -188,8 +188,9 @@ checks the other words are the README's.
 - **M11.** `play_step` with an action the game does not have, or a player not in the game, would be refused by the sim
   in silence. *Fixed:* `"<action>" is not one of this game's actions: left, right, jump.` and `There is no player <n>
   in this game. It has: 1.`, as results with `isError`.
-- **M12.** Step P was free to start after PR 46; plan P's eight fixes (stage 6) have not merged. *Fixed:* every Part 2
-  step starts after its plan's fixes stage merges.
+- **M12.** Step P was free to start after PR 46, before plan P's eight fixes (stage 6). Those merged as PR 68 while
+  this audit was written, so Step P is free once Part 1 merges. *Fixed* for the rest: every Part 2 step starts after
+  its plan's fixes stage merges, not only its build.
 - **M13.** Saves (plan V) and online play (plan N) are on `main`, in no step, and in no "not here" row. *Fixed:* Step U
   brings saves with the saves screen; a row says online stays off in the template, the per-game choice the spec gives,
   with plan N's README as the way to turn it on.
