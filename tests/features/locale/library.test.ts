@@ -1,5 +1,7 @@
 // The framework's own sentences: six files, written the way `writeContent` writes them, complete in every language,
 // and plain enough to read aloud.
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
   LANGUAGES,
@@ -72,4 +74,34 @@ test("how many of the framework's words wait for a native read is printed, and n
   console.log(`native read: ${waiting} of ${total} framework words wait`)
   // With an empty marks file, every translated word waits and English never does.
   expect(waiting).toBe(total)
+})
+
+/** Every `.ts` file under `dir`. */
+function sourcesIn(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name)
+    if (entry.isDirectory()) return sourcesIn(path)
+    return entry.name.endsWith('.ts') ? [path] : []
+  })
+}
+
+/** A quoted `automata.<part>.…`: a whole key, or the start of one when what follows is a `${` (a key built from a variable). */
+const KEY = /(['"`])(automata\.[a-z][a-z0-9-]*\.[a-z0-9.-]*?)(\$\{|\1)/g
+
+test('every automata.* key written in src/ is in en.json, and every key of en.json is written in src/', () => {
+  const written = new Set<string>()
+  const stems = new Set<string>()
+  for (const file of sourcesIn(join(import.meta.dirname, '../../../src')))
+    for (const match of readFileSync(file, 'utf8').matchAll(KEY)) {
+      const key = match[2] as string
+      // A file's name is not a key: `automata.translations.toml`.
+      if (/\.(toml|json)$/.test(key)) continue
+      ;(match[3] === '$' + '{' ? stems : written).add(key)
+    }
+  const keys = Object.keys(wordsIn('en'))
+  for (const key of written) expect(keys, `${key} is written in src/ but not in en.json`).toContain(key)
+  for (const key of keys) {
+    const used = written.has(key) || [...stems].some((stem) => key.startsWith(stem))
+    expect(used, `${key} is in en.json but no code asks for it`).toBe(true)
+  }
 })

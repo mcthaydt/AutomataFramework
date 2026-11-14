@@ -31,7 +31,7 @@ export interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
   readonly level?: string
   /** How many players the room is for; used when this page makes the room. Default 2, or the game's own count if it is a co-op game. */
   readonly seats?: number
-  /** Called whenever what a person should be told about the room changes (`onlineWords` has the words). */
+  /** Called whenever what a person should be told about the room changes (`onlineWords` has the words, in the language of `locale.words` if you pass it). */
   readonly onStatus?: (status: OnlineStatus) => void
   readonly onCheck?: (tick: number, hash: string, ok: boolean) => void
   /** A test's lag or a debug tool: sees the line to the room, and any line that takes over after a drop. */
@@ -76,6 +76,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     join: joinRoom = joinSession,
     audio,
     soundNotice: noticeOption,
+    locale,
     ...simOptions
   } = options
   checkControls(controls)
@@ -179,10 +180,14 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       mount,
       controls,
       frames,
+      ...(locale === undefined ? {} : { words: locale.words }),
       ...(settings === undefined ? {} : { settings }),
       ...(gamepads === undefined ? {} : { gamepads }),
     })
+    // A new language says the touch buttons again. Stopped with the game.
+    const unfollow = locale?.onChange(() => input.relabel(locale.words))
     cleanup = () => {
+      unfollow?.()
       input.destroy()
       renderer.destroy()
       leaveRoom()

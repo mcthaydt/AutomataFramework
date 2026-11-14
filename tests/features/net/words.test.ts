@@ -1,67 +1,48 @@
-// What a person reads about a room. One assertion per line of the plan's table, and no word of the machinery.
+// What a room says, as keys and values: one assertion per row of the plan's table, and no sentence at all (the words
+// are `locale`'s: `tests/features/locale/online.test.ts` holds every English sentence).
 import { expect, test } from 'vitest'
-import { ONLINE_PROBLEMS, type OnlineProblem, type OnlineStatus, onlineWords } from '#src/features/net/net.ts'
+import { ONLINE_PROBLEMS, type OnlineStatus, onlineMessage } from '#src/features/net/net.ts'
 
-test('waiting for one more player says how to share the code', () => {
-  expect(onlineWords({ state: 'waiting', code: 'K7QX', missing: 1 })).toBe(
-    'Waiting for 1 more player. Share this code so a friend can join: K7QX',
-  )
+test('waiting for one more player names the code', () => {
+  expect(onlineMessage({ state: 'waiting', code: 'K7QX', missing: 1 })).toEqual({
+    key: 'automata.online.waiting.one',
+    values: { code: 'K7QX' },
+  })
 })
 
-test('waiting for several players', () => {
-  expect(onlineWords({ state: 'waiting', code: 'K7QX', missing: 3 })).toBe(
-    'Waiting for 3 more players. Share this code so friends can join: K7QX',
-  )
+test('waiting for several players names how many and the code', () => {
+  expect(onlineMessage({ state: 'waiting', code: 'K7QX', missing: 3 })).toEqual({
+    key: 'automata.online.waiting.many',
+    values: { count: 3, code: 'K7QX' },
+  })
 })
 
-test('playing with everyone here says nothing', () => {
-  expect(onlineWords({ state: 'playing', away: [] })).toBe('')
+test('playing with everyone here is nothing to say', () => {
+  expect(onlineMessage({ state: 'playing', away: [] })).toBeUndefined()
 })
 
-test('a player who is away is named, and the game goes on', () => {
-  expect(onlineWords({ state: 'playing', away: [2] })).toBe(
-    'Player 2 lost their connection. The game goes on.',
-  )
-  expect(onlineWords({ state: 'playing', away: [1, 3] })).toBe(
-    'Players 1 and 3 lost their connection. The game goes on.',
-  )
-  expect(onlineWords({ state: 'playing', away: [1, 2, 4] })).toBe(
-    'Players 1, 2 and 4 lost their connection. The game goes on.',
-  )
+test('a player who is away is named, and a list of them is a list', () => {
+  expect(onlineMessage({ state: 'playing', away: [2] })).toEqual({
+    key: 'automata.online.away.one',
+    values: { players: [2] },
+  })
+  expect(onlineMessage({ state: 'playing', away: [1, 2, 4] })).toEqual({
+    key: 'automata.online.away.many',
+    values: { players: [1, 2, 4] },
+  })
 })
 
-test('reconnecting', () => {
-  expect(onlineWords({ state: 'reconnecting' })).toBe('Connection lost. Trying to get you back in.')
+test('reconnecting has no values', () => {
+  expect(onlineMessage({ state: 'reconnecting' })).toEqual({ key: 'automata.online.reconnecting' })
 })
 
-const ended: Record<OnlineProblem, string> = {
-  'different-version':
-    'This game is a different version from the room. Reload the page to get the newest one, then join again.',
-  'room-full': 'That room is full. Start a new room, or ask for another code.',
-  'no-room': 'No room has that code. Check the code and try again.',
-  'server-full': 'The server has no space for another room right now. Try again in a minute.',
-  'bad-room': 'That room could not be made. Check the level and the number of players.',
-  'no-server': 'Could not reach the game server. Check your internet and try again.',
-  lost: 'The connection was lost and could not be got back. Start or join a room to play again.',
-}
-
-test('every way a room can end has its words', () => {
-  expect(Object.keys(ended).sort()).toEqual([...ONLINE_PROBLEMS].sort())
-  for (const problem of ONLINE_PROBLEMS)
-    expect(onlineWords({ state: 'ended', problem }), problem).toBe(ended[problem])
+test('every way a room can end has a key of its own', () => {
+  const keys = ONLINE_PROBLEMS.map((problem) => onlineMessage({ state: 'ended', problem })?.key)
+  expect(keys).toEqual(ONLINE_PROBLEMS.map((problem) => `automata.online.ended.${problem}`))
+  expect(new Set(keys).size).toBe(ONLINE_PROBLEMS.length)
 })
 
-test('no words of the machinery', () => {
-  const statuses: OnlineStatus[] = [
-    { state: 'waiting', code: 'K7QX', missing: 1 },
-    { state: 'waiting', code: 'K7QX', missing: 2 },
-    { state: 'playing', away: [2] },
-    { state: 'playing', away: [1, 2] },
-    { state: 'reconnecting' },
-    ...ONLINE_PROBLEMS.map((problem): OnlineStatus => ({ state: 'ended', problem })),
-  ]
-  for (const status of statuses)
-    expect(onlineWords(status).toLowerCase(), JSON.stringify(status)).not.toMatch(
-      /socket|server tick|desync|rollback|\bsync\b|\bseat\b/,
-    )
+test('a status says the same thing twice, with nothing shared between the answers', () => {
+  const status: OnlineStatus = { state: 'playing', away: [3] }
+  expect(onlineMessage(status)).toEqual(onlineMessage(status))
 })
