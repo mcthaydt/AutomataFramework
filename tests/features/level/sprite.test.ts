@@ -12,6 +12,7 @@ import {
 import { definePlugin, defineSystem, type Sim } from '#src/features/sim/sim.ts'
 import { coopFiles } from '../../fixtures/game/co-op.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
+import { movesFiles, type Setup } from '../../fixtures/game/moves-game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 import { loadSpriteGame, spriteGameFiles } from '../../fixtures/game/sprite-game.ts'
@@ -210,4 +211,38 @@ test('a snapshot restored mid-clip carries on from the same pose', async () => {
   for (let i = 0; i < 10; i++) second.step(script(second.tick))
   expect(second.hash()).toBe(whole.hash())
   expect(sprite(second)).toEqual(sprite(whole))
+})
+
+/** A hero the framework moves, with the example figure and its eight clips, and no game code at all. */
+async function moved(setup: Setup = {}): Promise<Sim> {
+  const sim = await createGameSim({ content: await loadFixtureGame(movesFiles({ figure: true, ...setup })) })
+  made.push(sim)
+  idleFor(sim, 60)
+  return sim
+}
+
+test('a hero the framework moves runs, faces the way it was last sent, and stands', async () => {
+  const sim = await moved()
+  sim.step([controlsCommand(sim.tick, 1, 0, ['left'])])
+  idleFor(sim, 20)
+  expect(sprite(sim)).toMatchObject({ clip: 'run', face: -1 })
+  sim.step([controlsCommand(sim.tick, 1, 1, [])])
+  idleFor(sim, 40)
+  expect(sprite(sim)).toMatchObject({ clip: 'idle', face: -1 })
+})
+
+test('an air jump plays its own clip while the hero goes up, then the ordinary ones', async () => {
+  const sim = await moved({ doubleJump: true })
+  sim.step([controlsCommand(sim.tick, 1, 0, ['jump'])])
+  sim.step([controlsCommand(sim.tick, 1, 1, [])])
+  idleFor(sim, 8)
+  expect(sprite(sim)?.clip).toBe('jump')
+  sim.step([controlsCommand(sim.tick, 1, 2, ['jump'])])
+  expect(sprite(sim)).toMatchObject({ clip: 'air-jump', pose: 'push' })
+})
+
+test('a dash plays its own clip, and the hero faces the way it dashes', async () => {
+  const sim = await moved({ dash: true })
+  sim.step([controlsCommand(sim.tick, 1, 0, ['left', 'dash'])])
+  expect(sprite(sim)).toMatchObject({ clip: 'dash', pose: 'run-2', face: -1 })
 })

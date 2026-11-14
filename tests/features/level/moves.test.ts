@@ -2,7 +2,6 @@
 // with real physics and no game code.
 import { afterEach, describe, expect, test } from 'vitest'
 import { commandsPlugin, controlsCommand, Player } from '#src/features/commands/commands.ts'
-import { DEFAULT_HERO_CONTROLS, MOVE_NUMBERS, writeContent } from '#src/features/content/content.ts'
 import {
   createGameSim,
   joinCommand,
@@ -14,62 +13,13 @@ import {
 } from '#src/features/level/level.ts'
 import { Body, physics, Touching, Transform } from '#src/features/physics/physics.ts'
 import { type Command, createSim, definePlugin, defineSystem, type Sim } from '#src/features/sim/sim.ts'
-import { gameFiles } from '../../fixtures/content/kind.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
-import { fixtureFiles } from '../../fixtures/game/read.ts'
+import { movesFiles, type Setup } from '../../fixtures/game/moves-game.ts'
 
 const made: Sim[] = []
 afterEach(() => {
   for (const sim of made.splice(0)) sim.dispose()
 })
-
-interface Setup {
-  /** Values for the tuning file's numbers, by id; the rest are the framework's. */
-  readonly numbers?: Readonly<Record<string, number>>
-  readonly doubleJump?: boolean
-  /** Makes it a game for this many players, with a start point for each, a metre or two apart on the floor. */
-  readonly players?: number
-}
-
-/** The fixture game with a hero that has `moves`, a tuning file for it, and no crate in the way. */
-function movesFiles(setup: Setup = {}): Record<string, string | undefined> {
-  const players = setup.players ?? 1
-  const tuning = {
-    format: 1,
-    id: 'hero-moves',
-    numbers: MOVE_NUMBERS.map((n) => ({
-      id: n.id,
-      about: n.about,
-      value: setup.numbers?.[n.id] ?? n.value,
-      min: n.min,
-      max: n.max,
-      step: n.step,
-    })),
-    controls: DEFAULT_HERO_CONTROLS,
-  }
-  const hero = {
-    format: 1,
-    id: 'hero',
-    body: 'dynamic',
-    size: { w: 0.8, h: 1 },
-    color: '#e4572e',
-    upright: true,
-    moves: { tuning: 'hero-moves', 'double-jump': setup.doubleJump ?? false },
-  }
-  const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] ?? '') as Record<string, unknown>
-  const starts = Array.from({ length: players }, (_, i) => ({ player: i + 1, x: 2.5 + i * 3, y: 7.5 }))
-  const tuningFile = { type: 'tuning', path: 'content/tunings/hero-moves.json' } as const
-  const files = gameFiles(fixtureFiles, [{ ...tuningFile, text: writeContent('tuning', tuning as never) }], {
-    'content/characters/hero.json': writeContent('character', hero as never),
-    'content/levels/level-1.json': writeContent('level', { ...level, things: [], starts } as never),
-  })
-  if (players > 1)
-    files['automata.toml'] = (files['automata.toml'] ?? '').replace(
-      'hero = "hero"\n',
-      `hero = "hero"\nplayers = ${players}\n`,
-    )
-  return files
-}
 
 async function game(setup: Setup = {}, plugins: Parameters<typeof createGameSim>[0]['plugins'] = []) {
   const content = await loadFixtureGame(movesFiles(setup))
