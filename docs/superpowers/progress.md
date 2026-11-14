@@ -6,12 +6,13 @@ The tracker every stage reads first and updates last. One section per cycle; new
 
 Spec: [`specs/2026-11-14-content-hero-controls-design.md`](specs/2026-11-14-content-hero-controls-design.md)
 
-Overall: **10%** (stage 1, the spec, is written and in review; one plan, plan H, then runs stages 2 to 7)
+Overall: **20%** (the spec is merged; plan H is written and in review; stages 3 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
-| 1. Spec | Written, in review, 100%. The Owner answered (2026-11-14): walk and jump with the fair-jump numbers, plus double jump, wall jump and dash, each switched on in the file (C); the demo teaches one new move per level, the starter stays walk and jump (B); touch first, then gamepad, then keyboard, with AAA phone controls. Three goldens move once (the template's and the demo's two); no framework golden moves | `specs/2026-11-14-content-hero-controls-design.md` |
-| 2 to 7 (plan H) | Not started | `plans/2026-11-14-built-in-hero.md` |
+| 1. Spec | Merged (PR 91), 100%. The Owner answered (2026-11-14): walk and jump with the fair-jump numbers, plus double jump, wall jump and dash, each switched on in the file (C); the demo teaches one new move per level, the starter stays walk and jump (B); touch first, then gamepad, then keyboard, with AAA phone controls. Three goldens move once (the template's and the demo's two); no framework golden moves | `specs/2026-11-14-content-hero-controls-design.md` |
+| 2. Plan (plan H) | Written, in review, 100%. Fifteen tasks (6% each, 10% for the last green run): `moves` in a character file; the eighteen numbers, their limits and the hero's controls; `buzz` in a feel file; `Touching`, what a body stands on and leans against, from Rapier's contact normals; how a hero moves as one pure step; the `moves` plugin, added only when the hero has `moves`; three clips; the golden `moves.json` in four engines, co-op and online; the controls from the tuning file (`startGame` needs no `controls` and no `plugins`); `buzz` through the host; the thumb gestures as rules with no page; the thumb scheme on the page; the words and the key and gamepad hints in six languages; the scheme at five sizes in three browsers; the template moved over. No framework golden moves, `template/replays/level-1.json` moves once, and no dependency is added. Found while planning: no plan owns the feel runtime (dust, shake and freeze are read and not drawn), so plan H builds only the part that buzzes. No Owner question is open | `plans/2026-11-14-built-in-hero.md` |
+| 3 to 7 (plan H) | Not started | |
 
 ## Cycle 5: no default language
 
