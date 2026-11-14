@@ -144,4 +144,5 @@ the anchor order (`b` first with `(bx, by)`).
 - **Plan D.** A hero who leaves the game (plan I's `leave`) while in the door sends no `door.left`, because the
   payload names a hero that is gone. "Everyone is through the door" is counted among `playersIn(sim)`. Written into
   the plan's step for plan D and its "What other plans rely on".
-- **Plan N's audit (PR 41)** was open while this was written; nothing in it was relied on.
+- **Plan N's audit (PR 41)** merged while this was written; it changes nothing plan P uses (it reads plans I, C
+  and V, and its layer change puts `net` after `commands` and `server` after `level`).
