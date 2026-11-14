@@ -39,9 +39,11 @@ Not covered, with the reason:
   under "Handoff to plan D".
 - **Screens.** The framework has no Svelte kit until plan U. This plan gives a game the status as data and the plain
   English words for it; plan U puts them on a screen and plan L translates them.
-- **Joining a room that has started, as a new player.** A room starts when its seats are full, and its players are
-  fixed from tick 0, as `createGameSim` fixes them today. Players coming and going inside the sim belongs to the plan
-  that adds it to the sim (same-screen "Add a player"); when it exists, a room uses the same command.
+- **Coming and going without plan I.** Plan I adds the `join` and `leave` commands to the sim, for games whose
+  `automata.toml` says `players = 2` or more. Tasks 1 to 10 do not need them: there a room starts when its seats are
+  full and its players are fixed from tick 0, as `createGameSim` fixes them today. Task 11 makes a room of a co-op
+  game use plan I's two commands, so a player can join a game that is already going and a player who leaves takes
+  their hero with them. **Task 11 starts only after plan I has merged**; the rest does not wait for it.
 - **Smoothing a correction.** After a rollback the picture is redrawn from the corrected state at once. Hiding that
   with blending is tuning for real networks, and is the deploy plan's.
 - **`@colyseus/testing`.** Left out of the stack: it needs `@colyseus/tools`, which the spec's table does not name,
@@ -91,8 +93,8 @@ As in the M1 plan: there is no local test run, so each task proves itself in the
   implementation (every job must pass). Task 6's lifted file and its lifted test push once, together.
 - A new golden is committed with `"finalHash": ""`; the Node job fails with `GOLDEN NOT RECORDED` and the JSON to
   commit; after that all four engines must match. If a browser differs from Node, stop and report.
-- After each task: tick its boxes here, update this plan's row in `docs/superpowers/progress.md` (Tasks 1 to 10 are 9%
-  each of this stage, Task 11 is 10%), and send the coordinator one line: commit, test count, surprises.
+- After each task: tick its boxes here, update this plan's row in `docs/superpowers/progress.md` (Tasks 1 to 11 are 8%
+  each of this stage, Task 12 is 12%), and send the coordinator one line: commit, test count, surprises.
 - Stop rules: a failing check you cannot explain, a third fix for the same failure, an access refusal, a missing
   tool, or an Owner-only question. Stop that task and report at once. Hand off at 90 minutes.
 
@@ -368,8 +370,16 @@ interface RoomEngine {
   step(): void
   replay(): Replay
 }
-function createRoomEngine(setup: { sim: Sim; level: string; seats: number }): RoomEngine
+function createRoomEngine(setup: {
+  sim: Sim
+  level: string
+  seats: number
+  /** The sim's own commands for a player arriving and going, by type. Task 11 gives them; without them the room waits until it is full. */
+  seatCommands?: { readonly join: string; readonly leave: string }
+}): RoomEngine
 ```
+
+  Tasks 3 to 10 never pass `seatCommands`; the option is named here so Task 11 changes no signature.
 
 - `tests/fixtures/online/two-player-level.ts`: `twoPlayerLevel(levelText: string): string`, the fixture's `level-1`
   with a second start added (`{ "player": 2, "x": 13.5, "y": 7.5 }`). It imports nothing, so plain Node can load it
@@ -867,7 +877,65 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
   (`pr-<number>/online/`) and say in the report whether two heroes and the buttons are plain to see at phone size.
 - [ ] **Step 5: Commit** `test: two real browsers play together against a server CI starts`.
 
-### Task 11: The docs, and what the Owner does after
+### Task 11: Coming and going, with plan I's commands
+
+**Starts only after plan I (`docs/superpowers/plans/2026-11-14-m2-input.md`) has merged to `main`.** If it has not
+when Task 10 is done, report to the coordinator, go on to Task 12, and leave this task for a later session; the tracker
+then says so.
+
+**Files:**
+- Modify: `src/features/net/room-engine.ts`, `src/features/net/session.ts`, `src/features/server/room.ts`,
+  `tests/features/net/room-engine.test.ts`, `tests/features/net/session.test.ts`,
+  `tests/features/server/room-server.test.ts`, `tests/fixtures/online/game.ts`, `tests/fixtures/online/server.ts`,
+  `tests/fixtures/online/page/main.ts`, `tests/journeys/online.journey.test.ts`
+
+**Interfaces:**
+- Consumes: plan I's `JoinCommand`, `LeaveCommand`, `playersIn` and the project's optional `players` (from the level
+  and content entries), and its fixture `tests/fixtures/game/co-op.ts` (`coopFiles`: `players = 4`, four starts).
+- Produces, with no new exported name:
+  - **The engine with `seatCommands`.** The room starts on the first join: no `waiting`, `start` goes to the first
+    player at once. Every join, the first included, queues the `join` command from that seat for the next tick, and
+    the player gets `seat`, then `sync` and the bytes, exactly as `back` sends them (a room at tick 0 included).
+    `leave(seat)` queues the `leave` command from that seat. `away` and `back` are unchanged: a dropped player's hero
+    stands still for the grace, and is taken out only when the grace ends. Server-made commands take that seat's
+    next `seq`, so a replay of the room holds them in order.
+  - **The room** passes `seatCommands: { join: JoinCommand.id, leave: LeaveCommand.id }` when the game's project has
+    `players`. Its sim is then made with `players: []` (everyone arrives by `join`), `RoomOptions.seats` must equal
+    the project's `players` (else `bad-room`), and the replay's `meta.players` is `""`. If `createGameSim` refuses an
+    empty list of players, stop and report.
+  - **A client of a co-op game** makes its two sims with `players: []` too. `joinSession` and `startOnlineGame` take
+    `seats` from the project's `players` when it has one. The session already starts from a `sync`.
+  - `tests/fixtures/online/game.ts` gains `loadCoopGame()` and `coopSim()` (plan I's `coopFiles`, `heroPlugin`, no
+    players); `server.ts` serves the co-op game when started with `--co-op`; the page uses it with `?game=co-op`.
+
+- [ ] **Step 1: Write the failing tests.**
+  - Engine: "a co-op room starts with one player" (join 1: `seat`, `start`, `sync`; the tick message for the next
+    tick carries a `join` from source 1; `playersIn` of the engine's sim is `[1]` after it); "a second player joins
+    a game that is going" (after 90 steps, join 2: its `sync` restores on a fresh `coopSim()` to the engine's hash,
+    the next tick message carries `join` from source 2, and seat 1's session shows player 2's hero after a rollback
+    or on the confirmed tick); "leaving takes the hero out" (`leave(2)`: a `leave` from source 2 is relayed, and
+    `playersIn` is `[1]`); "away keeps the hero" (`away(2)`: no `leave` is relayed); "the fifth player is refused"
+    (`room-full`); "the room's co-op play is a replay" (`verifyReplay(await coopSim(), engine.replay())` is ok, with
+    the `join` and `leave` commands in it).
+  - Session: "a player who joins late starts from the state" (its first advance after the `sync` has
+    `confirmedTick` at the room's tick, never replaying from 0).
+  - Real sockets: **"a third player joins a game already going, and one leaves"**: players 1 and 2 play
+    `onlineScript`; after both have the check for tick 119, player 3 joins by code with `lagMs: 120`; after the
+    check for tick 359, player 2 leaves. Players 1 and 3 get the check for tick 599 with equal hashes, equal to the
+    room's replay's; `desyncs` are 0; `verifyReplay(await coopSim(), thatReplay)` is ok, and the replay holds three
+    `join` commands and one `leave`. And "a room for 2 in a game for 4 cannot be made" (`bad-room`).
+  - Journey, one more pair (Chromium 1280 by 720 with WebKit 390 by 844), on the co-op server: player 1 opens the
+    page and `data-state` is `playing` at once with an empty `#status`; three seconds later player 2 opens
+    `?room=<code>`; each page shows the other's hero move; both get an equal later check; player 2 closes its page
+    and, after the grace (the co-op fixture server runs with `graceSeconds: 2`), player 1's page shows one hero
+    (`data-players="1"`) and an empty `#status`.
+- [ ] **Step 2: Push; `check` and `online` fail** on the new cases; every earlier test passes.
+- [ ] **Step 3: Implement.** No change to the lobby path: a game without `players` behaves as Tasks 3 to 10 left it,
+  and `tests/golden/online-two-players.json` must not move.
+- [ ] **Step 4: Push; every job passes.**
+- [ ] **Step 5: Commit** `feat: players join and leave a room that is going, by the sim's own commands`.
+
+### Task 12: The docs, and what the Owner does after
 
 **Files:**
 - Modify: `README.md`, `tests/docs/readme.test.ts`, `CLAUDE.md` (Structure), `docs/superpowers/progress.md`
@@ -890,6 +958,7 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
     'contexts[]=online'`.
   - Notes for other plans: plan L translates `onlineWords`; plan U shows them on a screen; plan D takes the step
     under "Handoff to plan D"; plan K's `automata` command may wrap `runRoomServer` later.
+  - Whether Task 11 was done, or is waiting for plan I.
 
 ## Self-review
 
@@ -899,5 +968,8 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
   that rollback runs": Task 5 (scripted, four engines) and Task 7 (real sockets). "A journey with two real browsers
   against a server CI starts": Task 10. "The demo does not go online": nothing here touches Examples. The protocol
   and the snapshot on the wire: "The protocol". The replay format: unchanged, and said so.
-- **Not decided here, on purpose:** nothing is left as "to be decided". The two things outside this plan's reach
-  (players joining a started room, smoothing) are named with their owner.
+- **Plan I's commands.** Task 11 uses `join` and `leave` (the spec's "the same numbered commands the room server
+  relays"), and is the only task that waits on another plan; the spec's rule is that a plan which depends on another
+  says so and runs in order, and this one says so for one task only.
+- **Not decided here, on purpose:** nothing is left as "to be decided". Smoothing a correction is named with its
+  owner, the deploy plan.
