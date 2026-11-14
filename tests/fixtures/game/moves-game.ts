@@ -57,7 +57,11 @@ export function movesFiles(setup: Setup = {}): Record<string, string | undefined
   const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] ?? '') as Record<string, unknown>
   const starts = Array.from({ length: players }, (_, i) => ({ player: i + 1, x: 2.5 + i * 3, y: 7.5 }))
   const listed: GameFile[] = [
-    { type: 'tuning', path: 'content/tunings/hero-moves.json', text: writeContent('tuning', tuning as never) },
+    {
+      type: 'tuning',
+      path: 'content/tunings/hero-moves.json',
+      text: writeContent('tuning', tuning as never),
+    },
   ]
   if (setup.figure)
     listed.push({

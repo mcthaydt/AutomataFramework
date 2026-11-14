@@ -2,8 +2,8 @@ import { describe, expect, test } from 'vitest'
 import { MOVE_NUMBERS, type MoveNumbers, moveNumbers } from '#src/features/content/content.ts'
 import {
   MOVE_START,
-  MoveMode,
   type MoveInput,
+  MoveMode,
   type MoveResult,
   type MoveState,
   type MoveSwitches,
@@ -106,15 +106,15 @@ describe('jumping', () => {
   })
 
   test('ledge grace: a press 6 ticks after the ground still jumps, 7 does not', () => {
-    const after = (k: number) =>
+    const pressedAfter = (k: number) =>
       last(run([tick(), ...repeat(k - 1, tick(AIR)), tick({ jumpPressed: true, jumpHeld: true, ...AIR })]))
-    expect(after(6).events).toContain('jumped')
-    expect(after(6).vy).toBe(-12)
-    expect(after(7).events).not.toContain('jumped')
+    expect(pressedAfter(6).events).toContain('jumped')
+    expect(pressedAfter(6).vy).toBe(-12)
+    expect(pressedAfter(7).events).not.toContain('jumped')
   })
 
   test('early press: a press 6 ticks before the ground jumps on landing, 7 does not', () => {
-    const before = (k: number) =>
+    const pressedBefore = (k: number) =>
       last(
         run(
           [
@@ -127,8 +127,8 @@ describe('jumping', () => {
           falling(),
         ),
       )
-    expect(before(6).events).toEqual(expect.arrayContaining(['landed', 'jumped']))
-    expect(before(7).events).toEqual(['landed'])
+    expect(pressedBefore(6).events).toEqual(expect.arrayContaining(['landed', 'jumped']))
+    expect(pressedBefore(7).events).toEqual(['landed'])
   })
 
   test('letting go while rising keeps half; holding keeps all; letting go while falling does nothing', () => {

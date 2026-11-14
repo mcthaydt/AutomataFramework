@@ -169,10 +169,9 @@ describe('the checks, in a game', () => {
     expect(await gameProblems(game(tuning([['walk-speed', 6, 1, 20]])))).toEqual([]))
 
   test('a tuning no hero names is checked for none of this', async () => {
-    const files = gameFiles(
-      fixtureFiles,
-      [{ type: 'tuning', path, text: writeContent('tuning', tuning([['jump-speed', 12, 1, 99]]) as never) }],
-    )
+    const files = gameFiles(fixtureFiles, [
+      { type: 'tuning', path, text: writeContent('tuning', tuning([['jump-speed', 12, 1, 99]]) as never) },
+    ])
     expect(await gameProblems(files)).toEqual([])
   })
 })

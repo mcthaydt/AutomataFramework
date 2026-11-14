@@ -71,7 +71,11 @@ describe('the built-in hero', () => {
     const standing = { x: xOf(sim), y: yOf(sim) }
     play(sim, 30, hold([[20, ['right']]]))
     expect(xOf(sim)).toBeGreaterThan(standing.x + 2)
-    play(sim, 10, hold([[50, ['right', 'jump']], [51, ['right']]]))
+    const jump = hold([
+      [50, ['right', 'jump']],
+      [51, ['right']],
+    ])
+    play(sim, 10, jump)
     expect(yOf(sim)).toBeLessThan(standing.y - 0.5)
   })
 

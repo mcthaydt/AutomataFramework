@@ -12,8 +12,8 @@ import {
 import { definePlugin, defineSystem, type Sim } from '#src/features/sim/sim.ts'
 import { coopFiles } from '../../fixtures/game/co-op.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
-import { movesFiles, type Setup } from '../../fixtures/game/moves-game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
+import { movesFiles, type Setup } from '../../fixtures/game/moves-game.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 import { loadSpriteGame, spriteGameFiles } from '../../fixtures/game/sprite-game.ts'
 

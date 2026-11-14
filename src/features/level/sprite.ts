@@ -58,7 +58,8 @@ const spritesSystem: SystemDef = defineSystem({
       if (clips.length > 0) {
         const playing = clips.find((clip) => clip.id === sprite.clip)
         const landing = playing !== undefined && !poseAt(playing, ctx.tick - sprite.since).done
-        const wanted = sprite.by !== '' ? sprite.by : motionClip(vx, vy, sprite.clip, still, landing, moves?.mode)
+        const wanted =
+          sprite.by !== '' ? sprite.by : motionClip(vx, vy, sprite.clip, still, landing, moves?.mode)
         const picked = pickClip(clips, wanted)
         if (picked !== undefined) {
           const since = picked.id === sprite.clip ? sprite.since : ctx.tick

@@ -9,8 +9,8 @@ import { Body, Collider, Joint, Transform } from './components.ts'
 import { CollisionEnded, CollisionStarted } from './events.ts'
 import { BodyKind, JointKind, ShapeKind } from './kinds.ts'
 import type { PhysicsAdapter } from './physics-world.ts'
-import type { FeltContact } from './touching.ts'
 import { loadRapier } from './rapier-wasm.ts'
+import type { FeltContact } from './touching.ts'
 
 type World = RAPIER.World
 

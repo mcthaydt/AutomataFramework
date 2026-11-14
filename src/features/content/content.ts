@@ -79,6 +79,13 @@ export {
   placeholdersOf,
 } from './messages.ts'
 export {
+  DEFAULT_HERO_CONTROLS,
+  MOVE_NUMBERS,
+  type MoveNumberInfo,
+  type MoveNumbers,
+  moveNumbers,
+} from './moves.ts'
+export {
   type DrumPart,
   MAX_STEPS,
   type MusicFile,
@@ -86,13 +93,6 @@ export {
   MusicSchema,
   type TonePart,
 } from './music.ts'
-export {
-  DEFAULT_HERO_CONTROLS,
-  MOVE_NUMBERS,
-  type MoveNumberInfo,
-  type MoveNumbers,
-  moveNumbers,
-} from './moves.ts'
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'

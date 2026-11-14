@@ -271,7 +271,9 @@ describe('moves', () => {
       text: writeContent('tuning', {
         format: 1,
         id: 'hero-moves',
-        numbers: [{ id: 'walk-speed', about: 'How fast the hero walks.', value: 6, min: 1, max: 20, step: 0.5 }],
+        numbers: [
+          { id: 'walk-speed', about: 'How fast the hero walks.', value: 6, min: 1, max: 20, step: 0.5 },
+        ],
       } as never),
     }
     const withMoves = (id: string, tuning: string): Record<string, string | undefined> =>
