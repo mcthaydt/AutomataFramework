@@ -5,7 +5,7 @@ import { createScene } from './scene.ts'
 import { createStage } from './stage.ts'
 
 export { type Fit, fitWorld } from './fit.ts'
-export { createScene, type Scene, type View } from './scene.ts'
+export { createScene, type Link, type Scene, type View } from './scene.ts'
 
 /** What `createRenderer` gives back. */
 export interface Renderer {
@@ -52,11 +52,11 @@ export async function createRenderer(options: {
       scene.apply(delta)
       if (started) return
       started = true
-      stage.draw(scene.views(1))
+      stage.draw(scene.views(1), scene.links(1))
     },
     draw(alpha) {
       started = true
-      stage.draw(scene.views(alpha))
+      stage.draw(scene.views(alpha), scene.links(alpha))
     },
     setInset: (px) => stage.setInset(px),
     destroy() {

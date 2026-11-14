@@ -1164,6 +1164,19 @@ interface LevelThing {
 }
 ```
 
+### `Link` (interface)
+
+```ts
+interface Link {
+    readonly sid: number;
+    readonly kind: 'pin' | 'rope';
+    readonly x1: number;
+    readonly y1: number;
+    readonly x2: number;
+    readonly y2: number;
+}
+```
+
 ### `Listed` (interface)
 
 ```ts
@@ -1650,6 +1663,7 @@ type RngState = [number, number, number, number];
 interface Scene {
     apply(delta: RenderDelta): void;
     views(alpha: number): View[];
+    links(alpha: number): Link[];
 }
 ```
 
