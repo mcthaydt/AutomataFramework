@@ -3,8 +3,9 @@
 // puts the picture right when the room's answer differs. The page is only ever as late as the room is: it never
 // pauses, because the room does not wait for anyone.
 import { pageFrames } from '../../lib/frames.ts'
+import { createSequence } from '../commands/commands.ts'
 import { checkControls, createInput } from '../input/input.ts'
-import { createGameSim, levelSize, skyOf } from '../level/level.ts'
+import { createGameSim, levelSize, skyOf, usesStory } from '../level/level.ts'
 import {
   coopSeats,
   type Joined,
@@ -18,6 +19,7 @@ import {
 } from '../net/net.ts'
 import { createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
+import { createStoryView } from '../story/story.ts'
 import type { GameOptions } from './game.ts'
 import { createLoop } from './loop.ts'
 
@@ -65,6 +67,8 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     frames = pageFrames,
     settings,
     gamepads,
+    words,
+    boxWords,
     server,
     room,
     seats: seatsOption,
@@ -189,8 +193,35 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     // This page plays one player. The room's other players' hands are theirs, and arrive in the room's ticks.
     input.setPlayers([seat])
 
+    // A game with a story gets its box on this page too. Only this page's player can press it: the room sends the
+    // press to everyone, and the other players' own pages show the same words.
+    const story = usesStory(simOptions.content)
+      ? createStoryView({
+          mount,
+          sim: session.sim,
+          content: simOptions.content,
+          sequence: createSequence(),
+          onMenu: input.onMenu,
+          seats: input.seats,
+          inset: input.inset,
+          ...(words === undefined ? {} : { words }),
+          ...(boxWords === undefined ? {} : { boxWords }),
+        })
+      : undefined
+    if (story !== undefined) {
+      const was = cleanup
+      cleanup = () => {
+        story.destroy()
+        was()
+      }
+      input.onInset((px) => story.setInset(px))
+    }
+
     const step = (): void => {
-      for (const delta of session.advance(input.poll(session.sim.tick)).deltas) renderer.apply(delta)
+      const tick = session.sim.tick
+      for (const delta of session.advance([...(story?.commands(tick) ?? []), ...input.poll(tick)]).deltas)
+        renderer.apply(delta)
+      story?.update()
     }
     const loop = createLoop({
       tickHz: session.sim.tickHz,
