@@ -169,9 +169,9 @@ test('an agent adds a word in English and is told, file by file, where else to w
   expect(translationProblems(written.value)).toEqual([])
 
   // 3. Five new words wait for a native speaker's read, one in each language; reading Spanish leaves four.
-  const waiting = unreadWords(written.value, {}).filter((word) => word.key === 'keeper.joke')
+  const waiting = unreadWords(written.value, undefined).filter((word) => word.key === 'keeper.joke')
   expect(waiting.map((word) => word.language)).toEqual(['zh', 'es', 'pt', 'ja', 'ko'])
-  const marks = markRead(written.value, {}, 'es', ['keeper.joke'])
+  const marks = markRead(written.value, undefined, 'es', ['keeper.joke'])
   expect(unreadWords(written.value, marks).filter((word) => word.key === 'keeper.joke')).toHaveLength(4)
 })
 

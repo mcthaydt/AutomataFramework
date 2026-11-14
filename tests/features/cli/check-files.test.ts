@@ -218,7 +218,7 @@ test('a read mark takes a word off the note, and a marks file that does not read
     return text
   })
   if (!content.ok) throw new Error('the fixture words do not load')
-  const marks = markRead(content.value, {}, 'es')
+  const marks = markRead(content.value, undefined, 'es')
   const read = await filesStep({ ...withWords(false), [READ_MARKS_FILE]: writeReadMarks(marks) })
   expect(read.report.steps[0]?.notes).toEqual([])
   const broken = await filesStep({ ...withWords(false), [READ_MARKS_FILE]: 'format = 2' })

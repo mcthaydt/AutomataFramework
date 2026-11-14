@@ -70,6 +70,10 @@ test('no sentence names a colour or says locale, message key, translation, fallb
   for (const [key, text] of Object.entries(wordsIn('en'))) expect(text, key).not.toMatch(banned)
 })
 
+test('the marks file is format 2 and says it was made against English, the language the words are written in', () => {
+  expect(marksRaw).toBe('format = 2\nsource = "en"\n')
+})
+
 test("how many of the framework's words wait for a native read is printed, and never fails", async () => {
   const marks = parseReadMarks(marksRaw)
   expect(marks.ok).toBe(true)

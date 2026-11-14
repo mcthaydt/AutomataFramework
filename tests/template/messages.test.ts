@@ -61,6 +61,8 @@ test('the marks file is there, reads, and says no word has been read yet', async
   const marks = parseReadMarks(tree['automata.translations.toml'] ?? '')
   expect(marks.ok).toBe(true)
   if (!marks.ok) return
+  expect(tree['automata.translations.toml']).toBe('format = 2\nsource = "en"\n')
+  expect(marks.value.source).toBe((await loaded()).project.source)
   const unread = unreadWords(await loaded(), marks.value)
   // Five languages, every key of each.
   const keys = Object.keys((await loaded()).messages?.en?.messages ?? {}).length
