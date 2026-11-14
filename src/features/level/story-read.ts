@@ -2,8 +2,9 @@
 // `undefined` (or nothing played) for a game with no story, so a caller need not know whether the plugin is in.
 import type { GameContent } from '../content/content.ts'
 import type { Sim } from '../sim/sim.ts'
-import { Story } from './story-state.ts'
+import { Story, type StoryProgress } from './story-state.ts'
 import { usesStory } from './story.ts'
+import { cameraAt, linesAt, type SceneCamera } from './timeline.ts'
 
 /** What the speech box shows: who says which line, and what the player may pick now. */
 export interface TalkView {
@@ -34,4 +35,37 @@ export function talkOf(sim: Sim, content: GameContent): TalkView | undefined {
     line,
     choices: choosing ? (node.choices ?? []).map((c) => c.line) : [],
   }
+}
+
+/** What the page shows of a cutscene that is playing: how far along it is, where the camera is, and what is said. */
+export interface SceneView {
+  readonly cutscene: string
+  /** Ticks since it started, and how long it lasts. */
+  readonly t: number
+  readonly length: number
+  readonly camera: SceneCamera
+  readonly lines: readonly { readonly speaker: string | undefined; readonly line: string }[]
+}
+
+/** The cutscene that is playing, as the page shows it, or undefined when none is. */
+export function sceneOf(sim: Sim, content: GameContent): SceneView | undefined {
+  if (!usesStory(content)) return undefined
+  const scene = sim.resource(Story).scene
+  const file = scene === null ? undefined : content.cutscenes?.[scene.cutscene]
+  if (scene === null || file === undefined) return undefined
+  const t = sim.tick - scene.since
+  return {
+    cutscene: scene.cutscene,
+    t,
+    length: file.length,
+    camera: cameraAt(file, t),
+    lines: linesAt(file, t).map(({ speaker, line }) => ({ speaker, line })),
+  }
+}
+
+/** What a save keeps of the story: the node each conversation last finished on, and the cutscenes seen. */
+export function storyProgress(sim: Sim, content: GameContent): StoryProgress {
+  if (!usesStory(content)) return { ended: {}, seen: [] }
+  const { ended, seen } = sim.resource(Story)
+  return { ended: { ...ended }, seen: [...seen] }
 }

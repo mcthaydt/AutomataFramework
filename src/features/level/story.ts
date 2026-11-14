@@ -8,11 +8,12 @@
 // at ed8592e8, `extensions/cutscenes/src/shared/sim/cutscene.system.ts`).
 import { ControlsCommand, Player } from '../commands/commands.ts'
 import type { ConversationFile, GameContent } from '../content/content.ts'
-import { Transform } from '../physics/physics.ts'
+import { Body, Transform } from '../physics/physics.ts'
 import {
   definePlugin,
   defineSystem,
   hypot,
+  type EntityRef,
   type PluginDef,
   type SimContext,
   type SystemDef,
@@ -27,12 +28,14 @@ import {
   CutsceneEnded,
   CutsceneStarted,
   NextCommand,
+  SKIP_AFTER,
   SkipCommand,
   Story,
   type StoryState,
   TALK_REACH,
 } from './story-state.ts'
 import { choosePlace, nextPlace, openAt, type TalkPlace } from './talk.ts'
+import { type ActorPlace, actorsAt } from './timeline.ts'
 
 /** True when the project lists a conversation or a cutscene: the only games that get this plugin. */
 export function usesStory(content: GameContent): boolean {
@@ -46,11 +49,35 @@ function withId(list: readonly string[], id: string): string[] {
   return [...new Set([...list, id])].sort()
 }
 
-/** Ends the cutscene that is playing: it is `seen` now, and the page is told. */
+/** Puts each actor where `places` says: the thing whose id it is, one that is not in the game is passed over. */
+function placeActors(ctx: SimContext, places: readonly ActorPlace[]): void {
+  if (places.length === 0) return
+  const things = new Map<string, EntityRef>()
+  for (const e of ctx.query(Thing)) things.set(e.get(Thing).id, e)
+  for (const place of places) {
+    const e = things.get(place.who)
+    if (e === undefined) continue
+    const at = e.get(Transform)
+    const moved = at.x !== Math.fround(place.x) || at.y !== Math.fround(place.y)
+    if (moved) e.set(Transform, { x: place.x, y: place.y })
+    // Nothing is left moving, so physics leaves the body where the key says.
+    if (e.has(Body)) {
+      const body = e.get(Body)
+      if (body.vx !== 0 || body.vy !== 0 || body.angvel !== 0) e.set(Body, { vx: 0, vy: 0, angvel: 0 })
+    }
+  }
+}
+
+/**
+ * Ends the cutscene that is playing, in time or skipped: every actor is put where its last key says, so what the story
+ * changed is the same whether or not the player watched. It is `seen` now, and the page is told.
+ */
 function endScene(ctx: SimContext, story: StoryState, skipped: boolean): void {
   const scene = story.scene
   if (scene === null) return
   story.scene = null
+  const file = (ctx.content as GameContent).cutscenes?.[scene.cutscene]
+  if (file !== undefined) placeActors(ctx, actorsAt(file, file.length))
   story.seen = withId(story.seen, scene.cutscene)
   ctx.emit(CutsceneEnded, { cutscene: scene.cutscene, skipped })
 }
@@ -64,6 +91,8 @@ export function startCutscene(ctx: SimContext, id: string): boolean {
   if (file === undefined) return false
   const story = ctx.resource(Story)
   if (file.level !== story.level) return false
+  // Whatever is on is cut short: a conversation ends unfinished, a cutscene ends as if skipped.
+  endTalk(ctx, story, false)
   endScene(ctx, story, true)
   story.scene = { cutscene: id, since: ctx.tick }
   ctx.emit(CutsceneStarted, { cutscene: id })
@@ -104,6 +133,11 @@ function endTalk(ctx: SimContext, story: StoryState, finished: boolean): void {
     player: talk.player,
     finished,
   })
+  // The last node may send the players straight into a cutscene, in the same tick, so there is no gap to run in.
+  if (!finished) return
+  const content = ctx.content as GameContent
+  const next = content.conversations?.[talk.conversation]?.nodes.find((n) => n.id === talk.node)?.cutscene
+  if (next !== undefined) startCutscene(ctx, next)
 }
 
 /**
@@ -210,6 +244,11 @@ const holdSystem: SystemDef = defineSystem({
       const length = content.cutscenes?.[scene.cutscene]?.length ?? 0
       if (ctx.tick - scene.since >= length) endScene(ctx, story, false)
     }
+    // 3. A skip from a player with a hero ends the cutscene, once it has played long enough to be meant.
+    if (story.scene !== null && ctx.tick - story.scene.since >= SKIP_AFTER) {
+      const heroes = new Set(ctx.query(Player).map((e) => e.get(Player).number))
+      if (ctx.commands.of(SkipCommand).some((c) => heroes.has(c.source))) endScene(ctx, story, true)
+    }
     // 4. A conversation whose talker or thing has gone ends, unfinished.
     const talk = story.talk
     if (talk !== null) {
@@ -222,6 +261,18 @@ const holdSystem: SystemDef = defineSystem({
     if (talkFile !== undefined) talkCommands(ctx, talkFile, story)
     // 6. Hands.
     holdHands(ctx, story)
+  },
+})
+
+const stageSystem: SystemDef = defineSystem({
+  name: 'level.story.stage',
+  phase: 'prePhysics',
+  // Said, not left to the names' order: physics must see where the actors were put.
+  before: ['physics.sync-in'],
+  run(ctx) {
+    const scene = ctx.resource(Story).scene
+    const file = scene === null ? undefined : (ctx.content as GameContent).cutscenes?.[scene.cutscene]
+    if (scene !== null && file !== undefined) placeActors(ctx, actorsAt(file, ctx.tick - scene.since))
   },
 })
 
@@ -281,5 +332,5 @@ export const storyPlugin: PluginDef = definePlugin({
     CutsceneStarted,
     CutsceneEnded,
   ],
-  systems: [holdSystem, meetSystem],
+  systems: [holdSystem, stageSystem, meetSystem],
 })

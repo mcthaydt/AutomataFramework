@@ -15,6 +15,8 @@ import {
 } from '../sim/sim.ts'
 import { Thing } from './components.ts'
 import { firstRule, Mind, type Sensed, stepOf } from './mind.ts'
+import { Story, type StoryState } from './story-state.ts'
+import { usesStory } from './story.ts'
 
 /** True when some character of the game has a behaviour: the only games that get this plugin. */
 export function usesBehaviours(content: GameContent): boolean {
@@ -103,6 +105,17 @@ function behave(ctx: SimContext, content: GameContent, e: EntityRef, spots: read
   if (Object.keys(thought).length > 0) e.set(Mind, thought)
 }
 
+/** A thing stands still while a cutscene plays, and while it is the one being talked to. */
+function stands(story: StoryState | undefined, sid: number): boolean {
+  return story !== undefined && (story.scene !== null || story.talk?.thing === sid)
+}
+
+/** Stops a thing where it is: no sideways speed, and nothing asked for. */
+function stand(e: EntityRef): void {
+  if (e.get(Body).vx !== 0) e.set(Body, { vx: 0 })
+  if (e.get(Mind).want !== 0) e.set(Mind, { want: 0 })
+}
+
 const behaviourSystem: SystemDef = defineSystem({
   name: 'level.behaviour',
   phase: 'gameplay',
@@ -117,7 +130,12 @@ const behaviourSystem: SystemDef = defineSystem({
       y: e.get(Transform).y,
       kind: content.characters[e.get(Thing).character]?.kind,
     }))
-    for (const e of minds) behave(ctx, content, e, spots)
+    // Only a game with a story has one to ask; the story plugin is not there otherwise.
+    const story = usesStory(content) ? ctx.resource(Story) : undefined
+    for (const e of minds) {
+      if (stands(story, e.sid)) stand(e)
+      else behave(ctx, content, e, spots)
+    }
   },
 })
 
