@@ -71,6 +71,9 @@ const built = await attemptsToBuildCode(async () => {
         // Only the keys are held back, and each by the same time, so they reach the room in the order they were pressed.
         return {
           send: (message) => {
+            // DIAGNOSTIC (crate race): when this page first sent a key, and the tick it was stamped with.
+            if (message.t === 'cmd' && game.dataset.firstCmd === undefined)
+              game.dataset.firstCmd = `${Date.now()}@${(message as { tick: number }).tick}`
             if (message.t === 'cmd' && late > 0) setTimeout(() => link.send(message), late)
             else link.send(message)
           },
@@ -102,8 +105,19 @@ if (framework !== undefined && online !== undefined) {
     const hero = playing.sim.query(Player, Transform).find((e) => e.get(Player).number === n)
     return hero === undefined ? '' : String(hero.get(Transform).x)
   }
+  let frames = 0
   const tick = (): void => {
-    game.dataset.rollbacks = String(playing.stats().rollbacks)
+    const stats = playing.stats()
+    // DIAGNOSTIC (crate race): frames drawn, the sims' ticks, and when each hero first moved as this page sees it.
+    frames++
+    game.dataset.diag = `frames=${frames} predicted=${stats.predictedTick} confirmed=${stats.confirmedTick} lead=${stats.lead} late=${stats.late}`
+    const p1 = Number(x(1))
+    const p2 = Number(x(2))
+    if (game.dataset.p1Moved === undefined && p1 > 2.6)
+      game.dataset.p1Moved = `${Date.now()}@${stats.predictedTick}/${stats.confirmedTick}`
+    if (game.dataset.p2Moved === undefined && p2 < 13.4)
+      game.dataset.p2Moved = `${Date.now()}@${stats.predictedTick}/${stats.confirmedTick}`
+    game.dataset.rollbacks = String(stats.rollbacks)
     game.dataset.p1X = x(1)
     game.dataset.p2X = x(2)
     game.dataset.players = String(playersIn(playing.sim).length)
