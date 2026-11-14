@@ -96,7 +96,7 @@ The editors also ship as an app for iPad, Android and desktop.
 | Edits that collide | Handled the way GitHub does: a three-way merge, with conflicts shown and resolved before the save commits. |
 | Sign-in step and site host | Sign-in is a GitHub App. Cloudflare Pages Functions do its token exchange and, as the App, all the editor's GitHub work; the site is on Cloudflare Pages. |
 | New repo names | AutomataFrameworkEditors and AutomataFrameworkSite. |
-| The look | Blueprint, dark by default, canvas first with floating tools, a drawing-notes layer that never changes the game's art, and Phosphor regular icons; on the editors, the site and the Examples demo game's screens, not on games in general (the Owner, 2026-11-14). See Visual direction. |
+| The look | Blueprint, dark by default, canvas first with floating tools, a drawing-notes layer that never changes the game's art, and Phosphor regular icons; on the editors, the site and the Examples demo game's screens, not on games in general (the Owner, 2026-11-14). The colours come from "A Dictionary of Color Combinations": one combination each for the site, the editors, the demo's screens and the example games' own art (the Owner, 2026-11-14). The product is called "Automata Framework" and its wordmark is the word "automata". See Visual direction. |
 | Plans | Written in separate sessions (Fable 5.2, medium), one per plan, after this spec is committed. |
 
 ## Approaches considered
@@ -298,35 +298,66 @@ Decided by the Owner, 2026-11-14. The research behind it, with its references, i
 principle 2 (iPad-first editors) and principle 1 (agent-first: the drawing notes show every setting an agent can
 change, where it acts).
 
-- **The look is called Blueprint**: the editor is a drafting table. Deep blue paper, chalk-white lines and text,
-  pencil-blue for quieter text, and one marker yellow that means "you can touch this" (the picked thing, the main
-  button, the values in notes). Square corners (2 to 3 px), 1 px chalk borders, a soft shadow only on floating
-  panels. Each editor tints its own paper so a person always knows where they are: World blueprint blue, Characters
-  sepia, Feel graph-paper green, Sound teal, Story grey.
+- **The look is called Blueprint**: the editor is a drafting table. The name now stands for the layout, the type, the
+  drawing notes and the stamps, not for the colour: the colours are not blue (see "Colours"). A dark ground, light
+  lines and text, and one bright colour that means "you can touch this" (the picked thing, the main button, the
+  values in notes). Square corners (2 to 3 px), 1 px borders in the text colour, a soft shadow only on floating
+  panels.
+- **Colours** come from *A Dictionary of Color Combinations* (Sanzo Wada) and replace the first Blueprint palette
+  (deep blue, chalk white, pencil blue and marker yellow, with a tint per editor), by the Owner's choice on
+  2026-11-14. Each combination has four colours, which play the same four jobs everywhere: the **ground** is the
+  page and the panels, the **words** colour is text, lines and icons, the **touchable** colour is what the finger can
+  act on (the job marker yellow had), and the **fourth** colour is for small marks only: stamps, tags and warnings.
+  A place may also use two shades that are not the book's, a slightly lighter ground for raised panels and a quieter
+  words colour for hints, each mixed from the place's own ground and words; its plan names them. Every pair a person
+  reads is held to a contrast test.
 
-  | Token | Value | Job |
-  |---|---|---|
-  | paper | `#0A1F3C` | the panels and the ground of every screen |
-  | hatch | `#0E2A50` | raised or grouped areas |
-  | chalk | `#EAF2FA` | text, borders, icons |
-  | pencil | `#8FB0D3` | quieter text and hints |
-  | marker | `#FFD447` | what can be touched: the picked thing, the main button, values in notes |
+  | Where | Combination | Ground | Words | Touchable | Fourth |
+  |---|---|---|---|---|---|
+  | The site | No. 325 | Deep Slate Green `#112f2c` | Naples Yellow `#fbe6a0` | Yellow Ocher `#e2b540` | Eugenia Red `#da525d` |
+  | The editors | No. 310 | Deep Slate Olive `#253122` | Sulphur Yellow `#f5ecc2` | Pinkish Cinnamon `#eeb480` | Olive `#837e31` |
+  | The Examples demo game's own screens (title, pause, settings) and its chrome | No. 340 | Black `#111314` | Neutral Gray `#b6bfc1` | Sea Green `#00b49b` | Peach Red `#f15a30` |
+  | The example games' own art, 2D and 3D | No. 276 | Black `#111314` | Seashell Pink `#fdd4bd` | Yellow Green `#afd472` | Eosine Pink `#f37f94` |
 
-- **Type.** IBM Plex Sans Condensed for labels, set in capitals like notes on a drawing, and JetBrains Mono for
-  numbers and measures (tabular). Both are under the SIL Open Font License and cover Latin and Cyrillic; Korean,
-  Japanese and Chinese use Noto Sans for that language. How the font files are shipped is the plan's choice; a font
-  package added as a dependency needs the Owner's yes.
+  The hex values are the book's, as read from its open data set and recorded in the site's design audit
+  (AutomataFrameworkSite, `docs/superpowers/audits/2026-11-14-home-design-audit.md`). The four combinations are four
+  separate palettes: the editors do not tint a paper per editor any more, they share No. 310, and the editor
+  switcher tells a person where they are with the editor's name and icon. The framework imposes none of them: a game
+  made with it keeps its own look, and No. 276 is only what the example games are drawn in. If the Owner meant No.
+  276 to replace No. 340 on the demo's screens as well, the Examples plan asks before it starts.
+- **The name and the wordmark.** The product is called **Automata Framework**, two words, wherever a person reads
+  it. Its mark is the word **automata**, set in lower case, with no drawn logo or symbol (the Owner, 2026-11-14).
+  The repos keep their names (AutomataFramework, AutomataFrameworkExamples, and so on).
+
+- **Type** (the Owner, 2026-11-14; the options and the sample screens are in the site's design audit, and the Owner's
+  yes covers the packages named). All fonts are under the SIL Open Font License and come as Fontsource packages, so
+  each product serves its own files. IBM Plex Sans Condensed leaves the UI; JetBrains Mono stays for numbers and
+  measures.
+  - **The site and the editors: Fraunces** for the claim and titles, **Onest** for words and buttons, and
+    **JetBrains Mono** for numbers and measures (tabular). Packages: `@fontsource-variable/fraunces`,
+    `@fontsource-variable/onest` and `@fontsource/jetbrains-mono`. They cover Latin and Cyrillic; the editors add
+    `@fontsource/noto-sans-kr`, `@fontsource/noto-sans-jp` and `@fontsource/noto-sans-sc` for Korean, Japanese and
+    Chinese. Labels and drawing notes are still set in capitals, like notes on a drawing, in Onest.
+  - **The Examples screens and the demo games: Fredoka**, with rounded partners for the other languages and no second
+    font for Latin: **M PLUS Rounded 1c** (Japanese), **Jua** (Korean) and **ZCOOL KuaiLe** (Chinese). Packages:
+    `@fontsource/fredoka`, `@fontsource/m-plus-rounded-1c`, `@fontsource/jua` and `@fontsource/zcool-kuaile`. Fredoka
+    is first in the list, so numbers and Latin letters are Fredoka's in every language. The page sets
+    `font-synthesis: none` so the browser never fakes a bold, and Korean and Chinese show what matters with size and
+    colour, since Jua and ZCOOL KuaiLe have one weight. No word is smaller than 18 px. A game that draws its words on
+    a canvas has to ask for the fonts itself, which the game's plan settles.
+  These fonts are for the products' own screens: a game's own art and the framework itself impose no font. Which
+  files are shipped is each plan's choice.
 - **Dark by default.** Dark is the first theme. A light theme comes later, made with the same care.
 - **The layout is canvas first.** The level (or the character, or the timeline) fills the screen. The tools, the
   editor switcher, Save and Share, the picked thing's card, and undo and redo float on top at the edges: tools on the
   edge the hand holds, Save top right, undo and redo bottom right. On an iPad held upright and on a phone the
   picked thing's card becomes a bottom sheet.
 - **The game's art is never restyled** (the Owner: "having the art forced into an art style is stupid"). The canvas
-  always shows the game's real art, exactly as players see it. Blueprint is only the editor's own skin.
+  always shows the game's real art, exactly as players see it. Blueprint is only the editor's own skin, in its own colours.
 - **The drawing notes** are a layer drawn over the art, never into it: the picked thing's settings written beside
   it with a leader line ("HOW HEAVY 2.0"), measure lines ("3 TILES"), and the tile grid. Notes show only for what is
   picked, plus the grid, so busy levels stay calm. Each note is also a control: tapping one opens the same − and +
-  as the card. They are navy chips with a thin white edge so they read over light or dark art. One "Drawing notes"
+  as the card. They are chips in the ground colour with a thin edge in the words colour, so they read over light or dark art. One "Drawing notes"
   switch sets them to on, faded or hidden, and Play always hides them. The switch is a setting on the device, like
   the first-run tips, so it never changes a game's files, and it has a plain-words command ("Hide notes") in the find
   bar.
