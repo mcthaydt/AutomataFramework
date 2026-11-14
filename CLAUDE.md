@@ -164,3 +164,8 @@ The networking is two features: `net` (pure: the wire, the room's rules and the 
 The `automata` command is the last feature, `cli` (Node only, on Effect, using only what `src/headless.ts` re-exports; only
 `src/cli.ts` may import it).
 Features import only from features below them. No top-level `components/`, `services/` or `utils/`.
+
+`biome.json` turns off a rule for two groups of files and says why here, since JSON has no comments: `noSvgWithoutTitle` for
+the drawings in `src/features/web/library/` (a flag or an icon is drawn inside a button that has the name; the page marks
+the drawing hidden from a screen reader, and a title inside it would be read twice), and `useHtmlLang` for
+`template/index.html` (no language is the default, so the page sets `lang` itself once the player has one).

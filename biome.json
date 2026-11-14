@@ -15,5 +15,15 @@
   },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" } },
-  "linter": { "enabled": true, "rules": { "preset": "recommended" } }
+  "linter": { "enabled": true, "rules": { "preset": "recommended" } },
+  "overrides": [
+    {
+      "includes": ["src/features/web/library/**/*.svg"],
+      "linter": { "rules": { "a11y": { "noSvgWithoutTitle": "off" } } }
+    },
+    {
+      "includes": ["template/index.html"],
+      "linter": { "rules": { "a11y": { "useHtmlLang": "off" } } }
+    }
+  ]
 }
