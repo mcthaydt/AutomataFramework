@@ -9,10 +9,15 @@ const LOAD_LIMIT_MS = 20_000
 /** Where `page.ts` is served from, worked out from this file's own address so the test server's layout never matters. */
 const PAGE_URL = new URL('./page.ts', import.meta.url).href
 
-/** Opens a fresh page (frame) of `size`, loads `page.ts` in it, and returns its handle and a `close` that removes it. */
-export async function openPage(
+/**
+ * Opens a fresh page (frame) of `size`, loads the page at `url` (default `page.ts`) in it, and returns its handle and a
+ * `close` that removes it. A page at another address says "ready" the same way and puts its handle, of type `T`, on
+ * its window as `savesPage`; every method of the handle is called inside the frame and its answer copied back.
+ */
+export async function openPage<T extends object = SavesPage>(
   size: { width: number; height: number } = { width: 390, height: 844 },
-): Promise<{ page: SavesPage; close(): void }> {
+  url: string = PAGE_URL,
+): Promise<{ page: T; close(): void }> {
   const frame = document.createElement('iframe')
   frame.style.cssText = `position:fixed;left:0;top:0;border:0;width:${size.width}px;height:${size.height}px`
   const close = (): void => frame.remove()
@@ -56,25 +61,27 @@ export async function openPage(
 globalThis.__vitest_browser_runner__ = { wrapDynamicImport: (load) => load() }
 parent.postMessage({ savesPage: 'started' }, '*')
 addEventListener('error', (event) => parent.postMessage({ savesPage: 'error', error: 'script error: ' + event.message }, '*'))
-</script><script type="module" src=${JSON.stringify(PAGE_URL)}
+</script><script type="module" src=${JSON.stringify(url)}
   onerror="parent.postMessage({ savesPage: 'error', error: 'the page script could not be loaded' }, '*')"></script></body></html>`
     document.body.append(frame)
     const win = await ready
-    const inside = (win as unknown as { savesPage: SavesPage }).savesPage
+    const inside = (win as unknown as { savesPage: Record<string, (...a: unknown[]) => Promise<unknown>> })
+      .savesPage
     // What comes back is copied through JSON: it was made by the frame's own `Array` and `Object`, and a test should
     // compare plain data, not another realm's objects.
-    const call = async <T>(method: keyof SavesPage, ...args: unknown[]): Promise<T> => {
-      const result = await (inside[method] as (...a: unknown[]) => Promise<unknown>)(...args)
-      return (result === undefined ? undefined : JSON.parse(JSON.stringify(result))) as T
+    const call = async (method: string, ...args: unknown[]): Promise<unknown> => {
+      const fn = inside[method]
+      if (fn === undefined) throw new Error(`The page has no "${method}".`)
+      const result = await fn(...args)
+      return result === undefined ? undefined : JSON.parse(JSON.stringify(result))
     }
-    const page: SavesPage = {
-      title: () => call('title'),
-      play: (ticks, level) => call('play', ticks, level),
-      save: (slot, data, options) => call('save', slot, data, options),
-      load: (slot) => call('load', slot),
-      setMusic: (volume) => call('setMusic', volume),
-      music: () => call('music'),
+    // Each method of the page's handle, called inside the frame. Never "then", so awaiting the handle gives it back.
+    function method(name: string): (...args: unknown[]) => Promise<unknown> {
+      return (...args) => call(name, ...args)
     }
+    const page = new Proxy({} as T, {
+      get: (_target, name) => (typeof name === 'string' && name !== 'then' ? method(name) : undefined),
+    })
     return { page, close }
   } catch (error) {
     close()

@@ -4,6 +4,10 @@
 import { type Host, isOpenableLink, type LinkAnswer } from '../host/host.ts'
 import { webStore } from './storage.ts'
 
+export { NOTICE_PROPERTIES, soundNotice } from './notice.ts'
+export { type SpeakerSeams, webSpeaker } from './speaker.ts'
+export { playVoice } from './voices.ts'
+
 /** What the web host reads of the page. Only for tests; a game passes nothing. */
 export interface WebSeams {
   readonly document: Pick<Document, 'visibilityState' | 'addEventListener' | 'removeEventListener'>

@@ -73,7 +73,9 @@ test('the list of words files is not hashed either', async () => {
   const full = await loadFull()
   const given = simContent(full)
   expect(given.project.content.some((entry) => entry.type === 'messages')).toBe(false)
-  expect(given.project.content).toEqual(full.project.content.filter((entry) => entry.type !== 'messages'))
+  // Every other entry stays, in its order; the sound, music and cue files leave with the words (plan S's kinds).
+  const left = new Set(['messages', 'sound', 'music', 'cues'])
+  expect(given.project.content).toEqual(full.project.content.filter((entry) => !left.has(entry.type)))
 })
 
 test('changing a level still moves the content hash', async () => {
