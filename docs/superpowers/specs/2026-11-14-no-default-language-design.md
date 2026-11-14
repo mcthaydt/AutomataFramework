@@ -32,7 +32,7 @@ It breaks none: it is 2D only, nothing is mixed in from 3D, and nothing new is p
 | Q3. When the picker shows | **On every first visit**, with the device's language already chosen when the game has it, so one press of Go moves on. Later visits skip it. Settings changes it. |
 | Q4. List order | **The player's own language first.** The rest follow one fixed order: how many people speak each as a first language. |
 | The picker's look | **Just the flag** ("We just show the flag btw"). |
-| Which flags for English and Spanish | **The United States' flag for English and Spain's for Spanish** (option B). |
+| Which flags for English and Spanish | **The United States' flag for English and Mexico's for Spanish** (the Owner's correction: "use US for English, Mexico for Spanish"). |
 | English spelling | **US spelling** ("Use US spelling"): every word a player or an editor user reads in English is written the US way ("color", not "colour"). |
 
 ## Goals, non-goals, anti-goals
@@ -127,7 +127,7 @@ The second step of the default flow, after any warnings and before the splash:
  ┌──────────────────────────────────────┐
  │                (globe)               │
  │                                      │
- │   [🇰🇷]   [🇨🇳]   [🇪🇸]                 │   the player's language first
+ │   [🇰🇷]   [🇨🇳]   [🇲🇽]                 │   the player's language first
  │   [🇺🇸]   [🇧🇷]   [🇯🇵]                 │   then by first-language speakers
  │                                      │
  │               [  ✓  ]                │   Go: big, an icon
@@ -144,8 +144,8 @@ The second step of the default flow, after any warnings and before the splash:
   editors), drawn simply enough to read at 44 pixels. They are not emoji, because Windows does not draw flag emoji, and
   no flag package is added. Chinese is China's flag, because our Chinese is Simplified (`zh-Hans`). Portuguese is
   Brazil's, because ours is Brazilian (`pt-BR`). Korean is South Korea's and Japanese is Japan's. English is the United
-  States' flag and Spanish is Spain's (the Owner, B). The Spanish words stay the neutral Latin American Spanish plan L
-  chose: the flag is the Owner's pick for the picker, and it changes no word.
+  States' flag, matching US spelling, and Spanish is Mexico's, matching the Latin American Spanish plan L chose (the
+  Owner).
 - **Touch, keys and pad.** Every flag is a 48-pixel target. Arrow keys and the pad move between flags, and Enter, Space
   or the pad's confirm presses Go. A chosen flag is outlined in the game's own touch colour (Examples: Peach Red), so
   the choice shows without words.

@@ -10,7 +10,7 @@ Overall: **10%** (stage 1, the spec, is written and in review; one plan, plan W,
 
 | Stage | State | Output |
 |---|---|---|
-| 1. Spec | Written, in review, 100%. The Owner answered every question (2026-11-14): players and editor users only, an asked-for language with a flag-only picker on every first visit, the player's own language first, then by first-language speakers, US and Spain flags, US spelling. No golden moves | `specs/2026-11-14-no-default-language-design.md` |
+| 1. Spec | Written, in review, 100%. The Owner answered every question (2026-11-14): players and editor users only, an asked-for language with a flag-only picker on every first visit, the player's own language first, then by first-language speakers, the US flag for English and Mexico's for Spanish, US spelling. No golden moves | `specs/2026-11-14-no-default-language-design.md` |
 | 2 to 7 (plan W) | Not started | `plans/2026-11-14-no-default-language.md` |
 
 ## Cycle 4: M2, the 2D framework in full
