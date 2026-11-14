@@ -72,25 +72,28 @@ test('the function it returns removes the button and stops listening', async () 
   expect(button()).toBeNull()
 })
 
-test.each(SCREENS)('on %s it is inside the mount, at least 48 px high, with 18 px words', async (name, w, h) => {
-  await page.viewport(w, h)
-  expect([window.innerWidth, window.innerHeight]).toEqual([w, h])
-  // The mount is away from the page's corner, so a button placed against the page and not the mount would be seen.
-  mount.style.cssText = 'position:fixed;left:30px;top:40px;right:30px;bottom:40px;background:#6cb4e8'
-  const { audio } = await setup()
-  removeNotice = soundNotice({ mount, audio })
-  const shown = button()
-  expect(shown).not.toBeNull()
-  const box = (shown as HTMLButtonElement).getBoundingClientRect()
-  const room = mount.getBoundingClientRect()
-  expect(box.height).toBeGreaterThanOrEqual(48)
-  expect(box.left).toBeGreaterThanOrEqual(room.left + 16)
-  expect(box.right).toBeLessThanOrEqual(room.right - 16)
-  expect(box.top).toBeGreaterThanOrEqual(room.top)
-  expect(box.bottom).toBeLessThanOrEqual(room.bottom)
-  expect(getComputedStyle(shown as HTMLButtonElement).fontSize).toBe('18px')
-  await page.screenshot({ element: mount, path: `__screenshots__/sound-notice-${name}.png` })
-})
+test.each(SCREENS)(
+  'on %s it is inside the mount, at least 48 px high, with 18 px words',
+  async (name, w, h) => {
+    await page.viewport(w, h)
+    expect([window.innerWidth, window.innerHeight]).toEqual([w, h])
+    // The mount is away from the page's corner, so a button placed against the page and not the mount would be seen.
+    mount.style.cssText = 'position:fixed;left:30px;top:40px;right:30px;bottom:40px;background:#6cb4e8'
+    const { audio } = await setup()
+    removeNotice = soundNotice({ mount, audio })
+    const shown = button()
+    expect(shown).not.toBeNull()
+    const box = (shown as HTMLButtonElement).getBoundingClientRect()
+    const room = mount.getBoundingClientRect()
+    expect(box.height).toBeGreaterThanOrEqual(48)
+    expect(box.left).toBeGreaterThanOrEqual(room.left + 16)
+    expect(box.right).toBeLessThanOrEqual(room.right - 16)
+    expect(box.top).toBeGreaterThanOrEqual(room.top)
+    expect(box.bottom).toBeLessThanOrEqual(room.bottom)
+    expect(getComputedStyle(shown as HTMLButtonElement).fontSize).toBe('18px')
+    await page.screenshot({ element: mount, path: `__screenshots__/sound-notice-${name}.png` })
+  },
+)
 
 test('a static mount is made relative while the button is there, and given back', async () => {
   const { speaker, audio } = await setup()
