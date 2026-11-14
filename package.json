@@ -65,6 +65,7 @@
     "@colyseus/sdk": "0.18.5",
     "@colyseus/ws-transport": "0.18.4",
     "@dimforge/rapier2d-deterministic-compat": "0.21.0",
+    "effect": "3.22.2",
     "koota": "0.6.6",
     "pixi.js": "8.22.0",
     "smol-toml": "1.9.0",

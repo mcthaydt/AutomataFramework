@@ -7,7 +7,7 @@ import { expect, test } from 'vitest'
 const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
   scripts: Record<string, string>
   files: string[]
-  exports: Record<string, { import?: string } | string>
+  exports: Record<string, { types?: string; import?: string } | string>
   dependencies: Record<string, string>
 }
 
@@ -21,6 +21,14 @@ test('what the build writes is what the package ships and points at', () => {
   expect(manifest.exports['./headless']).toMatchObject({ import: './dist/headless.js' })
 })
 
+// The room server is Node only, so it is a third entry of its own: a game's page never loads it.
+test("the room server is the package's own entry", () => {
+  expect(manifest.exports['./server']).toEqual({
+    types: './dist/server.d.ts',
+    import: './dist/server.js',
+  })
+})
+
 // Online play runs on Colyseus, at the versions the old repo ran. `@colyseus/schema` is named by no file: `@colyseus/core`
 // requires it installed beside it, so it is a dependency of ours too, at the version its sibling was built against.
 test('the networking packages are dependencies at the exact versions', () => {
@@ -28,4 +36,5 @@ test('the networking packages are dependencies at the exact versions', () => {
   expect(manifest.dependencies['@colyseus/schema']).toBe('5.0.36')
   expect(manifest.dependencies['@colyseus/ws-transport']).toBe('0.18.4')
   expect(manifest.dependencies['@colyseus/sdk']).toBe('0.18.5')
+  expect(manifest.dependencies.effect).toBe('3.22.2')
 })

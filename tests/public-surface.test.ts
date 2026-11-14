@@ -65,8 +65,18 @@ test('headless exports what a game sim and an editor need', async () => {
     'RESERVED_KEYS',
     'RESERVED_PAD',
     'FRAMEWORK_VERSION',
+    'joinSession',
+    'createSession',
+    'createRoomEngine',
+    'OnlineError',
+    'PROTOCOL_VERSION',
   ])
     expect(api, name).toHaveProperty(name)
+})
+
+test("the server entry exports what a game's own server file needs", async () => {
+  const api = await import('#src/server.ts')
+  for (const name of ['createRoomServer', 'runRoomServer']) expect(api, name).toHaveProperty(name)
 })
 
 test('the committed JSON Schemas are what the code produces', () => {

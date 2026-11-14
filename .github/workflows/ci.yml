@@ -128,4 +128,5 @@ jobs:
           echo '{ "private": true, "type": "module" }' > package.json
           npm install --no-audit --no-fund "$RUNNER_TEMP"/pack/*.tgz
           node smoke.mjs
+          node server-smoke.mjs
           "$GITHUB_WORKSPACE/node_modules/.bin/tsc" -p .
