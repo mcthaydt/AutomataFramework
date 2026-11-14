@@ -2,7 +2,6 @@
 // (Owner's answer to Q1, 2026-11-14: our own server, with the official SDK only as a development dependency that
 // checks it in a test). One JSON message per line each way, as the specification's stdio transport says. The server
 // never loads a game's code itself (audit C1): the tools run it in a child process or a Worker.
-import { format } from 'node:util'
 import { Effect, type Layer } from 'effect'
 import { z } from '../../lib/zod.ts'
 import { FRAMEWORK_VERSION } from '../sim/sim.ts'
@@ -10,6 +9,7 @@ import { readResource, resources } from './mcp-library.ts'
 import { type McpTool, mcpTools } from './mcp-tools.ts'
 import type { Ports } from './ports.ts'
 import { createSessions } from './session.ts'
+import { printToStderr } from './stderr.ts'
 
 /** The protocol versions this server speaks, newest first. A client asking for another is answered with the first. */
 export const PROTOCOL_VERSIONS: readonly string[] = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05']
@@ -42,19 +42,6 @@ function inputProblem(tool: string, error: z.ZodError): string {
 const schemaOfInput = (tool: McpTool): unknown => {
   const { $schema: _, ...schema } = z.toJSONSchema(tool.inputSchema, { io: 'input' })
   return schema
-}
-
-/** While the server runs, what a game's rules print goes to stderr: standard output carries only the protocol. */
-function printToStderr(): () => void {
-  const names = ['log', 'info', 'debug'] as const
-  const saved = names.map((name) => console[name])
-  for (const name of names)
-    console[name] = (...args: unknown[]) => void process.stderr.write(`${format(...args)}\n`)
-  return () => {
-    names.forEach((name, i) => {
-      console[name] = saved[i] as (typeof console)[typeof name]
-    })
-  }
 }
 
 /**

@@ -13,6 +13,7 @@ import { runPlay } from './play.ts'
 import { CliError, Out, type OutService, type Ports } from './ports.ts'
 import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
+import { printToStderr } from './stderr.ts'
 
 type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
 
@@ -52,6 +53,10 @@ const replay: Command = (input) =>
     return replayExitCode(results)
   })
 
+/** A folder as a person can paste it after `cd`: in quotes when it has a space or a quote in it. */
+const shellWord = (word: string): string =>
+  /^[\w@%+=:,./\\-]+$/.test(word) ? word : `"${word.replaceAll('"', '\\"')}"`
+
 /** `automata create <name>`: a new game, and what to type next. */
 const create: Command = (input) =>
   Effect.gen(function* () {
@@ -71,7 +76,7 @@ const create: Command = (input) =>
       `Made ${nameOf(input.folder)}.`,
       '',
       'Next:',
-      `  cd ${made.folder}`,
+      `  cd ${shellWord(made.folder)}`,
       '  npm install',
       '  npm run dev',
       '',
@@ -129,6 +134,14 @@ const run = (args: readonly string[]): Effect.Effect<number, CliError, Ports> =>
       yield* out.line(FRAMEWORK_VERSION)
       return 0
     }
+    // A word after the folder would be dropped, and the command would quietly work on another folder: a name with a
+    // space typed without quotes is the usual way to get here.
+    if (parsed.rest.length > 0) {
+      yield* out.error(
+        `automata ${parsed.command} takes one folder, but more words came after "${parsed.folder}": ${parsed.rest.join(' ')}. A folder with a space in its name goes in quotes, like "my games/first one".`,
+      )
+      return 2
+    }
     return yield* COMMANDS[parsed.command](parsed)
   })
 
@@ -152,5 +165,11 @@ export async function main(args: readonly string[], layer: Layer.Layer<Ports> = 
     Effect.catchAllCause((cause) => refuse(unplanned(cause))),
     Effect.provide(layer),
   )
-  return Effect.runPromise(program)
+  // `--json` promises one JSON value on stdout and nothing else, so what the game's rules print goes to stderr.
+  const restore = args.includes('--json') ? printToStderr() : undefined
+  try {
+    return await Effect.runPromise(program)
+  } finally {
+    restore?.()
+  }
 }
