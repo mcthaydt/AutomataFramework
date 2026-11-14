@@ -71,6 +71,8 @@ async function start(answers: Advance[], syncs = { count: 0 }, tapped = true) {
     host: testHost(),
     frames,
     server: 'ws://room.test',
+    // The M1 level has one start; the stand-in room is for one player.
+    seats: 1,
     join: standIn(answers, syncs),
     audio,
   })
