@@ -6,6 +6,8 @@ import { loadGame } from '#src/features/content/content.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import { simContent } from '#src/features/level/sim-content.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
+import { artGame } from '../../fixtures/content/art.ts'
+import { readFiles } from '../../fixtures/content/kind.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
@@ -73,8 +75,8 @@ test('the list of words files is not hashed either', async () => {
   const full = await loadFull()
   const given = simContent(full)
   expect(given.project.content.some((entry) => entry.type === 'messages')).toBe(false)
-  // Every other entry stays, in its order; the sound, music and cue files leave with the words (plan S's kinds).
-  const left = new Set(['messages', 'sound', 'music', 'cues'])
+  // Every other entry stays, in its order; the sound, music, cue and art files leave with the words (plans S and A).
+  const left = new Set(['messages', 'sound', 'music', 'cues', 'figure', 'backdrop'])
   expect(given.project.content).toEqual(full.project.content.filter((entry) => !left.has(entry.type)))
 })
 
@@ -136,4 +138,27 @@ test('a replay recorded before a word changed still plays', async () => {
   es.messages['keeper.hello'] = '¡Hola, viajero!'
   const changed = await simOf(await loadFull({ 'content/messages/es.json': JSON.stringify(es) }))
   expect(verifyReplay(changed, replay)).toEqual({ ok: true })
+})
+
+test('the sim is given no figures or backdrops, and a colour changed in one moves no hash', async () => {
+  const paint = (color: string): Record<string, string | undefined> => {
+    const files = artGame()
+    const hero = JSON.parse(files['content/figures/hero.json'] ?? '') as { paints: { color: string }[] }
+    ;(hero.paints[0] as { color: string }).color = color
+    return { ...files, 'content/figures/hero.json': `${JSON.stringify(hero, null, 2)}\n` }
+  }
+  const load = async (files: Record<string, string | undefined>) => {
+    const loaded = await loadGame(readFiles(files))
+    if (!loaded.ok) throw new Error(loaded.diagnostics.map((d) => d.message).join('\n'))
+    return loaded.value
+  }
+  const red = await load(paint('#f37f94'))
+  expect(red.figures).toBeDefined()
+  const given = simContent(red)
+  expect(given.figures).toBeUndefined()
+  expect(given.project.content.some((entry) => entry.type === 'figure')).toBe(false)
+  const before = await simOf(red)
+  const after = await simOf(await load(paint('#afd472')))
+  expect(after.contentHash).toBe(before.contentHash)
+  expect(after.hash()).toBe(before.hash())
 })

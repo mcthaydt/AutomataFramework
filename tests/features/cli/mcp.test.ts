@@ -98,7 +98,7 @@ test('resources/list has a schema per kind and a text per skill, and resources/r
       'automata://skills/automata-content',
     ]),
   )
-  expect(resources.filter((r) => r.uri.startsWith('automata://schemas/'))).toHaveLength(13)
+  expect(resources.filter((r) => r.uri.startsWith('automata://schemas/'))).toHaveLength(15)
   expect(resources.filter((r) => r.uri.startsWith('automata://skills/'))).toHaveLength(4)
   for (const resource of resources) {
     expect(resource.name, resource.uri).not.toBe('')

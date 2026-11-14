@@ -1,0 +1,46 @@
+{
+  "format": 1,
+  "id": "valley",
+  "seed": 7,
+  "tile": 8,
+  "width": 32,
+  "layers": [
+    {
+      "id": "haze",
+      "kind": "flat",
+      "color": "#fdd4bd",
+      "height": 3,
+      "drift": 0
+    },
+    {
+      "id": "far",
+      "kind": "mountains",
+      "color": "#f37f94",
+      "height": 6,
+      "drift": 0.3
+    },
+    {
+      "id": "near",
+      "kind": "hills",
+      "color": "#afd472",
+      "height": 2.5,
+      "drift": 0.7
+    }
+  ],
+  "props": [
+    {
+      "id": "tree-1",
+      "figure": "tree",
+      "layer": "near",
+      "x": 6,
+      "up": 1.5
+    },
+    {
+      "id": "tree-2",
+      "figure": "tree",
+      "layer": "near",
+      "x": 21,
+      "up": 1.5
+    }
+  ]
+}

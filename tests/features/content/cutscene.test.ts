@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { writeContent } from '#src/features/content/content.ts'
+import { artGame } from '../../fixtures/content/art.ts'
 import { expectRoundTrip, gameProblems, problemsOf } from '../../fixtures/content/kind.ts'
 import { english, intro, storyGame } from '../../fixtures/content/story.ts'
 
@@ -83,10 +84,12 @@ test('an unknown key', () =>
     `${file}: music: This is not something a cutscene has. Remove it or check the spelling.`,
   ]))
 
-test('an actor has no clip yet: plan A adds clips with the characters that have them', () =>
-  expect(said(edit((v) => Object.assign((v.actors as Json[])[0] as Json, { clip: 'talk' })))).toEqual([
-    `${file}: actors[0].clip: This is not something a cutscene has. Remove it or check the spelling.`,
-  ]))
+test('an actor may name a clip, written right after its place and before which way it faces', () => {
+  const scene = edit((v) => Object.assign((v.actors as Json[])[0] as Json, { clip: 'talk', face: 'left' }))
+  expect(said(scene)).toEqual([])
+  const keys = Object.keys((JSON.parse(writeContent('cutscene', scene as never)).actors as Json[])[0] as Json)
+  expect(keys.slice(0, 6)).toEqual(['at', 'who', 'x', 'y', 'clip', 'face'])
+})
 
 const inGame = (scene: unknown, replace: Record<string, string | undefined> = {}) =>
   storyGame(
@@ -143,3 +146,31 @@ test('a line English does not have, and a speaker who is not a character', async
     `${file}: lines[0].speaker: There is no character called "keper". This game has: crate, hero, keeper.`,
   ])
 })
+
+const withClip = (clip: string, who = 'keeper') =>
+  edit((v) => Object.assign((v.actors as Json[])[0] as Json, { who, clip }))
+const inArt = (scene: unknown) =>
+  artGame([
+    { type: 'messages', path: 'content/messages/en.json', text: writeContent('messages', english()) },
+    { type: 'cutscene', path: file, text: writeContent('cutscene', scene as never) },
+  ])
+
+test('an actor whose character has the clip loads', async () =>
+  expect(await gameProblems(inArt(withClip('talk')))).toEqual([]))
+
+test('an actor whose character has no such clip', async () =>
+  expect(await gameProblems(inArt(withClip('dance')))).toEqual([
+    `${file}: actors[0].clip: The character "keeper" has no clip called "dance". It has: idle, talk.`,
+  ]))
+
+test('a player’s actor is the hero of the game, so its clips are the hero’s', async () => {
+  expect(await gameProblems(inArt(withClip('run', 'player-1')))).toEqual([])
+  expect(await gameProblems(inArt(withClip('talk', 'player-1')))).toEqual([
+    `${file}: actors[0].clip: The character "hero" has no clip called "talk". It has: fall, idle, jump, land, push, run.`,
+  ])
+})
+
+test('a character with no clips cannot play one', async () =>
+  expect(await gameProblems(inGame(withClip('talk')))).toEqual([
+    `${file}: actors[0].clip: The character "keeper" has no clips, so it cannot play "talk". Give it clips, or remove "clip".`,
+  ]))

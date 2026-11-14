@@ -145,7 +145,7 @@ jobs:
         run: |
           smoke="$RUNNER_TEMP/smoke"
           mkdir "$smoke"
-          cp tests/install/* tests/golden/push-crate.json tests/golden/playground.json "$smoke"/
+          cp tests/install/* tests/fixtures/xxhash64-reference.ts tests/golden/push-crate.json tests/golden/playground.json tests/golden/art.json "$smoke"/
           cp -r tests/fixtures/game "$smoke/game"
           cp -r tests/fixtures/full-game "$smoke/full-game"
           cp -r tests/fixtures/playground "$smoke/playground"

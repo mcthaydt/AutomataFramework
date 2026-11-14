@@ -13,6 +13,8 @@ export interface Listed {
   has(type: ContentType, id: string): boolean
   /** Every listed id of a kind, sorted. */
   ids(type: ContentType): readonly string[]
+  /** The project's `hero`: whose character `player-1` to `player-4` are in a cutscene. */
+  readonly hero: string
   /** The file's value, or undefined when it is not listed or did not read. A check skips what it cannot see. */
   get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined
 }
