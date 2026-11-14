@@ -290,3 +290,69 @@ test('starting with players [1, 2] and a claim for 2 plays the same way', async 
   expect(heroOf(g, 2).x).toBeGreaterThan((before[1] ?? 0) + 1)
   expect(heroOf(g, 1).x).toBeCloseTo(before[0] ?? 0, 1)
 })
+
+// Audit I1: a number whose hero is still in the sim is not free, even when a leave for it is queued.
+test('taking a player out and adding one before the game steps gives the new person a number that arrives', async () => {
+  const { game: g, frames, pads } = await startCoop(mount)
+  game = g
+  pads.connect(1)
+  pads.connect(2)
+  expect(g.addPlayer('pad-1')).toEqual({ ok: true, player: 2 })
+  run(frames, 3)
+  g.pause()
+  expect(g.removePlayer(2)).toBe(true)
+  const answer = g.addPlayer('pad-2')
+  expect(answer.ok).toBe(true)
+  const player = answer.ok ? answer.player : 0
+  expect(player).not.toBe(2)
+  g.resume()
+  run(frames, 5)
+  expect(g.players()).toEqual([1, player])
+  expect(g.input.seats().find((seat) => seat.player === player)?.devices).toEqual(['pad-2'])
+})
+
+test('in a full game, taking one out and adding one before the game steps says it is full', async () => {
+  const { game: g, frames, pads } = await startCoop(mount)
+  game = g
+  pads.connect(0)
+  pads.connect(1)
+  pads.connect(2)
+  g.addPlayer('pad-0')
+  g.addPlayer('pad-1')
+  g.addPlayer('keyboard')
+  run(frames, 3)
+  expect(g.players()).toEqual([1, 2, 3, 4])
+  g.pause()
+  expect(g.removePlayer(4)).toBe(true)
+  expect(g.addPlayer('pad-2')).toMatchObject({ ok: false, reason: 'full' })
+  g.resume()
+  run(frames, 3)
+  expect(g.players()).toEqual([1, 2, 3])
+  expect(g.addPlayer('pad-2')).toEqual({ ok: true, player: 4 })
+})
+
+// Audit I2: a device given through `input.claim` is taken, whoever asks next.
+test('a gamepad given to a player through input.claim cannot be given to a second one', async () => {
+  const { game: g, frames, pads } = await startCoop(mount, { players: [1, 2] })
+  game = g
+  pads.connect(1)
+  g.input.claim(2, 'pad-1')
+  run(frames, 2)
+  expect(g.addPlayer('pad-1')).toEqual({
+    ok: false,
+    reason: 'taken',
+    message: 'That gamepad already has a player.',
+  })
+})
+
+test('the keyboard given to a player through input.claim cannot be shared again', async () => {
+  const { game: g, frames } = await startCoop(mount, { players: [1, 2] })
+  game = g
+  g.input.claim(2, 'keyboard')
+  run(frames, 2)
+  expect(g.addPlayer('keyboard')).toEqual({
+    ok: false,
+    reason: 'taken',
+    message: 'The keyboard is already shared.',
+  })
+})

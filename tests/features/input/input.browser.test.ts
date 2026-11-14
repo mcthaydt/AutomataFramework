@@ -451,6 +451,21 @@ test('silence lets go for everyone, and keys still down afterwards wait for a fr
   expect(i.poll(4)).toEqual([controlsCommand(4, 1, 2, ['right'])])
 })
 
+test('a finger still on a button when silence ends does nothing until it lifts and presses again', () => {
+  const i = make()
+  firstTouch()
+  pointer(button('Jump'), 'pointerdown', 1)
+  expect(i.poll(0)).toEqual([controlsCommand(0, 1, 0, ['jump'])])
+  const release = i.silence()
+  expect(i.poll(1)).toEqual([controlsCommand(1, 1, 1, [])])
+  release()
+  expect(i.poll(2)).toEqual([])
+  pointer(button('Jump'), 'pointerup', 1)
+  expect(i.poll(3)).toEqual([])
+  pointer(button('Jump'), 'pointerdown', 1)
+  expect(i.poll(4)).toEqual([controlsCommand(4, 1, 2, ['jump'])])
+})
+
 test('nested silences each need their own release', () => {
   const i = make()
   const first = i.silence()
