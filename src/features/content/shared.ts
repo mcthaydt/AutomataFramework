@@ -1,6 +1,6 @@
 // Pieces every kind of content file uses. A kind's file imports this and never `load.ts` or `project.ts`: `load.ts`
 // imports the table and the table imports each kind, so that import would be a cycle.
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 
 /** "crate, hero", or a plain "nothing" for an empty game. Sorted by UTF-16 code unit, the same in every engine. */
 export function list(ids: readonly string[]): string {

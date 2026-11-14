@@ -3,7 +3,7 @@
 // parse is `undefined`, never a throw: a client that sends rubbish costs the room nothing.
 //
 // Messages are plain objects on the channel `m`; a snapshot's bytes follow their header on the channel `b`.
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { MAX_PLAYERS } from '../commands/commands.ts'
 import { FRAMEWORK_VERSION, type Sim } from '../sim/sim.ts'
 

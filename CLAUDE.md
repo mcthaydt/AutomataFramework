@@ -140,7 +140,7 @@ implementations or incomplete integrations. Do your best work."
 src/index.ts                  the public surface
 src/headless.ts               the entry for Node and editors: everything that needs no page
 src/server.ts                 the Node-only entry: the room server (`@automataframework/framework/server`)
-src/lib/                      shared helpers, no feature logic
+src/lib/                      shared helpers, no feature logic; `zod.ts` is the one way into Zod (it turns its eval probe off first)
 src/features/<feature>/       <feature>.ts entry, <part>.ts one job per file, library/ JSON data
 scripts/                      thin CLI wrappers
 tests/architecture.test.ts    imports go down, no cycles, no tests in src

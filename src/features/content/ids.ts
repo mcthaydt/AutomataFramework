@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 
 /** The shape of every id in a content file: lower-case words joined by dashes, starting with a letter. */
 const ID_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/

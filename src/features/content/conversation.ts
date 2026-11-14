@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import type { CutsceneFile } from './cutscene.ts'
 import { Id } from './ids.ts'
 import { englishLacks, englishMissing } from './messages.ts'

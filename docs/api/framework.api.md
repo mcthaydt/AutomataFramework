@@ -2943,7 +2943,7 @@ function writeReplay(replay: Replay): string;
 ### `z` (unresolved)
 
 ```ts
-from 'zod'
+from './lib/zod.ts'
 ```
 
 ## `./headless`
@@ -5418,7 +5418,7 @@ function writeReplay(replay: Replay): string;
 ### `z` (unresolved)
 
 ```ts
-from 'zod'
+from './lib/zod.ts'
 ```
 
 ## `./server`

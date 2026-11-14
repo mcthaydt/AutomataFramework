@@ -1,6 +1,6 @@
 // Lifted from AutomataFrameworkFailed@ed8592e8: extensions/physics/src/features/2d/physics-2d.event.ts
 
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { defineEvent, type EventDef } from '../sim/sim.ts'
 
 // Collision events: `a < b` are the two entities' StableIds; `sensor` when either is a sensor.
