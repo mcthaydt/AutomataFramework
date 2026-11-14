@@ -56,4 +56,8 @@ npx --no automata replay
 Exit codes, for every command: 0 everything is fine, 1 the game has something to fix, 2 the command could not do its
 work (a folder that is not a game, a tool that is not installed). Add `--json` to read the answer as JSON.
 
+If your program speaks the Model Context Protocol, `automata mcp` offers the same commands as tools (`create`, `check` and
+`replay`), and five more that run the game a few ticks at a time and say where everything is (`play_start`, `play_step`,
+`play_state`, `play_save` and `play_stop`). The game's `.mcp.json` starts it.
+
 Always write `npx --no automata`, with `--no`. Without it, the command can fetch an unrelated package of that name from npm.

@@ -52,7 +52,7 @@ fetch an unrelated package of that name from npm.
 | `automata check` | Says whether the game is sound, step by step, and what to fix if it is not. |
 | `automata play` | Plays the game in your browser, and shows your changes as you make them. |
 | `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
-| `automata mcp` | Lets an agent use these commands as tools (an MCP server). Not built yet. |
+| `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
 ## Install
 
@@ -427,8 +427,44 @@ recording). The first two exit with 0, the others with 1.
 
 ### automata mcp
 
-`automata mcp` is meant to let an agent use these commands as tools, over the Model Context Protocol. It is not built
-yet, and says so when run.
+`automata mcp` lets an agent use these commands as tools, over the [Model Context Protocol](https://modelcontextprotocol.io).
+An agent's own program starts it and talks to it on standard input and output, one JSON message per line; it prints
+nothing a person reads. A game made by `automata create` is already set up for it: `.mcp.json` starts it in the game's
+folder.
+
+```json
+{
+  "mcpServers": {
+    "automata": { "command": "node", "args": ["node_modules/@automataframework/framework/dist/cli.js", "mcp"] }
+  }
+}
+```
+
+It speaks the protocol versions `2025-11-25`, `2025-06-18`, `2025-03-26` and `2024-11-05`, and answers `initialize`,
+`ping`, `tools/list`, `tools/call`, `resources/list` and `resources/read`. These are its tools. A result with `isError`
+holds the sentence the command would have printed, so an agent reads what a person would.
+
+| Tool | Input | The same as |
+|---|---|---|
+| `create` | `folder` | `automata create <folder> --json` |
+| `check` | `folder`, `only?`, `fix?` | `automata check <folder> --json` |
+| `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
+| `content_types` | none | the table of content kinds above |
+| `schema` | `type` | reading `schemas/<type>.schema.json` |
+| `skill` | `name?` | reading `skills/<name>/SKILL.md` |
+| `play_start` | `folder`, `level?`, `players?`, `seed?` | starts a game and answers a `session` and its `state` |
+| `play_step` | `session`, `ticks`, `hold?` | plays `ticks` ticks (1 to 3600, a minute of play) with these actions held, like `{"1": ["right"]}`, and answers the `state` and the `events` raised |
+| `play_state` | `session` | the `state` again, with no tick played |
+| `play_save` | `session`, `file` | writes the play so far to `replays/<file>.json`, which `automata replay` plays |
+| `play_stop` | `session` | ends the game |
+
+Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
+and `automata://skills/<name>`.
+
+The server never loads a game's rules itself. `create`, `check` and `replay` each run the command in a process of their
+own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
+keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
+goes to standard error, never into the messages.
 
 ## Without a page
 
