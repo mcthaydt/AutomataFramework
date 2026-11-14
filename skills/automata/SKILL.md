@@ -39,8 +39,8 @@ files. Read this page, then the skill for the kind of change you are making.
 - A figure or a backdrop (how something is drawn): content. Edit the JSON, then run `npx --no automata art` to paint its
   pictures, and commit them with it. `check` fails for a picture that is missing or older than its file.
 - A new thing a character can do: a rule, in `src/features/<name>/`. Skill `automata-rules`.
-- A word a player reads: content, in `content/messages/`, one file for each language. Change it in every language's
-  file, under the same key; `check` names any language that is missing it. `npx --no automata words` lists the
+- A word a player reads: content, in `content/messages/`, one file for each language, in the fixed order `zh, es, en, pt, ja, ko`. The game's own
+  language is `source` in `automata.toml`; write the word there first, then in every other file, under the same key; `check` names any language that is missing it. `npx --no automata words` lists the
   translations no native speaker has read, beside the game's own text. Mark a language read (`--read <language>`) only
   once a native speaker has read it.
 - How the game looks on the page: `src/features/page/` and `src/style.css`.

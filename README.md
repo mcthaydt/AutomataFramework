@@ -266,27 +266,28 @@ that cannot be read starts again from its first values.
 
 ## Languages
 
-A game's words are content, not code. There is one file for each language, `content/messages/en.json`, `es.json`,
-`ko.json`, `ja.json`, `zh.json` and `pt.json` (each listed in `automata.toml` as `type = "messages"`), and one line for
-each word. English is the one that says what a word is for; the others carry the same keys. A word can ask for a value
+A game's words are content, not code. There is one file for each language, `content/messages/zh.json`, `es.json`,
+`en.json`, `pt.json`, `ja.json` and `ko.json` (each listed in `automata.toml` as `type = "messages"`), and one line for
+each word. The file of the game's own language (`source` in `automata.toml`) says what a word is for; the others carry
+the same keys. A word can ask for a value
 with `{name}`, and the game gives it one.
 
 ```json
 {
   "format": 1,
-  "id": "en",
+  "id": "es",
   "messages": {
-    "controls.jump": "Jump",
-    "keeper.hello": "Hello there! 👋",
-    "level.level-1.name": "Level 1",
-    "room.waiting": "Waiting for {count} more"
+    "controls.jump": "Saltar",
+    "keeper.hello": "¡Hola! 👋",
+    "level.level-1.name": "Nivel 1",
+    "room.waiting": "Esperando a {count} más"
   }
 }
 ```
 
-The player's language is the one they picked or the host says, and only a language the game has words in. A player who
-has done neither has no language: nobody is given one, and the device's language only decides which flag the picker opens
-on. `createLocale` gives a game the words in it, and keeps a pick with the settings:
+The player's language is the one they picked on their first visit: a new player is shown six flags, with their device's
+language already chosen when the game has it. A player who has not picked has no language (`locale.language()` is
+`undefined`, and `locale.asked()` is false): nobody is given one. `createLocale` gives a game the words in it, and keeps a pick with the settings:
 
 ```ts
 import { createLocale, levelName } from '@automataframework/framework/headless'
@@ -311,12 +312,14 @@ moves no hash and no replay: the sim never sees words.
 Two checks are for a person or an agent to run, and neither is part of `loadGame`, because a game with a word missing
 in Korean still loads and plays:
 
-- `translationProblems(content)` says, in one sentence for each, where a word is missing, what English says, which
-  value is missing or misspelt (`{cuont}` for `{count}`), and what is too long for a button or a save. A sentence reads
-  `content/messages/ko.json: messages: This file has no "keeper.hello". English says "Hello there!". Write it in Korean.`
+- `translationProblems(content)` says, in one sentence for each, where a word is missing, what the game's own language
+  says, which value is missing or misspelt (`{cuont}` for `{count}`), and what is too long for a button or a save. A
+  sentence reads
+  `content/messages/es.json: messages: This file has no "keeper.hello". The English file says "Hello there!". Write it in Spanish.`
 - `unreadWords(content, marks)` lists the words no native speaker has read yet. The marks are in
-  `automata.translations.toml` (`parseReadMarks`, `markRead`, `writeReadMarks`); a mark is of the exact words that
-  were read, so changing a word makes it unread again.
+  `automata.translations.toml` (`parseReadMarks`, `markRead`, `writeReadMarks`), in format 2, which names the `source`
+  they were made against: marks made against another language count for nothing. A mark is of the exact words that were
+  read, so changing a word makes it unread again.
 
 `automata check` runs both for you, in its `files` step: a missing word fails it with the sentence above, and the words
 nobody has read yet are one note for each language, never a failure. `automata words` lists them, each beside the game's

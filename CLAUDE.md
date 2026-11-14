@@ -66,8 +66,8 @@ package.
   milestone, and `release.yml` runs only when the Owner starts it by hand. Small releases come back only once the
   product is officially feature complete.
 - **Publish targets:** web, itch.io, Wavedash (if its rules fit the host port) and desktop.
-- **Languages:** games ship English, Spanish, Korean, Japanese, Chinese and Portuguese. Editors add French, Russian and
-  German. The list follows the most popular languages for Godot.
+- **Languages:** games ship Chinese, Spanish, English, Portuguese, Japanese and Korean. Editors add Russian, German and
+  French. The list follows the most popular languages for Godot.
 - **`main` is protected** in every repo: pull requests only, no force pushes or deletion, checks required once CI exists,
   no required approving review. Every new repo gets the same protection, and its own copy of this page, when it is
   created.

@@ -139,7 +139,7 @@ export function createGame(options: {
     if (named === undefined)
       return yield* Effect.fail(
         new CliError(
-          'The automata.toml in the template must have exactly one source line, like source = "en". Reinstall the framework.',
+          'The automata.toml in the template must have exactly one source line, like source = "es". Reinstall the framework.',
         ),
       )
     const written: string[] = []

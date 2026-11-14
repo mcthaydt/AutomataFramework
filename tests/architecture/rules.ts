@@ -110,6 +110,17 @@ const SERVER_ENTRY = 'src/server.ts'
 const CLI_FEATURE = 'cli'
 const CLI_ENTRY = 'src/cli.ts'
 
+/**
+ * English named as a language of its own: a quoted `en`, a property `.en`, or `en-GB`. No default language: a game's
+ * words, a player's language and a fallback come from the game's `source` or the player, never from English.
+ */
+const ENGLISH_BY_NAME = /(['"`])en\1|\.en\b(?!\.json)|\ben-GB\b/
+/** The two lines that may name English: the list of languages, and the format 1 marks (written before `source`). */
+const ENGLISH_ALLOWED: Readonly<Record<string, RegExp>> = {
+  'src/features/content/messages.ts': /^export const LANGUAGES = \[[^\]]*\] as const$/m,
+  'src/features/content/read-marks.ts': /^const FORMAT_1_SOURCE: Language = 'en'$/m,
+}
+
 interface Source {
   readonly file: string
   readonly text: string
@@ -264,6 +275,16 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
       }
     }
 
+    if (file.startsWith('src/')) {
+      const allowed = ENGLISH_ALLOWED[file]
+      const text = allowed === undefined ? source.text : source.text.replace(allowed, '')
+      if (ENGLISH_BY_NAME.test(text))
+        add(
+          file,
+          'no-default-language',
+          "English is named here as a language of its own. Use the game's source or the player's language.",
+        )
+    }
     const painter = PAINTER_FILES.test(file)
     if (painter) {
       for (const call of source.text.matchAll(PAINTER_MATH))

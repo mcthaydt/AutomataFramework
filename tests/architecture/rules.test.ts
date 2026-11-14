@@ -321,3 +321,25 @@ test('the PNG writer is held to the painter rule', () =>
 
 test('another file of content may use any Math function', () =>
   expect(one(painterFile('const x = Math.hypot(3, 4)', 'level'))).toEqual([]))
+
+// No default language: English is a language like the others, never the one a missing word or a missing choice falls to.
+test.each([
+  ["const words = options.words ?? frameworkWords('en')", 'src/features/game/players.ts'],
+  ['type Translated = Exclude<Language, "en">', 'src/features/content/other.ts'],
+  ['const english = files.en', 'src/features/content/translations.ts'],
+  ["const tag = language === 'x' ? 'en-GB' : tag", 'src/features/locale/fill.ts'],
+  ["if (file.id === 'en') return", 'src/features/content/messages.ts'],
+  ['const english = files.en', 'src/features/content/read-marks.ts'],
+])('a file that names English as a fallback breaks no-default-language: %s', (text, file) => {
+  expect(one({ [file]: text })).toContain('no-default-language')
+})
+
+test('the list of languages, the format 1 marks and a comment may name English', () => {
+  const rules = (file: string, text: string): string[] => one({ [file]: text })
+  const list = "export const LANGUAGES = ['zh', 'en'] as const"
+  expect(rules('src/features/content/messages.ts', list)).not.toContain('no-default-language')
+  const marks = "const FORMAT_1_SOURCE: Language = 'en'"
+  expect(rules('src/features/content/read-marks.ts', marks)).not.toContain('no-default-language')
+  const words = "// never 'en'\nimport en from './library/en.json'\nconst L = { en: held(en) }"
+  expect(rules('src/features/locale/words.ts', words)).not.toContain('no-default-language')
+})
