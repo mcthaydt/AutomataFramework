@@ -277,6 +277,7 @@ export function createInput(options: InputOptions): Input {
           // also act in the game.
           keyboard.clear()
           pads.mask()
+          touch.mask()
         }
       }
     },

@@ -61,7 +61,12 @@ export function createPlayers(options: {
     addPlayer(claim) {
       if (most < 2) return { ok: false, reason: 'one-player-game', message: 'This game is for one player.' }
       const inside = new Set(eventually())
-      const free = Array.from({ length: most }, (_, i) => i + 1).filter((n) => !inside.has(n))
+      // A number is free once its hero is gone, not just once a `leave` for it is queued: a `join` for a number whose
+      // hero is still there in the same step is ignored, and the person would be told yes and never arrive.
+      const there = new Set(playersIn(sim))
+      const free = Array.from({ length: most }, (_, i) => i + 1).filter(
+        (n) => !inside.has(n) && !there.has(n),
+      )
       if (free.length === 0)
         return {
           ok: false,
@@ -75,7 +80,15 @@ export function createPlayers(options: {
           reason: 'no-start',
           message: `This level has room for ${starts.length} players.`,
         }
-      const taken = [...claimed.entries()].some(([who, one]) => inside.has(who) && one === claim)
+      // Taken by a joiner whose `join` is still queued, or by anyone the input says holds it, whoever gave it to them
+      // (`addPlayer`, or `game.input.claim` for a game started with several players).
+      const device = claim === 'keyboard' ? 'keyboard-2' : claim
+      const taken =
+        [...claimed.entries()].some(([who, one]) => inside.has(who) && one === claim) ||
+        input
+          .seats()
+          .slice(1)
+          .some((seat) => inside.has(seat.player) && seat.devices.includes(device))
       if (taken)
         return {
           ok: false,
