@@ -16,20 +16,48 @@ export function matchLanguage(tag: string, shipped: readonly Language[]): Langua
   return shipped.find((language) => language === first)
 }
 
+/** What the player and the host know of their language: one of the game's, or none yet and what to open the picker on. */
+export type LanguagePick =
+  | { readonly language: Language; readonly from: 'saved' | 'host' }
+  | { readonly language: undefined; readonly suggested: Language | undefined }
+
+/** The first of the device's languages, in its order, that the game has words in. */
+export function suggestLanguage(
+  device: readonly string[],
+  shipped: readonly Language[],
+): Language | undefined {
+  for (const tag of device) {
+    const found = matchLanguage(tag, shipped)
+    if (found !== undefined) return found
+  }
+  return undefined
+}
+
 /**
- * The language to open in: what the player saved, then what the host says, then the device's own list in its order,
- * then English. A tag the game has no words for is passed over, so the next in line is tried.
+ * The player's language: what they saved, then what the host says. A tag the game has no words for is passed over.
+ * With neither there is no language: nobody has been asked, and the device's own language is only a suggestion for the
+ * picker to open on. A player is never given a language they have not chosen.
  */
 export function pickLanguage(options: {
   readonly saved?: string | undefined
   readonly host?: string | undefined
   readonly device: readonly string[]
   readonly shipped: readonly Language[]
-}): Language {
-  for (const tag of [options.saved, options.host, ...options.device]) {
+}): LanguagePick {
+  const from: readonly ['saved' | 'host', string | undefined][] = [
+    ['saved', options.saved],
+    ['host', options.host],
+  ]
+  for (const [source, tag] of from) {
     if (tag === undefined) continue
     const found = matchLanguage(tag, options.shipped)
-    if (found !== undefined) return found
+    if (found !== undefined) return { language: found, from: source }
   }
-  return 'en'
+  return { language: undefined, suggested: suggestLanguage(options.device, options.shipped) }
+}
+
+/** `shipped` with `own` moved to the front and nothing else moved; `shipped` itself when `own` is not in it. */
+export function playersOrder(own: Language | undefined, shipped: readonly Language[]): readonly Language[] {
+  if (own === undefined || !shipped.includes(own)) return shipped
+  return [own, ...shipped.filter((language) => language !== own)]
 }

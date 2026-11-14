@@ -27,16 +27,22 @@ const LIBRARY: Readonly<Record<Language, MessagesFile>> = {
 const textOf = (file: MessagesFile | undefined, key: string): string | undefined =>
   file !== undefined && Object.hasOwn(file.messages, key) ? file.messages[key] : undefined
 
-/** Words in `language`: the game's file, the framework's, the game's English, the framework's English, then the key. */
-function say(language: Language, game: Readonly<Record<string, MessagesFile>> | undefined): Words {
+/**
+ * Words in `language`: the game's file, the framework's, the game's file in its own language (`source`), the
+ * framework's in that language, then the key. A game with no `source` has no words of its own, so it stops after the
+ * second. No language is the default for anyone: a game falls back to the language its own team writes in.
+ */
+function say(
+  language: Language,
+  game: Readonly<Record<string, MessagesFile>> | undefined,
+  source: Language | undefined,
+): Words {
   const own = (code: Language): MessagesFile | undefined =>
     game !== undefined && Object.hasOwn(game, code) ? game[code] : undefined
-  const chain: readonly (MessagesFile | undefined)[] = [
-    own(language),
-    LIBRARY[language],
-    own('en'),
-    LIBRARY.en,
-  ]
+  const chain: readonly (MessagesFile | undefined)[] =
+    source === undefined
+      ? [own(language), LIBRARY[language]]
+      : [own(language), LIBRARY[language], own(source), LIBRARY[source]]
   return (key: string, values?: Values): string => {
     for (const file of chain) {
       const text = textOf(file, key)
@@ -46,14 +52,14 @@ function say(language: Language, game: Readonly<Record<string, MessagesFile>> | 
   }
 }
 
-/** Words in a language for a game: its own, then the framework's, then English, then the key itself. */
+/** Words in a language for a game: its own, then the framework's, then its own language's, then the key itself. */
 export function wordsOf(content: GameContent, language: Language): Words {
-  return say(language, content.messages)
+  return say(language, content.messages, content.project.source)
 }
 
-/** The framework's own sentences alone, for a page that has no game loaded yet. */
+/** The framework's own sentences in a language, for a page that has no game loaded yet: the library's, then the key. */
 export function frameworkWords(language: Language): Words {
-  return say(language, undefined)
+  return say(language, undefined, undefined)
 }
 
 /** The languages a game has words in, in the order the framework lists them; all six for a game with no words at all. */

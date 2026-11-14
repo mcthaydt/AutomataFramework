@@ -64,12 +64,10 @@ test('the six files are translated in full', async () => {
 
 test("every file has every key the others have, none is 'the first', and the picker's two words are among them", () => {
   const keys = (language: Language): string[] => Object.keys(wordsIn(language)).sort()
-  for (const a of LANGUAGES)
+  for (const a of LANGUAGES) {
+    expect(keys(a), a).toEqual(expect.arrayContaining(['automata.picker.go', 'automata.picker.title']))
     for (const b of LANGUAGES) expect(keys(a), `${a} against ${b}`).toEqual(keys(b))
-  for (const language of LANGUAGES)
-    expect(keys(language), language).toEqual(
-      expect.arrayContaining(['automata.picker.go', 'automata.picker.title']),
-    )
+  }
 })
 
 test('the picker names its own language in that language, so each flag reads its own title', () => {

@@ -72,7 +72,7 @@ test('a language the game has no words in is ignored, and nothing is thrown', as
   expect(bound.getLocale()).toBe('es')
 })
 
-test('with no language yet, getLocale answers the runtime\'s base language, not a language the player never chose', async () => {
+test("with no language yet, getLocale answers the runtime's base language, not one the player never chose", async () => {
   const locale = await unaskedLocale()
   expect(locale.language()).toBeUndefined()
   const bound = runtime()

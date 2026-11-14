@@ -151,8 +151,9 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       initial: INPUT_SETTINGS_DEFAULT,
     })
 
-    // The words in the player's language: the one they picked, else the host's, else the device's, else English.
-    const locale = createLocale({ content: loaded.value, host, settings })
+    // The words in the player's language: the one they picked, else the host's. Watching, for now: this page has no
+    // picker yet, so nobody is asked and the words are in the suggested language.
+    const locale = createLocale({ content: loaded.value, host, settings, watching: true })
     forgetLanguage = followLanguage(locale)
     say = locale.words
 
