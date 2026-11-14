@@ -6,7 +6,13 @@ import { type Controls, checkControls } from './controls.ts'
 import { createKeyboard } from './keyboard.ts'
 import { createTouch } from './touch.ts'
 
-export { type Control, type Controls, checkControls } from './controls.ts'
+export {
+  type Control,
+  type ControlEntry,
+  type Controls,
+  checkControls,
+  controlsFromList,
+} from './controls.ts'
 
 export interface Input {
   /** The commands to send this tick: one `controls` command when what is held has changed, otherwise none. */

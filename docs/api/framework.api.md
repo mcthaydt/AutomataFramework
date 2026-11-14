@@ -226,6 +226,16 @@ interface Control {
     readonly label: string;
     readonly keys: readonly string[];
     readonly side: 'left' | 'right';
+    readonly pad?: readonly PadInput[];
+    readonly shared?: readonly [readonly string[], readonly string[]];
+}
+```
+
+### `ControlEntry` (interface)
+
+```ts
+interface ControlEntry extends Control {
+    readonly action: string;
 }
 ```
 
@@ -245,6 +255,12 @@ const ControlsCommand: CommandDef<typeof controlsPayload>;
 
 ```ts
 function controlsCommand(tick: number, player: number, seq: number, held: readonly string[]): Command;
+```
+
+### `controlsFromList` (function)
+
+```ts
+function controlsFromList(list: readonly ControlEntry[]): Controls;
 ```
 
 ### `cos` (function)
@@ -685,6 +701,24 @@ const MAX_PLAYERS = 4;
 const MAX_STEPS_PER_FRAME = 5;
 ```
 
+### `PAD_BUTTONS` (const)
+
+```ts
+const PAD_BUTTONS: readonly ["south", "east", "west", "north", "l1", "r1", "l2", "r2", "select", "start", "l3", "r3", "dpad-up", "dpad-down", "dpad-left", "dpad-right", "home"];
+```
+
+### `PAD_STICKS` (const)
+
+```ts
+const PAD_STICKS: readonly ["left-stick-up", "left-stick-down", "left-stick-left", "left-stick-right", "right-stick-up", "right-stick-down", "right-stick-left", "right-stick-right"];
+```
+
+### `PadInput` (type)
+
+```ts
+type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
+```
+
 ### `parseContent` (function)
 
 ```ts
@@ -933,6 +967,18 @@ class ReplayFormatError extends Error {
 
 ```ts
 const ReplaySchema: z.ZodType<Replay>;
+```
+
+### `RESERVED_KEYS` (const)
+
+```ts
+const RESERVED_KEYS: readonly string[];
+```
+
+### `RESERVED_PAD` (const)
+
+```ts
+const RESERVED_PAD: readonly PadInput[];
 ```
 
 ### `ResourceDef` (interface)
@@ -1898,6 +1944,24 @@ const MAX_ACTIONS = 16;
 const MAX_PLAYERS = 4;
 ```
 
+### `PAD_BUTTONS` (const)
+
+```ts
+const PAD_BUTTONS: readonly ["south", "east", "west", "north", "l1", "r1", "l2", "r2", "select", "start", "l3", "r3", "dpad-up", "dpad-down", "dpad-left", "dpad-right", "home"];
+```
+
+### `PAD_STICKS` (const)
+
+```ts
+const PAD_STICKS: readonly ["left-stick-up", "left-stick-down", "left-stick-left", "left-stick-right", "right-stick-up", "right-stick-down", "right-stick-left", "right-stick-right"];
+```
+
+### `PadInput` (type)
+
+```ts
+type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
+```
+
 ### `parseContent` (function)
 
 ```ts
@@ -2134,6 +2198,18 @@ class ReplayFormatError extends Error {
 
 ```ts
 const ReplaySchema: z.ZodType<Replay>;
+```
+
+### `RESERVED_KEYS` (const)
+
+```ts
+const RESERVED_KEYS: readonly string[];
+```
+
+### `RESERVED_PAD` (const)
+
+```ts
+const RESERVED_PAD: readonly PadInput[];
 ```
 
 ### `ResourceDef` (interface)
