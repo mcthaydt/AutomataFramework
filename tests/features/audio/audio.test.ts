@@ -217,3 +217,99 @@ test('of two music changes for one event the last one counts', async () => {
   expect(audio.music()).toBeUndefined()
   expect(audio.log().map((e) => e.do)).toEqual(['music', 'stop-music'])
 })
+
+test('a new audio gives the speaker the first volumes', async () => {
+  const speaker = tapped()
+  createAudio({ content: await loadFull(), speaker })
+  expect(speaker.levels).toEqual({ music: 0.7, sound: 1 })
+})
+
+test('setVolumes gives both buses their volume and volumes() answers it, frozen', async () => {
+  const speaker = tapped()
+  const audio = createAudio({ content: await loadFull(), speaker })
+  audio.setVolumes({ format: 1, music: 0.25, sound: 0.5 })
+  expect(speaker.levels).toEqual({ music: 0.25, sound: 0.5 })
+  expect(audio.volumes()).toEqual({ format: 1, music: 0.25, sound: 0.5 })
+  expect(Object.isFrozen(audio.volumes())).toBe(true)
+})
+
+test("volumes set while waiting are the speaker's when sound starts", async () => {
+  const speaker = testSpeaker()
+  const audio = createAudio({ content: await loadFull(), speaker })
+  audio.setVolumes({ format: 1, music: 0.1, sound: 0.2 })
+  speaker.tap()
+  expect(speaker.levels).toEqual({ music: 0.1, sound: 0.2 })
+})
+
+test('a volume out of range or not a number throws the sentence above and changes nothing', async () => {
+  const speaker = tapped()
+  const audio = createAudio({ content: await loadFull(), speaker })
+  expect(() => audio.setVolumes({ format: 1, music: 1.5, sound: 1 })).toThrow(RangeError)
+  expect(() => audio.setVolumes({ format: 1, music: 1.5, sound: 1 })).toThrow(
+    'A volume is a number from 0 to 1. Got 1.5 for music.',
+  )
+  expect(() => audio.setVolumes({ format: 1, music: 0.2, sound: -0.1 })).toThrow(
+    'A volume is a number from 0 to 1. Got -0.1 for sound.',
+  )
+  expect(() => audio.setVolumes({ format: 1, music: Number.NaN, sound: 1 })).toThrow(
+    'A volume is a number from 0 to 1. Got NaN for music.',
+  )
+  expect(audio.volumes()).toEqual({ format: 1, music: 0.7, sound: 1 })
+  expect(speaker.levels).toEqual({ music: 0.7, sound: 1 })
+})
+
+test('volume 0 still logs and still hands voices over', async () => {
+  const speaker = tapped()
+  const audio = createAudio({ content: await loadFull(), speaker })
+  audio.setVolumes({ format: 1, music: 0, sound: 0 })
+  audio.hear({ tick: 1, events: events('hero.jumped') })
+  expect(audio.log()).toHaveLength(1)
+  expect(speaker.played).toHaveLength(1)
+  expect(speaker.levels.sound).toBe(0)
+})
+
+test('sample plays the 660 hertz tone on that bus and logs nothing', async () => {
+  const speaker = tapped()
+  const audio = createAudio({ content: await loadFull(), speaker })
+  audio.sample('music')
+  expect(speaker.played).toEqual([
+    {
+      bus: 'music',
+      when: 0,
+      voice: { kind: 'tone', wave: 'sine', from: 660, to: 660, at: 0, length: 0.12, volume: 0.4 },
+    },
+  ])
+  expect(audio.log()).toEqual([])
+})
+
+test('stop cuts both buses and wants no music; the next cue still plays', async () => {
+  const speaker = tapped()
+  const audio = createAudio({ content: await loadFull(), speaker })
+  audio.raise('level.started')
+  audio.stop()
+  expect(speaker.cuts).toContain('sound')
+  expect(speaker.cuts).toContain('music')
+  expect(audio.music()).toBeUndefined()
+  const before = speaker.played.length
+  audio.hear({ tick: 1, events: events('hero.jumped') })
+  expect(speaker.played).toHaveLength(before + 1)
+})
+
+test("close stops, and the speaker's later changes of state reach no listener", async () => {
+  const speaker = testSpeaker()
+  const audio = createAudio({ content: await loadFull(), speaker })
+  const heard = vi.fn()
+  audio.onState(heard)
+  audio.close()
+  speaker.tap()
+  expect(heard).not.toHaveBeenCalled()
+  expect(speaker.cuts).toContain('music')
+})
+
+test('close twice is fine, and the speaker is not closed', async () => {
+  const speaker = tapped()
+  const audio = createAudio({ content: await loadFull(), speaker })
+  audio.close()
+  audio.close()
+  expect(speaker.closed).toBe(false)
+})
