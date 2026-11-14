@@ -2,6 +2,17 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 6: the built-in hero (walk, jump and more, from content)
+
+Spec: [`specs/2026-11-14-content-hero-controls-design.md`](specs/2026-11-14-content-hero-controls-design.md)
+
+Overall: **10%** (stage 1, the spec, is written and in review; one plan, plan H, then runs stages 2 to 7)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Written, in review, 100%. The Owner answered (2026-11-14): walk and jump with the fair-jump numbers, plus double jump, wall jump and dash, each switched on in the file (C); the demo teaches one new move per level, the starter stays walk and jump (B); touch first, then gamepad, then keyboard, with AAA phone controls. Three goldens move once (the template's and the demo's two); no framework golden moves | `specs/2026-11-14-content-hero-controls-design.md` |
+| 2 to 7 (plan H) | Not started | `plans/2026-11-14-built-in-hero.md` |
+
 ## Cycle 5: no default language
 
 Spec: [`specs/2026-11-14-no-default-language-design.md`](specs/2026-11-14-no-default-language-design.md)
