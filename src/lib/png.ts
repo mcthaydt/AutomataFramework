@@ -213,7 +213,7 @@ function check(picture: IndexedPicture): void {
 }
 
 /** The bytes of a PNG for `picture`. The same picture is the same bytes in every engine. */
-export function encodePng(picture: IndexedPicture): Uint8Array {
+export function encodePng(picture: IndexedPicture): Uint8Array<ArrayBuffer> {
   check(picture)
   const { width, height, palette, pixels } = picture
 
