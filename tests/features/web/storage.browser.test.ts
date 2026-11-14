@@ -127,3 +127,28 @@ test("any other error answers failed with the error's words", async () => {
     detail: 'The disk is on fire.',
   })
 })
+
+// Audit M1: a browser that hands over no storage at all is "off", not a surprise: the title screen says saving is off
+// only for `unavailable`.
+test('a getter that throws anything at all answers unavailable', async () => {
+  const store = webStore(() => {
+    throw new Error('no storage here')
+  })
+  expect(await store.set(`${P}a`, '1')).toEqual({
+    ok: false,
+    refusal: 'unavailable',
+    detail: 'no storage here',
+  })
+  expect(await store.check()).toMatchObject({ ok: false, refusal: 'unavailable' })
+})
+
+test('a browser whose storage is switched off (null) answers unavailable', async () => {
+  const store = webStore(() => null as unknown as Storage)
+  for (const answer of [
+    await store.get(`${P}a`),
+    await store.set(`${P}a`, '1'),
+    await store.remove(`${P}a`),
+    await store.check(),
+  ])
+    expect(answer).toMatchObject({ ok: false, refusal: 'unavailable' })
+})

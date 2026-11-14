@@ -9,6 +9,7 @@ import {
   latestSlot,
   memoryStore,
   type SaveDef,
+  type SaveStore,
   type SlotState,
 } from '#src/features/saves/saves.ts'
 import { type Progress, progress } from '../../fixtures/saves/progress.ts'
@@ -234,6 +235,48 @@ test('save finishes without waiting on a timer, an event or a frame', async () =
   } finally {
     vi.useRealTimers()
   }
+})
+
+// Audit V1: the reader refuses a label of 0 or over 80 characters, so `save` must never write one: the save it replaced
+// would be gone and the new one would list as damaged.
+test('a label the reader would refuse throws before anything is written, and the old save is whole', async () => {
+  const { saves, store } = setup()
+  await saves.save(0, level2, { label: 'Level 2' })
+  const before = store.entries()[key(0)]
+  for (const label of ['', 'x'.repeat(81)]) {
+    await expect(saves.save(0, { level: 'level-3', doors: 5 }, { label })).rejects.toThrow(RangeError)
+    expect(store.entries()[key(0)], `label of ${label.length}`).toBe(before)
+  }
+  await expect(saves.save(0, level2, { label: '' })).rejects.toThrow(
+    "A save's label is 1 to 80 characters. Got 0.",
+  )
+})
+
+test('a label of 80 characters saves and lists as ready', async () => {
+  const { saves } = setup()
+  const label = 'x'.repeat(80)
+  expect(await saves.save(1, level2, { label })).toEqual({ ok: true })
+  expect(await saves.list()).toMatchObject({ ok: true, value: [{}, { slot: 1, kind: 'ready', label }, {}] })
+})
+
+// Audit M2: an adapter answers, it never rejects, but one that does is a refusal and not a crash.
+test('a store whose calls reject is answered as failed, never passed on as a rejection', async () => {
+  const boom = (): Promise<never> => Promise.reject(new Error('boom'))
+  const store: SaveStore = { check: boom, get: boom, set: boom, remove: boom }
+  const saves = createSaves({ def: progress, store, now: counter() })
+  const refusal = { refusal: 'failed', detail: 'boom' }
+  expect(await saves.check()).toEqual({ ok: false, ...refusal })
+  expect(await saves.list()).toEqual({ ok: false, ...refusal })
+  expect(await saves.load(0)).toEqual({ ok: false, problem: { kind: 'refused', ...refusal } })
+  expect(await saves.save(0, level2)).toEqual({ ok: false, problem: { kind: 'refused', ...refusal } })
+  expect(await saves.erase(0)).toEqual({ ok: false, ...refusal })
+  // Only the write rejects: the slot read passes, and the write's rejection is a refusal too.
+  const inner = memoryStore()
+  const writeRejects: SaveStore = { ...inner, set: boom }
+  expect(await createSaves({ def: progress, store: writeRejects }).save(0, level2)).toEqual({
+    ok: false,
+    problem: { kind: 'refused', ...refusal },
+  })
 })
 
 test('latestSlot picks the ready slot saved last', () => {

@@ -181,21 +181,23 @@ export type SlotState =
   | { readonly slot: number; readonly kind: 'ready'; readonly savedAt: number; readonly label?: string }
   | { readonly slot: number; readonly kind: 'damaged' | 'newer' | 'too-old'; readonly problem: SaveProblem }
 
+/** What `load` answers: the data (`null` for an empty slot) or the slot's problem. */
+export type LoadResult<S> =
+  | { readonly ok: true; readonly data: S | null; readonly savedAt?: number; readonly label?: string }
+  | { readonly ok: false; readonly problem: SaveProblem }
+/** What `save` answers: kept, or the slot's problem. */
+export type SaveResult = { readonly ok: true } | { readonly ok: false; readonly problem: SaveProblem }
 export interface Saves<S> {
   check(): Promise<StoreResult<void>>
   /** Every slot, in order, read afresh from the host each time. */
   list(): Promise<StoreResult<readonly SlotState[]>>
   /** `data` is at this build's version, upgraded if it was stored older. `null` for an empty slot. */
-  load(slot: number): Promise<
-    | { readonly ok: true; readonly data: S | null; readonly savedAt?: number; readonly label?: string }
-    | { readonly ok: false; readonly problem: SaveProblem }
-  >
+  load(slot: number): Promise<LoadResult<S>>
   /**
    * Writes the slot. A slot that is damaged, newer or too old is not written over unless `replace` is true (a saves
    * screen passes it after the player has said yes); the answer is then that slot's problem.
    */
-  save(slot: number, data: S, options?: { readonly label?: string; readonly replace?: boolean }):
-    Promise<{ readonly ok: true } | { readonly ok: false; readonly problem: SaveProblem }>
+  save(slot: number, data: S, options?: { readonly label?: string; readonly replace?: boolean }): Promise<SaveResult>
   erase(slot: number): Promise<StoreResult<void>>
 }
 export function createSaves<S>(options: {
@@ -714,7 +716,7 @@ export interface SavesPage {
   /** Starts the game at `level` (default the project's start), runs `ticks` ticks, and returns the sim's hash. */
   play(ticks: number, level?: string): Promise<string>
   /** Saves `data` to `slot`. With `wait: false` it returns as soon as `save` has been called, not when it answers. */
-  save(slot: number, data: { level: string; doors: number }, options?: { wait?: boolean }): Promise<void>
+  save(slot: number, data: { level: string; doors: number }, options?: { wait?: boolean }): Promise<SaveResult | undefined>
   load(slot: number): Promise<{ level: string; doors: number } | null>
   setMusic(volume: number): Promise<void>
   music(): Promise<number>
