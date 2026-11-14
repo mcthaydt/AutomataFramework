@@ -49,6 +49,7 @@ This repo has Part A only: one function.
 |---|---|
 | 1. `watchReplay` draws a replay with no input | Done, 100% (merged, PR 29, `cc281c9`) |
 | The Owner's answers, Q1 (a), Q2 (a), Q3 (b), Q4 (a) | Recorded in the spec addendum, 2026-11-14 |
+| Stage 6, F1: `rounds` stops on the recording's last tick even when a late frame carries several ticks | Done, 100% (a guard at the top of `step`, and a test that delivers the end in one frame of four ticks), in review |
 
 ## Cycle 1: the 2D first layer
 
