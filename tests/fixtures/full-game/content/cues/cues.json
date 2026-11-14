@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "id": "cues",
+  "cues": [
+    {
+      "on": "hero.jumped",
+      "do": "sound",
+      "sound": "jump"
+    },
+    {
+      "on": "hero.landed",
+      "do": "sound",
+      "sound": "land"
+    },
+    {
+      "on": "level.started",
+      "do": "music",
+      "music": "meadow"
+    }
+  ]
+}

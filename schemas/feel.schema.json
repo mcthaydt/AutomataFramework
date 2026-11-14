@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this feel, like \"land-dust\". It matches the file name."
+    },
+    "on": {
+      "type": "string",
+      "maxLength": 96,
+      "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$",
+      "description": "The event that sets it off, like \"hero.landed\"."
+    },
+    "dust": {
+      "description": "A burst of dust. Left out means none.",
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64,
+          "description": "How many specks of dust."
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "The colour of the dust, as # and six digits, like #e8dcc0."
+        },
+        "speed": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 32,
+          "description": "How fast the specks fly out, in tiles a second."
+        },
+        "life": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120,
+          "description": "How long a speck lasts, in ticks. 60 ticks is one second."
+        }
+      },
+      "required": [
+        "count",
+        "color",
+        "speed",
+        "life"
+      ],
+      "additionalProperties": false
+    },
+    "shake": {
+      "description": "The picture shakes. Left out means no shake.",
+      "type": "object",
+      "properties": {
+        "strength": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "description": "How far the picture shakes, in tiles. At most 1."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60,
+          "description": "How long it shakes, in ticks. 60 ticks is one second."
+        }
+      },
+      "required": [
+        "strength",
+        "ticks"
+      ],
+      "additionalProperties": false
+    },
+    "freeze": {
+      "description": "The game holds still for a moment. Left out means no freeze.",
+      "type": "object",
+      "properties": {
+        "ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "description": "How long the game holds still, in ticks. 60 ticks is one second."
+        }
+      },
+      "required": [
+        "ticks"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "on"
+  ],
+  "additionalProperties": false,
+  "title": "Feel"
+}

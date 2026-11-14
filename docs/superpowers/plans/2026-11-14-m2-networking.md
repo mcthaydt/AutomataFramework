@@ -57,8 +57,9 @@ Stop and report to the coordinator if either is not true.
 2. `pnpm install` of the five packages above succeeds with exactly those versions. If a version cannot be installed,
    stop: choosing another is the Owner's.
 
-Other M2 plans (C, I, V) are being executed in this repo at the same time. This plan touches four shared files:
-`tests/architecture/rules.ts`, `package.json`, `.github/workflows/ci.yml` and `docs/superpowers/progress.md`. Merge
+Other M2 plans (C, I, V) are being executed in this repo at the same time. This plan touches seven shared files:
+`tests/architecture/rules.ts`, `src/headless.ts`, `docs/api/framework.api.md`, `package.json`, `knip.json`,
+`.github/workflows/ci.yml` and `docs/superpowers/progress.md`. Merge
 `main` before every push, keep the edits to those files as small as the task says, and report a conflict that is more
 than lines side by side.
 
@@ -72,6 +73,9 @@ than lines side by side.
   under `src/features/server/`.
 - Neither `src/index.ts` nor `src/headless.ts` may reach `src/features/server/`. Its only entry is `src/server.ts`.
 - Zod is the only schema language. Every message off the wire is parsed before it is used, on both sides.
+- **The API report moves with the surface** (audit F4). Every task that adds an export reachable from `src/index.ts`
+  or `src/headless.ts` (Tasks 2, 3, 4, 7, 9; Task 8 adds `./server`) runs `pnpm build` and `pnpm api-report --update`
+  and commits `docs/api/framework.api.md` with its implementation, because the `package` job fails on a stale report.
 - The server sets a command's `source` from the seat and its `tick` from its queue. What a client says for either is
   never trusted.
 - A source file has at most 600 lines. Comments say why.
@@ -136,9 +140,13 @@ interface RoomOptions {
 }
 ```
 
-The room filters on every field, so "join or make" only ever meets a room of the same game, level, seed and size, and
-a join by code with another version is refused `different-version`. Because the options hold everything a sim needs,
-a client builds its sims before it joins.
+Without a code a page always **makes a new room** (the SDK's `create`), and a friend joins it by its code
+(`joinById`); a page never joins a stranger's room by itself, so the seat the words offer a friend is never taken by
+someone else (audit F2). The room checks every field of a joiner's options against its own in `onAuth`, before a
+seat is reserved, and refuses another version `different-version`. The room's `maxClients` is its `seats`, so
+Colyseus locks it when full (a dropped player's seat counts while the grace lasts) and a join by code then fails with
+Colyseus's own `room "<code>" is locked`, which the client reads as `room-full`. Because the options hold everything a
+sim needs, a client builds its sims before it joins.
 
 **Client to room.**
 
@@ -151,7 +159,7 @@ a client builds its sims before it joins.
 
 | Message | Meaning |
 |---|---|
-| `{ t: 'seat', seat, code }` | Your player number and the room's code. First message after a join or a return. |
+| `{ t: 'seat', seat, code, nextSeq }` | Your player number, the room's code, and the `seq` your next command must have (the room's own commands for your seat use that seat's numbers too, audit F1). First message after a join or a return. |
 | `{ t: 'waiting', missing }` | The room has not started; `missing` more players are needed. |
 | `{ t: 'start' }` | Every seat is taken. The next message is tick 0. |
 | `{ t: 'tick', tick, commands, hash? }` | The commands the room's sim took on `tick`, sorted by source then seq. `hash` is the room's hash after that step, present when `(tick + 1) % 60 === 0`. Sent for every tick, in order. |
@@ -184,6 +192,9 @@ the effective tick of that seat's previous command)`: late is never refused and 
 never overtake each other. `seq` must be higher than the seat's last. The room steps the commands due, drops the ones
 the sim rejects (`refused: not-valid`), and relays the rest in the tick message. When a seat's connection drops, the
 room queues a `controls` command with nothing held for it, so a hero does not run on with nobody holding the button.
+A command the room makes for a seat (that `controls`, and Task 11's `join` and `leave`) takes that seat's next `seq`,
+so a replay of the room holds the seat's commands in one order; the next `seat` message's `nextSeq` tells the player
+where to carry on, so their own next command is never refused `out-of-order` (audit F1).
 
 **The client's rules** (the session, Task 4). Two sims made the same way. `confirmed` steps only tick messages.
 `predicted` is what is drawn. On each advance:
@@ -203,7 +214,8 @@ room queues a `controls` command with nothing held for it, so a hero does not ru
    no new step they wait for the next advance.
 4. With no late command for `LEAD_DECAY_TICKS`, lower the lead by 1, to `MIN_LEAD` at least.
 
-A `sync` restores both sims from its bytes, forgets `pending` and everything waiting before its tick, and sends again
+A `seat` message sets the session's next `seq` to its `nextSeq`. A `sync` restores both sims from its bytes, forgets
+`pending` and everything waiting before its tick, and sends again
 the last command of each type in `resendAfterSync` (default `['controls']`), because commands sent while the line was
 down are gone and the room must learn what is held now. A pending command is also given up once its stamped tick is
 `2 * MAX_LEAD_TICKS` behind the confirmed tick.
@@ -277,8 +289,11 @@ What the spec implies and a person will meet, most likely first. Each has its te
 - Modify: `tests/architecture/rules.ts`, `tests/architecture/rules.test.ts`
 
 **Interfaces:**
-- Produces: `LAYERS` is `sim, physics, commands, net, content, level, server, render, input, host, game`. `net` joins
-  `PURE_FEATURES`. New confinements: `@colyseus/sdk` only in `src/features/net/colyseus-link.ts`;
+- Produces: two insertions in `LAYERS`, whatever the other plans have made of the rest of it by then: `net` right
+  after `commands`, and `server` right after `level` (on today's `main` that gives `sim, physics, commands, net,
+  content, level, server, render, input, host, game`; plan V and its audit add `saves`, `host`, `web` and others
+  above `level`, which this does not touch, audit F8). `net` joins `PURE_FEATURES`. Its rules comment says why a pure
+  feature may hold `colyseus-link.ts`: the file's only I/O is the SDK it loads on demand, and it reads no clock. New confinements: `@colyseus/sdk` only in `src/features/net/colyseus-link.ts`;
   `@colyseus/core`, `@colyseus/ws-transport` and `@colyseus/schema` only under `src/features/server/`; Effect only in
   `src/features/server/process.ts` (the message becomes "Effect is only for the server's process."). New rule
   `server-is-node-only`.
@@ -306,6 +321,7 @@ What the spec implies and a person will meet, most likely first. Each has its te
 
 **Files:**
 - Create: `src/features/net/protocol.ts`, `src/features/net/net.ts`, `tests/features/net/protocol.test.ts`
+- Modify: `src/headless.ts` (`export * from './features/net/net.ts'`, audit F4), `docs/api/framework.api.md`
 
 **Interfaces:**
 - Consumes: `Command`, `Sim`, `FRAMEWORK_VERSION` from the sim's entry; `MAX_PLAYERS` from commands.
@@ -406,7 +422,9 @@ function createRoomEngine(setup: {
   - "a hash every sixty ticks": tick message 59 has a `hash` equal to the engine sim's `hash()` after that step; 58 and
     60 have none.
   - "away lets go": seat 2 holds `right`, `away(2)`; seat 1 gets `away { seat: 2 }` and the next tick message carries
-    a `controls` from source 2 with `held: []`.
+    a `controls` from source 2 with `held: []` and the seq after seat 2's last.
+  - "after a return the player's numbers carry on" (audit F1): seat 2 sent seqs 0 to 3, `away(2)`, `back(2, peer)`:
+    the new peer's `seat` has `nextSeq: 5`, and a `cmd` with seq 5 is taken, not refused.
   - "back gets the state": after `away(2)` and 30 steps, `back(2, peer)` sends `seat`, then `sync` with the engine's `tick` and
     bytes that restore on a second `onlineSim()` to the engine sim's hash; later tick messages reach the new peer.
   - "sync on request": `receive(1, { t: 'sync' })` sends seat 1 `sync` and bytes, and seat 2 nothing.
@@ -475,8 +493,14 @@ function createSession(setup: {
 ```
 
 - `tests/fixtures/online/wire.ts`: `createWire(engine: RoomEngine)` gives `link(delay: { up: number; down: number }):
-  Link` (each call joins the engine as the next peer) and `pump(): void` (one beat: delivers every message that has
-  waited its delay, in the order sent). Also `silence(on: boolean)`, which holds everything from the room back.
+  Link` (each call joins the engine as the next peer) and `pump(): void` (delivers every message that has waited its
+  delay, in the order sent; a delay of `d` means "at the `d`th pump after it was sent"). Also `silence(on: boolean)`,
+  which holds everything from the room back.
+- **One beat**, in every test here and in Task 5, is in this order: `wire.pump()`, then `engine.step()`, then each
+  session's `advance`. Delivering before the room steps is what makes `START_LEAD` 2 enough for delays of 1 each way:
+  a command stamped for the tick after the confirmed one, sent at beat `j`, reaches the room at beat `j + 1` before it
+  steps that tick. With the room stepping first, the same command is one tick late, and "agrees without a rollback
+  when alone" cannot hold (audit F3).
 
 - [ ] **Step 1: Write the failing tests** (each builds an engine on one `onlineSim()` and sessions on two more each, and
   disposes them):
@@ -520,8 +544,9 @@ function createSession(setup: {
 - Produces: `ONLINE_TICKS = 600`; `onlineScript(seat: number, tick: number): Command[]` (seat 1: hold `right` from
   tick 10, add `jump` at 200, let go at 260; seat 2: hold `left` from 30, add `jump` at 120, let go at 300, hold
   `right` from 400, let go at 520); `runOnline(delays: Record<number, { up: number; down: number }>): Promise<{
-  room: Replay; players: SessionStats[]; hashes: string[] }>`. One beat of `runOnline` is: `engine.step()` (until the
-  room has stepped `ONLINE_TICKS`), `wire.pump()`, then each session's `advance(onlineScript(seat, predicted tick))`;
+  room: Replay; players: SessionStats[]; hashes: string[] }>`. One beat of `runOnline` is, in Task 4's order:
+  `wire.pump()`, `engine.step()` (until the room has stepped `ONLINE_TICKS`), then each session's
+  `advance(onlineScript(seat, predicted tick))`;
   it beats until both sessions have confirmed `ONLINE_TICKS`, and `hashes` are the two confirmed sims' final hashes.
 
 - [ ] **Step 1: Write the test and an empty golden** (`{ "ticks": 600, "finalHash": "", "checks": [] }`):
@@ -578,19 +603,21 @@ function createRoomServer(options: RoomServerOptions): Promise<RoomServer>
 
 - The room: on create, parses the options, refuses `server-full` at `maxRooms`, builds the sim with
   `createGameSim({ ...game, level, seed, players: 1..seats })` (a `LevelError` refuses `bad-room` with its message),
-  and makes an engine; the room's code is Colyseus's `roomId`. It filters on every `RoomOptions` field. On join it
-  calls `engine.join` and refuses with the problem; on a dropped connection `engine.away` and
-  `allowReconnection(client, graceSeconds)`, then `engine.back` or `engine.leave`; on a consented leave
-  `engine.leave`. It starts a tick scheduler (`tickMs: 1000 / 60`) when the engine starts and stops it, and disposes
+  and makes an engine; the room's code is Colyseus's `roomId`, and `maxClients` is `seats` (audit F2). The 0.18
+  hooks, as the old `automata-room.ts` uses them (audit F9): `onAuth` parses the options and refuses
+  `different-version` when any field differs from the room's, before a seat is reserved; `onJoin` calls
+  `engine.join` and refuses with its problem; `onDrop` (a connection lost, not given up) calls `engine.away` and
+  `allowReconnection(client, graceSeconds)`; `onReconnect` calls `engine.back`; `onLeave` (a consented leave, or a
+  drop whose grace ran out) calls `engine.leave`. It starts a tick scheduler (`tickMs: 1000 / 60`) when the engine starts and stops it, and disposes
   the sim, when the room is disposed. A refusal is an `Error` whose message is `<problem>: <words>`. The transport is
   made with `maxPayload: MAX_MESSAGE_BYTES + 1024`.
 - `@colyseus/schema` is installed because `@colyseus/core` requires it beside it; no file imports it, so it goes in
   `knip.json`'s `ignoreDependencies`, and `tests/package.test.ts` says why in a comment and asserts all three are
   dependencies at the exact versions.
 
-- [ ] **Step 1: Lift the scheduler and its test.** Push once; every job passes (the scheduler's test runs; nothing
-  else uses the feature yet, so `src/features/server/server.ts` exports only the scheduler). The dependencies wait for
-  Step 3, because knip fails a dependency nothing imports.
+- [ ] **Step 1: Lift the scheduler and its test**, and nothing else: no `src/features/server/server.ts` yet, because
+  knip fails a file nothing imports (audit F5); the test imports the scheduler's own file. Push once; every job
+  passes. The dependencies and the entry wait for Step 3, because knip fails a dependency nothing imports too.
 - [ ] **Step 2: Commit** `feat: the room's tick scheduler, lifted`.
 - [ ] **Step 3: Add the three dependencies; write `room.ts`, `room-server.ts`, the entries.** No test of its own here: Task 7 tests it through
   real sockets, and writes those tests first. Run `pnpm lint`, `pnpm typecheck`, `pnpm knip` locally.
@@ -634,12 +661,14 @@ function joinSession(options: {
 ```
 
 - `colyseus-link.ts`: `connect(server, room, options): Promise<{ link: Link; code: string; reconnect(): Promise<Link> }>`.
-  With a code it calls the SDK's `joinById(code, options)`, without one `joinOrCreate(ROOM_NAME, options)`, and
+  With a code it calls the SDK's `joinById(code, options)`, without one `create(ROOM_NAME, options)` (audit F2), and
   `reconnect` uses the room's `reconnectionToken`. It is the only file that names the SDK, by
   `await import('@colyseus/sdk')`, uses a structural slice of the SDK's
   room (as the old `sdk.ts` does) so a test hands in a fake, switches the SDK's own retry off, and maps a rejected
-  join to `OnlineError`: the problem is the message's prefix up to the colon when it is an `OnlineProblem`, `no-room`
-  when a code is not found, and `no-server` when nothing answered.
+  join to `OnlineError`: the problem is the message's prefix up to the colon when it is an `OnlineProblem`; Colyseus
+  0.18's own matchmaker words `room "<code>" not found` give `no-room` and `room "<code>" is locked` give `room-full`
+  (the old `net-error.ts` reads the same two); and `no-server` when nothing answered (the fetch failures and socket
+  codes the old `net-error.ts` lists).
 - `tests/fixtures/online/headless-player.ts`: `headlessPlayer(setup: { server: string; room?: string; seats: number;
   lagMs?: number; script: (seat: number, tick: number) => Command[] }): Promise<{ joined: Joined; checks: Map<number,
   string>; stop(): void }>`. It makes two `onlineSim(seats)`s, joins, and calls `advance` on a 60 Hz timer; `lagMs` wraps
@@ -648,7 +677,9 @@ function joinSession(options: {
 - [ ] **Step 1: Write the failing tests.**
   - `colyseus-link.test.ts`, on a fake SDK room: a message on `m` that parses reaches `message`, one that does not is
     dropped; bytes on `b` reach `bytes`; the SDK's leave calls `closed` once; a rejected join whose message is
-    `room-full: …` throws `OnlineError` with `problem: 'room-full'`.
+    `room-full: …`, and one whose message is `room "abc" is locked`, each throw `OnlineError` with
+    `problem: 'room-full'`; `room "abc" not found` gives `no-room`; with no code the fake sees `create`, never
+    `joinOrCreate`.
   - `lazy-load.test.ts` (the pattern of `tests/features/physics/lazy-load.test.ts`): importing `#src/headless.ts`
     loads no `@colyseus/sdk`; `joinSession` does.
   - `room-server.test.ts`, each test on `createRoomServer({ game })` at port 0, closed after:
@@ -658,7 +689,10 @@ function joinSession(options: {
       `server.replays()[code]`; each player's `rollbacks` is above 0; `server.stats.late` is above 0; every
       `desyncs` is 0; and after the players leave, `verifyReplay(await onlineSim(), thatReplay)` is `{ ok: true }`.
     - "a second player joins by code": player 1 joins with no code, is `waiting` with `missing: 1`; player 2 joins
-      with `joined.code`; both become `playing`.
+      with `joined.code`; both become `playing`. (Every second player in these tests joins by the first one's code:
+      a page with no code makes its own room.)
+    - "a page with no code never lands in a full room" (audit F2): two players fill a room; a third headless player
+      with no code is `waiting` in a new room with another code.
     - "another version is refused" (Review Focus 4): a player whose sims are made without `heroPlugin` joins by code
       and gets `OnlineError` with `problem: 'different-version'`; the room still shows `missing: 1`.
     - "a full room, a wrong code, no server": `room-full`, `no-room`, and (after `close()`) `no-server`.
@@ -684,7 +718,8 @@ function joinSession(options: {
 - Create: `src/features/server/process.ts`, `tests/features/server/process.test.ts`,
   `tests/fixtures/online/server.ts`, `tests/install/server-smoke.mjs`
 - Modify: `src/features/server/server.ts`, `package.json` (dependency `effect`; export `./server`), `vite.config.ts`
-  (entry `server: 'src/server.ts'`; `node:` modules external), `scripts/api-report.ts` (the `./server` entry),
+  (entry `server: 'src/server.ts'`; `node:` modules external), `knip.json` (`tests/fixtures/online/server.ts` as an
+  entry: tests start it by path, never import it, audit F5), `scripts/api-report.ts` (the `./server` entry),
   `docs/api/framework.api.md` (`pnpm api-report --update`), `tests/package.test.ts`, `tests/public-surface.test.ts`,
   `.github/workflows/ci.yml` (the `package` job runs the new smoke)
 
@@ -787,9 +822,15 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
 | `ended: lost` | `The connection was lost and could not be got back. Start or join a room to play again.` |
 
 - `startOnlineGame` is `startGame`'s wiring with a session in the middle: both sims from `createGameSim` with
-  `players: 1..seats`; the input is made for the seat the room gave; each loop step calls
-  `session.advance(input.poll(session.sim.tick))` and applies every delta. It never pauses: while the host says the
-  page is hidden the loop stops as today, and on return the session catches up or syncs. When the link closes it
+  `players: 1..seats`; the input is made for the seat the room gave (audit F7: on today's `main` that is
+  `createInput({ ..., player: seat })`; once plan I's Task 6 is on `main`, which takes the `player` option away,
+  it is `input.setPlayers([seat])` before the first poll, and the online page never tells the input about the other
+  players in the sim); each loop step calls `session.advance(input.poll(session.sim.tick))` and applies every delta.
+  It never pauses: while the host says the page is hidden the loop stops as today, and on return the session catches
+  up or syncs. **Hiding lets go** (audit F6): when the host says the page went out of sight, the page first calls
+  `session.advance([{ type: 'controls', payload: { held: [] } }])` once, so the room does not run the hero on for
+  everyone else while nobody looks at this page, and the input forgets what it last sent (plan I's `silence()` once
+  it is on `main`), so on return whatever is held is sent again. When the link closes it
   reports `reconnecting` and calls `rejoin()` after each of `RECONNECT_DELAYS_MS` (`setTimeout`: `game` is a page
   feature, not a pure one), then `ended: lost`.
 
@@ -804,6 +845,9 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
       hero in `game.sim` has moved right of 13.5.
     - "my key moves me before the room answers": a `keydown` of `ArrowRight` moves player 1's hero within two frames
       with the wire silenced.
+    - "hiding the page lets go" (audit F6): holding `ArrowRight`, the host's visibility goes false; the room's next
+      tick messages carry a `controls` from this seat with `held: []`, and the scripted player sees player 1's hero
+      stop.
     - "the input is for my seat": joining second gives `seat: 2`, and the page's `ArrowRight` moves player 2's hero.
     - "a refused join leaves nothing": `join` rejecting with `OnlineError('room-full')` rejects `startOnlineGame`
       with it, and the mount is empty.
@@ -903,11 +947,16 @@ then says so.
   - **The room** passes `seatCommands: { join: JoinCommand.id, leave: LeaveCommand.id }` when the game's project has
     `players`. Its sim is then made with `players: []` (everyone arrives by `join`), `RoomOptions.seats` must equal
     the project's `players` (else `bad-room`), and the replay's `meta.players` is `""`. If `createGameSim` refuses an
-    empty list of players, stop and report.
+    empty list of players, stop and report. **A room's seats are what its level can hold** (audit F10): the number
+    of the level's starts numbered 1 to the project's `players`. `joinSession` and `startOnlineGame` reckon the same
+    number, and `RoomOptions.seats` of any other value is `bad-room`, so nobody is seated with no hero to play.
   - **A client of a co-op game** makes its two sims with `players: []` too. `joinSession` and `startOnlineGame` take
     `seats` from the project's `players` when it has one. The session already starts from a `sync`.
   - `tests/fixtures/online/game.ts` gains `loadCoopGame()` and `coopSim()` (plan I's `coopFiles`, `heroPlugin`, no
-    players); `server.ts` serves the co-op game when started with `--co-op`; the page uses it with `?game=co-op`.
+    players); `server.ts` serves the co-op game when started with `--co-op`; the page uses it with `?game=co-op`, and
+    gains `data-players`, the length of `playersIn(game.sim)` each frame.
+  - **The input stays on this page's seat.** Plan I's `startGame` tells the input about every player who joins; the
+    online page does not, because the other players' hands are on other devices.
 
 - [ ] **Step 1: Write the failing tests.**
   - Engine: "a co-op room starts with one player" (join 1: `seat`, `start`, `sync`; the tick message for the next
@@ -957,8 +1006,9 @@ then says so.
   - The new check `online` is not a required check until the Owner adds it. The command, to run after the merge:
     `gh api repos/mcthaydt/AutomataFramework/branches/main/protection/required_status_checks/contexts -X POST -f
     'contexts[]=online'`.
-  - Notes for other plans: plan L translates `onlineWords`; plan U shows them on a screen; plan D takes the step
-    under "Handoff to plan D"; plan K's `automata` command may wrap `runRoomServer` later.
+  - Notes for other plans: plan L translates `onlineWords`; plan U shows them on a screen, and its pause screen must
+    not stop an online game's loop (the room does not wait); plan D takes the step under "Handoff to plan D"; plan K's
+    `automata` command may wrap `runRoomServer` later, and widens the Effect rule when it does.
   - Whether Task 11 was done, or is waiting for plan I.
 
 ## Self-review
@@ -972,5 +1022,7 @@ then says so.
 - **Plan I's commands.** Task 11 uses `join` and `leave` (the spec's "the same numbered commands the room server
   relays"), and is the only task that waits on another plan; the spec's rule is that a plan which depends on another
   says so and runs in order, and this one says so for one task only.
+- **Plan audit:** [`../audits/2026-11-14-m2-networking-plan-audit.md`](../audits/2026-11-14-m2-networking-plan-audit.md);
+  its findings F1 to F10 are applied above, each marked "audit F<n>" where it changed the plan.
 - **Not decided here, on purpose:** nothing is left as "to be decided". Smoothing a correction is named with its
   owner, the deploy plan.

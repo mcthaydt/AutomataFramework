@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "land-dust",
+  "on": "hero.landed",
+  "dust": {
+    "count": 8,
+    "color": "#e8dcc0",
+    "speed": 2,
+    "life": 20
+  }
+}

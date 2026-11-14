@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this track, like \"meadow\". It matches the file name."
+    },
+    "tempo": {
+      "type": "integer",
+      "minimum": 30,
+      "maximum": 300,
+      "description": "Beats a minute, from 30 to 300."
+    },
+    "stepsPerBeat": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8,
+      "description": "How many steps make one beat, from 1 to 8."
+    },
+    "volume": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "How loud the whole track is, from 0 (silent) to 1 (full)."
+    },
+    "loop": {
+      "type": "boolean",
+      "description": "True if the track starts again when it ends."
+    },
+    "parts": {
+      "minItems": 1,
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this part, like \"bass\"."
+              },
+              "kind": {
+                "type": "string",
+                "const": "tone",
+                "description": "A part that plays notes."
+              },
+              "wave": {
+                "type": "string",
+                "enum": [
+                  "sine",
+                  "square",
+                  "sawtooth",
+                  "triangle"
+                ],
+                "description": "The shape of the wave: how the notes sound."
+              },
+              "volume": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "How loud this part is, from 0 (silent) to 1 (full)."
+              },
+              "notes": {
+                "minItems": 1,
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 256
+                },
+                "description": "Rows of steps, separated by one space. A note like C4 or F#3, - for a rest, = to hold the note before."
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "wave",
+              "volume",
+              "notes"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this part, like \"drums\"."
+              },
+              "kind": {
+                "type": "string",
+                "const": "drums",
+                "description": "A part that plays drum hits."
+              },
+              "volume": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "How loud this part is, from 0 (silent) to 1 (full)."
+              },
+              "notes": {
+                "minItems": 1,
+                "maxItems": 64,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 256
+                },
+                "description": "Rows of steps, separated by one space. A note like C4 or F#3, - for a rest, = to hold the note before."
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "volume",
+              "notes"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "description": "The parts that play together, each a row of steps."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "tempo",
+    "stepsPerBeat",
+    "volume",
+    "loop",
+    "parts"
+  ],
+  "additionalProperties": false,
+  "title": "Music"
+}

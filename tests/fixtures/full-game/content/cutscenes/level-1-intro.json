@@ -1,0 +1,44 @@
+{
+  "format": 1,
+  "id": "level-1-intro",
+  "level": "level-1",
+  "length": 300,
+  "camera": [
+    {
+      "at": 0,
+      "x": 4,
+      "y": 4,
+      "zoom": 1,
+      "ease": "cut"
+    },
+    {
+      "at": 120,
+      "x": 8,
+      "y": 4,
+      "zoom": 1.5,
+      "ease": "smooth"
+    }
+  ],
+  "actors": [
+    {
+      "at": 0,
+      "who": "keeper",
+      "x": 11.5,
+      "y": 7.5
+    },
+    {
+      "at": 60,
+      "who": "keeper",
+      "x": 11.5,
+      "y": 7.5
+    }
+  ],
+  "lines": [
+    {
+      "at": 60,
+      "until": 180,
+      "line": "keeper.hello",
+      "speaker": "keeper"
+    }
+  ]
+}

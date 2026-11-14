@@ -1,13 +1,9 @@
 // The fixed-step loop. The sim takes a step every 1/tickHz of a second however fast the display refreshes: a frame
 // adds the time it took to a pool and takes a step for each whole tick in it. What is left over becomes `alpha`, how
 // far between two steps the picture is drawn. Time comes only from `frames`, so a test drives the loop by hand.
+import type { Frames } from '../../lib/frames.ts'
 
-/** Where frames come from: `requestAnimationFrame` in a page, a hand-driven fake in a test. */
-export interface Frames {
-  /** Asks for one callback with a timestamp in milliseconds. Returns an id for `cancel`. */
-  request(callback: (ms: number) => void): number
-  cancel(id: number): void
-}
+export type { Frames } from '../../lib/frames.ts'
 
 /**
  * A frame never runs more than this many steps. Past that the game is further behind than it can catch up (a slow

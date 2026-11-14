@@ -53,6 +53,24 @@
       "default": false,
       "description": "True if the character stays on its feet and cannot be tipped over. Left out means false.",
       "type": "boolean"
+    },
+    "kind": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "What this is to the game's rules and to behaviour files, like \"crate\", \"spark\" or \"door\"."
+    },
+    "behaviour": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "The behaviour file that decides what it does, by id, like \"critter\"."
+    },
+    "tuning": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "The tuning file whose numbers decide how it moves, by id, like \"hero\"."
     }
   },
   "required": [

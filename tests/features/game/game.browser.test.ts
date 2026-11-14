@@ -136,7 +136,10 @@ test('a game that starts on a hidden page waits to be seen', async () => {
   const host = testHost()
   host.hide()
   const { game: g, frames } = await start({ host })
-  expect(frames.pending).toBe(false)
+  // The input also asks for frames (to read gamepads), so what is shown is that the game itself does not run.
+  frames.at(0)
+  run(frames, 5)
+  expect(g.sim.tick).toBe(0)
   host.show()
   frames.at(0)
   run(frames, 3)
@@ -162,7 +165,10 @@ test('coming back to a page that is paused by hand does not start it', async () 
   g.pause()
   host.hide()
   host.show()
-  expect(frames.pending).toBe(false)
+  // The input keeps asking for frames, so a menu can be walked with a gamepad while the game is held: the game does not run.
+  frames.at(9000)
+  run(frames, 5)
+  expect(g.sim.tick).toBe(0)
 })
 
 test('stop leaves the mount empty and the sim disposed', async () => {

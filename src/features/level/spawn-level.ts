@@ -1,9 +1,10 @@
-import { MAX_PLAYERS, Player } from '../commands/commands.ts'
+import { MAX_PLAYERS } from '../commands/commands.ts'
 import type { Character, GameContent } from '../content/content.ts'
 import { BodyKind, body, collider, transform } from '../physics/physics.ts'
-import type { Sim, SpawnPart } from '../sim/sim.ts'
-import { colourNumber, groundOf } from './colours.ts'
+import type { Sim } from '../sim/sim.ts'
+import { groundOf } from './colours.ts'
 import { Look, Thing } from './components.ts'
+import { characterParts, heroParts } from './hero.ts'
 import { tileRuns } from './tile-runs.ts'
 
 /** The level cannot be spawned as asked: an unknown level, or a player the level has no start point for. */
@@ -13,18 +14,6 @@ export class LevelError extends Error {}
 function who(numbers: readonly number[]): string {
   const last = numbers[numbers.length - 1]
   return numbers.length === 1 ? `player ${last}` : `players ${numbers.slice(0, -1).join(', ')} and ${last}`
-}
-
-/** The parts every character-shaped entity gets: where, how it moves, its box and how it looks. */
-function characterParts(character: Character, at: { x: number; y: number }): SpawnPart[] {
-  return [
-    transform(at),
-    body(character.body === 'dynamic' ? BodyKind.dynamic : BodyKind.fixed, {
-      fixedRotation: character.upright,
-    }),
-    collider.cuboid(character.size.w / 2, character.size.h / 2),
-    [Look, { w: character.size.w, h: character.size.h, color: colourNumber(character.color) }],
-  ]
 }
 
 /**
@@ -59,7 +48,19 @@ export function spawnLevel(
   }
 
   const ground = groundOf(level)
-  for (const run of tileRuns(level.tiles))
+  // A level with a tileset takes "solid" from it; the content a game was loaded from always has the tileset, so it is
+  // only a hand-built content that can be missing it, and then nothing is guessed.
+  let isSolid: ((letter: string) => boolean) | undefined
+  if (level.tileset !== undefined) {
+    const tileset = content.tilesets?.[level.tileset]
+    if (tileset === undefined)
+      throw new LevelError(
+        `Level "${levelId}" uses the tileset "${level.tileset}", and this game has no such tileset.`,
+      )
+    const letters = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
+    isSolid = (letter) => letters.has(letter)
+  }
+  for (const run of tileRuns(level.tiles, isSolid))
     sim.spawn([
       transform({ x: run.col + run.length / 2, y: run.row + 0.5 }),
       body(BodyKind.fixed),
@@ -71,13 +72,7 @@ export function spawnLevel(
       ...characterParts(character(thing.character, `Thing "${thing.id}"`), thing),
       [Thing, { id: thing.id, character: thing.character }],
     ])
-  const hero = character(content.project.hero, 'The hero')
-  for (const number of numbers) {
-    const start = level.starts.find((s) => s.player === number) as { x: number; y: number }
-    sim.spawn([
-      ...characterParts(hero, start),
-      [Thing, { id: `player-${number}`, character: content.project.hero }],
-      [Player, { number }],
-    ])
-  }
+  // The hero's character must exist; the level is known to have each player's start point, checked above.
+  character(content.project.hero, 'The hero')
+  for (const number of numbers) sim.spawn(heroParts(content, levelId, number) ?? [])
 }
