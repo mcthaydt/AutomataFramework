@@ -238,7 +238,8 @@ test('startConversation says no to an id the game lacks, a player with no hero, 
   const asks = callOn('ask', [5, 6, 7, 8], (ctx) => {
     const id = ctx.tick === 5 ? 'nothing' : 'keeper'
     const player = ctx.tick === 6 ? 3 : 1
-    answers.push(startConversation(ctx, id, player), ...(ctx.tick === 8 ? [startConversation(ctx, id, 2)] : []))
+    answers.push(startConversation(ctx, id, player))
+    if (ctx.tick === 8) answers.push(startConversation(ctx, id, 2))
   })
   const sim = await simOf(await keeperGame(), asks)
   run(sim, 10)

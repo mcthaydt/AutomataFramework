@@ -189,7 +189,8 @@ test('a choice is a whole number from 0 to 3; anything else is a bad command', a
     { tick: 0, source: 1, seq: 4, type: 'story.skip', payload: 7 },
   ]
   expect(sim.step(bad).rejected.map((r) => r.reason)).toEqual(Array(5).fill('invalid-payload'))
-  expect(sim.step([nextCommand(1, 1, 0), chooseCommand(1, 1, 1, 3), skipCommand(1, 1, 2)]).rejected).toEqual([])
+  const fine = [nextCommand(1, 1, 0), chooseCommand(1, 1, 1, 3), skipCommand(1, 1, 2)]
+  expect(sim.step(fine).rejected).toEqual([])
 })
 
 test('startCutscene says no to an id the game lacks and to another level’s cutscene', async () => {

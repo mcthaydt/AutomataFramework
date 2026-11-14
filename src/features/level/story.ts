@@ -7,14 +7,17 @@
 // on a skip, and a player's input is ignored while it plays; a start while one plays replaces it (AutomataFrameworkFailed
 // at ed8592e8, `extensions/cutscenes/src/shared/sim/cutscene.system.ts`).
 import { ControlsCommand, Player } from '../commands/commands.ts'
-import type { GameContent } from '../content/content.ts'
+import type { ConversationFile, GameContent } from '../content/content.ts'
+import { Transform } from '../physics/physics.ts'
 import {
   definePlugin,
   defineSystem,
+  hypot,
   type PluginDef,
   type SimContext,
   type SystemDef,
 } from '../sim/sim.ts'
+import { Thing } from './components.ts'
 import {
   ChooseCommand,
   ConversationChosen,
@@ -27,7 +30,9 @@ import {
   SkipCommand,
   Story,
   type StoryState,
+  TALK_REACH,
 } from './story-state.ts'
+import { choosePlace, nextPlace, openAt, type TalkPlace } from './talk.ts'
 
 /** True when the project lists a conversation or a cutscene: the only games that get this plugin. */
 export function usesStory(content: GameContent): boolean {
@@ -63,6 +68,98 @@ export function startCutscene(ctx: SimContext, id: string): boolean {
   story.scene = { cutscene: id, since: ctx.tick }
   ctx.emit(CutsceneStarted, { cutscene: id })
   return true
+}
+
+/** The id of the thing with this sid, or '' when it has none or is gone. */
+function thingId(ctx: SimContext, sid: number): string {
+  const e = sid === 0 ? undefined : ctx.entity(sid)
+  return e !== undefined && e.has(Thing) ? e.get(Thing).id : ''
+}
+
+/** Tells the page the line the conversation is on. */
+function say(ctx: SimContext, file: ConversationFile, talk: { conversation: string } & TalkPlace): void {
+  const node = file.nodes.find((n) => n.id === talk.node)
+  const line = node?.lines[talk.line]
+  if (node === undefined || line === undefined) return
+  ctx.emit(ConversationSaid, {
+    conversation: talk.conversation,
+    node: node.id,
+    line,
+    speaker: node.speaker ?? '',
+  })
+}
+
+/**
+ * Ends the conversation that is open. `finished` is false when it was cut short, and then nothing is kept; otherwise the
+ * node it ended on is kept, as the place the player got to.
+ */
+function endTalk(ctx: SimContext, story: StoryState, finished: boolean): void {
+  const talk = story.talk
+  if (talk === null) return
+  story.talk = null
+  if (finished) story.ended = { ...story.ended, [talk.conversation]: talk.node }
+  ctx.emit(ConversationEnded, {
+    conversation: talk.conversation,
+    node: talk.node,
+    player: talk.player,
+    finished,
+  })
+}
+
+/**
+ * Opens the conversation `id` for `player` with the thing `thing` (a sid; leave it out for none), for a game's own
+ * system. False, and nothing happens, when the game has no such conversation, the player has no hero, the thing is not
+ * in the game, or a conversation or cutscene is on.
+ */
+export function startConversation(ctx: SimContext, id: string, player: number, thing = 0): boolean {
+  const file = (ctx.content as GameContent).conversations?.[id]
+  if (file === undefined) return false
+  const story = ctx.resource(Story)
+  if (story.talk !== null || story.scene !== null) return false
+  if (!ctx.query(Player).some((e) => e.get(Player).number === player)) return false
+  if (thing !== 0 && ctx.entity(thing) === undefined) return false
+  story.talk = { conversation: id, player, thing, ...openAt(file) }
+  ctx.emit(ConversationStarted, { conversation: id, player, thing: thingId(ctx, thing) })
+  say(ctx, file, story.talk)
+  return true
+}
+
+/** Moves the conversation to `place` and says the line it is on. */
+function goTo(ctx: SimContext, file: ConversationFile, story: StoryState, place: TalkPlace): void {
+  if (story.talk === null) return
+  story.talk = { ...story.talk, ...place }
+  say(ctx, file, story.talk)
+}
+
+/** The talker's Next and choose commands of this tick, in the order they were sent, each moving the conversation once. */
+function talkCommands(ctx: SimContext, file: ConversationFile, story: StoryState): void {
+  const nexts = ctx.commands.of(NextCommand).map(({ source, seq }) => ({ source, seq, choice: undefined }))
+  const picks = ctx.commands
+    .of(ChooseCommand)
+    .map(({ source, seq, payload }) => ({ source, seq, choice: payload.choice }))
+  const asked = [...nexts, ...picks].sort((a, b) => a.seq - b.seq)
+  for (const { source, choice } of asked) {
+    const talk = story.talk
+    if (talk === null) return
+    if (source !== talk.player) continue
+    if (choice === undefined) {
+      const next = nextPlace(file, talk)
+      if (next === 'end') endTalk(ctx, story, true)
+      else if (next !== 'pick') goTo(ctx, file, story, next)
+    } else {
+      const next = choosePlace(file, talk, choice)
+      const chosen = file.nodes.find((n) => n.id === talk.node)?.choices?.[choice]
+      if (next === undefined || chosen === undefined) continue
+      ctx.emit(ConversationChosen, {
+        conversation: talk.conversation,
+        node: talk.node,
+        choice,
+        line: chosen.line,
+        player: talk.player,
+      })
+      goTo(ctx, file, story, next)
+    }
+  }
 }
 
 /**
@@ -113,8 +210,57 @@ const holdSystem: SystemDef = defineSystem({
       const length = content.cutscenes?.[scene.cutscene]?.length ?? 0
       if (ctx.tick - scene.since >= length) endScene(ctx, story, false)
     }
+    // 4. A conversation whose talker or thing has gone ends, unfinished.
+    const talk = story.talk
+    if (talk !== null) {
+      const talkerHere = ctx.query(Player).some((e) => e.get(Player).number === talk.player)
+      const thingHere = talk.thing === 0 || ctx.entity(talk.thing) !== undefined
+      if (!talkerHere || !thingHere) endTalk(ctx, story, false)
+    }
+    // 5. The talker's commands.
+    const talkFile = story.talk === null ? undefined : content.conversations?.[story.talk.conversation]
+    if (talkFile !== undefined) talkCommands(ctx, talkFile, story)
     // 6. Hands.
     holdHands(ctx, story)
+  },
+})
+
+/**
+ * Who is within reach of whom, as `'<thing sid>:<player>'`: every thing that is not a player whose character has a
+ * conversation the game has, with every hero whose middle is `TALK_REACH` or less from its middle.
+ */
+function pairsInReach(ctx: SimContext, content: GameContent): string[] {
+  const heroes = ctx
+    .query(Player, Transform)
+    .map((e) => ({ number: e.get(Player).number, at: e.get(Transform) }))
+    .sort((a, b) => a.number - b.number)
+  const pairs: string[] = []
+  for (const thing of ctx.query(Thing, Transform)) {
+    if (thing.has(Player)) continue
+    const conversation = content.characters[thing.get(Thing).character]?.conversation
+    if (conversation === undefined || content.conversations?.[conversation] === undefined) continue
+    const there = thing.get(Transform)
+    for (const hero of heroes) {
+      const near = hypot(hero.at.x - there.x, hero.at.y - there.y) <= TALK_REACH
+      if (near) pairs.push(`${thing.sid}:${hero.number}`)
+    }
+  }
+  return pairs.sort()
+}
+
+const meetSystem: SystemDef = defineSystem({
+  name: 'level.story.meet',
+  phase: 'gameplay',
+  run(ctx) {
+    const story = ctx.resource(Story)
+    const reach = pairsInReach(ctx, ctx.content as GameContent)
+    // A pair that comes within reach while a conversation or a cutscene is on is kept out, so it counts as new on the
+    // first tick nothing is on.
+    const busy = story.talk !== null || story.scene !== null
+    // Opening a conversation when a pair meets waits on the Owner's answer to plan T's question (when it opens: on
+    // every walk-up, until it has been finished once, or only with a Talk button), so nothing opens here yet.
+    const met = busy ? reach.filter((pair) => story.met.includes(pair)) : reach
+    if (met.length !== story.met.length || met.some((pair, i) => pair !== story.met[i])) story.met = met
   },
 })
 
@@ -135,5 +281,5 @@ export const storyPlugin: PluginDef = definePlugin({
     CutsceneStarted,
     CutsceneEnded,
   ],
-  systems: [holdSystem],
+  systems: [holdSystem, meetSystem],
 })
