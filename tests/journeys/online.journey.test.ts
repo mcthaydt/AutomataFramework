@@ -83,7 +83,8 @@ beforeAll(async () => {
   }
   await build({
     ...common,
-    build: { outDir, emptyOutDir: true, target: 'es2023', sourcemap: false },
+    // Scripts beside Rapier's binary, which the plugin writes at the top of the output: its address is relative.
+    build: { outDir, emptyOutDir: true, target: 'es2023', sourcemap: false, assetsDir: '' },
   })
   pageServer = await preview({
     ...common,
