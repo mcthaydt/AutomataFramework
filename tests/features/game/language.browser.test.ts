@@ -4,8 +4,8 @@
 // would meet them.
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { page as browser } from 'vitest/browser'
-import { LANGUAGES } from '#src/features/content/content.ts'
-import { LANGUAGE_NAMES } from '#src/features/locale/locale.ts'
+import { LANGUAGES, type Language } from '#src/features/content/content.ts'
+import { LANGUAGE_NAMES, playersOrder } from '#src/features/locale/locale.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import type { LocalePage } from '../../fixtures/locale/page.ts'
 import { openPage } from '../../fixtures/saves/open-page.ts'
@@ -71,16 +71,16 @@ for (const [name, width, height] of SCREENS) {
     const { page, close } = await open({ width, height }, '&saved=en')
     try {
       const boxes = await page.buttons()
-      expect(boxes.map((b) => b.language)).toEqual([...LANGUAGES])
+      // The player's own language first, the rest as the players of each speak it.
+      expect(boxes.map((b) => b.language)).toEqual(playersOrder('en', LANGUAGES))
       for (const box of boxes) {
-        expect(box.name, box.language).toBe(LANGUAGE_NAMES[box.language])
+        expect(box.name, box.language).toBe(LANGUAGE_NAMES[box.language as Language])
         expect(box.height, `${box.name} height`).toBeGreaterThanOrEqual(48)
         expect(box.width, `${box.name} width`).toBeGreaterThanOrEqual(48)
         expect(box.inside, `${box.name} is whole on the screen`).toBe(true)
         expect(box.reachable, `${box.name} is not covered`).toBe(true)
       }
-      // Audit J3: each name is drawn, in the page's font: a picture of it differs from a picture of characters that
-      // have no letter, which is all an empty box is.
+      // Audit J3: each flag is drawn: a picture of it has more than one colour, which an empty box does not.
       expect(await page.drawn()).toEqual(Object.fromEntries(LANGUAGES.map((language) => [language, true])))
     } finally {
       close()
