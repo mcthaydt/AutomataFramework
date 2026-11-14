@@ -129,8 +129,10 @@ Each line names its test and the task that owns it.
    crossing thumb keeps walking and never jumps. Task 11, `thumb-rules.test.ts`.
 3. **The phone is turned while a thumb is down:** everything is let go, the hero stops, and the halves are redrawn
    for the new shape. Task 12, `thumbs.browser.test.ts`.
-4. **A number in the file outside the framework's limits, or a fraction where ticks are counted:** the game still
-   plays inside the limits and the check says which number and what to write. Task 2, `moves.test.ts`.
+4. **A number in the file outside the framework's limits, or a fraction where ticks are counted:** `loadGame` (and so
+   `automata check`) refuses the file and says which number and what to write; content that never went through
+   `loadGame` (an editor's draft, a test's game in memory) still plays inside the limits. Task 2, `moves.test.ts`
+   (audit I2).
 5. **Saved keys from before the game had `dash`, one of them now `dash`'s own key:** that one saved binding is
    dropped, the rest are kept, nothing throws. Task 9, `hero-controls.test.ts`.
 
@@ -204,12 +206,16 @@ test('a tuning that names no listed file is refused with the listed ids', ...) /
 test('moves on a character that is not the project\'s hero is refused', ...)
 // 'Only the hero is moved by a player: "moves" belongs on "<hero>", the character automata.toml names as hero.' at 'moves'
 test('an unknown key inside moves is refused', ...)
+test('a hero whose "tuning" names another file than "moves.tuning" is refused', ...)   // audit I7
+// 'This hero takes its numbers from "moves.tuning" ("<moves>"). Take out "tuning", or make it the same file.' at 'tuning'
 ```
 
-- [ ] **Step 2: Push; the node job fails on these six.**
+- [ ] **Step 2: Push; the node job fails on these seven.**
 - [ ] **Step 3: Add `moves` to `CharacterSchema`** as a `strictObject` (`tuning: Id`, the three booleans
   `.default(false)`), each field with a `describe` in plain words; the two shape checks in `superRefine`; the two
-  cross-file checks in `characterInfo.check` (`game.has('tuning', …)`, `game.hero`). Add
+  cross-file checks in `characterInfo.check` (`game.has('tuning', …)`, `game.hero`), and in `superRefine` the check
+  that a top-level `tuning` (the field characters have today, which nothing in the framework reads) names the same
+  file as `moves.tuning` when both are there (audit I7: one hero, one tuning file). Add
   `'moves.tuning': 'Write the id of the tuning file with the hero\'s numbers, like "hero-moves".'` to `missing`.
   Widen the `clips` description to name `air-jump`, `wall` and `dash` as clips that play by how a hero with `moves`
   moves.
@@ -275,7 +281,8 @@ test('a value outside the limits is held at the limit', ...)             // a fi
 test('a counted number with a fraction is floored', ...)                 // dash-ticks 10.5 -> 10
 test('the same file gives the same object', ...)
 test('the framework controls pass checkControls, with dash and without', ...)
-// the checks, through loadGame on a small game in memory:
+// the checks, through loadGame on a small game in memory. Each is a refusal, as every content check is (the
+// diagnostics have no warnings); the clamp above is for content that never went through loadGame (audit I2):
 test('a range outside the limits is named with what to write', ...)
 // '"jump-speed" can be 4 to 30 in a game, and this file lets it reach 50. Keep "min" and "max" inside 4 to 30.' at numbers[i].max
 test('a counted number with a fraction is named', ...)
@@ -351,7 +358,8 @@ export function felt(contacts: readonly FeltContact[]): { below: boolean; left: 
 contactsOf(world: World, collider: number): FeltContact[]   // solid pairs only; sensors give none
 ```
 
-`felt`: a contact counts when `dist <= TOUCH_SLOP`. `below` when `ny <= -STEEP`. `left` when `nx >= STEEP` and the
+`contactsOf` skips a manifold with no contact points (Rapier keeps one for two boxes whose bounds overlap, with a
+zero normal), so it never reaches `felt` (audit M1). `felt`: a contact counts when `dist <= TOUCH_SLOP`. `below` when `ny <= -STEEP`. `left` when `nx >= STEEP` and the
 other does not move; `right` when `nx <= -STEEP` and the other does not move.
 
 - [ ] **Step 1: Failing unit tests** in `touching.test.ts`, on `felt` alone: flat ground; a slope of 44 degrees is
@@ -411,6 +419,7 @@ export interface MoveState {
   airDashes: number  // used since the ground
   walking: boolean
   mode: number       // a MoveMode, for the clip
+  run: number        // the sideways speed this step last asked for (f32, audit I1)
 }
 export const MOVE_START: MoveState   // face 1, everything else nought and false
 export interface MoveInput {
@@ -437,19 +446,24 @@ export function stepMoves(
 2. **The press.** `jumpPressed`: `press = earlyPress + 1`. `rest = max(0, rest - 1)`.
 3. **A dash under way** (`dash > 0`): if `wall === dashDir`, the dash ends (`dash = 0`, `rest = dashRest`) and the
    tick carries on at 4; else `vx = dashDir * dashSpeed`, `vy = hover`, `dash -= 1` (reaching 0 sets
-   `rest = dashRest`), `mode = dash`, `press = max(0, press - 1)`, and the tick ends here.
+   `rest = dashRest`, and `run = dashDir * walkSpeed`, so the hero comes out of a dash at a walk), `mode = dash`,
+   `press = max(0, press - 1)`, and the tick ends here. A dash that ends at a wall sets `run = 0`.
 4. **A dash begins** (`on.dash && dashPressed && rest === 0 && (below || airDashes < airDashes limit)`):
    `dashDir = dir !== 0 ? dir : face`; `face = dashDir`; in the air `airDashes += 1`; `rising = false`; `lock = 0`;
    `dash = dashTicks`; `dashed`; then as 3 for this tick.
-5. **Walk.** With `lock > 0`: `vx` is left alone and `lock -= 1`. Else the target is `dir * walkSpeed`, the grip is
-   `below ? walkGrip : airGrip`, and `vx` goes toward the target by at most `walkSpeed / grip` (all the way when the
-   grip is 0). Then, if `dir !== 0 && wall === dir`, `vx = 0`. `dir !== 0` sets `face = dir`. `below && dir !== 0 &&
+5. **Walk.** The walk starts from `run`, the speed the step asked for last tick, never from `input.vx`: ground
+   friction (0.5 on both colliders, so about 0.25 tiles a second taken off each tick) would otherwise eat the grip and
+   the hero would never hold `walk-speed` on the ground (audit I1). Today's hero sets its speed outright every tick,
+   so a crate it pushes slows it within a tick and no more; this keeps that. With `lock > 0`: `run` is left alone and
+   `lock -= 1`. Else the target is `dir * walkSpeed`, the grip is `below ? walkGrip : airGrip`, and `run` goes toward
+   the target by at most `walkSpeed / grip` (all the way when the grip is 0). Then, if `dir !== 0 && wall === dir`,
+   `run = 0`. `vx = run`. `dir !== 0` sets `face = dir`. `below && dir !== 0 &&
    !walking`: `walked`. `walking = below && dir !== 0`.
 6. **Wall slide** (`on.wallJump`): `sliding` is `!below && wall !== 0 && dir === wall && vy > 0`. While sliding,
    `vy = min(vy, wallSlideSpeed)` and `airJumps = 0`; on the tick it begins, `wall-slid`.
 7. **Jump**, the first that fits, when `press > 0`:
    a. `canStand`: `vy = -jumpSpeed`, `grace = 0`, `stood = false`, `jumped`.
-   b. `on.wallJump && !below && wall !== 0`: `vx = -wall * wallJumpOut`, `vy = -wallJumpUp`,
+   b. `on.wallJump && !below && wall !== 0`: `vx = run = -wall * wallJumpOut`, `vy = -wallJumpUp`,
       `lock = wallJumpLock`, `lockDir = -wall`, `face = -wall`, `sliding = false`, `wall-jumped`.
    c. `on.doubleJump && !below && airJumps < airJumps limit`: `vy = -airJumpSpeed`, `airJumps += 1`, `air-jumped`.
    Each sets `rising = true` and `press = 0`. With none, `press -= 1`.
@@ -482,6 +496,8 @@ test('air-dashes 1: one dash in the air until the ground', ...)
 test('a dash into a wall ends at the wall', ...)
 test('jump pressed during a dash is kept and used when the dash ends on the ground', ...)
 test('walking toward a wall keeps the sideways speed at nothing', ...)
+test('the walk goes from the speed it asked for: an input vx cut by friction does not slow the next tick', ...)   // audit I1
+test('a dash ends at walk speed; one that ends at a wall ends at nothing', ...)                                   // audit I1
 test('walked is said on the first step after standing, not on every tick', ...)
 test('landed and left-ground are each said once, and a jump is not left-ground', ...)
 test('the mode is dash, wall, airJump and plain at the right ticks', ...)
@@ -513,7 +529,7 @@ export interface MoveEvent { readonly player: number; readonly sid: number }
 /** The one event object for `hero.<name>`. */
 export function moveEvent(name: MoveEventName): EventDef<z.ZodType<MoveEvent>>
 export const MOVE_EVENTS: readonly MoveEventName[]
-/** `gravity` is the sim's; the plugin works `hover` out of it and the tick. */
+/** `gravity` is the sim's; the plugin works `hover` out of it and the tick: `hover = -gravity.y * dt` (audit M2). */
 export function movesPlugin(options: { readonly gravity: { readonly x: number; readonly y: number } }): PluginDef
 ```
 
@@ -531,6 +547,7 @@ is the hero the level would have made.
 
 ```ts
 test('createGameSim with no plugins moves the hero: held right, it is further right; jump, it leaves the ground', ...)
+test('held right on a floor for 60 ticks, the hero covers walk-speed tiles, give or take 2%', ...)   // audit I1: friction does not eat the walk
 test('each event is said once, on the tick it happens, with the player\'s number', ...)
 test('the numbers come from the tuning file: jump-speed 20 jumps higher than 12', ...)
 test('a switch that is off does nothing: no double jump without "double-jump"', ...)
@@ -626,11 +643,14 @@ test('that hash is the hash of the same commands played straight through', ...)
 ```ts
 /** The controls of a game whose hero has `moves`: its tuning file's list, else the framework's (without `dash` when
  *  the hero does not dash). `undefined` for a game whose hero has no `moves`. Throws what `controlsFromList` throws. */
-export function heroControls(content: GameContent): Controls | undefined
+export function heroControls(content: GameContent, given?: Controls): Controls | undefined
 export interface GameOptions { /* `controls` is now optional */ readonly controls?: Controls }
 ```
 
-`startGame` and `startOnlineGame`: the controls are `heroControls(content) ?? options.controls`. With neither, throw
+`heroControls` answers, for a game whose hero has `moves`, the tuning file's list when it has one, else `given`, else
+the framework's (audit I3: the spec's "when both are given, the tuning file wins" is about a file that has a list; a
+file with none must not throw away the controls a game passed in code). `startGame` and `startOnlineGame`: the
+controls are `heroControls(content, options.controls) ?? options.controls`. With neither, throw
 before anything is on the page: `'This game has no controls. Give its hero "moves" in its character file, or pass
 "controls" to startGame.'` With both, the file wins and the console is told once:
 `'startGame: the controls come from the tuning file "<id>". The "controls" passed in code are not used.'`
@@ -640,7 +660,8 @@ before anything is on the page: `'This game has no controls. Give its hero "move
   controls with a saved binding that gives `jump` the key `KeyX` drops that one binding, keeps a saved `left`, and
   throws nothing. `game.browser.test.ts`: `startGame` with no `controls` and no `plugins` on the moves fixture puts a
   hero on screen that a held key moves; with neither a file nor `controls` it throws the sentence and leaves the mount
-  empty; with both, the file's keys work and the console heard the note once.
+  empty; with both, the file's keys work and the console heard the note once; a tuning file with no list and
+  `controls` in code plays the code's keys and says nothing (audit I3).
 - [ ] **Step 2: Push; red.** **Step 3: Build.** **Step 4: Push; green.**
 - [ ] **Step 5: Commit** `feat: a game with a built-in hero needs no controls in code`
 
@@ -850,8 +871,11 @@ What is on the page (class names are the hooks a game's stylesheet has; colours 
 
 `createInput` makes `createThumbs` when `thumbs` is given and `createTouch` otherwise; `poll` reads `touch.drain()`
 where it read `touch.held()`; everything else that reads what is held keeps `held()`. `startGame` and
-`startOnlineGame` pass `thumbs` when the controls came from `heroControls`, apply `touchSettings.swapSides`, and give
-the renderer `input.thumbRoom()` beside the inset. `setThumbRoom`: in a level with a `view`, the box round the heroes
+`startOnlineGame` pass `thumbs` when `usesMoves(content)` (the spec: the scheme follows the hero, not where the
+controls came from; audit I3), apply `touchSettings.swapSides`, and give the renderer `input.thumbRoom()` beside the
+inset. **A level with no `view` has no camera to move** (the template's level is one: 16 by 9 tiles, its floor at the
+bottom of the screen, under the thumbs on a sideways phone), so there `startGame` gives the room to `setInset`
+instead and the level is fitted above it (audit I4). `setThumbRoom`: in a level with a `view`, the box round the heroes
 has `px / scale` more tiles under it (the scale of the last frame drawn), still inside the level.
 
 - [ ] **Step 1: Write the failing tests** in `thumbs.browser.test.ts` (real pointer events with `pointerType`
@@ -871,6 +895,7 @@ test('a game with dash has the dash mark, 64 px, and a tap on it is a dash', ...
 test('a game\'s own action is a 64 px button above the jump half, and holding it does not jump', ...)
 test('nothing scrolls, zooms or opens a menu under a thumb', ...)
 test('a game whose hero has no moves still gets the buttons', ...)
+test('an element the page stacks over a half, outside the mount, takes its own touch and the half sees none', ...)   // audit I5: the editors' Stop, plan U's Pause
 ```
 
   and in `camera.test.ts`: with room for the thumbs the shot's box reaches further down; with none it is today's.
@@ -971,13 +996,16 @@ test(`${name}: the jump begins on the first tick after the thumb lands`, ...)   
 test(`${name}: a flick dashes, and the fake host is asked to buzz with the feel file's strength`, ...)
 test(`${name}: every round button is 64 px, inside the mount, and clear of the jump hint`, ...)
 test(`${name}: with the thumbs over the game, the hero's box never enters the bottom 120 px`, ...)   // game.heroes()
+test(`${name}: the same with the fixture's level copied without its view: the level is fitted above the thumbs`, ...)   // audit I4
 test(`${name}: a picture is saved`, ...)    // thumbs-<name>.png, hints showing, to the screens artifact
 ```
 
   `moves-pad.browser.test.ts` (the test's own pad, through `gamepads`): the stick walks, the bottom button jumps and
   double jumps, the left button and the right trigger dash; the same at a keyboard with Space and Shift.
 - [ ] **Step 2: Push; red.** **Step 3: Fix what the tests find** in Tasks 10 to 13's code, each fix its own commit.
-- [ ] **Step 4: Push; green in three browsers.** Look at the fifteen pictures on `ci-screens` before going on: a
+- [ ] **Step 4: Push; green in three browsers.** Look at the fifteen pictures on `ci-screens` before going on (and
+  put them in the review artifact at phone sideways, phone upright, tablet upright, tablet sideways and desktop, the
+  Owner's format, saying plainly that the halves are the final look and the game's art is still boxes; audit M5): a
   thumb, a hint or a button that covers the hero, or words that are cut, is a defect to fix here.
 - [ ] **Step 5: Commit** `test: the thumb scheme at five sizes in three browsers`
 
@@ -1044,15 +1072,29 @@ What changes in the template:
 
 - **AutomataFrameworkEditors, the redesign plan's Task 19 (Play).** It needs an amendment once this is merged and the
   pin moves. What it relies on, all from `@automataframework/framework`:
-  - `startGame({ content, mount, host, locale, readPicture })` with no `controls` and no `plugins` plays any game
-    whose hero has `moves`, with the thumb scheme on a touch screen. `usesMoves(content)` says whether Play can
-    play; a game without `moves` gets the physics-only picture and a sentence saying how to switch the hero on.
+  - `startGame({ content, mount, host, locale, readPicture, level })` with no `controls` and no `plugins` plays any
+    game whose hero has `moves`, with the thumb scheme on a touch screen. Task 19's G1 holds: `canPlay` is
+    `usesMoves(content)`, the name plan H kept. A game without `moves` does not play: Task 19's notice
+    (`playNeedsCode`) is the answer, as that plan says (audit I6; an earlier line here said "the physics-only
+    picture", which the merged Editors plan does not do).
+  - Task 19's `startPlay({ mount, content, level, art })`: the level as it is on screen goes in as
+    `content.levels[id]` with `level: id`; `startGame` loads its own pictures through `readPicture` and takes no
+    `Art`, so the editors pass the picture reader they draw with and `art` is not needed (the amendment's call).
+    `host` is `webHost()`. Play passes no `settings` and opens none, so nothing is written to the device, which the
+    editors' list of device keys requires.
+  - Stop sits outside the mount, stacked above it: Task 12's test proves such an element takes its own touch and the
+    half under it sees none, which answers Task 19's "a touch on Stop never starts a walk".
+  - Which language Play speaks is settled (the Owner, 2026-11-14, the Editors plan audit's Q2, answer A): the
+    editors' language when the game has it, else Play shows the game's flags once. Plan H changes nothing about it:
+    Play builds a `Locale` that answers that language and passes it as `locale`, as plan W requires.
   - `MOVE_NUMBERS` (ids, the spec's `about`, values, limits, steps) is what the Tuner draws for a hero's tuning
     file; a slider never leaves the framework's limits. A Tuner change is a new content value and a new `startGame`:
     there is no changing a number inside a running game.
   - `heroControls(content)`, `playHint` and `teachHint` for the key and gamepad hints beside the canvas.
   - The halves take the game's own `--automata-touch-*` look; the editor's chrome never restyles them.
   - The game's own plugins (the template's score) do not run in Play.
+  - The spec's "a Tuner change to `jump-speed` felt in the next Play" is the Feel editor's journey (M3, Tuner inside
+    Feel), not Task 19's: Task 19 has no Tuner (audit M4).
 - **Plan U (screens).** Settings gains two toggles, both in the `touch` section (`TouchSettingsSchema`,
   `TOUCH_SETTINGS_DEFAULT`): "Swap sides" (`game.input.setSwapSides`) and "Vibration: on / off"
   (`game.setVibration`; show it only where `host.canBuzz`). Pause stays in the top corner, above the halves. The
@@ -1064,10 +1106,15 @@ What changes in the template:
   it is done. `replays/level-1.json` and `replays/test-game.json` move once, each named in its commit and shown to
   the Owner. Its journeys play the three levels by thumbs at a phone size and by keyboard. The pin moves to the
   commit that lands this plan.
-- **Plan T (story).** `on-ground` is `Touching.below`: `createGameSim` asks for `touching` when a behaviour file
+- **Plan T (story).** Its plan (builder's call 8) now carries a note pointing here (audit I9). `on-ground` is
+  `Touching.below`, if Task 4 is on `main` when plan T builds its senses; if plan T goes first, it keeps its own
+  sense, and moving it later is plan T's change, with its own golden named: `createGameSim` asks for `touching` when a behaviour file
   uses that sense, and the critter's parts carry `Touching`. `blocked` may read `Touching.left` and `right`.
 - **Plan S (audio).** `hero.jumped`, `hero.landed` and the other six are now the framework's own events, with
   `{ player, sid }`. A game with a built-in hero must not define events of those names itself.
-- **The feel runtime (no plan yet).** It takes `game/buzz.ts` in and draws `dust`, `shake` and `freeze` from the
+- **The feel runtime (no plan yet; the audit's answer to where it lives).** In this repo, as its own plan (plan F),
+  after this one and before plan D's demo step, whose "dust on landing" needs it; see the plan audit's "The feel
+  runtime". Until it is built the template's `land.json` buzzes and its dust is not drawn, so on Android the buzz is
+  briefly the only sign of a landing besides the landing itself: plan F closes that. It takes `game/buzz.ts` in and draws `dust`, `shake` and `freeze` from the
   same events. Until then a feel file's `buzz` works and its other three effects are read and not drawn.
 - **Release 4 (Tauri).** Real haptics are that adapter's `buzz`, with the strength the web cannot give.
