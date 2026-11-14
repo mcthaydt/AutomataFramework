@@ -58,6 +58,7 @@
     "build": "vite build && tsc -p tsconfig.build.json && node scripts/fix-dts.ts",
     "prepare": "node --run build",
     "schemas": "node scripts/write-schemas.ts",
+    "art": "node scripts/art.ts",
     "api-report": "node scripts/api-report.ts"
   },
   "devDependencies": {

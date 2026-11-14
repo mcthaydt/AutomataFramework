@@ -1,4 +1,6 @@
 // A level that names a tileset plays exactly like the same level written with # and . — in Node and in every browser.
+// Its level is a floor and no wall: a level with a tileset joins stacked tiles into one box (tileBoxes), a level in # and
+// . does not, so the two play alike only while no wall is a column of equal rows. That is why they still do here.
 import { afterEach, expect, test } from 'vitest'
 import { writeContent } from '#src/features/content/content.ts'
 import { createGameSim } from '#src/features/level/level.ts'

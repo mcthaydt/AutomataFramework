@@ -1,7 +1,8 @@
-import { expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { formatDiagnostic, parseContent, writeContent } from '#src/features/content/content.ts'
+import { artGame, BACKDROP_PATH, valleyBackdrop } from '../../fixtures/content/art.ts'
 import { exampleLevel } from '../../fixtures/content/example-level.ts'
-import { expectRoundTrip, gameFiles, gameProblems } from '../../fixtures/content/kind.ts'
+import { changed, expectRoundTrip, gameFiles, gameProblems } from '../../fixtures/content/kind.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const FILE = 'content/levels/a.json'
@@ -419,4 +420,78 @@ test('a pin on a character that is upright cannot turn, and the sentence says so
   // a rope holds an upright thing without trouble
   const roped = { id: 'tie', kind: 'rope', thing: 'crate-1', from: { x: 6.5, y: 7 }, to: { x: 6.5, y: 4 } }
   expect(await gameProblems(files(roped))).toEqual([])
+})
+
+describe('a level with a backdrop and a view', () => {
+  const view = { w: 10, h: 3 }
+
+  test('they are written after the tileset and the colours, right where the schema says', () => {
+    const full = { ...exampleLevel(), backdrop: 'valley', sky: '#fdd4bd', ground: '#111314', view }
+    const parsed = parseContent('level', JSON.stringify(full), FILE)
+    expect(parsed.ok && parsed.value).toEqual(full)
+    expect(Object.keys(JSON.parse(writeContent('level', full as never)))).toEqual([
+      'format',
+      'id',
+      'backdrop',
+      'sky',
+      'ground',
+      'view',
+      'tiles',
+      'things',
+      'starts',
+    ])
+  })
+
+  test('a level with neither is written as it was before', () =>
+    expect(Object.keys(JSON.parse(writeContent('level', exampleLevel() as never)))).toEqual([
+      'format',
+      'id',
+      'tiles',
+      'things',
+      'starts',
+    ]))
+
+  test('a view bigger than the level says how big the level is', () => {
+    expect(problems(withLevel((l) => (l.view = { w: 20, h: 3 })))).toEqual([
+      `${FILE}: view.w: The level is 16 tiles wide, so the view cannot be 20. Make "w" 16 or less, or leave "view" out to show the whole level.`,
+    ])
+    expect(problems(withLevel((l) => (l.view = { w: 16, h: 4 })))).toEqual([
+      `${FILE}: view.h: The level is 3 tiles tall, so the view cannot be 4. Make "h" 3 or less, or leave "view" out to show the whole level.`,
+    ])
+  })
+
+  test('how far the camera pulls back may not be less than the view, or more than the level', () => {
+    expect(problems(withLevel((l) => (l.view = { w: 8, h: 3, most: { w: 6, h: 3 } })))).toEqual([
+      `${FILE}: view.most.w: The camera cannot pull back to less than it shows. Make "w" 8 or more.`,
+    ])
+    expect(problems(withLevel((l) => (l.view = { w: 8, h: 3, most: { w: 18, h: 3 } })))).toEqual([
+      `${FILE}: view.most.w: The level is 16 tiles wide, so the view cannot be 18. Make "w" 16 or less, or leave "view" out to show the whole level.`,
+    ])
+    expect(problems(withLevel((l) => (l.view = { w: 8, h: 3, most: { w: 16, h: 3 } })))).toEqual([])
+  })
+
+  test('a view with a side missing says what to write', () =>
+    expect(problems(withLevel((l) => (l.view = { w: 8 })))).toEqual([
+      `${FILE}: view.h: This is missing. Write how many tiles tall the screen shows, like 9.`,
+    ]))
+
+  test('a backdrop the game has loads, and one it does not have says what it has', async () => {
+    const level = (value: string | undefined) =>
+      changed('level', fixtureFiles['content/levels/level-1.json'], (l) => {
+        if (value !== undefined) l.backdrop = value
+        l.view = { w: 10, h: 9 }
+      })
+    const withBackdrop = artGame(
+      [{ type: 'backdrop', path: BACKDROP_PATH, text: writeContent('backdrop', valleyBackdrop() as never) }],
+      { 'content/levels/level-1.json': level('valley') },
+    )
+    expect(await gameProblems(withBackdrop)).toEqual([])
+    const lacking = artGame(
+      [{ type: 'backdrop', path: BACKDROP_PATH, text: writeContent('backdrop', valleyBackdrop() as never) }],
+      { 'content/levels/level-1.json': level('vally') },
+    )
+    expect(await gameProblems(lacking)).toEqual([
+      'content/levels/level-1.json: backdrop: There is no backdrop called "vally". This game has: valley.',
+    ])
+  })
 })

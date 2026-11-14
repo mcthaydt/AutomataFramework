@@ -1,0 +1,85 @@
+{
+  "format": 1,
+  "id": "keeper",
+  "tile": 16,
+  "frame": {
+    "w": 24,
+    "h": 24
+  },
+  "outline": "#111314",
+  "paints": [
+    {
+      "id": "robe",
+      "color": "#afd472"
+    },
+    {
+      "id": "trim",
+      "color": "#fdd4bd"
+    },
+    {
+      "id": "ink",
+      "color": "#111314"
+    }
+  ],
+  "parts": [
+    {
+      "id": "robe",
+      "shape": "block",
+      "x": 12,
+      "y": 18,
+      "w": 12,
+      "h": 12,
+      "paint": "robe"
+    },
+    {
+      "id": "head",
+      "shape": "round",
+      "x": 12,
+      "y": 9,
+      "w": 10,
+      "h": 10,
+      "paint": "trim"
+    },
+    {
+      "id": "eye",
+      "shape": "block",
+      "x": 15,
+      "y": 8,
+      "w": 2,
+      "h": 3,
+      "paint": "ink"
+    },
+    {
+      "id": "mouth",
+      "shape": "block",
+      "x": 15,
+      "y": 12,
+      "w": 3,
+      "h": 1,
+      "paint": "ink"
+    }
+  ],
+  "poses": [
+    {
+      "id": "idle",
+      "moves": []
+    },
+    {
+      "id": "talk",
+      "moves": [
+        {
+          "part": "head",
+          "dy": -1
+        },
+        {
+          "part": "eye",
+          "dy": -1
+        },
+        {
+          "part": "mouth",
+          "dy": -1
+        }
+      ]
+    }
+  ]
+}

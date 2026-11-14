@@ -11,6 +11,7 @@ import { startGame } from '#src/features/game/game.ts'
 import { createLocale, LANGUAGE_NAMES, levelName } from '#src/features/locale/locale.ts'
 import { openSettings } from '#src/features/saves/saves.ts'
 import { followLanguage, webHost } from '#src/features/web/web.ts'
+import { readFullGamePicture } from '../full-game/pictures.ts'
 import { readFullGame } from '../full-game/read.ts'
 import { fixtureControls } from '../game/controls.ts'
 import { manualFrames } from '../game/frames.ts'
@@ -116,6 +117,7 @@ const game = await startGame({
   host,
   frames,
   locale,
+  readPicture: readFullGamePicture,
 })
 // A finger on the screen brings the touch buttons up, as it does on a phone.
 window.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }))
@@ -236,6 +238,7 @@ const page: LocalePage = {
       host,
       frames: playFrames,
       locale,
+      readPicture: readFullGamePicture,
     })
     try {
       playFrames.at(0)

@@ -16,9 +16,10 @@ import {
 } from '../input/input.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
-import { createRenderer } from '../render/render.ts'
+import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
+import { levelArt } from './art.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
 
@@ -49,6 +50,13 @@ export interface GameOptions extends GameSimOptions {
    */
   readonly soundNotice?: string | false
   /**
+   * Fetches a picture of the game by its path, like `content/figures/hero.png`. Needed when the game has pictures (a
+   * figure, a tileset or a backdrop): they are loaded and checked before anything is put on the page, and a picture that
+   * is missing, old or the wrong size stops the game with one sentence that says what to run. A game with no pictures
+   * needs none.
+   */
+  readonly readPicture?: ReadPicture
+  /**
    * The player's language. The touch buttons say `controls.<action>` and `automata.touch.label` in it, a refused
    * `addPlayer` explains itself in it, and all of them change when the player picks another. Default: English, and each
    * control's own label.
@@ -69,6 +77,12 @@ export interface Game {
   /** Holds the game still until `resume`. The game is also still while the host says it is not on screen. */
   pause(): void
   resume(): void
+  /**
+   * Every hero as its box on the canvas, in CSS pixels from the mount's top left corner, lowest player first. New after
+   * each draw, so read it after one. Empty in a game whose heroes have no figure and whose levels have no view: the
+   * renderer tells a hero from a crate by the sprite, which such a game does not have.
+   */
+  heroes(): readonly HeroBox[]
   /** The play so far, from tick 0. Not available after `stop`, which disposes the sim. */
   replay(): Replay
   /** Stops the loop, removes the canvas and the controls, and disposes the sim. Safe to call twice. */
@@ -89,7 +103,24 @@ export async function startGame(options: GameOptions): Promise<Game> {
   try {
     const level = options.content.levels[options.level ?? options.content.project.start]
     if (level === undefined) throw new Error('The level this game opens is missing.')
-    const renderer = await createRenderer({ mount, world: levelSize(level), sky: skyOf(level) })
+    // The pictures first: a game that cannot be drawn leaves nothing on the page.
+    const art = await levelArt(
+      'startGame',
+      options.content,
+      options.level ?? options.content.project.start,
+      options.readPicture,
+    )
+    cleanup = () => {
+      art?.destroy()
+      sim.dispose()
+    }
+    const renderer = await createRenderer({
+      mount,
+      world: levelSize(level),
+      sky: skyOf(level),
+      art,
+      view: level.view,
+    })
     cleanup = () => {
       renderer.destroy()
       sim.dispose()
@@ -189,6 +220,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         unsilence = undefined
         sync()
       },
+      heroes: () => renderer.heroes(),
       replay: () => recorder.replay(),
       stop() {
         if (stopped) return

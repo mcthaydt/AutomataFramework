@@ -34,6 +34,12 @@ test('the package job copies the full game, so the packed install loads every ki
   expect(pack).toContain('cp -r tests/fixtures/full-game "$smoke/full-game"')
 })
 
+test("the package job copies the art golden and the plain hash, so the packed install checks the full game's pictures", () => {
+  const pack = jobs.slice(jobs.indexOf('\n  package:'))
+  expect(pack).toContain('tests/golden/art.json')
+  expect(pack).toContain('tests/fixtures/xxhash64-reference.ts')
+})
+
 test('the package job copies the playground and its golden, so the packed install loads ropes and touch', () => {
   const pack = jobs.slice(jobs.indexOf('\n  package:'))
   expect(pack).toContain('cp -r tests/fixtures/playground "$smoke/playground"')

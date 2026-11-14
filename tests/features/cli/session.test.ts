@@ -150,6 +150,31 @@ test('an action the game does not have, and player 2 in a one-player game, each 
   await run(memory, sessions.stopAll())
 })
 
+test('a player is named exactly as the game numbers them: "01" is not player 1', async () => {
+  const memory = game()
+  const sessions = createSessions()
+  const { session } = await run(memory, sessions.start({ folder: 'game' }))
+  expect(await sentence(memory, sessions.step(session, 1, { '01': ['right'] }))).toBe(
+    'There is no player 01 in this game. It has: 1.',
+  )
+  await run(memory, sessions.stopAll())
+})
+
+test("a recording that is already there, such as the game's own, is never written over", async () => {
+  const memory = game()
+  const sessions = createSessions()
+  const { session } = await run(memory, sessions.start({ folder: 'game' }))
+  await run(memory, sessions.step(session, 30, { '1': ['right'] }))
+  await run(memory, sessions.save(session, 'agent-run'))
+  const kept = memory.files.get('game/replays/agent-run.json')
+  await run(memory, sessions.step(session, 30, {}))
+  expect(await sentence(memory, sessions.save(session, 'agent-run'))).toBe(
+    'There is already a recording called agent-run, in replays/agent-run.json. Pick another name, or delete that file first.',
+  )
+  expect(memory.files.get('game/replays/agent-run.json')).toBe(kept)
+  await run(memory, sessions.stopAll())
+})
+
 test('a recording is named in small letters, numbers and dashes', async () => {
   const memory = game()
   const sessions = createSessions()

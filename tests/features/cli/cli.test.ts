@@ -78,3 +78,12 @@ test('an error nobody planned for is reported, not thrown', async () => {
   expect(memory.err[0]).toMatch(/^Something went wrong inside automata\. Please report this:\n/)
   expect(memory.err[0]).toContain('the pipe broke')
 })
+
+test('words after the folder are refused, not dropped: a name with a space needs quotes', async () => {
+  const memory = memoryLayer({})
+  expect(await main(['check', 'my', 'game'], memory.layer)).toBe(2)
+  expect(memory.err).toEqual([
+    'automata check takes one folder, but more words came after "my": game. A folder with a space in its name goes in quotes, like "my games/first one".',
+  ])
+  expect(memory.out).toEqual([])
+})
