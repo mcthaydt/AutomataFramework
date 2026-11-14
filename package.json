@@ -54,8 +54,8 @@
     "test:node": "vitest run --project node",
     "test:journeys": "vitest run --project journeys",
     "test:engine": "vitest run --passWithNoTests --project",
-    "build": "vite build && tsc -p tsconfig.build.json",
-    "prepare": "pnpm build",
+    "build": "vite build && tsc -p tsconfig.build.json && node scripts/fix-dts.ts",
+    "prepare": "node --run build",
     "schemas": "node scripts/write-schemas.ts",
     "api-report": "node scripts/api-report.ts"
   },

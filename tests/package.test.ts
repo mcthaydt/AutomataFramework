@@ -12,8 +12,13 @@ const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.
   dependencies: Record<string, string>
 }
 
-test('a git install builds the package: prepare runs the build', () => {
-  expect(manifest.scripts.prepare).toBe('pnpm build')
+// `node --run`, not `pnpm`: a game installs this package from git with npm, on a machine that may have no pnpm.
+test('a git install builds the package: prepare runs the build with Node alone', () => {
+  expect(manifest.scripts.prepare).toBe('node --run build')
+})
+
+test('the build writes the declarations so they load under NodeNext and an older TypeScript', () => {
+  expect(manifest.scripts.build).toMatch(/&& node scripts\/fix-dts\.ts$/)
 })
 
 test('what the build writes is what the package ships and points at', () => {

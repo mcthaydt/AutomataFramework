@@ -39,3 +39,9 @@ test('the package job copies the playground and its golden, so the packed instal
   expect(pack).toContain('cp -r tests/fixtures/playground "$smoke/playground"')
   expect(pack).toContain('tests/golden/playground.json')
 })
+
+test('the package job also typechecks the consumer with TypeScript 6 and NodeNext, and checks what the tarball holds', () => {
+  const pack = jobs.slice(jobs.indexOf('\n  package:'))
+  expect(pack).toContain('node "$GITHUB_WORKSPACE/node_modules/typescript-6/bin/tsc" -p tsconfig.ts6.json')
+  expect(pack).toContain('node tests/install/tarball.mjs "$RUNNER_TEMP"/pack/*.tgz')
+})

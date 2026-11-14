@@ -155,3 +155,7 @@ jobs:
           node smoke.mjs
           node server-smoke.mjs
           "$GITHUB_WORKSPACE/node_modules/.bin/tsc" -p .
+          # The same file again with the older TypeScript and NodeNext resolution, the way a game on either would read it.
+          node "$GITHUB_WORKSPACE/node_modules/typescript-6/bin/tsc" -p tsconfig.ts6.json
+      - name: The packed package holds the command, the template and the skills
+        run: node tests/install/tarball.mjs "$RUNNER_TEMP"/pack/*.tgz
