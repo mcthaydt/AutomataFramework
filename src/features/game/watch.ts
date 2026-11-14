@@ -8,8 +8,9 @@
 import type { Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
-import { createRenderer } from '../render/render.ts'
+import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Command, Sim } from '../sim/sim.ts'
+import { levelArt } from './art.ts'
 import { createLoop, type Frames } from './loop.ts'
 
 export interface WatchOptions extends GameSimOptions {
@@ -23,12 +24,16 @@ export interface WatchOptions extends GameSimOptions {
   readonly rounds?: number
   /** How many ticks the last picture is held before the next round. Default: one second (`tickHz`). */
   readonly restTicks?: number
+  /** Fetches a picture of the game by its path; needed when the game has pictures, as for `startGame`. */
+  readonly readPicture?: ReadPicture
 }
 
 export interface Watch {
   readonly sim: Sim
   /** How many rounds have finished. */
   readonly rounds: number
+  /** Every hero as its box on the canvas, as `Game.heroes` gives it. */
+  heroes(): readonly HeroBox[]
   /** Stops the loop, removes the canvas and disposes the sim. Safe to call twice. */
   stop(): void
 }
@@ -83,7 +88,19 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
   try {
     const level = options.content.levels[options.level ?? options.content.project.start]
     if (level === undefined) throw new Error('The level this game opens is missing.')
-    const renderer = await createRenderer({ mount, world: levelSize(level), sky: skyOf(level) })
+    // The pictures first: a game that cannot be drawn leaves nothing on the page.
+    const art = await levelArt('watchReplay', options.content, options.level ?? options.content.project.start, options.readPicture)
+    cleanup = () => {
+      art?.destroy()
+      sim.dispose()
+    }
+    const renderer = await createRenderer({
+      mount,
+      world: levelSize(level),
+      sky: skyOf(level),
+      art,
+      view: level.view,
+    })
     cleanup = () => {
       renderer.destroy()
       sim.dispose()
@@ -155,6 +172,7 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
       get rounds() {
         return played
       },
+      heroes: () => renderer.heroes(),
       stop() {
         if (stopped) return
         stopped = true

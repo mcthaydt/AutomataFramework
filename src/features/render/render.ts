@@ -69,11 +69,13 @@ export async function createRenderer(options: {
    * What the level's `view` says: the camera follows the heroes and shows this many tiles, and pulls back to `most` for
    * heroes far apart. Left out, the whole level is always in view.
    */
-  view?: {
-    readonly w: number
-    readonly h: number
-    readonly most?: { readonly w: number; readonly h: number } | undefined
-  }
+  view?:
+    | {
+        readonly w: number
+        readonly h: number
+        readonly most?: { readonly w: number; readonly h: number } | undefined
+      }
+    | undefined
 }): Promise<Renderer> {
   const { mount, world, sky, art, view, density } = options
   const scene = createScene()

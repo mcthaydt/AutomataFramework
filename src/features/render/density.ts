@@ -26,7 +26,8 @@ export const pageDensity: Density = {
     let stopped = false
     const watch = (): void => {
       query = window.matchMedia?.(`(resolution: ${window.devicePixelRatio}dppx)`)
-      query?.addEventListener('change', changed, { once: true })
+      // A page (or a test) whose `matchMedia` gives something that cannot be listened to has nothing to hear.
+      query?.addEventListener?.('change', changed, { once: true })
     }
     function changed(): void {
       if (stopped) return
@@ -36,7 +37,7 @@ export const pageDensity: Density = {
     watch()
     return () => {
       stopped = true
-      query?.removeEventListener('change', changed)
+      query?.removeEventListener?.('change', changed)
     }
   },
 }
