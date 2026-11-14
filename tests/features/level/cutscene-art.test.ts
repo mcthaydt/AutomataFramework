@@ -89,7 +89,8 @@ test('a skipped cutscene lets the clip go too', async () => {
 test('an actor with no figure is moved, and nothing throws', async () => {
   const sim = await chatSim(keys.turning, { [KEEPER_PATH]: keeperCharacter() })
   const seen = watch(sim, 80)
-  expect(seen.every((s) => s.by === 'no sprite')).toBe(true)
+  // Its sprite is there but names no clip, and it is no figure's picture: the turn is the only thing that lands.
+  expect(seen.every((s) => s.by === '')).toBe(true)
   const thing = sim.query(Thing).find((e) => e.get(Thing).id === 'keeper')
   expect(thing).toBeDefined()
 })

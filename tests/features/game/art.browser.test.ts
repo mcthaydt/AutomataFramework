@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page } from 'vitest/browser'
 import { createRecorder, Player } from '#src/features/commands/commands.ts'
 import type { GameContent } from '#src/features/content/content.ts'
-import { loadGame } from '#src/features/content/content.ts'
+import { loadGame, writeContent } from '#src/features/content/content.ts'
 import { type Game, startGame } from '#src/features/game/game.ts'
 import { type Watch, watchReplay } from '#src/features/game/watch.ts'
 import { testHost } from '#src/features/host/host.ts'
@@ -46,9 +46,19 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-/** The full game, loaded, with `overrides` as `readFullGame` takes them. */
+/** The full game's opening cutscene as a plain cutscene: these tests are of the art, not of the story, and an opening holds the hero's hands. */
+const withoutOpening = (): string => {
+  const { opens: _opens, ...scene } = JSON.parse(
+    fullGameFiles['content/cutscenes/level-1-intro.json'] ?? '',
+  ) as Record<string, unknown>
+  return writeContent('cutscene', scene as never)
+}
+
+/** The full game, loaded, with `overrides` as `readFullGame` takes them, and no opening cutscene. */
 async function full(overrides: Record<string, string | undefined> = {}): Promise<GameContent> {
-  const loaded = await loadGame(readFullGame(overrides))
+  const loaded = await loadGame(
+    readFullGame({ 'content/cutscenes/level-1-intro.json': withoutOpening(), ...overrides }),
+  )
   if (!loaded.ok) throw new Error('the full game did not load')
   return loaded.value
 }

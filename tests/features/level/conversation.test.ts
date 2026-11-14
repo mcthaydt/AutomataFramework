@@ -398,9 +398,10 @@ test('two heroes who arrive on the same tick: the lower-numbered player talks', 
 
 test('a hero who stops short of the keeper opens nothing', async () => {
   const sim = await simOf(await keeperGame(inFront))
-  const send = at({ 10: [controlsCommand(10, 1, 0, ['right'])], 60: [controlsCommand(60, 1, 1, [])] })
+  const send = at({ 10: [controlsCommand(10, 1, 0, ['right'])], 25: [controlsCommand(25, 1, 1, [])] })
   expect(run(sim, 140, send)).toEqual({})
   expect(sim.resource(Story).talk).toBeNull()
+  expect(xOf(sim, 1)).toBeGreaterThan(4.6)
   expect(xOf(sim, 1)).toBeLessThan(10.5 - 1.5)
   expect(sim.resource(Story).met).toEqual([])
 })

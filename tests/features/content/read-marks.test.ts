@@ -32,11 +32,11 @@ test('the marks file is named, and the full game ships one that marks nothing', 
 
 test('with no marks, every translated word waits for a read, and English never does', async () => {
   const unread = unreadWords(await full(), {})
-  // Five languages, nine words each: the keeper's five, the level's name and three buttons.
-  expect(unread).toHaveLength(45)
+  // Five languages, ten words each: the keeper's six, the level's name and three buttons.
+  expect(unread).toHaveLength(50)
   expect(unread.some((word) => word.language === 'en')).toBe(false)
-  expect(unread.slice(0, 9).map((word) => word.language)).toEqual(Array(9).fill('es'))
-  const keys = unread.slice(0, 9).map((word) => word.key)
+  expect(unread.slice(0, 10).map((word) => word.language)).toEqual(Array(10).fill('es'))
+  const keys = unread.slice(0, 10).map((word) => word.key)
   expect(keys).toEqual([...keys].sort())
 })
 
@@ -44,14 +44,14 @@ test('marking a language reads all of it, and only it', async () => {
   const content = await full()
   const marks = markRead(content, {}, 'ko')
   expect(unreadCount(content, marks, 'ko')).toBe(0)
-  expect(unreadWords(content, marks)).toHaveLength(36)
+  expect(unreadWords(content, marks)).toHaveLength(40)
   expect(Object.keys(marks)).toEqual(['ko'])
 })
 
 test('marking some keys reads those and no others', async () => {
   const content = await full()
   const marks = markRead(content, {}, 'es', ['keeper.hello', 'keeper.bye'])
-  expect(unreadCount(content, marks, 'es')).toBe(7)
+  expect(unreadCount(content, marks, 'es')).toBe(8)
 })
 
 describe('a mark is of what was read', () => {
@@ -82,7 +82,7 @@ describe('a mark is of what was read', () => {
     expect(unreadWords(changed, marks).filter((word) => word.language === 'es')).toEqual([
       { language: 'es', key: 'keeper.tip' },
     ])
-    expect(unreadCount(changed, marks, 'ko')).toBe(9)
+    expect(unreadCount(changed, marks, 'ko')).toBe(10)
   })
 
   test('a mark is 16 hex digits of the two texts, and either changing changes it', () => {
