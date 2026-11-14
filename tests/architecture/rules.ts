@@ -15,6 +15,7 @@ export const LAYERS = [
   'input',
   'saves',
   'host',
+  'story',
   'web',
   'game',
 ] as const
@@ -36,7 +37,7 @@ const MAX_LINES = 600
  */
 const PURE_FEATURES: ReadonlySet<string> = new Set(['sim', 'physics', 'commands', 'net', 'level'])
 /** Features that need a page (a DOM, a canvas): the headless entry may not reach them. */
-const PAGE_FEATURES: ReadonlySet<string> = new Set(['render', 'input', 'web', 'game'])
+const PAGE_FEATURES: ReadonlySet<string> = new Set(['render', 'input', 'story', 'web', 'game'])
 
 const IMPURE: readonly { readonly pattern: RegExp; readonly what: string }[] = [
   { pattern: /\bMath\.random\b/, what: 'Math.random' },
