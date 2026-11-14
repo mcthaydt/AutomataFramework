@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "id": "zh",
+  "messages": {
+    "controls.jump": "跳跃",
+    "controls.left": "左",
+    "controls.right": "右",
+    "hint.arrows": "方向键",
+    "hint.jump": "按{key}跳跃。",
+    "hint.move": "用{keys}移动。",
+    "key.arrow-down": "下箭头",
+    "key.arrow-left": "左箭头",
+    "key.arrow-right": "右箭头",
+    "key.arrow-up": "上箭头",
+    "key.space": "空格键",
+    "level.level-1.name": "第1关",
+    "page.cannot-start": "这个浏览器无法启动游戏。请换一个浏览器试试。"
+  }
+}

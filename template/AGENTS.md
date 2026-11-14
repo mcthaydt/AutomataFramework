@@ -9,13 +9,15 @@ the skills below.
 |---|---|
 | The project: name, first level, which files are content | `automata.toml` |
 | Levels and characters (JSON, one thing per file) | `content/levels/`, `content/characters/` |
+| What things look like: a figure for each character, and its painted picture | `content/figures/` |
+| Every word a player reads, one file for each language (English says what a word is for) | `content/messages/` |
 | The list of the game's rules | `src/headless.ts` |
 | One feature's rules (a plugin and its systems) | `src/features/<name>/` |
 | The page: loading, controls, words on screen | `src/features/page/` |
 | Tests of the rules | `tests/features/<name>/` |
 | A recorded play, replayed on every check | `replays/` |
 
-## The four commands
+## The commands
 
 Run them as `npx --no automata <command>`, which never fetches anything. A person types the `npm run` form.
 
@@ -23,6 +25,8 @@ Run them as `npx --no automata <command>`, which never fetches anything. A perso
   step, `--fix` puts content files in their standard form, `--json` prints the report as JSON.
 - `npx --no automata replay` plays the recordings in `replays/` and says whether each ends where it did. `--accept`
   records them again.
+- `npx --no automata art` paints the pictures of the figures and backdrops. Run it after you change a figure, and commit the
+  pictures. `--check` paints nothing and says which are missing or old.
 - `npx --no automata play` serves the game for a browser.
 - `npx --no automata create <name>` makes a new game.
 
@@ -39,7 +43,7 @@ Exit codes: 0 fine, 1 the game needs fixing, 2 the command could not do its work
 
 ## Verify in this order
 
-1. `npx --no automata check --only files` after any content change.
+1. `npx --no automata check --only files` after any content change, and `npx --no automata art` after a figure.
 2. `npx --no automata check` before you say you are done.
 3. If the play was meant to change, `npx --no automata replay --accept`, and say why the recording moved.
 

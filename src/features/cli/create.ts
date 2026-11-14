@@ -3,6 +3,8 @@
 import { join } from 'node:path'
 import { Effect } from 'effect'
 import { FRAMEWORK_VERSION } from '../sim/sim.ts'
+import { paintArt } from './art.ts'
+import { readGame } from './game-folder.ts'
 import { CliError, Files, type Ports } from './ports.ts'
 import { templateFiles } from './template.ts'
 
@@ -75,6 +77,9 @@ export function createGame(options: {
       yield* files.write(join(folder, file.path), data)
       written.push(file.path)
     }
+    // The pictures its figures make, painted now, so the new game has them and the package never carries one.
+    const game = yield* readGame(folder)
+    written.push(...(yield* paintArt(game)))
     return { folder, files: written }
   })
 }

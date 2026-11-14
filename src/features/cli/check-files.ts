@@ -2,7 +2,8 @@
 // `writeContent` makes), so that a person, an editor and an agent editing the same file make the same change.
 import { join } from 'node:path'
 import { Effect } from 'effect'
-import { type Diagnostic, parseProject } from '../content/content.ts'
+import { type Diagnostic, type GameContent, type Language, parseProject } from '../content/content.ts'
+import { paintedPaths } from './art.ts'
 import type { GameFolder } from './game-folder.ts'
 import { type CliError, Files, type FilesService } from './ports.ts'
 import type { StepReport } from './report.ts'
@@ -50,10 +51,12 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
       }
     }
 
-    // A `.json` under content/ that the project does not list is a file the game never reads.
+    // A `.json` under content/ that the project does not list is a file the game never reads, unless it is one a figure or
+    // a backdrop paints (an atlas), which is part of the game because the file that makes it is.
+    const painted = paintedPaths(game)
     for (const name of yield* files.list(join(game.folder, 'content'))) {
       const path = `content/${name}`
-      if (name.endsWith('.json') && !listed.has(path))
+      if (name.endsWith('.json') && !listed.has(path) && !painted.has(path))
         problems.push({
           file: path,
           path: '',
@@ -62,7 +65,47 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
         })
     }
 
+    if (game.loaded.ok) {
+      const words = yield* translationStep(game, game.loaded.value, files)
+      problems.push(...words.problems)
+      notes.push(...words.notes)
+    }
+
     const state = problems.length > 0 ? 'failed' : 'passed'
     return { step: 'files', state, problems, notes } satisfies StepReport
+  })
+}
+
+/**
+ * The words of a game in every language: what is missing (a problem: a player in that language would see English) and
+ * how many of the translated words no native speaker has read yet (a note, never a problem: a first draft plays). A
+ * game with no messages says nothing. A game's own copy of the framework does the reading, so an older one that has no
+ * such check is left alone.
+ */
+function translationStep(
+  game: GameFolder,
+  content: GameContent,
+  files: FilesService,
+): Effect.Effect<{ problems: Diagnostic[]; notes: string[] }> {
+  return Effect.gen(function* () {
+    const api = game.content
+    if (typeof api.translationProblems !== 'function' || typeof api.unreadWords !== 'function')
+      return { problems: [], notes: [] }
+    const problems = [...api.translationProblems(content)]
+    const marksText = yield* files.readText(join(game.folder, api.READ_MARKS_FILE))
+    const marks = marksText === undefined ? undefined : api.parseReadMarks(marksText)
+    if (marks?.ok === false) return { problems: [...problems, ...marks.diagnostics], notes: [] }
+    const unread = api.unreadWords(content, marks?.value ?? {})
+    const counts = new Map<Language, number>()
+    for (const word of unread) counts.set(word.language, (counts.get(word.language) ?? 0) + 1)
+    const notes =
+      counts.size === 0
+        ? []
+        : [
+            'Words no native speaker has read yet (a first draft plays fine): ' +
+              [...counts].map(([language, count]) => `${api.languageName(language)} ${count}`).join(', ') +
+              '.',
+          ]
+    return { problems, notes }
   })
 }

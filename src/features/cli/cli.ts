@@ -4,6 +4,7 @@
 import { Cause, Effect, Layer } from 'effect'
 import { FRAMEWORK_VERSION } from '../sim/sim.ts'
 import { type CommandInput, type CommandName, parseArgs } from './args.ts'
+import { describeArt, runArt } from './art.ts'
 import { runCheck } from './check.ts'
 import { createGame, nameOf } from './create.ts'
 import { helpFor } from './help.ts'
@@ -51,6 +52,21 @@ const replay: Command = (input) =>
     else if (results.length === 0) yield* out.line(NO_RECORDINGS)
     else for (const result of results) yield* out.line(describeResult(result))
     return replayExitCode(results)
+  })
+
+/** `automata art`: the pictures painted (or, with `--check`, judged), as words or as JSON. */
+const art: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const check = input.flags.check === true
+    const report = yield* runArt({ folder: input.folder ?? '.', check })
+    if (input.flags.json === true) yield* out.line(JSON.stringify(report, null, 2))
+    else {
+      const said = describeArt(report, check)
+      for (const line of said.out) yield* out.line(line)
+      for (const line of said.err) yield* out.error(line)
+    }
+    return report.ok ? 0 : 1
   })
 
 /** A folder as a person can paste it after `cd`: in quotes when it has a space or a quote in it. */
@@ -115,6 +131,7 @@ const COMMANDS: Readonly<Record<CommandName, Command>> = {
   check,
   play,
   replay,
+  art,
   mcp,
 }
 

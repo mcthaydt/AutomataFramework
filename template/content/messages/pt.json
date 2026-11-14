@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "id": "pt",
+  "messages": {
+    "controls.jump": "Pular",
+    "controls.left": "Esquerda",
+    "controls.right": "Direita",
+    "hint.arrows": "As setas",
+    "hint.jump": "{key} para pular.",
+    "hint.move": "{keys} para andar.",
+    "key.arrow-down": "Seta para baixo",
+    "key.arrow-left": "Seta para a esquerda",
+    "key.arrow-right": "Seta para a direita",
+    "key.arrow-up": "Seta para cima",
+    "key.space": "Espaço",
+    "level.level-1.name": "Nível 1",
+    "page.cannot-start": "Este jogo não pôde começar neste navegador. Tente outro navegador."
+  }
+}

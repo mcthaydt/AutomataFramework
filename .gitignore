@@ -4,3 +4,6 @@ coverage/
 .superpowers/
 *.tsbuildinfo
 __screenshots__/
+# The template's pictures are painted by `automata create` into a new game, never kept here: its tests paint them in memory.
+template/content/**/*.png
+template/content/**/*.atlas.json

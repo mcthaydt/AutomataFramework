@@ -35,6 +35,8 @@ files. Read this page, then the skill for the kind of change you are making.
 ## Where a change goes
 
 - A number, a level, a character's size or colour: content. Edit the JSON, then run `automata check --fix`.
+- A figure or a backdrop (how something is drawn): content. Edit the JSON, then run `npx --no automata art` to paint its
+  pictures, and commit them with it. `check` fails for a picture that is missing or older than its file.
 - A new thing a character can do: a rule, in `src/features/<name>/`. Skill `automata-rules`.
 - How the game looks on the page, or the words on it: `src/features/page/` and `src/style.css`.
 - A new kind of file: see `automata-content` for the kinds there are. A kind that is not there is not built yet.
@@ -48,7 +50,7 @@ npx --no automata replay
 ```
 
 1. After any content change, `check --only files` says what is wrong with a file, in plain words, with its place.
-2. Before you say you are done, `check` runs every step: the files, the rules, lint, types, the replays and the tests. A
+2. Before you say you are done, `check` runs every step: the files, the pictures, the rules, lint, types, the replays and the tests. A
    step that fails does not stop the next, so one run says everything that is wrong.
 3. If you meant to change how the game plays, `replay` will say the recording no longer ends where it did. Run
    `npx --no automata replay --accept` to record the new play, and say in your message why it moved.
@@ -56,8 +58,8 @@ npx --no automata replay
 Exit codes, for every command: 0 everything is fine, 1 the game has something to fix, 2 the command could not do its
 work (a folder that is not a game, a tool that is not installed). Add `--json` to read the answer as JSON.
 
-If your program speaks the Model Context Protocol, `automata mcp` offers the same commands as tools (`create`, `check` and
-`replay`), and five more that run the game a few ticks at a time and say where everything is (`play_start`, `play_step`,
+If your program speaks the Model Context Protocol, `automata mcp` offers the same commands as tools (`create`, `check`, `replay` and
+`art`), and five more that run the game a few ticks at a time and say where everything is (`play_start`, `play_step`,
 `play_state`, `play_save` and `play_stop`). The game's `.mcp.json` starts it.
 
 Always write `npx --no automata`, with `--no`. Without it, the command can fetch an unrelated package of that name from npm.

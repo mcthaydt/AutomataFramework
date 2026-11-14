@@ -10,6 +10,7 @@
     "dev": "automata play",
     "check": "automata check",
     "fix": "automata check --fix",
+    "art": "automata art",
     "accept": "automata replay --accept",
     "test": "vitest run"
   },

@@ -55,10 +55,26 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 
 ### Log
 
+- 2026-11-14, plan K, Part 2 step A: `automata art` is the sixth command (`src/features/cli/art.ts`, from plan A's
+  `scripts/art.ts`, which is removed with its `package.json` script; its test is `tests/features/cli/art.test.ts` with every
+  assertion kept, now over files in memory). `check` has an `art` step after `files`, `play` and `create` paint first, and the
+  files step does not call a painted atlas unlisted. The MCP server has an `art` tool (twelve now). The template's hero and crate
+  each have a figure (`content/figures/`), the page passes `readPicture`, and an `ArtError` is shown as a problem, not as "try
+  another browser". The Owner's answer was (a), pictures committed in a game: the template's `gitignore` does not list them and
+  its `AGENTS.md` says to commit them; in this repo they are ignored, since `create` paints them. Skills: `automata` names the
+  command, and `automata-content` says to run it after a figure or a backdrop. The recording moves (`Sprite` joins the sim);
+  re-recorded in CI in a commit that names it, with the hashes sent to the coordinator.
 - 2026-11-14, plan K (the `automata` command): the implementation audit is written and its fixes applied. A game's
   rules that print now leave `--json` and `automata mcp` alone: `main` points `console.log` at stderr under `--json`,
   and a play session's Worker writes its output to stderr, not into the protocol; the smoke's rule change now prints
   on every tick on three systems to prove it. A recording whose `meta.players` is `''` is played with nobody again.
+- 2026-11-14, plan K, Part 2 step L: the template has `content/messages/` in all six languages (every word its page shows:
+  the touch buttons, the key hint and each key's name, the level's name, and "could not start") and an
+  `automata.translations.toml` with no marks yet; the page makes a locale from them and follows it, so a device that
+  speaks Japanese is told the keys in Japanese. `automata check`'s `files` step adds `translationProblems`, and prints
+  `unreadWords` as a note with a count for each language, never a failure. The recording should not move (words are
+  not in the sim's hash); if CI says it did, it is re-recorded in a named commit. Open for the Owner: a command that marks a
+  language as read (plan L named it plan K's to name) is not built, since no step of plan K's text asks for it.
 - 2026-11-14, plan K, Part 2 step P: the template's level gains a spark (`content/characters/spark.json`, `"touch": "take"`),
   and the hero's rules count it from `spark.taken` into a `hero.score` resource (`template/src/features/hero/score.ts`).
   `automata-rules` gains "Answering an event". The recorded play `template/replays/level-1.json` moves (the hero now takes

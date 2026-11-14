@@ -3,10 +3,10 @@
 // Ported in shape from AutomataFrameworkFailed@ed8592e8: packages/tools/src/app/cli.ts (one small file parses the
 // words; the work is in files a test runs with fakes).
 
-export type CommandName = 'create' | 'check' | 'play' | 'replay' | 'mcp'
+export type CommandName = 'create' | 'check' | 'play' | 'replay' | 'art' | 'mcp'
 
 /** The commands, in the order help lists them. One row per command in `cli.ts`'s table. */
-export const COMMAND_NAMES: readonly CommandName[] = ['create', 'check', 'play', 'replay', 'mcp']
+export const COMMAND_NAMES: readonly CommandName[] = ['create', 'check', 'play', 'replay', 'art', 'mcp']
 
 /** A command and what was typed after it. */
 export interface CommandInput {
@@ -37,6 +37,7 @@ const FLAGS: Readonly<Record<CommandName, Flags>> = {
   check: { switches: ['fix', 'json'], values: ['only'] },
   play: { switches: ['no-open'], values: ['port'] },
   replay: { switches: ['accept', 'state', 'json'], values: [] },
+  art: { switches: ['check', 'json'], values: [] },
   mcp: { switches: [], values: [] },
 }
 

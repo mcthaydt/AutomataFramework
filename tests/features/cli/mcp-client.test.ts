@@ -47,7 +47,7 @@ test('the official client connects, and is told our name, our version and our tw
   expect(client.getServerCapabilities()).toMatchObject({ tools: {}, resources: {} })
 })
 
-test('the official client lists the eleven tools, and reads a tool that needs no game', {
+test('the official client lists the twelve tools, and reads a tool that needs no game', {
   timeout: 60_000,
 }, async () => {
   const { tools } = await client.listTools()
@@ -55,6 +55,7 @@ test('the official client lists the eleven tools, and reads a tool that needs no
     'create',
     'check',
     'replay',
+    'art',
     'content_types',
     'schema',
     'skill',

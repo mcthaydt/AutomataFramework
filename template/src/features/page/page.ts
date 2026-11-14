@@ -2,7 +2,10 @@
 // everything; this file only shows it. Whatever goes wrong becomes a few lines of plain words in the page, never a blank
 // screen and never an error nobody reads.
 import {
+  ArtError,
+  createLocale,
   type Frames,
+  followLanguage,
   formatDiagnostic,
   type Game,
   type Host,
@@ -10,7 +13,9 @@ import {
   InputSettingsSchema,
   loadGame,
   openSettings,
+  type ReadPicture,
   startGame,
+  type Words,
   webHost,
 } from '@automataframework/framework'
 import { gamePlugins } from '../../headless.ts'
@@ -22,7 +27,11 @@ const ACTIONS: readonly string[] = Object.keys(CONTROLS)
 /** The id the game's settings are saved under: the game's name. `automata create` writes the real one here. */
 const GAME_ID = 'my-game'
 
-/** Every sentence the page says by itself. */
+/**
+ * The sentences the page says before it has any of the game's words: while the files are loading, and when they could not
+ * be read at all (`cannotStart` is also in the messages, as `page.cannot-start`, and said in the player's language once
+ * there is one). Everything else it says is in `content/messages/`, in six languages.
+ */
 export const WORDS = {
   loading: 'Loading the game…',
   problemTitle: 'This game has a problem and cannot start.',
@@ -33,6 +42,8 @@ export const WORDS = {
 export interface PageOptions {
   /** Reads one of the game's files by its path from the game's root. Default: fetches it from beside the page. */
   readonly read?: (path: string) => Promise<string>
+  /** Reads one of the game's pictures by its path from the game's root. Default: fetches it from beside the page. */
+  readonly readPicture?: ReadPicture
   /** Default `webHost()`. */
   readonly host?: Host
   /** Default: the page's animation frames. A test hands its own. */
@@ -61,6 +72,15 @@ function fetchBeside(base: string | URL): (path: string) => Promise<string> {
   }
 }
 
+/** A `readPicture` that fetches `path` from beside the page: a picture that is not there is "no such file". */
+function fetchPictureBeside(base: string | URL): ReadPicture {
+  return async (path) => {
+    const response = await fetch(new URL(path, base))
+    if (!response.ok) throw new Error(`${path}: no such file`)
+    return response.blob()
+  }
+}
+
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string): HTMLElementTagNameMap[K] {
   const made = document.createElement(tag)
   if (text !== undefined) made.textContent = text
@@ -75,11 +95,15 @@ function loading(): HTMLParagraphElement {
 
 /** Loads the game and starts it in `root`. Never rejects: anything that goes wrong is words in `root`. */
 export async function startPage(root: HTMLElement, options: PageOptions = {}): Promise<Page> {
-  const { read = fetchBeside(new URL('./', location.href)), host = webHost() } = options
+  const here = new URL('./', location.href)
+  const { read = fetchBeside(here), readPicture = fetchPictureBeside(here), host = webHost() } = options
   const coarse = options.coarse ?? window.matchMedia('(pointer: coarse)').matches
   let game: Game | undefined
   let stopped = false
   let forgetHint = (): void => {}
+  let forgetLanguage = (): void => {}
+  /** Says a sentence in the player's language; `undefined` until there are words to say it in. */
+  let say: Words | undefined
 
   const page: Page = {
     get game() {
@@ -89,6 +113,7 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       if (stopped) return
       stopped = true
       forgetHint()
+      forgetLanguage()
       game?.stop()
       game = undefined
       root.replaceChildren()
@@ -125,6 +150,11 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       initial: INPUT_SETTINGS_DEFAULT,
     })
 
+    // The words in the player's language: the one they picked, else the host's, else the device's, else English.
+    const locale = createLocale({ content: loaded.value, host, settings })
+    forgetLanguage = followLanguage(locale)
+    say = locale.words
+
     root.replaceChildren()
     const started = await startGame({
       content: loaded.value,
@@ -132,6 +162,8 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       mount: root,
       controls: CONTROLS,
       host,
+      locale,
+      readPicture,
       settings: controls.get(),
       ...(options.frames === undefined ? {} : { frames: options.frames }),
     })
@@ -145,10 +177,12 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
 
     // A player at a keyboard is told which keys to press, until the first time they press one of them.
     if (!coarse) {
-      const hint = element(
-        'p',
-        hintFor((action) => started.input.inputsFor(1, action)[0]),
-      )
+      const hint = element('p')
+      const draw = (): void => {
+        hint.textContent = hintFor((action) => started.input.inputsFor(1, action)[0], locale.words)
+      }
+      draw()
+      const unfollow = locale.onChange(draw)
       hint.className = 'hint'
       root.append(hint)
       const gone = (event: KeyboardEvent): void => {
@@ -157,6 +191,7 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       }
       forgetHint = () => {
         window.removeEventListener('keydown', gone)
+        unfollow()
         hint.remove()
         forgetHint = () => {}
       }
@@ -166,6 +201,8 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
   } catch (error) {
     // `loadGame` reports a bad file as words; this is a read that failed some other way, or a browser that cannot play.
     const reason = error instanceof Error ? error.message : String(error)
-    return problem(WORDS.cannotStart, [reason])
+    // A picture that is missing or old says what to run itself; it is the game's files that need fixing, not the browser.
+    if (error instanceof ArtError) return problem(WORDS.problemTitle, [reason], WORDS.problemFix)
+    return problem(say?.('page.cannot-start') ?? WORDS.cannotStart, [reason])
   }
 }

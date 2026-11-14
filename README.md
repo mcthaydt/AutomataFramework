@@ -52,6 +52,7 @@ fetch an unrelated package of that name from npm.
 | `automata check` | Says whether the game is sound, step by step, and what to fix if it is not. |
 | `automata play` | Plays the game in your browser, and shows your changes as you make them. |
 | `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
+| `automata art` | Paints the game's pictures from its figure and backdrop files. |
 | `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
 ## Install
@@ -307,6 +308,9 @@ in Korean still loads and plays:
 - `unreadWords(content, marks)` lists the words no native speaker has read yet. The marks are in
   `automata.translations.toml` (`parseReadMarks`, `markRead`, `writeReadMarks`); a mark is of the exact words that
   were read, so changing a word makes it unread again.
+
+`automata check` runs both for you, in its `files` step: a missing word fails it with the sentence above, and the words
+nobody has read yet are a note with a count for each language, never a failure.
 
 Every translation the framework ships (the six languages' library, and the demo game's) waits for a native speaker's
 read before Release 1: machine-written words are a first draft, and the marks say which are still that.
@@ -589,7 +593,8 @@ do its work (a folder that is not a game, a tool that is not installed). Add `--
 
 | Step | What it looks at |
 |---|---|
-| `files` | every content file reads, is listed, and is written the standard way |
+| `files` | every content file reads, is listed, and is written the standard way; every language has every word English has (a missing one is named), and the words no native speaker has read yet are counted in a note |
+| `art` | every picture the figures and backdrops make is painted, and none is older than its file |
 | `rules` | the game's rules can be replayed: no clock, no dice of their own, no files |
 | `lint` | the code's style (Biome) |
 | `types` | the code's types (TypeScript) |
@@ -623,6 +628,19 @@ recording). The first two exit with 0, the others with 1.
 - `--json`: print the answer as JSON: a list with each recording's `file`, `verdict` and `message`, and its `ticks` and
   `finalHash` when it was played.
 
+### automata art
+
+`automata art [folder]` paints the game's pictures: for every figure and backdrop file, one picture and the atlas that
+says where each pose is in it, written beside that file (`content/figures/hero.json` makes `hero.png` and
+`hero.atlas.json`). It paints only what is missing or old and says each file it wrote. Commit the pictures with the
+file that made them. `automata create` and `automata play` paint first, so a new game has its pictures and a page never
+meets a missing one; `automata check` has an `art` step that fails for a picture that is missing or older than its file,
+and names the command to run.
+
+- `--check`: paint nothing: say which pictures are missing or old, and exit 1 if any is.
+- `--json`: print the answer as JSON: `ok`, the `painted` paths and the `problems` (each a `file`, a `path` and a
+  `message`). A game that does not load is not painted, and says so in `sentence`.
+
 ### automata mcp
 
 `automata mcp` lets an agent use these commands as tools, over the [Model Context Protocol](https://modelcontextprotocol.io).
@@ -647,6 +665,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 | `create` | `folder` | `automata create <folder> --json` |
 | `check` | `folder`, `only?`, `fix?` | `automata check <folder> --json` |
 | `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
+| `art` | `folder`, `check?` | `automata art <folder> --json` |
 | `content_types` | none | the table of content kinds above |
 | `schema` | `type` | reading `schemas/<type>.schema.json` |
 | `skill` | `name?` | reading `skills/<name>/SKILL.md` |
@@ -659,7 +678,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
 and `automata://skills/<name>`.
 
-The server never loads a game's rules itself. `create`, `check` and `replay` each run the command in a process of their
+The server never loads a game's rules itself. `create`, `check`, `replay` and `art` each run the command in a process of their
 own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
 keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
 goes to standard error, never into the messages.
