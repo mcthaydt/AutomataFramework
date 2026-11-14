@@ -10,6 +10,15 @@
 const ACTION_NAME: RegExp;
 ```
 
+### `applySettings` (function)
+
+```ts
+function applySettings(defaults: Controls, saved: unknown): {
+    readonly controls: Controls;
+    readonly dropped: readonly string[];
+};
+```
+
 ### `atan` (function)
 
 ```ts
@@ -20,6 +29,22 @@ function atan(x0: number): number;
 
 ```ts
 function atan2(y: number, x: number): number;
+```
+
+### `BindingOverride` (interface)
+
+```ts
+interface BindingOverride {
+    readonly keys?: readonly string[] | undefined;
+    readonly shared?: readonly [readonly string[], readonly string[]] | undefined;
+    readonly pad?: readonly PadInput[] | undefined;
+}
+```
+
+### `BindingSlot` (type)
+
+```ts
+type BindingSlot = 'keys' | 'shared-1' | 'shared-2' | 'pad';
 ```
 
 ### `Body` (const)
@@ -590,6 +615,27 @@ interface Input {
 }
 ```
 
+### `INPUT_SETTINGS_DEFAULT` (const)
+
+```ts
+const INPUT_SETTINGS_DEFAULT: InputSettings;
+```
+
+### `InputSettings` (interface)
+
+```ts
+interface InputSettings {
+    readonly format: 1;
+    readonly bindings: Readonly<Record<string, BindingOverride>>;
+}
+```
+
+### `InputSettingsSchema` (const)
+
+```ts
+const InputSettingsSchema: z.ZodType<InputSettings, InputSettings>;
+```
+
 ### `isHeld` (function)
 
 ```ts
@@ -873,6 +919,26 @@ const PROJECT_FILE = "automata.toml";
 const ProjectSchema: z.ZodType<Project, Project>;
 ```
 
+### `rebind` (function)
+
+```ts
+function rebind(current: Controls, action: string, slot: BindingSlot, input: string): Rebound;
+```
+
+### `Rebound` (type)
+
+```ts
+type Rebound = {
+    readonly ok: true;
+    readonly controls: Controls;
+    readonly swapped?: string;
+} | {
+    readonly ok: false;
+    readonly reason: 'unknown-action' | 'reserved' | 'no-shared' | 'other-half';
+    readonly message: string;
+};
+```
+
 ### `Recorder` (interface)
 
 ```ts
@@ -1016,6 +1082,12 @@ interface Scene {
     apply(delta: RenderDelta): void;
     views(alpha: number): View[];
 }
+```
+
+### `settingsOf` (function)
+
+```ts
+function settingsOf(defaults: Controls, current: Controls): InputSettings;
 ```
 
 ### `ShapeKind` (const)

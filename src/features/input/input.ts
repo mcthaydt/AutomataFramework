@@ -7,6 +7,17 @@ import { createKeyboard } from './keyboard.ts'
 import { createTouch } from './touch.ts'
 
 export {
+  applySettings,
+  type BindingOverride,
+  type BindingSlot,
+  INPUT_SETTINGS_DEFAULT,
+  type InputSettings,
+  InputSettingsSchema,
+  type Rebound,
+  rebind,
+  settingsOf,
+} from './bindings.ts'
+export {
   type Control,
   type ControlEntry,
   type Controls,
