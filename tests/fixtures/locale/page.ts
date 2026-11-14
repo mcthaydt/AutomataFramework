@@ -133,6 +133,8 @@ const say = (): void => {
 }
 
 const languageButtons = new Map<Language, HTMLButtonElement>()
+/** The last pick a button made, so a test waits for it to be kept rather than for a while. */
+let picking: Promise<unknown> = Promise.resolve()
 for (const language of LANGUAGES.filter((l) => locale.languages.includes(l))) {
   const button = document.createElement('button')
   button.type = 'button'
@@ -142,7 +144,7 @@ for (const language of LANGUAGES.filter((l) => locale.languages.includes(l))) {
   button.style.cssText =
     'min-width:96px;min-height:48px;padding:0 16px;font:inherit;color:inherit;background:#333;border:2px solid #888;border-radius:8px'
   button.addEventListener('click', () => {
-    void locale.set(language)
+    picking = locale.set(language)
   })
   languageButtons.set(language, button)
   row.append(button)
@@ -180,8 +182,8 @@ const page: LocalePage = {
     const button = languageButtons.get(language)
     if (button === undefined) throw new Error(`The page has no button for ${language}.`)
     button.click()
-    // `set` changes the words at once and then keeps the pick; the keeping is done a moment later.
-    await new Promise((resolve) => setTimeout(resolve, 50))
+    // `set` changes the words at once and then keeps the pick: wait for the keeping, not for a guess at how long.
+    await picking
   },
   async buttons() {
     return [...languageButtons].map(([language, button]) => {

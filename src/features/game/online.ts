@@ -301,7 +301,11 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
         ? soundNotice({
             mount,
             audio,
-            ...(typeof noticeOption === 'string' ? { words: noticeOption } : {}),
+            ...(typeof noticeOption === 'string'
+              ? { words: noticeOption }
+              : locale === undefined
+                ? {}
+                : { locale }),
           })
         : undefined
     sync()

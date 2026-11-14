@@ -5,6 +5,7 @@
 //    same bytes;
 //  - what is loaded never throws: a binding that no longer fits the game (renamed action, a key the game now uses
 //    elsewhere) is dropped and named, and the rest still apply.
+import type { Values } from '../../lib/message.ts'
 import { z } from '../../lib/zod.ts'
 import { PAD_BUTTONS, PAD_STICKS, type PadInput, RESERVED_KEYS, RESERVED_PAD } from '../commands/commands.ts'
 import { type Control, type Controls, checkControls } from './controls.ts'
@@ -186,7 +187,12 @@ export function settingsOf(defaults: Controls, current: Controls): InputSettings
   return { format: 1, bindings }
 }
 
-/** The answer to a change: the new controls, or why not, in words for the person. */
+/**
+ * The answer to a change: the new controls, or why not. A refusal is also a `Message` (`key`, `values`), so a screen
+ * says it in the player's language with `locale.say(answer)`; `message` is the sentence in the words the input was
+ * given (`InputOptions.words`), in English when it has none. The English here is the framework library's, word for
+ * word (a test holds them together): `input` sits below `locale` and cannot read the library itself.
+ */
 export type Rebound =
   | {
       readonly ok: true
@@ -198,41 +204,42 @@ export type Rebound =
       readonly ok: false
       readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half'
       readonly message: string
+      /** The sentence's key in the framework's library: `automata.rebind.*`. */
+      readonly key: string
+      readonly values?: Values
     }
+
+/** A refusal: its reason, its key in the library, its English, and what goes into it. */
+function refused(reason: Extract<Rebound, { ok: false }>['reason'], key: string, message: string, values?: Values): Rebound {
+  return { ok: false, reason, message, key: `automata.rebind.${key}`, ...(values === undefined ? {} : { values }) }
+}
 
 /** `input` (a key code, or a PadInput for the `pad` slot) becomes the action's only input in that slot. */
 export function rebind(current: Controls, action: string, slot: BindingSlot, input: string): Rebound {
   const target = current[action]
   if (target === undefined)
-    return { ok: false, reason: 'unknown-action', message: `This game has no action called "${action}".` }
+    return refused('unknown-action', 'unknown-action', `This game has no action called "${action}".`, { action })
   if (slot === 'pad') {
     if (RESERVED_PAD_NAMES.has(input))
-      return {
-        ok: false,
-        reason: 'reserved',
-        message: `The ${input} button is kept for the game's menus. Pick another button.`,
-      }
+      return refused(
+        'reserved',
+        'reserved.button',
+        `The ${input} button is kept for the game's menus. Pick another button.`,
+        { input },
+      )
     if (
       !(PAD_BUTTONS as readonly string[]).includes(input) &&
       !(PAD_STICKS as readonly string[]).includes(input)
     )
-      return {
-        ok: false,
-        reason: 'unknown-input',
-        message: 'That is not a button on a gamepad. Pick another button.',
-      }
+      return refused('unknown-input', 'unknown-input', 'That is not a button on a gamepad. Pick another button.')
   } else if (RESERVED_KEYS.includes(input))
-    return {
-      ok: false,
-      reason: 'reserved',
-      message: `${input} is kept for the game's menus. Pick another key.`,
-    }
+    return refused('reserved', 'reserved.key', `${input} is kept for the game's menus. Pick another key.`, { input })
   if (slot === 'shared-1' || slot === 'shared-2') {
     if (!Object.values(current).some((control) => control.shared !== undefined))
-      return { ok: false, reason: 'no-shared', message: "This game's keys cannot be shared." }
+      return refused('no-shared', 'no-shared', "This game's keys cannot be shared.")
     const otherSlot: BindingSlot = slot === 'shared-1' ? 'shared-2' : 'shared-1'
     if (Object.values(current).some((control) => slotOf(control, otherSlot)?.includes(input)))
-      return { ok: false, reason: 'other-half', message: "That key is the other person's. Pick another key." }
+      return refused('other-half', 'other-half', "That key is the other person's. Pick another key.")
   }
 
   const gave = slotOf(target, slot) ?? []
