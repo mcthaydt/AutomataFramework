@@ -1,6 +1,6 @@
 // What a game or an editor can rely on finding in the package. Imports the source entries; the packed package is
 // checked by tests/install/smoke.mjs in CI.
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
 import { CONTENT_TYPES, type ContentType, jsonSchemaFor } from '#src/headless.ts'
 
@@ -33,6 +33,20 @@ test('headless exports what a game sim and an editor need', async () => {
     'loadGame',
     'formatDiagnostic',
     'jsonSchemaFor',
+    'LANGUAGES',
+    'tuningNumbers',
+    'LevelSchema',
+    'CharacterSchema',
+    'TilesetSchema',
+    'BehaviourSchema',
+    'TuningSchema',
+    'FeelSchema',
+    'SoundSchema',
+    'MusicSchema',
+    'CuesSchema',
+    'ConversationSchema',
+    'CutsceneSchema',
+    'MessagesSchema',
     'PROJECT_FILE',
     'spawnLevel',
     'createGameSim',
@@ -51,4 +65,13 @@ test('the committed JSON Schemas are what the code produces', () => {
     )
     expect(committed, type).toEqual(jsonSchemaFor(type))
   }
+})
+
+test('there is a committed JSON Schema for every kind, and no stray one', () => {
+  const committed = readdirSync(new URL('../schemas/', import.meta.url)).sort()
+  expect(committed).toEqual(
+    Object.keys(CONTENT_TYPES)
+      .map((type) => `${type}.schema.json`)
+      .sort(),
+  )
 })

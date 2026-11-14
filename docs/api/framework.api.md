@@ -338,6 +338,44 @@ const ControlsCommand: CommandDef<typeof controlsPayload>;
 function controlsCommand(tick: number, player: number, seq: number, held: readonly string[]): Command;
 ```
 
+### `ConversationChoice` (interface)
+
+```ts
+interface ConversationChoice {
+    readonly line: string;
+    readonly next: string;
+}
+```
+
+### `ConversationFile` (interface)
+
+```ts
+interface ConversationFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly start: string;
+    readonly nodes: readonly ConversationNode[];
+}
+```
+
+### `ConversationNode` (interface)
+
+```ts
+interface ConversationNode {
+    readonly id: string;
+    readonly speaker?: string | undefined;
+    readonly lines: readonly string[];
+    readonly choices?: readonly Choice[] | undefined;
+    readonly next?: string | undefined;
+}
+```
+
+### `ConversationSchema` (const)
+
+```ts
+const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
+```
+
 ### `cos` (function)
 
 ```ts
@@ -2209,6 +2247,44 @@ const ControlsCommand: CommandDef<typeof controlsPayload>;
 
 ```ts
 function controlsCommand(tick: number, player: number, seq: number, held: readonly string[]): Command;
+```
+
+### `ConversationChoice` (interface)
+
+```ts
+interface ConversationChoice {
+    readonly line: string;
+    readonly next: string;
+}
+```
+
+### `ConversationFile` (interface)
+
+```ts
+interface ConversationFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly start: string;
+    readonly nodes: readonly ConversationNode[];
+}
+```
+
+### `ConversationNode` (interface)
+
+```ts
+interface ConversationNode {
+    readonly id: string;
+    readonly speaker?: string | undefined;
+    readonly lines: readonly string[];
+    readonly choices?: readonly Choice[] | undefined;
+    readonly next?: string | undefined;
+}
+```
+
+### `ConversationSchema` (const)
+
+```ts
+const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
 ```
 
 ### `cos` (function)

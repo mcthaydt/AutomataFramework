@@ -11,6 +11,12 @@ export {
 export { type Character, type CharacterInput, CharacterSchema } from './character.ts'
 export { CONTENT_TYPES, type ContentType, type ContentValue } from './content-types.ts'
 export {
+  type Choice as ConversationChoice,
+  type ConversationFile,
+  type ConversationNode,
+  ConversationSchema,
+} from './conversation.ts'
+export {
   type Cue,
   type CuesFile,
   CuesSchema,
