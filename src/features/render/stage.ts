@@ -350,7 +350,8 @@ export async function createStage(
     },
     setView(next) {
       if (destroyed) return
-      const usable = next !== undefined && next.scale > 0 && Number.isFinite(next.left + next.top + next.scale)
+      const usable =
+        next !== undefined && next.scale > 0 && Number.isFinite(next.left + next.top + next.scale)
       view = usable ? next : undefined
       if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
     },
