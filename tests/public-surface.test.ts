@@ -141,7 +141,8 @@ test('the browser entry adds the web host, and headless does not have it', async
   expect(entry).toContain("export * from './headless.ts'")
   // The page's `<html lang>` follows the locale: it needs a page, so it is the browser entry's only.
   expect(api).not.toHaveProperty('followLanguage')
-  expect(readFileSync(new URL('../src/features/web/web.ts', import.meta.url), 'utf8')).toContain('followLanguage')
+  const web = readFileSync(new URL('../src/features/web/web.ts', import.meta.url), 'utf8')
+  expect(web).toContain('followLanguage')
 })
 
 test('the committed JSON Schemas are what the code produces', () => {

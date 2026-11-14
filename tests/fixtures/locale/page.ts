@@ -6,7 +6,7 @@
 // the level's name and what the game answers to a second player who cannot join. It has one real button for each
 // language the game has. Every method runs in this frame: its own memory, with nothing in common with the next page
 // but what the browser stored.
-import { type Language, LANGUAGES, loadGame } from '#src/features/content/content.ts'
+import { LANGUAGES, type Language, loadGame } from '#src/features/content/content.ts'
 import { startGame } from '#src/features/game/game.ts'
 import { createLocale, LANGUAGE_NAMES, levelName } from '#src/features/locale/locale.ts'
 import { openSettings } from '#src/features/saves/saves.ts'
@@ -93,7 +93,8 @@ document.body.style.cssText = 'margin:0;font:18px/1.3 system-ui,sans-serif;backg
 const mount = document.createElement('div')
 mount.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden'
 const words = document.createElement('div')
-words.style.cssText = 'position:fixed;left:0;top:0;width:100%;z-index:2;padding:8px 16px;box-sizing:border-box'
+words.style.cssText =
+  'position:fixed;left:0;top:0;width:100%;z-index:2;padding:8px 16px;box-sizing:border-box'
 const row = document.createElement('div')
 row.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px'
 const lines = (['greeting', 'level', 'refused'] as const).map((id) => {
@@ -167,7 +168,9 @@ const page: LocalePage = {
       },
       tick: game.sim.tick,
       canvas: mount.querySelector('canvas') !== null,
-      pressed: [...languageButtons].filter(([, b]) => b.getAttribute('aria-pressed') === 'true').map(([l]) => l),
+      pressed: [...languageButtons]
+        .filter(([, b]) => b.getAttribute('aria-pressed') === 'true')
+        .map(([l]) => l),
     }
   },
   async tap(language) {

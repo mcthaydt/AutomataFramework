@@ -99,7 +99,11 @@ test('an agent adds a word in English and is told, file by file, where else to w
 
   // 2. It writes the five, and the check has nothing left to say.
   for (const language of ['es', 'ko', 'ja', 'zh', 'pt'])
-    files[`content/messages/${language}.json`] = withLine(language, 'keeper.joke', `(${language}) keeper.joke`)
+    files[`content/messages/${language}.json`] = withLine(
+      language,
+      'keeper.joke',
+      `(${language}) keeper.joke`,
+    )
   const written = await loadGame(readFullGame(files))
   expect(written.ok).toBe(true)
   if (!written.ok) return
