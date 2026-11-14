@@ -6,13 +6,19 @@ import { expect, test } from 'vitest'
 // `prepare` script. Without the script the install succeeds and both entry points point at files that are not there.
 const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
   scripts: Record<string, string>
+  bin: Record<string, string>
   files: string[]
   exports: Record<string, { types?: string; import?: string } | string>
   dependencies: Record<string, string>
 }
 
-test('a git install builds the package: prepare runs the build', () => {
-  expect(manifest.scripts.prepare).toBe('pnpm build')
+// `node --run`, not `pnpm`: a game installs this package from git with npm, on a machine that may have no pnpm.
+test('a git install builds the package: prepare runs the build with Node alone', () => {
+  expect(manifest.scripts.prepare).toBe('node --run build')
+})
+
+test('the build writes the declarations so they load under NodeNext and an older TypeScript', () => {
+  expect(manifest.scripts.build).toMatch(/&& node scripts\/fix-dts\.ts$/)
 })
 
 test('what the build writes is what the package ships and points at', () => {
@@ -43,4 +49,16 @@ test('the networking packages are dependencies at the exact versions', () => {
 // The package exports that copy by name so a game can read it and ship it beside its own files.
 test("Rapier's licence is exported by name, from the files the package ships", () => {
   expect(manifest.exports['./rapier.LICENSE']).toBe('./dist/rapier.LICENSE')
+})
+
+// The `automata` command is a fourth entry of the same package: one bin, built from `src/cli.ts`, and the template and
+// the skills it writes and serves ship beside it.
+test('the package has one bin, automata, built from src/cli.ts', () => {
+  expect(manifest.bin).toEqual({ automata: './dist/cli.js' })
+  const build = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8')
+  expect(build).toContain("cli: 'src/cli.ts'")
+})
+
+test('the package ships the template and the skills', () => {
+  expect(manifest.files).toEqual(expect.arrayContaining(['template', 'skills', 'docs/api/framework.api.md']))
 })

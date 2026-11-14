@@ -125,11 +125,10 @@ test('the committed JSON Schemas are what the code produces', () => {
   }
 })
 
-test('there is a committed JSON Schema for every kind, and no stray one', () => {
+// The replay file has a schema of its own, beside the content kinds'; `scripts/write-schemas.ts --check` holds it.
+test('there is a committed JSON Schema for every kind and for the replay file, and no stray one', () => {
   const committed = readdirSync(new URL('../schemas/', import.meta.url)).sort()
   expect(committed).toEqual(
-    Object.keys(CONTENT_TYPES)
-      .map((type) => `${type}.schema.json`)
-      .sort(),
+    [...Object.keys(CONTENT_TYPES), 'replay'].map((type) => `${type}.schema.json`).sort(),
   )
 })

@@ -1,0 +1,25 @@
+# This file says what your game is made of. Everything else in the game is found from it.
+format = 1
+# The game's name, as a person reads it.
+name = "My Game"
+# The level a player starts on.
+start = "level-1"
+# The character the player controls.
+hero = "hero"
+
+# Each [[content]] block lists one file of the game. A file that is not listed here is not part of the game.
+
+# A level: where the walls are, and where things start.
+[[content]]
+type = "level"
+path = "content/levels/level-1.json"
+
+# The hero: the character the player controls.
+[[content]]
+type = "character"
+path = "content/characters/hero.json"
+
+# The crate: something for the hero to push.
+[[content]]
+type = "character"
+path = "content/characters/crate.json"

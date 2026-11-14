@@ -1,0 +1,152 @@
+// The `automata` command's entry: the words are read (`args.ts`), the command's row in the table runs as an Effect over
+// the ports (`ports.ts`), and the answer is the exit status: 0 everything is fine, 1 the game has something to fix, 2 the
+// command could not do its work. Nothing here prints a stack trace: a person gets a sentence.
+import { Cause, Effect, type Layer } from 'effect'
+import { FRAMEWORK_VERSION } from '../sim/sim.ts'
+import { type CommandInput, type CommandName, parseArgs } from './args.ts'
+import { runCheck } from './check.ts'
+import { createGame, nameOf } from './create.ts'
+import { helpFor } from './help.ts'
+import { liveLayer } from './live.ts'
+import { runPlay } from './play.ts'
+import { CliError, Out, type OutService, type Ports } from './ports.ts'
+import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
+import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
+
+type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
+
+/** A command whose task has not landed yet says so. */
+const notBuilt =
+  (name: CommandName): Command =>
+  () =>
+    Effect.fail(new CliError(`automata ${name} is not built yet.`))
+
+/** `automata check`: the steps' report, as words or as JSON, and the exit status the report gives. */
+const check: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const { only, fix, json } = input.flags
+    const step = STEP_NAMES.find((name) => name === only)
+    if (only !== undefined && step === undefined)
+      return yield* Effect.fail(
+        new CliError(`There is no step called "${String(only)}". The steps are: ${STEP_NAMES.join(', ')}.`),
+      )
+    const report = yield* runCheck({
+      folder: input.folder ?? '.',
+      ...(step === undefined ? {} : { only: step }),
+      fix: fix === true,
+    })
+    yield* out.line(json === true ? JSON.stringify(report, null, 2) : formatReport(report))
+    return exitCodeOf(report)
+  })
+
+/** `automata replay`: each recording played to its hash (or recorded again), as words or as JSON. */
+const replay: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const { folder, file } = replayTarget(input.folder ?? '.')
+    const results = yield* runReplays({
+      folder,
+      ...(file === undefined ? {} : { file }),
+      accept: input.flags.accept === true,
+      state: input.flags.state === true,
+    })
+    if (input.flags.json === true) yield* out.line(JSON.stringify(results, null, 2))
+    else if (results.length === 0) yield* out.line(NO_RECORDINGS)
+    else for (const result of results) yield* out.line(describeResult(result))
+    return replayExitCode(results)
+  })
+
+/** `automata create <name>`: a new game, and what to type next. */
+const create: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    if (input.folder === undefined)
+      return yield* Effect.fail(new CliError('Give the new game a name: automata create my-game'))
+    const { framework } = input.flags
+    const made = yield* createGame({
+      folder: input.folder,
+      ...(typeof framework === 'string' ? { framework } : {}),
+    })
+    if (input.flags.json === true) {
+      yield* out.line(JSON.stringify(made, null, 2))
+      return 0
+    }
+    for (const line of [
+      `Made ${nameOf(input.folder)}.`,
+      '',
+      'Next:',
+      `  cd ${made.folder}`,
+      '  npm install',
+      '  npm run dev',
+      '',
+      'npm run check says whether the game is sound. AGENTS.md tells an agent where everything is.',
+    ])
+      yield* out.line(line)
+    return 0
+  })
+
+/** `automata play`: the game in a browser, until Ctrl+C. */
+const play: Command = (input) =>
+  Effect.gen(function* () {
+    const { port } = input.flags
+    const number = typeof port === 'string' ? Number(port) : undefined
+    if (number !== undefined && !(Number.isInteger(number) && number > 0 && number < 65536))
+      return yield* Effect.fail(new CliError('--port needs a number, like --port 4000.'))
+    return yield* runPlay({
+      folder: input.folder ?? '.',
+      open: input.flags['no-open'] !== true,
+      ...(number === undefined ? {} : { port: number }),
+    })
+  })
+
+/** One row per command, so a new command (M4's `ship` and `build`) is one row and one help text. */
+const COMMANDS: Readonly<Record<CommandName, Command>> = {
+  create,
+  check,
+  play,
+  replay,
+  mcp: notBuilt('mcp'),
+}
+
+const run = (args: readonly string[]): Effect.Effect<number, CliError, Ports> =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const parsed = parseArgs(args)
+    if ('problem' in parsed) {
+      yield* out.error(parsed.problem)
+      return 2
+    }
+    if ('help' in parsed) {
+      yield* out.line(helpFor(parsed.help))
+      return 0
+    }
+    if ('version' in parsed) {
+      yield* out.line(FRAMEWORK_VERSION)
+      return 0
+    }
+    return yield* COMMANDS[parsed.command](parsed)
+  })
+
+/** Says a sentence on stderr and gives the exit status for a command that could not do its work. */
+const refuse = (sentence: string): Effect.Effect<number, never, OutService> =>
+  Effect.flatMap(Out, (out) => Effect.as(out.error(sentence), 2))
+
+/** What a person reads when something nobody planned for went wrong: a sentence, then the error's own words. */
+const unplanned = (cause: Cause.Cause<unknown>): string => {
+  const reason = Cause.squash(cause)
+  return `Something went wrong inside automata. Please report this:\n${reason instanceof Error ? reason.message : String(reason)}`
+}
+
+/**
+ * Runs `automata <args>` and gives the exit status. `layer` is what the command reaches the world through: the live one
+ * by default, a memory one in a test. An error the command planned for is printed as its sentence and is exit 2.
+ */
+export async function main(args: readonly string[], layer: Layer.Layer<Ports> = liveLayer): Promise<number> {
+  const program = run(args).pipe(
+    Effect.catchAll((error) => refuse(error.message)),
+    Effect.catchAllCause((cause) => refuse(unplanned(cause))),
+    Effect.provide(layer),
+  )
+  return Effect.runPromise(program)
+}
