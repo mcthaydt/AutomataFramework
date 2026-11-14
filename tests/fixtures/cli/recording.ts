@@ -42,7 +42,7 @@ export const failingHero: PluginDef = variant('same', (tick) => {
   if (tick === 20) throw new Error('boom')
 })
 
-/** Runs as `failingHero` does (it never jumps), and prints a line on its first tick, as a rule being debugged might. */
+/** Runs as `failingHero` does, never failing, and prints a line on its first tick, as a rule being debugged might. */
 export const noisyHero: PluginDef = variant('same', (tick) => {
   if (tick === 1) console.log('the rules said hello')
 })

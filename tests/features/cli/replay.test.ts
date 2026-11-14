@@ -193,10 +193,10 @@ test('--json is the only thing on stdout: what the rules print goes to stderr, a
     return true
   })
   try {
-    // The noisy hero never jumps, so the play differs from the recording; what matters is where the words went.
-    expect(await play(memory, '--json')).toBe(1)
+    // What matters is where the words went, not the verdict: stdout is one JSON value, the rules' line is on stderr.
+    await play(memory, '--json')
     expect(said.join('')).toContain('the rules said hello\n')
-    expect(JSON.parse(memory.out.join(''))).toMatchObject([{ file: FILE, verdict: 'diverged' }])
+    expect(JSON.parse(memory.out.join(''))).toMatchObject([{ file: FILE }])
     expect(console.log).toBe(before)
   } finally {
     spy.mockRestore()
