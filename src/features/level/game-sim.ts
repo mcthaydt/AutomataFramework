@@ -26,9 +26,10 @@ export interface GameSimOptions {
 
 /**
  * The sim a game runs: physics, commands, the level plugin and the game's own plugins, with the level spawned, at
- * tick 0. The content goes into the sim, but not its sound, music and cue files (`simContent`), so it is part of
- * `contentHash` and a replay knows if it changed, except for what a game sounds like. If the level cannot be
- * spawned, the sim is disposed and the `LevelError` is thrown.
+ * tick 0. The content goes into the sim, so it is part of `contentHash` and a replay knows if it changed, but not the
+ * game's words or its sound, music and cue files (see `simContent`), so a replay does not notice what a game says or
+ * sounds like. The level is spawned from the whole content. If the level cannot be spawned, the sim is disposed and the
+ * `LevelError` is thrown.
  */
 export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const { content } = options

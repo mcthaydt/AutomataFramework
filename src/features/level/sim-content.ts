@@ -1,23 +1,38 @@
-import type { GameContent } from '../content/content.ts'
-
-/** The kinds of file that say what a game sounds like, never what happens: the project lists them by these names. */
-const AUDIO_KINDS: ReadonlySet<string> = new Set(['sound', 'music', 'cues'])
+import { deepFreeze } from '../../lib/deep-freeze.ts'
+import type { ContentType, GameContent } from '../content/content.ts'
 
 /**
- * The content the sim is given and hashes: everything but what a game sounds like. That is the `sounds`, `music` and
- * `cues` maps and also the project file's own list of those files, because the list is hashed with the rest: changing
- * a sound, or listing one more, must not move a hash (the spec's "sound never moves a hash"). A game that lists none
- * of them gets its own content back, so it hashes exactly as it did before audio.
+ * The kinds of file the sim is not given: the words a player reads (`messages`) and what a game sounds like (`sound`,
+ * `music`, `cues`). None of them says what happens, so a word or a sound changed in a file must not move a hash, stop a
+ * replay or keep two players out of one room. A plan that takes another kind out of the sim adds it here and to the
+ * `GameContent` maps it takes out below: a kind's maps and its files' entries in the project's list always leave
+ * together.
+ */
+const LEFT_OUT: ReadonlySet<ContentType> = new Set<ContentType>(['messages', 'sound', 'music', 'cues'])
+
+/**
+ * The content the sim is given, and so hashes: everything but the words and the sounds. Both their maps and their
+ * files' entries in `project.content` leave, because that list names every file by path and is hashed: keeping it
+ * would move every hash when a language or a sound is added or dropped (the spec's "sound never moves a hash"). The
+ * very same object comes back when the game lists none of these kinds, so a game that has neither hashes as it always
+ * did. The game itself keeps all its content; only the sim goes without.
  */
 export function simContent(content: GameContent): GameContent {
-  const listed = content.project.content.filter((ref) => !AUDIO_KINDS.has(ref.type))
+  const listed = content.project.content.some((entry) => LEFT_OUT.has(entry.type))
   if (
+    !listed &&
+    content.messages === undefined &&
     content.sounds === undefined &&
     content.music === undefined &&
-    content.cues === undefined &&
-    listed.length === content.project.content.length
+    content.cues === undefined
   )
     return content
-  const { sounds: _sounds, music: _music, cues: _cues, ...rest } = content
-  return { ...rest, project: { ...rest.project, content: listed } }
+  const { messages: _words, sounds: _sounds, music: _music, cues: _cues, ...kept } = content
+  return deepFreeze({
+    ...kept,
+    project: {
+      ...content.project,
+      content: content.project.content.filter((entry) => !LEFT_OUT.has(entry.type)),
+    },
+  })
 }
