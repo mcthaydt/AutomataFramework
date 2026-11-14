@@ -7,6 +7,7 @@ import type { Dirent } from 'node:fs'
 import { access, mkdir, readdir, readFile, realpath, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { Worker } from 'node:worker_threads'
 import { Effect, Layer } from 'effect'
 import type * as Headless from '../../headless.ts'
 import type { Diagnostic } from '../content/content.ts'
@@ -21,6 +22,10 @@ import {
   Out,
   type OutService,
   type Ports,
+  Runner,
+  type RunnerService,
+  type SessionReply,
+  type SessionWorker,
   type ToolName,
   type ToolResult,
   Tools,
@@ -204,7 +209,14 @@ async function loadRules(folder: string): Promise<GameCode['rules']> {
   const plugins = loaded.gamePlugins
   if (!Array.isArray(plugins))
     return problemIn("This file must export gamePlugins, the list of the game's plugins.")
-  return { plugins: plugins as readonly PluginDef[] }
+  const actions = loaded.actions
+  return {
+    plugins: plugins as readonly PluginDef[],
+    // The list of what a player can hold, when the game keeps one: a play session refuses a name that is not on it.
+    ...(Array.isArray(actions) && actions.every((name) => typeof name === 'string')
+      ? { actions: actions as readonly string[] }
+      : {}),
+  }
 }
 
 /**
@@ -251,10 +263,50 @@ const outLive: OutService = {
   error: (text) => Effect.sync(() => void process.stderr.write(`${text}\n`)),
 }
 
+// --- Play sessions ---
+
+/** The Worker's file: the built one beside this code, or the source one when the code itself runs from source. */
+const sessionWorkerFile = (): URL =>
+  new URL(import.meta.url.endsWith('.ts') ? './session-worker.ts' : './session-worker.js', import.meta.url)
+
+/** A session's Worker, spoken to by numbered messages. A Worker that stops answers every message waiting with a sentence. */
+function startWorker(folder: string): SessionWorker {
+  const worker = new Worker(sessionWorkerFile(), { workerData: { folder } })
+  const waiting = new Map<number, (reply: SessionReply) => void>()
+  let next = 0
+  let over: string | undefined
+  const settle = (sentence: string): void => {
+    over = sentence
+    for (const done of waiting.values()) done({ ok: false, sentence, ended: true })
+    waiting.clear()
+  }
+  worker.on('message', (answer: { id: number; reply: SessionReply }) => {
+    waiting.get(answer.id)?.(answer.reply)
+    waiting.delete(answer.id)
+  })
+  worker.on('error', (error) => settle(`The game stopped: ${firstLine(error)}`))
+  worker.on('exit', () => settle('The session has ended.'))
+  return {
+    call: (message) =>
+      new Promise((resolve) => {
+        if (over !== undefined) return resolve({ ok: false, sentence: over, ended: true })
+        const id = next++
+        waiting.set(id, resolve)
+        worker.postMessage({ id, message })
+      }),
+    end: async () => {
+      await worker.terminate()
+    },
+  }
+}
+
+const runnerLive: RunnerService = { worker: (folder) => Effect.sync(() => startWorker(folder)) }
+
 /** What a command run from a terminal reaches the world through. */
 export const liveLayer: Layer.Layer<Ports> = Layer.mergeAll(
   Layer.succeed(Files, filesLive),
   Layer.succeed(Tools, toolsLive),
   Layer.succeed(Code, codeLive),
   Layer.succeed(Out, outLive),
+  Layer.succeed(Runner, runnerLive),
 )

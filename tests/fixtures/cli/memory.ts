@@ -8,17 +8,23 @@ import {
   type GameCode,
   Out,
   type Ports,
+  Runner,
   type ToolName,
   type ToolResult,
   Tools,
 } from '#src/features/cli/ports.ts'
+import { readGame } from '#src/features/cli/game-folder.ts'
+import { sessionHost } from '#src/features/cli/session.ts'
 import * as framework from '#src/headless.ts'
 
 export interface MemoryOptions {
   /** What each tool answers; a tool not named exits 0 with no output. `'missing'` is a tool the game has not installed. */
   readonly tools?: Partial<Record<ToolName, ToolResult | 'missing'>>
-  /** The game's code, or the error loading it gives. Default: the framework with no plugins. */
-  readonly code?: GameCode | CliError
+  /**
+   * The game's code, or the error loading it gives. Default: the framework with no plugins. A function is asked each time
+   * the game is loaded, so a test can change the rules between two sessions the way an agent edits a file.
+   */
+  readonly code?: GameCode | CliError | (() => GameCode | CliError)
 }
 
 export interface ToolCall {
@@ -62,7 +68,7 @@ export function memoryLayer(
   const err: string[] = []
   const ran: ToolCall[] = []
   const answer = (tool: ToolName): ToolResult | 'missing' => options.tools?.[tool] ?? { code: 0, output: '' }
-  const layer = Layer.mergeAll(
+  const base = Layer.mergeAll(
     Layer.succeed(Files, {
       readText: (path) => Effect.sync(() => asText(files.get(keyOf(path)))),
       readBytes: (path) => Effect.sync(() => asBytes(files.get(keyOf(path)))),
@@ -92,13 +98,25 @@ export function memoryLayer(
     }),
     Layer.succeed(Code, {
       load: () => {
-        const code = options.code ?? { framework, rules: { plugins: [] } }
+        const given = options.code ?? { framework, rules: { plugins: [] } }
+        const code = typeof given === 'function' ? given() : given
         return code instanceof CliError ? Effect.fail(code) : Effect.succeed(code)
       },
     }),
     Layer.succeed(Out, {
       line: (text) => Effect.sync(() => void out.push(text)),
       error: (text) => Effect.sync(() => void err.push(text)),
+    }),
+  )
+  // A play session's "Worker" is the same session code in this process, loading the game afresh each time one starts.
+  const layer = Layer.merge(
+    base,
+    Layer.succeed(Runner, {
+      worker: (folder) =>
+        Effect.sync(() => {
+          const host = sessionHost(() => Effect.runPromise(Effect.provide(readGame(folder), base)))
+          return { call: async (message) => host.call(message), end: async () => host.end() }
+        }),
     }),
   )
   return { layer, files, out, err, ran }

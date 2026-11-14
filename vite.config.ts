@@ -1,5 +1,5 @@
-// The library build: four ES module entries (the browser one, the headless one, the Node server one and the `automata`
-// command), every dependency left for the game's own bundler. Declarations come from `tsc -p tsconfig.build.json`, not from here.
+// The library build: five ES module entries (the browser one, the headless one, the Node server one, the `automata`
+// command and the Worker a play session runs in), every dependency left for the game's own bundler. Declarations come from `tsc -p tsconfig.build.json`, not from here.
 import { defineConfig, type UserConfig } from 'vite'
 import manifest from './package.json' with { type: 'json' }
 import { rapierWasm } from './vite-rapier-wasm.ts'
@@ -22,6 +22,8 @@ const config: UserConfig = defineConfig({
         headless: 'src/headless.ts',
         server: 'src/server.ts',
         cli: 'src/cli.ts',
+        // A play session's Worker: a file of its own, so the thread that starts it can name it.
+        'session-worker': 'src/features/cli/session-worker.ts',
       },
       formats: ['es'],
       fileName: (_format, name) => `${name}.js`,

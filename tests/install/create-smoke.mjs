@@ -17,6 +17,7 @@ import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { Worker } from 'node:worker_threads'
 import { GAME_FOLDER, PACKAGE_NAME, START_HERE } from './create-commands.ts'
 
 const WINDOWS = process.platform === 'win32'
@@ -149,6 +150,56 @@ if (rules === undefined || !JSON.stringify(rules.problems).includes('Math.random
   fail('a broken rule: the rules step does not name Math.random.', JSON.stringify(broken, null, 2))
 writeFileSync(movePath, move)
 step('a clock or dice in the rules is named')
+
+// 7. An agent plays: a session's Worker, the built file the package ships, spoken to as the MCP server will speak to it.
+// The rules are changed in `move.ts` between two sessions, and the second one plays the new rules.
+const workerFile = pathToFileURL(
+  join(game, 'node_modules', '@automataframework', 'framework', 'dist', 'session-worker.js'),
+)
+function openSession() {
+  const worker = new Worker(workerFile, { workerData: { folder: game } })
+  const waiting = new Map()
+  let next = 0
+  worker.on('message', ({ id, reply }) => {
+    waiting.get(id)?.(reply)
+    waiting.delete(id)
+  })
+  worker.on('error', (error) => fail(`a play session's Worker stopped: ${error.message}`))
+  const ask = (message) =>
+    new Promise((resolve) => {
+      waiting.set(next, resolve)
+      worker.postMessage({ id: next++, message })
+    })
+  return { ask, end: () => worker.terminate() }
+}
+const heroX = (state) => state.things.find((thing) => thing.character === 'hero').x
+async function playRight(ticks) {
+  const session = openSession()
+  const started = await session.ask({ kind: 'start' })
+  if (!started.ok) fail(`a play session did not start: ${started.sentence}`)
+  const stepped = await session.ask({ kind: 'step', ticks, hold: { 1: ['right'] } })
+  if (!stepped.ok) fail(`a play session did not step: ${stepped.sentence}`)
+  const recorded = await session.ask({ kind: 'recording' })
+  await session.end()
+  return { x: heroX(stepped.state), tick: stepped.state.tick, recording: recorded.recording }
+}
+const ran = await playRight(60)
+if (ran.tick !== 60 || !(ran.x > 3)) fail(`a play session: the hero is at ${ran.x} after ${ran.tick} ticks.`)
+writeFileSync(join(game, 'replays', 'agent-run.json'), ran.recording)
+const replayed = must('replay of the agent run', 'npx', ['--no', 'automata', 'replay', '--json'], game)
+const verdicts = JSON.parse(replayed).map((result) => `${result.file}: ${result.verdict}`)
+if (!verdicts.includes('replays/agent-run.json: ok') || !verdicts.includes('replays/level-1.json: ok'))
+  fail(`replay: the recordings are ${verdicts.join(', ')}.`, replayed)
+writeFileSync(movePath, move.replace('const RUN = 6', 'const RUN = 3'))
+const slower = await playRight(60)
+if (!(slower.x < ran.x))
+  fail(`a session after the rules changed still plays the old ones: x ${slower.x}, was ${ran.x}.`)
+const diverged = run('npx', ['--no', 'automata', 'replay', 'replays/agent-run.json', '--json'], game)
+if (!diverged.output.includes('diverged'))
+  fail('replay: the agent run does not say diverged after the rules changed.', diverged.output)
+writeFileSync(movePath, move)
+rmSync(join(game, 'replays', 'agent-run.json'))
+step('an agent plays a session, saves it, and sees the rules change')
 
 // 8. The game is as it was after step 4, so it passes again.
 said('after the repairs', checkOf('after the repairs'), 'Everything passed.')
