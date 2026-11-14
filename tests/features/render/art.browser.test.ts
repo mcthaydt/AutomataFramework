@@ -280,3 +280,75 @@ test('the full game paints a picture for each of its figures', async () => {
   const pictures = await fullGamePictures()
   expect(Object.keys(pictures)).toContain('content/figures/hero.png')
 })
+
+/** The whole level, drawn on the full game's own backdrop (no camera): the sky above, the hills low down. */
+async function drawnWith(width: number, rows: RenderDelta['added'] = []): Promise<(x: number, y: number) => number[]> {
+  const game = await loaded()
+  art = await loadArt({ content: game, readPicture: readFullGamePicture })
+  mount.style.width = `${width}px`
+  renderer = await createRenderer({ mount, world: WORLD, art })
+  renderer.apply({ resync: true, added: rows, changed: [], removed: [] })
+  renderer.draw(1)
+  return snapshot(renderer.canvas)
+}
+
+test('the backdrop is behind the level: sky at the top, hills low down, a tree on them', async () => {
+  const at = await drawnWith(WORLD.w * TILE)
+  // Above the mountains is sky; the bottom row is the hills' green; and the first tree's trunk is ink.
+  expect(near(at(10, 10), SKY)).toBe(true)
+  expect(near(at(100, 287), 0xafd472)).toBe(true)
+  expect(near(at(193, 233), 0x111314)).toBe(true)
+})
+
+test('a layer repeats across a screen wider than the layer', async () => {
+  // The hills' strip is 32 tiles, 1024 pixels; the canvas is 1200 pixels, with the 512 pixel level in its middle.
+  const at = await drawnWith(1200)
+  expect(near(at(10, 287), 0xafd472)).toBe(true)
+  expect(near(at(1190, 287), 0xafd472)).toBe(true)
+})
+
+test('a hero who stands still is drawn the same while the camera eases', async () => {
+  // A level 40 wide with a view 16 by 9 on a mount that is not a whole number of pixels a tile. Hero 2 walks and the
+  // camera glides after the pair, but hero 1 does not move in the level, so every pixel of it must stay as it was: the
+  // level's offset is whole device pixels, so the picture is never cut at a new place.
+  const game = await loaded()
+  art = await loadArt({ content: game, readPicture: readFullGamePicture })
+  mount.style.width = '333px'
+  mount.style.height = '187px'
+  renderer = await createRenderer({ mount, world: { w: 40, h: 12 }, view: { w: 16, h: 9 }, art })
+  const hero = (sid: number, player: number, x: number): RenderDelta['added'][number] => ({
+    sid,
+    components: {
+      transform: { x, y: 6, rotation: 0 },
+      look: { w: 0.8, h: 1, color: BOX },
+      [Sprite.id]: { character: 'hero', player, pose: 'idle', face: 1 },
+    },
+  })
+  renderer.apply({ resync: true, added: [hero(1, 1, 10), hero(2, 2, 14)], changed: [], removed: [] })
+  const counts: number[] = []
+  const middles: number[] = []
+  for (let frame = 0; frame < 20; frame++) {
+    renderer.apply({
+      resync: false,
+      added: [],
+      changed: [hero(1, 1, 10), hero(2, 2, 14 + frame * 0.25)],
+      removed: [],
+    })
+    renderer.draw(1)
+    const box = renderer.heroes()[0]
+    if (box === undefined) throw new Error('hero 1 is not on the canvas')
+    middles.push(box.x)
+    const at = snapshot(renderer.canvas)
+    // The picture is 1.5 tiles square, standing on the bottom of the box.
+    const side = (box.w / 0.8) * 1.5
+    let ink = 0
+    for (let y = Math.floor(box.y + box.h - side); y < box.y + box.h; y++)
+      for (let x = Math.floor(box.x + box.w / 2 - side / 2); x < box.x + box.w / 2 + side / 2; x++)
+        if (near(at(x + 0.5, y + 0.5), 0x111314, 16)) ink++
+    counts.push(ink)
+  }
+  // The camera did move (hero 1 is not in the same place on the canvas), and the picture did not change.
+  expect(new Set(middles).size).toBeGreaterThan(1)
+  expect(counts[0]).toBeGreaterThan(0)
+  expect(new Set(counts).size).toBe(1)
+})
