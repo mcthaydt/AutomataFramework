@@ -346,7 +346,7 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
 
         await page.locator('.automata-flag[data-language="ko"]').click()
         await expect
-          .poll(() => page.locator('.automata-picker-go').textContent(), POLL)
+          .poll(() => page.locator('.automata-picker-title').textContent(), POLL)
           .toContain('한국어로 플레이')
         await go.click()
         await expect.poll(() => page.locator('.hint').textContent(), POLL).toContain('방향키')
