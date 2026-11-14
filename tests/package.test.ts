@@ -19,7 +19,7 @@ test('a git install builds the package: prepare runs the build with Node alone',
 })
 
 test('the build writes the declarations so they load under NodeNext and an older TypeScript', () => {
-  expect(manifest.scripts.build).toMatch(/&& node scripts\/fix-dts\.ts$/)
+  expect(manifest.scripts.build).toMatch(/&& node scripts\/fix-dts\.mjs$/)
 })
 
 test('what the build writes is what the package ships and points at', () => {
