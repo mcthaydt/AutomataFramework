@@ -294,9 +294,9 @@ A word a language lacks is said in English, and one English lacks is shown as it
 a game. Give `startGame` the locale (`startGame({ ..., locale })`) and the touch buttons say `controls.<action>`, a
 refused `addPlayer` explains itself in the player's language, and all of it changes when the player picks another.
 In a page, `followLanguage(locale)` keeps `<html lang>` right, so a screen reader speaks the words properly. The
-framework's own sentences (a room's status, why a player cannot join) are in all six languages: `onlineWords(status,
-locale.words)` says the room's status in the player's. Changing a word, or the language, moves no hash and no replay:
-the sim never sees words.
+framework's own sentences (a room's status, why a player cannot join) are in all six languages, and
+`onlineWords(status, locale.words)` says the room's status in the player's. Changing a word, or the language,
+moves no hash and no replay: the sim never sees words.
 
 Two checks are for a person or an agent to run, and neither is part of `loadGame`, because a game with a word missing
 in Korean still loads and plays:
