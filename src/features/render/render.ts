@@ -146,7 +146,9 @@ export async function createRenderer(options: {
       const fit = stage.fit(shotAt(drawnAt))
       return scene
         .views(drawnAt)
-        .flatMap((v) => (v.sprite !== undefined && v.sprite.player > 0 ? [{ v, player: v.sprite.player }] : []))
+        .flatMap((v) =>
+          v.sprite !== undefined && v.sprite.player > 0 ? [{ v, player: v.sprite.player }] : [],
+        )
         .sort((a, b) => a.player - b.player || a.v.sid - b.v.sid)
         .map(({ v, player }) => ({
           player,

@@ -161,7 +161,11 @@ export async function createStage(
   // The last views asked for. A resize wipes the canvas, and a game paused by hand asks for no more frames, so the
   // stage puts this picture back itself.
   let last:
-    | { readonly views: readonly View[]; readonly links: readonly RopeLine[]; readonly shot: Shot | undefined }
+    | {
+        readonly views: readonly View[]
+        readonly links: readonly RopeLine[]
+        readonly shot: Shot | undefined
+      }
     | undefined
 
   /** The room the level has: the canvas without the strip kept free at the bottom. */
@@ -215,7 +219,10 @@ export async function createStage(
 
   const paint = (views: readonly View[], links: readonly RopeLine[], shot: Shot | undefined): void => {
     const fit = fitFor(shot)
-    cover.clear().rect(0, room().h, box.w, box.h - room().h).fill(sky)
+    cover
+      .clear()
+      .rect(0, room().h, box.w, box.h - room().h)
+      .fill(sky)
     if (art?.backdrop !== undefined) paintBackdrop(art.backdrop, fit, shot !== undefined)
     root.scale.set(fit.scale)
     root.position.set(fit.left, fit.top)

@@ -286,7 +286,10 @@ test('the full game paints a picture for each of its figures', async () => {
 })
 
 /** The whole level, drawn on the full game's own backdrop (no camera): the sky above, the hills low down. */
-async function drawnWith(width: number, rows: RenderDelta['added'] = []): Promise<(x: number, y: number) => number[]> {
+async function drawnWith(
+  width: number,
+  rows: RenderDelta['added'] = [],
+): Promise<(x: number, y: number) => number[]> {
   const game = await loaded()
   art = await loadArt({ content: game, readPicture: readFullGamePicture })
   mount.style.width = `${width}px`
