@@ -10,6 +10,7 @@ import type { Sim } from '../sim/sim.ts'
 import { createLoop, type Frames } from './loop.ts'
 
 export { type Frames, MAX_STEPS_PER_FRAME } from './loop.ts'
+export { type Watch, type WatchOptions, WatchSetupError, watchReplay } from './watch.ts'
 
 export interface GameOptions extends GameSimOptions {
   /** The element the game fills: a canvas, and the touch buttons on top of it. */
