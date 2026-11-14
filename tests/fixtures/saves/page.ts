@@ -95,3 +95,5 @@ const page: SavesPage = {
 }
 
 ;(window as unknown as { savesPage: SavesPage }).savesPage = page
+// Tells the frame's opener (`open-page.ts`) that the page can be asked things.
+parent.postMessage({ savesPage: 'ready' }, '*')

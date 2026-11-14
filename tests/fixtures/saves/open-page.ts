@@ -7,17 +7,6 @@ import type { SavesPage } from './page.ts'
 const LOAD_LIMIT_MS = 20_000
 
 /** Where `page.ts` is served from, worked out from this file's own address so the test server's layout never matters. */
-/** TEMPORARY: modules loaded one at a time first, to name the one WebKit hangs on. */
-const PROBES = [
-  'saves/saves',
-  'host/host',
-  'web/web',
-  'sim/sim',
-  'physics/physics',
-  'render/render',
-  'game/game',
-].map((name) => [name, new URL(`../../../src/features/${name}.ts`, import.meta.url).href] as const)
-
 const PAGE_URL = new URL('./page.ts', import.meta.url).href
 
 /** Opens a fresh page (frame) of `size`, loads `page.ts` in it, and returns its handle and a `close` that removes it. */
@@ -31,25 +20,23 @@ export async function openPage(
     // The page tells this one when it is ready, or why it is not. Listening starts before the frame exists.
     const ready = new Promise<Window>((resolve, reject) => {
       let started = false
-      const steps: string[] = []
       // A page that never answers is named, not left to the test's own timeout, which says nothing.
       const gaveUp = setTimeout(() => {
         window.removeEventListener('message', heard)
         reject(
           new Error(
-            `The page did not answer in ${LOAD_LIMIT_MS} ms (its script ${started ? 'started' : 'never started'}; loaded: ${steps.join(', ') || 'nothing'}).`,
+            `The page did not answer in ${LOAD_LIMIT_MS} ms (its script ${started ? 'started' : 'never started'}).`,
           ),
         )
       }, LOAD_LIMIT_MS)
       function heard(event: MessageEvent): void {
         if (frame.contentWindow === null || event.source !== frame.contentWindow) return
         const data = event.data as
-          | { savesPage: 'started'; step?: string }
+          | { savesPage: 'started' }
           | { savesPage: 'ready' }
           | { savesPage: 'error'; error: string }
         if (data.savesPage === 'started') {
           started = true
-          if (data.step !== undefined) steps.push(data.step)
           return
         }
         clearTimeout(gaveUp)
@@ -59,21 +46,18 @@ export async function openPage(
       }
       window.addEventListener('message', heard)
     })
-    // The script is part of the frame's own document, so no browser can replace the document between "loaded" and
-    // "running it" (WebKit and Firefox both swap a frame's first, empty document). Vitest rewrites every `import()` in
-    // the code it serves into a call on `__vitest_browser_runner__`, which only the test's own frame has; this frame
-    // gets the plain version of it (the one Vitest itself uses where it has no runner): load the module, nothing more.
-    frame.srcdoc = `<!doctype html><html><body style="margin:0"><script type="module">
+    // The page's script is a `<script src>` in the frame's own document, so no browser can swap the document between
+    // "loaded" and "running it" (WebKit and Firefox both replace a frame's first, empty document), and no `import()`
+    // runs from an inline script, which WebKit never settles in a srcdoc frame. Vitest rewrites every `import()` in the
+    // code it serves into a call on `__vitest_browser_runner__`, which only the test's own frame has; this frame gets
+    // the plain version of it (the one Vitest itself uses where it has no runner): load the module, nothing more.
+    // `page.ts` says "ready" itself, once it has put its `SavesPage` on the window.
+    frame.srcdoc = `<!doctype html><html><body style="margin:0"><script>
 globalThis.__vitest_browser_runner__ = { wrapDynamicImport: (load) => load() }
 parent.postMessage({ savesPage: 'started' }, '*')
 addEventListener('error', (event) => parent.postMessage({ savesPage: 'error', error: 'script error: ' + event.message }, '*'))
-;(async () => {
-  for (const [name, url] of ${JSON.stringify(PROBES)}) { await import(url); parent.postMessage({ savesPage: 'started', step: name }, '*') }
-})().then(() => import(${JSON.stringify(PAGE_URL)})).then(
-  () => parent.postMessage({ savesPage: 'ready' }, '*'),
-  (error) => parent.postMessage({ savesPage: 'error', error: String((error && error.stack) || error) }, '*'),
-)
-</script></body></html>`
+</script><script type="module" src=${JSON.stringify(PAGE_URL)}
+  onerror="parent.postMessage({ savesPage: 'error', error: 'the page script could not be loaded' }, '*')"></script></body></html>`
     document.body.append(frame)
     const win = await ready
     const inside = (win as unknown as { savesPage: SavesPage }).savesPage
