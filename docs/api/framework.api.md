@@ -1483,6 +1483,12 @@ interface NoiseVoice {
 }
 ```
 
+### `NOTICE_PROPERTIES` (const)
+
+```ts
+const NOTICE_PROPERTIES: readonly string[];
+```
+
 ### `ONLINE_PROBLEMS` (const)
 
 ```ts
@@ -2509,6 +2515,16 @@ interface SoundFile {
     readonly volume: number;
     readonly voices: readonly SoundVoice[];
 }
+```
+
+### `soundNotice` (function)
+
+```ts
+function soundNotice(options: {
+    readonly mount: HTMLElement;
+    readonly audio: Pick<GameAudio, 'state' | 'onState' | 'silent'>;
+    readonly words?: string;
+}): () => void;
 ```
 
 ### `SoundSchema` (const)
