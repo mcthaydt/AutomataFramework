@@ -1,7 +1,11 @@
 import { expect, test } from 'vitest'
 import { type CheckReport, exitCodeOf, formatReport, type StepReport } from '#src/features/cli/report.ts'
 
-const step = (name: StepReport['step'], state: StepReport['state'], extra: Partial<StepReport> = {}): StepReport => ({
+const step = (
+  name: StepReport['step'],
+  state: StepReport['state'],
+  extra: Partial<StepReport> = {},
+): StepReport => ({
   step: name,
   state,
   problems: [],
@@ -17,7 +21,9 @@ test('formatReport lines the steps up and ends with the count', () => {
   const text = formatReport(
     report(
       step('files', 'failed', {
-        problems: [{ file: 'content/levels/level-1.json', path: 'things[0].x', message: 'This must be a number.' }],
+        problems: [
+          { file: 'content/levels/level-1.json', path: 'things[0].x', message: 'This must be a number.' },
+        ],
         notes: ['Rewrote content/characters/hero.json in the standard form.'],
       }),
       step('rules', 'passed'),
@@ -42,15 +48,21 @@ test('formatReport lines the steps up and ends with the count', () => {
 })
 
 test('one failed step is "1 step needs fixing"', () => {
-  expect(formatReport(report(step('files', 'passed'), step('types', 'failed'))).split('\n').at(-1)).toBe(
-    '1 step needs fixing: types. Fix the first and run automata check again.',
-  )
+  expect(
+    formatReport(report(step('files', 'passed'), step('types', 'failed')))
+      .split('\n')
+      .at(-1),
+  ).toBe('1 step needs fixing: types. Fix the first and run automata check again.')
 })
 
 test('a report where everything passed or was skipped says so', () => {
-  const text = formatReport(report(step('files', 'passed'), step('tests', 'skipped', { notes: ['This game has no tests yet.'] })))
+  const text = formatReport(
+    report(step('files', 'passed'), step('tests', 'skipped', { notes: ['This game has no tests yet.'] })),
+  )
   expect(text).toBe(
-    ['files     passed', 'tests     skipped', '  This game has no tests yet.', '', 'Everything passed.'].join('\n'),
+    ['files     passed', 'tests     skipped', '  This game has no tests yet.', '', 'Everything passed.'].join(
+      '\n',
+    ),
   )
 })
 
@@ -71,9 +83,11 @@ test('a step that could not run says why on its own line, and the count says so 
       '2 steps could not run: lint, types.',
     ].join('\n'),
   )
-  expect(formatReport(report(step('lint', 'could-not-run', { notes: ['x'] }))).split('\n').at(-1)).toBe(
-    '1 step could not run: lint.',
-  )
+  expect(
+    formatReport(report(step('lint', 'could-not-run', { notes: ['x'] })))
+      .split('\n')
+      .at(-1),
+  ).toBe('1 step could not run: lint.')
 })
 
 test('exitCodeOf: 0 all passed or skipped, 1 any failed, 2 none failed and one could not run', () => {

@@ -7,7 +7,8 @@ import * as framework from '#src/headless.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, memoryLayer } from '../../fixtures/cli/memory.ts'
 
-const read = (memory: Memory, folder = 'game') => Effect.runPromise(readGame(folder).pipe(Effect.provide(memory.layer)))
+const read = (memory: Memory, folder = 'game') =>
+  Effect.runPromise(readGame(folder).pipe(Effect.provide(memory.layer)))
 const failure = async (memory: Memory, folder = 'game'): Promise<string> => {
   const result = await Effect.runPromise(Effect.either(readGame(folder).pipe(Effect.provide(memory.layer))))
   if (result._tag === 'Right') throw new Error('readGame did not fail')
@@ -48,8 +49,10 @@ test('a game is read with its own copy of the framework, and its recordings are 
   expect(game.codeError).toBeUndefined()
 })
 
-test('a game that is not installed is still read, with the command\'s own copy of the framework', async () => {
-  const notInstalled = new CliError("This game's tools are not installed yet. Run npm install in game, then try again.")
+test("a game that is not installed is still read, with the command's own copy of the framework", async () => {
+  const notInstalled = new CliError(
+    "This game's tools are not installed yet. Run npm install in game, then try again.",
+  )
   const memory = memoryLayer(under('game', smallGame()), { code: notInstalled })
   const game = await read(memory)
   expect(game.loaded.ok).toBe(true)
@@ -58,7 +61,7 @@ test('a game that is not installed is still read, with the command\'s own copy o
   expect(typeof game.content.loadGame).toBe('function')
 })
 
-test('broken rules give the problem, and the game\'s framework is still there for its files (audit M1)', async () => {
+test("broken rules give the problem, and the game's framework is still there for its files (audit M1)", async () => {
   const code: GameCode = {
     framework,
     rules: { problem: { file: 'src/headless.ts', path: '', message: 'This file is missing.' } },

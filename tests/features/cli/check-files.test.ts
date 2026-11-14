@@ -16,7 +16,9 @@ async function filesStep(
   options: { fix?: boolean; memory?: MemoryOptions } = {},
 ): Promise<{ report: CheckReport; memory: Memory }> {
   const files: Record<string, string | undefined> = { ...smallGame(), ...changes }
-  const present = Object.fromEntries(Object.entries(files).filter((e): e is [string, string] => e[1] !== undefined))
+  const present = Object.fromEntries(
+    Object.entries(files).filter((e): e is [string, string] => e[1] !== undefined),
+  )
   const memory = memoryLayer(under('game', present), options.memory)
   const report = await Effect.runPromise(
     runCheck({ folder: 'game', only: 'files', fix: options.fix === true }).pipe(Effect.provide(memory.layer)),
@@ -39,16 +41,20 @@ test("it prints loadGame's problems as they are", async () => {
   const { report } = await filesStep({ [LEVEL]: levelWith({ things }) })
   const [step] = report.steps
   expect(step?.state).toBe('failed')
-  expect(step?.problems).toEqual([
-    { file: LEVEL, path: 'things[0].x', message: 'This must be a number.' },
-  ])
+  expect(step?.problems).toEqual([{ file: LEVEL, path: 'things[0].x', message: 'This must be a number.' }])
   expect(report.ok).toBe(false)
 })
 
 test('a file not in the standard form is a problem, and --fix rewrites it', async () => {
   // The same level with its keys in another order: it reads, but it is not what writeContent writes.
   const level = JSON.parse(fixtureFiles[LEVEL] as string) as Record<string, unknown>
-  const shuffled = JSON.stringify({ starts: level.starts, things: level.things, tiles: level.tiles, id: level.id, format: 1 })
+  const shuffled = JSON.stringify({
+    starts: level.starts,
+    things: level.things,
+    tiles: level.tiles,
+    id: level.id,
+    format: 1,
+  })
   const without = await filesStep({ [LEVEL]: shuffled })
   expect(without.report.steps[0]?.state).toBe('failed')
   expect(without.report.steps[0]?.problems).toEqual([
@@ -80,7 +86,8 @@ test('a .json under content/ that automata.toml does not list is a problem', asy
     {
       file: 'content/levels/level-2.json',
       path: '',
-      message: 'This file is not listed in automata.toml, so the game does not use it. List it, or delete it.',
+      message:
+        'This file is not listed in automata.toml, so the game does not use it. List it, or delete it.',
     },
   ])
 })
@@ -90,16 +97,24 @@ test('a file under content/ that is not json is left alone', async () => {
   expect(report.steps[0]?.state).toBe('passed')
 })
 
-test('a game that is not installed is checked with the command\'s own copy, and the report says so', async () => {
+test("a game that is not installed is checked with the command's own copy, and the report says so", async () => {
   const { report } = await filesStep(
     {},
-    { memory: { code: new CliError("This game's tools are not installed yet. Run npm install in game, then try again.") } },
+    {
+      memory: {
+        code: new CliError(
+          "This game's tools are not installed yet. Run npm install in game, then try again.",
+        ),
+      },
+    },
   )
   expect(report.steps[0]).toEqual({
     step: 'files',
     state: 'passed',
     problems: [],
-    notes: ["This game is not installed, so its files were checked with automata's own copy of the framework."],
+    notes: [
+      "This game is not installed, so its files were checked with automata's own copy of the framework.",
+    ],
   })
 })
 
@@ -128,7 +143,9 @@ test('--json prints the CheckReport and nothing else', async () => {
   const memory = memoryLayer(under('game', smallGame()))
   expect(await main(['check', 'game', '--only', 'files', '--json'], memory.layer)).toBe(0)
   const expected = await Effect.runPromise(
-    runCheck({ folder: 'game', only: 'files' }).pipe(Effect.provide(memoryLayer(under('game', smallGame())).layer)),
+    runCheck({ folder: 'game', only: 'files' }).pipe(
+      Effect.provide(memoryLayer(under('game', smallGame())).layer),
+    ),
   )
   expect(JSON.parse(memory.out.join(''))).toEqual(expected)
   expect(memory.err).toEqual([])

@@ -18,13 +18,17 @@ afterEach(async () => {
 const files = <A>(use: (files: FilesService) => Effect.Effect<A>): Promise<A> =>
   Effect.runPromise(Effect.flatMap(Files, use).pipe(Effect.provide(liveLayer)))
 const loadCode = () =>
-  Effect.runPromise(Effect.either(Effect.flatMap(Code, (code) => code.load(folder))).pipe(Effect.provide(liveLayer)))
+  Effect.runPromise(
+    Effect.either(Effect.flatMap(Code, (code) => code.load(folder))).pipe(Effect.provide(liveLayer)),
+  )
 
 test('the live Files reads, writes and lists under a folder with a space in its name', async () => {
   await files((f) => f.write(join(folder, 'content', 'levels', 'a.json'), '{"a":1}\n'))
   await files((f) => f.write(join(folder, 'content', 'b.json'), new Uint8Array([1, 2, 3])))
   expect(await files((f) => f.readText(join(folder, 'content', 'levels', 'a.json')))).toBe('{"a":1}\n')
-  expect(await files((f) => f.readBytes(join(folder, 'content', 'b.json')))).toEqual(new Uint8Array([1, 2, 3]))
+  expect(await files((f) => f.readBytes(join(folder, 'content', 'b.json')))).toEqual(
+    new Uint8Array([1, 2, 3]),
+  )
   expect(await files((f) => f.list(folder))).toEqual(['content/b.json', 'content/levels/a.json'])
   expect(await files((f) => f.list(join(folder, 'nothing here')))).toEqual([])
 })

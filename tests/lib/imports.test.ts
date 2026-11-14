@@ -2,8 +2,21 @@ import { expect, test } from 'vitest'
 import { importsOf, resolveImport, withoutComments } from '#src/lib/imports.ts'
 
 test('comments are taken out, and a // inside a string or a URL is not a comment', () => {
-  expect(withoutComments('a // b\nc /* d\ne */ f')).toBe('a \nc  f')
+  expect(withoutComments('a // b\nc /* d\ne */ f')).toBe('a \nc \n f')
   expect(withoutComments("const u = 'https://x.y'")).toBe("const u = 'https://x.y'")
+})
+
+test("a comment that spans lines leaves its line breaks, so a line counted in the rest is the file's line", () => {
+  const code = withoutComments('/* one\ntwo\nthree */\nconst a = Math.random()')
+  expect(code.slice(0, code.indexOf('const')).split('\n')).toHaveLength(4)
+})
+
+test('every import says where it starts in the text', () => {
+  const code = "const a = 1\nimport { b } from './b.ts'\nconst c = await import('./c.ts')"
+  expect(importsOf(code).map((i) => [i.spec, code.slice(i.index, i.index + 6)])).toEqual([
+    ['./b.ts', 'import'],
+    ['./c.ts', 'import'],
+  ])
 })
 
 test('every way to import is found, with the specifier as written', () => {
