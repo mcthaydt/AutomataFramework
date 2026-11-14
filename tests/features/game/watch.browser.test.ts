@@ -5,7 +5,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { controlsCommand, createRecorder, type Replay } from '#src/features/commands/commands.ts'
 import { type Watch, WatchSetupError, watchReplay } from '#src/features/game/watch.ts'
-import type { Host } from '#src/features/host/host.ts'
+import { type TestHost, testHost } from '#src/features/host/host.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
@@ -18,26 +18,6 @@ const TICKS = 90
 
 let mount: HTMLDivElement
 let watch: Watch | undefined
-
-/** A host the test can hide and show. */
-function fakeHost(): Host & { hide(): void; show(): void } {
-  let visible = true
-  const listeners = new Set<(visible: boolean) => void>()
-  const set = (next: boolean): void => {
-    visible = next
-    for (const l of listeners) l(next)
-  }
-  return {
-    target: 'web',
-    visible: () => visible,
-    onVisibility(listener) {
-      listeners.add(listener)
-      return () => listeners.delete(listener)
-    },
-    hide: () => set(false),
-    show: () => set(true),
-  }
-}
 
 beforeEach(() => {
   mount = document.createElement('div')
@@ -94,11 +74,11 @@ async function start(
 ): Promise<{
   watch: Watch
   frames: ReturnType<typeof manualFrames>
-  host: ReturnType<typeof fakeHost>
+  host: TestHost
   replay: Replay
 }> {
   const frames = manualFrames()
-  const host = fakeHost()
+  const host = testHost()
   const replay = extra.replay ?? (await record())
   watch = await watchReplay({
     content: await loadFixtureGame(extra.files ?? {}),
@@ -222,7 +202,7 @@ test('content that changed since the recording still plays', async () => {
 test('a replay for another tick rate or seed is refused in words', async () => {
   const replay = await record()
   const frames = manualFrames()
-  const common = { content: await loadFixtureGame(), plugins: [heroPlugin], mount, host: fakeHost(), frames }
+  const common = { content: await loadFixtureGame(), plugins: [heroPlugin], mount, host: testHost(), frames }
   const rate = await watchReplay({ ...common, replay: { ...replay, tickHz: 30 } }).catch((e: unknown) => e)
   expect(rate).toBeInstanceOf(WatchSetupError)
   expect((rate as WatchSetupError).name).toBe('WatchSetupError')

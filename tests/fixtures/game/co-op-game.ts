@@ -3,7 +3,7 @@
 import { Player } from '#src/features/commands/commands.ts'
 import type { GameContent } from '#src/features/content/content.ts'
 import { type Game, type GameOptions, startGame } from '#src/features/game/game.ts'
-import type { Host } from '#src/features/host/host.ts'
+import { type TestHost, testHost } from '#src/features/host/host.ts'
 import { Transform } from '#src/features/physics/physics.ts'
 import { type FakeGamepads, fakeGamepads } from '../input/fake-gamepads.ts'
 import { coopFiles } from './co-op.ts'
@@ -16,7 +16,7 @@ import { heroPlugin } from './hero.ts'
 export const FRAME: number = 1000 / 60
 
 /** A host that is always on screen: these tests drive the frames by hand. */
-export const visibleHost: Host = { target: 'web', visible: () => true, onVisibility: () => () => {} }
+export const visibleHost: TestHost = testHost()
 
 export interface Started {
   readonly game: Game

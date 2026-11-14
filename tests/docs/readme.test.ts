@@ -54,3 +54,42 @@ test("the README's door.json is exactly what writeContent makes of it", () => {
   const written = framework.writeContent('sound', JSON.parse(block ?? '') as never)
   expect(written).toBe(block)
 })
+
+/** The text of one `## ` section of the README, up to the next. */
+function section(heading: string): string {
+  const start = readme.indexOf(heading)
+  expect(start, heading).toBeGreaterThan(-1)
+  const next = readme.indexOf('\n## ', start + 1)
+  return readme.slice(start, next === -1 ? undefined : next)
+}
+
+// A game finds out where its saves are and what a refusal is called from here, and copies an example that runs.
+test('the README has a Saves section: the keys, every refusal, and an example that uses only what headless exports', () => {
+  const saves = section('## Saves')
+  for (const refusal of ['unavailable', 'full', 'failed']) expect(saves, refusal).toContain(refusal)
+  for (const key of ['automata.<game>.save.<slot>', 'automata.<game>.settings'])
+    expect(saves, key).toContain(key)
+  const imported = /import \{([^}]+)\} from '@automataframework\/framework\/headless'/.exec(saves)?.[1]
+  expect(imported).toBeDefined()
+  const names = (imported ?? '').split(',').map((name) => name.trim())
+  for (const name of ['z', 'defineSave', 'createSaves', 'openSettings', 'latestSlot'])
+    expect(names).toContain(name)
+  for (const name of names) expect(framework, name).toHaveProperty(name)
+})
+
+test('the README has a host section that names every member of the port and both hosts', () => {
+  const host = section('## The host')
+  for (const word of [
+    'visible',
+    'store',
+    'language',
+    'deviceLanguages',
+    'openLink',
+    'canQuit',
+    'quit',
+    'https:',
+    'webHost()',
+    'testHost()',
+  ])
+    expect(host, word).toContain(word)
+})

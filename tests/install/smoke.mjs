@@ -6,8 +6,13 @@ import { readFile } from 'node:fs/promises'
 import {
   CONTENT_TYPES,
   createGameSim,
+  createSaves,
+  defineSave,
   formatDiagnostic,
   loadGame,
+  openSettings,
+  testHost,
+  z,
 } from '@automataframework/framework/headless'
 
 const here = (path) => new URL(path, import.meta.url)
@@ -28,6 +33,31 @@ if (hash !== golden.idleHash60) {
   process.exit(1)
 }
 console.log(`The installed package ran 60 ticks and ended on ${hash}, as recorded.`)
+
+// Saves and the host, from the packed package alone: `z` is the package's own (never `zod`, which npm's flat folder
+// would let this file import, and so prove nothing). A save goes in a slot and comes back, under the documented key.
+const host = testHost()
+const def = defineSave({ game: 'smoke', version: 1, slots: 1, schema: z.strictObject({ level: z.string() }) })
+const saves = createSaves({ def, store: host.store })
+const written = await saves.save(0, { level: 'level-1' })
+const back = await saves.load(0)
+const stored = await host.store.get('automata.smoke.save.0')
+if (!written.ok || !back.ok || back.data?.level !== 'level-1' || !stored.ok || stored.value === null) {
+  console.error('The installed package did not save and load a game.')
+  process.exit(1)
+}
+const soundSection = {
+  name: 'sound',
+  schema: z.strictObject({ music: z.number().min(0).max(1) }),
+  initial: { music: 0.8 },
+}
+await (await openSettings({ game: 'smoke', store: host.store })).section(soundSection).set({ music: 0.5 })
+const reopened = (await openSettings({ game: 'smoke', store: host.store })).section(soundSection).get()
+if (reopened.music !== 0.5) {
+  console.error('The installed package did not keep a setting.')
+  process.exit(1)
+}
+console.log('The installed package saved and loaded a game in Node.')
 
 const full = await loadGame((path) => readFile(here(`full-game/${path}`), 'utf8'))
 if (!full.ok) {
