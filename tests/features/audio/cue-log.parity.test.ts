@@ -4,11 +4,11 @@ import { afterEach, expect, test } from 'vitest'
 import { createAudio, type CueLogEntry, type GameAudio, testSpeaker } from '#src/features/audio/audio.ts'
 import { createRecorder } from '#src/features/commands/commands.ts'
 import { createGameSim } from '#src/features/level/level.ts'
-import { canonicalJson } from '#src/lib/canonical.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
+import { canonicalJson } from '#src/lib/canonical.ts'
+import { SOUNDING_TICKS, soundingScript } from '../../fixtures/audio/script.ts'
 import { loadSoundingGame } from '../../fixtures/audio/sounding-game.ts'
 import { soundingHeroPlugin } from '../../fixtures/audio/sounding-hero.ts'
-import { SOUNDING_TICKS, soundingScript } from '../../fixtures/audio/script.ts'
 import { expectGolden, expectRecorded } from '../../fixtures/golden.ts'
 import golden from '../../golden/sounding.json' with { type: 'json' }
 
