@@ -112,6 +112,8 @@ for (const line of rest.filter((command) => command !== 'npm run dev' && !comman
   if (line === 'npm run check') said('npm run check', output, 'Everything passed.')
 }
 said('check', checkOf('check'), 'Everything passed.')
+// The new game has its words in six languages, and says that no native speaker has read the five translations yet.
+said('the words', checkOf('the words', 0, '--only', 'files'), 'Words no native speaker has read yet')
 step('npm install and npm run check pass in the new game')
 
 // 3. Change a number with the framework's own writer: the check says the content changed, and does not fail.

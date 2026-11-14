@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "id": "en",
+  "messages": {
+    "controls.jump": "Jump",
+    "controls.left": "Left",
+    "controls.right": "Right",
+    "hint.arrows": "Arrow keys",
+    "hint.jump": "{key} to jump.",
+    "hint.move": "{keys} to move.",
+    "key.arrow-down": "Down arrow",
+    "key.arrow-left": "Left arrow",
+    "key.arrow-right": "Right arrow",
+    "key.arrow-up": "Up arrow",
+    "key.space": "Space",
+    "level.level-1.name": "Level 1",
+    "page.cannot-start": "This game could not start in this browser. Try another browser."
+  }
+}

@@ -102,6 +102,21 @@ test('a keyboard player is told the keys, until they move', async () => {
   expect(hint()).toBeUndefined()
 })
 
+test('a player whose device speaks Spanish is told the keys in Spanish, and the page says it is Spanish', async () => {
+  await page.viewport(1280, 720)
+  await open({ host: testHost({ deviceLanguages: ['es-ES'] }) })
+  expect(root.querySelector('.hint')?.textContent).toBe('Las flechas para moverte. Espacio para saltar.')
+  expect(document.documentElement.lang).toBe('es')
+})
+
+test('the touch buttons say their words in the language of the device', async () => {
+  await page.viewport(390, 844)
+  await open({ host: testHost({ deviceLanguages: ['pt'] }), coarse: true })
+  window.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }))
+  const label = (action: string): string => root.querySelector(`[data-action='${action}']`)?.textContent ?? ''
+  expect([label('left'), label('right'), label('jump')]).toEqual(['Esquerda', 'Direita', 'Pular'])
+})
+
 test('a player with a finger on the screen is not told about keys', async () => {
   await page.viewport(390, 844)
   await open({ coarse: true })

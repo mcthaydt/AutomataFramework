@@ -9,6 +9,7 @@ the skills below.
 |---|---|
 | The project: name, first level, which files are content | `automata.toml` |
 | Levels and characters (JSON, one thing per file) | `content/levels/`, `content/characters/` |
+| Every word a player reads, one file for each language (English says what a word is for) | `content/messages/` |
 | The list of the game's rules | `src/headless.ts` |
 | One feature's rules (a plugin and its systems) | `src/features/<name>/` |
 | The page: loading, controls, words on screen | `src/features/page/` |

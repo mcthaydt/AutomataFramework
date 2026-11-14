@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "id": "es",
+  "messages": {
+    "controls.jump": "Saltar",
+    "controls.left": "Izquierda",
+    "controls.right": "Derecha",
+    "hint.arrows": "Las flechas",
+    "hint.jump": "{key} para saltar.",
+    "hint.move": "{keys} para moverte.",
+    "key.arrow-down": "Flecha abajo",
+    "key.arrow-left": "Flecha izquierda",
+    "key.arrow-right": "Flecha derecha",
+    "key.arrow-up": "Flecha arriba",
+    "key.space": "Espacio",
+    "level.level-1.name": "Nivel 1",
+    "page.cannot-start": "Este juego no pudo empezar en este navegador. Prueba con otro navegador."
+  }
+}

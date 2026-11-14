@@ -52,6 +52,13 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 
 ### Log
 
+- 2026-11-14, plan K, Part 2 step L: the template has `content/messages/` in all six languages (every word its page shows:
+  the touch buttons, the key hint and each key's name, the level's name, and "could not start") and an
+  `automata.translations.toml` with no marks yet; the page makes a locale from them and follows it, so a device that
+  speaks Japanese is told the keys in Japanese. `automata check`'s `files` step adds `translationProblems`, and prints
+  `unreadWords` as a note with a count for each language, never a failure. The recording should not move (words are
+  not in the sim's hash); if CI says it did, it is re-recorded in a named commit. Open for the Owner: a command that marks a
+  language as read (plan L named it plan K's to name) is not built, since no step of plan K's text asks for it.
 - 2026-11-14, plan K, Part 2 step P: the template's level gains a spark (`content/characters/spark.json`, `"touch": "take"`),
   and the hero's rules count it from `spark.taken` into a `hero.score` resource (`template/src/features/hero/score.ts`).
   `automata-rules` gains "Answering an event". The recorded play `template/replays/level-1.json` moves (the hero now takes

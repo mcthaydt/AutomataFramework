@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "id": "ko",
+  "messages": {
+    "controls.jump": "점프",
+    "controls.left": "왼쪽",
+    "controls.right": "오른쪽",
+    "hint.arrows": "방향키",
+    "hint.jump": "점프: {key}",
+    "hint.move": "이동: {keys}",
+    "key.arrow-down": "아래쪽 화살표",
+    "key.arrow-left": "왼쪽 화살표",
+    "key.arrow-right": "오른쪽 화살표",
+    "key.arrow-up": "위쪽 화살표",
+    "key.space": "스페이스바",
+    "level.level-1.name": "레벨 1",
+    "page.cannot-start": "이 브라우저에서는 게임을 시작할 수 없어요. 다른 브라우저를 써 보세요."
+  }
+}

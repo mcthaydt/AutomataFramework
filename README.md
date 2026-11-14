@@ -308,6 +308,9 @@ in Korean still loads and plays:
   `automata.translations.toml` (`parseReadMarks`, `markRead`, `writeReadMarks`); a mark is of the exact words that
   were read, so changing a word makes it unread again.
 
+`automata check` runs both for you, in its `files` step: a missing word fails it with the sentence above, and the words
+nobody has read yet are a note with a count for each language, never a failure.
+
 Every translation the framework ships (the six languages' library, and the demo game's) waits for a native speaker's
 read before Release 1: machine-written words are a first draft, and the marks say which are still that.
 
@@ -447,7 +450,7 @@ do its work (a folder that is not a game, a tool that is not installed). Add `--
 
 | Step | What it looks at |
 |---|---|
-| `files` | every content file reads, is listed, and is written the standard way |
+| `files` | every content file reads, is listed, and is written the standard way; every language has every word English has (a missing one is named), and the words no native speaker has read yet are counted in a note |
 | `rules` | the game's rules can be replayed: no clock, no dice of their own, no files |
 | `lint` | the code's style (Biome) |
 | `types` | the code's types (TypeScript) |

@@ -4,6 +4,14 @@ import { runCheck } from '#src/features/cli/check.ts'
 import { main } from '#src/features/cli/cli.ts'
 import { CliError } from '#src/features/cli/ports.ts'
 import type { CheckReport } from '#src/features/cli/report.ts'
+import {
+  type Language,
+  loadGame,
+  markRead,
+  READ_MARKS_FILE,
+  writeContent,
+  writeReadMarks,
+} from '#src/features/content/content.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, type MemoryOptions, memoryLayer } from '../../fixtures/cli/memory.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
@@ -156,4 +164,60 @@ test('a failed step is exit 1, and the report says what to fix', async () => {
   expect(await main(['check', 'game', '--only', 'files'], memory.layer)).toBe(1)
   expect(memory.out[0]).toContain('1 step needs fixing: files. Fix the first and run automata check again.')
   expect(memory.out[0]).toContain(`${LEVEL}: This file is not valid JSON.`)
+})
+
+// The words: a game with messages is checked in every language, and what no native speaker has read is a note.
+const messages = (id: Language, words: Record<string, string>): string =>
+  writeContent('messages', { format: 1, id, messages: words })
+/** The fixture game with English and Spanish words (Spanish short of "hello" when `lacking`), and the files listing them. */
+function withWords(lacking: boolean): Record<string, string> {
+  const toml = (fixtureFiles['automata.toml'] as string).trimEnd()
+  const listed = ['en', 'es'].map(
+    (id) => `\n[[content]]\ntype = "messages"\npath = "content/messages/${id}.json"\n`,
+  )
+  return {
+    'automata.toml': `${toml}\n${listed.join('')}`,
+    'content/messages/en.json': messages('en', { 'controls.jump': 'Jump', 'keeper.hello': 'Hello there!' }),
+    'content/messages/es.json': messages(
+      'es',
+      lacking ? { 'controls.jump': 'Saltar' } : { 'controls.jump': 'Saltar', 'keeper.hello': '¡Hola!' },
+    ),
+  }
+}
+test('a word a language lacks is a problem that names the file, the key and what English says', async () => {
+  const { report } = await filesStep(withWords(true))
+  const [step] = report.steps
+  expect(step?.state).toBe('failed')
+  expect(step?.problems.map((p) => p.message)).toContain(
+    'This file has no "keeper.hello". English says "Hello there!". Write it in Spanish.',
+  )
+  expect(step?.problems.some((p) => p.file === 'content/messages/es.json')).toBe(true)
+})
+
+test('words nobody has read yet are a note with the count for each language, and never a failure', async () => {
+  const { report } = await filesStep(withWords(false))
+  const [step] = report.steps
+  const words = step?.notes.filter((note) => note.startsWith('Words no native speaker has read yet')) ?? []
+  expect(words).toEqual(['Words no native speaker has read yet (a first draft plays fine): Spanish 2.'])
+  expect(step?.problems.filter((p) => p.file === 'content/messages/es.json')).toEqual([])
+})
+
+test('a read mark takes a word off the note, and a marks file that does not read is a problem', async () => {
+  const content = await loadGame(async (path) => {
+    const text = withWords(false)[path] ?? fixtureFiles[path]
+    if (text === undefined) throw new Error(`${path}: no such file`)
+    return text
+  })
+  if (!content.ok) throw new Error('the fixture words do not load')
+  const marks = markRead(content.value, {}, 'es')
+  const read = await filesStep({ ...withWords(false), [READ_MARKS_FILE]: writeReadMarks(marks) })
+  expect(read.report.steps[0]?.notes).toEqual([])
+  const broken = await filesStep({ ...withWords(false), [READ_MARKS_FILE]: 'format = 2' })
+  expect(broken.report.steps[0]?.state).toBe('failed')
+  expect(broken.report.steps[0]?.problems.map((p) => p.file)).toContain(READ_MARKS_FILE)
+})
+
+test('a game with no words says nothing about them', async () => {
+  const { report } = await filesStep()
+  expect(report.steps[0]).toEqual({ step: 'files', state: 'passed', problems: [], notes: [] })
 })

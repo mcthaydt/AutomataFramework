@@ -28,3 +28,29 @@ path = "content/characters/crate.json"
 [[content]]
 type = "character"
 path = "content/characters/spark.json"
+
+# The game's words, one file for each language. English comes first and says what every word is for; the other five
+# carry the same keys. `automata check` names a word a language is missing.
+[[content]]
+type = "messages"
+path = "content/messages/en.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/es.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/ko.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/ja.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/zh.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/pt.json"

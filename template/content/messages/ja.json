@@ -1,0 +1,19 @@
+{
+  "format": 1,
+  "id": "ja",
+  "messages": {
+    "controls.jump": "ジャンプ",
+    "controls.left": "左",
+    "controls.right": "右",
+    "hint.arrows": "矢印キー",
+    "hint.jump": "{key}でジャンプ。",
+    "hint.move": "{keys}で移動。",
+    "key.arrow-down": "下矢印",
+    "key.arrow-left": "左矢印",
+    "key.arrow-right": "右矢印",
+    "key.arrow-up": "上矢印",
+    "key.space": "スペース",
+    "level.level-1.name": "レベル1",
+    "page.cannot-start": "このブラウザではゲームを始められませんでした。別のブラウザで試してください。"
+  }
+}
