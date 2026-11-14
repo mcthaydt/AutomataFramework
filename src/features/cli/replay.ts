@@ -185,8 +185,8 @@ async function playOne(
               ),
             ),
           }
-        case 'content-changed': {
-          // The hashes cannot be compared, so the recording is played only to say where it ends now.
+        default: {
+          // `content-changed`: the hashes cannot be compared, so the recording is played only to say where it ends now.
           const played = framework.playReplay(sim, replay)
           const rules = verdict.rulesChanged ? 'Its rules have changed too. ' : ''
           return {
