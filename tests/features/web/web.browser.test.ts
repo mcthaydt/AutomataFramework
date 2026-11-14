@@ -1,6 +1,6 @@
 // The web host reads one thing about the page: is it on screen. A made-up document stands in, so a test can hide it.
 import { expect, test, vi } from 'vitest'
-import { webHost } from '#src/features/host/host.ts'
+import { webHost } from '#src/features/web/web.ts'
 
 /** A document that only knows what the host asks of it. */
 function fakeDocument(state: DocumentVisibilityState): {
