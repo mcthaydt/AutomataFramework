@@ -86,7 +86,8 @@ test('an agent gives the keeper a third choice by editing two files, and the gam
   const talk = JSON.parse(files['content/conversations/keeper.json'] ?? '') as {
     nodes: Record<string, unknown>[]
   }
-  ;(talk.nodes[0]?.choices as unknown[]).push({ line: 'hero.joke', next: 'joke' })
+  const hello = talk.nodes[0] as { choices: unknown[] }
+  hello.choices.push({ line: 'hero.joke', next: 'joke' })
   talk.nodes.push({ id: 'joke', speaker: 'keeper', lines: ['keeper.joke'] })
   files['content/conversations/keeper.json'] = writeContent('conversation', talk as never)
 
