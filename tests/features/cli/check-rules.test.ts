@@ -63,10 +63,7 @@ test.each(['sin', 'cos', 'tan', 'atan', 'atan2', 'exp', 'log', 'pow', 'hypot'])(
   'Math.%s has a safe one in the framework',
   (name) => {
     expect(found(using(`Math.${name}(1)`))).toEqual([
-      at(
-        2,
-        `Math.${name} can differ between browsers. Use the framework's own ${name}, from "${ENTRY}".`,
-      ),
+      at(2, `Math.${name} can differ between browsers. Use the framework's own ${name}, from "${ENTRY}".`),
     ])
   },
 )
@@ -101,10 +98,7 @@ test('the maths that every browser does the same is allowed', () => {
 
 test('the page entry is not for the rules, but its types are', () => {
   expect(found(`import { startGame } from '${PAGE}'\nexport const x = startGame\n`)).toEqual([
-    at(
-      1,
-      `Import from "${ENTRY}" here: this file is part of the game's rules, which run with no page.`,
-    ),
+    at(1, `Import from "${ENTRY}" here: this file is part of the game's rules, which run with no page.`),
   ])
   // A type-only import is gone once the game is compiled, so it reaches no page.
   expect(found(`import type { Game } from '${PAGE}'\nexport type X = Game\n`)).toEqual([])
@@ -136,8 +130,7 @@ test('a # import is found through the imports of the game package.json (audit M1
     {
       file: HEADLESS,
       path: 'line 1',
-      message:
-        '"#hero/hero.ts" is not in the "imports" of this game\'s package.json, so it cannot be found.',
+      message: '"#hero/hero.ts" is not in the "imports" of this game\'s package.json, so it cannot be found.',
     },
   ])
 })
