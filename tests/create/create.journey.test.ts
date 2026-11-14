@@ -90,7 +90,18 @@ beforeAll(async () => {
   const slashes = tarball.replaceAll('\\', '/')
   execFileSync(
     npx,
-    ['--yes', '--package', tarball, 'automata', 'create', 'my-game', '--framework', `file:${slashes}`],
+    [
+      '--yes',
+      '--package',
+      tarball,
+      'automata',
+      'create',
+      'my-game',
+      '--source',
+      'es',
+      '--framework',
+      `file:${slashes}`,
+    ],
     { cwd: work, env, shell: WINDOWS, stdio: 'inherit' },
   )
   gameFolder = join(work, 'my-game')
@@ -101,6 +112,25 @@ beforeAll(async () => {
     shell: WINDOWS,
     stdio: 'inherit',
   })
+
+  // The game says what it checks, lists the words nobody has read (against Spanish, the language it is written in)
+  // and keeps a language marked read, before the browsers see it.
+  const automata = (...args: string[]): string =>
+    execFileSync(npx, ['--no', 'automata', ...args], {
+      cwd: gameFolder,
+      env,
+      shell: WINDOWS,
+      encoding: 'utf8',
+    })
+  expect((JSON.parse(automata('check', '--json')) as { ok: boolean }).ok, 'a new game is sound').toBe(true)
+  const listed = JSON.parse(automata('words', '--json')) as { source: string; unread: { language: string }[] }
+  expect(listed.source).toBe('es')
+  expect(listed.unread.some((word) => word.language === 'en')).toBe(true)
+  automata('words', '--read', 'pt')
+  const marked = JSON.parse(automata('words', '--json')) as { unread: { language: string }[] }
+  expect(marked.unread.some((word) => word.language === 'pt')).toBe(false)
+  const again = JSON.parse(automata('check', '--json')) as { ok: boolean }
+  expect(again.ok, 'and sound after marking').toBe(true)
 
   const port = await freePort()
   address = `http://localhost:${port}/`
@@ -190,6 +220,21 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
             pictures.push(response.url())
         })
         await page.goto(address)
+        // The picker is first: six flags, each whole on this screen, and the game has not started.
+        const flags = page.locator('.automata-flag')
+        await page.locator('.automata-picker-go').waitFor({ state: 'visible', timeout: 30_000 })
+        expect(await flags.count(), `${where}: six flags`).toBe(6)
+        for (let at = 0; at < 6; at++) {
+          const box = await flags.nth(at).boundingBox()
+          expect(box, `${where}: flag ${at} is on the screen`).not.toBeNull()
+          if (box !== null) {
+            expect(box.x, where).toBeGreaterThanOrEqual(0)
+            expect(box.y, where).toBeGreaterThanOrEqual(0)
+            expect(box.x + box.width, where).toBeLessThanOrEqual(size.width)
+            expect(box.y + box.height, where).toBeLessThanOrEqual(size.height)
+          }
+        }
+        await page.screenshot({ path: `${shots}${name}-picker-${size.width}x${size.height}.png` })
         await pickLanguage(page, 'en')
 
         // The game is on screen, and time passes in it.
@@ -276,4 +321,106 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
       await browser.close()
     }
   }, 600_000)
+}
+
+// A player whose device speaks a language the framework has no words in is not given one: six flags, none chosen, and
+// Go waits until one is. The choice is kept, so the next visit does not ask again.
+for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
+  test(`${name}: a player whose language is not shipped chooses one, and is not asked again`, async () => {
+    const browser: Browser = await ENGINES[name].launch()
+    try {
+      const french = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'fr-FR' })
+      try {
+        const page = await french.newPage()
+        await page.goto(address)
+        const go = page.locator('.automata-picker-go')
+        await go.waitFor({ state: 'visible', timeout: 30_000 })
+        const flags = page.locator('.automata-flag')
+        expect(await flags.count()).toBe(6)
+        expect(await page.locator('.automata-flag[aria-pressed="true"]').count(), 'none is chosen').toBe(0)
+        expect(((await page.locator('.automata-picker').textContent()) ?? '').trim(), 'no letters').toBe('')
+        await go.click()
+        expect(await go.isVisible(), 'Go does nothing before a flag is chosen').toBe(true)
+        expect(await tickOf(page)).toBe(-1)
+
+        await page.locator('.automata-flag[data-language="ko"]').click()
+        await expect
+          .poll(() => page.locator('.automata-picker-go').textContent(), POLL)
+          .toContain('한국어로 플레이')
+        await go.click()
+        await expect.poll(() => page.locator('.hint').textContent(), POLL).toContain('방향키')
+        expect(await page.evaluate(() => document.documentElement.lang)).toBe('ko')
+
+        await page.reload()
+        await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+        expect(await page.locator('.automata-picker').count(), 'a kept language is not asked again').toBe(0)
+      } finally {
+        await french.close()
+      }
+    } finally {
+      await browser.close()
+    }
+  }, 300_000)
+
+  test(`${name}: Go is pressed by touch, by Enter and by a gamepad`, async () => {
+    const browser: Browser = await ENGINES[name].launch()
+    try {
+      const ways = ['touch', 'enter', 'pad'] as const
+      for (const way of ways) {
+        const context = await browser.newContext({
+          viewport: { width: 844, height: 390 },
+          locale: 'ja-JP',
+          hasTouch: way === 'touch',
+        })
+        try {
+          if (way === 'pad')
+            await context.addInitScript(() => {
+              const buttons = Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 }))
+              const pad = {
+                id: 'Test pad',
+                index: 0,
+                connected: true,
+                mapping: 'standard',
+                axes: [0, 0, 0, 0],
+                buttons,
+              }
+              ;(window as unknown as { __hold: (on: boolean) => void }).__hold = (on) => {
+                const south = buttons[0]
+                if (south !== undefined) Object.assign(south, { pressed: on, touched: on, value: on ? 1 : 0 })
+              }
+              navigator.getGamepads = () => [pad as unknown as Gamepad]
+            })
+          const page = await context.newPage()
+          await page.goto(address)
+          const go = page.locator('.automata-picker-go')
+          await go.waitFor({ state: 'visible', timeout: 30_000 })
+          // The device suggests Japanese: that flag is already chosen, and one press starts the game.
+          const chosen = page.locator('.automata-flag[aria-pressed="true"]')
+          await expect.poll(() => chosen.getAttribute('data-language'), POLL).toBe('ja')
+          if (way === 'touch') await go.tap()
+          else if (way === 'enter') await page.keyboard.press('Enter')
+          else
+            await expect
+              .poll(async () => {
+                // Held for two frames, as a thumb would hold it, then let go.
+                await page.evaluate(async () => {
+                  const hold = (window as unknown as { __hold: (on: boolean) => void }).__hold
+                  const frame = () => new Promise((done) => requestAnimationFrame(done))
+                  hold(true)
+                  await frame()
+                  await frame()
+                  hold(false)
+                })
+                return (await page.locator('.automata-picker').count()) === 0
+              }, POLL)
+              .toBe(true)
+          await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+        } finally {
+          await context.close()
+        }
+      }
+    } finally {
+      await browser.close()
+    }
+  }, 300_000)
 }

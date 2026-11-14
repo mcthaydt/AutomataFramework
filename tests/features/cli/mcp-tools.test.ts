@@ -182,7 +182,7 @@ test('a folder that is not a game is a result that is an error and holds the com
 test('create, then check, then replay, in one conversation', async () => {
   const memory = memoryLayer({ ...templateInMemory(), ...packageFilesInMemory() }, { code: templateCode })
   const replies = await talk(memory.layer, [
-    call(1, 'create', { folder: 'my-game' }),
+    call(1, 'create', { folder: 'my-game', source: 'en' }),
     call(2, 'check', { folder: 'my-game', only: 'files' }),
     call(3, 'replay', { folder: 'my-game' }),
   ])

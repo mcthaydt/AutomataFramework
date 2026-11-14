@@ -12,12 +12,15 @@ replays, level and character content, rendering (PixiJS), keyboard and touch inp
 You need [Node](https://nodejs.org) 24.21.0 or later. Then:
 
 ```sh
-npx @automataframework/framework create my-game
+npx @automataframework/framework create my-game --source en
 cd my-game
 npm install
 npm run check
 npm run dev
 ```
+
+`--source` is the language you write the game's words in: `zh` (Chinese), `es` (Spanish), `en` (English), `pt`
+(Portuguese), `ja` (Japanese) or `ko` (Korean). The game ships in all six, and each player picks their own.
 
 `create` makes a small game: one level, a hero, a crate to push. `npm run check` says whether the game is sound, in
 plain words. `npm run dev` plays it in your browser: hold the arrow keys to move and press Space to jump, or touch
@@ -599,8 +602,11 @@ do its work (a folder that is not a game, a tool that is not installed). Add `--
 `automata create <name>` makes a new game in a new folder called `<name>` (small letters, numbers and dashes, like
 `my-game`): one level, a hero, a crate to push, and everything a game needs to be checked and played.
 
+- `--source <language>`: the language you write the game's words in: `zh`, `es`, `en`, `pt`, `ja` or `ko`. It is the
+  `source` line of `automata.toml`, and the other five languages are read against it (see `automata words`). Left out,
+  your computer's own language is used when it is one of them; when it is not, `create` stops and asks you to say.
 - `--framework <spec>`: which framework the game installs. Leave it out for the one that made the game.
-- `--json`: print what was made as JSON.
+- `--json`: print what was made as JSON: the `folder`, the `source` language and the `files`.
 
 ### automata check
 

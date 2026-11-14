@@ -45,7 +45,7 @@ interface Flags {
 
 /** The flags each command knows. A flag a command does not know is a problem, so a typo is never ignored. */
 const FLAGS: Readonly<Record<CommandName, Flags>> = {
-  create: { switches: ['json'], values: ['framework'], lists: [] },
+  create: { switches: ['json'], values: ['framework', 'source'], lists: [] },
   check: { switches: ['fix', 'json'], values: ['only'], lists: [] },
   play: { switches: ['no-open'], values: ['port'], lists: [] },
   replay: { switches: ['accept', 'state', 'json'], values: [], lists: [] },

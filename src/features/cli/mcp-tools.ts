@@ -60,8 +60,15 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
       'Make a new game in a new folder: use it to start a game, and it answers the files it wrote.',
       z.object({
         folder: z.string().describe('The new folder, named in small letters, numbers and dashes.'),
+        source: z
+          .string()
+          .optional()
+          .describe(
+            "The language you write the game's words in: zh, es, en, pt, ja or ko. Left out, the computer's own language is used when it is one of them.",
+          ),
       }),
-      (input) => command(['create', input.folder]),
+      (input) =>
+        command(['create', input.folder, ...(input.source === undefined ? [] : ['--source', input.source])]),
     ),
     tool(
       'check',

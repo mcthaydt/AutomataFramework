@@ -98,12 +98,6 @@ export function runWords(options: {
               `${name(language)} has no word called "${key}". Check the key in content/messages/${language}.json.`,
             ),
           )
-        if (!Object.hasOwn(own, key))
-          return yield* Effect.fail(
-            new CliError(
-              `${name(source)} has no word called "${key}", so the ${name(language)} one has nothing to be read against.`,
-            ),
-          )
       }
       marks = api.markRead(content, marks, language, keys.length === 0 ? undefined : keys)
       yield* files.write(marksPath, api.writeReadMarks(marks))

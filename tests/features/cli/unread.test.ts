@@ -177,17 +177,6 @@ test('a word the language does not have is named, with the file to look in', asy
   )
 })
 
-test('a word only the translation has cannot be read against anything', async () => {
-  const es = JSON.parse(wordsGame('ko', ['es'])['content/messages/es.json'] as string) as {
-    messages: Record<string, string>
-  }
-  const extra = `${JSON.stringify({ ...es, messages: { ...es.messages, 'only.es': '¡Solo yo!' } }, null, 2)}\n`
-  const memory = korean({ 'content/messages/es.json': extra })
-  expect(await stopped(memory, { language: 'es', keys: ['only.es'] })).toBe(
-    'Korean has no word called "only.es", so the Spanish one has nothing to be read against.',
-  )
-})
-
 // What a person reads.
 const KOREAN_BLOCK = [
   'Checked against Korean (ko).',

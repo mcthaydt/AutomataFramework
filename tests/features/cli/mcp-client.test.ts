@@ -84,7 +84,7 @@ test('the official client reads the resources the server lists', { timeout: 60_0
 test('a game is made and its files checked through the real command, and a game that is not installed says so when played', {
   timeout: 120_000,
 }, async () => {
-  const made = await client.callTool({ name: 'create', arguments: { folder: 'made-game' } })
+  const made = await client.callTool({ name: 'create', arguments: { folder: 'made-game', source: 'en' } })
   expect(made.isError).toBeFalsy()
   expect(existsSync(join(work, 'made-game', 'automata.toml'))).toBe(true)
   expect(JSON.parse(textOf(made)).files).toContain('automata.toml')
@@ -107,7 +107,7 @@ test('a game is made and its files checked through the real command, and a game 
 test('words answers through the real command the same JSON automata words --json prints', {
   timeout: 120_000,
 }, async () => {
-  await client.callTool({ name: 'create', arguments: { folder: 'words-game' } })
+  await client.callTool({ name: 'create', arguments: { folder: 'words-game', source: 'en' } })
   const listed = await client.callTool({ name: 'words', arguments: { folder: 'words-game' } })
   expect(listed.isError).toBeFalsy()
   const report = JSON.parse(textOf(listed)) as { source: string; unread: { language: string; key: string }[] }

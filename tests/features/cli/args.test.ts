@@ -6,6 +6,7 @@ test('reads a command, a folder and its flags', () => {
     command: 'check',
     folder: 'my game',
     flags: { only: 'files', json: true },
+    lists: {},
     rest: [],
   })
 })
@@ -15,12 +16,13 @@ test('a flag may carry its value after an equals sign, and words after the folde
     command: 'check',
     folder: 'here',
     flags: { only: 'files' },
+    lists: {},
     rest: ['more'],
   })
 })
 
 test('no folder is no folder', () => {
-  expect(parseArgs(['replay', '--accept'])).toEqual({ command: 'replay', flags: { accept: true }, rest: [] })
+  expect(parseArgs(['replay', '--accept'])).toEqual({ command: 'replay', flags: { accept: true }, lists: {}, rest: [] })
 })
 
 test('--help and -h, alone or after a command, and the word help', () => {

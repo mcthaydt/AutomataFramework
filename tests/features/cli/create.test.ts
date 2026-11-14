@@ -4,17 +4,21 @@ import { runCheck } from '#src/features/cli/check.ts'
 import { main } from '#src/features/cli/cli.ts'
 import type { GameCode } from '#src/features/cli/ports.ts'
 import { runReplays } from '#src/features/cli/replay.ts'
+import { loadGame, READ_MARKS_FILE, translationProblems } from '#src/features/content/content.ts'
 import { FRAMEWORK_VERSION } from '#src/features/sim/sim.ts'
 import * as framework from '#src/headless.ts'
 import { gamePlugins } from '../../../template/src/headless.ts'
 import { type Memory, memoryLayer } from '../../fixtures/cli/memory.ts'
 import { templateInMemory } from '../../fixtures/cli/template.ts'
+import { templateTree } from '../../template/tree.ts'
 
 /** The memory layer with the real template where `create` reads it, and `files` besides. */
 const withTemplate = (more: Record<string, string> = {}, code?: GameCode): Memory =>
   memoryLayer({ ...templateInMemory(), ...more }, code === undefined ? {} : { code })
+/** A game made in English unless the call says another language. */
 const made = async (args: string[], memory = withTemplate()): Promise<Memory> => {
-  expect(await main(['create', ...args], memory.layer)).toBe(0)
+  const source = args.includes('--source') ? [] : ['--source', 'en']
+  expect(await main(['create', ...args, ...source], memory.layer)).toBe(0)
   return memory
 }
 const text = (memory: Memory, path: string): string => String(memory.files.get(path))
@@ -118,6 +122,7 @@ test('it ends with what to type next', async () => {
   const memory = await made(['my-game'])
   expect(memory.out).toEqual([
     'Made my-game.',
+    'Its words are written in English. To change that, change source in automata.toml.',
     '',
     'Next:',
     '  cd my-game',
@@ -130,8 +135,9 @@ test('it ends with what to type next', async () => {
 
 test('--json prints what was made', async () => {
   const memory = await made(['my-game', '--json'])
-  const printed = JSON.parse(memory.out.join('\n')) as { folder: string; files: string[] }
+  const printed = JSON.parse(memory.out.join('\n')) as { folder: string; source: string; files: string[] }
   expect(printed.folder).toBe('my-game')
+  expect(printed.source).toBe('en')
   expect(printed.files).toEqual(expect.arrayContaining(['package.json', 'automata.toml']))
 })
 
@@ -162,7 +168,7 @@ test('a folder with something in it is refused, and an empty one is used', async
   ])
   expect(taken.files.size).toBe(before)
   // The memory layer has no empty folders, so "empty" is "has no files": another name in the same place is the same.
-  expect(await main(['create', 'your-game'], taken.layer)).toBe(0)
+  expect(await main(['create', 'your-game', '--source', 'en'], taken.layer)).toBe(0)
 })
 
 test('a folder with a space in its path is quoted in the cd line, so it can be pasted', async () => {
@@ -177,4 +183,87 @@ test('a path before the name says where, and a name beside is fine', async () =>
   expect(memory.out[0]).toBe('Made first-one.')
   const beside = await made(['../crate-pusher'])
   expect(beside.out[0]).toBe('Made crate-pusher.')
+})
+
+// The language the game's own words are written in: asked for, or the machine's, and never English by default.
+const ASK =
+  "Say which language you write the game's words in: add --source with one of zh, es, en, pt, ja, ko, like automata create my-game --source es."
+const sourceLines = (memory: Memory, folder = 'my-game'): string[] =>
+  text(memory, `${folder}/automata.toml`).match(/^source = .*$/gm) ?? []
+
+test('--source ko writes source = "ko", marks made against Korean, and a game that loads and has no word missing', async () => {
+  const memory = await made(['my-game', '--source', 'ko'])
+  expect(sourceLines(memory)).toEqual(['source = "ko"'])
+  expect(text(memory, `my-game/${READ_MARKS_FILE}`)).toBe('format = 2\nsource = "ko"\n')
+  const printed = memory.out.join('\n')
+  expect(printed).toContain('Its words are written in Korean. To change that, change source in automata.toml.')
+  const report = await Effect.runPromise(
+    Effect.provide(runCheck({ folder: 'my-game', only: 'files' }), memory.layer),
+  )
+  expect(report.steps[0]?.problems).toEqual([])
+  const loaded = await loadGame(async (path) => {
+    const file = memory.files.get(`my-game/${path}`)
+    if (file === undefined) throw new Error(`${path}: no such file`)
+    return typeof file === 'string' ? file : new TextDecoder().decode(file)
+  })
+  if (!loaded.ok) throw new Error('the new game does not load')
+  expect(loaded.value.project.source).toBe('ko')
+  expect(translationProblems(loaded.value)).toEqual([])
+})
+
+test('--source en keeps the template\'s own marks file, byte for byte', async () => {
+  const memory = await made(['my-game', '--source', 'en'])
+  expect(sourceLines(memory)).toEqual(['source = "en"'])
+  expect(text(memory, `my-game/${READ_MARKS_FILE}`)).toBe(templateTree()[READ_MARKS_FILE])
+})
+
+test('the machine\'s own language is the source when none is given', async () => {
+  const memory = memoryLayer(templateInMemory(), { deviceLanguages: ['ja_JP.UTF-8'] })
+  expect(await main(['create', 'my-game'], memory.layer)).toBe(0)
+  expect(sourceLines(memory)).toEqual(['source = "ja"'])
+  expect(text(memory, `my-game/${READ_MARKS_FILE}`)).toBe('format = 2\nsource = "ja"\n')
+})
+
+test('the first of the machine\'s languages the framework has words in is used', async () => {
+  const memory = memoryLayer(templateInMemory(), { deviceLanguages: ['C.UTF-8', 'fr_FR.UTF-8', 'pt_BR.UTF-8'] })
+  expect(await main(['create', 'my-game', '--json'], memory.layer)).toBe(0)
+  expect(sourceLines(memory)).toEqual(['source = "pt"'])
+})
+
+test('with no language asked for and none the machine speaks, it stops and asks, and writes nothing', async () => {
+  for (const deviceLanguages of [[], ['C.UTF-8'], ['fr_FR.UTF-8']]) {
+    const memory = memoryLayer(templateInMemory(), { deviceLanguages })
+    const before = memory.files.size
+    expect(await main(['create', 'my-game'], memory.layer), deviceLanguages.join()).toBe(2)
+    expect(memory.err, deviceLanguages.join()).toEqual([ASK])
+    expect(memory.files.size, deviceLanguages.join()).toBe(before)
+  }
+})
+
+test('a language that is not one of the six is refused in words, and nothing is written', async () => {
+  const memory = withTemplate()
+  const before = memory.files.size
+  expect(await main(['create', 'my-game', '--source', 'fr'], memory.layer)).toBe(2)
+  expect(memory.err).toEqual([
+    '"fr" is not a language a game can be written in. Use one of zh, es, en, pt, ja, ko, like --source es.',
+  ])
+  expect(memory.files.size).toBe(before)
+})
+
+test('a language asked for beats the machine\'s', async () => {
+  const memory = memoryLayer(templateInMemory(), { deviceLanguages: ['ja_JP.UTF-8'] })
+  expect(await main(['create', 'my-game', '--source', 'es'], memory.layer)).toBe(0)
+  expect(sourceLines(memory)).toEqual(['source = "es"'])
+})
+
+test('a template with no source line, or two, is refused by name, and nothing is written', async () => {
+  const tree = templateInMemory()
+  const path = [...Object.keys(tree)].find((key) => key.endsWith('automata.toml')) ?? ''
+  for (const toml of ['name = "x"\n', `${tree[path] ?? ''}\nsource = "ko"\n`]) {
+    const memory = memoryLayer({ ...tree, [path]: toml })
+    const before = memory.files.size
+    expect(await main(['create', 'my-game', '--source', 'en'], memory.layer)).toBe(2)
+    expect(memory.err[0]).toContain('must have exactly one source line')
+    expect(memory.files.size).toBe(before)
+  }
 })

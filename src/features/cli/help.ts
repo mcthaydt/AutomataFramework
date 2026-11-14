@@ -44,8 +44,9 @@ const CREATE_HELP = `automata create <name>
 Makes a new game in a new folder called <name>: one level, a hero, a crate to push, and everything a game needs
 to be checked and played. Use small letters, numbers and dashes, like my-game.
 
-  --framework <spec>  Which framework the game installs. Leave it out for the one that made the game.
-  --json              Print what was made as JSON.`
+  --source <language>  The language you write the game's words in: zh, es, en, pt, ja or ko. Left out, your computer's own language is used when it is one of them.
+  --framework <spec>   Which framework the game installs. Leave it out for the one that made the game.
+  --json               Print what was made as JSON.`
 
 const PLAY_HELP = `automata play [folder]
 
