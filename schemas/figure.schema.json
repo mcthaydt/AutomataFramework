@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this figure, like \"hero\". It matches the file name."
+    },
+    "tile": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 64,
+      "description": "How many pixels of the picture make one tile of the game, in pixels."
+    },
+    "frame": {
+      "type": "object",
+      "properties": {
+        "w": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 128,
+          "description": "How wide one pose is, in pixels."
+        },
+        "h": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 128,
+          "description": "How tall one pose is, in pixels."
+        }
+      },
+      "required": [
+        "w",
+        "h"
+      ],
+      "additionalProperties": false,
+      "description": "The size of one pose, in pixels."
+    },
+    "outline": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "description": "An edge one pixel wide round the whole figure, as # and six digits, like #111314. Left out means no edge."
+    },
+    "paints": {
+      "minItems": 1,
+      "maxItems": 16,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this colour, for what it is for, like \"body\", \"trim\" or \"ink\"."
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "The colour, as # and six digits, like #f37f94."
+          }
+        },
+        "required": [
+          "id",
+          "color"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The colours the parts use, each named for what it is for."
+    },
+    "parts": {
+      "minItems": 1,
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this part, used once in this figure, like \"head\"."
+          },
+          "shape": {
+            "type": "string",
+            "enum": [
+              "block",
+              "round"
+            ],
+            "description": "\"block\" is a rectangle; \"round\" is an ellipse that fills the same box."
+          },
+          "x": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 128,
+            "description": "Where the part's middle is, in pixels from the left edge of the frame."
+          },
+          "y": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 128,
+            "description": "Where the part's middle is, in pixels from the top edge of the frame."
+          },
+          "w": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 128,
+            "description": "How wide the part is, in pixels."
+          },
+          "h": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 128,
+            "description": "How tall the part is, in pixels."
+          },
+          "paint": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "Which of the figure's paints it is drawn in, by id, like \"body\"."
+          },
+          "turn": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "description": "How far it is turned clockwise about its middle, in degrees. Left out means not turned."
+          }
+        },
+        "required": [
+          "id",
+          "shape",
+          "x",
+          "y",
+          "w",
+          "h",
+          "paint"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The parts, drawn first to last, so the first is at the back."
+    },
+    "poses": {
+      "minItems": 1,
+      "maxItems": 64,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this pose, used once in this figure, like \"idle\" or \"run-1\"."
+          },
+          "moves": {
+            "maxItems": 32,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "part": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                  "description": "Which part moves, by id, like \"head\"."
+                },
+                "dx": {
+                  "type": "number",
+                  "minimum": -128,
+                  "maximum": 128,
+                  "description": "How far it moves right (left if below 0), in pixels. Left out means not at all."
+                },
+                "dy": {
+                  "type": "number",
+                  "minimum": -128,
+                  "maximum": 128,
+                  "description": "How far it moves down (up if below 0), in pixels. Left out means not at all."
+                },
+                "turn": {
+                  "type": "number",
+                  "minimum": -180,
+                  "maximum": 180,
+                  "description": "How much further it turns clockwise, in degrees, added to the part's own. Left out means none."
+                }
+              },
+              "required": [
+                "part"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The parts that move in this pose. Write [] for the figure just as its parts say."
+          }
+        },
+        "required": [
+          "id",
+          "moves"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The ways the figure can stand. Each one is a picture in the figure's sheet."
+    },
+    "variants": {
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for these colours, used once in this figure, like \"two\"."
+          },
+          "paints": {
+            "minItems": 1,
+            "maxItems": 16,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                  "description": "A name for this colour, for what it is for, like \"body\", \"trim\" or \"ink\"."
+                },
+                "color": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$",
+                  "description": "The colour, as # and six digits, like #f37f94."
+                }
+              },
+              "required": [
+                "id",
+                "color"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Only the paints that change, each with the id it has in the figure and its new colour."
+          }
+        },
+        "required": [
+          "id",
+          "paints"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The same figure in other colours. Player 2's hero is drawn in the first, player 3's in the second, player 4's in the third. Left out means none."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "tile",
+    "frame",
+    "paints",
+    "parts",
+    "poses"
+  ],
+  "additionalProperties": false,
+  "title": "Figure"
+}

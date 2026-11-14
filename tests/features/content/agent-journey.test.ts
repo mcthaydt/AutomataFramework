@@ -83,7 +83,9 @@ test('an agent repaints the hero, and is told when the picture is stale and when
   ])
 
   // 3. It changes one paint of the hero, and is told the picture is older than the file.
-  const hero = JSON.parse(files['content/figures/hero.json'] ?? '') as { paints: { id: string; color: string }[] }
+  const hero = JSON.parse(files['content/figures/hero.json'] ?? '') as {
+    paints: { id: string; color: string }[]
+  }
   const trim = hero.paints.find((p) => p.id === 'trim') as { color: string }
   trim.color = '#afd472'
   files['content/figures/hero.json'] = writeContent('figure', hero as never)

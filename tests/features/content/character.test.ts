@@ -164,8 +164,12 @@ test('clips without a figure', () => {
 
 test('a clip needs poses, a speed and whether it goes round again', () => {
   const clip = { id: 'run', poses: ['run-1'], fps: 8, loop: true }
-  expect(problems('content/characters/hero.json', { ...withArt(), clips: [{ ...clip, poses: [] }] })).toHaveLength(1)
-  expect(problems('content/characters/hero.json', { ...withArt(), clips: [{ ...clip, fps: 0 }] })).toHaveLength(1)
+  expect(
+    problems('content/characters/hero.json', { ...withArt(), clips: [{ ...clip, poses: [] }] }),
+  ).toHaveLength(1)
+  expect(
+    problems('content/characters/hero.json', { ...withArt(), clips: [{ ...clip, fps: 0 }] }),
+  ).toHaveLength(1)
   expect(
     problems('content/characters/hero.json', {
       ...withArt(),

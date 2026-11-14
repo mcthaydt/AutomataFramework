@@ -6,7 +6,7 @@ import type { Diagnostic } from './diagnostics.ts'
 import type { GameContent } from './load.ts'
 import { paintBackdrop } from './paint-backdrop.ts'
 import { paintFigure } from './paint-figure.ts'
-import { type Sheet, atlasOf, backdropSheet, figureSheet } from './sheet.ts'
+import { atlasOf, backdropSheet, figureSheet, type Sheet } from './sheet.ts'
 
 /** One file a painter makes: where it goes in the game and what it holds. */
 export interface ArtFile {

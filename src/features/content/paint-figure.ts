@@ -7,7 +7,7 @@
 import type { IndexedPicture } from '../../lib/png.ts'
 import { cos, sin } from '../sim/sim.ts'
 import type { FigureFile, FigurePart, FigurePose } from './figure.ts'
-import { type Picture, createPicture, rgb } from './pixels.ts'
+import { createPicture, type Picture, rgb } from './pixels.ts'
 import { figureSheet } from './sheet.ts'
 
 /** The sine and cosine of a turn in degrees; a quarter turn is exact, so a block turned on its end has no stray edge. */

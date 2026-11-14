@@ -54,7 +54,10 @@ const layer = z.strictObject({
     .describe('How it is painted: "flat" is a band, then "hills", "mountains" or "clouds".'),
   color: colour('The colour of the layer', '#afd472'),
   height: z.number().gt(0).max(64).describe("How high it reaches, in tiles above the level's bottom edge."),
-  drift: z.number().min(0).max(1)
+  drift: z
+    .number()
+    .min(0)
+    .max(1)
     .describe(
       'How much it moves with the level: 0 stays still on the screen like far mountains, 1 moves with it.',
     ),
@@ -113,7 +116,10 @@ export const BackdropSchema: z.ZodType<BackdropFile, BackdropFile> = z
       .describe('Change this number for another painting of the same description.'),
     tile: z.int().min(4).max(64).describe('How many pixels of the picture make one tile of the game.'),
     width: z.int().min(4).max(128).describe('How many tiles wide a layer is before it repeats.'),
-    layers: z.array(layer).min(1).max(8)
+    layers: z
+      .array(layer)
+      .min(1)
+      .max(8)
       .describe(
         'The layers, back to front. Each stands on the bottom edge of the level and repeats sideways.',
       ),

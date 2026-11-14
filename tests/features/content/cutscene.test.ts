@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { writeContent } from '#src/features/content/content.ts'
-import { expectRoundTrip, gameProblems, problemsOf } from '../../fixtures/content/kind.ts'
 import { artGame } from '../../fixtures/content/art.ts'
+import { expectRoundTrip, gameProblems, problemsOf } from '../../fixtures/content/kind.ts'
 import { english, intro, storyGame } from '../../fixtures/content/story.ts'
 
 type Json = Record<string, unknown>
@@ -87,9 +87,7 @@ test('an unknown key', () =>
 test('an actor may name a clip, written right after its place and before which way it faces', () => {
   const scene = edit((v) => Object.assign((v.actors as Json[])[0] as Json, { clip: 'talk', face: 'left' }))
   expect(said(scene)).toEqual([])
-  const keys = Object.keys(
-    (JSON.parse(writeContent('cutscene', scene as never)).actors as Json[])[0] as Json,
-  )
+  const keys = Object.keys((JSON.parse(writeContent('cutscene', scene as never)).actors as Json[])[0] as Json)
   expect(keys.slice(0, 6)).toEqual(['at', 'who', 'x', 'y', 'clip', 'face'])
 })
 

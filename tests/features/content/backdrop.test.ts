@@ -68,7 +68,9 @@ test('a drift, a height and a seed out of range', () => {
   expect(said(edit((v) => Object.assign(layer(v), { height: 0 })))).toEqual([
     `${file}: layers[0].height: This must be more than 0.`,
   ])
-  expect(said(edit((v) => Object.assign(v, { seed: -1 })))).toEqual([`${file}: seed: This must be 0 or more.`])
+  expect(said(edit((v) => Object.assign(v, { seed: -1 })))).toEqual([
+    `${file}: seed: This must be 0 or more.`,
+  ])
 })
 
 test('a layer that is not a kind the painter knows', () =>

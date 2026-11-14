@@ -116,7 +116,10 @@ const move = z.strictObject({
     .max(128)
     .describe('How far it moves down (up if below 0), in pixels. Left out means not at all.')
     .optional(),
-  turn: z.number().min(-180).max(180)
+  turn: z
+    .number()
+    .min(-180)
+    .max(180)
     .describe(
       "How much further it turns clockwise, in degrees, added to the part's own. Left out means none.",
     )
@@ -231,7 +234,9 @@ export const FigureSchema: z.ZodType<FigureFile, FigureFile> = z
       .min(1)
       .max(64)
       .describe("The ways the figure can stand. Each one is a picture in the figure's sheet."),
-    variants: z.array(variant).max(8)
+    variants: z
+      .array(variant)
+      .max(8)
       .describe(
         "The same figure in other colours. Player 2's hero is drawn in the first, player 3's in the second, player 4's in the third. Left out means none.",
       )

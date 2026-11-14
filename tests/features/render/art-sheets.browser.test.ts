@@ -11,6 +11,8 @@ const SKY = '#9fd3f0'
 for (const path of Object.keys(await fullGamePictures()).filter((name) => name.endsWith('.png'))) {
   const id = path.slice(path.lastIndexOf('/') + 1, -'.png'.length)
   test(`the picture of ${id} is photographed for a person to look at`, async () => {
+    // Wide enough for the widest picture at four times its size.
+    await page.viewport(1200, 900)
     const bytes = (await fullGamePictures())[path] as Uint8Array
     const url = URL.createObjectURL(new Blob([bytes.slice()], { type: 'image/png' }))
     const holder = document.createElement('div')

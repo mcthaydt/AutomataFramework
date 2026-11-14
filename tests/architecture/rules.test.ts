@@ -286,13 +286,15 @@ test.each([
   ['a timer', 'setTimeout(() => {}, 1)'],
   ['the network', "fetch('/a')"],
 ])('the painter has %s nowhere: it is held to the pure features list too', (_what, text) =>
-  expect(one(painterFile(text))).toEqual(['sim-is-pure']))
+  expect(one(painterFile(text))).toEqual(['sim-is-pure']),
+)
 
 test('the painter imports nothing from Node', () =>
   expect(one(painterFile("import { deflateSync } from 'node:zlib'"))).toEqual(['sim-is-pure']))
 
 test.each(['pixels', 'sheet', 'art'])('%s is a painter file too', (name) =>
-  expect(one(painterFile('const x = Math.sin(1)', name))).toEqual(['painter-math']))
+  expect(one(painterFile('const x = Math.sin(1)', name))).toEqual(['painter-math']),
+)
 
 test('the PNG writer is held to the painter rule', () =>
   expect(one({ 'src/lib/png.ts': 'const x = Math.pow(2, 3)' })).toEqual(['painter-math']))

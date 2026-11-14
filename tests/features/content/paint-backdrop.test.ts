@@ -33,7 +33,8 @@ function strip(backdrop: BackdropFile, picture: IndexedPicture, id: string): num
   const rows: number[][] = []
   for (let y = 0; y < frame.h; y++) {
     const row: number[] = []
-    for (let x = 0; x < frame.w; x++) row.push(picture.pixels[(frame.y + y) * picture.width + frame.x + x] as number)
+    for (let x = 0; x < frame.w; x++)
+      row.push(picture.pixels[(frame.y + y) * picture.width + frame.x + x] as number)
     rows.push(row)
   }
   return rows

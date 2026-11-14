@@ -4,9 +4,9 @@
 // is kept (AutomataFrameworkFailed@ed8592e8, extensions/world-kit/README.md): a scene is kinds with numbers and a
 // seed, and the same seed gives the same scene.
 import type { IndexedPicture } from '../../lib/png.ts'
-import { type Rng, createRng, deriveSeed, sin } from '../sim/sim.ts'
+import { createRng, deriveSeed, type Rng, sin } from '../sim/sim.ts'
 import type { BackdropFile, BackdropLayer } from './backdrop.ts'
-import { type Picture, createPicture, rgb } from './pixels.ts'
+import { createPicture, type Picture, rgb } from './pixels.ts'
 import { backdropSheet } from './sheet.ts'
 
 const TAU = 2 * Math.PI

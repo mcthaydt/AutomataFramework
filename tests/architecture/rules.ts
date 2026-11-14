@@ -267,7 +267,8 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
           `Math.${call[1]} is not allowed in the painter: its last bit may differ between engines. Use dmath's sin and cos, or whole numbers.`,
         )
     }
-    const pure = painter || file.startsWith('src/lib/') || (feature !== undefined && PURE_FEATURES.has(feature))
+    const pure =
+      painter || file.startsWith('src/lib/') || (feature !== undefined && PURE_FEATURES.has(feature))
     if (pure) {
       for (const { pattern, what } of IMPURE) {
         if (pattern.test(source.text)) add(file, 'sim-is-pure', `${what} is not allowed on the sim side.`)

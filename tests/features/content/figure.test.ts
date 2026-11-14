@@ -113,7 +113,9 @@ test('a pose that moves one part twice', () => {
 
 test('a move that says nothing', () => {
   const nothing = edit((v) => Object.assign(pose(v, 3), { moves: [{ part: 'head' }] }))
-  expect(said(nothing)).toEqual([`${file}: poses[3].moves[0]: Say how the part moves: add "dx", "dy" or "turn".`])
+  expect(said(nothing)).toEqual([
+    `${file}: poses[3].moves[0]: Say how the part moves: add "dx", "dy" or "turn".`,
+  ])
 })
 
 test('a part whose middle is outside the frame', () => {

@@ -60,6 +60,56 @@
       "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
       "description": "What this is to the game's rules and to behaviour files, like \"crate\", \"spark\" or \"door\"."
     },
+    "figure": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "The figure it is drawn from, by id, like \"hero\". Left out means the coloured box."
+    },
+    "clips": {
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this clip, used once in this character, like \"run\"."
+          },
+          "poses": {
+            "minItems": 1,
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+            },
+            "description": "The poses of the character's figure it shows, in order, by id, like [\"run-1\", \"run-2\"]."
+          },
+          "fps": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 60,
+            "description": "How many pictures a second it shows, from 1 to 60."
+          },
+          "loop": {
+            "type": "boolean",
+            "description": "True to go round again at the end, false to hold the last picture."
+          }
+        },
+        "required": [
+          "id",
+          "poses",
+          "fps",
+          "loop"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The ways it moves, as runs of its figure's poses. \"idle\", \"run\", \"jump\", \"fall\" and \"land\" play by how it moves; any other, like \"push\" or \"talk\", plays when the game or a cutscene asks. Left out means the first pose."
+    },
     "behaviour": {
       "type": "string",
       "maxLength": 64,

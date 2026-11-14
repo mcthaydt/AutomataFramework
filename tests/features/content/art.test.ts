@@ -8,8 +8,8 @@ import {
   paintedPath,
   writeContent,
 } from '#src/features/content/content.ts'
-import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { fullGamePictures } from '../../fixtures/full-game/pictures.ts'
+import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 
 async function loadFull(overrides: Record<string, string | undefined> = {}): Promise<GameContent> {
@@ -151,7 +151,8 @@ test('no id and no message in the full game names a colour', () => {
     for (const match of text.matchAll(/"id": "([^"]*)"/g)) found.push(match[1] as string)
     if (path === 'content/messages/en.json')
       for (const match of text.matchAll(/": "([^"]*)"/g)) found.push(match[1] as string)
-    for (const text2 of found) for (const word of words(text2)) if (colours.has(word)) named.push(`${path}: ${word}`)
+    for (const text2 of found)
+      for (const word of words(text2)) if (colours.has(word)) named.push(`${path}: ${word}`)
   }
   expect(named).toEqual([])
 })
