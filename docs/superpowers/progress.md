@@ -15,6 +15,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan C (content): 2. Plan | Written, in review: twelve tasks, twelve new kinds of file and the widened character and level | `plans/2026-11-14-m2-content.md` |
 | Plan V (saves and the host port): 2. Plan | Written, in review; stage at 100%, plan V at 10% | `plans/2026-11-14-m2-saves-host.md` |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
+| Plan I (input), stage 3: plan audit | Done, 100%: 3 blocking, 12 should-fix and 5 notes, all applied to the plan; ready for stage 4 | `audits/2026-11-14-m2-input-plan-audit.md` |
 
 ### Log
 
