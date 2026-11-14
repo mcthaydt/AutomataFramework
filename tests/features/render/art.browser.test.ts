@@ -367,7 +367,7 @@ test('a hero who stands still is drawn the same while the camera eases', async (
   expect(new Set(counts).size).toBe(1)
 })
 
-test("a tile whose edge falls part way across a pixel shows nothing of the square beside it in the picture", async () => {
+test('a tile whose edge falls part way across a pixel shows nothing of the square beside it in the picture', async () => {
   // The flowers at row 5, column 2 of the full game's level have air to their left, and their square in the meadow's
   // picture has the plain grass square beside it. When the tile's left edge is between a pixel's middle and its right
   // side, an antialiased canvas colours that pixel from the pixel's middle, which is left of the tile: a texture cut from
@@ -400,9 +400,10 @@ test("a tile whose edge falls part way across a pixel shows nothing of the squar
     const pixel = (Math.floor(edge) + 0.5) / dpr
     const there = at(pixel, y)
     const air = at(pixel - 2 / dpr, y)
-    expect(near(there, (air[0] << 16) | (air[1] << 8) | air[2], 6), `at ${width} pixels wide: ${there} beside ${air}`).toBe(
-      true,
-    )
+    expect(
+      near(there, (air[0] << 16) | (air[1] << 8) | air[2], 6),
+      `at ${width} pixels wide: ${there} beside ${air}`,
+    ).toBe(true)
     renderer.destroy()
     renderer = undefined
   }

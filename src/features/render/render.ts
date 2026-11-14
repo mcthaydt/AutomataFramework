@@ -7,6 +7,13 @@ import type { Density } from './density.ts'
 import { createScene } from './scene.ts'
 import { createStage } from './stage.ts'
 
+/**
+ * How far, in tiles, the camera's aim must jump at a resync for the camera to go straight to it. A restore (watch mode
+ * between rounds) puts the heroes back where they started, far from where they were; an online game's rollback puts
+ * them back by a step or two, and should not stop the glide each time it happens.
+ */
+const JUMP = 1
+
 export { type Art, ArtError, loadArt, needsPictures, type ReadPicture } from './art.ts'
 export type { Shot } from './camera.ts'
 export { type Density, pageDensity } from './density.ts'
@@ -92,6 +99,8 @@ export async function createRenderer(options: {
   let previous: Shot | undefined
   let current: Shot | undefined
   let looking: { readonly x: number; readonly y: number; readonly zoom: number } | undefined
+  // Where the camera was going at the last step, so a resync can tell a restore from a small correction.
+  let aim: Shot | undefined
   let drawnAt = 1
   const watcher = new ResizeObserver(refit)
   watcher.observe(mount)
@@ -102,10 +111,13 @@ export async function createRenderer(options: {
       ? undefined
       : blendShot(previous ?? current, current, Math.min(1, Math.max(0, alpha || 0)))
 
-  /** Takes one camera step. The first one, and the first after a resync (a restore), go straight to the target. */
+  /**
+   * Takes one camera step. The first one goes straight to the target, and so does a resync that moves the target more
+   * than `JUMP` tiles (a restore); a resync that moves it less (an online game's rollback) keeps gliding.
+   */
   const step = (resync: boolean): void => {
     if (view === undefined && looking === undefined) {
-      previous = current = undefined
+      previous = current = aim = undefined
       return
     }
     const size = view ?? world
@@ -115,9 +127,17 @@ export async function createRenderer(options: {
       looking === undefined
         ? frameHeroes(world, size, heroes)
         : { x: looking.x, y: looking.y, w: size.w / zoom, h: size.h / zoom }
+    const jumped =
+      resync &&
+      (aim === undefined ||
+        Math.abs(target.x - aim.x) > JUMP ||
+        Math.abs(target.y - aim.y) > JUMP ||
+        Math.abs(target.w - aim.w) > JUMP ||
+        Math.abs(target.h - aim.h) > JUMP)
+    aim = target
     // A look is exact; heroes are followed with a glide.
-    const next = current === undefined || resync || looking !== undefined ? target : easeShot(current, target)
-    previous = current === undefined || resync ? next : current
+    const next = current === undefined || jumped || looking !== undefined ? target : easeShot(current, target)
+    previous = current === undefined || jumped ? next : current
     current = next
   }
 
