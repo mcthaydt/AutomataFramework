@@ -30,6 +30,7 @@
       "types": "./dist/server.d.ts",
       "import": "./dist/server.js"
     },
+    "./rapier.LICENSE": "./dist/rapier.LICENSE",
     "./schemas/*": "./schemas/*"
   },
   "packageManager": "pnpm@10.34.6",

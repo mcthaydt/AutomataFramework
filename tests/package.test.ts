@@ -38,3 +38,9 @@ test('the networking packages are dependencies at the exact versions', () => {
   expect(manifest.dependencies['@colyseus/sdk']).toBe('0.18.5')
   expect(manifest.dependencies.effect).toBe('3.22.2')
 })
+
+// Rapier's code is built into the package's own files, and its licence (Apache-2.0) asks that a copy travels with it.
+// The package exports that copy by name so a game can read it and ship it beside its own files.
+test("Rapier's licence is exported by name, from the files the package ships", () => {
+  expect(manifest.exports['./rapier.LICENSE']).toBe('./dist/rapier.LICENSE')
+})
