@@ -217,6 +217,19 @@ test("each flag's name is its own language's, and its drawing is read in that la
   }
 })
 
+test('choosing the first flag moves nothing: the flag a finger just touched stays under it', async () => {
+  const { page, close } = await open('still', '&device=fr-FR')
+  try {
+    const before = (await page.picker())?.tops
+    expect(before?.flags).toHaveLength(LANGUAGES.length)
+    await page.tapFlag('ko')
+    const after = (await page.picker())?.tops
+    expect(after).toEqual(before)
+  } finally {
+    close()
+  }
+})
+
 test('the arrow keys walk the flags and stop at the ends, and Tab onto a flag chooses it', async () => {
   const { page, close } = await open('keys', '&device=fr-FR')
   try {

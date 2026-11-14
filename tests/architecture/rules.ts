@@ -111,14 +111,19 @@ const CLI_FEATURE = 'cli'
 const CLI_ENTRY = 'src/cli.ts'
 
 /**
- * English named as a language of its own: a quoted `en`, a property `.en`, or `en-GB`. No default language: a game's
- * words, a player's language and a fallback come from the game's `source` or the player, never from English.
+ * English named as a language of its own: a quoted `en`, a property `.en`, or a full tag, `en-GB` or `en-US`. No
+ * default language: a game's words, a player's language and a fallback come from the game's `source` or the player,
+ * never from English.
  */
-const ENGLISH_BY_NAME = /(['"`])en\1|\.en\b(?!\.json)|\ben-GB\b/
-/** The two lines that may name English: the list of languages, and the format 1 marks (written before `source`). */
+const ENGLISH_BY_NAME = /(['"`])en\1|\.en\b(?!\.json)|\ben-(GB|US)\b/
+/**
+ * The three lines that may name English: the list of languages, the format 1 marks (written before `source`) and the
+ * tag a page's `lang` takes for it.
+ */
 const ENGLISH_ALLOWED: Readonly<Record<string, RegExp>> = {
   'src/features/content/messages.ts': /^export const LANGUAGES = \[[^\]]*\] as const$/m,
   'src/features/content/read-marks.ts': /^const FORMAT_1_SOURCE: Language = 'en'$/m,
+  'src/features/locale/names.ts': /^ {2}en: 'en-US',$/m,
 }
 
 interface Source {

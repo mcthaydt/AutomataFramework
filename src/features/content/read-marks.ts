@@ -122,11 +122,12 @@ export function writeReadMarks(marks: ReadMarks): string {
 }
 
 /**
- * The mark of one word as it is now: 16 hex digits from the English text and the translated one, so a word changed
- * after its read (in either language) has a different mark and is unread again with nobody saying so.
+ * The mark of one word as it is now: 16 hex digits from the text in the game's own language (`source`) and the
+ * translated one, so a word changed after its read (in either language) has a different mark and is unread again with
+ * nobody saying so.
  */
-export function readMark(english: string, translated: string): string {
-  return hex64(xxhash64(utf8(canonicalJson([english, translated]))))
+export function readMark(sourceText: string, translated: string): string {
+  return hex64(xxhash64(utf8(canonicalJson([sourceText, translated]))))
 }
 
 /** The words a native speaker is asked to read: `language`'s texts the game's own file (`source`) also has, by key. */
