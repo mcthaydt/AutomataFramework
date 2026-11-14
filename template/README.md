@@ -20,7 +20,7 @@ The game opens in your browser. Hold the left or right arrow key to move, and pr
 2. Open `content/characters/crate.json` and change its `color`.
 3. Open `src/features/hero/move.ts` and change `RUN` or `JUMP`. A bigger `JUMP` is a higher jump.
 4. Open `content/messages/en.json` and change a word. The game says it in six languages: write the same
-   key in `es.json`, `ko.json`, `ja.json`, `zh.json` and `pt.json` too, and `npm run check` names any that is missing.
+   key in the other five files of `content/messages/` too, and `npm run check` names any that is missing.
 5. Run `npm run dev` again.
 
 ## Give it a name

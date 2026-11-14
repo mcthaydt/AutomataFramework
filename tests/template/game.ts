@@ -6,6 +6,12 @@ import crate from '../../template/content/characters/crate.json?raw'
 import hero from '../../template/content/characters/hero.json?raw'
 import spark from '../../template/content/characters/spark.json?raw'
 import level1 from '../../template/content/levels/level-1.json?raw'
+import enWords from '../../template/content/messages/en.json?raw'
+import esWords from '../../template/content/messages/es.json?raw'
+import jaWords from '../../template/content/messages/ja.json?raw'
+import koWords from '../../template/content/messages/ko.json?raw'
+import ptWords from '../../template/content/messages/pt.json?raw'
+import zhWords from '../../template/content/messages/zh.json?raw'
 
 /** Every content file of the template, by its path from the game's root. */
 export const templateFiles: Readonly<Record<string, string>> = {
@@ -14,6 +20,12 @@ export const templateFiles: Readonly<Record<string, string>> = {
   'content/characters/hero.json': hero,
   'content/characters/crate.json': crate,
   'content/characters/spark.json': spark,
+  'content/messages/en.json': enWords,
+  'content/messages/es.json': esWords,
+  'content/messages/ko.json': koWords,
+  'content/messages/ja.json': jaWords,
+  'content/messages/zh.json': zhWords,
+  'content/messages/pt.json': ptWords,
 }
 
 /** A `read` over the template, as `loadGame` and the page take it. An override replaces a file. */
