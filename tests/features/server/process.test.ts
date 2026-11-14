@@ -1,13 +1,22 @@
 // The server as a process: what a host (a container, a terminal) sees of it. It starts the fixture game's server with
 // plain Node, reads its one line of output, plays in it over a real socket, and stops it with a signal.
 import { type ChildProcess, spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { createInterface } from 'node:readline'
-import { afterEach, expect, test, vi } from 'vitest'
+import { afterEach, beforeAll, expect, test, vi } from 'vitest'
+import { createGameSim } from '#src/features/level/level.ts'
+import { loadOnlineGame } from '../../fixtures/online/game.ts'
 import { headlessPlayer, until } from '../../fixtures/online/headless-player.ts'
 
 vi.setConfig({ testTimeout: 60_000 })
 
 const SERVER = new URL('../../fixtures/online/server.ts', import.meta.url).pathname
+const DIST = new URL('../../../dist/server.js', import.meta.url).pathname
+
+// The fixture server is the built package, as a game's own server file is: `pnpm build` has to have run.
+beforeAll(() => {
+  if (!existsSync(DIST)) throw new Error('dist/server.js is missing: run `pnpm build` before this test.')
+})
 
 interface Running {
   readonly child: ChildProcess
@@ -42,12 +51,21 @@ test('it prints one line when it listens, serves a game, and stops on SIGTERM', 
   expect(listening.event).toBe('listening')
   expect(Number.isInteger(listening.port) && listening.port > 0).toBe(true)
 
+  // The server is the built package (its own Rapier, on plain Node) and this sim is the source (under Vitest): the same
+  // sixty idle ticks must end on the same hash in both, which a game's own server depends on.
+  const plain = (): ReturnType<typeof createGameSim> =>
+    loadOnlineGame().then((content) => createGameSim({ content, players: [1] }))
   const player = await headlessPlayer({
     server: `ws://127.0.0.1:${listening.port}`,
     seats: 1,
     script: () => [],
+    makeSim: plain,
   })
   await until('a check from the server', () => player.checks.has(59))
+  const local = await plain()
+  for (let tick = 0; tick < 60; tick++) local.step([])
+  expect(player.checks.get(59)).toBe(local.hash())
+  local.dispose()
   player.stop()
 
   const stopped = Date.now()
