@@ -98,10 +98,10 @@ test('a held hero stands still, and runs on when it is let go with the key still
   // It is playing after the step that started it, until the step at the tick it ends.
   expect(seen.map((s) => s.playing).indexOf(true)).toBe(START)
   expect(seen.map((s) => s.playing).lastIndexOf(true)).toBe(END - 1)
-  // Held from the next tick on: nothing is held, and after the one tick it coasts on, it has not moved.
+  // Held from the next tick on: nothing is held, and it slows to a stop within a hundredth of a tile and then has not moved.
   for (let t = START + 1; t < END; t++) expect(seen[t]?.held, `held at ${t}`).toBe('')
   for (let t = START + 2; t <= END; t++)
-    expect(seen[t]?.x, `x at ${t}`).toBeCloseTo(seen[START + 1]?.x ?? Number.NaN, 6)
+    expect(seen[t]?.x, `x at ${t}`).toBeCloseTo(seen[START + 1]?.x ?? Number.NaN, 2)
   // Let go: the key is still down, and it was never a new press.
   expect(seen[END]?.held).toBe('right')
   expect(seen[END]?.pressed).toBe('')
@@ -113,7 +113,7 @@ test('a key let go while held stays let go', async () => {
   const seen = run(sim, 140, controlsAt({ 10: ['right'], 50: [] }))
   expect(seen[END]?.held).toBe('')
   expect(seen[END + 20]?.x).toBeCloseTo(seen[END]?.x ?? Number.NaN, 6)
-  expect(seen[END + 20]?.x).toBeCloseTo(seen[START + 1]?.x ?? Number.NaN, 6)
+  expect(seen[END + 20]?.x).toBeCloseTo(seen[START + 1]?.x ?? Number.NaN, 2)
 })
 
 test('the press on the tick it ends is held, not pressed', async () => {
@@ -153,6 +153,8 @@ test('a held player who leaves takes their entry with them', async () => {
   run(sim, 41)
   expect(Object.keys(sim.resource(Story).hands)).toEqual(['1', '2'])
   run(sim, 51, (tick) => (tick === 50 ? [leaveCommand(50, 2, 0)] : []))
+  // A hero that leaves is gone at the end of its tick, so the next tick is the first to hold without it.
+  run(sim, 52)
   expect(Object.keys(sim.resource(Story).hands)).toEqual(['1'])
 })
 

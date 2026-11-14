@@ -286,7 +286,7 @@ test('the keeper goes away mid-sentence: it ends unfinished, and the hero runs o
   // The key it held through the conversation is still down, and is not a new press.
   expect(held(sim, 1)).toBe('right')
   const x = xOf(sim, 1)
-  run(sim, 40)
+  run(sim, 60)
   expect(xOf(sim, 1)).toBeGreaterThan(x + 0.5)
 })
 

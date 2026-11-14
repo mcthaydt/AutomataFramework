@@ -128,9 +128,10 @@ test('two critters and two heroes: each runs from the nearer hero', async () => 
 test('a game with no behaviour has no Mind and no behaviour system', async () => {
   const sim = await createGameSim({ content: await loadFixtureGame() })
   made.push(sim)
-  expect(() => sim.spawn([[Mind, {}]])).toThrow()
   for (let i = 0; i < 60; i++) sim.step([])
   expect(sim.hash()).toBe((golden as { idleHash60: string }).idleHash60)
+  // After the hash: even a spawn that throws can use up a number, and the hash is the game as it was.
+  expect(() => sim.spawn([[Mind, {}]])).toThrow()
 })
 
 test('straight, and restored at tick 45, a critter run agrees', async () => {

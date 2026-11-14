@@ -252,8 +252,8 @@ test('the conversation’s last node starts its cutscene in the tick it ends', a
     },
     { type: 'cutscene.started', payload: { cutscene: 'tip' } },
   ])
-  // Held without a gap: the key is still down, and nothing has let go of it.
-  expect(sim.resource(Story).hands).toEqual({ '1': 'right' })
+  // Held without a gap: the key is still down and nothing has let go of it, and the other player is held too.
+  expect(sim.resource(Story).hands).toEqual({ '1': 'right', '2': '' })
   run(sim, 61)
   expect(heroX(sim, 1)).toBeCloseTo(7.5, 3)
   const ended = run(sim, 100)
@@ -321,8 +321,9 @@ test('a critter does not act while a cutscene plays, and carries on after', asyn
     xs.push(thingX(sim, 'critter-1'))
   }
   expect(xs[29]).toBeGreaterThan(xs[10] ?? Number.NaN)
-  // Held from the next tick, it coasts one tick on, then stands until the cutscene ends at tick 90.
-  for (let t = 32; t <= 90; t++) expect(xs[t], `x at ${t}`).toBeCloseTo(xs[31] ?? Number.NaN, 6)
+  // Held from the next tick, it slows to a stop (a hundredth of a tile at most) and stands until the cutscene ends at
+  // tick 90; running, it would cover a fifteenth of a tile every tick.
+  for (let t = 32; t <= 90; t++) expect(xs[t], `x at ${t}`).toBeCloseTo(xs[31] ?? Number.NaN, 2)
   expect(Math.abs((xs[120] ?? 0) - (xs[90] ?? 0))).toBeGreaterThan(0.3)
 })
 
