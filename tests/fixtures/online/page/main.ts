@@ -1,7 +1,7 @@
 // The page the online journey opens in each browser: the fixture online game on a real page, joined to a real room
 // server. It shows what the journey reads and nothing else: `#status` holds the words a person would read, and `#game`
 // carries the numbers (`data-*`). The address says where: `?server=ws://…`, `?room=<code>`, `?seats=<n>`, and
-// `?game=co-op` for the game made for four players, whose heroes come and go while it is played. `slowLine(ms)` makes
+// `?game=co-op` for the game made for four players, `?lang=es` for a page that says its status in that language, whose heroes come and go while it is played. `slowLine(ms)` makes
 // the line slow from then on: each key this page sends reaches the room that much later, so the room puts it on a later
 // tick than the one this page guessed, and the page must put its picture right.
 import { attemptsToBuildCode } from '../../strict-csp.ts'
@@ -47,7 +47,8 @@ const built = await attemptsToBuildCode(async () => {
     },
   })
   framework = await import('#src/index.ts')
-  const { onlineWords, startOnlineGame, webHost } = framework
+  const { frameworkWords, onlineWords, startOnlineGame, webHost } = framework
+  const words = frameworkWords((params.get('lang') ?? 'en') as Parameters<typeof frameworkWords>[0])
   const { fixtureControls } = await import('../../game/controls.ts')
   const { heroPlugin } = await import('../../game/hero.ts')
   const { loadCoopGame, loadOnlineGame } = await import('../game.ts')
@@ -81,12 +82,12 @@ const built = await attemptsToBuildCode(async () => {
       onCheck: (tick, hash, ok) => {
         if (ok) game.setAttribute(`data-check-${tick}`, hash)
       },
-      onStatus: (next) => show(onlineWords(next), next.state),
+      onStatus: (next) => show(onlineWords(next, words), next.state),
     })
   } catch (error) {
     const problem = (error as { problem?: string }).problem
     if (problem === undefined) show(String(error), 'failed')
-    else show(onlineWords({ state: 'ended', problem: problem as 'lost' }), 'ended')
+    else show(onlineWords({ state: 'ended', problem: problem as 'lost' }, words), 'ended')
   }
 })
 game.dataset.builtCode = JSON.stringify(built)

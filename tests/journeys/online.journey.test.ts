@@ -288,6 +288,17 @@ for (const [first, second] of PAIRS) {
   })
 }
 
+// Audit J2: the words of the room's status are the player's own, in a real browser against a real room.
+test('a player whose page is in Spanish is told in Spanish who the room waits for', async () => {
+  const one = await seatOf(PAIRS[0]?.[0] as Spec, '&lang=es')
+  await opened(one)
+  await expect.poll(() => one.data('code'), POLL).toMatch(/\S/)
+  const code = (await one.data('code')) as string
+  await expect
+    .poll(() => one.status(), POLL)
+    .toBe(`Falta 1 jugador. Comparte este código para que un amigo se una: ${code}`)
+})
+
 test('co-op: a second player joins a game that is going, and when they go their hero goes', async () => {
   const one = await seatOf(
     { engine: 'chromium', width: 1280, height: 720, touch: false },

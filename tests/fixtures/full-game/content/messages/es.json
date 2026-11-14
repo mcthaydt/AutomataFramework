@@ -2,10 +2,14 @@
   "format": 1,
   "id": "es",
   "messages": {
+    "controls.jump": "Saltar",
+    "controls.left": "Izquierda",
+    "controls.right": "Derecha",
     "hero.ask": "¿Algún consejo?",
     "hero.bye": "Hasta luego.",
     "keeper.bye": "Cuídate.",
     "keeper.hello": "¡Hola!",
-    "keeper.tip": "Empuja la caja hasta el borde."
+    "keeper.tip": "Empuja la caja hasta el borde.",
+    "level.level-1.name": "Nivel 1"
   }
 }

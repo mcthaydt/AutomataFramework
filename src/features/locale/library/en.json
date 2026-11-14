@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "id": "en",
+  "messages": {
+    "automata.join.full": "Everyone is in. This game has room for {count} players.",
+    "automata.join.no-shared": "This game's keys cannot be shared. Join with a gamepad.",
+    "automata.join.no-start.many": "This level has room for {count} players.",
+    "automata.join.no-start.one": "This level has room for one player.",
+    "automata.join.one-player-game": "This game is for one player.",
+    "automata.join.taken.gamepad": "That gamepad already has a player.",
+    "automata.join.taken.keyboard": "The keyboard is already shared.",
+    "automata.online.away.many": "Players {players} lost their connection. The game goes on.",
+    "automata.online.away.one": "Player {players} lost their connection. The game goes on.",
+    "automata.online.ended.bad-room": "That room could not be made. Check the level and the number of players.",
+    "automata.online.ended.different-version": "This game is a different version from the room. Reload the page to get the newest one, then join again.",
+    "automata.online.ended.lost": "The connection was lost and could not be got back. Start or join a room to play again.",
+    "automata.online.ended.no-room": "No room has that code. Check the code and try again.",
+    "automata.online.ended.no-server": "Could not reach the game server. Check your internet and try again.",
+    "automata.online.ended.room-full": "That room is full. Start a new room, or ask for another code.",
+    "automata.online.ended.server-full": "The server has no space for another room right now. Try again in a minute.",
+    "automata.online.reconnecting": "Connection lost. Trying to get you back in.",
+    "automata.online.waiting.many": "Waiting for {count} more players. Share this code so friends can join: {code}",
+    "automata.online.waiting.one": "Waiting for 1 more player. Share this code so a friend can join: {code}",
+    "automata.touch.label": "Touch controls"
+  }
+}

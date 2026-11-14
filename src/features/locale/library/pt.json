@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "id": "pt",
+  "messages": {
+    "automata.join.full": "Todo mundo já entrou. Este jogo tem lugar para {count} jogadores.",
+    "automata.join.no-shared": "As teclas deste jogo não podem ser divididas. Entre com um controle.",
+    "automata.join.no-start.many": "Esta fase tem lugar para {count} jogadores.",
+    "automata.join.no-start.one": "Esta fase tem lugar para um jogador.",
+    "automata.join.one-player-game": "Este jogo é para um jogador.",
+    "automata.join.taken.gamepad": "Esse controle já tem um jogador.",
+    "automata.join.taken.keyboard": "O teclado já está sendo dividido.",
+    "automata.online.away.many": "Os jogadores {players} perderam a conexão. O jogo continua.",
+    "automata.online.away.one": "O jogador {players} perdeu a conexão. O jogo continua.",
+    "automata.online.ended.bad-room": "Não foi possível criar essa sala. Confira a fase e o número de jogadores.",
+    "automata.online.ended.different-version": "Este jogo está em uma versão diferente da sala. Recarregue a página para pegar a mais nova e entre de novo.",
+    "automata.online.ended.lost": "A conexão caiu e não voltou. Crie uma sala ou entre em uma para jogar de novo.",
+    "automata.online.ended.no-room": "Nenhuma sala tem esse código. Confira o código e tente de novo.",
+    "automata.online.ended.no-server": "Não foi possível falar com o servidor do jogo. Confira sua internet e tente de novo.",
+    "automata.online.ended.room-full": "Essa sala está cheia. Crie uma sala nova ou peça outro código.",
+    "automata.online.ended.server-full": "O servidor está sem espaço para outra sala agora. Tente de novo em um minuto.",
+    "automata.online.reconnecting": "A conexão caiu. Estamos tentando colocar você de volta.",
+    "automata.online.waiting.many": "Faltam {count} jogadores. Compartilhe este código para seus amigos entrarem: {code}",
+    "automata.online.waiting.one": "Falta 1 jogador. Compartilhe este código para um amigo entrar: {code}",
+    "automata.touch.label": "Controles de toque"
+  }
+}

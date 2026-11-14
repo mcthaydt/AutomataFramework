@@ -1,6 +1,7 @@
 // The on-screen buttons: real `<button>`s in the bottom corners, one per action, shown once a finger touches the
 // screen (or at once on a touch screen). Each finger holds the button it is on; sliding off, lifting, or a touch the
 // system cancels lets go, so a hero never keeps running with nothing under the thumb.
+import type { Words } from '../../lib/message.ts'
 import type { Controls } from './controls.ts'
 
 /** What the game holds with the screen. */
@@ -13,6 +14,8 @@ export interface Touch {
   inset(): number
   /** Calls `listener` with the new room whenever the buttons show, hide or change size. Stops on `destroy`. */
   onInset(listener: (px: number) => void): void
+  /** Says every word again in other words (a new language): what is held stays held. */
+  relabel(words: Words): void
   destroy(): void
 }
 
@@ -62,7 +65,33 @@ const BUTTON_STYLE = [
 const groupStyle = (side: 'left' | 'right'): string =>
   `display:flex;gap:${GAP_PX}px;pointer-events:auto;${side === 'left' ? '' : 'margin-left:auto'}`
 
-export function createTouch(mount: HTMLElement, controls: Controls, win: Window = window): Touch {
+/** The key of the overlay's name for a screen reader, and the words used when nobody gives any. */
+const OVERLAY_KEY = 'automata.touch.label'
+const OVERLAY_WORDS = 'Touch controls'
+
+/** The overlay's name: `words`' own, else English. */
+function overlayLabel(words: Words | undefined): string {
+  const said = words?.(OVERLAY_KEY)
+  return said === undefined || said === OVERLAY_KEY ? OVERLAY_WORDS : said
+}
+
+/** A button's words: the game's `controls.<action>` when `words` has it, else the control's own label. */
+function buttonLabel(words: Words | undefined, action: string, label: string): string {
+  const key = `controls.${action}`
+  const said = words?.(key)
+  return said === undefined || said === key ? label : said
+}
+
+/**
+ * The buttons for `controls`. `words` (a `Locale`'s) gives the overlay's name and each button's words in the player's
+ * language, and `relabel` says them again when it changes; `win` is only for tests.
+ */
+export function createTouch(
+  mount: HTMLElement,
+  controls: Controls,
+  options: { readonly win?: Window; readonly words?: Words } = {},
+): Touch {
+  const win = options.win ?? window
   // The buttons sit against the mount's own corners, so the mount has to be what they are positioned against.
   const restorePosition = getComputedStyle(mount).position === 'static' ? '' : undefined
   if (restorePosition !== undefined) mount.style.position = 'relative'
@@ -70,7 +99,7 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
   const overlay = document.createElement('div')
   overlay.className = 'automata-touch'
   overlay.setAttribute('role', 'group')
-  overlay.setAttribute('aria-label', 'Touch controls')
+  overlay.setAttribute('aria-label', overlayLabel(options.words))
   // Notches and the home bar: stay inside the safe area on every edge.
   overlay.style.cssText = [
     'position:absolute',
@@ -126,8 +155,9 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
     // Hooks for a game's stylesheet: which button this is.
     b.className = 'automata-touch-button'
     b.dataset.action = action
-    b.textContent = control.label
-    b.setAttribute('aria-label', control.label)
+    const said = buttonLabel(options.words, action, control.label)
+    b.textContent = said
+    b.setAttribute('aria-label', said)
     b.setAttribute('aria-pressed', 'false')
     b.style.cssText = BUTTON_STYLE
     // A finger lands on the button, or slides onto it from the next one still touching the glass (a mouse only counts
@@ -181,6 +211,14 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
     inset,
     onInset(listener) {
       insetListeners.add(listener)
+    },
+    relabel(words) {
+      overlay.setAttribute('aria-label', overlayLabel(words))
+      for (const [action, b] of buttons) {
+        const said = buttonLabel(words, action, controls[action]?.label ?? action)
+        b.textContent = said
+        b.setAttribute('aria-label', said)
+      }
     },
     destroy() {
       insetWatcher.disconnect()

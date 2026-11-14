@@ -17,6 +17,7 @@ export const LAYERS = [
   'audio',
   'saves',
   'host',
+  'locale',
   'web',
   'game',
   'cli',

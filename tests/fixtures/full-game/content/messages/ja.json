@@ -2,10 +2,14 @@
   "format": 1,
   "id": "ja",
   "messages": {
+    "controls.jump": "ジャンプ",
+    "controls.left": "左",
+    "controls.right": "右",
     "hero.ask": "ヒントはありますか？",
     "hero.bye": "またね。",
     "keeper.bye": "お気をつけて。",
     "keeper.hello": "こんにちは！",
-    "keeper.tip": "箱を棚の上に押してみて。"
+    "keeper.tip": "箱を棚の上に押してみて。",
+    "level.level-1.name": "レベル1"
   }
 }
