@@ -4,6 +4,29 @@
 
 ## `.`
 
+### `Act` (type)
+
+```ts
+type Act = {
+    readonly act: 'stay';
+} | {
+    readonly act: 'wander';
+    readonly speed: number;
+    readonly turnEvery: number;
+} | {
+    readonly act: 'flee';
+    readonly from: string;
+    readonly speed: number;
+} | {
+    readonly act: 'follow';
+    readonly to: string;
+    readonly speed: number;
+} | {
+    readonly act: 'jump';
+    readonly speed: number;
+};
+```
+
 ### `ACTION_NAME` (const)
 
 ```ts
@@ -20,6 +43,32 @@ function atan(x0: number): number;
 
 ```ts
 function atan2(y: number, x: number): number;
+```
+
+### `BehaviourFile` (interface)
+
+```ts
+interface BehaviourFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly rules: readonly BehaviourRule[];
+}
+```
+
+### `BehaviourRule` (interface)
+
+```ts
+interface BehaviourRule {
+    readonly id: string;
+    readonly when: readonly Sense[];
+    readonly do: Act;
+}
+```
+
+### `BehaviourSchema` (const)
+
+```ts
+const BehaviourSchema: z.ZodType<BehaviourFile, BehaviourFile>;
 ```
 
 ### `Body` (const)
@@ -66,6 +115,8 @@ interface Character {
     };
     readonly color: string;
     readonly upright: boolean;
+    readonly kind?: string | undefined;
+    readonly behaviour?: string | undefined;
 }
 ```
 
@@ -186,6 +237,7 @@ const CONTENT_TYPES: {
     readonly level: ContentTypeInfo<Level, Level>;
     readonly character: ContentTypeInfo<Character, CharacterInput>;
     readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
+    readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
 };
 ```
 
@@ -517,6 +569,7 @@ interface GameContent {
     readonly levels: Readonly<Record<string, Level>>;
     readonly characters: Readonly<Record<string, Character>>;
     readonly tilesets?: Readonly<Record<string, TilesetFile>>;
+    readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
 }
 ```
 
@@ -1001,6 +1054,24 @@ interface Scene {
 }
 ```
 
+### `Sense` (type)
+
+```ts
+type Sense = {
+    readonly sense: 'near';
+    readonly kind: string;
+    readonly within: number;
+} | {
+    readonly sense: 'far';
+    readonly kind: string;
+    readonly beyond: number;
+} | {
+    readonly sense: 'blocked';
+} | {
+    readonly sense: 'on-ground';
+};
+```
+
 ### `ShapeKind` (const)
 
 ```ts
@@ -1428,6 +1499,29 @@ function writeReplay(replay: Replay): string;
 
 ## `./headless`
 
+### `Act` (type)
+
+```ts
+type Act = {
+    readonly act: 'stay';
+} | {
+    readonly act: 'wander';
+    readonly speed: number;
+    readonly turnEvery: number;
+} | {
+    readonly act: 'flee';
+    readonly from: string;
+    readonly speed: number;
+} | {
+    readonly act: 'follow';
+    readonly to: string;
+    readonly speed: number;
+} | {
+    readonly act: 'jump';
+    readonly speed: number;
+};
+```
+
 ### `ACTION_NAME` (const)
 
 ```ts
@@ -1444,6 +1538,32 @@ function atan(x0: number): number;
 
 ```ts
 function atan2(y: number, x: number): number;
+```
+
+### `BehaviourFile` (interface)
+
+```ts
+interface BehaviourFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly rules: readonly BehaviourRule[];
+}
+```
+
+### `BehaviourRule` (interface)
+
+```ts
+interface BehaviourRule {
+    readonly id: string;
+    readonly when: readonly Sense[];
+    readonly do: Act;
+}
+```
+
+### `BehaviourSchema` (const)
+
+```ts
+const BehaviourSchema: z.ZodType<BehaviourFile, BehaviourFile>;
 ```
 
 ### `Body` (const)
@@ -1490,6 +1610,8 @@ interface Character {
     };
     readonly color: string;
     readonly upright: boolean;
+    readonly kind?: string | undefined;
+    readonly behaviour?: string | undefined;
 }
 ```
 
@@ -1604,6 +1726,7 @@ const CONTENT_TYPES: {
     readonly level: ContentTypeInfo<Level, Level>;
     readonly character: ContentTypeInfo<Character, CharacterInput>;
     readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
+    readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
 };
 ```
 
@@ -1847,6 +1970,7 @@ interface GameContent {
     readonly levels: Readonly<Record<string, Level>>;
     readonly characters: Readonly<Record<string, Character>>;
     readonly tilesets?: Readonly<Record<string, TilesetFile>>;
+    readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
 }
 ```
 
@@ -2270,6 +2394,24 @@ interface Rng {
 
 ```ts
 type RngState = [number, number, number, number];
+```
+
+### `Sense` (type)
+
+```ts
+type Sense = {
+    readonly sense: 'near';
+    readonly kind: string;
+    readonly within: number;
+} | {
+    readonly sense: 'far';
+    readonly kind: string;
+    readonly beyond: number;
+} | {
+    readonly sense: 'blocked';
+} | {
+    readonly sense: 'on-ground';
+};
 ```
 
 ### `ShapeKind` (const)

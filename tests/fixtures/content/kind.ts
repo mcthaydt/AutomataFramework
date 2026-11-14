@@ -39,3 +39,40 @@ export async function gameProblems(files: Readonly<Record<string, string | undef
   const loaded = await loadGame(readFiles(files))
   return loaded.ok ? [] : loaded.diagnostics.map(formatDiagnostic)
 }
+
+/** The fixture game's files (`tests/fixtures/game`), and a way to add files to it, for tests that need a whole game. */
+export interface GameFile {
+  readonly type: ContentType
+  readonly path: string
+  /** The file's text, or `undefined` to list it with no file there. */
+  readonly text: string | undefined
+}
+
+/**
+ * The files of a game: `base` (the fixture game's files), each of `extra` listed in `automata.toml` and written, and
+ * `replace` over any path. A test then reads it with `gameProblems`.
+ */
+export function gameFiles(
+  base: Readonly<Record<string, string>>,
+  extra: readonly GameFile[],
+  replace: Readonly<Record<string, string | undefined>> = {},
+): Record<string, string | undefined> {
+  const listed = extra.map((f) => `\n[[content]]\ntype = "${f.type}"\npath = "${f.path}"\n`).join('')
+  const files: Record<string, string | undefined> = {
+    ...base,
+    'automata.toml': `${base['automata.toml'] ?? ''}${listed}`,
+  }
+  for (const f of extra) files[f.path] = f.text
+  return { ...files, ...replace }
+}
+
+/** A file's JSON with one change made, written the way `writeContent` writes it. */
+export function changed(
+  type: ContentType,
+  text: string | undefined,
+  change: (v: Record<string, unknown>) => void,
+): string {
+  const value = JSON.parse(text ?? '') as Record<string, unknown>
+  change(value)
+  return writeContent(type, value as never)
+}

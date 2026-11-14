@@ -1,4 +1,5 @@
 import { deepFreeze } from '../../lib/deep-freeze.ts'
+import type { BehaviourFile } from './behaviour.ts'
 import type { Character } from './character.ts'
 import { CONTENT_TYPES, type ContentType } from './content-types.ts'
 import type { Diagnostic } from './diagnostics.ts'
@@ -21,6 +22,7 @@ export interface GameContent {
   readonly levels: Readonly<Record<string, Level>>
   readonly characters: Readonly<Record<string, Character>>
   readonly tilesets?: Readonly<Record<string, TilesetFile>>
+  readonly behaviours?: Readonly<Record<string, BehaviourFile>>
 }
 
 /** What a file's id has to be: its name without `.json`. */

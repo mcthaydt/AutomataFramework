@@ -1,0 +1,264 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this behaviour, like \"critter\". It matches the file name."
+    },
+    "rules": {
+      "minItems": 1,
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this rule, like \"run-away\"."
+          },
+          "when": {
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "sense": {
+                      "type": "string",
+                      "const": "near",
+                      "description": "Looks for the nearest thing of a kind."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                      "description": "The kind of thing to look for, like \"hero\"."
+                    },
+                    "within": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "maximum": 64,
+                      "description": "It fits when that thing is closer than this, in tiles."
+                    }
+                  },
+                  "required": [
+                    "sense",
+                    "kind",
+                    "within"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "sense": {
+                      "type": "string",
+                      "const": "far",
+                      "description": "Looks for the nearest thing of a kind."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                      "description": "The kind of thing to look for, like \"hero\"."
+                    },
+                    "beyond": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "maximum": 64,
+                      "description": "It fits when that thing is farther away than this, in tiles."
+                    }
+                  },
+                  "required": [
+                    "sense",
+                    "kind",
+                    "beyond"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "sense": {
+                      "type": "string",
+                      "const": "blocked",
+                      "description": "Fits when something is in the way ahead."
+                    }
+                  },
+                  "required": [
+                    "sense"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "sense": {
+                      "type": "string",
+                      "const": "on-ground",
+                      "description": "Fits when the character stands on something."
+                    }
+                  },
+                  "required": [
+                    "sense"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "description": "What must all be true for this rule. An empty list always fits, and belongs on the last rule."
+          },
+          "do": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "act": {
+                    "type": "string",
+                    "const": "stay",
+                    "description": "Stands still."
+                  }
+                },
+                "required": [
+                  "act"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "act": {
+                    "type": "string",
+                    "const": "wander",
+                    "description": "Walks one way, and turns around now and then."
+                  },
+                  "speed": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 32,
+                    "description": "How fast, in tiles a second."
+                  },
+                  "turnEvery": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3600,
+                    "description": "How long it walks before it turns around, in ticks. 60 ticks is one second."
+                  }
+                },
+                "required": [
+                  "act",
+                  "speed",
+                  "turnEvery"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "act": {
+                    "type": "string",
+                    "const": "flee",
+                    "description": "Runs away from the nearest thing of a kind."
+                  },
+                  "from": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                    "description": "The kind of thing to run away from, like \"hero\"."
+                  },
+                  "speed": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 32,
+                    "description": "How fast, in tiles a second."
+                  }
+                },
+                "required": [
+                  "act",
+                  "from",
+                  "speed"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "act": {
+                    "type": "string",
+                    "const": "follow",
+                    "description": "Walks toward the nearest thing of a kind."
+                  },
+                  "to": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                    "description": "The kind of thing to walk toward, like \"hero\"."
+                  },
+                  "speed": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 32,
+                    "description": "How fast, in tiles a second."
+                  }
+                },
+                "required": [
+                  "act",
+                  "to",
+                  "speed"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "act": {
+                    "type": "string",
+                    "const": "jump",
+                    "description": "Jumps."
+                  },
+                  "speed": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 32,
+                    "description": "How fast, in tiles a second."
+                  }
+                },
+                "required": [
+                  "act",
+                  "speed"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "description": "What the character does."
+          }
+        },
+        "required": [
+          "id",
+          "when",
+          "do"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The rules, first to last. Each tick the first rule whose \"when\" all holds is followed."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "rules"
+  ],
+  "additionalProperties": false,
+  "title": "Behaviour"
+}

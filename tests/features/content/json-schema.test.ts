@@ -24,7 +24,16 @@ test('the JSON Schema of a level names every field, each with a description', ()
 test('the JSON Schema of a character names every field, each with a description', () => {
   const schema = jsonSchemaFor('character') as Described
   expect(schema.title).toBe('Character')
-  expect(Object.keys(schema.properties)).toEqual(['format', 'id', 'body', 'size', 'color', 'upright'])
+  expect(Object.keys(schema.properties)).toEqual([
+    'format',
+    'id',
+    'body',
+    'size',
+    'color',
+    'upright',
+    'kind',
+    'behaviour',
+  ])
   for (const [name, field] of Object.entries(schema.properties)) {
     expect(field.description, `${name} has a description`).toMatch(/\w{4,}/)
   }
@@ -46,3 +55,6 @@ function expectSchema(type: ContentType, title: string, fields: string[]): void 
 
 test('the JSON Schema of a tileset', () =>
   expectSchema('tileset', 'Tileset', ['format', 'id', 'image', 'tileSize', 'columns', 'tiles']))
+
+test('the JSON Schema of a behaviour', () =>
+  expectSchema('behaviour', 'Behaviour', ['format', 'id', 'rules']))

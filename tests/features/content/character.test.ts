@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { formatDiagnostic, parseContent } from '#src/features/content/content.ts'
+import { formatDiagnostic, parseContent, writeContent } from '#src/features/content/content.ts'
 
 const hero = () => ({
   format: 1,
@@ -50,4 +50,35 @@ test('a missing field says what to write', () =>
 test('an unknown key', () =>
   expect(problems('content/characters/hero.json', { ...hero(), speed: 3 })).toEqual([
     'content/characters/hero.json: speed: This is not something a character has. Remove it or check the spelling.',
+  ]))
+
+test('a character may say what kind of thing it is and which behaviour decides what it does', () => {
+  const critter = { ...crate(), id: 'critter', kind: 'critter', behaviour: 'critter' }
+  const parsed = parseContent('character', JSON.stringify(critter), 'content/characters/critter.json')
+  expect(parsed.ok && parsed.value).toEqual({ ...critter, upright: false })
+  expect(Object.keys(JSON.parse(writeContent('character', critter as never)))).toEqual([
+    'format',
+    'id',
+    'body',
+    'size',
+    'color',
+    'upright',
+    'kind',
+    'behaviour',
+  ])
+})
+
+test('a character with neither is written as it was before, byte for byte', () =>
+  expect(Object.keys(JSON.parse(writeContent('character', crate() as never)))).toEqual([
+    'format',
+    'id',
+    'body',
+    'size',
+    'color',
+    'upright',
+  ]))
+
+test('a kind that is not an id', () =>
+  expect(problems('content/characters/hero.json', { ...hero(), kind: 'Big Crate' })).toEqual([
+    'content/characters/hero.json: kind: Use lower-case words joined by dashes, like "level-1".',
   ]))

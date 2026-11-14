@@ -1,6 +1,13 @@
 // The content feature: level and character files, read into values with plain problems and written one way.
 // Nothing here touches a file; callers hand in text and take text back.
 
+export {
+  type Act,
+  type BehaviourFile,
+  type BehaviourRule,
+  BehaviourSchema,
+  type Sense,
+} from './behaviour.ts'
 export { type Character, type CharacterInput, CharacterSchema } from './character.ts'
 export { CONTENT_TYPES, type ContentType, type ContentValue } from './content-types.ts'
 export { type Diagnostic, formatDiagnostic } from './diagnostics.ts'
