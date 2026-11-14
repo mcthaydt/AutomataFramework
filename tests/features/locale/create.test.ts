@@ -180,7 +180,7 @@ test('say fills a message as words does', async () => {
 
 // Plan L's implementation audit, M2: the locale asks the host for two things only, as the plan's contract says, so a
 // tool in Node (an editor's preview, an agent's script) gives it those two and no page, store or quit button.
-test('a host of only its language and the device's languages is enough', async () => {
+test("a host of only its language and the device's languages is enough", async () => {
   const content = await full()
   const settings = await openSettings({ game: GAME, store: memoryStore() })
   const locale = createLocale({

@@ -105,7 +105,10 @@ test('a refused change is said in the words the input has now', () => {
   })
   english.destroy()
   const made = make(said({ 'automata.rebind.reserved.key': '{input} es para los menús.' }))
-  expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({ ok: false, message: 'Escape es para los menús.' })
+  expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({
+    ok: false,
+    message: 'Escape es para los menús.',
+  })
   // Words that do not have the sentence leave it in English.
   made.relabel(said({}))
   expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({
@@ -113,5 +116,8 @@ test('a refused change is said in the words the input has now', () => {
     message: "Escape is kept for the game's menus. Pick another key.",
   })
   made.relabel(said({ 'automata.rebind.reserved.key': '{input}はメニュー用です。' }))
-  expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({ ok: false, message: 'Escapeはメニュー用です。' })
+  expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({
+    ok: false,
+    message: 'Escapeはメニュー用です。',
+  })
 })
