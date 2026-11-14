@@ -1,9 +1,9 @@
 import { expect, test } from 'vitest'
 import {
-  type GameContent,
   artFiles,
   artProblems,
   formatDiagnostic,
+  type GameContent,
   loadGame,
   paintedPath,
   writeContent,

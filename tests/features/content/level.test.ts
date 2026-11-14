@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { formatDiagnostic, parseContent, writeContent } from '#src/features/content/content.ts'
-import { BACKDROP_PATH, artGame, valleyBackdrop } from '../../fixtures/content/art.ts'
+import { artGame, BACKDROP_PATH, valleyBackdrop } from '../../fixtures/content/art.ts'
 import { exampleLevel } from '../../fixtures/content/example-level.ts'
 import { changed, expectRoundTrip, gameFiles, gameProblems } from '../../fixtures/content/kind.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'

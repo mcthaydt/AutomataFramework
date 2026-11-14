@@ -48,10 +48,7 @@ export interface TileBox {
  * differ, like a ledge, keeps its joins, and a level in `#` and `.` keeps one box a row: only a level with a tileset
  * is spawned from boxes, so the games already recorded play as they did.
  */
-export function tileBoxes(
-  tiles: readonly string[],
-  isSolid?: (letter: string) => boolean,
-): TileBox[] {
+export function tileBoxes(tiles: readonly string[], isSolid?: (letter: string) => boolean): TileBox[] {
   const boxes: { row: number; col: number; w: number; h: number }[] = []
   for (const run of tileRuns(tiles, isSolid)) {
     const above = boxes.find((b) => b.col === run.col && b.w === run.length && b.row + b.h === run.row)

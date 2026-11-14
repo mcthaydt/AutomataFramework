@@ -6,7 +6,7 @@ export { JoinCommand, joinCommand, joinPlugin, LeaveCommand, leaveCommand, playe
 export { levelPlugin } from './plugin.ts'
 export { simContent } from './sim-content.ts'
 export { LevelError, spawnLevel } from './spawn-level.ts'
+export { Sprite, setClip, setFacing, spritesPlugin } from './sprite.ts'
 export { levelSize, type TileBox, type TileRun, tileBoxes, tileRuns } from './tile-runs.ts'
-export { setClip, setFacing, Sprite, spritesPlugin } from './sprite.ts'
 export { type Touch, touchEvent, touchPlugin } from './touch.ts'
 export { touchKinds, usesJoints, usesSprites } from './uses.ts'

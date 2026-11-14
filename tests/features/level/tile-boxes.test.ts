@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from 'vitest'
 import { writeContent } from '#src/features/content/content.ts'
-import { createGameSim, levelSize, Look, Thing, tileBoxes, tileRuns } from '#src/features/level/level.ts'
+import { createGameSim, Look, levelSize, Thing, tileBoxes, tileRuns } from '#src/features/level/level.ts'
 import { Body } from '#src/features/physics/physics.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'

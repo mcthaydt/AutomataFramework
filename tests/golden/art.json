@@ -1,3 +1,13 @@
 {
-  "png:noise-64": "0ddd9cedaafcce5d"
+  "png:noise-64": "0ddd9cedaafcce5d",
+  "content/figures/hero.png": "a4338916b5fa8ca0",
+  "content/figures/hero.atlas.json": "3db908ef77b8eb3b",
+  "content/figures/keeper.png": "5445902407db9de9",
+  "content/figures/keeper.atlas.json": "74e1b24733b7f63e",
+  "content/figures/meadow.png": "4414a1e86d0464d4",
+  "content/figures/meadow.atlas.json": "178e13140d26dfff",
+  "content/figures/tree.png": "77b3f5d583aa54b1",
+  "content/figures/tree.atlas.json": "a16e352fad905963",
+  "content/backdrops/valley.png": "3a5e68b61be41e4f",
+  "content/backdrops/valley.atlas.json": "3ca3e0fb3f7301bf"
 }

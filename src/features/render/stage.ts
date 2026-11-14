@@ -1,9 +1,10 @@
-// The only file that talks to Pixi. `pixi.js/unsafe-eval` swaps Pixi's generated functions for static ones, so the
+// One of the two files that talk to Pixi (the other, `art.ts`, makes the textures). `pixi.js/unsafe-eval` swaps Pixi's generated functions for static ones, so the
 // game runs under the strict CSPs of itch and Wavedash, and the texture loader checks image support on the main
 // thread: its worker probe fetches a `data:` URL, which those CSPs refuse.
 import 'pixi.js/unsafe-eval'
-import { Application, Container, Graphics, loadTextures } from 'pixi.js'
+import { Application, Container, Graphics, loadTextures, Sprite as PixiSprite } from 'pixi.js'
 import { SKY_COLOR } from '../level/level.ts'
+import type { Art } from './art.ts'
 import { fitWorld } from './fit.ts'
 import type { RopeLine, View } from './scene.ts'
 
@@ -44,17 +45,29 @@ export interface Stage {
   destroy(): void
 }
 
-/** One box on the stage, and the look it was last drawn with so a box is only redrawn when its look changes. */
+/**
+ * One thing on the stage: a box (the shape), or a figure (the container holds its picture). It keeps the look it was last
+ * drawn with so it is only redrawn when its look changes.
+ */
 interface Drawn {
-  readonly shape: Graphics
+  readonly box: Graphics
+  readonly figure: Container
+  readonly picture: PixiSprite
   look: string
 }
+
+/** The key of a box in the world, so a ground box the tiles replace can be told from the rest. */
+const boxKey = (x: number, y: number, w: number, h: number): string => `${x}|${y}|${w}|${h}`
 
 /**
  * Starts Pixi (WebGL) on a new canvas. The sky colour (the level's, or the framework's light blue) fills the canvas, so the bars beside a world that does not
  * fill it are sky too. Pixi's own ticker is off: the game's loop decides when to draw.
  */
-export async function createStage(world: { w: number; h: number }, sky: number = SKY_COLOR): Promise<Stage> {
+export async function createStage(
+  world: { w: number; h: number },
+  sky: number = SKY_COLOR,
+  art?: Art,
+): Promise<Stage> {
   const app = new Application()
   await app.init({
     width: 1,
@@ -71,11 +84,30 @@ export async function createStage(world: { w: number; h: number }, sky: number =
   // The canvas is as big as its mount; its drawing buffer is set to match by `resize`.
   canvas.style.cssText = 'display:block;width:100%;height:100%'
   const root = new Container()
-  // The ropes and pins sit over the boxes, so they have a layer of their own with the same fit.
+  // Back to front: boxes, the level's tiles, then the figures. The ropes and pins sit over all of them, so they have a
+  // layer of their own with the same fit.
+  const boxLayer = new Container()
+  const tileLayer = new Container()
+  const figureLayer = new Container()
+  root.addChild(boxLayer, tileLayer, figureLayer)
   const linkLayer = new Container()
   const linkShape = new Graphics()
   linkLayer.addChild(linkShape)
   app.stage.addChild(root, linkLayer)
+  // The tiles are placed once: the level's tiles do not move. When they are drawn, the boxes that make the same ground
+  // are not.
+  for (const tile of art?.tiles ?? []) {
+    const square = new PixiSprite({ texture: tile.texture })
+    square.position.set(tile.col, tile.row)
+    square.width = 1
+    square.height = 1
+    tileLayer.addChild(square)
+  }
+  const replaced = new Set(
+    (art?.tiles.length ?? 0) > 0
+      ? (art?.ground ?? []).map((b) => boxKey(b.col + b.w / 2, b.row + b.h / 2, b.w, b.h))
+      : [],
+  )
   const drawn = new Map<number, Drawn>()
   let box = { w: 0, h: 0 }
   // Room kept clear at the bottom of the box (the touch buttons). The sky still fills the whole canvas.
@@ -93,30 +125,57 @@ export async function createStage(world: { w: number; h: number }, sky: number =
     linkLayer.position.set(fit.left, fit.top)
     const live = new Set<number>()
     for (const v of views) {
+      // A ground box the tiles are drawn over is not drawn itself.
+      if (v.rotation === 0 && replaced.has(boxKey(v.x, v.y, v.w, v.h))) continue
       live.add(v.sid)
       let item = drawn.get(v.sid)
       if (item === undefined) {
-        item = { shape: new Graphics(), look: '' }
-        root.addChild(item.shape)
+        const picture = new PixiSprite()
+        picture.anchor.set(0.5, 1)
+        const figure = new Container()
+        figure.addChild(picture)
+        item = { box: new Graphics(), figure, picture, look: '' }
+        boxLayer.addChild(item.box)
+        figureLayer.addChild(item.figure)
         drawn.set(v.sid, item)
       }
-      // The edge is one screen pixel wide whatever the scale, so it is `1 / scale` tiles; the scale is part of the
-      // look because a refit changes it.
-      const look = `${v.w}|${v.h}|${v.color}|${fit.scale}`
-      if (item.look !== look) {
-        item.shape
-          .clear()
-          .rect(-v.w / 2, -v.h / 2, v.w, v.h)
-          .fill(v.color)
-          .stroke({ width: 1 / fit.scale, color: OUTLINE_COLOR, alignment: 1 })
-        item.look = look
+      // A thing with a figure whose picture is loaded is that picture, standing on the bottom of its box; any other thing
+      // is its box.
+      const shown = v.sprite === undefined ? undefined : art?.figure(v.sprite.character, v.sprite.pose, v.sprite.player)
+      const target = shown === undefined ? item.box : item.figure
+      item.box.visible = shown === undefined
+      item.figure.visible = shown !== undefined
+      if (shown !== undefined && v.sprite !== undefined) {
+        const look = `${v.sprite.character}|${v.sprite.pose}|${v.sprite.player}`
+        if (item.look !== look) {
+          item.picture.texture = shown.texture
+          item.look = look
+        }
+        item.picture.position.set(0, v.h / 2)
+        item.picture.scale.set(
+          (v.sprite.face < 0 ? -shown.w : shown.w) / shown.texture.frame.width,
+          shown.h / shown.texture.frame.height,
+        )
+      } else {
+        // The edge is one screen pixel wide whatever the scale, so it is `1 / scale` tiles; the scale is part of the
+        // look because a refit changes it.
+        const look = `${v.w}|${v.h}|${v.color}|${fit.scale}`
+        if (item.look !== look) {
+          item.box
+            .clear()
+            .rect(-v.w / 2, -v.h / 2, v.w, v.h)
+            .fill(v.color)
+            .stroke({ width: 1 / fit.scale, color: OUTLINE_COLOR, alignment: 1 })
+          item.look = look
+        }
       }
-      item.shape.position.set(v.x, v.y)
-      item.shape.rotation = v.rotation
+      target.position.set(v.x, v.y)
+      target.rotation = v.rotation
     }
     for (const [sid, item] of drawn) {
       if (live.has(sid)) continue
-      item.shape.destroy()
+      item.box.destroy()
+      item.figure.destroy({ children: true })
       drawn.delete(sid)
     }
     linkShape.clear()
@@ -156,6 +215,7 @@ export async function createStage(world: { w: number; h: number }, sky: number =
       destroyed = true
       drawn.clear()
       app.destroy({ removeView: true }, { children: true })
+      art?.destroy()
     },
   }
 }

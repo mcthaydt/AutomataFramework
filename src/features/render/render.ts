@@ -1,11 +1,13 @@
 // The render feature's entry: the scene drawn from the sim's deltas with Pixi. The scene and the fit are plain
 // functions of numbers; only `createRenderer` needs a page.
 import type { RenderDelta } from '../sim/sim.ts'
+import type { Art } from './art.ts'
 import { createScene } from './scene.ts'
 import { createStage } from './stage.ts'
 
+export { type Art, ArtError, loadArt, needsPictures, type ReadPicture } from './art.ts'
 export { type Fit, fitWorld } from './fit.ts'
-export { createScene, type RopeLine, type Scene, type View } from './scene.ts'
+export { createScene, type RopeLine, type Scene, type View, type ViewSprite } from './scene.ts'
 
 /** What `createRenderer` gives back. */
 export interface Renderer {
@@ -33,10 +35,15 @@ export async function createRenderer(options: {
   world: { w: number; h: number }
   /** The colour behind the level, 0xrrggbb. Left out, it is the framework's own light blue. */
   sky?: number
+  /**
+   * The level's pictures, from `loadArt`. A thing with a figure is drawn as its picture and the level's tiles as theirs.
+   * Left out, every thing is a box. The renderer frees them when it is destroyed.
+   */
+  art?: Art
 }): Promise<Renderer> {
-  const { mount, world, sky } = options
+  const { mount, world, sky, art } = options
   const scene = createScene()
-  const stage = await createStage(world, sky)
+  const stage = await createStage(world, sky, art)
   mount.append(stage.canvas)
   // `stage.resize` puts the last picture back, so a turned phone is never left blank, even when the game is paused.
   const refit = (): void => stage.resize(mount.clientWidth, mount.clientHeight)

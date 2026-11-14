@@ -20,7 +20,8 @@ test.each([
   [0, 0, 'jump', 4, false, 'idle'],
   [0.005, 0.2, 'idle', 4, false, 'idle'],
 ])('moving at %d, %d from %s, still for %d', (vx, vy, now, still, landing, expected) =>
-  expect(motionClip(vx, vy, now, still, landing)).toBe(expected))
+  expect(motionClip(vx, vy, now, still, landing)).toBe(expected),
+)
 
 test('a character without the clip asked for plays the nearest it has', () => {
   expect(pickClip([idle, run], 'push')?.id).toBe('run')

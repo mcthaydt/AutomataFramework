@@ -13,8 +13,8 @@ import { definePlugin, defineSystem, type Sim } from '#src/features/sim/sim.ts'
 import { coopFiles } from '../../fixtures/game/co-op.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
-import { loadSpriteGame, spriteGameFiles } from '../../fixtures/game/sprite-game.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
+import { loadSpriteGame, spriteGameFiles } from '../../fixtures/game/sprite-game.ts'
 
 const made: Sim[] = []
 afterEach(() => {
@@ -180,7 +180,10 @@ test('setFacing turns a thing that is standing still', async () => {
 test('a hero who joins gets a sprite with their number', async () => {
   const files = spriteGameFiles()
   const content = await loadSpriteGame({
-    'automata.toml': (files['automata.toml'] ?? '').replace('hero = "hero"\n', 'hero = "hero"\nplayers = 4\n'),
+    'automata.toml': (files['automata.toml'] ?? '').replace(
+      'hero = "hero"\n',
+      'hero = "hero"\nplayers = 4\n',
+    ),
     'content/levels/level-1.json': coopFiles['content/levels/level-1.json'],
   })
   const sim = await make(content)
@@ -192,7 +195,11 @@ test('a hero who joins gets a sprite with their number', async () => {
 
 test('a snapshot restored mid-clip carries on from the same pose', async () => {
   const script = (tick: number) =>
-    tick === 10 ? [controlsCommand(tick, 1, 0, ['right'])] : tick === 40 ? [controlsCommand(tick, 1, 1, ['jump', 'right'])] : []
+    tick === 10
+      ? [controlsCommand(tick, 1, 0, ['right'])]
+      : tick === 40
+        ? [controlsCommand(tick, 1, 1, ['jump', 'right'])]
+        : []
   const whole = await make(await loadSpriteGame())
   for (let i = 0; i < 43; i++) whole.step(script(whole.tick))
   const first = await make(await loadSpriteGame())

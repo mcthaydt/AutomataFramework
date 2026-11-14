@@ -106,12 +106,25 @@ test('a turn of 30 degrees paints the same pixels as recorded', () => {
     parts: [{ id: 'body', shape: 'block', x: 5, y: 5, w: 6, h: 2, paint: 'body', turn: 30 }],
   })
   expect(rows(paintFigure(slanted)).join('/')).toBe(
-    ['..........', '..........', '..........', '..11......', '..1111....', '....1111..', '......11..', '..........', '..........', '..........'].join('/'),
+    [
+      '..........',
+      '..........',
+      '..........',
+      '..11......',
+      '..1111....',
+      '....1111..',
+      '......11..',
+      '..........',
+      '..........',
+      '..........',
+    ].join('/'),
   )
 })
 
 test('a turn counted a whole round is the same as no turn', () => {
-  const round = dotWith({ parts: [{ id: 'body', shape: 'block', x: 2, y: 2, w: 2, h: 2, paint: 'body', turn: 180 }] })
+  const round = dotWith({
+    parts: [{ id: 'body', shape: 'block', x: 2, y: 2, w: 2, h: 2, paint: 'body', turn: 180 }],
+  })
   expect(rows(paintFigure(round))).toEqual(rows(paintFigure(dot())))
 })
 
@@ -152,7 +165,12 @@ test('the same figure paints the same pixels twice', () => {
 })
 
 test('a pose that is a clear frame is still a frame', () => {
-  const empty = dotWith({ poses: [{ id: 'idle', moves: [{ part: 'body', dx: 100 }] }, { id: 'back', moves: [] }] })
+  const empty = dotWith({
+    poses: [
+      { id: 'idle', moves: [{ part: 'body', dx: 100 }] },
+      { id: 'back', moves: [] },
+    ],
+  })
   const picture = paintFigure(empty)
   expect([picture.width, picture.height]).toEqual([8, 4])
 })

@@ -4,8 +4,8 @@
 import { afterEach, expect, test } from 'vitest'
 import { createGameSim } from '#src/features/level/level.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
-import { expectGolden, runGolden } from '../../fixtures/golden.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
+import { expectGolden, runGolden } from '../../fixtures/golden.ts'
 import { loadSpriteGame } from '../../fixtures/game/sprite-game.ts'
 import { PUSH_TICKS, pushScript } from '../../fixtures/game/script.ts'
 import golden from '../../golden/sprites.json' with { type: 'json' }

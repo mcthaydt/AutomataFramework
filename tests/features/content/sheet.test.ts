@@ -53,6 +53,10 @@ test('a backdrop’s picture is one strip per layer, top to bottom', () => {
 })
 
 test('a layer that is a fraction of a pixel tall is one pixel tall', () => {
-  const thin = { ...valley, tile: 4, layers: [{ ...valley.layers[0], height: 0.1 }] } as unknown as BackdropFile
+  const thin = {
+    ...valley,
+    tile: 4,
+    layers: [{ ...valley.layers[0], height: 0.1 }],
+  } as unknown as BackdropFile
   expect(backdropSheet(thin).frames[0]).toMatchObject({ h: 1 })
 })
