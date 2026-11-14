@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this tuning, like \"hero\". It matches the file name."
+    },
+    "numbers": {
+      "minItems": 1,
+      "maxItems": 64,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this number, like \"run-speed\"."
+          },
+          "about": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "What the number does, in plain words."
+          },
+          "value": {
+            "type": "number",
+            "description": "How much it is now."
+          },
+          "min": {
+            "type": "number",
+            "description": "The least it can be."
+          },
+          "max": {
+            "type": "number",
+            "description": "The most it can be."
+          },
+          "step": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "How far one nudge moves it."
+          }
+        },
+        "required": [
+          "id",
+          "about",
+          "value",
+          "min",
+          "max",
+          "step"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The numbers a person can change, each with its range."
+    },
+    "controls": {
+      "description": "The game's controls: keys, gamepad buttons and the touch button of each action. Left out means none.",
+      "maxItems": 16,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "The name of the action, like \"jump\"."
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 12,
+            "description": "The word on the touch button, up to 12 letters."
+          },
+          "keys": {
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "description": "A key name."
+            },
+            "description": "The keys that do it, as KeyboardEvent.code names, like [\"Space\"]."
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "left",
+              "right"
+            ],
+            "description": "Which thumb the touch button sits under."
+          },
+          "pad": {
+            "description": "Gamepad buttons and stick directions that do it. Names: south, east, west, north, l1, r1, l2, r2, select, start, l3, r3, dpad-up, dpad-down, dpad-left, dpad-right, home, left-stick-up, left-stick-down, left-stick-left, left-stick-right, right-stick-up, right-stick-down, right-stick-left, right-stick-right.",
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "A gamepad button or stick direction."
+            }
+          },
+          "shared": {
+            "description": "The keys for two people on one keyboard: the first person’s list, then the second’s.",
+            "type": "array",
+            "prefixItems": [
+              {
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "A key name."
+                },
+                "description": "The first person's keys."
+              },
+              {
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "A key name."
+                },
+                "description": "The second person's keys."
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "required": [
+          "action",
+          "label",
+          "keys",
+          "side"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "numbers"
+  ],
+  "additionalProperties": false,
+  "title": "Tuning"
+}

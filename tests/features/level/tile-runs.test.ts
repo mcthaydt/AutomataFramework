@@ -24,3 +24,9 @@ test('levelSize is the width of a row and the number of rows', async () => {
     h: 9,
   })
 })
+
+test('which letters are solid is the caller’s to say', () =>
+  expect(tileRuns(['G~G', '...'], (letter) => letter === 'G')).toEqual([
+    { row: 0, col: 0, length: 1 },
+    { row: 0, col: 2, length: 1 },
+  ]))

@@ -8,16 +8,21 @@ export interface TileRun {
 }
 
 /**
- * Each unbroken horizontal run of `#`, rows top to bottom and runs left to right. A run becomes one collider, so a
- * floor of sixteen tiles is one box and not sixteen.
+ * Each unbroken horizontal run of solid tiles, rows top to bottom and runs left to right. A run becomes one collider,
+ * so a floor of sixteen tiles is one box and not sixteen. `isSolid` says which letters are solid (a level with a
+ * tileset takes that from it); left out, `#` is.
  */
-export function tileRuns(tiles: readonly string[]): TileRun[] {
+export function tileRuns(
+  tiles: readonly string[],
+  isSolid: (letter: string) => boolean = (letter) => letter === '#',
+): TileRun[] {
   const runs: TileRun[] = []
   tiles.forEach((text, row) => {
     let start = -1
     // One step past the end closes a run that reaches the edge.
     for (let col = 0; col <= text.length; col++) {
-      const solid = text[col] === '#'
+      const letter = text[col]
+      const solid = letter !== undefined && isSolid(letter)
       if (solid && start < 0) start = col
       else if (!solid && start >= 0) {
         runs.push({ row, col: start, length: col - start })

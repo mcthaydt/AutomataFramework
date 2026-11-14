@@ -59,7 +59,19 @@ export function spawnLevel(
   }
 
   const ground = groundOf(level)
-  for (const run of tileRuns(level.tiles))
+  // A level with a tileset takes "solid" from it; the content a game was loaded from always has the tileset, so it is
+  // only a hand-built content that can be missing it, and then nothing is guessed.
+  let isSolid: ((letter: string) => boolean) | undefined
+  if (level.tileset !== undefined) {
+    const tileset = content.tilesets?.[level.tileset]
+    if (tileset === undefined)
+      throw new LevelError(
+        `Level "${levelId}" uses the tileset "${level.tileset}", and this game has no such tileset.`,
+      )
+    const letters = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
+    isSolid = (letter) => letters.has(letter)
+  }
+  for (const run of tileRuns(level.tiles, isSolid))
     sim.spawn([
       transform({ x: run.col + run.length / 2, y: run.row + 0.5 }),
       body(BodyKind.fixed),

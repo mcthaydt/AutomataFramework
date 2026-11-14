@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "id": "crate-shake",
+  "on": "crate.landed",
+  "shake": {
+    "strength": 0.1,
+    "ticks": 10
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "id": "critter",
+  "rules": [
+    {
+      "id": "run-away",
+      "when": [
+        {
+          "sense": "near",
+          "kind": "hero",
+          "within": 3
+        }
+      ],
+      "do": {
+        "act": "flee",
+        "from": "hero",
+        "speed": 4
+      }
+    },
+    {
+      "id": "wander",
+      "when": [],
+      "do": {
+        "act": "wander",
+        "speed": 1,
+        "turnEvery": 90
+      }
+    }
+  ]
+}

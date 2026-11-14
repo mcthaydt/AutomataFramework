@@ -1,0 +1,96 @@
+format = 1
+name = "Full Game"
+start = "level-1"
+hero = "hero"
+
+[[content]]
+type = "level"
+path = "content/levels/level-1.json"
+
+[[content]]
+type = "tileset"
+path = "content/tilesets/meadow.json"
+
+[[content]]
+type = "character"
+path = "content/characters/hero.json"
+
+[[content]]
+type = "character"
+path = "content/characters/crate.json"
+
+[[content]]
+type = "character"
+path = "content/characters/keeper.json"
+
+[[content]]
+type = "character"
+path = "content/characters/critter.json"
+
+[[content]]
+type = "behaviour"
+path = "content/behaviours/critter.json"
+
+[[content]]
+type = "tuning"
+path = "content/tunings/hero.json"
+
+[[content]]
+type = "feel"
+path = "content/feels/land-dust.json"
+
+[[content]]
+type = "feel"
+path = "content/feels/crate-shake.json"
+
+[[content]]
+type = "feel"
+path = "content/feels/spark-freeze.json"
+
+[[content]]
+type = "sound"
+path = "content/sounds/jump.json"
+
+[[content]]
+type = "sound"
+path = "content/sounds/land.json"
+
+[[content]]
+type = "music"
+path = "content/music/meadow.json"
+
+[[content]]
+type = "cues"
+path = "content/cues/cues.json"
+
+[[content]]
+type = "conversation"
+path = "content/conversations/keeper.json"
+
+[[content]]
+type = "cutscene"
+path = "content/cutscenes/level-1-intro.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/en.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/es.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/ko.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/ja.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/zh.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/pt.json"

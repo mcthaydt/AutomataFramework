@@ -1,14 +1,11 @@
 import type { z } from 'zod'
-import { CONTENT_TYPES, type ContentType } from './content-types.ts'
+import { CONTENT_TYPES, type ContentType, type ContentValue } from './content-types.ts'
 import { type Diagnostic, toDiagnostics, type Voice } from './diagnostics.ts'
 
 /** What reading a file gives: the value, or every problem found in it. */
 export type Parsed<T> =
   | { readonly ok: true; readonly value: T }
   | { readonly ok: false; readonly diagnostics: readonly Diagnostic[] }
-
-/** The value a content type reads into. */
-export type ContentValue<T extends ContentType> = z.output<(typeof CONTENT_TYPES)[T]['schema']>
 
 /**
  * Checks data already read out of a file (JSON or TOML) against a schema. Never throws: whatever goes wrong is
@@ -30,6 +27,11 @@ export function checkData<T>(schema: z.ZodType, data: unknown, file: string, voi
   }
 }
 
+/** An editor on Windows may start a file with a byte-order mark (U+FEFF); it is not part of the content. */
+export function withoutMark(text: string): string {
+  return text.startsWith('\uFEFF') ? text.slice(1) : text
+}
+
 /**
  * Reads the text of a content file. Never throws: text that is not JSON, or JSON that is not a valid file,
  * comes back as plain problems naming `file` and the place, all of them at once.
@@ -42,7 +44,7 @@ export function parseContent<T extends ContentType>(
   const entry = CONTENT_TYPES[type]
   let data: unknown
   try {
-    data = JSON.parse(text)
+    data = JSON.parse(withoutMark(text))
   } catch {
     return {
       ok: false,

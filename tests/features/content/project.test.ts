@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { formatDiagnostic, PROJECT_FILE, parseProject } from '#src/features/content/content.ts'
+import { CONTENT_TYPES, formatDiagnostic, PROJECT_FILE, parseProject } from '#src/features/content/content.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const FIXTURE = fixtureFiles[PROJECT_FILE] ?? ''
@@ -51,7 +51,7 @@ test('a name that is empty', () =>
 
 test('a content type that does not exist', () =>
   expect(problems(FIXTURE.replace('type = "level"', 'type = "leve"'))).toEqual([
-    'automata.toml: content[0].type: This must be one of: level, character.',
+    `automata.toml: content[0].type: This must be one of: ${Object.keys(CONTENT_TYPES).join(', ')}.`,
   ]))
 
 test('a path that leaves the game, or is not a .json file', () => {
