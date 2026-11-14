@@ -1,7 +1,7 @@
 // Conversations in the sim: one opens for a player and a thing, then moves only on that player's commands, holds
-// that player's hands while it is open, and ends, finished or cut short. When a conversation opens on its own, by a hero
-// walking up, waits on the Owner's answer to plan T's question (see the todo tests); a game's own code opens one with
-// `startConversation`, which these tests use.
+// that player's hands while it is open, and ends, finished or cut short. A conversation opens on its own when a hero
+// walks up to a thing whose character has one, until it has been heard to the end once (the Owner's answer to plan T's
+// first question); a game's own code opens one with `startConversation`, which most of these tests use.
 import { afterEach, expect, test } from 'vitest'
 import { controlsCommand, Player } from '#src/features/commands/commands.ts'
 import type { GameContent } from '#src/features/content/content.ts'
@@ -318,7 +318,89 @@ test('a hero never counts as a thing to talk to, even if its character names a c
   expect(sim.resource(Story).met).toEqual([])
 })
 
-test.todo('walking up to the keeper opens the conversation: waits for the Owner’s answer on when it opens')
-test.todo(
-  'it opens again only when the Owner’s rule says so, and two heroes arriving together: the lower player talks',
-)
+/** Steps until a conversation is open (and no more than `limit` ticks), sending `send(tick)`; returns what was said. */
+function walkUp(sim: Sim, send: (tick: number) => Command[], limit = 300): ReturnType<typeof storyEventsOf> {
+  while (sim.resource(Story).talk === null && sim.tick < limit) {
+    const found = storyEventsOf(sim.step(send(sim.tick)))
+    if (found.length > 0) return found
+  }
+  return []
+}
+/** Player 1 holds right from tick 10, and so walks up to the keeper at 10.5; player 2 stands behind. */
+const walk = at({ 10: [controlsCommand(10, 1, 0, ['right'])] })
+/** Player 1 in front, so walking right pushes nobody. */
+const inFront = { starts: [4.5, 2.5] }
+
+test('walking up to the keeper opens the conversation, once, and not again after it has been heard to the end', async () => {
+  const sim = await simOf(await keeperGame(inFront))
+  // The first tick the hero's middle is within 1.5 tiles of the keeper's.
+  expect(walkUp(sim, walk)).toEqual([
+    { type: 'conversation.started', payload: { conversation: 'keeper', player: 1, thing: 'keeper' } },
+    {
+      type: 'conversation.said',
+      payload: { conversation: 'keeper', node: 'hello', line: 'keeper.hello', speaker: 'keeper' },
+    },
+  ])
+  expect(Math.abs(xOf(sim, 1) - 10.5)).toBeLessThanOrEqual(1.5 + 0.1)
+  const opened = sim.tick
+  // Standing there with it open opens nothing more; a pick and a Next hear it to the end.
+  const answers = at({
+    [opened + 5]: [chooseCommand(opened + 5, 1, 0, 0)],
+    [opened + 10]: [nextCommand(opened + 10, 1, 0)],
+  })
+  const heard = run(sim, opened + 20, answers)
+  expect(Object.values(heard).flat().map((e) => e.type)).toEqual([
+    'conversation.chosen',
+    'conversation.said',
+    'conversation.ended',
+  ])
+  expect(sim.resource(Story).ended).toEqual({ keeper: 'tip' })
+  // Heard once: the hero may stand there, walk away and come back, and the keeper stays quiet.
+  const left = at({ [opened + 20]: [controlsCommand(opened + 20, 1, 1, ['left'])] })
+  run(sim, opened + 90, left)
+  expect(xOf(sim, 1)).toBeLessThan(10.5 - 1.5 - 0.5)
+  const back = at({ [opened + 90]: [controlsCommand(opened + 90, 1, 2, ['right'])] })
+  expect(run(sim, opened + 220, back)).toEqual({})
+  expect(Math.abs(xOf(sim, 1) - 10.5)).toBeLessThanOrEqual(1.5 + 0.1)
+})
+
+test('a hero who walks up while a conversation is open waits, and is spoken to when it is cut short', async () => {
+  // Player 1 walks up from the left and talks; player 2 comes in from the right, later.
+  const sim = await simOf(await keeperGame({ starts: [4.5, 14] }))
+  const send = at({
+    10: [controlsCommand(10, 1, 0, ['right'])],
+    70: [controlsCommand(70, 2, 0, ['left'])],
+  })
+  expect(walkUp(sim, send).map((e) => e.type)).toEqual(['conversation.started', 'conversation.said'])
+  expect(sim.resource(Story).talk?.player).toBe(1)
+  const opened = sim.tick
+  // Player 2 gets within reach during the talk and is not spoken to; the talker goes, and that ends it unfinished.
+  run(sim, opened + 60, send)
+  expect(sim.resource(Story).talk?.player).toBe(1)
+  expect(Math.abs(xOf(sim, 2) - 10.5)).toBeLessThanOrEqual(1.5 + 0.1)
+  const events = run(sim, opened + 62, at({ [opened + 60]: [leaveCommand(opened + 60, 1, 1)] }))
+  const heard = Object.values(events).flat()
+  expect(heard.map((e) => e.type)).toEqual([
+    'conversation.ended',
+    'conversation.started',
+    'conversation.said',
+  ])
+  expect(heard[0]?.payload).toMatchObject({ player: 1, finished: false })
+  expect(heard[1]?.payload).toMatchObject({ conversation: 'keeper', player: 2, thing: 'keeper' })
+  expect(sim.resource(Story).ended).toEqual({})
+})
+
+test('two heroes who arrive on the same tick: the lower-numbered player talks', async () => {
+  const sim = await simOf(await keeperGame({ starts: [9.4, 9.9] }))
+  expect(walkUp(sim, () => []).map((e) => e.type)).toEqual(['conversation.started', 'conversation.said'])
+  expect(sim.resource(Story).talk?.player).toBe(1)
+})
+
+test('a hero who stops short of the keeper opens nothing', async () => {
+  const sim = await simOf(await keeperGame(inFront))
+  const send = at({ 10: [controlsCommand(10, 1, 0, ['right'])], 60: [controlsCommand(60, 1, 1, [])] })
+  expect(run(sim, 140, send)).toEqual({})
+  expect(sim.resource(Story).talk).toBeNull()
+  expect(xOf(sim, 1)).toBeLessThan(10.5 - 1.5)
+  expect(sim.resource(Story).met).toEqual([])
+})

@@ -276,16 +276,27 @@ const stageSystem: SystemDef = defineSystem({
   },
 })
 
+/** A thing a hero can talk to, and a hero within `TALK_REACH` of it. */
+interface Pair {
+  /** The thing's sid. */
+  readonly thing: number
+  readonly player: number
+  /** The conversation its character opens. */
+  readonly conversation: string
+  /** `'<thing sid>:<player>'`, how `Story.met` keeps it. */
+  readonly key: string
+}
+
 /**
- * Who is within reach of whom, as `'<thing sid>:<player>'`: every thing that is not a player whose character has a
- * conversation the game has, with every hero whose middle is `TALK_REACH` or less from its middle.
+ * Who is within reach of whom: every thing that is not a player whose character has a conversation the game has, with
+ * every hero whose middle is `TALK_REACH` or less from its middle. Lowest thing sid first, then lowest player.
  */
-function pairsInReach(ctx: SimContext, content: GameContent): string[] {
+function pairsInReach(ctx: SimContext, content: GameContent): Pair[] {
   const heroes = ctx
     .query(Player, Transform)
     .map((e) => ({ number: e.get(Player).number, at: e.get(Transform) }))
     .sort((a, b) => a.number - b.number)
-  const pairs: string[] = []
+  const pairs: Pair[] = []
   for (const thing of ctx.query(Thing, Transform)) {
     if (thing.has(Player)) continue
     const conversation = content.characters[thing.get(Thing).character]?.conversation
@@ -293,10 +304,11 @@ function pairsInReach(ctx: SimContext, content: GameContent): string[] {
     const there = thing.get(Transform)
     for (const hero of heroes) {
       const near = hypot(hero.at.x - there.x, hero.at.y - there.y) <= TALK_REACH
-      if (near) pairs.push(`${thing.sid}:${hero.number}`)
+      if (!near) continue
+      pairs.push({ thing: thing.sid, player: hero.number, conversation, key: `${thing.sid}:${hero.number}` })
     }
   }
-  return pairs.sort()
+  return pairs.sort((a, b) => a.thing - b.thing || a.player - b.player)
 }
 
 const meetSystem: SystemDef = defineSystem({
@@ -305,13 +317,21 @@ const meetSystem: SystemDef = defineSystem({
   run(ctx) {
     const story = ctx.resource(Story)
     const reach = pairsInReach(ctx, ctx.content as GameContent)
-    // A pair that comes within reach while a conversation or a cutscene is on is kept out, so it counts as new on the
-    // first tick nothing is on.
+    // A thing talks when a hero walks up to it: the first pair that was not within reach last tick, if nothing is on,
+    // opens its conversation, and a conversation that has been heard to the end once is not opened this way again (a
+    // game's own code can still open it). Cut short, it is not heard, so the next walk-up opens it again.
     const busy = story.talk !== null || story.scene !== null
-    // Opening a conversation when a pair meets waits on the Owner's answer to plan T's question (when it opens: on
-    // every walk-up, until it has been finished once, or only with a Talk button), so nothing opens here yet.
-    const met = busy ? reach.filter((pair) => story.met.includes(pair)) : reach
-    if (met.length !== story.met.length || met.some((pair, i) => pair !== story.met[i])) story.met = met
+    const arrived = busy
+      ? undefined
+      : reach.find((pair) => !story.met.includes(pair.key) && story.ended[pair.conversation] === undefined)
+    const opened =
+      arrived !== undefined && startConversation(ctx, arrived.conversation, arrived.player, arrived.thing)
+    // A pair that comes within reach while a conversation or a cutscene is on is kept out, so it counts as new on the
+    // first tick nothing is on; the one that opened this tick is in, so it does not open again when it ends.
+    const kept =
+      busy || opened ? reach.filter((pair) => story.met.includes(pair.key) || pair === arrived) : reach
+    const met = kept.map((pair) => pair.key).sort()
+    if (met.length !== story.met.length || met.some((key, i) => key !== story.met[i])) story.met = met
   },
 })
 
