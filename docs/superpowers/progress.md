@@ -18,6 +18,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan C (content): 5. Implementation audit | Written, in review; stage at 100%, plan C at 80%: no critical, two important (a cutscene's `clip` is unchecked and belongs to plan A; the duplicate-id sentence reads "a cues"), eight minor; nine fixes for stage 6; no Owner question | `audits/2026-11-14-m2-content-implementation-audit.md` |
 | Plan V (saves and the host port): 2. Plan | Done, 100% (merged, PR 32) | `plans/2026-11-14-m2-saves-host.md` |
 | Plan V: 3. Plan audit | Written, in review; stage at 100%, plan V at 20%. Ten findings, all applied to the plan | `audits/2026-11-14-m2-saves-host-plan-audit.md` |
+| Plan V: 4. Execution | Done, 100% (all eight tasks, PR 40, green in Node and in Chromium, WebKit and Firefox, and the packed package; stage 5, the implementation audit, is next) | `plans/2026-11-14-m2-saves-host.md`, ticked |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
 | Plan I (input), stage 3: plan audit | Done, 100%: 3 blocking, 12 should-fix and 5 notes, all applied to the plan; ready for stage 4 | `audits/2026-11-14-m2-input-plan-audit.md` |
 | Plan I (input), stage 4: execution | Done, 100%: all ten tasks built, merged (PR 42, `2aa020b`), green on `eb7e32e` | `plans/2026-11-14-m2-input.md` |
@@ -30,6 +31,11 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 
 ### Log
 
+- 2026-11-14: plan V executed (PR 40). `saves` (slots, one settings record, versions and upgrades), the grown `Host`
+  port with `testHost`, and the `web` feature (`webHost` with seams, saves in `localStorage`). Two things differ from
+  the plan, both recorded in the plan's Task 7 and the PR: a frame's page is loaded with a `<script src>` (WebKit
+  never settled an inline `import()` in a `srcdoc` frame), and every task that changed the public surface also
+  regenerated `docs/api/framework.api.md`, since CI checks it on every pull request.
 - 2026-11-14: plan I's implementation audit. Nothing critical. I1: removing a player and adding one before the
   game steps answers "yes" and adds nobody; I2: `addPlayer` cannot see a claim made through `game.input.claim`, so one
   gamepad can drive two heroes. Ten minor fixes (touch through a pause, triggers, a reason, `ListedPad`, and tests)

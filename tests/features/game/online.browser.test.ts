@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page } from 'vitest/browser'
 import { Player } from '#src/features/commands/commands.ts'
 import { type OnlineGame, startOnlineGame } from '#src/features/game/online.ts'
-import type { Host } from '#src/features/host/host.ts'
+import { type TestHost, testHost } from '#src/features/host/host.ts'
 import {
   type ClientMessage,
   createRoomEngine,
@@ -51,25 +51,6 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-function fakeHost(): Host & { hide(): void; show(): void } {
-  let visible = true
-  const listeners = new Set<(visible: boolean) => void>()
-  const set = (next: boolean): void => {
-    visible = next
-    for (const l of listeners) l(next)
-  }
-  return {
-    target: 'web',
-    visible: () => visible,
-    onVisibility(listener) {
-      listeners.add(listener)
-      return () => listeners.delete(listener)
-    },
-    hide: () => set(false),
-    show: () => set(true),
-  }
-}
-
 interface Scripted {
   readonly session: Session
   hold(...actions: string[]): void
@@ -80,7 +61,7 @@ interface Setup {
   readonly engineSim: Sim
   readonly wire: Wire
   readonly frames: ReturnType<typeof manualFrames>
-  readonly host: ReturnType<typeof fakeHost>
+  readonly host: TestHost
   readonly statuses: OnlineStatus[]
   readonly sent: ClientMessage[]
   /** The room's own copy of the page's join: a line on the wire, a session on it, and the room's answer delivered. */
@@ -97,7 +78,7 @@ async function room(): Promise<Setup> {
   const engine = createRoomEngine({ sim: engineSim, level: 'level-1', seats: 2 })
   const wire = createWire(engine)
   const frames = manualFrames()
-  const host = fakeHost()
+  const host = testHost()
   const statuses: OnlineStatus[] = []
   const sent: ClientMessage[] = []
   const others: { session: Session; pending: { type: string; payload: unknown }[] }[] = []

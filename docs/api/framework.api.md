@@ -528,6 +528,16 @@ function createRoomEngine(setup: {
 }): RoomEngine;
 ```
 
+### `createSaves` (function)
+
+```ts
+function createSaves<S>(options: {
+    readonly def: SaveDef<S>;
+    readonly store: SaveStore;
+    readonly now?: () => number;
+}): Saves<S>;
+```
+
 ### `createScene` (function)
 
 ```ts
@@ -658,6 +668,12 @@ function definePlugin(spec: {
 
 ```ts
 function defineResource<Z extends z.ZodType>(id: string, schema: Z, init: () => z.input<Z>): ResourceDef<Z>;
+```
+
+### `defineSave` (function)
+
+```ts
+function defineSave<S>(def: SaveDef<S>): SaveDef<S>;
 ```
 
 ### `defineSystem` (function)
@@ -942,10 +958,22 @@ const HASH_EVERY = 60;
 
 ```ts
 interface Host {
-    readonly target: 'web';
+    readonly target: HostTarget;
     visible(): boolean;
     onVisibility(listener: (visible: boolean) => void): () => void;
+    readonly store: SaveStore;
+    language(): string | undefined;
+    deviceLanguages(): readonly string[];
+    openLink(url: string): Promise<LinkAnswer>;
+    readonly canQuit: boolean;
+    quit(): Promise<boolean>;
 }
+```
+
+### `HostTarget` (type)
+
+```ts
+type HostTarget = 'web' | 'test';
 ```
 
 ### `hypot` (function)
@@ -1028,6 +1056,12 @@ const InputSettingsSchema: z.ZodType<InputSettings, InputSettings>;
 
 ```ts
 function isHeld(player: EntityRef, action: string): boolean;
+```
+
+### `isOpenableLink` (function)
+
+```ts
+function isOpenableLink(url: string): boolean;
 ```
 
 ### `JoinAnswer` (type)
@@ -1115,6 +1149,12 @@ type Language = (typeof LANGUAGES)[number];
 
 ```ts
 const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+```
+
+### `latestSlot` (function)
+
+```ts
+function latestSlot(states: readonly SlotState[]): number | undefined;
 ```
 
 ### `LEAD_DECAY_TICKS` (const)
@@ -1214,6 +1254,12 @@ interface Link {
 }
 ```
 
+### `LinkAnswer` (type)
+
+```ts
+type LinkAnswer = 'opened' | 'blocked' | 'refused';
+```
+
 ### `Listed` (interface)
 
 ```ts
@@ -1238,6 +1284,20 @@ interface ListedPad {
 
 ```ts
 function loadGame(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>>;
+```
+
+### `LoadResult` (type)
+
+```ts
+type LoadResult<S> = {
+    readonly ok: true;
+    readonly data: S | null;
+    readonly savedAt?: number;
+    readonly label?: string;
+} | {
+    readonly ok: false;
+    readonly problem: SaveProblem;
+};
 ```
 
 ### `log` (function)
@@ -1316,6 +1376,21 @@ const MAX_STEPS = 4096;
 
 ```ts
 const MAX_STEPS_PER_FRAME = 5;
+```
+
+### `MemoryStore` (interface)
+
+```ts
+interface MemoryStore extends SaveStore {
+    refuse(refusal: StoreRefusal | undefined): void;
+    entries(): Readonly<Record<string, string>>;
+}
+```
+
+### `memoryStore` (function)
+
+```ts
+function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
 ```
 
 ### `MenuPress` (type)
@@ -1471,6 +1546,15 @@ type OnlineStatus = {
 
 ```ts
 function onlineWords(status: OnlineStatus): string;
+```
+
+### `openSettings` (function)
+
+```ts
+function openSettings(options: {
+    readonly game: string;
+    readonly store: SaveStore;
+}): Promise<Settings>;
 ```
 
 ### `PAD_BUTTONS` (const)
@@ -1943,6 +2027,74 @@ interface RoomPeer {
 }
 ```
 
+### `SaveDef` (interface)
+
+```ts
+interface SaveDef<S> {
+    readonly game: string;
+    readonly version: number;
+    readonly schema: z.ZodType<S>;
+    readonly slots: number;
+    readonly upgrades?: Readonly<Record<number, (data: unknown) => unknown>>;
+}
+```
+
+### `SaveProblem` (type)
+
+```ts
+type SaveProblem = {
+    readonly kind: 'refused';
+    readonly refusal: StoreRefusal;
+    readonly detail: string;
+} | {
+    readonly kind: 'damaged';
+    readonly detail: string;
+} | {
+    readonly kind: 'newer';
+    readonly version: number;
+} | {
+    readonly kind: 'too-old';
+    readonly version: number;
+};
+```
+
+### `SaveResult` (type)
+
+```ts
+type SaveResult = {
+    readonly ok: true;
+} | {
+    readonly ok: false;
+    readonly problem: SaveProblem;
+};
+```
+
+### `Saves` (interface)
+
+```ts
+interface Saves<S> {
+    check(): Promise<StoreResult<void>>;
+    list(): Promise<StoreResult<readonly SlotState[]>>;
+    load(slot: number): Promise<LoadResult<S>>;
+    save(slot: number, data: S, options?: {
+        readonly label?: string;
+        readonly replace?: boolean;
+    }): Promise<SaveResult>;
+    erase(slot: number): Promise<StoreResult<void>>;
+}
+```
+
+### `SaveStore` (interface)
+
+```ts
+interface SaveStore {
+    check(): Promise<StoreResult<void>>;
+    get(key: string): Promise<StoreResult<string | null>>;
+    set(key: string, value: string): Promise<StoreResult<void>>;
+    remove(key: string): Promise<StoreResult<void>>;
+}
+```
+
 ### `Scene` (interface)
 
 ```ts
@@ -2080,10 +2232,39 @@ interface SessionStats {
 }
 ```
 
+### `Settings` (interface)
+
+```ts
+interface Settings {
+    section<T>(def: SettingsSection<T>): SettingsHandle<T>;
+    readonly problem: SaveProblem | undefined;
+}
+```
+
+### `SettingsHandle` (interface)
+
+```ts
+interface SettingsHandle<T> {
+    get(): T;
+    set(value: T): Promise<StoreResult<void>>;
+    onChange(listener: (value: T) => void): () => void;
+}
+```
+
 ### `settingsOf` (function)
 
 ```ts
 function settingsOf(defaults: Controls, current: Controls): InputSettings;
+```
+
+### `SettingsSection` (interface)
+
+```ts
+interface SettingsSection<T> {
+    readonly name: string;
+    readonly schema: z.ZodType<T>;
+    readonly initial: T;
+}
 ```
 
 ### `Shake` (interface)
@@ -2216,6 +2397,24 @@ const SKY_COLOR = 10474480;
 
 ```ts
 const skyOf: (level: Level) => number;
+```
+
+### `SlotState` (type)
+
+```ts
+type SlotState = {
+    readonly slot: number;
+    readonly kind: 'empty';
+} | {
+    readonly slot: number;
+    readonly kind: 'ready';
+    readonly savedAt: number;
+    readonly label?: string;
+} | {
+    readonly slot: number;
+    readonly kind: 'damaged' | 'newer' | 'too-old';
+    readonly problem: SaveProblem;
+};
 ```
 
 ### `SNAPSHOT_VERSION` (const)
@@ -2351,6 +2550,25 @@ interface StopMusicCue {
 }
 ```
 
+### `StoreRefusal` (type)
+
+```ts
+type StoreRefusal = 'unavailable' | 'full' | 'failed';
+```
+
+### `StoreResult` (type)
+
+```ts
+type StoreResult<T> = {
+    readonly ok: true;
+    readonly value: T;
+} | {
+    readonly ok: false;
+    readonly refusal: StoreRefusal;
+    readonly detail: string;
+};
+```
+
 ### `SYNC_BEHIND` (const)
 
 ```ts
@@ -2386,6 +2604,37 @@ interface SystemSpec {
 
 ```ts
 function tan(x: number): number;
+```
+
+### `TestHost` (interface)
+
+```ts
+interface TestHost extends Host {
+    readonly target: 'test';
+    show(): void;
+    hide(): void;
+    readonly opened: readonly string[];
+    readonly quits: number;
+}
+```
+
+### `testHost` (function)
+
+```ts
+function testHost(options?: TestHostOptions): TestHost;
+```
+
+### `TestHostOptions` (interface)
+
+```ts
+interface TestHostOptions {
+    readonly visible?: boolean;
+    readonly store?: SaveStore;
+    readonly language?: string;
+    readonly deviceLanguages?: readonly string[];
+    readonly canQuit?: boolean;
+    readonly blockLinks?: boolean;
+}
 ```
 
 ### `Thing` (const)
@@ -2652,7 +2901,20 @@ type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
 ### `webHost` (function)
 
 ```ts
-function webHost(doc?: Document): Host;
+function webHost(seams?: Partial<WebSeams>): Host;
+```
+
+### `WebSeams` (interface)
+
+```ts
+interface WebSeams {
+    readonly document: Pick<Document, 'visibilityState' | 'addEventListener' | 'removeEventListener'>;
+    readonly navigator: Pick<Navigator, 'language' | 'languages'>;
+    readonly open: (url: string, target: string) => {
+        opener: unknown;
+    } | null;
+    readonly storage: () => Storage;
+}
 ```
 
 ### `writeContent` (function)
@@ -2665,6 +2927,12 @@ function writeContent<T extends ContentType>(type: T, value: z.input<(typeof CON
 
 ```ts
 function writeReplay(replay: Replay): string;
+```
+
+### `z` (unresolved)
+
+```ts
+from 'zod'
 ```
 
 ## `./headless`
@@ -3084,6 +3352,16 @@ function createRoomEngine(setup: {
 }): RoomEngine;
 ```
 
+### `createSaves` (function)
+
+```ts
+function createSaves<S>(options: {
+    readonly def: SaveDef<S>;
+    readonly store: SaveStore;
+    readonly now?: () => number;
+}): Saves<S>;
+```
+
 ### `createSequence` (function)
 
 ```ts
@@ -3208,6 +3486,12 @@ function definePlugin(spec: {
 
 ```ts
 function defineResource<Z extends z.ZodType>(id: string, schema: Z, init: () => z.input<Z>): ResourceDef<Z>;
+```
+
+### `defineSave` (function)
+
+```ts
+function defineSave<S>(def: SaveDef<S>): SaveDef<S>;
 ```
 
 ### `defineSystem` (function)
@@ -3416,6 +3700,28 @@ const groundOf: (level: Level) => number;
 const HASH_EVERY = 60;
 ```
 
+### `Host` (interface)
+
+```ts
+interface Host {
+    readonly target: HostTarget;
+    visible(): boolean;
+    onVisibility(listener: (visible: boolean) => void): () => void;
+    readonly store: SaveStore;
+    language(): string | undefined;
+    deviceLanguages(): readonly string[];
+    openLink(url: string): Promise<LinkAnswer>;
+    readonly canQuit: boolean;
+    quit(): Promise<boolean>;
+}
+```
+
+### `HostTarget` (type)
+
+```ts
+type HostTarget = 'web' | 'test';
+```
+
 ### `hypot` (function)
 
 ```ts
@@ -3432,6 +3738,12 @@ const Id: z.ZodString;
 
 ```ts
 function isHeld(player: EntityRef, action: string): boolean;
+```
+
+### `isOpenableLink` (function)
+
+```ts
+function isOpenableLink(url: string): boolean;
 ```
 
 ### `JoinCommand` (const)
@@ -3506,6 +3818,12 @@ type Language = (typeof LANGUAGES)[number];
 
 ```ts
 const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+```
+
+### `latestSlot` (function)
+
+```ts
+function latestSlot(states: readonly SlotState[]): number | undefined;
 ```
 
 ### `LEAD_DECAY_TICKS` (const)
@@ -3605,6 +3923,12 @@ interface Link {
 }
 ```
 
+### `LinkAnswer` (type)
+
+```ts
+type LinkAnswer = 'opened' | 'blocked' | 'refused';
+```
+
 ### `Listed` (interface)
 
 ```ts
@@ -3619,6 +3943,20 @@ interface Listed {
 
 ```ts
 function loadGame(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>>;
+```
+
+### `LoadResult` (type)
+
+```ts
+type LoadResult<S> = {
+    readonly ok: true;
+    readonly data: S | null;
+    readonly savedAt?: number;
+    readonly label?: string;
+} | {
+    readonly ok: false;
+    readonly problem: SaveProblem;
+};
 ```
 
 ### `log` (function)
@@ -3691,6 +4029,21 @@ const MAX_QUEUED_COMMANDS = 32;
 
 ```ts
 const MAX_STEPS = 4096;
+```
+
+### `MemoryStore` (interface)
+
+```ts
+interface MemoryStore extends SaveStore {
+    refuse(refusal: StoreRefusal | undefined): void;
+    entries(): Readonly<Record<string, string>>;
+}
+```
+
+### `memoryStore` (function)
+
+```ts
+function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
 ```
 
 ### `MESSAGE_CHANNEL` (const)
@@ -3812,6 +4165,15 @@ type OnlineStatus = {
 
 ```ts
 function onlineWords(status: OnlineStatus): string;
+```
+
+### `openSettings` (function)
+
+```ts
+function openSettings(options: {
+    readonly game: string;
+    readonly store: SaveStore;
+}): Promise<Settings>;
 ```
 
 ### `PAD_BUTTONS` (const)
@@ -4236,6 +4598,74 @@ interface RoomPeer {
 }
 ```
 
+### `SaveDef` (interface)
+
+```ts
+interface SaveDef<S> {
+    readonly game: string;
+    readonly version: number;
+    readonly schema: z.ZodType<S>;
+    readonly slots: number;
+    readonly upgrades?: Readonly<Record<number, (data: unknown) => unknown>>;
+}
+```
+
+### `SaveProblem` (type)
+
+```ts
+type SaveProblem = {
+    readonly kind: 'refused';
+    readonly refusal: StoreRefusal;
+    readonly detail: string;
+} | {
+    readonly kind: 'damaged';
+    readonly detail: string;
+} | {
+    readonly kind: 'newer';
+    readonly version: number;
+} | {
+    readonly kind: 'too-old';
+    readonly version: number;
+};
+```
+
+### `SaveResult` (type)
+
+```ts
+type SaveResult = {
+    readonly ok: true;
+} | {
+    readonly ok: false;
+    readonly problem: SaveProblem;
+};
+```
+
+### `Saves` (interface)
+
+```ts
+interface Saves<S> {
+    check(): Promise<StoreResult<void>>;
+    list(): Promise<StoreResult<readonly SlotState[]>>;
+    load(slot: number): Promise<LoadResult<S>>;
+    save(slot: number, data: S, options?: {
+        readonly label?: string;
+        readonly replace?: boolean;
+    }): Promise<SaveResult>;
+    erase(slot: number): Promise<StoreResult<void>>;
+}
+```
+
+### `SaveStore` (interface)
+
+```ts
+interface SaveStore {
+    check(): Promise<StoreResult<void>>;
+    get(key: string): Promise<StoreResult<string | null>>;
+    set(key: string, value: string): Promise<StoreResult<void>>;
+    remove(key: string): Promise<StoreResult<void>>;
+}
+```
+
 ### `Sense` (type)
 
 ```ts
@@ -4351,6 +4781,35 @@ interface SessionStats {
     readonly desyncs: number;
     readonly syncs: number;
     readonly checked: number;
+}
+```
+
+### `Settings` (interface)
+
+```ts
+interface Settings {
+    section<T>(def: SettingsSection<T>): SettingsHandle<T>;
+    readonly problem: SaveProblem | undefined;
+}
+```
+
+### `SettingsHandle` (interface)
+
+```ts
+interface SettingsHandle<T> {
+    get(): T;
+    set(value: T): Promise<StoreResult<void>>;
+    onChange(listener: (value: T) => void): () => void;
+}
+```
+
+### `SettingsSection` (interface)
+
+```ts
+interface SettingsSection<T> {
+    readonly name: string;
+    readonly schema: z.ZodType<T>;
+    readonly initial: T;
 }
 ```
 
@@ -4486,6 +4945,24 @@ const SKY_COLOR = 10474480;
 const skyOf: (level: Level) => number;
 ```
 
+### `SlotState` (type)
+
+```ts
+type SlotState = {
+    readonly slot: number;
+    readonly kind: 'empty';
+} | {
+    readonly slot: number;
+    readonly kind: 'ready';
+    readonly savedAt: number;
+    readonly label?: string;
+} | {
+    readonly slot: number;
+    readonly kind: 'damaged' | 'newer' | 'too-old';
+    readonly problem: SaveProblem;
+};
+```
+
 ### `SNAPSHOT_VERSION` (const)
 
 ```ts
@@ -4607,6 +5084,25 @@ interface StopMusicCue {
 }
 ```
 
+### `StoreRefusal` (type)
+
+```ts
+type StoreRefusal = 'unavailable' | 'full' | 'failed';
+```
+
+### `StoreResult` (type)
+
+```ts
+type StoreResult<T> = {
+    readonly ok: true;
+    readonly value: T;
+} | {
+    readonly ok: false;
+    readonly refusal: StoreRefusal;
+    readonly detail: string;
+};
+```
+
 ### `SYNC_BEHIND` (const)
 
 ```ts
@@ -4642,6 +5138,37 @@ interface SystemSpec {
 
 ```ts
 function tan(x: number): number;
+```
+
+### `TestHost` (interface)
+
+```ts
+interface TestHost extends Host {
+    readonly target: 'test';
+    show(): void;
+    hide(): void;
+    readonly opened: readonly string[];
+    readonly quits: number;
+}
+```
+
+### `testHost` (function)
+
+```ts
+function testHost(options?: TestHostOptions): TestHost;
+```
+
+### `TestHostOptions` (interface)
+
+```ts
+interface TestHostOptions {
+    readonly visible?: boolean;
+    readonly store?: SaveStore;
+    readonly language?: string;
+    readonly deviceLanguages?: readonly string[];
+    readonly canQuit?: boolean;
+    readonly blockLinks?: boolean;
+}
 ```
 
 ### `Thing` (const)
@@ -4864,6 +5391,12 @@ function writeContent<T extends ContentType>(type: T, value: z.input<(typeof CON
 
 ```ts
 function writeReplay(replay: Replay): string;
+```
+
+### `z` (unresolved)
+
+```ts
+from 'zod'
 ```
 
 ## `./server`
