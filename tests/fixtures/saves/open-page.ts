@@ -12,40 +12,32 @@ export async function openPage(
 ): Promise<{ page: SavesPage; close(): void }> {
   const frame = document.createElement('iframe')
   frame.style.cssText = `position:fixed;left:0;top:0;border:0;width:${size.width}px;height:${size.height}px`
-  frame.srcdoc = '<!doctype html><html><body style="margin:0"></body></html>'
-  const loaded = new Promise<void>((resolve) =>
-    frame.addEventListener('load', () => resolve(), { once: true }),
-  )
-  document.body.append(frame)
   const close = (): void => frame.remove()
   try {
-    await loaded
-    const win = frame.contentWindow
-    const doc = frame.contentDocument
-    if (win === null || doc === null) throw new Error('The frame has no window.')
-    // The page tells this one when it is ready, or why it is not.
-    const ready = new Promise<void>((resolve, reject) => {
+    // The page tells this one when it is ready, or why it is not. Listening starts before the frame exists.
+    const ready = new Promise<Window>((resolve, reject) => {
       const heard = (event: MessageEvent): void => {
-        if (event.source !== win) return
+        if (frame.contentWindow === null || event.source !== frame.contentWindow) return
         window.removeEventListener('message', heard)
         const data = event.data as { savesPage: 'ready' } | { savesPage: 'error'; error: string }
-        if (data.savesPage === 'ready') resolve()
+        if (data.savesPage === 'ready') resolve(frame.contentWindow)
         else reject(new Error(`The page did not load: ${data.error}`))
       }
       window.addEventListener('message', heard)
     })
-    const script = doc.createElement('script')
-    script.type = 'module'
-    // Vitest rewrites every `import()` in the code it serves into a call on `__vitest_browser_runner__`, which only the
-    // test's own frame has. This new frame gets the plain version of it (the one Vitest itself uses where it has no
-    // runner): load the module, nothing more.
-    script.textContent = `globalThis.__vitest_browser_runner__ = { wrapDynamicImport: (load) => load() }
-    import(${JSON.stringify(PAGE_URL)}).then(
-      () => parent.postMessage({ savesPage: 'ready' }, '*'),
-      (error) => parent.postMessage({ savesPage: 'error', error: String((error && error.stack) || error) }, '*'),
-    )`
-    doc.body.append(script)
-    await ready
+    // The script is part of the frame's own document, so no browser can replace the document between "loaded" and
+    // "running it" (WebKit and Firefox both swap a frame's first, empty document). Vitest rewrites every `import()` in
+    // the code it serves into a call on `__vitest_browser_runner__`, which only the test's own frame has; this frame
+    // gets the plain version of it (the one Vitest itself uses where it has no runner): load the module, nothing more.
+    frame.srcdoc = `<!doctype html><html><body style="margin:0"><script type="module">
+globalThis.__vitest_browser_runner__ = { wrapDynamicImport: (load) => load() }
+import(${JSON.stringify(PAGE_URL)}).then(
+  () => parent.postMessage({ savesPage: 'ready' }, '*'),
+  (error) => parent.postMessage({ savesPage: 'error', error: String((error && error.stack) || error) }, '*'),
+)
+</script></body></html>`
+    document.body.append(frame)
+    const win = await ready
     const inside = (win as unknown as { savesPage: SavesPage }).savesPage
     // What comes back is copied through JSON: it was made by the frame's own `Array` and `Object`, and a test should
     // compare plain data, not another realm's objects.
