@@ -375,3 +375,18 @@ test('the play of a co-op room is a replay, with its joins and leaves in it', as
   made.push(again)
   expect(verifyReplay(again, replay)).toEqual({ ok: true })
 })
+
+// A game with no co-op seats: a player who leaves on purpose is told to the others as gone, so nobody reads
+// "lost their connection" for the rest of the game.
+test('a player who leaves a started room is told to the others as gone, away or not', async () => {
+  const { engine, a, b } = await started()
+  engine.leave(2)
+  expect(ofType(a, 'gone')).toEqual([{ t: 'gone', seat: 2 }])
+  expect(ofType(b, 'gone')).toEqual([])
+
+  const dropped = await started()
+  dropped.engine.away(2)
+  dropped.engine.leave(2)
+  expect(ofType(dropped.a, 'away')).toHaveLength(1)
+  expect(ofType(dropped.a, 'gone')).toEqual([{ t: 'gone', seat: 2 }])
+})

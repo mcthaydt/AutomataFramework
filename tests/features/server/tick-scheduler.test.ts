@@ -1,6 +1,7 @@
 // Lifted from AutomataFrameworkFailed@ed8592e8: extensions/net-server/tests/unit/room/rules/tick-scheduler.test.ts
 import { describe, expect, it } from 'vitest'
-import { startTickScheduler, type TickClock } from '#src/features/server/server.ts'
+import type { TickClock } from '#src/features/server/server.ts'
+import { startTickScheduler } from '#src/features/server/tick-scheduler.ts'
 
 // The tick scheduler, on a clock and timer the test controls (the injected clock). No wall time and no real timers.
 

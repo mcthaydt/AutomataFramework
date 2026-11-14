@@ -7,7 +7,6 @@ import {
   createSession,
   LEAD_DECAY_TICKS,
   type Link,
-  MAX_AHEAD,
   MAX_CONFIRM_PER_ADVANCE,
   type RoomEngine,
   type ServerMessage,
@@ -211,8 +210,9 @@ test('a silent room: the game waits instead of running away, and carries on afte
   r.wire.silence(true)
   r.beats(60)
   const gap = () => p.session.stats().predictedTick - p.session.stats().confirmedTick
+  // With nothing coming in, `predicted` runs on only as far as the lead past the last confirmed tick, and waits there.
   const held = gap()
-  expect(held).toBeLessThanOrEqual(MAX_AHEAD)
+  expect(held).toBe(p.session.stats().lead)
   r.beats(200)
   expect(gap()).toBe(held)
   r.wire.silence(false)
