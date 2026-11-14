@@ -373,7 +373,7 @@ The inputs the spec implies and a player will meet, most likely first. Each has 
 - Consumes: nothing.
 - Produces: `StoreRefusal`, `StoreResult`, `SaveStore`, `MemoryStore`, `memoryStore` (the contract above).
 
-- [ ] **Step 1: Write the failing tests.** `store.test.ts`:
+- [x] **Step 1: Write the failing tests.** `store.test.ts`:
 
 ```ts
 test('a value set is the value got, and a key never set is null', ...)
@@ -389,10 +389,10 @@ test('entries is a copy: changing it changes nothing', ...)
   `rules.test.ts`, one more case: `saves` may import nothing above it
   (`{ 'src/features/saves/saves.ts': "import '../host/host.ts'" }` gives `['imports-go-down']`).
 
-- [ ] **Step 2: Push; `check` fails** because `store.ts` does not exist and `saves` is an unknown feature.
-- [ ] **Step 3: Implement** `store.ts` and the entry, and add the layer.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(saves): the storage port and a store in memory`).
+- [x] **Step 2: Push; `check` fails** because `store.ts` does not exist and `saves` is an unknown feature.
+- [x] **Step 3: Implement** `store.ts` and the entry, and add the layer.
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(saves): the storage port and a store in memory`).
 
 ### Task 2: The stored form of a save, and upgrading it
 
@@ -437,7 +437,7 @@ export const progress = defineSave({
 })
 ```
 
-- [ ] **Step 1: Write the failing tests.** `envelope.parity.test.ts` (Node and the three browsers, so the bytes are
+- [x] **Step 1: Write the failing tests.** `envelope.parity.test.ts` (Node and the three browsers, so the bytes are
   proven the same everywhere):
 
 ```ts
@@ -470,10 +470,10 @@ test('data the schema refuses is damaged', ...)                  // { level: 7 }
 test('an upgrade is not given the stored object itself', ...)    // the upgrade mutates its argument; the envelope's data is unchanged
 ```
 
-- [ ] **Step 2: Push; `check` fails** because neither file exists.
-- [ ] **Step 3: Implement.** `upgrade` clones the data with `structuredClone` before the first step.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(saves): a versioned save envelope and its upgrades`).
+- [x] **Step 2: Push; `check` fails** because neither file exists.
+- [x] **Step 3: Implement.** `upgrade` clones the data with `structuredClone` before the first step.
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(saves): a versioned save envelope and its upgrades`).
 
 ### Task 3: Save slots
 
@@ -487,7 +487,7 @@ test('an upgrade is not given the stored object itself', ...)    // the upgrade 
   `upgrade`, and the `progress` fixture.
 - Produces: `Saves`, `SlotState`, `createSaves`, `latestSlot` (the contract above).
 
-- [ ] **Step 1: Write the failing tests.** Every test builds `createSaves({ def: progress, store: memoryStore(), now })`
+- [x] **Step 1: Write the failing tests.** Every test builds `createSaves({ def: progress, store: memoryStore(), now })`
   with `now` counting up from `1700000000000` by 1000 each call.
 
 ```ts
@@ -516,12 +516,12 @@ test('save finishes without waiting on a timer, an event or a frame', ...)   // 
 test('latestSlot picks the ready slot saved last', ...)            // none ready -> undefined; a tie -> the lower slot
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `slots.ts` does not exist.
-- [ ] **Step 3: Implement.** `save` parses `data` with the schema first, writes the envelope's text (so a value
+- [x] **Step 2: Push; `check` fails** because `slots.ts` does not exist.
+- [x] **Step 3: Implement.** `save` parses `data` with the schema first, writes the envelope's text (so a value
   `canonicalJson` refuses throws here, as a `RangeError`, before the store is touched), then reads the slot to decide
   whether it may write, then writes. No step waits on anything but the store.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(saves): save slots that never lose a save by themselves`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(saves): save slots that never lose a save by themselves`).
 
 ### Task 4: Settings
 
@@ -534,7 +534,7 @@ test('latestSlot picks the ready slot saved last', ...)            // none ready
 - Consumes: `SaveStore`, `memoryStore`, `settingsKey`, `canonicalJson`, `SaveProblem`.
 - Produces: `SettingsSection`, `SettingsHandle`, `Settings`, `openSettings` (the contract above).
 
-- [ ] **Step 1: Write the failing tests.** The section used throughout:
+- [x] **Step 1: Write the failing tests.** The section used throughout:
   `const sound = { name: 'sound', schema: z.strictObject({ music: z.number().min(0).max(1) }), initial: { music: 0.8 } }`.
 
 ```ts
@@ -557,12 +557,12 @@ test('get gives a frozen value', ...)                                      // Au
 test('a bad section name throws', ...)                                     // 'Sound FX' -> RangeError naming the rule
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `settings.ts` does not exist.
-- [ ] **Step 3: Implement.** One write at a time: each `set` chains its write on the one before, and each write
+- [x] **Step 2: Push; `check` fails** because `settings.ts` does not exist.
+- [x] **Step 3: Implement.** One write at a time: each `set` chains its write on the one before, and each write
   serialises the settings as they are when it starts. Settings damaged on open are written over by the first `set`
   (losing a preference is acceptable).
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(saves): one settings record, a section per feature`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(saves): one settings record, a section per feature`).
 
 ### Task 5: The `web` feature, and saving in the browser
 

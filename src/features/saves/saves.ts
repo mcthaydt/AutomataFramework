@@ -2,6 +2,7 @@
 // storage port a host provides. Headless: it runs in Node, with no page.
 
 export { defineSave, type SaveDef, type SaveProblem } from './define.ts'
+export { openSettings, type Settings, type SettingsHandle, type SettingsSection } from './settings.ts'
 export {
   createSaves,
   type LoadResult,

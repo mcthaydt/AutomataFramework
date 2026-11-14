@@ -736,6 +736,15 @@ interface MemoryStore extends SaveStore {
 function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
 ```
 
+### `openSettings` (function)
+
+```ts
+function openSettings(options: {
+    readonly game: string;
+    readonly store: SaveStore;
+}): Promise<Settings>;
+```
+
 ### `parseContent` (function)
 
 ```ts
@@ -1088,6 +1097,35 @@ interface SaveStore {
 interface Scene {
     apply(delta: RenderDelta): void;
     views(alpha: number): View[];
+}
+```
+
+### `Settings` (interface)
+
+```ts
+interface Settings {
+    section<T>(def: SettingsSection<T>): SettingsHandle<T>;
+    readonly problem: SaveProblem | undefined;
+}
+```
+
+### `SettingsHandle` (interface)
+
+```ts
+interface SettingsHandle<T> {
+    get(): T;
+    set(value: T): Promise<StoreResult<void>>;
+    onChange(listener: (value: T) => void): () => void;
+}
+```
+
+### `SettingsSection` (interface)
+
+```ts
+interface SettingsSection<T> {
+    readonly name: string;
+    readonly schema: z.ZodType<T>;
+    readonly initial: T;
 }
 ```
 
@@ -2105,6 +2143,15 @@ interface MemoryStore extends SaveStore {
 function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
 ```
 
+### `openSettings` (function)
+
+```ts
+function openSettings(options: {
+    readonly game: string;
+    readonly store: SaveStore;
+}): Promise<Settings>;
+```
+
 ### `parseContent` (function)
 
 ```ts
@@ -2436,6 +2483,35 @@ interface SaveStore {
     get(key: string): Promise<StoreResult<string | null>>;
     set(key: string, value: string): Promise<StoreResult<void>>;
     remove(key: string): Promise<StoreResult<void>>;
+}
+```
+
+### `Settings` (interface)
+
+```ts
+interface Settings {
+    section<T>(def: SettingsSection<T>): SettingsHandle<T>;
+    readonly problem: SaveProblem | undefined;
+}
+```
+
+### `SettingsHandle` (interface)
+
+```ts
+interface SettingsHandle<T> {
+    get(): T;
+    set(value: T): Promise<StoreResult<void>>;
+    onChange(listener: (value: T) => void): () => void;
+}
+```
+
+### `SettingsSection` (interface)
+
+```ts
+interface SettingsSection<T> {
+    readonly name: string;
+    readonly schema: z.ZodType<T>;
+    readonly initial: T;
 }
 ```
 
