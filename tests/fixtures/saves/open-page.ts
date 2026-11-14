@@ -36,7 +36,11 @@ export async function openPage(
     })
     const script = doc.createElement('script')
     script.type = 'module'
-    script.textContent = `import(${JSON.stringify(PAGE_URL)}).then(
+    // Vitest rewrites every `import()` in the code it serves into a call on `__vitest_browser_runner__`, which only the
+    // test's own frame has. This new frame gets the plain version of it (the one Vitest itself uses where it has no
+    // runner): load the module, nothing more.
+    script.textContent = `globalThis.__vitest_browser_runner__ = { wrapDynamicImport: (load) => load() }
+    import(${JSON.stringify(PAGE_URL)}).then(
       () => parent.postMessage({ savesPage: 'ready' }, '*'),
       (error) => parent.postMessage({ savesPage: 'error', error: String((error && error.stack) || error) }, '*'),
     )`
