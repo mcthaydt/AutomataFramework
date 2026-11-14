@@ -4,9 +4,11 @@
 import { Cause, Effect, type Layer } from 'effect'
 import { FRAMEWORK_VERSION } from '../sim/sim.ts'
 import { type CommandInput, type CommandName, parseArgs } from './args.ts'
+import { runCheck } from './check.ts'
 import { helpFor } from './help.ts'
 import { liveLayer } from './live.ts'
 import { CliError, Out, type OutService, type Ports } from './ports.ts'
+import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
 
 type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
 
@@ -16,10 +18,29 @@ const notBuilt =
   () =>
     Effect.fail(new CliError(`automata ${name} is not built yet.`))
 
+/** `automata check`: the steps' report, as words or as JSON, and the exit status the report gives. */
+const check: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const { only, fix, json } = input.flags
+    const step = STEP_NAMES.find((name) => name === only)
+    if (only !== undefined && step === undefined)
+      return yield* Effect.fail(
+        new CliError(`There is no step called "${String(only)}". The steps are: ${STEP_NAMES.join(', ')}.`),
+      )
+    const report = yield* runCheck({
+      folder: input.folder ?? '.',
+      ...(step === undefined ? {} : { only: step }),
+      fix: fix === true,
+    })
+    yield* out.line(json === true ? JSON.stringify(report, null, 2) : formatReport(report))
+    return exitCodeOf(report)
+  })
+
 /** One row per command, so a new command (M4's `ship` and `build`) is one row and one help text. */
 const COMMANDS: Readonly<Record<CommandName, Command>> = {
   create: notBuilt('create'),
-  check: notBuilt('check'),
+  check,
   play: notBuilt('play'),
   replay: notBuilt('replay'),
   mcp: notBuilt('mcp'),
