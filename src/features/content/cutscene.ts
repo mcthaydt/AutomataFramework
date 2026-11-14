@@ -45,6 +45,8 @@ export interface CutsceneFile {
   readonly camera: readonly CameraKey[]
   readonly actors: readonly ActorKey[]
   readonly lines: readonly CutsceneLine[]
+  /** True when it plays when its level opens. At most one cutscene of a level has it. */
+  readonly opens?: true | undefined
 }
 
 const MAX_TICKS = 3600
@@ -120,6 +122,15 @@ function actorsIn(level: {
 
 /** Everything a cutscene names must be in the game, and every place it names must be inside the level. */
 function checkNames(file: CutsceneFile, game: Listed, report: Report): void {
+  if (file.opens === true) {
+    // The first by id keeps its place, and each later one is told, so every problem is said once, at its own file.
+    const first = game.ids('cutscene').find((id) => {
+      const other = game.get('cutscene', id)
+      return other?.level === file.level && other.opens === true
+    })
+    if (first !== undefined && first !== file.id)
+      report('opens', `The level "${file.level}" already opens with the cutscene "${first}". Only one can.`)
+  }
   const level = game.get('level', file.level)
   if (!game.has('level', file.level)) report('level', noSuch('level', file.level, game.ids('level')))
   if (level !== undefined) {
@@ -163,6 +174,12 @@ export const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile> = z
       .max(256)
       .describe('Where each thing stands and what it does, key by key, in time order.'),
     lines: z.array(line).max(64).describe('What is said, and when.'),
+    opens: z
+      .literal(true)
+      .optional()
+      .describe(
+        'True if it plays when its level opens. Left out, it plays only when a conversation or the game asks.',
+      ),
   })
   .superRefine(checkCutscene)
 
