@@ -12,6 +12,8 @@ import {
   type MessagesFile,
   openSettings,
   type SaveDef,
+  type StoryProgress,
+  type TalkView,
   type TilesetFile,
   type Touch,
   testHost,
@@ -47,3 +49,7 @@ export const tiles: TilesetFile | undefined = undefined
 // Joints and touch are in the packed declarations too.
 export const held: LevelJoint | undefined = undefined
 export const touched: Touch | undefined = undefined
+
+// The story is in the packed declarations too: what a save keeps, and what the box shows.
+export const storyKept: StoryProgress = { ended: {}, seen: [] }
+export const said: TalkView | undefined = undefined

@@ -1,7 +1,8 @@
 import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { Id } from './ids.ts'
-import { noSuch } from './shared.ts'
+import { englishLacks, englishMissing } from './messages.ts'
+import { MessageKey, noSuch } from './shared.ts'
 import type { ContentTypeInfo } from './type-info.ts'
 
 /** A character file once read: what one kind of thing is. M1 draws it as a coloured box. */
@@ -27,6 +28,10 @@ export interface Character {
    * when a hero touches it. Needs a `kind`, and a `fixed` body.
    */
   readonly touch?: 'sense' | 'take' | undefined
+  /** The message key of the name shown when it speaks. */
+  readonly name?: string | undefined
+  /** The conversation a hero opens by walking up to it. */
+  readonly conversation?: string | undefined
 }
 
 /** What a person may write: `upright` can be left out, and then it is false. */
@@ -67,6 +72,12 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
         '"sense": things pass through it and the game is told when one touches it, like a door. "take": the same, and it is taken away when a hero touches it, like a spark.',
       )
       .optional(),
+    name: MessageKey.describe(
+      'The name shown when it speaks, as a message key, like "keeper.name".',
+    ).optional(),
+    conversation: Id.describe(
+      'The conversation a hero opens by walking up to it, by id, like "keeper".',
+    ).optional(),
   })
   .superRefine((character, ctx) => {
     if (character.touch === undefined) return
@@ -107,5 +118,12 @@ export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
       report('behaviour', noSuch('behaviour', character.behaviour, game.ids('behaviour')))
     if (character.tuning !== undefined && !game.has('tuning', character.tuning))
       report('tuning', noSuch('tuning', character.tuning, game.ids('tuning')))
+    // A behaviour sets how fast the body moves, and a fixed body does not move.
+    if (character.behaviour !== undefined && character.body === 'fixed')
+      report('body', 'A character with a behaviour has to move, so its body must be "dynamic".')
+    if (character.name !== undefined && englishLacks(game, character.name))
+      report('name', englishMissing(character.name))
+    if (character.conversation !== undefined && !game.has('conversation', character.conversation))
+      report('conversation', noSuch('conversation', character.conversation, game.ids('conversation')))
   },
 }

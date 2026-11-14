@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "id": "glade-tip",
+  "level": "glade",
+  "length": 90,
+  "camera": [
+    {
+      "at": 0,
+      "x": 10.5,
+      "y": 4.5,
+      "zoom": 1,
+      "ease": "cut"
+    },
+    {
+      "at": 60,
+      "x": 16.5,
+      "y": 6,
+      "zoom": 2,
+      "ease": "smooth"
+    }
+  ],
+  "actors": [],
+  "lines": [
+    {
+      "at": 10,
+      "until": 80,
+      "line": "keeper.look",
+      "speaker": "keeper"
+    }
+  ]
+}

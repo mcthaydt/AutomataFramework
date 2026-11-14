@@ -7,8 +7,11 @@ import {
   loadGame,
   writeContent,
 } from '#src/features/content/content.ts'
+import { chooseCommand, createGameSim, startConversation } from '#src/features/level/level.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { readFixture } from '../../fixtures/game/read.ts'
+import { callOn, storyEventsOf } from '../../fixtures/level/story-helpers.ts'
+import { storyFiles } from '../../fixtures/story/read.ts'
 
 /** A sound an agent might add: one falling sine tone, a door's creak. */
 const door = {
@@ -67,4 +70,55 @@ test('every kind of file is in the full game, so nothing is untested', async () 
 test('a game with only levels and characters loads to just those keys, so its content hash has not moved', async () => {
   const loaded = await loadGame(readFixture())
   expect(loaded.ok && Object.keys(loaded.value).sort()).toEqual(['characters', 'levels', 'project'])
+})
+
+test('an agent gives the keeper a third choice by editing two files, and the game plays it', async () => {
+  // 1. The agent adds the two lines to the English words, and a choice and a node to the keeper, writing both files
+  //    with `writeContent` so its bytes are the framework's own.
+  const files: Record<string, string | undefined> = { ...storyFiles }
+  const read = async (path: string): Promise<string> => files[path] ?? Promise.reject(new Error(path))
+  const words = JSON.parse(files['content/messages/en.json'] ?? '') as {
+    messages: Record<string, string>
+  }
+  words.messages['hero.joke'] = 'Tell me a joke.'
+  words.messages['keeper.joke'] = 'A crate walks into a bar.'
+  files['content/messages/en.json'] = writeContent('messages', words as never)
+  const talk = JSON.parse(files['content/conversations/keeper.json'] ?? '') as {
+    nodes: Record<string, unknown>[]
+  }
+  const hello = talk.nodes[0] as { choices: unknown[] }
+  hello.choices.push({ line: 'hero.joke', next: 'joke' })
+  talk.nodes.push({ id: 'joke', speaker: 'keeper', lines: ['keeper.joke'] })
+  files['content/conversations/keeper.json'] = writeContent('conversation', talk as never)
+
+  // 2. The game loads with no problem.
+  const loaded = await loadGame(read)
+  expect(loaded.ok ? [] : loaded.diagnostics.map(formatDiagnostic)).toEqual([])
+  if (!loaded.ok) return
+
+  // 3. A sim on the changed game: the third choice leads to the new line.
+  const sim = await createGameSim({
+    content: loaded.value,
+    story: { ended: {}, seen: ['glade-intro'] },
+    plugins: [callOn('open-keeper', [2], (ctx) => void startConversation(ctx, 'keeper', 1))],
+  })
+  try {
+    const said: unknown[] = []
+    for (let tick = 0; tick < 8; tick++) {
+      const result = sim.step(tick === 5 ? [chooseCommand(tick, 1, 0, 2)] : [])
+      for (const e of storyEventsOf(result)) if (e.type === 'conversation.said') said.push(e.payload)
+    }
+    expect(said.map((p) => (p as { line: string }).line)).toEqual(['keeper.hello', 'keeper.joke'])
+  } finally {
+    sim.dispose()
+  }
+
+  // 4. The slip: the new node names a cutscene with a letter missing. The check says which file, where, and what there is.
+  const node = talk.nodes[3] as Record<string, unknown>
+  node.cutscene = 'glade-tp'
+  files['content/conversations/keeper.json'] = writeContent('conversation', talk as never)
+  const broken = await loadGame(read)
+  expect(broken.ok ? [] : broken.diagnostics.map(formatDiagnostic)).toEqual([
+    'content/conversations/keeper.json: nodes[3].cutscene: There is no cutscene called "glade-tp". This game has: glade-intro, glade-tip.',
+  ])
 })

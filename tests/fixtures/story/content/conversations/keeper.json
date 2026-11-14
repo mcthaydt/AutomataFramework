@@ -1,0 +1,40 @@
+{
+  "format": 1,
+  "id": "keeper",
+  "start": "hello",
+  "nodes": [
+    {
+      "id": "hello",
+      "speaker": "keeper",
+      "lines": [
+        "keeper.hello"
+      ],
+      "choices": [
+        {
+          "line": "hero.ask",
+          "next": "tip"
+        },
+        {
+          "line": "hero.bye",
+          "next": "bye"
+        }
+      ]
+    },
+    {
+      "id": "tip",
+      "speaker": "keeper",
+      "lines": [
+        "keeper.tip",
+        "keeper.tip-more"
+      ],
+      "cutscene": "glade-tip"
+    },
+    {
+      "id": "bye",
+      "speaker": "keeper",
+      "lines": [
+        "keeper.bye"
+      ]
+    }
+  ]
+}

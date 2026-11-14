@@ -145,10 +145,11 @@ jobs:
         run: |
           smoke="$RUNNER_TEMP/smoke"
           mkdir "$smoke"
-          cp tests/install/* tests/golden/push-crate.json tests/golden/playground.json "$smoke"/
+          cp tests/install/* tests/golden/push-crate.json tests/golden/playground.json tests/golden/story.json "$smoke"/
           cp -r tests/fixtures/game "$smoke/game"
           cp -r tests/fixtures/full-game "$smoke/full-game"
           cp -r tests/fixtures/playground "$smoke/playground"
+          cp -r tests/fixtures/story "$smoke/story"
           cd "$smoke"
           echo '{ "private": true, "type": "module" }' > package.json
           npm install --no-audit --no-fund "$RUNNER_TEMP"/pack/*.tgz

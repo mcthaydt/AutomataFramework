@@ -6,6 +6,7 @@ import { groundOf } from './colours.ts'
 import { Look, Thing } from './components.ts'
 import { characterParts, heroParts } from './hero.ts'
 import { jointParts, type Placed } from './joints.ts'
+import { mindParts } from './mind.ts'
 import { tileRuns } from './tile-runs.ts'
 
 /** The level cannot be spawned as asked: an unknown level, or a player the level has no start point for. */
@@ -71,15 +72,16 @@ export function spawnLevel(
       [Look, { w: run.length, h: 1, color: ground }],
     ])
   const placed = new Map<string, Placed>()
-  for (const thing of level.things)
-    placed.set(thing.id, {
-      sid: sim.spawn([
-        ...characterParts(character(thing.character, `Thing "${thing.id}"`), thing),
-        [Thing, { id: thing.id, character: thing.character }],
-      ]),
-      x: thing.x,
-      y: thing.y,
-    })
+  for (const thing of level.things) {
+    const kind = character(thing.character, `Thing "${thing.id}"`)
+    // Only a thing with a behaviour has a mind, and never a hero: `heroParts` does not add one.
+    const sid = sim.spawn([
+      ...characterParts(kind, thing),
+      [Thing, { id: thing.id, character: thing.character }],
+      ...mindParts(kind),
+    ])
+    placed.set(thing.id, { sid, x: thing.x, y: thing.y })
+  }
   const joints = level.joints ?? []
   // The level itself, as a joint's holder: a fixed body at the corner, so a place on the level is its own offset.
   const anchor: Placed | undefined = joints.some((j) => j.holder === undefined)

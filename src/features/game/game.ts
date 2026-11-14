@@ -2,6 +2,7 @@
 // what the player holds, steps the sim through the recorder (so the play can be replayed), and gives the renderer what
 // changed. The sim decides everything; this file decides when.
 
+import { canonicalJson } from '../../lib/canonical.ts'
 import { type Frames, pageFrames } from '../../lib/frames.ts'
 import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
@@ -13,9 +14,10 @@ import {
   type Input,
   type PadLike,
 } from '../input/input.ts'
-import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
+import { createGameSim, type GameSimOptions, levelSize, skyOf, usesStory } from '../level/level.ts'
 import { createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
+import { type BoxWords, createStoryView, type Words } from '../story/story.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
 
@@ -35,6 +37,10 @@ export interface GameOptions extends GameSimOptions {
   readonly settings?: unknown
   /** Only for tests: stands in for the browser's gamepads. */
   readonly gamepads?: () => readonly (PadLike | null)[]
+  /** The words a player reads, by key. Default: the game's English messages (`wordsOf(content)`). */
+  readonly words?: Words
+  /** The words on the story box's own two buttons. Default: Next and Skip. */
+  readonly boxWords?: BoxWords
 }
 
 export interface Game {
@@ -94,7 +100,35 @@ export async function startGame(options: GameOptions): Promise<Game> {
     renderer.setInset(input.inset())
     input.onInset((px) => renderer.setInset(px))
     input.setPlayers(options.players ?? [1])
-    const recorder = createRecorder(sim)
+    // A game that continues a story records where it started, so its replay can be played from there (`storyOfReplay`).
+    const recorder = createRecorder(
+      sim,
+      options.story === undefined ? {} : { meta: { story: canonicalJson(options.story) } },
+    )
+    // A game with a story gets its box; a game without one has nothing of the kind in its page.
+    const story = usesStory(options.content)
+      ? createStoryView({
+          mount,
+          sim,
+          content: options.content,
+          sequence,
+          onMenu: input.onMenu,
+          seats: input.seats,
+          keysOf: (player) =>
+            Object.keys(input.controls()).flatMap((action) => input.inputsFor(player, action)),
+          inset: input.inset,
+          ...(options.words === undefined ? {} : { words: options.words }),
+          ...(options.boxWords === undefined ? {} : { boxWords: options.boxWords }),
+        })
+      : undefined
+    if (story !== undefined) {
+      const was = cleanup
+      cleanup = () => {
+        story.destroy()
+        was()
+      }
+      input.onInset((px) => story.setInset(px))
+    }
     const people = createPlayers({
       sim,
       content: options.content,
@@ -107,8 +141,10 @@ export async function startGame(options: GameOptions): Promise<Game> {
       tickHz: sim.tickHz,
       step() {
         const tick = sim.tick
-        renderer.apply(recorder.step([...people.commands(tick), ...input.poll(tick)]).render)
+        const commands = [...people.commands(tick), ...(story?.commands(tick) ?? []), ...input.poll(tick)]
+        renderer.apply(recorder.step(commands).render)
         people.afterStep()
+        story?.update()
       },
       draw: (alpha) => renderer.draw(alpha),
       frames,
@@ -136,11 +172,13 @@ export async function startGame(options: GameOptions): Promise<Game> {
       removePlayer: people.removePlayer,
       pause() {
         pausedByHand = true
+        story?.hold(true)
         unsilence ??= input.silence()
         sync()
       },
       resume() {
         pausedByHand = false
+        story?.hold(false)
         unsilence?.()
         unsilence = undefined
         sync()

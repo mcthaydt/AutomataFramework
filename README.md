@@ -330,6 +330,142 @@ and this is the whole file `content/sounds/door.json`:
 A mistake is reported with the file, the place in it and what to write, for example `content/cues/cues.json:
 cues[3].sound: There is no sound called "dor". This game has: door, jump, land.`
 
+## Story
+
+A game can have a keeper who talks, a critter that runs from the hero, and cutscenes. All of it is content files, and
+it is part of the replay. A game with none of them plays exactly as it did before.
+
+A character that talks says so in its file: `kind` is what behaviours and the game's code call it, `name` is the message
+key of the name shown when it speaks, and `conversation` is the conversation it has.
+
+```json
+{
+  "id": "keeper",
+  "kind": "keeper",
+  "name": "keeper.name",
+  "conversation": "keeper"
+}
+```
+
+A conversation is nodes of lines. Every line is a message key, so every word is in a `messages` file and can be
+translated. A node ends the talk, goes to another node (`next`), asks the player to pick (`choices`) or plays a
+cutscene (`cutscene`):
+
+```json
+{
+  "format": 1,
+  "id": "keeper",
+  "start": "hello",
+  "nodes": [
+    {
+      "id": "hello",
+      "speaker": "keeper",
+      "lines": ["keeper.hello"],
+      "choices": [
+        { "line": "hero.ask", "next": "tip" },
+        { "line": "hero.bye", "next": "bye" }
+      ]
+    },
+    { "id": "tip", "speaker": "keeper", "lines": ["keeper.tip", "keeper.tip-more"], "cutscene": "glade-tip" },
+    { "id": "bye", "speaker": "keeper", "lines": ["keeper.bye"] }
+  ]
+}
+```
+
+A cutscene is a camera that moves, actors that walk to places, and lines said at a tick, in a level. With `"opens":
+true` it plays when that level opens, and the player can skip it after half a second. A cutscene that was seen does not
+open its level again.
+
+```json
+{
+  "format": 1,
+  "id": "glade-intro",
+  "level": "glade",
+  "length": 120,
+  "camera": [
+    { "at": 0, "x": 15, "y": 4.5, "zoom": 1, "ease": "cut" },
+    { "at": 90, "x": 6, "y": 4.5, "zoom": 1, "ease": "smooth" }
+  ],
+  "actors": [
+    { "at": 0, "who": "keeper", "x": 12.5, "y": 7.5 },
+    { "at": 90, "who": "keeper", "x": 10.5, "y": 7.5 }
+  ],
+  "lines": [{ "at": 30, "until": 110, "line": "keeper.welcome", "speaker": "keeper" }],
+  "opens": true
+}
+```
+
+A character that decides for itself has a `behaviour`: rules, and the first one whose senses all fit is followed. A
+critter runs from a hero within three tiles and otherwise wanders:
+
+```json
+{
+  "format": 1,
+  "id": "critter",
+  "rules": [
+    {
+      "id": "run-away",
+      "when": [{ "sense": "near", "kind": "hero", "within": 3 }],
+      "do": { "act": "flee", "from": "hero", "speed": 4 }
+    },
+    { "id": "wander", "when": [], "do": { "act": "wander", "speed": 1, "turnEvery": 90 } }
+  ]
+}
+```
+
+The four senses: `near` (the nearest thing of a kind is within some tiles), `far` (it is beyond some tiles),
+`blocked` (something is in the way) and `on-ground` (standing on something). The five acts: `stay`, `wander`, `flee`
+(from a kind), `follow` (a kind) and `jump`. A thing stands still while a cutscene plays and while it is being talked to.
+
+### What the game's own code does
+
+The framework tells a game who is within reach of whom (`Story.met`). A game decides what that means and starts the
+talk, or a cutscene, from a system of its own; both return false, and do nothing, when there is nothing to start:
+
+```ts
+import { defineSystem, startCutscene } from '@automataframework/framework/headless'
+
+export const doorScene = defineSystem({
+  name: 'game.door-scene',
+  phase: 'gameplay',
+  run(ctx) {
+    if (levelIsDone(ctx)) startCutscene(ctx, 'door')
+  },
+})
+```
+
+`startConversation(ctx, 'keeper', player, thing)` opens a conversation the same way. While one is open the talker's
+hero stands still and their buttons are the box's, and the other players walk about. The six events
+(`conversation.started`, `conversation.said`, `conversation.chosen`, `conversation.ended`, `cutscene.started` and
+`cutscene.ended`) are like any other event, so a cue or a feel file can name them.
+
+What a player pressed is in the replay: Next, a choice and Skip are the commands `story.next`, `story.choose` and
+`story.skip`. To keep a story in a save, put `StoryProgressSchema` in the save's schema, save `storyProgress(game.sim,
+content)`, and start the next game with `story:` set to what was loaded, so the keeper is where it was left and a seen
+cutscene does not play again. `startGame` records that start in the replay (`meta.story`), and `storyOfReplay(replay)`
+reads it back to verify the replay or watch it.
+
+```ts
+const save = defineSave({ game: 'my-game', version: 1, slots: 1, schema: z.strictObject({ story: StoryProgressSchema }) })
+await saves.save(0, { story: storyProgress(game.sim, content) })
+const loaded = await saves.load(0)
+const next = await startGame({ ...options, ...(loaded.ok && loaded.data ? { story: loaded.data.story } : {}) })
+```
+
+### The box a player reads
+
+A game with a story gets one speech box along the bottom of its page, above the touch buttons. It has the speaker's name,
+the words, the answers to pick from and a Next or Skip button, each at least 48 pixels tall. A player taps, or presses
+Enter or Space for Next (Space never skips: most games jump with it, and a player still tapping jump when a cutscene
+starts would skip it unseen), Up and Down to move among the answers, and 1 to 4 to pick one. A gamepad's accept, up and
+down work for the player who is talking, and back skips a cutscene.
+
+Dress it with seven CSS properties, set on the page or any element above the game: `--automata-story-background`,
+`--automata-story-color`, `--automata-story-border`, `--automata-story-radius`, `--automata-story-font`,
+`--automata-story-button-background` and `--automata-story-button-color`. Words are the game's English messages unless
+it hands over its own: `startGame({ ..., words: wordsOf(content, 'es'), boxWords: { next: 'Siguiente', skip: 'Saltar' } })`.
+A key with no text in the chosen language shows the English, and a key with none anywhere shows the key itself.
+
 ## Shipping a game: Rapier's licence
 
 The physics engine, Rapier, is Apache-2.0, and its code is built into this package's files (its binary comes out as

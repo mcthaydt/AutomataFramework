@@ -5,11 +5,19 @@
 // It plays whatever the content is now, not what it was when the recording was made: if the level was edited since,
 // the same commands lead somewhere else and that is what is shown. Only a different seed or tick rate is refused,
 // because then the commands mean something else.
-import type { Replay } from '../commands/commands.ts'
+import { createSequence, type Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
-import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
+import {
+  createGameSim,
+  type GameSimOptions,
+  levelSize,
+  skyOf,
+  storyOfReplay,
+  usesStory,
+} from '../level/level.ts'
 import { createRenderer } from '../render/render.ts'
 import type { Command, Sim } from '../sim/sim.ts'
+import { type BoxWords, createStoryView, type Words } from '../story/story.ts'
 import { createLoop, type Frames } from './loop.ts'
 
 export interface WatchOptions extends GameSimOptions {
@@ -23,6 +31,10 @@ export interface WatchOptions extends GameSimOptions {
   readonly rounds?: number
   /** How many ticks the last picture is held before the next round. Default: one second (`tickHz`). */
   readonly restTicks?: number
+  /** The words a player reads, by key. Default: the game's English messages (`wordsOf(content)`). */
+  readonly words?: Words
+  /** The words on the story box's own two buttons. Default: Next and Skip. */
+  readonly boxWords?: BoxWords
 }
 
 export interface Watch {
@@ -46,6 +58,9 @@ const pageFrames: Frames = {
   cancel: (id) => cancelAnimationFrame(id),
 }
 
+const storyOption = (story: GameSimOptions['story']): Pick<GameSimOptions, 'story'> =>
+  story === undefined ? {} : { story }
+
 /**
  * Starts the recording playing and returns once it is on screen. Throws a `WatchSetupError`, with nothing left on the
  * page, if the recording was made with another seed or tick rate (or `rounds` or `restTicks` is not a whole number in
@@ -65,6 +80,8 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
     ...(options.level === undefined ? {} : { level: options.level }),
     ...(options.players === undefined ? {} : { players: options.players }),
     ...(options.gravity === undefined ? {} : { gravity: options.gravity }),
+    // Where the recorded play started: a game that continued a story, else the recording's own `meta.story`.
+    ...storyOption(options.story ?? storyOfReplay(replay)),
   })
   // The tick rate is the sim's, not an option, so it can only be compared once the sim exists.
   const mismatch =
@@ -87,6 +104,26 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
     cleanup = () => {
       renderer.destroy()
       sim.dispose()
+    }
+
+    // What is said is shown; there is nothing to press, so the box has no buttons and sends nothing.
+    const story = usesStory(options.content)
+      ? createStoryView({
+          mount,
+          sim,
+          content: options.content,
+          sequence: createSequence(),
+          watching: true,
+          ...(options.words === undefined ? {} : { words: options.words }),
+          ...(options.boxWords === undefined ? {} : { boxWords: options.boxWords }),
+        })
+      : undefined
+    if (story !== undefined) {
+      const was = cleanup
+      cleanup = () => {
+        story.destroy()
+        was()
+      }
     }
 
     // Every round starts from this picture of tick 0, which is what makes the next round the same as the first.
@@ -124,8 +161,10 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
           sim.restore(start)
           next = 0
           resting = undefined
+          story?.update()
         }
         renderer.apply(sim.step(commandsNow()).render)
+        story?.update()
         if (sim.tick < replay.ticks) return
         played++
         if (roundLimit !== undefined && played >= roundLimit) {

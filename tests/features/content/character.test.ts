@@ -1,5 +1,8 @@
 import { expect, test } from 'vitest'
 import { formatDiagnostic, parseContent, writeContent } from '#src/features/content/content.ts'
+import { gameProblems } from '../../fixtures/content/kind.ts'
+import { english, keeperTalk, storyGame } from '../../fixtures/content/story.ts'
+import { fullGameFiles } from '../../fixtures/full-game/read.ts'
 
 const hero = () => ({
   format: 1,
@@ -124,3 +127,98 @@ test('a character that is touched cannot be dynamic', () =>
   expect(problems('content/characters/spark.json', { ...spark(), body: 'dynamic' })).toEqual([
     'content/characters/spark.json: body: A character that is touched lets everything through, so it would fall out of the level. Make its body "fixed".',
   ]))
+
+test('a character may be named and may open a conversation, and both are written last', () => {
+  const keeper = {
+    ...crate(),
+    id: 'keeper',
+    kind: 'keeper',
+    tuning: 'hero',
+    name: 'keeper.name',
+    conversation: 'keeper',
+  }
+  const parsed = parseContent('character', JSON.stringify(keeper), 'content/characters/keeper.json')
+  expect(parsed.ok && parsed.value).toEqual({ ...keeper, upright: false })
+  expect(Object.keys(JSON.parse(writeContent('character', keeper as never)))).toEqual([
+    'format',
+    'id',
+    'body',
+    'size',
+    'color',
+    'upright',
+    'kind',
+    'tuning',
+    'name',
+    'conversation',
+  ])
+})
+
+test('a name that is not a message key, and a conversation that is not an id', () => {
+  const file = 'content/characters/hero.json'
+  expect(problems(file, { ...hero(), name: 'The Keeper' })).toEqual([
+    `${file}: name: Use lower-case words joined by dots or dashes, like "keeper.hello".`,
+  ])
+  expect(problems(file, { ...hero(), conversation: 'The Keeper' })).toEqual([
+    `${file}: conversation: Use lower-case words joined by dashes, like "level-1".`,
+  ])
+})
+
+const KEEPER_PATH = 'content/characters/keeper.json'
+
+/** The story game's keeper, given these fields, with English words for its name and a conversation to open. */
+const keeperGame = (fields: Record<string, unknown>, extra: Parameters<typeof storyGame>[0] = []) =>
+  storyGame(
+    [
+      {
+        type: 'messages',
+        path: 'content/messages/en.json',
+        text: writeContent('messages', {
+          ...english(),
+          messages: { ...english().messages, 'keeper.name': 'Keeper' },
+        }),
+      },
+      {
+        type: 'conversation',
+        path: 'content/conversations/keeper.json',
+        text: writeContent('conversation', keeperTalk() as never),
+      },
+      ...extra,
+    ],
+    {
+      [KEEPER_PATH]: writeContent('character', {
+        format: 1,
+        id: 'keeper',
+        body: 'fixed',
+        size: { w: 0.8, h: 1 },
+        color: '#7a9e3b',
+        ...fields,
+      } as never),
+    },
+  )
+
+test('a keeper with a name English has and a conversation the game has loads', async () =>
+  expect(await gameProblems(keeperGame({ name: 'keeper.name', conversation: 'keeper' }))).toEqual([]))
+
+test('a name English does not have', async () =>
+  expect(await gameProblems(keeperGame({ name: 'keeper.nam' }))).toEqual([
+    `${KEEPER_PATH}: name: English has no message called "keeper.nam". Add it to the English file or fix the spelling.`,
+  ]))
+
+test('a conversation the game does not have', async () =>
+  expect(await gameProblems(keeperGame({ conversation: 'keper' }))).toEqual([
+    `${KEEPER_PATH}: conversation: There is no conversation called "keper". This game has: keeper.`,
+  ]))
+
+test('a character with a behaviour has to move', async () => {
+  const behaviour = {
+    type: 'behaviour' as const,
+    path: 'content/behaviours/critter.json',
+    text: fullGameFiles['content/behaviours/critter.json'],
+  }
+  // The behaviour looks for a hero, so some character has to be of that kind: here, the keeper.
+  const walker = { behaviour: 'critter', kind: 'hero' }
+  expect(await gameProblems(keeperGame(walker, [behaviour]))).toEqual([
+    `${KEEPER_PATH}: body: A character with a behaviour has to move, so its body must be "dynamic".`,
+  ])
+  expect(await gameProblems(keeperGame({ ...walker, body: 'dynamic' }, [behaviour]))).toEqual([])
+})

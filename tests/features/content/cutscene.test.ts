@@ -143,3 +143,50 @@ test('a line English does not have, and a speaker who is not a character', async
     `${file}: lines[0].speaker: There is no character called "keper". This game has: crate, hero, keeper.`,
   ])
 })
+
+test('a cutscene may open its level, and says so last', () => {
+  expectRoundTrip('cutscene', { ...intro(), opens: true })
+  const written = JSON.parse(writeContent('cutscene', { ...intro(), opens: true } as never)) as Json
+  expect(Object.keys(written).at(-1)).toBe('opens')
+  expect('opens' in (JSON.parse(writeContent('cutscene', intro() as never)) as Json)).toBe(false)
+})
+
+test('"opens" is true or it is left out', () =>
+  expect(said({ ...intro(), opens: false })).toEqual([`${file}: opens: This must be true.`]))
+
+/** The fixture game with these cutscenes (id, level, opens), and English for their lines. */
+const withOpening = (scenes: readonly (readonly [string, boolean])[]) =>
+  storyGame([
+    { type: 'messages', path: 'content/messages/en.json', text: writeContent('messages', english()) },
+    ...scenes.map(([id, opens]) => {
+      const scene = { ...intro(), id, level: 'level-1', ...(opens ? { opens } : {}) }
+      return {
+        type: 'cutscene' as const,
+        path: `content/cutscenes/${id}.json`,
+        text: writeContent('cutscene', scene as never),
+      }
+    }),
+  ])
+
+test('a level that opens with one cutscene', async () =>
+  expect(
+    await gameProblems(
+      withOpening([
+        ['level-1-intro', true],
+        ['level-1-tip', false],
+      ]),
+    ),
+  ).toEqual([]))
+
+test('two cutscenes that both open one level: the one with the later id is told', async () =>
+  expect(
+    await gameProblems(
+      withOpening([
+        ['level-1-start', true],
+        ['level-1-intro', true],
+        ['level-1-tip', false],
+      ]),
+    ),
+  ).toEqual([
+    'content/cutscenes/level-1-start.json: opens: The level "level-1" already opens with the cutscene "level-1-intro". Only one can.',
+  ]))

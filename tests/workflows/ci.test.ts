@@ -39,3 +39,9 @@ test('the package job copies the playground and its golden, so the packed instal
   expect(pack).toContain('cp -r tests/fixtures/playground "$smoke/playground"')
   expect(pack).toContain('tests/golden/playground.json')
 })
+
+test('the package job copies the story game and its golden, so the packed install loads a keeper and a critter', () => {
+  const pack = jobs.slice(jobs.indexOf('\n  package:'))
+  expect(pack).toContain('cp -r tests/fixtures/story "$smoke/story"')
+  expect(pack).toContain('tests/golden/story.json')
+})

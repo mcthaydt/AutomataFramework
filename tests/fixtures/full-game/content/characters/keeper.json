@@ -8,5 +8,7 @@
   },
   "color": "#7a9e3b",
   "upright": false,
-  "kind": "keeper"
+  "kind": "keeper",
+  "name": "keeper.name",
+  "conversation": "keeper"
 }

@@ -30,5 +30,7 @@ if (process.argv.includes('--update')) {
   console.error(
     'docs/api/framework.api.md does not match the source. Run `pnpm api-report --update` and review the diff.',
   )
+  // The report in full, so a run in CI shows what to commit.
+  console.error(`----- docs/api/framework.api.md, as the source makes it -----\n${text}----- end -----`)
   process.exitCode = 1
 }

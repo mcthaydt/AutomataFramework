@@ -1,4 +1,5 @@
 import { z } from '../../lib/zod.ts'
+import type { CutsceneFile } from './cutscene.ts'
 import { Id } from './ids.ts'
 import { englishLacks, englishMissing } from './messages.ts'
 import { MessageKey, noSuch, unique } from './shared.ts'
@@ -20,6 +21,8 @@ export interface ConversationNode {
   readonly choices?: readonly Choice[] | undefined
   /** The node that follows. A node with neither `choices` nor `next` ends the conversation. */
   readonly next?: string | undefined
+  /** The cutscene that plays when the conversation ends on this node. It has no choices and no `next`. */
+  readonly cutscene?: string | undefined
 }
 
 /** A conversation file once read: nodes that say lines by key, then offer choices or go on. */
@@ -47,6 +50,9 @@ const node = z.strictObject({
     .optional()
     .describe('What the player may pick. Left out means no choice.'),
   next: Id.optional().describe('The node that follows. Left out, with no choices, ends the conversation.'),
+  cutscene: Id.optional().describe(
+    'The cutscene that plays when the conversation ends here, by id, like "glade-tip".',
+  ),
 })
 
 /** The sentence for a node that is not there. */
@@ -97,6 +103,11 @@ function checkConversation(file: Partial<ConversationFile>, ctx: z.core.$Refinem
   nodes.forEach((n, i) => {
     if (n.choices !== undefined && n.next !== undefined)
       add(['nodes', i], 'A node has choices or a "next", not both.')
+    if (n.cutscene !== undefined && (n.choices !== undefined || n.next !== undefined))
+      add(
+        ['nodes', i, 'cutscene'],
+        'A cutscene plays when the conversation ends, so this node cannot have choices or a "next".',
+      )
     if (n.next !== undefined) {
       pointedAt.add(n.next)
       if (!known.has(n.next)) add(['nodes', i, 'next'], noNode(n.next, nodes))
@@ -117,7 +128,33 @@ function checkConversation(file: Partial<ConversationFile>, ctx: z.core.$Refinem
     )
 }
 
-/** Speakers must be characters, and every line and choice must be in English. */
+/**
+ * The levels, other than the cutscene's, in which a character that opens this conversation stands, each with that
+ * character. Empty when any level or character did not read: the check cannot see them all, so it says nothing.
+ */
+function otherLevels(
+  file: ConversationFile,
+  scene: CutsceneFile,
+  game: Listed,
+): { level: string; character: string }[] {
+  const characters = game.ids('character').map((id) => game.get('character', id))
+  const levels = game.ids('level').map((id) => game.get('level', id))
+  const talkers = new Set<string>()
+  const found: { level: string; character: string }[] = []
+  for (const c of characters) {
+    if (c === undefined) return []
+    if (c.conversation === file.id) talkers.add(c.id)
+  }
+  for (const level of levels) {
+    if (level === undefined) return []
+    const thing = level.things.find((t) => talkers.has(t.character))
+    if (thing !== undefined && level.id !== scene.level)
+      found.push({ level: level.id, character: thing.character })
+  }
+  return found
+}
+
+/** Speakers must be characters, every line and choice must be in English, and a node's cutscene must be playable. */
 function checkNames(file: ConversationFile, game: Listed, report: Report): void {
   file.nodes.forEach((n, i) => {
     if (n.speaker !== undefined && !game.has('character', n.speaker))
@@ -128,6 +165,18 @@ function checkNames(file: ConversationFile, game: Listed, report: Report): void 
     n.choices?.forEach((c, j) => {
       if (englishLacks(game, c.line)) report(`nodes[${i}].choices[${j}].line`, englishMissing(c.line))
     })
+    if (n.cutscene === undefined) return
+    if (!game.has('cutscene', n.cutscene)) {
+      report(`nodes[${i}].cutscene`, noSuch('cutscene', n.cutscene, game.ids('cutscene')))
+      return
+    }
+    const scene = game.get('cutscene', n.cutscene)
+    if (scene === undefined) return
+    for (const there of otherLevels(file, scene, game))
+      report(
+        `nodes[${i}].cutscene`,
+        `The cutscene "${scene.id}" is staged in the level "${scene.level}", but "${there.character}" can be talked to in the level "${there.level}" too, where it cannot play. Stage a cutscene there, or remove this one.`,
+      )
   })
 }
 

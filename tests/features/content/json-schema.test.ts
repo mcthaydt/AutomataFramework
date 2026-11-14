@@ -36,6 +36,8 @@ test('the JSON Schema of a character names every field, each with a description'
     'behaviour',
     'tuning',
     'touch',
+    'name',
+    'conversation',
   ])
   for (const [name, field] of Object.entries(schema.properties)) {
     expect(field.description, `${name} has a description`).toMatch(/\w{4,}/)
@@ -77,5 +79,21 @@ test('the JSON Schema of a sound, a track and a list of cues', () => {
 test('the JSON Schema of messages, a conversation and a cutscene', () => {
   expectSchema('messages', 'Messages', ['format', 'id', 'messages'])
   expectSchema('conversation', 'Conversation', ['format', 'id', 'start', 'nodes'])
-  expectSchema('cutscene', 'Cutscene', ['format', 'id', 'level', 'length', 'camera', 'actors', 'lines'])
+  expectSchema('cutscene', 'Cutscene', [
+    'format',
+    'id',
+    'level',
+    'length',
+    'camera',
+    'actors',
+    'lines',
+    'opens',
+  ])
+})
+
+test('a conversation node can name the cutscene that follows it, and says so in words', () => {
+  const schema = jsonSchemaFor('conversation') as { properties: { nodes: { items: Described } } }
+  const node = schema.properties.nodes.items.properties
+  expect(Object.keys(node).at(-1)).toBe('cutscene')
+  expect(node.cutscene?.description).toMatch(/cutscene that plays/)
 })
