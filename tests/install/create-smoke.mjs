@@ -176,7 +176,12 @@ if (!koreanMarks.startsWith('format = 2\nsource = "ko"\n'))
   fail('create --source ko: the marks file is not made against Korean.')
 said(
   'a Korean game',
-  must('check ko-game', 'npx', ['--no', 'automata', 'check', 'ko-game', '--only', 'files'], work),
+  must(
+    'check ko-game',
+    'npx',
+    ['--yes', '--package', tarball, 'automata', 'check', 'ko-game', '--only', 'files'],
+    work,
+  ),
   'Everything passed.',
 )
 step('--source writes the language the game is written in')
