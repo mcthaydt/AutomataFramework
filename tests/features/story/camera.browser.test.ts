@@ -71,12 +71,13 @@ test('on the page the hero is out of the picture at the start of the opening and
   })
   const started = await startStory(mount, { content })
   game = started.game
-  run(started.frames, 2)
+  // Four frames: the camera is let go of the heroes one step after the cutscene starts, and drawn between two steps.
+  run(started.frames, 4)
   const first = game.heroes()[0]
   expect(first, 'a hero is on the page').toBeDefined()
   // The camera starts on the keeper's side, far from the hero.
   expect((first?.x ?? 0) + (first?.w ?? 0)).toBeLessThanOrEqual(0)
-  run(started.frames, 118)
+  run(started.frames, 116)
   const last = game.heroes()[0]
   expect(last?.x ?? -1).toBeGreaterThanOrEqual(0)
   expect((last?.x ?? 1e9) + (last?.w ?? 0)).toBeLessThanOrEqual(390)

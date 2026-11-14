@@ -1,5 +1,44 @@
 {
   "ticks": 600,
-  "finalHash": "",
-  "checks": []
+  "finalHash": "43f12dccd11fc02d",
+  "checks": [
+    {
+      "tick": 60,
+      "hash": "9f2d66295fb75810"
+    },
+    {
+      "tick": 120,
+      "hash": "f9ec97602e698435"
+    },
+    {
+      "tick": 180,
+      "hash": "1136ba0619ec9a2f"
+    },
+    {
+      "tick": 240,
+      "hash": "aa0116640eb51658"
+    },
+    {
+      "tick": 300,
+      "hash": "7fb89300369fd8ef"
+    },
+    {
+      "tick": 360,
+      "hash": "f4f8b0629deb401f"
+    },
+    {
+      "tick": 420,
+      "hash": "1c8335048f9346c6"
+    },
+    {
+      "tick": 480,
+      "hash": "95fa3bffe4a44eca"
+    },
+    {
+      "tick": 540,
+      "hash": "3a1f722e5bb092a7"
+    }
+  ],
+  "idleHash60": "6cbfa9b46f60d548",
+  "timeline": "9c615bb8606aa4c0"
 }
