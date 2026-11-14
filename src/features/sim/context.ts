@@ -47,6 +47,14 @@ export interface SimContext {
     of<Z extends z.ZodType>(def: CommandDef<Z>): ReadonlyArray<CommandRecord<z.output<Z>>>
   }
   emit<Z extends z.ZodType>(def: EventDef<Z>, payload: z.input<Z>): void
+  readonly events: {
+    /**
+     * The payloads of this event emitted so far in this tick, in the order they were emitted: nothing from an
+     * earlier tick, and nothing a later system has yet to emit. Events are not part of a snapshot, so a restored
+     * sim has none until its systems run again.
+     */
+    of<Z extends z.ZodType>(def: EventDef<Z>): ReadonlyArray<z.output<Z>>
+  }
   resource<Z extends z.ZodType>(def: ResourceDef<Z>): z.output<Z>
   /** The per-sim state of the plugin that registered this system (`definePlugin({ state })`), else undefined. */
   readonly pluginState: unknown

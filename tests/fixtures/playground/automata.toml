@@ -1,0 +1,32 @@
+format = 1
+name = "Playground"
+start = "playground"
+hero = "hero"
+
+[[content]]
+type = "level"
+path = "content/levels/playground.json"
+
+[[content]]
+type = "character"
+path = "content/characters/hero.json"
+
+[[content]]
+type = "character"
+path = "content/characters/crate.json"
+
+[[content]]
+type = "character"
+path = "content/characters/plank.json"
+
+[[content]]
+type = "character"
+path = "content/characters/platform.json"
+
+[[content]]
+type = "character"
+path = "content/characters/spark.json"
+
+[[content]]
+type = "character"
+path = "content/characters/door.json"

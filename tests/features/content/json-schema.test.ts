@@ -15,6 +15,7 @@ test('the JSON Schema of a level names every field, each with a description', ()
     'tiles',
     'things',
     'starts',
+    'joints',
   ])
   for (const [name, field] of Object.entries(schema.properties)) {
     expect(field.description, `${name} has a description`).toMatch(/\w{4,}/)
@@ -34,6 +35,7 @@ test('the JSON Schema of a character names every field, each with a description'
     'kind',
     'behaviour',
     'tuning',
+    'touch',
     'name',
     'conversation',
   ])

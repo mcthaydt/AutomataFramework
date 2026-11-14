@@ -72,17 +72,13 @@
       "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
       "description": "The tuning file whose numbers decide how it moves, by id, like \"hero\"."
     },
-    "name": {
+    "touch": {
       "type": "string",
-      "maxLength": 96,
-      "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$",
-      "description": "The name shown when it speaks, as a message key, like \"keeper.name\"."
-    },
-    "conversation": {
-      "type": "string",
-      "maxLength": 64,
-      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
-      "description": "The conversation a hero opens by walking up to it, by id, like \"keeper\"."
+      "enum": [
+        "sense",
+        "take"
+      ],
+      "description": "\"sense\": things pass through it and the game is told when one touches it, like a door. \"take\": the same, and it is taken away when a hero touches it, like a spark."
     }
   },
   "required": [

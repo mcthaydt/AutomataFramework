@@ -7,11 +7,13 @@ import {
   defineSave,
   type GameContent,
   type Host,
+  type LevelJoint,
   loadGame,
   type MessagesFile,
   openSettings,
   type SaveDef,
   type TilesetFile,
+  type Touch,
   testHost,
   z,
 } from '@automataframework/framework/headless'
@@ -41,3 +43,7 @@ export const progress: SaveDef<{ level: string }> = defineSave({
 export const sound: NonNullable<GameContent['sounds']>[string] | undefined = undefined
 export const words: MessagesFile | undefined = undefined
 export const tiles: TilesetFile | undefined = undefined
+
+// Joints and touch are in the packed declarations too.
+export const held: LevelJoint | undefined = undefined
+export const touched: Touch | undefined = undefined

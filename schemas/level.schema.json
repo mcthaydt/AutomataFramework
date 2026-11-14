@@ -107,6 +107,160 @@
         "additionalProperties": false
       },
       "description": "Where each player begins. At least one is needed."
+    },
+    "joints": {
+      "maxItems": 256,
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this joint, used once in this level, like \"seesaw\"."
+              },
+              "thing": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Which thing is held, by its id in this level, like \"plank-1\"."
+              },
+              "holder": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "The thing that holds it, by its id in this level. Left out means the level itself holds it."
+              },
+              "kind": {
+                "type": "string",
+                "const": "pin",
+                "description": "\"pin\": the thing turns about one point, as a seesaw does."
+              },
+              "x": {
+                "type": "number",
+                "description": "Where the pin is, in tiles from the left edge."
+              },
+              "y": {
+                "type": "number",
+                "description": "Where the pin is, in tiles from the top edge."
+              },
+              "turn": {
+                "type": "object",
+                "properties": {
+                  "min": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180,
+                    "description": "The furthest it may turn one way, in degrees: 0 or less."
+                  },
+                  "max": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180,
+                    "description": "The furthest it may turn the other way, in degrees: 0 or more."
+                  }
+                },
+                "required": [
+                  "min",
+                  "max"
+                ],
+                "additionalProperties": false,
+                "description": "How far the thing may turn from how it was placed. Left out means it turns freely."
+              }
+            },
+            "required": [
+              "id",
+              "thing",
+              "kind",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this joint, used once in this level, like \"seesaw\"."
+              },
+              "thing": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Which thing is held, by its id in this level, like \"plank-1\"."
+              },
+              "holder": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "The thing that holds it, by its id in this level. Left out means the level itself holds it."
+              },
+              "kind": {
+                "type": "string",
+                "const": "rope",
+                "description": "\"rope\": the thing can go no further than the rope reaches, as a swing does."
+              },
+              "from": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number",
+                    "description": "Where the rope is tied to the thing, in tiles from the left edge."
+                  },
+                  "y": {
+                    "type": "number",
+                    "description": "Where the rope is tied to the thing, in tiles from the top edge."
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "to": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number",
+                    "description": "Where the other end is tied, to the holder or to the level, in tiles from the left edge."
+                  },
+                  "y": {
+                    "type": "number",
+                    "description": "Where the other end is tied, to the holder or to the level, in tiles from the top edge."
+                  }
+                },
+                "required": [
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "slack": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 64,
+                "description": "How much longer the rope is than the gap between its ends, in tiles. Left out means none."
+              }
+            },
+            "required": [
+              "id",
+              "thing",
+              "kind",
+              "from",
+              "to"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "description": "Pins and ropes that hold things: a seesaw turning on its pin, a swing hung from ropes. Left out means nothing is held."
     }
   },
   "required": [

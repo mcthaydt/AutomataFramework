@@ -31,3 +31,5 @@ export {
 export { choosePlace, nextPlace, openAt, type TalkPlace } from './talk.ts'
 export { levelSize, type TileRun, tileRuns } from './tile-runs.ts'
 export { type ActorPlace, actorsAt, cameraAt, linesAt, type SceneCamera } from './timeline.ts'
+export { type Touch, touchEvent, touchPlugin } from './touch.ts'
+export { touchKinds, usesJoints } from './uses.ts'

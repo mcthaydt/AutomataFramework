@@ -46,3 +46,11 @@ export function colliderDefaults(opts: ColliderOptions): {
     restitution: opts.restitution ?? 0,
   }
 }
+
+/**
+ * The codes a joint's `kind` field holds: `pin` (the first thing turns about a point, as a seesaw does on its
+ * pin) and `rope` (the first thing can go no further from the second than the rope reaches, as a swing does).
+ * `JointKind` is also the type of those values.
+ */
+export const JointKind: { readonly pin: 0; readonly rope: 1 } = { pin: 0, rope: 1 }
+export type JointKind = (typeof JointKind)[keyof typeof JointKind]

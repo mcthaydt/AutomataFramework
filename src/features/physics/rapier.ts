@@ -4,10 +4,10 @@
 
 import RAPIER from '@dimforge/rapier2d-deterministic'
 import type { EntityRef } from '../sim/sim.ts'
-import { checkBody, checkCollider } from './checks.ts'
-import { Body, Collider, Transform } from './components.ts'
+import { checkBody, checkCollider, checkJoint } from './checks.ts'
+import { Body, Collider, Joint, Transform } from './components.ts'
 import { CollisionEnded, CollisionStarted } from './events.ts'
-import { BodyKind, ShapeKind } from './kinds.ts'
+import { BodyKind, JointKind, ShapeKind } from './kinds.ts'
 import type { PhysicsAdapter } from './physics-world.ts'
 import { loadRapier } from './rapier-wasm.ts'
 
@@ -60,6 +60,7 @@ export async function createRapier(setup: {
     Transform,
     RigidBody: Body,
     Collider,
+    Joint,
     started: CollisionStarted,
     ended: CollisionEnded,
 
@@ -82,6 +83,7 @@ export async function createRapier(setup: {
       rotationLocked.clear()
     },
     handles(world) {
+      const joints: number[] = []
       const bodies: number[] = []
       const colliders: number[] = []
       world.bodies.forEach((body) => {
@@ -90,7 +92,41 @@ export async function createRapier(setup: {
       world.colliders.forEach((collider) => {
         colliders.push(collider.handle)
       })
-      return { bodies, colliders }
+      world.impulseJoints.raw.forEachJointHandle((handle: number) => {
+        joints.push(handle)
+      })
+      return { bodies, colliders, joints }
+    },
+
+    validateJoint(entity) {
+      checkJoint(entity.sid, 'physics.joint', entity.get(Joint))
+    },
+    // Rapier's first body is `b` and its second `a`, so a pin's limits are a's turn against b: with b the level,
+    // simply how far a may turn. A pin lets its two things pass through each other (the hinge sits inside both);
+    // a rope leaves their contacts on, so two things tied together still bump.
+    createJoint(world, spec, bodyA, bodyB) {
+      const first = { x: spec.bx, y: spec.by }
+      const second = { x: spec.ax, y: spec.ay }
+      const pin = spec.kind === JointKind.pin
+      const data = pin
+        ? RAPIER.JointData.revolute(first, second)
+        : RAPIER.JointData.rope(spec.max, first, second)
+      const joint = world.createImpulseJoint(data, world.getRigidBody(bodyB), world.getRigidBody(bodyA), true)
+      if (pin) {
+        joint.setContactsEnabled(false)
+        // JointData's own limit fields are read only for prismatic joints, so a revolute's are set on the made joint.
+        if (spec.limited) (joint as RAPIER.RevoluteImpulseJoint).setLimits(spec.min, spec.max)
+      }
+      return joint.handle
+    },
+    removeJoint(world, joint) {
+      world.removeImpulseJoint(world.getImpulseJoint(joint), true)
+    },
+    // The raw handles, not `joint.body1().handle`: the wrapper resolves through the body set's map, and the joint
+    // table compares exact bits (the lesson of `colliderParent`).
+    jointBodies(world, joint) {
+      const raw = world.impulseJoints.raw
+      return { a: raw.jointBodyHandle2(joint), b: raw.jointBodyHandle1(joint) }
     },
 
     validate(entity) {
