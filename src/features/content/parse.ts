@@ -1,4 +1,4 @@
-import type { z } from 'zod'
+import type { z } from '../../lib/zod.ts'
 import { CONTENT_TYPES, type ContentType, type ContentValue } from './content-types.ts'
 import { type Diagnostic, toDiagnostics, type Voice } from './diagnostics.ts'
 

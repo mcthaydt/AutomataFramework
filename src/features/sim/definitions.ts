@@ -1,9 +1,9 @@
 // Lifted from AutomataFrameworkFailed@ed8592e8: packages/sim/src/shared/define/definitions.ts
 import { type Trait, trait } from 'koota'
-import type { z } from 'zod'
 import { canonicalJson } from '../../lib/canonical.ts'
 import { deepFreeze } from '../../lib/deep-freeze.ts'
 import { sortedKeys } from '../../lib/sorted.ts'
+import type { z } from '../../lib/zod.ts'
 import type { SimContext } from './context.ts'
 import { defaultField, FIELD_TYPES, type FieldSchema, type FieldType } from './fields.ts'
 

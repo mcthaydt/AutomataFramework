@@ -5,7 +5,7 @@
 //    same bytes;
 //  - what is loaded never throws: a binding that no longer fits the game (renamed action, a key the game now uses
 //    elsewhere) is dropped and named, and the rest still apply.
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { PAD_BUTTONS, PAD_STICKS, type PadInput, RESERVED_KEYS, RESERVED_PAD } from '../commands/commands.ts'
 import { type Control, type Controls, checkControls } from './controls.ts'
 

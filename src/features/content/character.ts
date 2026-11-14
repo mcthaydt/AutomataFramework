@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { Id } from './ids.ts'
 import { noSuch } from './shared.ts'

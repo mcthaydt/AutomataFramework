@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { Id } from './ids.ts'
 import { englishLacks, englishMissing } from './messages.ts'
 import { MessageKey, noSuch, unique } from './shared.ts'
