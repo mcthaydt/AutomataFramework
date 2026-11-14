@@ -1,10 +1,12 @@
 import type { z } from '../../lib/zod.ts'
+import { type BackdropFile, backdropInfo } from './backdrop.ts'
 import { type BehaviourFile, behaviourInfo } from './behaviour.ts'
 import { type Character, type CharacterInput, characterInfo } from './character.ts'
 import { type ConversationFile, conversationInfo } from './conversation.ts'
 import { type CuesFile, cuesInfo } from './cues.ts'
 import { type CutsceneFile, cutsceneInfo } from './cutscene.ts'
 import { type FeelFile, feelInfo } from './feel.ts'
+import { type FigureFile, figureInfo } from './figure.ts'
 import { type Level, levelInfo } from './level.ts'
 import { type MessagesFile, messagesInfo } from './messages.ts'
 import { type MusicFile, musicInfo } from './music.ts'
@@ -20,7 +22,9 @@ import type { ContentTypeInfo } from './type-info.ts'
 export const CONTENT_TYPES: {
   readonly level: ContentTypeInfo<Level, Level>
   readonly character: ContentTypeInfo<Character, CharacterInput>
+  readonly figure: ContentTypeInfo<FigureFile, FigureFile>
   readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>
+  readonly backdrop: ContentTypeInfo<BackdropFile, BackdropFile>
   readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>
   readonly tuning: ContentTypeInfo<TuningFile, TuningFile>
   readonly feel: ContentTypeInfo<FeelFile, FeelFile>
@@ -33,7 +37,9 @@ export const CONTENT_TYPES: {
 } = {
   level: levelInfo,
   character: characterInfo,
+  figure: figureInfo,
   tileset: tilesetInfo,
+  backdrop: backdropInfo,
   behaviour: behaviourInfo,
   tuning: tuningInfo,
   feel: feelInfo,

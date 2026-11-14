@@ -10,8 +10,10 @@ test('the JSON Schema of a level names every field, each with a description', ()
     'format',
     'id',
     'tileset',
+    'backdrop',
     'sky',
     'ground',
+    'view',
     'tiles',
     'things',
     'starts',
@@ -33,6 +35,8 @@ test('the JSON Schema of a character names every field, each with a description'
     'color',
     'upright',
     'kind',
+    'figure',
+    'clips',
     'behaviour',
     'tuning',
     'touch',
@@ -58,6 +62,21 @@ function expectSchema(type: ContentType, title: string, fields: string[]): void 
 
 test('the JSON Schema of a tileset', () =>
   expectSchema('tileset', 'Tileset', ['format', 'id', 'image', 'tileSize', 'columns', 'tiles']))
+
+test('the JSON Schema of a figure and a backdrop', () => {
+  expectSchema('figure', 'Figure', [
+    'format',
+    'id',
+    'tile',
+    'frame',
+    'outline',
+    'paints',
+    'parts',
+    'poses',
+    'variants',
+  ])
+  expectSchema('backdrop', 'Backdrop', ['format', 'id', 'seed', 'tile', 'width', 'layers', 'props'])
+})
 
 test('the JSON Schema of a behaviour', () =>
   expectSchema('behaviour', 'Behaviour', ['format', 'id', 'rules']))

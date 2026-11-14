@@ -1,5 +1,7 @@
-import { expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { formatDiagnostic, parseContent, writeContent } from '#src/features/content/content.ts'
+import { artGame } from '../../fixtures/content/art.ts'
+import { gameProblems } from '../../fixtures/content/kind.ts'
 
 const hero = () => ({
   format: 1,
@@ -124,3 +126,84 @@ test('a character that is touched cannot be dynamic', () =>
   expect(problems('content/characters/spark.json', { ...spark(), body: 'dynamic' })).toEqual([
     'content/characters/spark.json: body: A character that is touched lets everything through, so it would fall out of the level. Make its body "fixed".',
   ]))
+
+const withArt = () => ({
+  ...hero(),
+  figure: 'hero',
+  clips: [
+    { id: 'idle', poses: ['idle'], fps: 1, loop: true },
+    { id: 'run', poses: ['run-1', 'run-2'], fps: 8, loop: true },
+  ],
+})
+
+test('a figure and clips are written right after the kind, before the behaviour and the tuning', () => {
+  const full = { ...withArt(), kind: 'hero', behaviour: 'hero', tuning: 'hero' }
+  const parsed = parseContent('character', JSON.stringify(full), 'content/characters/hero.json')
+  expect(parsed.ok && parsed.value).toEqual(full)
+  expect(Object.keys(JSON.parse(writeContent('character', full as never)))).toEqual([
+    'format',
+    'id',
+    'body',
+    'size',
+    'color',
+    'upright',
+    'kind',
+    'figure',
+    'clips',
+    'behaviour',
+    'tuning',
+  ])
+})
+
+test('clips without a figure', () => {
+  const { figure: _figure, ...noFigure } = withArt()
+  expect(problems('content/characters/hero.json', noFigure)).toEqual([
+    'content/characters/hero.json: clips: Clips play a figure\'s poses, so this character needs a "figure" too.',
+  ])
+})
+
+test('a clip needs poses, a speed and whether it goes round again', () => {
+  const clip = { id: 'run', poses: ['run-1'], fps: 8, loop: true }
+  expect(problems('content/characters/hero.json', { ...withArt(), clips: [{ ...clip, poses: [] }] })).toHaveLength(1)
+  expect(problems('content/characters/hero.json', { ...withArt(), clips: [{ ...clip, fps: 0 }] })).toHaveLength(1)
+  expect(
+    problems('content/characters/hero.json', {
+      ...withArt(),
+      clips: [{ id: 'run', poses: ['run-1'], loop: true }],
+    }),
+  ).toEqual([
+    'content/characters/hero.json: clips[0].fps: This is missing. Write how many pictures a second it shows, like 8.',
+  ])
+})
+
+test('two clips with one id', () => {
+  const one = { id: 'run', poses: ['run-1'], fps: 8, loop: true }
+  expect(problems('content/characters/hero.json', { ...withArt(), clips: [one, one] })).toHaveLength(1)
+})
+
+test('a character with a figure and clips is written as it was, byte for byte', () => {
+  const text = writeContent('character', withArt() as never)
+  expect(writeContent('character', JSON.parse(text))).toBe(text)
+})
+
+describe('in a game', () => {
+  const heroText = (value: unknown): Record<string, string | undefined> =>
+    artGame([], { 'content/characters/hero.json': writeContent('character', value as never) })
+
+  test('a figure the game has, and clips of its poses, load', async () =>
+    expect(await gameProblems(artGame())).toEqual([]))
+
+  test('a figure the game does not have', async () =>
+    expect(await gameProblems(heroText({ ...withArt(), figure: 'hera' }))).toEqual([
+      'content/characters/hero.json: figure: There is no figure called "hera". This game has: hero, keeper.',
+    ]))
+
+  test('a clip that shows a pose the figure does not have', async () =>
+    expect(
+      await gameProblems(
+        heroText({ ...withArt(), clips: [{ id: 'run', poses: ['run-1', 'sprint'], fps: 8, loop: true }] }),
+      ),
+    ).toEqual([
+      'content/characters/hero.json: clips[0].poses[1]: The figure "hero" has no pose called "sprint". It has: idle, run-1, run-2, jump, fall, land, push.',
+    ]))
+})
