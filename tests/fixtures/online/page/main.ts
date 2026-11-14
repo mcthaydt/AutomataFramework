@@ -22,7 +22,16 @@ let online: Online | undefined
 
 // The first load of the framework and the SDK, and the whole join, happen inside this with `new Function` refused as a
 // strict CSP does: whatever tried to build code from a string is listed in `data-built-code`.
+const stacks: string[] = []
 const built = await attemptsToBuildCode(async () => {
+  // Where each attempt came from, for the journey to print if there is one: a stack's first lines say which package asked.
+  const refusing = globalThis.Function
+  globalThis.Function = new Proxy(refusing, {
+    construct: (target, args, newTarget) => {
+      stacks.push((new Error().stack ?? '').split('\n').slice(1, 8).join(' | '))
+      return Reflect.construct(target, args, newTarget)
+    },
+  })
   framework = await import('#src/index.ts')
   const { onlineWords, startOnlineGame, webHost } = framework
   const { fixtureControls } = await import('../../game/controls.ts')
@@ -58,6 +67,7 @@ const built = await attemptsToBuildCode(async () => {
   }
 })
 game.dataset.builtCode = JSON.stringify(built)
+game.dataset.builtStack = JSON.stringify(stacks)
 
 if (framework !== undefined && online !== undefined) {
   const { Player, playersIn, Transform } = framework

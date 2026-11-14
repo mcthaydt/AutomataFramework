@@ -220,8 +220,8 @@ for (const [first, second] of PAIRS) {
     const two = await seatOf(second, `&room=${encodeURIComponent(code)}`)
     for (const seat of [one, two]) await expect.poll(() => seat.data('state'), POLL).toBe('playing')
     for (const seat of [one, two]) await expect.poll(() => seat.status(), POLL).toBe('')
-    expect(await one.data('seat')).toBe('1')
-    expect(await two.data('seat')).toBe('2')
+    await expect.poll(() => one.data('seat'), POLL).toBe('1')
+    await expect.poll(() => two.data('seat'), POLL).toBe('2')
 
     // 3 and 4. One runs right, the other left; each sees the other move.
     await one.hold('right')
@@ -243,7 +243,10 @@ for (const [first, second] of PAIRS) {
     expect((await checks(one)).get(599)).toBe((await checks(two)).get(599))
     for (const seat of [one, two]) {
       expect(num(await seat.data('rollbacks'))).toBeGreaterThan(0)
-      expect(await seat.data('built-code')).toBe('[]')
+      expect(
+        await seat.data('built-code'),
+        `built from a string, at: ${await seat.data('built-stack')}`,
+      ).toBe('[]')
     }
 
     // 6. A dropped connection gets back into its place, and the room ends on one picture again.
@@ -291,7 +294,7 @@ test('co-op: a second player joins a game that is going, and when they go their 
     coopServer,
   )
   await expect.poll(() => two.data('state'), POLL).toBe('playing')
-  expect(await two.data('seat')).toBe('2')
+  await expect.poll(() => two.data('seat'), POLL).toBe('2')
   for (const seat of [one, two]) await expect.poll(() => seat.data('players'), POLL).toBe('2')
 
   // Each sees the other's hero move.
