@@ -341,12 +341,31 @@ export const levelInfo: ContentTypeInfo<Level, Level> = {
         ? character
         : undefined
     }
+    const characterOf = (id: string | undefined): string | undefined =>
+      level.things.find((t) => t.id === id)?.character
     level.joints?.forEach((joint, i) => {
       const held = fixedCharacter(joint.thing)
-      if (held !== undefined && (joint.holder === undefined || fixedCharacter(joint.holder) !== undefined))
+      const holder = joint.holder === undefined ? undefined : fixedCharacter(joint.holder)
+      if (held !== undefined && holder !== undefined)
+        report(
+          `joints[${i}].thing`,
+          `The characters "${held}" and "${holder}" are both "fixed", so neither moves and this joint holds nothing. Make one of them "dynamic", or remove this joint.`,
+        )
+      else if (held !== undefined && joint.holder === undefined)
         report(
           `joints[${i}].thing`,
           `The character "${held}" is "fixed", so it never moves and cannot be joined to the level. Make it "dynamic", or remove this joint.`,
+        )
+      // An upright thing keeps its rotation locked, so a pin on it holds it still: it can never turn.
+      const character = characterOf(joint.thing)
+      if (
+        joint.kind === 'pin' &&
+        character !== undefined &&
+        game.get('character', character)?.upright === true
+      )
+        report(
+          `joints[${i}].thing`,
+          `The character "${character}" is "upright", so it cannot turn on a pin. Set "upright" to false, or hold it with a rope.`,
         )
     })
   },

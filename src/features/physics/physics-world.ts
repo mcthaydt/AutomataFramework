@@ -199,7 +199,13 @@ export class PhysicsWorld<World> implements PluginState {
         this.rapier.updateLoneCollider(this.world, row.collider, entity)
       }
     }
-    this.joints?.createMissing(ctx, this.world, this.bodyOf)
+    // A body is made only for an entity with both a body row and a transform: a joint to one without says which is missing.
+    const lack = (sid: number): string =>
+      ctx.entity(sid)?.has(this.rapier.RigidBody) === true &&
+      ctx.entity(sid)?.has(this.rapier.Transform) !== true
+        ? 'transform'
+        : 'physics.body'
+    this.joints?.createMissing(ctx, this.world, this.bodyOf, lack)
   }
 
   step(): void {
