@@ -77,7 +77,9 @@ for (const [name, w, h] of SCREENS) {
     await userEvent.keyboard('{Space>}')
     for (let i = 0; i < 10; i++) frames.advance(FRAME)
     await userEvent.keyboard('{/Space}')
-    expect(audio.log()).toContainEqual(expect.objectContaining({ from: 'sim', on: 'hero.jumped', do: 'sound' }))
+    expect(audio.log()).toContainEqual(
+      expect.objectContaining({ from: 'sim', on: 'hero.jumped', do: 'sound' }),
+    )
     expect(audio.log().filter((entry) => entry.skipped !== undefined)).toEqual([])
 
     frames.advance(FRAME)
