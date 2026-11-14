@@ -142,7 +142,7 @@ test('the README has a Languages section: the files, the values, the pick, the t
 
 // A first-time developer copies the first example and gets a running page: the language is asked, then the game starts.
 test("the README's first example makes a locale and shows the picker before it starts the game", () => {
-  const start = readme.indexOf("import {\n  createLocale,")
+  const start = readme.indexOf('import {\n  createLocale,')
   expect(start).toBeGreaterThan(-1)
   const example = readme.slice(start, readme.indexOf('```', start))
   const order = ['createLocale({', 'languagePicker({', 'startGame({'].map((word) => example.indexOf(word))

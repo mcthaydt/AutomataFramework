@@ -2624,7 +2624,7 @@ const READ_MARKS_FILE = "automata.translations.toml";
 ### `readMark` (function)
 
 ```ts
-function readMark(english: string, translated: string): string;
+function readMark(sourceText: string, translated: string): string;
 ```
 
 ### `ReadMarks` (interface)
@@ -6270,7 +6270,7 @@ const READ_MARKS_FILE = "automata.translations.toml";
 ### `readMark` (function)
 
 ```ts
-function readMark(english: string, translated: string): string;
+function readMark(sourceText: string, translated: string): string;
 ```
 
 ### `ReadMarks` (interface)
