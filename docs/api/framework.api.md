@@ -960,6 +960,12 @@ type Ease = 'cut' | 'linear' | 'smooth';
 type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
 ```
 
+### `emptyReadMarks` (function)
+
+```ts
+function emptyReadMarks(source: Language): ReadMarks;
+```
+
 ### `encodePng` (function)
 
 ```ts
@@ -1883,7 +1889,7 @@ const Look: ComponentDef<typeof lookFields>;
 ### `markRead` (function)
 
 ```ts
-function markRead(content: GameContent, marks: ReadMarks, language: Translated, keys?: readonly string[]): ReadMarks;
+function markRead(content: GameContent, marks: ReadMarks | undefined, language: Language, keys?: readonly string[]): ReadMarks;
 ```
 
 ### `matchLanguage` (function)
@@ -2477,10 +2483,13 @@ const READ_MARKS_FILE = "automata.translations.toml";
 function readMark(english: string, translated: string): string;
 ```
 
-### `ReadMarks` (type)
+### `ReadMarks` (interface)
 
 ```ts
-type ReadMarks = Readonly<Partial<Record<Translated, Readonly<Record<string, string>>>>>;
+interface ReadMarks {
+    readonly source: Language;
+    readonly read: Readonly<Partial<Record<Language, Readonly<Record<string, string>>>>>;
+}
 ```
 
 ### `ReadPicture` (type)
@@ -3789,7 +3798,7 @@ function typed<M extends Readonly<Record<string, string>>>(_file: {
 ### `unreadWords` (function)
 
 ```ts
-function unreadWords(content: GameContent, marks: ReadMarks): readonly {
+function unreadWords(content: GameContent, marks: ReadMarks | undefined): readonly {
     readonly language: Language;
     readonly key: string;
 }[];
@@ -4788,6 +4797,12 @@ type Ease = 'cut' | 'linear' | 'smooth';
 type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
 ```
 
+### `emptyReadMarks` (function)
+
+```ts
+function emptyReadMarks(source: Language): ReadMarks;
+```
+
 ### `encodePng` (function)
 
 ```ts
@@ -5529,7 +5544,7 @@ const Look: ComponentDef<typeof lookFields>;
 ### `markRead` (function)
 
 ```ts
-function markRead(content: GameContent, marks: ReadMarks, language: Translated, keys?: readonly string[]): ReadMarks;
+function markRead(content: GameContent, marks: ReadMarks | undefined, language: Language, keys?: readonly string[]): ReadMarks;
 ```
 
 ### `matchLanguage` (function)
@@ -6043,10 +6058,13 @@ const READ_MARKS_FILE = "automata.translations.toml";
 function readMark(english: string, translated: string): string;
 ```
 
-### `ReadMarks` (type)
+### `ReadMarks` (interface)
 
 ```ts
-type ReadMarks = Readonly<Partial<Record<Translated, Readonly<Record<string, string>>>>>;
+interface ReadMarks {
+    readonly source: Language;
+    readonly read: Readonly<Partial<Record<Language, Readonly<Record<string, string>>>>>;
+}
 ```
 
 ### `RECONNECT_DELAYS_MS` (const)
@@ -7226,7 +7244,7 @@ function typed<M extends Readonly<Record<string, string>>>(_file: {
 ### `unreadWords` (function)
 
 ```ts
-function unreadWords(content: GameContent, marks: ReadMarks): readonly {
+function unreadWords(content: GameContent, marks: ReadMarks | undefined): readonly {
     readonly language: Language;
     readonly key: string;
 }[];
