@@ -160,3 +160,12 @@ test('headless and the page entry never reach src/server.ts, through any chain',
   expect(one({ ...node, 'src/headless.ts': "export * from './server.ts'" })).toEqual(['server-is-node-only'])
   expect(one({ ...node, 'src/index.ts': "export * from './server.ts'" })).toEqual(['server-is-node-only'])
 })
+
+test('audio may import nothing above it', () =>
+  expect(one({ 'src/features/audio/audio.ts': "import '../saves/saves.ts'" })).toEqual(['imports-go-down']))
+
+test('the sim side may not import audio', () =>
+  expect(one({ 'src/features/level/level.ts': "import '../audio/audio.ts'" })).toEqual(['imports-go-down']))
+
+test('audio keeps no clock of its own: its speaker has the only one', () =>
+  expect(one({ 'src/features/audio/audio.ts': 'setTimeout(() => {}, 1)' })).toEqual(['sim-is-pure']))
