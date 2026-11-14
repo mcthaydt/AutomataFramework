@@ -16,4 +16,9 @@ export interface Link {
   }): void
   /** Ends the connection, and leaves the room. */
   close(): void
+  /**
+   * A network failure, for tests and debug tools: ends the connection without leaving the room, so the room keeps
+   * the seat for its grace and the player can get back in. A link that cannot do this leaves it out.
+   */
+  drop?(): void
 }

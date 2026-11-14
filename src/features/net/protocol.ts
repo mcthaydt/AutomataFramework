@@ -11,6 +11,9 @@ import { FRAMEWORK_VERSION, type Sim } from '../sim/sim.ts'
 export const PROTOCOL_VERSION = 1 as const
 /** The one room type the server runs. */
 export const ROOM_NAME = 'game'
+/** The channel messages travel on (Colyseus packs the plain objects), and the one a snapshot's bytes follow on. */
+export const MESSAGE_CHANNEL = 'm'
+export const BYTES_CHANNEL = 'b'
 /** A larger message from a client is dropped by the transport. */
 export const MAX_MESSAGE_BYTES = 16_384
 /** A command stamped further ahead of the room than this many ticks is refused. */
@@ -57,6 +60,16 @@ export type OnlineProblem =
   | 'bad-room'
   | 'no-server'
   | 'lost'
+
+/** Thrown when a room cannot be joined or the connection is lost for good. `message` is in plain words. */
+export class OnlineError extends Error {
+  readonly problem: OnlineProblem
+  constructor(problem: OnlineProblem, message: string) {
+    super(message)
+    this.name = 'OnlineError'
+    this.problem = problem
+  }
+}
 
 /** The problems a join can be refused with, as the room writes them before the colon of its error message. */
 export const ONLINE_PROBLEMS: readonly OnlineProblem[] = [

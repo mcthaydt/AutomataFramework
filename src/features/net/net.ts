@@ -2,8 +2,10 @@
 // and rolls back. Nothing here reads a clock or sets a timer: time reaches it only as "advance once", from whoever
 // owns the loop, so the same messages in give the same state out on every machine.
 
+export { type Joined, type JoinOptions, joinSession } from './join.ts'
 export type { Link } from './link.ts'
 export {
+  BYTES_CHANNEL,
   type ClientMessage,
   DEFAULT_MAX_ROOMS,
   HASH_EVERY,
@@ -15,8 +17,10 @@ export {
   MAX_LEAD_TICKS,
   MAX_MESSAGE_BYTES,
   MAX_QUEUED_COMMANDS,
+  MESSAGE_CHANNEL,
   MIN_LEAD,
   ONLINE_PROBLEMS,
+  OnlineError,
   type OnlineProblem,
   PROTOCOL_VERSION,
   parseClientMessage,

@@ -148,6 +148,12 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `BYTES_CHANNEL` (const)
+
+```ts
+const BYTES_CHANNEL = "b";
+```
+
 ### `CameraKey` (interface)
 
 ```ts
@@ -1048,6 +1054,35 @@ const JoinCommand: CommandDef<typeof emptyPayload>;
 function joinCommand(tick: number, player: number, seq: number): Command;
 ```
 
+### `Joined` (interface)
+
+```ts
+interface Joined {
+    readonly session: Session;
+    readonly code: string;
+    rejoin(): Promise<void>;
+    leave(): void;
+}
+```
+
+### `JoinOptions` (interface)
+
+```ts
+interface JoinOptions {
+    readonly server: string;
+    readonly room?: string;
+    readonly level: string;
+    readonly seats: number;
+    readonly confirmed: Sim;
+    readonly predicted: Sim;
+    readonly wrapLink?: (link: Link) => Link;
+    readonly resendAfterSync?: readonly string[];
+    readonly onCheck?: (tick: number, hash: string, ok: boolean) => void;
+    readonly onState?: (state: SessionState) => void;
+    readonly onLinkClosed?: () => void;
+}
+```
+
 ### `joinPlugin` (function)
 
 ```ts
@@ -1055,6 +1090,12 @@ function joinPlugin(options: {
     readonly level: string;
     readonly max: number;
 }): PluginDef;
+```
+
+### `joinSession` (function)
+
+```ts
+function joinSession(options: JoinOptions): Promise<Joined>;
 ```
 
 ### `jsonSchemaFor` (function)
@@ -1168,6 +1209,7 @@ interface Link {
         closed(): void;
     }): void;
     close(): void;
+    drop?(): void;
 }
 ```
 
@@ -1271,6 +1313,12 @@ const MAX_STEPS_PER_FRAME = 5;
 type MenuPress = 'up' | 'down' | 'left' | 'right' | 'accept' | 'back' | 'pause';
 ```
 
+### `MESSAGE_CHANNEL` (const)
+
+```ts
+const MESSAGE_CHANNEL = "m";
+```
+
 ### `MessagesFile` (interface)
 
 ```ts
@@ -1345,6 +1393,15 @@ interface NoiseVoice {
 
 ```ts
 const ONLINE_PROBLEMS: readonly OnlineProblem[];
+```
+
+### `OnlineError` (class)
+
+```ts
+class OnlineError extends Error {
+    readonly problem: OnlineProblem;
+    constructor(problem: OnlineProblem, message: string);
+}
 ```
 
 ### `OnlineProblem` (type)
@@ -2662,6 +2719,12 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `BYTES_CHANNEL` (const)
+
+```ts
+const BYTES_CHANNEL = "b";
+```
+
 ### `CameraKey` (interface)
 
 ```ts
@@ -3314,6 +3377,35 @@ const JoinCommand: CommandDef<typeof emptyPayload>;
 function joinCommand(tick: number, player: number, seq: number): Command;
 ```
 
+### `Joined` (interface)
+
+```ts
+interface Joined {
+    readonly session: Session;
+    readonly code: string;
+    rejoin(): Promise<void>;
+    leave(): void;
+}
+```
+
+### `JoinOptions` (interface)
+
+```ts
+interface JoinOptions {
+    readonly server: string;
+    readonly room?: string;
+    readonly level: string;
+    readonly seats: number;
+    readonly confirmed: Sim;
+    readonly predicted: Sim;
+    readonly wrapLink?: (link: Link) => Link;
+    readonly resendAfterSync?: readonly string[];
+    readonly onCheck?: (tick: number, hash: string, ok: boolean) => void;
+    readonly onState?: (state: SessionState) => void;
+    readonly onLinkClosed?: () => void;
+}
+```
+
 ### `joinPlugin` (function)
 
 ```ts
@@ -3321,6 +3413,12 @@ function joinPlugin(options: {
     readonly level: string;
     readonly max: number;
 }): PluginDef;
+```
+
+### `joinSession` (function)
+
+```ts
+function joinSession(options: JoinOptions): Promise<Joined>;
 ```
 
 ### `jsonSchemaFor` (function)
@@ -3434,6 +3532,7 @@ interface Link {
         closed(): void;
     }): void;
     close(): void;
+    drop?(): void;
 }
 ```
 
@@ -3525,6 +3624,12 @@ const MAX_QUEUED_COMMANDS = 32;
 const MAX_STEPS = 4096;
 ```
 
+### `MESSAGE_CHANNEL` (const)
+
+```ts
+const MESSAGE_CHANNEL = "m";
+```
+
 ### `MessagesFile` (interface)
 
 ```ts
@@ -3599,6 +3704,15 @@ interface NoiseVoice {
 
 ```ts
 const ONLINE_PROBLEMS: readonly OnlineProblem[];
+```
+
+### `OnlineError` (class)
+
+```ts
+class OnlineError extends Error {
+    readonly problem: OnlineProblem;
+    constructor(problem: OnlineProblem, message: string);
+}
 ```
 
 ### `OnlineProblem` (type)

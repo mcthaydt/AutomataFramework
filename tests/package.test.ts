@@ -8,6 +8,7 @@ const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.
   scripts: Record<string, string>
   files: string[]
   exports: Record<string, { import?: string } | string>
+  dependencies: Record<string, string>
 }
 
 test('a git install builds the package: prepare runs the build', () => {
@@ -18,4 +19,13 @@ test('what the build writes is what the package ships and points at', () => {
   expect(manifest.files).toContain('dist')
   expect(manifest.exports['.']).toMatchObject({ import: './dist/index.js' })
   expect(manifest.exports['./headless']).toMatchObject({ import: './dist/headless.js' })
+})
+
+// Online play runs on Colyseus, at the versions the old repo ran. `@colyseus/schema` is named by no file: `@colyseus/core`
+// requires it installed beside it, so it is a dependency of ours too, at the version its sibling was built against.
+test('the networking packages are dependencies at the exact versions', () => {
+  expect(manifest.dependencies['@colyseus/core']).toBe('0.18.18')
+  expect(manifest.dependencies['@colyseus/schema']).toBe('5.0.36')
+  expect(manifest.dependencies['@colyseus/ws-transport']).toBe('0.18.4')
+  expect(manifest.dependencies['@colyseus/sdk']).toBe('0.18.5')
 })

@@ -24,7 +24,9 @@ function fakeRoom(code = 'ROOM') {
     reconnection: { enabled: true },
     connection: { close: () => undefined },
     onMessage: (type, handler) => void handlers.set(type, handler),
-    onLeave: (handler) => void (onLeave = handler),
+    onLeave: (handler) => {
+      onLeave = handler
+    },
     send: (type, payload) => void sent.push({ type, payload }),
     leave: async () => {
       onLeave(4000)

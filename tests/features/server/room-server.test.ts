@@ -5,7 +5,7 @@ import { afterEach, expect, test } from 'vitest'
 import { verifyReplay } from '#src/features/commands/commands.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import { OnlineError } from '#src/features/net/net.ts'
-import { createRoomServer, type RoomServer, type RoomServerOptions } from '#src/features/server/server.ts'
+import { createRoomServer, type RoomServer, type RoomServerOptions } from '#src/server.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { loadOnlineGame, onlineSim } from '../../fixtures/online/game.ts'
 import {
