@@ -8,6 +8,5 @@
     "tests/fixtures/online/page/main.ts"
   ],
   "project": ["src/**/*.ts", "tests/**/*.ts"],
-  "ignore": ["tests/install/**"],
-  "ignoreIssues": { "src/features/audio/audio.ts": ["exports", "types"] }
+  "ignore": ["tests/install/**"]
 }
