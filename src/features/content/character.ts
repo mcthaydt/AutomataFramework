@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { colour } from './colour.ts'
 import { Id } from './ids.ts'
+import type { ContentTypeInfo } from './type-info.ts'
 
 /** A character file once read: what one kind of thing is. M1 draws it as a coloured box. */
 export interface Character {
@@ -43,3 +44,22 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z.strictObj
     .default(false)
     .describe('True if the character stays on its feet and cannot be tipped over. Left out means false.'),
 })
+
+/** The character's row of the content table. */
+export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
+  schema: CharacterSchema,
+  title: 'Character',
+  plural: 'characters',
+  editor: 'characters',
+  part: 'clips',
+  noun: 'character',
+  missing: {
+    format: 'Write "format": 1.',
+    id: 'Give the character a name like "hero".',
+    body: 'Write "dynamic" if it moves and falls, or "fixed" if it stays put.',
+    size: 'Write the size in tiles, like { "w": 1, "h": 1 }.',
+    'size.w': 'Write how wide it is, in tiles.',
+    'size.h': 'Write how tall it is, in tiles.',
+    color: 'Write the colour as # and six digits, like #e4572e.',
+  },
+}

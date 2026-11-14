@@ -1,6 +1,6 @@
 import { parse as parseToml } from 'smol-toml'
 import { z } from 'zod'
-import type { ContentType } from './content-types.ts'
+import { CONTENT_TYPES, type ContentType } from './content-types.ts'
 import type { Voice } from './diagnostics.ts'
 import { Id } from './ids.ts'
 import { checkData, type Parsed } from './parse.ts'
@@ -33,8 +33,11 @@ function isGamePath(path: string): boolean {
   return path.split('/').every((part) => part !== '' && part !== '.' && part !== '..')
 }
 
+/** Every kind in the table: `z.enum` wants a non-empty list, and the table always has rows. */
+const KINDS = Object.keys(CONTENT_TYPES) as [ContentType, ...ContentType[]]
+
 const ref = z.strictObject({
-  type: z.enum(['level', 'character']),
+  type: z.enum(KINDS),
   path: z.string().refine(isGamePath, PATH_HINT),
 })
 
@@ -68,7 +71,7 @@ const VOICE: Voice = {
     start: 'Write the id of the level a new game opens, like start = "level-1".',
     hero: 'Write the id of the character each player controls, like hero = "hero".',
     content: 'List every content file with a [[content]] block holding a type and a path.',
-    'content.type': 'Write type = "level" or type = "character".',
+    'content.type': 'Write the kind of file, like type = "level".',
     'content.path': 'Write where the file is, like path = "content/levels/level-1.json".',
   },
 }

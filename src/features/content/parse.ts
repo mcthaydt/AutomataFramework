@@ -1,14 +1,11 @@
 import type { z } from 'zod'
-import { CONTENT_TYPES, type ContentType } from './content-types.ts'
+import { CONTENT_TYPES, type ContentType, type ContentValue } from './content-types.ts'
 import { type Diagnostic, toDiagnostics, type Voice } from './diagnostics.ts'
 
 /** What reading a file gives: the value, or every problem found in it. */
 export type Parsed<T> =
   | { readonly ok: true; readonly value: T }
   | { readonly ok: false; readonly diagnostics: readonly Diagnostic[] }
-
-/** The value a content type reads into. */
-export type ContentValue<T extends ContentType> = z.output<(typeof CONTENT_TYPES)[T]['schema']>
 
 /**
  * Checks data already read out of a file (JSON or TOML) against a schema. Never throws: whatever goes wrong is

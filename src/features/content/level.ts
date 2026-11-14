@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { colour } from './colour.ts'
 import { Id } from './ids.ts'
+import { noSuch } from './shared.ts'
+import type { ContentTypeInfo } from './type-info.ts'
 
 /** A thing standing in a level: one placed copy of a character. `x` and `y` are its centre, in tiles. */
 export interface LevelThing {
@@ -134,3 +136,33 @@ export const LevelSchema: z.ZodType<Level, Level> = z
     starts: z.array(start).min(1).max(4).describe('Where each player begins. At least one is needed.'),
   })
   .superRefine(checkLevel)
+
+/** The level's row of the content table. */
+export const levelInfo: ContentTypeInfo<Level, Level> = {
+  schema: LevelSchema,
+  title: 'Level',
+  plural: 'levels',
+  editor: 'world',
+  part: 'levels',
+  noun: 'level',
+  missing: {
+    format: 'Write "format": 1.',
+    id: 'Give the level a name like "level-1".',
+    tiles: 'Write the map as a list of text rows, using # for solid and . for empty.',
+    things: 'Write [] if the level has no things in it.',
+    'things.id': 'Give the thing a name like "crate-1".',
+    'things.character': 'Say which character it is, like "crate".',
+    'things.x': 'Say where the middle of it is, in tiles from the left.',
+    'things.y': 'Say where the middle of it is, in tiles from the top.',
+    starts: 'A level needs at least one start point.',
+    'starts.player': 'Say which player starts here: 1, 2, 3 or 4.',
+    'starts.x': 'Say where the hero starts, in tiles from the left.',
+    'starts.y': 'Say where the hero starts, in tiles from the top.',
+  },
+  check(level, game, report) {
+    level.things.forEach((thing, i) => {
+      if (!game.has('character', thing.character))
+        report(`things[${i}].character`, noSuch('character', thing.character, game.ids('character')))
+    })
+  },
+}
