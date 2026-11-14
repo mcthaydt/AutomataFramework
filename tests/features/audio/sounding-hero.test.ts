@@ -3,9 +3,9 @@
 import { expect, test } from 'vitest'
 import { createGameSim } from '#src/features/level/level.ts'
 import type { SimEvent } from '#src/features/sim/sim.ts'
+import { SOUNDING_TICKS, soundingScript } from '../../fixtures/audio/script.ts'
 import { loadSoundingGame } from '../../fixtures/audio/sounding-game.ts'
 import { soundingHeroPlugin } from '../../fixtures/audio/sounding-hero.ts'
-import { SOUNDING_TICKS, soundingScript } from '../../fixtures/audio/script.ts'
 
 /** The ticks (after the step) on which the run's events of `type` came. */
 async function ticksOf(): Promise<{ jumped: number[]; landed: number[]; all: SimEvent[] }> {
