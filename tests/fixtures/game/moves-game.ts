@@ -21,6 +21,7 @@ export interface Setup {
   /** Values for the tuning file's numbers, by id; the rest are the framework's. */
   readonly numbers?: Readonly<Record<string, number>>
   readonly doubleJump?: boolean
+  readonly wallJump?: boolean
   readonly dash?: boolean
   /** Gives the hero the example figure and its clips, with the three a hero the framework moves can play. */
   readonly figure?: boolean
@@ -51,7 +52,12 @@ export function movesFiles(setup: Setup = {}): Record<string, string | undefined
     size: { w: 0.8, h: 1 },
     color: '#e4572e',
     upright: true,
-    moves: { tuning: 'hero-moves', 'double-jump': setup.doubleJump ?? false, dash: setup.dash ?? false },
+    moves: {
+      tuning: 'hero-moves',
+      'double-jump': setup.doubleJump ?? false,
+      'wall-jump': setup.wallJump ?? false,
+      dash: setup.dash ?? false,
+    },
     ...(setup.figure ? { figure: 'hero', clips: FIGURE_CLIPS } : {}),
   }
   const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] ?? '') as Record<string, unknown>
