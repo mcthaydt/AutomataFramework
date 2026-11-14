@@ -12,6 +12,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 |---|---|---|
 | 1. Spec | Written, in review | `specs/2026-11-14-m2-design.md` |
 | 2 to 7, per plan | Not started (plans C, I, V and N can start at once) | |
+| Plan V (saves and the host port): 2. Plan | Written, in review; stage at 100%, plan V at 10% | `plans/2026-11-14-m2-saves-host.md` |
 
 ### Log
 
