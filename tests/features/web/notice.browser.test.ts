@@ -36,7 +36,7 @@ async function setup(state?: 'unavailable') {
   return { speaker, audio }
 }
 
-test('while the sound waits, the button says so in the words of the player\'s language', async () => {
+test("while the sound waits, the button says so in the words of the player's language", async () => {
   const { audio } = await setup()
   removeNotice = soundNotice({ mount, audio, locale: korean() })
   expect(button()?.textContent).toBe('눌러서 소리를 켜세요')
