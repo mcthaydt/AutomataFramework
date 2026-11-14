@@ -1,7 +1,7 @@
 // Values go into a text where their names are, once, in the language's own way.
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { LANGUAGES } from '#src/features/content/content.ts'
-import { fill } from '#src/features/locale/locale.ts'
+import { fill, LANGUAGE_TAGS } from '#src/features/locale/locale.ts'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -12,13 +12,20 @@ test('a value goes where its name is, as often as it is named', () => {
 })
 
 test('a number is shown as written, and a list is joined the way the language joins one', () => {
-  expect(fill('Players {players}', { players: [1, 2, 4] }, 'en')).toBe('Players 1, 2 and 4')
+  expect(fill('Players {players}', { players: [1, 2, 4] }, 'en')).toBe('Players 1, 2, and 4')
   expect(fill('Players {players}', { players: [1, 3] }, 'en')).toBe('Players 1 and 3')
   expect(fill('{players}', { players: [2] }, 'ko')).toBe('2')
   expect(fill('{n}', { n: 0.5 }, 'en')).toBe('0.5')
   // Every number is there, in order, in every language and every engine.
   for (const language of LANGUAGES) expect(fill('{p}', { p: [1, 2, 4] }, language)).toMatch(/1.*2.*4/)
 })
+
+test('an English list is joined the US way', () => {
+  expect(fill('Players {players}', { players: [1, 2, 4] }, 'en')).toBe('Players 1, 2, and 4')
+  expect(fill('Players {players}', { players: [1, 2] }, 'en')).toBe('Players 1 and 2')
+})
+
+test('the page is told English is US English', () => expect(LANGUAGE_TAGS.en).toBe('en-US'))
 
 test('a name with no value is shown as typed; a value nobody asked for is ignored', () => {
   expect(fill('Hi {name}', {}, 'en')).toBe('Hi {name}')

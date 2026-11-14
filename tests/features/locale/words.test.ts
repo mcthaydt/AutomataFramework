@@ -48,7 +48,7 @@ test('values are put in, in the language asked for', () => {
     'Waiting for 3 more players. Share this code so friends can join: ABCD',
   )
   expect(frameworkWords('en')('automata.online.away.many', { players: [1, 2, 4] })).toBe(
-    'Players 1, 2 and 4 lost their connection. The game goes on.',
+    'Players 1, 2, and 4 lost their connection. The game goes on.',
   )
 })
 

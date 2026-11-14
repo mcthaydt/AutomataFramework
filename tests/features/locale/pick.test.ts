@@ -54,19 +54,19 @@ test('saved first, then the host, then the device in its order, then English', (
 
 test('each language is named in its own words, and has a tag for a page', () => {
   expect(LANGUAGES.map((language) => LANGUAGE_NAMES[language])).toEqual([
-    'English',
-    'Español',
-    '한국어',
-    '日本語',
     '中文',
+    'Español',
+    'English',
     'Português',
+    '日本語',
+    '한국어',
   ])
   expect(LANGUAGES.map((language) => LANGUAGE_TAGS[language])).toEqual([
-    'en',
-    'es',
-    'ko',
-    'ja',
     'zh-Hans',
+    'es',
+    'en-US',
     'pt-BR',
+    'ja',
+    'ko',
   ])
 })

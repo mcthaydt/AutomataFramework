@@ -29,7 +29,7 @@ test('a player who is away is named, and the game goes on', () => {
     'Players 1 and 3 lost their connection. The game goes on.',
   )
   expect(onlineWords({ state: 'playing', away: [1, 2, 4] })).toBe(
-    'Players 1, 2 and 4 lost their connection. The game goes on.',
+    'Players 1, 2, and 4 lost their connection. The game goes on.',
   )
 })
 

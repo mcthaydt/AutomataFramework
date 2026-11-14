@@ -13,8 +13,9 @@ import { english, keeperTalk, storyGame } from '../../fixtures/content/story.ts'
 const file = 'content/messages/en.json'
 const said = (value: unknown): string[] => problemsOf('messages', value, file)
 
-test('the six languages a game ships in', () =>
-  expect(LANGUAGES).toEqual(['en', 'es', 'ko', 'ja', 'zh', 'pt']))
+test('the languages are listed by how many people speak each as a first language', () => {
+  expect(LANGUAGES).toEqual(['zh', 'es', 'en', 'pt', 'ja', 'ko'])
+})
 
 test('a messages file reads, and writes back to the same bytes twice', () =>
   expectRoundTrip('messages', english()))
@@ -58,7 +59,7 @@ test('Korean, Japanese, Chinese and an emoji come back unchanged', () => {
 
 test('a language that is not one of the six', () =>
   expect(said({ ...english(), id: 'fr' })).toEqual([
-    `${file}: id: This must be one of: en, es, ko, ja, zh, pt.`,
+    `${file}: id: This must be one of: zh, es, en, pt, ja, ko.`,
   ]))
 
 test('a key that is not lower-case words, and a text that is empty', () => {
