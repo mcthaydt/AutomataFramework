@@ -1,6 +1,7 @@
 // The first tap, end to end in each real browser, with the real speaker and no seam: a game that has just opened says
 // the sound is waiting, plays on without it, and a real key press (which counts as a gesture to the browser) starts
-// the sound and takes the button away. The pictures show the game on each screen with the sound on.
+// the sound and takes the button away; the level's music is wanted and a real jump key puts the jump in the cue log.
+// The pictures show the game on each screen with the sound on.
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { createAudio } from '#src/features/audio/audio.ts'
@@ -68,6 +69,18 @@ for (const [name, w, h] of SCREENS) {
     if (hasEars) await vi.waitFor(() => expect(speaker.state()).toBe('on'), { timeout: 5000 })
     else await new Promise((done) => setTimeout(done, 1000))
     expect(notice() === null).toBe(speaker.state() === 'on')
+    // The level's track is wanted whatever the device, and where the sound is on the real clock is running.
+    expect(audio.music()).toBe('meadow')
+    if (speaker.state() === 'on') await vi.waitFor(() => expect(speaker.now()).toBeGreaterThan(0.05))
+
+    // A real jump key, held for ten frames: the jump the sim raised is in the cue log, and was not skipped.
+    await userEvent.keyboard('{Space>}')
+    for (let i = 0; i < 10; i++) frames.advance(FRAME)
+    await userEvent.keyboard('{/Space}')
+    expect(audio.log()).toContainEqual(
+      expect.objectContaining({ from: 'sim', on: 'hero.jumped', do: 'sound' }),
+    )
+    expect(audio.log().filter((entry) => entry.skipped !== undefined)).toEqual([])
 
     frames.advance(FRAME)
     await page.screenshot({ element: mount, path: `__screenshots__/sound-on-${name}.png` })
