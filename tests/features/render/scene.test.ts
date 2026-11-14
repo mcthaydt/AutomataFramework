@@ -173,7 +173,16 @@ test('a row with a sprite gives a view its character, pose, facing and player', 
     ...row(1, 4, 5),
     components: {
       ...row(1, 4, 5).components,
-      sprite: { character: 'hero', pose: 'run-1', face: -1, player: 2, clip: 'run', since: 3, by: '', still: 0 },
+      sprite: {
+        character: 'hero',
+        pose: 'run-1',
+        face: -1,
+        player: 2,
+        clip: 'run',
+        since: 3,
+        by: '',
+        still: 0,
+      },
     },
   }
   scene.apply(delta({ added: [withSprite] }))

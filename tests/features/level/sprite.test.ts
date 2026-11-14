@@ -4,9 +4,9 @@ import { controlsCommand, Player } from '#src/features/commands/commands.ts'
 import {
   createGameSim,
   joinCommand,
+  Sprite,
   setClip,
   setFacing,
-  Sprite,
   usesSprites,
 } from '#src/features/level/level.ts'
 import { definePlugin, defineSystem, type Sim } from '#src/features/sim/sim.ts'

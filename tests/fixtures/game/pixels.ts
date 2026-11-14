@@ -58,7 +58,9 @@ export function drawnRows(canvas: HTMLCanvasElement): { top: number; bottom: num
  * Every pixel of the canvas read once, as a function from a position in CSS pixels to [r, g, b]. For a test that looks
  * at many places, since `pixel` copies the whole canvas each time. Call it in the task that drew.
  */
-export function snapshot(canvas: HTMLCanvasElement): (cssX: number, cssY: number) => [number, number, number] {
+export function snapshot(
+  canvas: HTMLCanvasElement,
+): (cssX: number, cssY: number) => [number, number, number] {
   const { width, height } = canvas
   const data = copyOf(canvas).getImageData(0, 0, width, height).data
   return (cssX, cssY) => {

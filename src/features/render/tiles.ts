@@ -33,7 +33,8 @@ export function tilePictures(level: Level, tileset: TilesetFile): PlacedTile[] {
         return there === undefined || there === letter ? 'same' : 'other'
       }
       const fits = (when: TileWhen | undefined): boolean =>
-        when === undefined || SIDES.every((side) => when[side] === undefined || when[side] === neighbour(side))
+        when === undefined ||
+        SIDES.every((side) => when[side] === undefined || when[side] === neighbour(side))
       const picture = kind.pictures.find((one) => fits(one.when)) ?? kind.pictures.at(-1)
       if (picture !== undefined) placed.push({ col, row, frame: picture.frame })
     }

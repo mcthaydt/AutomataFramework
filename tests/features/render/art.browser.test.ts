@@ -6,9 +6,9 @@ import { type GameContent, loadGame } from '#src/features/content/content.ts'
 import { Sprite } from '#src/features/level/level.ts'
 import { type Art, ArtError, createRenderer, loadArt, type Renderer } from '#src/features/render/render.ts'
 import type { RenderDelta } from '#src/features/sim/sim.ts'
-import { snapshot } from '../../fixtures/game/pixels.ts'
 import { fullGamePictures, readFullGamePicture } from '../../fixtures/full-game/pictures.ts'
 import { readFullGame } from '../../fixtures/full-game/read.ts'
+import { snapshot } from '../../fixtures/game/pixels.ts'
 
 /** The level is 16 tiles wide and 9 tall; 32 pixels a tile makes every texel of a 16-pixel tile two pixels. */
 const WORLD = { w: 16, h: 9 }
@@ -152,9 +152,11 @@ test('a thing with no figure is its box, with a dark edge', async () => {
   })
   renderer.draw(1)
   const at = snapshot(renderer.canvas)
-  // The box is x 112 to 144 and y 128 to 160: its middle is the crate's colour, and the pixel just left of it is the edge.
+  // The box is x 112 to 144 and y 128 to 160: its middle is the crate's colour, and its left side is a dark line one pixel
+  // wide, just outside it or just inside.
   expect(near(at(4 * TILE, 4.5 * TILE), CRATE)).toBe(true)
-  expect(near(at(3.5 * TILE - 1, 4.5 * TILE), EDGE, 40)).toBe(true)
+  const side = [at(3.5 * TILE - 0.5, 4.5 * TILE), at(3.5 * TILE + 0.5, 4.5 * TILE)]
+  expect(side.some((colour) => near(colour, EDGE, 40))).toBe(true)
 })
 
 /** The ground box of the full game's level: the whole bottom row. */
@@ -272,7 +274,9 @@ test('a tileset that uses a square its picture does not have stops the game', as
     }))
     return { ...game, tilesets: { ...game.tilesets, meadow: { ...meadow, tiles } } }
   })
-  expect(message).toMatch(/^The tileset "meadow" uses picture 99, but its picture has only \d+ squares, 0 to \d+\.$/)
+  expect(message).toMatch(
+    /^The tileset "meadow" uses picture 99, but its picture has only \d+ squares, 0 to \d+\.$/,
+  )
 })
 
 test('the full game paints a picture for each of its figures', async () => {

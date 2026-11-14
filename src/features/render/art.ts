@@ -8,8 +8,8 @@ import {
   type BackdropFile,
   backdropSheet,
   type FigureFile,
-  type GameContent,
   figureSheet,
+  type GameContent,
   paintedPath,
 } from '../content/content.ts'
 import { type TileBox, tileBoxes } from '../level/level.ts'
@@ -171,12 +171,22 @@ export async function loadArt(options: {
         let texture = squareOf.get(frame)
         if (texture === undefined) {
           const size = tileset.tileSize
-          texture = cut(picture, (frame % tileset.columns) * size, Math.floor(frame / tileset.columns) * size, size, size)
+          texture = cut(
+            picture,
+            (frame % tileset.columns) * size,
+            Math.floor(frame / tileset.columns) * size,
+            size,
+            size,
+          )
           squareOf.set(frame, texture)
         }
         return texture
       }
-      tiles = tilePictures(level, tileset).map(({ col, row, frame }) => ({ col, row, texture: square(frame) }))
+      tiles = tilePictures(level, tileset).map(({ col, row, frame }) => ({
+        col,
+        row,
+        texture: square(frame),
+      }))
       const solid = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
       ground = tileBoxes(level.tiles, (letter) => solid.has(letter))
     }
@@ -213,7 +223,8 @@ export async function loadArt(options: {
       const { figure, frames } = found
       const name = pose === '' || !frames.has(pose) ? (figure.poses[0]?.id ?? '') : pose
       const variant = player >= 2 ? figure.variants?.[player - 2] : undefined
-      const texture = (variant === undefined ? undefined : frames.get(`${variant.id}/${name}`)) ?? frames.get(name)
+      const texture =
+        (variant === undefined ? undefined : frames.get(`${variant.id}/${name}`)) ?? frames.get(name)
       if (texture === undefined) return undefined
       return { texture, w: texture.frame.width / figure.tile, h: texture.frame.height / figure.tile }
     }
@@ -222,7 +233,8 @@ export async function loadArt(options: {
     let backdrop: BackdropArt | undefined
     if (backdropFile !== undefined) {
       const path = paintedPath(content, 'backdrop', backdropFile.id)
-      if (path === undefined) throw new ArtError(`The backdrop "${backdropFile.id}" has no file in this game.`)
+      if (path === undefined)
+        throw new ArtError(`The backdrop "${backdropFile.id}" has no file in this game.`)
       const bitmap = await decode(path, readPicture)
       const sheet = backdropSheet(backdropFile)
       sized(path, bitmap, sheet.w, sheet.h, 'backdrop file')

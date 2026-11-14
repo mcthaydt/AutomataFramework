@@ -239,7 +239,8 @@ export async function createStage(
       }
       // A thing with a figure whose picture is loaded is that picture, standing on the bottom of its box; any other thing
       // is its box.
-      const shown = v.sprite === undefined ? undefined : art?.figure(v.sprite.character, v.sprite.pose, v.sprite.player)
+      const shown =
+        v.sprite === undefined ? undefined : art?.figure(v.sprite.character, v.sprite.pose, v.sprite.player)
       const target = shown === undefined ? item.box : item.figure
       item.box.visible = shown === undefined
       item.figure.visible = shown !== undefined
