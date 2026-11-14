@@ -2,6 +2,7 @@ import { commandsPlugin } from '../commands/commands.ts'
 import type { GameContent } from '../content/content.ts'
 import { physics } from '../physics/physics.ts'
 import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
+import { behaviourPlugin, usesBehaviours } from './behaviour.ts'
 import { joinPlugin } from './join.ts'
 import { levelPlugin } from './plugin.ts'
 import { spawnLevel } from './spawn-level.ts'
@@ -38,6 +39,8 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
       levelPlugin,
       // Only a game for two or more players can have people join and leave (see join.ts).
       ...(players >= 2 ? [joinPlugin({ level: options.level ?? content.project.start, max: players })] : []),
+      // Only a game with a character that has a behaviour gets the rules' system, for the same reason.
+      ...(usesBehaviours(content) ? [behaviourPlugin] : []),
       ...(options.plugins ?? []),
     ],
   })

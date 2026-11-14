@@ -1,8 +1,8 @@
 // What a character with a behaviour senses, and which of its rules fits: pure functions over plain numbers, so the
 // rules can be tested with no sim. `behaviour.ts` is the system that feeds them from the sim's own state.
 // A rule is the first whose every sense holds, and the last rule always fits (plan C checks that its `when` is empty).
-import type { Act, BehaviourRule, Sense } from '../content/content.ts'
-import { type ComponentDef, defineComponent } from '../sim/sim.ts'
+import type { Act, BehaviourRule, Character, Sense } from '../content/content.ts'
+import { type ComponentDef, defineComponent, type SpawnPart } from '../sim/sim.ts'
 
 const mindFields = {
   /** The behaviour file's id. */
@@ -20,6 +20,12 @@ const mindFields = {
 } as const
 /** On every thing whose character has a `behaviour`, and never on a hero. Not drawn. */
 export const Mind: ComponentDef<typeof mindFields> = defineComponent('mind', mindFields, { render: false })
+
+/** The part a thing gets when it is spawned, when its character has a behaviour: a mind that has followed no rule yet. */
+export function mindParts(character: Character): SpawnPart[] {
+  if (character.behaviour === undefined) return []
+  return [[Mind, { behaviour: character.behaviour, rule: '', dir: 1, since: 0, want: 0, rest: 0 }]]
+}
 
 /** What one thing senses this tick. */
 export interface Sensed {

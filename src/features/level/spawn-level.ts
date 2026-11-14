@@ -5,6 +5,7 @@ import type { Sim } from '../sim/sim.ts'
 import { groundOf } from './colours.ts'
 import { Look, Thing } from './components.ts'
 import { characterParts, heroParts } from './hero.ts'
+import { mindParts } from './mind.ts'
 import { tileRuns } from './tile-runs.ts'
 
 /** The level cannot be spawned as asked: an unknown level, or a player the level has no start point for. */
@@ -67,11 +68,15 @@ export function spawnLevel(
       collider.cuboid(run.length / 2, 0.5),
       [Look, { w: run.length, h: 1, color: ground }],
     ])
-  for (const thing of level.things)
+  for (const thing of level.things) {
+    const kind = character(thing.character, `Thing "${thing.id}"`)
+    // Only a thing with a behaviour has a mind, and never a hero: `heroParts` does not add one.
     sim.spawn([
-      ...characterParts(character(thing.character, `Thing "${thing.id}"`), thing),
+      ...characterParts(kind, thing),
       [Thing, { id: thing.id, character: thing.character }],
+      ...mindParts(kind),
     ])
+  }
   // The hero's character must exist; the level is known to have each player's start point, checked above.
   character(content.project.hero, 'The hero')
   for (const number of numbers) sim.spawn(heroParts(content, levelId, number) ?? [])
