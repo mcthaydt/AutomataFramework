@@ -95,7 +95,7 @@ function translationStep(
     const marksText = yield* files.readText(join(game.folder, api.READ_MARKS_FILE))
     const marks = marksText === undefined ? undefined : api.parseReadMarks(marksText)
     if (marks?.ok === false) return { problems: [...problems, ...marks.diagnostics], notes: [] }
-    const unread = api.unreadWords(content, marks?.value ?? {})
+    const unread = api.unreadWords(content, marks?.value)
     const counts = new Map<Language, number>()
     for (const word of unread) counts.set(word.language, (counts.get(word.language) ?? 0) + 1)
     const notes =
