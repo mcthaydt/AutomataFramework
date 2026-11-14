@@ -88,6 +88,11 @@ const CONFINED: readonly {
     only: ['src/features/server/process.ts', 'src/features/cli/'],
     why: "Effect is only for the server's process and the command",
   },
+  {
+    package: /^@inlang\//,
+    only: ['src/features/cli/words.ts'],
+    why: 'Paraglide is named by the words compiler alone, which loads it only when words are compiled',
+  },
 ]
 
 /** The one Node-only feature: only `src/server.ts` (the package's Node entry) may import it. */

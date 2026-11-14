@@ -29,6 +29,8 @@ export interface FilesService {
   readonly write: (path: string, data: string | Uint8Array) => Effect.Effect<void, CliError>
   /** Every file under `dir`, `/`-joined from `dir`, sorted; `[]` when there is none. */
   readonly list: (dir: string) => Effect.Effect<readonly string[]>
+  /** Takes the file away (its folder stays); nothing happens when there is no such file. */
+  readonly remove: (path: string) => Effect.Effect<void, CliError>
 }
 export const Files: Context.Tag<FilesService, FilesService> =
   Context.GenericTag<FilesService>('automata/Files')

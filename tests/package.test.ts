@@ -76,3 +76,17 @@ test('the MCP SDK is a development dependency at one exact version, and the pack
     )
   }
 })
+
+// The Owner's answer to the Paraglide question (2026-11-14): a game's words are also typed functions for its code. Both
+// packages are dependencies, exact, and only the words compiler (a file of `automata`, loaded only when words are
+// compiled) names them, so loading the framework in a page loads no inlang code.
+test('Paraglide and its message-format plugin are dependencies at exact versions, named by one file', () => {
+  expect(manifest.dependencies['@inlang/paraglide-js']).toBe('2.25.4')
+  expect(manifest.dependencies['@inlang/plugin-message-format']).toBe('4.4.4')
+  const sources = readdirSync(new URL('../src/', import.meta.url), { recursive: true, encoding: 'utf8' })
+  const naming = sources
+    .filter((name) => name.endsWith('.ts'))
+    .filter((file) => readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8').includes('@inlang/'))
+    .map((file) => file.split('\\').join('/'))
+  expect(naming).toEqual(['features/cli/words.ts'])
+})

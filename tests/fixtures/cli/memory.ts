@@ -76,6 +76,7 @@ export function memoryLayer(
       readText: (path) => Effect.sync(() => asText(files.get(keyOf(path)))),
       readBytes: (path) => Effect.sync(() => asBytes(files.get(keyOf(path)))),
       write: (path, data) => Effect.sync(() => void files.set(keyOf(path), data)),
+      remove: (path) => Effect.sync(() => void files.delete(keyOf(path))),
       list: (dir) =>
         Effect.sync(() => {
           const here = keyOf(dir)

@@ -311,6 +311,13 @@ in Korean still loads and plays:
 Every translation the framework ships (the six languages' library, and the demo game's) waits for a native speaker's
 read before Release 1: machine-written words are a first draft, and the marks say which are still that.
 
+A game's own code can also call a word as a typed function, `m.keeper_hello()`, so a misspelt word is a mistake the
+compiler shows. Paraglide makes those functions from the same files. Give its generated `runtime.js` to
+`bindParaglide(runtime, locale)` and every function answers in the player's language, and changes with it, with no
+page reload. The package's own words compiler (`compileWords`, in the code behind the `automata` command; no command
+runs it yet) makes that folder from the messages files, and rewrites only the files that changed. Words made this way
+are for code: a conversation still names its lines by key, and the words stay content, read when the game starts.
+
 ## The host
 
 A game asks its host about where it runs, never the page: `visible()` and `onVisibility` (is the game on screen),

@@ -33,6 +33,13 @@ test('the live Files reads, writes and lists under a folder with a space in its 
   expect(await files((f) => f.list(join(folder, 'nothing here')))).toEqual([])
 })
 
+test('the live Files removes a file, and a file that is not there is no mistake', async () => {
+  await files((f) => f.write(join(folder, 'content', 'gone.json'), '{}\n'))
+  await files((f) => f.remove(join(folder, 'content', 'gone.json')))
+  expect(await files((f) => f.readText(join(folder, 'content', 'gone.json')))).toBeUndefined()
+  await files((f) => f.remove(join(folder, 'content', 'gone.json')))
+})
+
 test('a file that is not there reads as undefined, not as an error', async () => {
   expect(await files((f) => f.readText(join(folder, 'nope.txt')))).toBeUndefined()
   expect(await files((f) => f.readBytes(join(folder, 'nope.txt')))).toBeUndefined()
