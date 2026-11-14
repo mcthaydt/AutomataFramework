@@ -32,7 +32,9 @@ test('a value is never filled a second time, and what it holds is only text', ()
 })
 
 test('a value named like something every object has is only a value', () => {
-  expect(fill('{constructor} {toString} {hasOwnProperty}', {}, 'en')).toBe('{constructor} {toString} {hasOwnProperty}')
+  expect(fill('{constructor} {toString} {hasOwnProperty}', {}, 'en')).toBe(
+    '{constructor} {toString} {hasOwnProperty}',
+  )
   expect(fill('{constructor}', { constructor: 'Ana' }, 'en')).toBe('Ana')
 })
 

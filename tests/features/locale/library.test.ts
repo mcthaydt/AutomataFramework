@@ -19,7 +19,14 @@ import ptRaw from '#src/features/locale/library/pt.json?raw'
 import zhRaw from '#src/features/locale/library/zh.json?raw'
 import { wordsGame } from '../../fixtures/locale/content.ts'
 
-const RAW: Readonly<Record<Language, string>> = { en: enRaw, es: esRaw, ko: koRaw, ja: jaRaw, zh: zhRaw, pt: ptRaw }
+const RAW: Readonly<Record<Language, string>> = {
+  en: enRaw,
+  es: esRaw,
+  ko: koRaw,
+  ja: jaRaw,
+  zh: zhRaw,
+  pt: ptRaw,
+}
 const wordsIn = (language: Language): Record<string, string> =>
   (JSON.parse(RAW[language]) as { messages: Record<string, string> }).messages
 
@@ -51,7 +58,8 @@ test('the six files are translated in full', async () => {
 })
 
 test('no sentence names a colour or says locale, key, fallback, socket or tick', () => {
-  const banned = /\b(red|green|blue|yellow|orange|purple|pink|black|white|gr[ae]y|colou?rs?|locale|key|fallback|socket|ticks?)\b/i
+  const banned =
+    /\b(red|green|blue|yellow|orange|purple|pink|black|white|gr[ae]y|colou?rs?|locale|key|fallback|socket|ticks?)\b/i
   for (const [key, text] of Object.entries(wordsIn('en'))) expect(text, key).not.toMatch(banned)
 })
 

@@ -13,9 +13,9 @@ export function levelName(words: Words, levelId: string): string {
 
 /** The pieces of a text a person sees as one letter each (an emoji with its joiners is one), or code points where an engine cannot tell. */
 function pieces(text: string): readonly string[] {
-  if (typeof Intl.Segmenter === 'function')
-    return Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text), (s) => s.segment)
-  return [...text]
+  if (typeof Intl.Segmenter !== 'function') return [...text]
+  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+  return Array.from(segmenter.segment(text), (s) => s.segment)
 }
 
 /**

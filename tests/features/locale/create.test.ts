@@ -3,7 +3,11 @@
 import { describe, expect, test } from 'vitest'
 import { type GameContent, type Language, loadGame } from '#src/features/content/content.ts'
 import { type TestHostOptions, testHost } from '#src/features/host/host.ts'
-import { createLocale, LANGUAGE_SETTINGS_DEFAULT, LanguageSettingsSchema } from '#src/features/locale/locale.ts'
+import {
+  createLocale,
+  LANGUAGE_SETTINGS_DEFAULT,
+  LanguageSettingsSchema,
+} from '#src/features/locale/locale.ts'
 import { memoryStore, openSettings } from '#src/features/saves/saves.ts'
 import { readFullGame } from '../../fixtures/full-game/read.ts'
 import { wordsGame } from '../../fixtures/locale/content.ts'
@@ -169,5 +173,7 @@ test('say fills a message as words does', async () => {
   const message = { key: 'automata.online.waiting.many', values: { count: 3, code: 'AB12' } }
   expect(locale.say(message)).toBe(locale.words(message.key, message.values))
   await locale.set('es')
-  expect(locale.say(message)).toBe('Faltan 3 jugadores. Comparte este código para que tus amigos se unan: AB12')
+  expect(locale.say(message)).toBe(
+    'Faltan 3 jugadores. Comparte este código para que tus amigos se unan: AB12',
+  )
 })

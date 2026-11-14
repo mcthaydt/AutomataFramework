@@ -31,7 +31,12 @@ const textOf = (file: MessagesFile | undefined, key: string): string | undefined
 function say(language: Language, game: Readonly<Record<string, MessagesFile>> | undefined): Words {
   const own = (code: Language): MessagesFile | undefined =>
     game !== undefined && Object.hasOwn(game, code) ? game[code] : undefined
-  const chain: readonly (MessagesFile | undefined)[] = [own(language), LIBRARY[language], own('en'), LIBRARY.en]
+  const chain: readonly (MessagesFile | undefined)[] = [
+    own(language),
+    LIBRARY[language],
+    own('en'),
+    LIBRARY.en,
+  ]
   return (key: string, values?: Values): string => {
     for (const file of chain) {
       const text = textOf(file, key)

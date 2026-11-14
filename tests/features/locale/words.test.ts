@@ -54,7 +54,11 @@ test('values are put in, in the language asked for', () => {
 
 describe("the game's languages", () => {
   test('in order, whatever order the files were listed in', async () => {
-    const content = await wordsGame({ pt: { [hello]: 'Olá' }, en: { [hello]: 'Hi' }, ko: { [hello]: '안녕' } })
+    const content = await wordsGame({
+      pt: { [hello]: 'Olá' },
+      en: { [hello]: 'Hi' },
+      ko: { [hello]: '안녕' },
+    })
     expect(languagesOf(content)).toEqual(['en', 'ko', 'pt'])
   })
 
