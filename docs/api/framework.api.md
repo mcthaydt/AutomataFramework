@@ -658,6 +658,19 @@ function createGameSim(options: GameSimOptions): Promise<Sim>;
 function createInput(options: InputOptions): Input;
 ```
 
+### `createLevelPicture` (function)
+
+```ts
+function createLevelPicture(options: {
+    mount: HTMLElement;
+    content: GameContent;
+    level: Level;
+    art?: Art | undefined;
+    density?: Density | undefined;
+    keep?: boolean;
+}): Promise<LevelPicture>;
+```
+
 ### `createLocale` (function)
 
 ```ts
@@ -1144,6 +1157,18 @@ interface Fit {
     readonly left: number;
     readonly top: number;
 }
+```
+
+### `fitInRoom` (function)
+
+```ts
+function fitInRoom(box: {
+    w: number;
+    h: number;
+}, room: Room, world: {
+    w: number;
+    h: number;
+}): Fit;
 ```
 
 ### `fitLabel` (function)
@@ -1711,6 +1736,18 @@ type LevelJoint = {
 function levelName(words: Words, levelId: string): string;
 ```
 
+### `LevelPicture` (interface)
+
+```ts
+interface LevelPicture {
+    readonly canvas: HTMLCanvasElement;
+    show(level: Level): void;
+    setRoom(room: Room): void;
+    fit(): Fit;
+    destroy(): void;
+}
+```
+
 ### `levelPlugin` (const)
 
 ```ts
@@ -1773,6 +1810,15 @@ interface LevelView {
         readonly h: number;
     } | undefined;
 }
+```
+
+### `levelViews` (function)
+
+```ts
+function levelViews(content: GameContent, level: Level): {
+    views: View[];
+    links: RopeLine[];
+};
 ```
 
 ### `Link` (interface)
@@ -2680,6 +2726,17 @@ interface Rng {
 
 ```ts
 type RngState = [number, number, number, number];
+```
+
+### `Room` (interface)
+
+```ts
+interface Room {
+    readonly top: number;
+    readonly right: number;
+    readonly bottom: number;
+    readonly left: number;
+}
 ```
 
 ### `ROOM_NAME` (const)

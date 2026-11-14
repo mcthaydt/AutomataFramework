@@ -81,6 +81,11 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan L (languages): 5. Implementation audit | Written, in review; stage at 100%, plan L at 80%: no critical, three important (the sound's button stayed English, though plan L came after plan S; a refused change of key was English only, in a feature below `locale`; Paraglide's two packages were installed by every game though nothing a game installs loads them, now development dependencies until a command runs the compiler), four minor, all fixed in the same pull request with their tests first; seven of the builder's rulings accepted; no golden moved. The Owner's new direction (no default language) is its own spec. The framework words waiting for a native read are now 135 (27 keys, five languages) | `audits/2026-11-14-m2-plan-l-implementation-audit.md` |
 
 ### Log
+- 2026-11-14, the editors' Blueprint redesign, Task 2 (AutomataFrameworkEditors plan): `createLevelPicture`, a level drawn
+  still with room kept clear on four sides, for the editors' level screen and card pictures. The same pull request fixes
+  a break found moving the editors' pin: `scripts/fix-dts.ts` ran in a package installed from git, which unpacks under
+  `node_modules`, where Node refuses to strip types, so no commit since that script landed could be a git dependency. It
+  is `fix-dts.mjs` now.
 - 2026-11-14, plan L (languages): implementation audit written, AutomataFramework PR 88. `automata.sound.start` and six
   `automata.rebind.*` sentences join the library in six languages: the sound's button follows the locale, and a refused
   `rebind` is a key and values said in the input's words. `createLocale` asks its host for its two languages only; the
