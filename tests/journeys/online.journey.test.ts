@@ -231,34 +231,15 @@ for (const [first, second] of PAIRS) {
     await expect.poll(() => one.data('seat'), POLL).toBe('1')
     await expect.poll(() => two.data('seat'), POLL).toBe('2')
 
-    // 3 and 4. One runs right, the other left; each sees the other move.
-    const t0 = Date.now()
+    // 3 and 4. One runs right, the other left; each sees the other move. The friend's page has only just started its
+    // game, and its first frames are slow (in CI, WebKit's first two took 677 and 787 ms): so the friend's first keys
+    // reach the room late, here 1.8 s late on purpose (the page's `slowLine`), whatever the browser.
+    await two.page.evaluate(() => (window as unknown as { slowLine(ms: number): void }).slowLine(1800))
     await one.hold('right')
-    const t1 = Date.now()
     await two.hold('left')
-    const t2 = Date.now()
-    // DIAGNOSTIC (crate race): a timeline of the first two seconds, then what each page recorded.
-    const timeline: string[] = []
-    while (Date.now() - t0 < 2000) {
-      timeline.push(
-        `+${Date.now() - t0}ms one.p2=${await one.data('p2-x')} two.p2=${await two.data('p2-x')} one[${await one.data('diag')}] two[${await two.data('diag')}]`,
-      )
-    }
-    const report = async (): Promise<void> => {
-      const seen = async (seat: Seat) =>
-        `playing=${await seat.data('playing-at')} resolved=${await seat.data('resolved-at')} gaps=${await seat.data('gaps')} cmd=${await seat.data('first-cmd')} p1moved=${await seat.data('p1-moved')} p2moved=${await seat.data('p2-moved')}`
-      console.log(
-        `CRATE RACE ${first.engine}-${first.width} vs ${second.engine}-${second.width}: t0=${t0} oneHeld=+${t1 - t0} twoHeld=+${t2 - t0}\n one: ${await seen(one)}\n two: ${await seen(two)}\n one.p2-x=${await one.data('p2-x')} two.p2-x=${await two.data('p2-x')} one.p1-x=${await one.data('p1-x')}\n${timeline.join('\n')}`,
-      )
-    }
-    try {
-      await expect.poll(async () => num(await one.data('p2-x')), POLL).toBeLessThan(12.5)
-    } finally {
-      await report()
-    }
+    await expect.poll(async () => num(await one.data('p2-x')), POLL).toBeLessThan(12.5)
     await expect.poll(async () => num(await two.data('p1-x')), POLL).toBeGreaterThan(3.5)
-    // From here the friend's line is slow: their keys reach the room a quarter of a second late (the page's
-    // `slowLine`). It starts only now, so who reaches the crate first above is the same race it always was.
+    // From here the friend's line is slow by a quarter of a second.
     await two.page.evaluate(() => (window as unknown as { slowLine(ms: number): void }).slowLine(250))
     await one.release('right')
     await two.release('left')
