@@ -9,7 +9,6 @@ import type { Host } from '../host/host.ts'
 import {
   type Claim,
   type Controls,
-  checkControls,
   createInput,
   type Input,
   type PadLike,
@@ -20,6 +19,7 @@ import { createRenderer, type HeroBox, type ReadPicture } from '../render/render
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
+import { resolveControls } from './controls.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
@@ -32,7 +32,11 @@ export { type Watch, type WatchOptions, WatchSetupError, watchReplay } from './w
 export interface GameOptions extends GameSimOptions {
   /** The element the game fills: a canvas, and the touch buttons on top of it. */
   readonly mount: HTMLElement
-  readonly controls: Controls
+  /**
+   * The game's controls. Optional for a game whose hero has `moves`: its tuning file lists them (or the framework's four
+   * stand in), and a list in the file wins over this.
+   */
+  readonly controls?: Controls
   readonly host: Host
   /** Default: the page's animation frames. */
   readonly frames?: Frames
@@ -97,9 +101,9 @@ export interface Game {
  * the controls are wrong; if the level cannot be loaded or drawn, nothing is left behind.
  */
 export async function startGame(options: GameOptions): Promise<Game> {
-  const { mount, controls, host, locale, frames = pageFrames } = options
+  const { mount, host, locale, frames = pageFrames } = options
   // First, so a mistake in the controls costs nothing: no sim, no canvas.
-  checkControls(controls)
+  const controls = resolveControls('startGame', options.content, options.controls)
   requireLanguage(locale)
   const sim = await createGameSim(options)
   // What to undo if a later step fails; it grows as things are made.

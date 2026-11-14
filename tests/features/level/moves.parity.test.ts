@@ -74,9 +74,10 @@ const top = (frames: readonly Frame[], from: number, to: number): number =>
 test('the moves game plays as its script says, and matches its golden', async () => {
   const { replay, frames, trace } = await record()
   const n = (name: string) => times(frames, name).length
-  expect(MOVE_EVENTS.map((name) => `${name}:${n(name) > 0}`), trace).toEqual(
-    MOVE_EVENTS.map((name) => `${name}:true`),
-  )
+  expect(
+    MOVE_EVENTS.map((name) => `${name}:${n(name) > 0}`),
+    trace,
+  ).toEqual(MOVE_EVENTS.map((name) => `${name}:true`))
   expect(n('jumped'), trace).toBeGreaterThanOrEqual(5)
   expect(n('air-jumped'), trace).toBe(1)
   expect(n('wall-jumped'), trace).toBe(3)

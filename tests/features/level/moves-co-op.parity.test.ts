@@ -22,9 +22,15 @@ test('two heroes on one floor, one dashes into the other: one hash in every engi
     for (const e of sim.step(movesTwoScript(sim.tick)).events)
       if (e.type.startsWith('hero.')) said.push(`${t}:${e.type}`)
   const x = (number: number): number =>
-    sim.query(Player).find((e) => e.get(Player).number === number)?.get(Transform).x ?? Number.NaN
+    sim
+      .query(Player)
+      .find((e) => e.get(Player).number === number)
+      ?.get(Transform).x ?? Number.NaN
   const trace = said.join(' ')
-  expect(said.filter((e) => e.endsWith('dashed')), trace).toHaveLength(1)
+  expect(
+    said.filter((e) => e.endsWith('dashed')),
+    trace,
+  ).toHaveLength(1)
   // The second hero was in the dash's way and stands where it did not start, to the right of the first.
   expect(x(2), trace).toBeGreaterThan(x(1))
   expectRecorded('coOpHash', sim.hash(), (golden as { coOpHash?: string }).coOpHash)

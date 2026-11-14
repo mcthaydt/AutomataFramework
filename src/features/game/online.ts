@@ -3,7 +3,7 @@
 // puts the picture right when the room's answer differs. The page is only ever as late as the room is: it never
 // pauses, because the room does not wait for anyone.
 import { pageFrames } from '../../lib/frames.ts'
-import { checkControls, createInput } from '../input/input.ts'
+import { createInput } from '../input/input.ts'
 import { createGameSim, levelSize, skyOf } from '../level/level.ts'
 import {
   coopSeats,
@@ -20,6 +20,7 @@ import { type Art, createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
+import { resolveControls } from './controls.ts'
 import type { GameOptions } from './game.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
@@ -63,7 +64,6 @@ export interface OnlineGame {
 export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGame> {
   const {
     mount,
-    controls,
     host,
     frames = pageFrames,
     settings,
@@ -82,7 +82,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     readPicture,
     ...simOptions
   } = options
-  checkControls(controls)
+  const controls = resolveControls('startOnlineGame', simOptions.content, options.controls)
   requireLanguage(locale)
   const level = levelOption ?? simOptions.content.project.start
   const levelData = simOptions.content.levels[level]
