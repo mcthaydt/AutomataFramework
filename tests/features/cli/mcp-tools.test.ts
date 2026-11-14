@@ -37,6 +37,7 @@ test('tools/list has these tools, each with a description and an object schema',
     'create',
     'check',
     'replay',
+    'art',
     'content_types',
     'schema',
     'skill',
@@ -57,7 +58,7 @@ test('tools/list has these tools, each with a description and an object schema',
 test('every tool has a command of the same name, or a file or a session the table names', () => {
   const tools = mcpTools(createSessions()).map((tool) => tool.name)
   const commands = tools.filter((name) => (COMMAND_NAMES as readonly string[]).includes(name))
-  expect(commands).toEqual(['create', 'check', 'replay'])
+  expect(commands).toEqual(['create', 'check', 'replay', 'art'])
   expect(tools.filter((name) => !commands.includes(name))).toEqual([
     'content_types',
     'schema',

@@ -136,14 +136,22 @@ test('--only wat names the steps', async () => {
   const memory = memoryLayer(under('game', smallGame()))
   expect(await main(['check', 'game', '--only', 'wat'], memory.layer)).toBe(2)
   expect(memory.err).toEqual([
-    'There is no step called "wat". The steps are: files, rules, lint, types, replays, tests.',
+    'There is no step called "wat". The steps are: files, art, rules, lint, types, replays, tests.',
   ])
 })
 
 test('without --only every step has its place in the report, in order', async () => {
   const memory = memoryLayer(under('game', smallGame()))
   const report = await Effect.runPromise(runCheck({ folder: 'game' }).pipe(Effect.provide(memory.layer)))
-  expect(report.steps.map((s) => s.step)).toEqual(['files', 'rules', 'lint', 'types', 'replays', 'tests'])
+  expect(report.steps.map((s) => s.step)).toEqual([
+    'files',
+    'art',
+    'rules',
+    'lint',
+    'types',
+    'replays',
+    'tests',
+  ])
   expect(report.steps[0]?.state).toBe('passed')
 })
 
