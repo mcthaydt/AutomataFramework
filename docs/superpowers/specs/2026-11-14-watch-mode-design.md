@@ -64,12 +64,20 @@ page.
 - A way to pick which recording is watched. It is the first level's, the file the site's numbers already come from.
 - Watching in the editors.
 
-## Open for the Owner
+## The Owner's answers (2026-11-14)
 
-Each has a recommendation; none is decided until the Owner answers. The plan's tasks that depend on an answer wait
-for it.
+The Owner chose: **Q1 (a), Q2 (a), Q3 (b), Q4 (a).** The game says "The game is playing by itself. Tap it to play."
+while it watches; a tap or click on the moving game starts it (a dragging finger still scrolls the page); it plays
+itself for every visitor, including those who asked for less motion or to save data; and it plays again and again with
+a one-second rest between, for as long as it is on the screen. The questions below are kept as they were asked, so the
+reasons stay with the answers.
 
-**Q1. The words at the top of the game while it plays itself.** Today the strip says "You are the box on the left.
+## The questions as asked
+
+Each had a recommendation. The plan's tasks that depended on an answer waited for it.
+
+**Q1. The words at the top of the game while it plays itself.** *Answered (a).*
+Today the strip says "You are the box on the left.
 Push the other box." and what to press, which is not true of a recording.
 
 - (a) New words while watching: "The game is playing by itself. Tap it to play." **Recommended.** (If Q2 is (b):
@@ -77,18 +85,18 @@ Push the other box." and what to press, which is not true of a recording.
 - (b) No words while watching: only the game's art. The site's own bar above it says "Play it".
 - (c) Today's words stay, so a watcher reads the goal while seeing it done.
 
-**Q2. Touching the moving game.**
+**Q2. Touching the moving game.** *Answered (a).*
 
 - (a) A tap or click on the game starts it, the same as a Play button. A finger that drags across it scrolls the
   page instead. **Recommended:** a moving game invites a tap, and one that ignores it looks broken.
 - (b) Only the Play buttons start it.
 
-**Q3. Visitors who asked their device for less motion, or to save data.**
+**Q3. Visitors who asked their device for less motion, or to save data.** *Answered (b).*
 
 - (a) They keep the still picture, and the game loads when they press Play, as today. **Recommended.**
 - (b) The game plays itself for everyone.
 
-**Q4. How long it plays.** The recording is six seconds.
+**Q4. How long it plays.** *Answered (a).* The recording is six seconds.
 
 - (a) Again and again, with a one-second rest between, for as long as it is on the screen. **Recommended.**
 - (b) Three times, then it holds its last moment until Play.
