@@ -2,10 +2,14 @@
   "format": 1,
   "id": "zh",
   "messages": {
+    "controls.jump": "跳",
+    "controls.left": "左",
+    "controls.right": "右",
     "hero.ask": "有什么建议吗？",
     "hero.bye": "再见。",
     "keeper.bye": "保重。",
     "keeper.hello": "你好！",
-    "keeper.tip": "把箱子推到台阶上。"
+    "keeper.tip": "把箱子推到台阶上。",
+    "level.level-1.name": "第 1 关"
   }
 }

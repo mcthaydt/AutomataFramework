@@ -2,10 +2,14 @@
   "format": 1,
   "id": "pt",
   "messages": {
+    "controls.jump": "Pular",
+    "controls.left": "Esquerda",
+    "controls.right": "Direita",
     "hero.ask": "Alguma dica?",
     "hero.bye": "Até mais.",
     "keeper.bye": "Cuide-se.",
     "keeper.hello": "Olá!",
-    "keeper.tip": "Empurre a caixa até a beira."
+    "keeper.tip": "Empurre a caixa até a beira.",
+    "level.level-1.name": "Fase 1"
   }
 }

@@ -2,10 +2,14 @@
   "format": 1,
   "id": "ko",
   "messages": {
+    "controls.jump": "점프",
+    "controls.left": "왼쪽",
+    "controls.right": "오른쪽",
     "hero.ask": "조언이 있나요?",
     "hero.bye": "또 만나요.",
     "keeper.bye": "몸조심하세요.",
     "keeper.hello": "안녕하세요!",
-    "keeper.tip": "상자를 선반 위로 밀어 보세요."
+    "keeper.tip": "상자를 선반 위로 밀어 보세요.",
+    "level.level-1.name": "레벨 1"
   }
 }
