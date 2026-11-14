@@ -17,7 +17,7 @@ nothing critical. Three findings are important: the agent notes still send a cha
 L moved into `content/messages/`; the page's "a picture is missing" screen, Step A's, is English whatever the player
 speaks, tells them to fix a file they must not hand-edit, and has no test; and the command that marks a language as
 read, which plan L handed to plan K's Step L, was not built. The first two are fixed here, tests first. The third is a
-new command and goes to the Owner (Q1). Six minor findings follow; one is fixed.
+new command; the Owner chose to build it (Q1), after a game can name its own source language. Six minor findings follow; one is fixed.
 
 **How it was checked.** The three merges' diffs were read in full (`git diff <merge>^1 <merge>`), with every file of
 `src/features/cli/` they touch read whole as it is on `main` (`art.ts`, `check-files.ts`, `game-folder.ts`,
@@ -133,6 +133,15 @@ speaker's read, and nothing records that read but code.
   read.
 
 Nothing else waits on the answer.
+
+**The Owner's answer (2026-11-14): (a), and English must not be the default language.** Any language can be the one a
+game is written in and the one the others are read against. That is more than this audit: English is the source in the
+content format and the locale today (`translationProblems` and `unreadWords` compare with `en`; the marks file has a
+mark for every language but `en`, of the English text and the translation; `pick.ts` and `words.ts` fall back to English;
+`automata.toml` names no source; the check's sentences say "English says"; the README, the skills, the template's notes
+and plan L say so too), and plan L's Task 12 (Paraglide, PR 82, in flight) has a base language of its own. So
+`automata words` is built after a change to plan L that gives a game its source language, and on top of it, not here;
+building it now would tie it to English as well. The change and where it lands were sent to the coordinator.
 
 ## Fixes in this pull request
 
