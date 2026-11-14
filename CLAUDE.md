@@ -150,8 +150,9 @@ tests/architecture.test.ts    imports go down, no cycles, no tests in src
 tests/features/<feature>/     mirrors src/features
 tests/lib/                    tests of src/lib
 tests/fixtures/               shared test helpers and the example game's files
-tests/install/                installs the packed package in a clean folder and uses it
+tests/install/                installs the packed package in a clean folder and uses it; `create-smoke.mjs` runs the README's commands
 tests/journeys/               real browsers play one room against a server CI starts (own Vitest project, the `online` job)
+tests/create/                 a new game, made from the packed package, played in real browsers (own Vitest project, the `create-play` job)
 tests/workflows/, tests/docs/ checks that read a workflow or the README
 tests/template/               checks of the template: its files, its words, its recorded play, its page in real browsers
 tests/golden/                 recorded hashes and replays

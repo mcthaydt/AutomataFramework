@@ -1,8 +1,9 @@
-// Five Vitest projects. Test file suffixes decide where a test runs:
+// Six Vitest projects. Test file suffixes decide where a test runs:
 //   *.test.ts          Node
 //   *.parity.test.ts   Node and all three browsers: the same hash must come out of every engine
 //   *.browser.test.ts  the three browsers only (layout, DOM, canvas)
-//   *.journey.test.ts  Node, driving real browsers of its own (Playwright) against a server it starts
+//   *.journey.test.ts  Node, driving real browsers of its own (Playwright) against a server it starts; the ones under
+//                      tests/create/ are their own project, run from the packed package
 // Node is the fourth engine of the determinism proof; the browsers are real Chromium, WebKit and Firefox.
 import { fileURLToPath } from 'node:url'
 import { playwright } from '@vitest/browser-playwright'
@@ -31,6 +32,19 @@ const journeys = {
     include: ['tests/journeys/**/*.journey.test.ts'],
     testTimeout: 120_000,
     hookTimeout: 120_000,
+  },
+}
+
+// The new game, made from the packed package and played in real browsers: the `create-play` job's own project, so
+// `test:journeys` never runs it and `test:create` runs nothing else.
+const create = {
+  extends: true,
+  test: {
+    name: 'create',
+    environment: 'node',
+    include: ['tests/create/**/*.journey.test.ts'],
+    testTimeout: 600_000,
+    hookTimeout: 600_000,
   },
 }
 
@@ -68,7 +82,7 @@ const config: ViteUserConfig = defineConfig({
     ],
   },
   optimizeDeps: { exclude: [RAPIER] },
-  test: { server: { deps: { inline: [RAPIER] } }, projects: [node, journeys, ...ENGINES.map(inBrowser)] },
+  test: { server: { deps: { inline: [RAPIER] } }, projects: [node, journeys, create, ...ENGINES.map(inBrowser)] },
 })
 
 export default config

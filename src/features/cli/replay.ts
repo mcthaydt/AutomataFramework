@@ -66,7 +66,11 @@ const withoutFullStop = (text: string): string => text.replace(/\.$/, '')
 
 /** The numbers in `meta.players`, like `1,2`; a game for one player has `1`. */
 const playersOf = (meta: string | undefined): number[] => {
-  const numbers = (meta ?? '').split(',').map(Number).filter(Number.isInteger)
+  const numbers = (meta ?? '')
+    .split(',')
+    .filter((word) => word.trim() !== '')
+    .map(Number)
+    .filter(Number.isInteger)
   return numbers.length > 0 ? numbers : [1]
 }
 
