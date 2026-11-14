@@ -19,3 +19,9 @@ test('what the build writes is what the package ships and points at', () => {
   expect(manifest.exports['.']).toMatchObject({ import: './dist/index.js' })
   expect(manifest.exports['./headless']).toMatchObject({ import: './dist/headless.js' })
 })
+
+// Rapier's code is built into the package's own files, and its licence (Apache-2.0) asks that a copy travels with it.
+// The package exports that copy by name so a game can read it and ship it beside its own files.
+test("Rapier's licence is exported by name, from the files the package ships", () => {
+  expect(manifest.exports['./rapier.LICENSE']).toBe('./dist/rapier.LICENSE')
+})
