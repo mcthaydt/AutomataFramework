@@ -58,3 +58,9 @@ test('the JSON Schema of a tileset', () =>
 
 test('the JSON Schema of a behaviour', () =>
   expectSchema('behaviour', 'Behaviour', ['format', 'id', 'rules']))
+
+test('the JSON Schema of a tuning', () =>
+  expectSchema('tuning', 'Tuning', ['format', 'id', 'numbers', 'controls']))
+
+test('the JSON Schema of a feel', () =>
+  expectSchema('feel', 'Feel', ['format', 'id', 'on', 'dust', 'shake', 'freeze']))

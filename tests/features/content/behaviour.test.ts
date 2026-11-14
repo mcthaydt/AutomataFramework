@@ -188,13 +188,10 @@ test('a character file that does not read does not make every kind look wrong', 
   expect(
     await gameProblems(
       critterGame(critter(), {
-        'content/characters/crate.json': changed(
-          'character',
-          fixtureFiles['content/characters/crate.json'],
-          (c) => {
-            c.color = 'red'
-          },
-        ),
+        'content/characters/crate.json': JSON.stringify({
+          ...JSON.parse(fixtureFiles['content/characters/crate.json'] ?? ''),
+          color: 'red',
+        }),
       }),
     ),
   ).toEqual(['content/characters/crate.json: color: Write a colour as # and six digits, like #e4572e.']))

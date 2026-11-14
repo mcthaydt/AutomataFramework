@@ -238,6 +238,8 @@ const CONTENT_TYPES: {
     readonly character: ContentTypeInfo<Character, CharacterInput>;
     readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
     readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
+    readonly tuning: ContentTypeInfo<TuningFile, TuningFile>;
+    readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
 };
 ```
 
@@ -439,6 +441,17 @@ interface Diagnostic {
 }
 ```
 
+### `Dust` (interface)
+
+```ts
+interface Dust {
+    readonly count: number;
+    readonly color: string;
+    readonly speed: number;
+    readonly life: number;
+}
+```
+
 ### `EditorName` (type)
 
 ```ts
@@ -472,6 +485,25 @@ interface EventDef<Z extends z.ZodType = z.ZodType> {
 
 ```ts
 function exp(x: number): number;
+```
+
+### `FeelFile` (interface)
+
+```ts
+interface FeelFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly on: string;
+    readonly dust?: Dust | undefined;
+    readonly shake?: Shake | undefined;
+    readonly freeze?: Freeze | undefined;
+}
+```
+
+### `FeelSchema` (const)
+
+```ts
+const FeelSchema: z.ZodType<FeelFile, FeelFile>;
 ```
 
 ### `FieldRecord` (type)
@@ -549,6 +581,14 @@ interface Frames {
 const FRAMEWORK_VERSION: string;
 ```
 
+### `Freeze` (interface)
+
+```ts
+interface Freeze {
+    readonly ticks: number;
+}
+```
+
 ### `Game` (interface)
 
 ```ts
@@ -570,6 +610,8 @@ interface GameContent {
     readonly characters: Readonly<Record<string, Character>>;
     readonly tilesets?: Readonly<Record<string, TilesetFile>>;
     readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
+    readonly tunings?: Readonly<Record<string, TuningFile>>;
+    readonly feels?: Readonly<Record<string, FeelFile>>;
 }
 ```
 
@@ -759,6 +801,24 @@ const MAX_PLAYERS = 4;
 
 ```ts
 const MAX_STEPS_PER_FRAME = 5;
+```
+
+### `PAD_BUTTONS` (const)
+
+```ts
+const PAD_BUTTONS: readonly ["south", "east", "west", "north", "l1", "r1", "l2", "r2", "select", "start", "l3", "r3", "dpad-up", "dpad-down", "dpad-left", "dpad-right", "home"];
+```
+
+### `PAD_STICKS` (const)
+
+```ts
+const PAD_STICKS: readonly ["left-stick-up", "left-stick-down", "left-stick-left", "left-stick-right", "right-stick-up", "right-stick-down", "right-stick-left", "right-stick-right"];
+```
+
+### `PadInput` (type)
+
+```ts
+type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
 ```
 
 ### `parseContent` (function)
@@ -1017,6 +1077,18 @@ const ReplaySchema: z.ZodType<Replay>;
 type Report = (path: string, message: string) => void;
 ```
 
+### `RESERVED_KEYS` (const)
+
+```ts
+const RESERVED_KEYS: readonly string[];
+```
+
+### `RESERVED_PAD` (const)
+
+```ts
+const RESERVED_PAD: readonly PadInput[];
+```
+
 ### `ResourceDef` (interface)
 
 ```ts
@@ -1072,6 +1144,15 @@ type Sense = {
 };
 ```
 
+### `Shake` (interface)
+
+```ts
+interface Shake {
+    readonly strength: number;
+    readonly ticks: number;
+}
+```
+
 ### `ShapeKind` (const)
 
 ```ts
@@ -1081,6 +1162,12 @@ const ShapeKind: {
     readonly capsule: 2;
 };
 type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind];
+```
+
+### `SharedKeys` (type)
+
+```ts
+type SharedKeys = readonly [readonly string[], readonly string[]];
 ```
 
 ### `Sim` (interface)
@@ -1391,6 +1478,55 @@ function transform(at?: {
     y?: number;
     rotation?: number;
 }): SpawnPart;
+```
+
+### `TuningControl` (interface)
+
+```ts
+interface TuningControl {
+    readonly action: string;
+    readonly label: string;
+    readonly keys: readonly string[];
+    readonly side: 'left' | 'right';
+    readonly pad?: readonly PadInput[] | undefined;
+    readonly shared?: SharedKeys | undefined;
+}
+```
+
+### `TuningFile` (interface)
+
+```ts
+interface TuningFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly numbers: readonly TuningNumber[];
+    readonly controls?: readonly TuningControl[] | undefined;
+}
+```
+
+### `TuningNumber` (interface)
+
+```ts
+interface TuningNumber {
+    readonly id: string;
+    readonly about: string;
+    readonly value: number;
+    readonly min: number;
+    readonly max: number;
+    readonly step: number;
+}
+```
+
+### `tuningNumbers` (function)
+
+```ts
+function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
+```
+
+### `TuningSchema` (const)
+
+```ts
+const TuningSchema: z.ZodType<TuningFile, TuningFile>;
 ```
 
 ### `Verdict` (type)
@@ -1727,6 +1863,8 @@ const CONTENT_TYPES: {
     readonly character: ContentTypeInfo<Character, CharacterInput>;
     readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
     readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
+    readonly tuning: ContentTypeInfo<TuningFile, TuningFile>;
+    readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
 };
 ```
 
@@ -1883,6 +2021,17 @@ interface Diagnostic {
 }
 ```
 
+### `Dust` (interface)
+
+```ts
+interface Dust {
+    readonly count: number;
+    readonly color: string;
+    readonly speed: number;
+    readonly life: number;
+}
+```
+
 ### `EditorName` (type)
 
 ```ts
@@ -1916,6 +2065,25 @@ interface EventDef<Z extends z.ZodType = z.ZodType> {
 
 ```ts
 function exp(x: number): number;
+```
+
+### `FeelFile` (interface)
+
+```ts
+interface FeelFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly on: string;
+    readonly dust?: Dust | undefined;
+    readonly shake?: Shake | undefined;
+    readonly freeze?: Freeze | undefined;
+}
+```
+
+### `FeelSchema` (const)
+
+```ts
+const FeelSchema: z.ZodType<FeelFile, FeelFile>;
 ```
 
 ### `FieldRecord` (type)
@@ -1962,6 +2130,14 @@ function formatDiagnostic(d: Diagnostic): string;
 const FRAMEWORK_VERSION: string;
 ```
 
+### `Freeze` (interface)
+
+```ts
+interface Freeze {
+    readonly ticks: number;
+}
+```
+
 ### `GameContent` (interface)
 
 ```ts
@@ -1971,6 +2147,8 @@ interface GameContent {
     readonly characters: Readonly<Record<string, Character>>;
     readonly tilesets?: Readonly<Record<string, TilesetFile>>;
     readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
+    readonly tunings?: Readonly<Record<string, TuningFile>>;
+    readonly feels?: Readonly<Record<string, FeelFile>>;
 }
 ```
 
@@ -2122,6 +2300,24 @@ const MAX_ACTIONS = 16;
 
 ```ts
 const MAX_PLAYERS = 4;
+```
+
+### `PAD_BUTTONS` (const)
+
+```ts
+const PAD_BUTTONS: readonly ["south", "east", "west", "north", "l1", "r1", "l2", "r2", "select", "start", "l3", "r3", "dpad-up", "dpad-down", "dpad-left", "dpad-right", "home"];
+```
+
+### `PAD_STICKS` (const)
+
+```ts
+const PAD_STICKS: readonly ["left-stick-up", "left-stick-down", "left-stick-left", "left-stick-right", "right-stick-up", "right-stick-down", "right-stick-left", "right-stick-right"];
+```
+
+### `PadInput` (type)
+
+```ts
+type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
 ```
 
 ### `parseContent` (function)
@@ -2368,6 +2564,18 @@ const ReplaySchema: z.ZodType<Replay>;
 type Report = (path: string, message: string) => void;
 ```
 
+### `RESERVED_KEYS` (const)
+
+```ts
+const RESERVED_KEYS: readonly string[];
+```
+
+### `RESERVED_PAD` (const)
+
+```ts
+const RESERVED_PAD: readonly PadInput[];
+```
+
 ### `ResourceDef` (interface)
 
 ```ts
@@ -2414,6 +2622,15 @@ type Sense = {
 };
 ```
 
+### `Shake` (interface)
+
+```ts
+interface Shake {
+    readonly strength: number;
+    readonly ticks: number;
+}
+```
+
 ### `ShapeKind` (const)
 
 ```ts
@@ -2423,6 +2640,12 @@ const ShapeKind: {
     readonly capsule: 2;
 };
 type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind];
+```
+
+### `SharedKeys` (type)
+
+```ts
+type SharedKeys = readonly [readonly string[], readonly string[]];
 ```
 
 ### `Sim` (interface)
@@ -2727,6 +2950,55 @@ function transform(at?: {
     y?: number;
     rotation?: number;
 }): SpawnPart;
+```
+
+### `TuningControl` (interface)
+
+```ts
+interface TuningControl {
+    readonly action: string;
+    readonly label: string;
+    readonly keys: readonly string[];
+    readonly side: 'left' | 'right';
+    readonly pad?: readonly PadInput[] | undefined;
+    readonly shared?: SharedKeys | undefined;
+}
+```
+
+### `TuningFile` (interface)
+
+```ts
+interface TuningFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly numbers: readonly TuningNumber[];
+    readonly controls?: readonly TuningControl[] | undefined;
+}
+```
+
+### `TuningNumber` (interface)
+
+```ts
+interface TuningNumber {
+    readonly id: string;
+    readonly about: string;
+    readonly value: number;
+    readonly min: number;
+    readonly max: number;
+    readonly step: number;
+}
+```
+
+### `tuningNumbers` (function)
+
+```ts
+function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
+```
+
+### `TuningSchema` (const)
+
+```ts
+const TuningSchema: z.ZodType<TuningFile, TuningFile>;
 ```
 
 ### `Verdict` (type)
