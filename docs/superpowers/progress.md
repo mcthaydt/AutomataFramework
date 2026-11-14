@@ -13,11 +13,16 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | 1. Spec | Written, in review | `specs/2026-11-14-m2-design.md` |
 | 2 to 7, per plan | Not started (plans C, I, V and N can start at once) | |
 | Plan C (content): 2. Plan | Written, in review: twelve tasks, twelve new kinds of file and the widened character and level | `plans/2026-11-14-m2-content.md` |
-| Plan V (saves and the host port): 2. Plan | Written, in review; stage at 100%, plan V at 10% | `plans/2026-11-14-m2-saves-host.md` |
+| Plan V (saves and the host port): 2. Plan | Done, 100% (merged, PR 32) | `plans/2026-11-14-m2-saves-host.md` |
+| Plan V: 3. Plan audit | Written, in review; stage at 100%, plan V at 20%. Ten findings, all applied to the plan | `audits/2026-11-14-m2-saves-host-plan-audit.md` |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
 
 ### Log
 
+- 2026-11-14: plan V's audit. Three major findings, fixed in the plan: `host` moves below `locale`, `ui` and
+  `screens` in the layers (they read it); both entries export `z`, so a game that may import only the framework can
+  write a save's schema; `input` and `audio` export their settings' schemas and plan U makes the sections. The
+  contract's `Host.saves` is now `Host.store`.
 - 2026-11-14: the M2 spec, with the Owner's answers: the demo has same-screen co-op for 2 to 4 players, and online
   play is built and proven in CI, not deployed; the showcase is one short real game of three levels plus a "What's
   inside" page. M2 is cut into small plans that can run side by side.
