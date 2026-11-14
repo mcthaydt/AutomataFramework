@@ -221,6 +221,48 @@ await host.openLink('https://example.com/help') // 'opened'
 host.opened // ['https://example.com/help']
 ```
 
+## Play online
+
+Online play is built and checked in CI. It is not deployed anywhere yet.
+
+A game plays in a room: each player is on their own device, and one server decides what happened. Your own key moves
+your hero at once, and the picture is put right if the room saw it differently. The server is a Node file next to your
+game. It loads the game as a page does, and hands it to `runRoomServer`:
+
+```ts
+import { readFile } from 'node:fs/promises'
+import { loadGame } from '@automataframework/framework/headless'
+import { runRoomServer } from '@automataframework/framework/server'
+
+const loaded = await loadGame((path) => readFile(path, 'utf8'))
+if (!loaded.ok) throw new Error('The game did not load.')
+await runRoomServer({ game: { content: loaded.value, plugins: [heroPlugin] } })
+```
+
+`runRoomServer` listens on the port you give it, else `PORT`, else any free one. It prints one line,
+`{"event":"listening","port":3000}`, and on SIGTERM it closes every room, prints `{"event":"stopped"}` and exits 0. A
+test can use `createRoomServer` instead, which resolves with the port and a `close()`.
+
+The page starts the game in a room with `startOnlineGame`, instead of `startGame`:
+
+```ts
+import { onlineWords, startOnlineGame } from '@automataframework/framework'
+
+const online = await startOnlineGame({
+  content, plugins, mount, controls, host: webHost(),
+  server: 'ws://localhost:3000',
+  // room: 'K7QX',   // join a friend's room by its code; leave it out to make one
+  onStatus: (status) => (message.textContent = onlineWords(status)),
+})
+online.code // to share with a friend
+```
+
+`onlineWords(status)` is the plain English for the room (waiting for a friend, someone lost their connection, the room
+is full) and an empty string while everyone is playing; a game puts it on its own screen. A refused join rejects with an
+`OnlineError` and leaves nothing on the page. A game with `players = 4` in `automata.toml` has no waiting: the room
+starts with whoever is first, and the others join and leave while it is played, as many as its level has start points
+for. Hiding the page lets go of the keys, so the hero does not run on for everyone else.
+
 ## Without a page
 
 `@automataframework/framework/headless` has everything that needs no page (the simulation, physics, commands, content,

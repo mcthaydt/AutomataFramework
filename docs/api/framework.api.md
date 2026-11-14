@@ -45,6 +45,15 @@ interface ActorKey {
 }
 ```
 
+### `Advance` (interface)
+
+```ts
+interface Advance {
+    readonly deltas: readonly RenderDelta[];
+    readonly events: readonly SimEvent[];
+}
+```
+
 ### `applySettings` (function)
 
 ```ts
@@ -139,6 +148,12 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `BYTES_CHANNEL` (const)
+
+```ts
+const BYTES_CHANNEL = "b";
+```
+
 ### `CameraKey` (interface)
 
 ```ts
@@ -215,6 +230,20 @@ function checkControls(controls: Controls): void;
 
 ```ts
 type Claim = 'keyboard' | 'pad-0' | 'pad-1' | 'pad-2' | 'pad-3';
+```
+
+### `ClientMessage` (type)
+
+```ts
+type ClientMessage = {
+    readonly t: 'cmd';
+    readonly seq: number;
+    readonly tick: number;
+    readonly type: string;
+    readonly payload: unknown;
+} | {
+    readonly t: 'sync';
+};
 ```
 
 ### `Collider` (const)
@@ -443,6 +472,16 @@ interface ConversationNode {
 const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
 ```
 
+### `coopSeats` (function)
+
+```ts
+function coopSeats(project: {
+    readonly players?: number | undefined;
+}, starts: readonly {
+    readonly player: number;
+}[]): number | undefined;
+```
+
 ### `cos` (function)
 
 ```ts
@@ -489,6 +528,20 @@ function createRenderer(options: {
 function createRng(seed: number): Rng;
 ```
 
+### `createRoomEngine` (function)
+
+```ts
+function createRoomEngine(setup: {
+    readonly sim: Sim;
+    readonly level: string;
+    readonly seats: number;
+    readonly seatCommands?: {
+        readonly join: string;
+        readonly leave: string;
+    };
+}): RoomEngine;
+```
+
 ### `createSaves` (function)
 
 ```ts
@@ -509,6 +562,12 @@ function createScene(): Scene;
 
 ```ts
 function createSequence(): Sequence;
+```
+
+### `createSession` (function)
+
+```ts
+function createSession(setup: SessionSetup): Session;
 ```
 
 ### `createSim` (function)
@@ -574,6 +633,12 @@ const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
 
 ```ts
 type Def = ComponentDef | CommandDef | EventDef | ResourceDef | SystemDef;
+```
+
+### `DEFAULT_MAX_ROOMS` (const)
+
+```ts
+const DEFAULT_MAX_ROOMS = 8;
 ```
 
 ### `defineCommand` (function)
@@ -897,6 +962,12 @@ interface GameSimOptions {
 const groundOf: (level: Level) => number;
 ```
 
+### `HASH_EVERY` (const)
+
+```ts
+const HASH_EVERY = 60;
+```
+
 ### `Host` (interface)
 
 ```ts
@@ -1032,6 +1103,35 @@ const JoinCommand: CommandDef<typeof emptyPayload>;
 function joinCommand(tick: number, player: number, seq: number): Command;
 ```
 
+### `Joined` (interface)
+
+```ts
+interface Joined {
+    readonly session: Session;
+    readonly code: string;
+    rejoin(): Promise<void>;
+    leave(): void;
+}
+```
+
+### `JoinOptions` (interface)
+
+```ts
+interface JoinOptions {
+    readonly server: string;
+    readonly room?: string;
+    readonly level: string;
+    readonly seats: number;
+    readonly confirmed: Sim;
+    readonly predicted: Sim;
+    readonly wrapLink?: (link: Link) => Link;
+    readonly resendAfterSync?: readonly string[];
+    readonly onCheck?: (tick: number, hash: string, ok: boolean) => void;
+    readonly onState?: (state: SessionState) => void;
+    readonly onLinkClosed?: () => void;
+}
+```
+
 ### `joinPlugin` (function)
 
 ```ts
@@ -1039,6 +1139,12 @@ function joinPlugin(options: {
     readonly level: string;
     readonly max: number;
 }): PluginDef;
+```
+
+### `joinSession` (function)
+
+```ts
+function joinSession(options: JoinOptions): Promise<Joined>;
 ```
 
 ### `jsonSchemaFor` (function)
@@ -1063,6 +1169,12 @@ const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
 
 ```ts
 function latestSlot(states: readonly SlotState[]): number | undefined;
+```
+
+### `LEAD_DECAY_TICKS` (const)
+
+```ts
+const LEAD_DECAY_TICKS = 300;
 ```
 
 ### `LeaveCommand` (const)
@@ -1141,6 +1253,21 @@ interface LevelThing {
 }
 ```
 
+### `Link` (interface)
+
+```ts
+interface Link {
+    send(message: ClientMessage): void;
+    listen(handlers: {
+        message(message: ServerMessage): void;
+        bytes(bytes: Uint8Array): void;
+        closed(): void;
+    }): void;
+    close(): void;
+    drop?(): void;
+}
+```
+
 ### `LinkAnswer` (type)
 
 ```ts
@@ -1205,10 +1332,52 @@ const Look: ComponentDef<typeof lookFields>;
 const MAX_ACTIONS = 16;
 ```
 
+### `MAX_AHEAD` (const)
+
+```ts
+const MAX_AHEAD = 120;
+```
+
+### `MAX_CATCH_UP` (const)
+
+```ts
+const MAX_CATCH_UP = 4;
+```
+
+### `MAX_CLIENT_LEAD` (const)
+
+```ts
+const MAX_CLIENT_LEAD = 30;
+```
+
+### `MAX_CONFIRM_PER_ADVANCE` (const)
+
+```ts
+const MAX_CONFIRM_PER_ADVANCE = 240;
+```
+
+### `MAX_LEAD_TICKS` (const)
+
+```ts
+const MAX_LEAD_TICKS = 60;
+```
+
+### `MAX_MESSAGE_BYTES` (const)
+
+```ts
+const MAX_MESSAGE_BYTES = 16384;
+```
+
 ### `MAX_PLAYERS` (const)
 
 ```ts
 const MAX_PLAYERS = 4;
+```
+
+### `MAX_QUEUED_COMMANDS` (const)
+
+```ts
+const MAX_QUEUED_COMMANDS = 32;
 ```
 
 ### `MAX_STEPS` (const)
@@ -1244,6 +1413,12 @@ function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
 type MenuPress = 'up' | 'down' | 'left' | 'right' | 'accept' | 'back' | 'pause';
 ```
 
+### `MESSAGE_CHANNEL` (const)
+
+```ts
+const MESSAGE_CHANNEL = "m";
+```
+
 ### `MessagesFile` (interface)
 
 ```ts
@@ -1258,6 +1433,12 @@ interface MessagesFile {
 
 ```ts
 const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
+```
+
+### `MIN_LEAD` (const)
+
+```ts
+const MIN_LEAD = 1;
 ```
 
 ### `MusicCue` (interface)
@@ -1308,6 +1489,79 @@ interface NoiseVoice {
 }
 ```
 
+### `ONLINE_PROBLEMS` (const)
+
+```ts
+const ONLINE_PROBLEMS: readonly OnlineProblem[];
+```
+
+### `OnlineError` (class)
+
+```ts
+class OnlineError extends Error {
+    readonly problem: OnlineProblem;
+    constructor(problem: OnlineProblem, message: string);
+}
+```
+
+### `OnlineGame` (interface)
+
+```ts
+interface OnlineGame {
+    readonly sim: Sim;
+    readonly seat: number;
+    readonly code: string;
+    status(): OnlineStatus;
+    stats(): SessionStats;
+    leave(): void;
+}
+```
+
+### `OnlineOptions` (interface)
+
+```ts
+interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
+    readonly server: string;
+    readonly room?: string;
+    readonly level?: string;
+    readonly seats?: number;
+    readonly onStatus?: (status: OnlineStatus) => void;
+    readonly onCheck?: (tick: number, hash: string, ok: boolean) => void;
+    readonly wrapLink?: (link: Link) => Link;
+    readonly join?: typeof joinSession;
+}
+```
+
+### `OnlineProblem` (type)
+
+```ts
+type OnlineProblem = 'different-version' | 'room-full' | 'no-room' | 'server-full' | 'bad-room' | 'no-server' | 'lost';
+```
+
+### `OnlineStatus` (type)
+
+```ts
+type OnlineStatus = {
+    readonly state: 'waiting';
+    readonly code: string;
+    readonly missing: number;
+} | {
+    readonly state: 'playing';
+    readonly away: readonly number[];
+} | {
+    readonly state: 'reconnecting';
+} | {
+    readonly state: 'ended';
+    readonly problem: OnlineProblem;
+};
+```
+
+### `onlineWords` (function)
+
+```ts
+function onlineWords(status: OnlineStatus): string;
+```
+
 ### `openSettings` (function)
 
 ```ts
@@ -1351,6 +1605,12 @@ interface PadLike {
 }
 ```
 
+### `parseClientMessage` (function)
+
+```ts
+function parseClientMessage(raw: unknown): ClientMessage | undefined;
+```
+
 ### `parseContent` (function)
 
 ```ts
@@ -1379,6 +1639,18 @@ function parseProject(text: string): Parsed<Project>;
 
 ```ts
 function parseReplay(text: string): Replay;
+```
+
+### `parseRoomOptions` (function)
+
+```ts
+function parseRoomOptions(raw: unknown): RoomOptions | undefined;
+```
+
+### `parseServerMessage` (function)
+
+```ts
+function parseServerMessage(raw: unknown): ServerMessage | undefined;
 ```
 
 ### `Phase` (type)
@@ -1512,6 +1784,12 @@ const PROJECT_FILE = "automata.toml";
 const ProjectSchema: z.ZodType<Project, Project>;
 ```
 
+### `PROTOCOL_VERSION` (const)
+
+```ts
+const PROTOCOL_VERSION: 1;
+```
+
 ### `rebind` (function)
 
 ```ts
@@ -1532,6 +1810,18 @@ type Rebound = {
 };
 ```
 
+### `RECONNECT_DELAYS_MS` (const)
+
+```ts
+const RECONNECT_DELAYS_MS: readonly number[];
+```
+
+### `RECONNECT_GRACE_SECONDS` (const)
+
+```ts
+const RECONNECT_GRACE_SECONDS = 30;
+```
+
 ### `Recorder` (interface)
 
 ```ts
@@ -1539,6 +1829,18 @@ interface Recorder {
     step(commands: readonly Command[]): StepResult;
     replay(): Replay;
 }
+```
+
+### `Refusal` (type)
+
+```ts
+type Refusal = (typeof REFUSALS)[number];
+```
+
+### `REFUSALS` (const)
+
+```ts
+const REFUSALS: readonly ["too-far-ahead", "out-of-order", "too-many", "not-started", "not-valid"];
 ```
 
 ### `RejectedCommand` (interface)
@@ -1674,6 +1976,71 @@ interface Rng {
 type RngState = [number, number, number, number];
 ```
 
+### `ROOM_NAME` (const)
+
+```ts
+const ROOM_NAME = "game";
+```
+
+### `RoomEngine` (interface)
+
+```ts
+interface RoomEngine {
+    readonly options: RoomOptions;
+    readonly started: boolean;
+    readonly tick: number;
+    readonly stats: {
+        readonly late: number;
+        readonly refused: number;
+        readonly ignored: number;
+    };
+    join(peer: RoomPeer, options: unknown, code: string): {
+        readonly seat: number;
+    } | {
+        readonly problem: 'different-version' | 'room-full';
+    };
+    receive(seat: number, raw: unknown): void;
+    away(seat: number): void;
+    back(seat: number, peer: RoomPeer): void;
+    leave(seat: number): void;
+    step(): void;
+    replay(): Replay;
+}
+```
+
+### `RoomOptions` (interface)
+
+```ts
+interface RoomOptions {
+    readonly protocol: 1;
+    readonly framework: string;
+    readonly schemaHash: string;
+    readonly contentHash: string;
+    readonly tickHz: number;
+    readonly level: string;
+    readonly seed: number;
+    readonly seats: number;
+}
+```
+
+### `roomOptionsOf` (function)
+
+```ts
+function roomOptionsOf(sim: Sim, room: {
+    readonly level: string;
+    readonly seats: number;
+}): RoomOptions;
+```
+
+### `RoomPeer` (interface)
+
+```ts
+interface RoomPeer {
+    send(message: ServerMessage): void;
+    sendBytes(bytes: Uint8Array): void;
+}
+```
+
 ### `SaveDef` (interface)
 
 ```ts
@@ -1784,6 +2151,101 @@ type Sense = {
 ```ts
 interface Sequence {
     next(source: number): number;
+}
+```
+
+### `ServerMessage` (type)
+
+```ts
+type ServerMessage = {
+    readonly t: 'seat';
+    readonly seat: number;
+    readonly code: string;
+    readonly nextSeq: number;
+} | {
+    readonly t: 'waiting';
+    readonly missing: number;
+} | {
+    readonly t: 'start';
+} | {
+    readonly t: 'tick';
+    readonly tick: number;
+    readonly commands: readonly WireCommand[];
+    readonly hash?: string;
+} | {
+    readonly t: 'refused';
+    readonly seq: number;
+    readonly reason: Refusal;
+} | {
+    readonly t: 'sync';
+    readonly tick: number;
+} | {
+    readonly t: 'away';
+    readonly seat: number;
+} | {
+    readonly t: 'back';
+    readonly seat: number;
+} | {
+    readonly t: 'gone';
+    readonly seat: number;
+};
+```
+
+### `Session` (interface)
+
+```ts
+interface Session {
+    readonly seat: number | undefined;
+    readonly sim: Sim;
+    state(): SessionState;
+    stats(): SessionStats;
+    advance(local: readonly Pick<Command, 'type' | 'payload'>[]): Advance;
+    resume(link: Link): void;
+    close(): void;
+}
+```
+
+### `SessionSetup` (interface)
+
+```ts
+interface SessionSetup {
+    readonly link: Link;
+    readonly confirmed: Sim;
+    readonly predicted: Sim;
+    readonly resendAfterSync?: readonly string[];
+    readonly onCheck?: (tick: number, hash: string, ok: boolean) => void;
+    readonly onState?: (state: SessionState) => void;
+    readonly onLinkClosed?: () => void;
+}
+```
+
+### `SessionState` (type)
+
+```ts
+type SessionState = {
+    readonly state: 'waiting';
+    readonly code: string;
+    readonly missing: number;
+} | {
+    readonly state: 'playing';
+    readonly away: readonly number[];
+} | {
+    readonly state: 'closed';
+};
+```
+
+### `SessionStats` (interface)
+
+```ts
+interface SessionStats {
+    readonly confirmedTick: number;
+    readonly predictedTick: number;
+    readonly lead: number;
+    readonly rollbacks: number;
+    readonly late: number;
+    readonly desyncs: number;
+    readonly syncs: number;
+    readonly checked: number;
 }
 ```
 
@@ -2067,10 +2529,22 @@ function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: re
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
 ```
 
+### `START_LEAD` (const)
+
+```ts
+const START_LEAD = 2;
+```
+
 ### `startGame` (function)
 
 ```ts
 function startGame(options: GameOptions): Promise<Game>;
+```
+
+### `startOnlineGame` (function)
+
+```ts
+function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>;
 ```
 
 ### `StepResult` (interface)
@@ -2110,6 +2584,12 @@ type StoreResult<T> = {
     readonly refusal: StoreRefusal;
     readonly detail: string;
 };
+```
+
+### `SYNC_BEHIND` (const)
+
+```ts
+const SYNC_BEHIND = 600;
 ```
 
 ### `SystemDef` (interface)
@@ -2515,6 +2995,15 @@ interface ActorKey {
 }
 ```
 
+### `Advance` (interface)
+
+```ts
+interface Advance {
+    readonly deltas: readonly RenderDelta[];
+    readonly events: readonly SimEvent[];
+}
+```
+
 ### `atan` (function)
 
 ```ts
@@ -2584,6 +3073,12 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `BYTES_CHANNEL` (const)
+
+```ts
+const BYTES_CHANNEL = "b";
+```
+
 ### `CameraKey` (interface)
 
 ```ts
@@ -2627,6 +3122,20 @@ interface CharacterInput extends Omit<Character, 'upright'> {
 
 ```ts
 const CharacterSchema: z.ZodType<Character, CharacterInput>;
+```
+
+### `ClientMessage` (type)
+
+```ts
+type ClientMessage = {
+    readonly t: 'cmd';
+    readonly seq: number;
+    readonly tick: number;
+    readonly type: string;
+    readonly payload: unknown;
+} | {
+    readonly t: 'sync';
+};
 ```
 
 ### `Collider` (const)
@@ -2823,6 +3332,16 @@ interface ConversationNode {
 const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
 ```
 
+### `coopSeats` (function)
+
+```ts
+function coopSeats(project: {
+    readonly players?: number | undefined;
+}, starts: readonly {
+    readonly player: number;
+}[]): number | undefined;
+```
+
 ### `cos` (function)
 
 ```ts
@@ -2850,6 +3369,20 @@ function createRecorder(sim: Sim, options?: {
 function createRng(seed: number): Rng;
 ```
 
+### `createRoomEngine` (function)
+
+```ts
+function createRoomEngine(setup: {
+    readonly sim: Sim;
+    readonly level: string;
+    readonly seats: number;
+    readonly seatCommands?: {
+        readonly join: string;
+        readonly leave: string;
+    };
+}): RoomEngine;
+```
+
 ### `createSaves` (function)
 
 ```ts
@@ -2864,6 +3397,12 @@ function createSaves<S>(options: {
 
 ```ts
 function createSequence(): Sequence;
+```
+
+### `createSession` (function)
+
+```ts
+function createSession(setup: SessionSetup): Session;
 ```
 
 ### `createSim` (function)
@@ -2929,6 +3468,12 @@ const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
 
 ```ts
 type Def = ComponentDef | CommandDef | EventDef | ResourceDef | SystemDef;
+```
+
+### `DEFAULT_MAX_ROOMS` (const)
+
+```ts
+const DEFAULT_MAX_ROOMS = 8;
 ```
 
 ### `defineCommand` (function)
@@ -3180,6 +3725,12 @@ interface GameSimOptions {
 const groundOf: (level: Level) => number;
 ```
 
+### `HASH_EVERY` (const)
+
+```ts
+const HASH_EVERY = 60;
+```
+
 ### `Host` (interface)
 
 ```ts
@@ -3238,6 +3789,35 @@ const JoinCommand: CommandDef<typeof emptyPayload>;
 function joinCommand(tick: number, player: number, seq: number): Command;
 ```
 
+### `Joined` (interface)
+
+```ts
+interface Joined {
+    readonly session: Session;
+    readonly code: string;
+    rejoin(): Promise<void>;
+    leave(): void;
+}
+```
+
+### `JoinOptions` (interface)
+
+```ts
+interface JoinOptions {
+    readonly server: string;
+    readonly room?: string;
+    readonly level: string;
+    readonly seats: number;
+    readonly confirmed: Sim;
+    readonly predicted: Sim;
+    readonly wrapLink?: (link: Link) => Link;
+    readonly resendAfterSync?: readonly string[];
+    readonly onCheck?: (tick: number, hash: string, ok: boolean) => void;
+    readonly onState?: (state: SessionState) => void;
+    readonly onLinkClosed?: () => void;
+}
+```
+
 ### `joinPlugin` (function)
 
 ```ts
@@ -3245,6 +3825,12 @@ function joinPlugin(options: {
     readonly level: string;
     readonly max: number;
 }): PluginDef;
+```
+
+### `joinSession` (function)
+
+```ts
+function joinSession(options: JoinOptions): Promise<Joined>;
 ```
 
 ### `jsonSchemaFor` (function)
@@ -3269,6 +3855,12 @@ const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
 
 ```ts
 function latestSlot(states: readonly SlotState[]): number | undefined;
+```
+
+### `LEAD_DECAY_TICKS` (const)
+
+```ts
+const LEAD_DECAY_TICKS = 300;
 ```
 
 ### `LeaveCommand` (const)
@@ -3347,6 +3939,21 @@ interface LevelThing {
 }
 ```
 
+### `Link` (interface)
+
+```ts
+interface Link {
+    send(message: ClientMessage): void;
+    listen(handlers: {
+        message(message: ServerMessage): void;
+        bytes(bytes: Uint8Array): void;
+        closed(): void;
+    }): void;
+    close(): void;
+    drop?(): void;
+}
+```
+
 ### `LinkAnswer` (type)
 
 ```ts
@@ -3401,10 +4008,52 @@ const Look: ComponentDef<typeof lookFields>;
 const MAX_ACTIONS = 16;
 ```
 
+### `MAX_AHEAD` (const)
+
+```ts
+const MAX_AHEAD = 120;
+```
+
+### `MAX_CATCH_UP` (const)
+
+```ts
+const MAX_CATCH_UP = 4;
+```
+
+### `MAX_CLIENT_LEAD` (const)
+
+```ts
+const MAX_CLIENT_LEAD = 30;
+```
+
+### `MAX_CONFIRM_PER_ADVANCE` (const)
+
+```ts
+const MAX_CONFIRM_PER_ADVANCE = 240;
+```
+
+### `MAX_LEAD_TICKS` (const)
+
+```ts
+const MAX_LEAD_TICKS = 60;
+```
+
+### `MAX_MESSAGE_BYTES` (const)
+
+```ts
+const MAX_MESSAGE_BYTES = 16384;
+```
+
 ### `MAX_PLAYERS` (const)
 
 ```ts
 const MAX_PLAYERS = 4;
+```
+
+### `MAX_QUEUED_COMMANDS` (const)
+
+```ts
+const MAX_QUEUED_COMMANDS = 32;
 ```
 
 ### `MAX_STEPS` (const)
@@ -3428,6 +4077,12 @@ interface MemoryStore extends SaveStore {
 function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
 ```
 
+### `MESSAGE_CHANNEL` (const)
+
+```ts
+const MESSAGE_CHANNEL = "m";
+```
+
 ### `MessagesFile` (interface)
 
 ```ts
@@ -3442,6 +4097,12 @@ interface MessagesFile {
 
 ```ts
 const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
+```
+
+### `MIN_LEAD` (const)
+
+```ts
+const MIN_LEAD = 1;
 ```
 
 ### `MusicCue` (interface)
@@ -3492,6 +4153,51 @@ interface NoiseVoice {
 }
 ```
 
+### `ONLINE_PROBLEMS` (const)
+
+```ts
+const ONLINE_PROBLEMS: readonly OnlineProblem[];
+```
+
+### `OnlineError` (class)
+
+```ts
+class OnlineError extends Error {
+    readonly problem: OnlineProblem;
+    constructor(problem: OnlineProblem, message: string);
+}
+```
+
+### `OnlineProblem` (type)
+
+```ts
+type OnlineProblem = 'different-version' | 'room-full' | 'no-room' | 'server-full' | 'bad-room' | 'no-server' | 'lost';
+```
+
+### `OnlineStatus` (type)
+
+```ts
+type OnlineStatus = {
+    readonly state: 'waiting';
+    readonly code: string;
+    readonly missing: number;
+} | {
+    readonly state: 'playing';
+    readonly away: readonly number[];
+} | {
+    readonly state: 'reconnecting';
+} | {
+    readonly state: 'ended';
+    readonly problem: OnlineProblem;
+};
+```
+
+### `onlineWords` (function)
+
+```ts
+function onlineWords(status: OnlineStatus): string;
+```
+
 ### `openSettings` (function)
 
 ```ts
@@ -3517,6 +4223,12 @@ const PAD_STICKS: readonly ["left-stick-up", "left-stick-down", "left-stick-left
 
 ```ts
 type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
+```
+
+### `parseClientMessage` (function)
+
+```ts
+function parseClientMessage(raw: unknown): ClientMessage | undefined;
 ```
 
 ### `parseContent` (function)
@@ -3547,6 +4259,18 @@ function parseProject(text: string): Parsed<Project>;
 
 ```ts
 function parseReplay(text: string): Replay;
+```
+
+### `parseRoomOptions` (function)
+
+```ts
+function parseRoomOptions(raw: unknown): RoomOptions | undefined;
+```
+
+### `parseServerMessage` (function)
+
+```ts
+function parseServerMessage(raw: unknown): ServerMessage | undefined;
 ```
 
 ### `Phase` (type)
@@ -3680,6 +4404,24 @@ const PROJECT_FILE = "automata.toml";
 const ProjectSchema: z.ZodType<Project, Project>;
 ```
 
+### `PROTOCOL_VERSION` (const)
+
+```ts
+const PROTOCOL_VERSION: 1;
+```
+
+### `RECONNECT_DELAYS_MS` (const)
+
+```ts
+const RECONNECT_DELAYS_MS: readonly number[];
+```
+
+### `RECONNECT_GRACE_SECONDS` (const)
+
+```ts
+const RECONNECT_GRACE_SECONDS = 30;
+```
+
 ### `Recorder` (interface)
 
 ```ts
@@ -3687,6 +4429,18 @@ interface Recorder {
     step(commands: readonly Command[]): StepResult;
     replay(): Replay;
 }
+```
+
+### `Refusal` (type)
+
+```ts
+type Refusal = (typeof REFUSALS)[number];
+```
+
+### `REFUSALS` (const)
+
+```ts
+const REFUSALS: readonly ["too-far-ahead", "out-of-order", "too-many", "not-started", "not-valid"];
 ```
 
 ### `RejectedCommand` (interface)
@@ -3810,6 +4564,71 @@ interface Rng {
 type RngState = [number, number, number, number];
 ```
 
+### `ROOM_NAME` (const)
+
+```ts
+const ROOM_NAME = "game";
+```
+
+### `RoomEngine` (interface)
+
+```ts
+interface RoomEngine {
+    readonly options: RoomOptions;
+    readonly started: boolean;
+    readonly tick: number;
+    readonly stats: {
+        readonly late: number;
+        readonly refused: number;
+        readonly ignored: number;
+    };
+    join(peer: RoomPeer, options: unknown, code: string): {
+        readonly seat: number;
+    } | {
+        readonly problem: 'different-version' | 'room-full';
+    };
+    receive(seat: number, raw: unknown): void;
+    away(seat: number): void;
+    back(seat: number, peer: RoomPeer): void;
+    leave(seat: number): void;
+    step(): void;
+    replay(): Replay;
+}
+```
+
+### `RoomOptions` (interface)
+
+```ts
+interface RoomOptions {
+    readonly protocol: 1;
+    readonly framework: string;
+    readonly schemaHash: string;
+    readonly contentHash: string;
+    readonly tickHz: number;
+    readonly level: string;
+    readonly seed: number;
+    readonly seats: number;
+}
+```
+
+### `roomOptionsOf` (function)
+
+```ts
+function roomOptionsOf(sim: Sim, room: {
+    readonly level: string;
+    readonly seats: number;
+}): RoomOptions;
+```
+
+### `RoomPeer` (interface)
+
+```ts
+interface RoomPeer {
+    send(message: ServerMessage): void;
+    sendBytes(bytes: Uint8Array): void;
+}
+```
+
 ### `SaveDef` (interface)
 
 ```ts
@@ -3901,6 +4720,101 @@ type Sense = {
 ```ts
 interface Sequence {
     next(source: number): number;
+}
+```
+
+### `ServerMessage` (type)
+
+```ts
+type ServerMessage = {
+    readonly t: 'seat';
+    readonly seat: number;
+    readonly code: string;
+    readonly nextSeq: number;
+} | {
+    readonly t: 'waiting';
+    readonly missing: number;
+} | {
+    readonly t: 'start';
+} | {
+    readonly t: 'tick';
+    readonly tick: number;
+    readonly commands: readonly WireCommand[];
+    readonly hash?: string;
+} | {
+    readonly t: 'refused';
+    readonly seq: number;
+    readonly reason: Refusal;
+} | {
+    readonly t: 'sync';
+    readonly tick: number;
+} | {
+    readonly t: 'away';
+    readonly seat: number;
+} | {
+    readonly t: 'back';
+    readonly seat: number;
+} | {
+    readonly t: 'gone';
+    readonly seat: number;
+};
+```
+
+### `Session` (interface)
+
+```ts
+interface Session {
+    readonly seat: number | undefined;
+    readonly sim: Sim;
+    state(): SessionState;
+    stats(): SessionStats;
+    advance(local: readonly Pick<Command, 'type' | 'payload'>[]): Advance;
+    resume(link: Link): void;
+    close(): void;
+}
+```
+
+### `SessionSetup` (interface)
+
+```ts
+interface SessionSetup {
+    readonly link: Link;
+    readonly confirmed: Sim;
+    readonly predicted: Sim;
+    readonly resendAfterSync?: readonly string[];
+    readonly onCheck?: (tick: number, hash: string, ok: boolean) => void;
+    readonly onState?: (state: SessionState) => void;
+    readonly onLinkClosed?: () => void;
+}
+```
+
+### `SessionState` (type)
+
+```ts
+type SessionState = {
+    readonly state: 'waiting';
+    readonly code: string;
+    readonly missing: number;
+} | {
+    readonly state: 'playing';
+    readonly away: readonly number[];
+} | {
+    readonly state: 'closed';
+};
+```
+
+### `SessionStats` (interface)
+
+```ts
+interface SessionStats {
+    readonly confirmedTick: number;
+    readonly predictedTick: number;
+    readonly lead: number;
+    readonly rollbacks: number;
+    readonly late: number;
+    readonly desyncs: number;
+    readonly syncs: number;
+    readonly checked: number;
 }
 ```
 
@@ -4178,6 +5092,12 @@ function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: re
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
 ```
 
+### `START_LEAD` (const)
+
+```ts
+const START_LEAD = 2;
+```
+
 ### `StepResult` (interface)
 
 ```ts
@@ -4215,6 +5135,12 @@ type StoreResult<T> = {
     readonly refusal: StoreRefusal;
     readonly detail: string;
 };
+```
+
+### `SYNC_BEHIND` (const)
+
+```ts
+const SYNC_BEHIND = 600;
 ```
 
 ### `SystemDef` (interface)
@@ -4505,4 +5431,62 @@ function writeReplay(replay: Replay): string;
 
 ```ts
 from 'zod'
+```
+
+## `./server`
+
+### `createRoomServer` (function)
+
+```ts
+function createRoomServer(options: RoomServerOptions): Promise<RoomServer>;
+```
+
+### `RoomServer` (interface)
+
+```ts
+interface RoomServer {
+    readonly port: number;
+    replays(): Record<string, Replay>;
+    readonly stats: {
+        readonly rooms: number;
+        readonly late: number;
+        readonly refused: number;
+    };
+    close(): Promise<void>;
+}
+```
+
+### `RoomServerOptions` (interface)
+
+```ts
+interface RoomServerOptions {
+    readonly game: RoomGame;
+    readonly port?: number;
+    readonly host?: string;
+    readonly maxRooms?: number;
+    readonly graceSeconds?: number;
+    readonly clock?: TickClock;
+}
+```
+
+### `runRoomServer` (function)
+
+```ts
+function runRoomServer(options: RoomServerOptions): Promise<never>;
+```
+
+### `startTickScheduler` (function)
+
+```ts
+function startTickScheduler(options: TickSchedulerOptions): TickScheduler;
+```
+
+### `TickClock` (interface)
+
+```ts
+interface TickClock {
+    now(): number;
+    setTimer(callback: () => void, delayMs: number): unknown;
+    clearTimer(handle: unknown): void;
+}
 ```

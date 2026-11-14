@@ -14,6 +14,13 @@ import {
   testHost,
   z,
 } from '@automataframework/framework/headless'
+import { createRoomServer, runRoomServer } from '@automataframework/framework/server'
+
+// The server entry loads under plain Node (it carries its own Rapier), and exports what a game's server file calls.
+if (typeof createRoomServer !== 'function' || typeof runRoomServer !== 'function') {
+  console.error('The installed package has no server entry with createRoomServer and runRoomServer.')
+  process.exit(1)
+}
 
 const here = (path) => new URL(path, import.meta.url)
 const loaded = await loadGame((path) => readFile(here(`game/${path}`), 'utf8'))

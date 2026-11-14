@@ -73,8 +73,19 @@ test('headless exports what a game sim and an editor need', async () => {
     'isOpenableLink',
     'z',
     'FRAMEWORK_VERSION',
+    'joinSession',
+    'createSession',
+    'createRoomEngine',
+    'OnlineError',
+    'PROTOCOL_VERSION',
+    'onlineWords',
   ])
     expect(api, name).toHaveProperty(name)
+})
+
+test("the server entry exports what a game's own server file needs", async () => {
+  const api = await import('#src/server.ts')
+  for (const name of ['createRoomServer', 'runRoomServer']) expect(api, name).toHaveProperty(name)
 })
 
 // The browser entry needs a page to be imported, so a Node test reads its text instead of loading it.

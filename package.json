@@ -26,6 +26,10 @@
       "types": "./dist/headless.d.ts",
       "import": "./dist/headless.js"
     },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
     "./rapier.LICENSE": "./dist/rapier.LICENSE",
     "./schemas/*": "./schemas/*"
   },
@@ -42,6 +46,7 @@
     "typecheck": "tsc -p .",
     "knip": "knip",
     "test:node": "vitest run --project node",
+    "test:journeys": "vitest run --project journeys",
     "test:engine": "vitest run --passWithNoTests --project",
     "build": "vite build && tsc -p tsconfig.build.json",
     "prepare": "pnpm build",
@@ -62,6 +67,11 @@
     "vitest": "5.0.3"
   },
   "dependencies": {
+    "@colyseus/core": "0.18.18",
+    "@colyseus/schema": "5.0.36",
+    "@colyseus/sdk": "0.18.5",
+    "@colyseus/ws-transport": "0.18.4",
+    "effect": "3.22.2",
     "koota": "0.6.6",
     "pixi.js": "8.22.0",
     "smol-toml": "1.9.0",
