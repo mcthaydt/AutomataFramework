@@ -86,6 +86,36 @@ test('headless exports what a game sim and an editor need', async () => {
     'OnlineError',
     'PROTOCOL_VERSION',
     'onlineWords',
+    'Mind',
+    'behaviourPlugin',
+    'usesBehaviours',
+    'Story',
+    'storyPlugin',
+    'usesStory',
+    'TALK_REACH',
+    'NextCommand',
+    'ChooseCommand',
+    'SkipCommand',
+    'nextCommand',
+    'chooseCommand',
+    'skipCommand',
+    'ConversationStarted',
+    'ConversationSaid',
+    'ConversationChosen',
+    'ConversationEnded',
+    'CutsceneStarted',
+    'CutsceneEnded',
+    'startConversation',
+    'startCutscene',
+    'talkOf',
+    'sceneOf',
+    'storyProgress',
+    'storyOfReplay',
+    'SKIP_AFTER',
+    'StoryProgressSchema',
+    'cameraAt',
+    'actorsAt',
+    'linesAt',
   ])
     expect(api, name).toHaveProperty(name)
 })
@@ -99,8 +129,10 @@ test("the server entry exports what a game's own server file needs", async () =>
 test('the browser entry adds the web host, and headless does not have it', async () => {
   const api = await import('#src/headless.ts')
   expect(api).not.toHaveProperty('webHost')
+  expect(api).not.toHaveProperty('createStoryView')
   const entry = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
   expect(entry).toContain("export * from './features/web/web.ts'")
+  expect(entry).toContain("export * from './features/story/story.ts'")
   expect(entry).toContain("export * from './headless.ts'")
 })
 

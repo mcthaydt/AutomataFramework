@@ -1,6 +1,7 @@
 // What the story's page tests share: the story game started on a page with hand-driven frames, and the few things a
 // test asks of it (the box's words, whether it shows, frames played until something is true).
 import { type Game, type GameOptions, startGame } from '#src/features/game/game.ts'
+import type { Command } from '#src/features/sim/sim.ts'
 import { run, type Started, visibleHost } from '../game/co-op-game.ts'
 import { fixtureControls } from '../game/controls.ts'
 import { manualFrames } from '../game/frames.ts'
@@ -40,12 +41,23 @@ export const said = (mount: HTMLElement, part: 'speaker' | 'text'): string =>
 
 /** Every button showing in the box: its words. */
 export const buttonsOf = (mount: HTMLElement): string[] =>
-  [...mount.querySelectorAll<HTMLButtonElement>('.automata-story button')]
-    .filter((b) => !b.hidden && b.style.display !== 'none')
-    .map((b) => b.textContent ?? '')
+  showing(mount)
+    ? [...mount.querySelectorAll<HTMLButtonElement>('.automata-story button')]
+        .filter((b) => !b.hidden && b.style.display !== 'none')
+        .map((b) => b.textContent ?? '')
+    : []
 
 /** Plays frames, one at a time, until `done()` or `max` frames have gone by. Returns whether `done()` came true. */
 export function playUntil(frames: Parameters<typeof run>[0], done: () => boolean, max = 400): boolean {
   for (let i = 0; i < max && !done(); i++) run(frames, 1)
   return done()
 }
+
+/** The commands of one type in the play so far. */
+export const sent = (game: Game, type: string): Command[] =>
+  game.replay().commands.filter((c) => c.type === type)
+
+/** The answer buttons showing. */
+export const choicesOf = (mount: HTMLElement): HTMLButtonElement[] => [
+  ...mount.querySelectorAll<HTMLButtonElement>('[data-choice]'),
+]

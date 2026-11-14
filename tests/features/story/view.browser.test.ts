@@ -19,7 +19,7 @@ import { key, run, type Started, startCoop, visibleHost } from '../../fixtures/g
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { loadStory, storyPlugins } from '../../fixtures/story/game.ts'
-import { boxOf, buttonsOf, playUntil, said, showing, startStory } from '../../fixtures/story/play.ts'
+import { boxOf, buttonsOf, playUntil, said, sent, showing, startStory } from '../../fixtures/story/play.ts'
 import { englishWords as en, spanishWords as es } from '../../fixtures/story/read.ts'
 
 let mount: HTMLDivElement
@@ -40,9 +40,6 @@ afterEach(() => {
   mount.remove()
   vi.restoreAllMocks()
 })
-
-/** The play's commands of one type. */
-const sent = (g: Game, type: string) => g.replay().commands.filter((c) => c.type === type)
 
 test('the box follows the sim: the opening, then nothing, then the keeper', async () => {
   const started = await startStory(mount)
@@ -157,7 +154,12 @@ test('a second player’s gamepad cannot press the talker’s button, but can sk
   pads.press('south', 1)
   run(frames, 3)
   pads.release('south', 1)
-  expect(sent(game, ChooseCommand.id)).toHaveLength(0)
+  const talk = JSON.stringify(game.sim.resource(Story).talk)
+  const seats = JSON.stringify(game.input.seats())
+  expect(
+    sent(game, ChooseCommand.id).map((c) => [c.tick, c.source]),
+    `talk ${talk} seats ${seats}`,
+  ).toEqual([])
   expect(buttonsOf(mount)).toHaveLength(2)
 })
 

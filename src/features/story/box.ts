@@ -218,7 +218,7 @@ export function createBox(
   const move = (by: 1 | -1): void => {
     const list = buttons()
     if (list.length === 0) return
-    const at = list.findIndex((b) => b === document.activeElement)
+    const at = list.indexOf(document.activeElement as HTMLButtonElement)
     const to = Math.min(list.length - 1, Math.max(0, at < 0 ? (by === 1 ? 0 : list.length - 1) : at + by))
     list[to]?.focus()
   }

@@ -123,3 +123,23 @@ if (joinedHash !== recorded.idleHash60) {
   process.exit(1)
 }
 console.log(`The installed package ran the playground 60 ticks and ended on ${joinedHash}, as recorded.`)
+
+// The story game has a keeper, a critter and two cutscenes, which switch on behaviours and the story in the sim. With no
+// game code, sixty idle ticks end on the hash its golden records.
+const story = await loadGame((path) => readFile(here(`story/${path}`), 'utf8'))
+if (!story.ok) {
+  for (const problem of story.diagnostics) console.error(formatDiagnostic(problem))
+  process.exit(1)
+}
+const told = await createGameSim({ content: story.value })
+for (let tick = 0; tick < 60; tick++) told.step([])
+const toldHash = told.hash()
+told.dispose()
+const storied = JSON.parse(await readFile(here('story.json'), 'utf8'))
+if (toldHash !== storied.idleHash60) {
+  console.error(
+    `The installed package ended the story game on ${toldHash}, but the golden says ${storied.idleHash60}.`,
+  )
+  process.exit(1)
+}
+console.log(`The installed package ran the story game 60 ticks and ended on ${toldHash}, as recorded.`)

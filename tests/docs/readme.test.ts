@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
 import { CONTENT_TYPES } from '#src/features/content/content-types.ts'
 import { TOUCH_PROPERTIES } from '#src/features/input/touch.ts'
+import { STORY_PROPERTIES } from '#src/features/story/box.ts'
 import * as framework from '#src/headless.ts'
 
 const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8')
@@ -116,4 +117,23 @@ test('the README shows a pin, a rope, a touched character and the event a game r
   for (const word of ['"kind": "pin"', '"kind": "rope"', '"touch": "take"', 'touchEvent('])
     expect(joints, word).toContain(word)
   expect(typeof framework.touchEvent).toBe('function')
+})
+
+// A game finds out how to give a keeper something to say, play a cutscene and keep a story from here.
+test('the README has a Story section: the files, the code a game writes, the save and the seven properties', () => {
+  const story = section('## Story')
+  for (const word of [
+    '"conversation": "keeper"',
+    '"opens": true',
+    '"cutscene":',
+    'storyProgress(',
+    'startCutscene(',
+    'StoryProgressSchema',
+    'storyOfReplay(',
+  ])
+    expect(story, word).toContain(word)
+  expect(STORY_PROPERTIES).toHaveLength(7)
+  for (const property of STORY_PROPERTIES) expect(story, property).toContain(property)
+  for (const name of ['startCutscene', 'startConversation', 'storyProgress', 'storyOfReplay'])
+    expect(framework, name).toHaveProperty(name)
 })

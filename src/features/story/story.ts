@@ -8,8 +8,8 @@ import type { Input, Seat } from '../input/input.ts'
 import {
   chooseCommand,
   nextCommand,
-  SKIP_AFTER,
   type SceneView,
+  SKIP_AFTER,
   sceneOf,
   skipCommand,
   type TalkView,
