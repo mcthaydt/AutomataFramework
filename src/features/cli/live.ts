@@ -4,7 +4,7 @@
 // process-runner.ts (a service with a live layer and a memory one); the code is new.
 import { type ChildProcess, type SpawnOptions, type StdioOptions, spawn } from 'node:child_process'
 import type { Dirent } from 'node:fs'
-import { access, mkdir, readdir, readFile, realpath, writeFile } from 'node:fs/promises'
+import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
@@ -220,9 +220,10 @@ async function loadRules(folder: string): Promise<GameCode['rules']> {
 }
 
 /**
- * The game's own copy of the framework, from `node_modules` in the game's folder. The path is resolved to the real one,
- * so a pnpm link and the game's own import name the same file, and the command and the game's rules share one copy of
- * the sim. A game's broken rules are not an error here: the framework still loads, so the files can still be checked.
+ * The game's own copy of the framework, from `node_modules` in the game's folder. It is imported the way the game's own
+ * rules import it, through Node's loader and with no path work of our own (a `realpath` here expanded Windows' short
+ * folder names where the loader did not, and the command and the rules then held two copies of the framework, each with
+ * components the other did not know). A game's broken rules are not an error here: the framework still loads, so the files can still be checked.
  */
 async function loadCode(folder: string): Promise<GameCode> {
   const manifestFile = join(folder, 'node_modules', '@automataframework', 'framework', 'package.json')
@@ -242,8 +243,8 @@ async function loadCode(folder: string): Promise<GameCode> {
     throw new CliError(
       `The framework installed in ${folder} has no headless entry. Run npm install in ${folder} to get a whole copy.`,
     )
-  const root = await realpath(dirname(manifestFile))
-  const framework = (await import(pathToFileURL(join(root, relative)).href)) as typeof Headless
+  const entryFile = join(dirname(manifestFile), relative)
+  const framework = (await import(pathToFileURL(entryFile).href)) as typeof Headless
   return { framework, rules: await loadRules(folder) }
 }
 

@@ -183,8 +183,8 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
 
         // The keys' hint is for a keyboard: shown at the desktop size and gone once the hero has moved, never on touch.
         const hint = page.locator('.hint')
-        if (size.touch) await expect(hint, where).toHaveCount(0)
-        else await expect(hint, where).toBeVisible()
+        if (size.touch) expect(await hint.count(), `${where}: the hint on a touch screen`).toBe(0)
+        else await expect.poll(() => hint.isVisible(), POLL).toBe(true)
 
         // Holding right moves the hero right: by the arrow key, or by a finger on the Right button.
         const start = await heroX(page)
@@ -198,7 +198,7 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
           await page.keyboard.down('ArrowRight')
           await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
           await page.keyboard.up('ArrowRight')
-          await expect(hint, where).toHaveCount(0)
+          await expect.poll(() => hint.count(), POLL).toBe(0)
         }
         await page.screenshot({ path: `${shots}${name}-${size.width}x${size.height}.png` })
 
@@ -212,11 +212,11 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
           writeFileSync(level, JSON.stringify(broken, null, 2))
           try {
             await page.reload()
-            await expect(page.locator('#game[data-state="problem"]'), where).toBeVisible(POLL)
-            await expect(page.locator('.problem'), where).toContainText(
-              'content/levels/level-1.json: things[0].x: This must be a number.',
-            )
-            await expect(page.locator('.problem'), where).toContainText('Fix the file named above')
+            const problem = page.locator('#game[data-state="problem"] .problem')
+            await expect.poll(() => problem.count(), POLL).toBe(1)
+            const words = (await problem.textContent()) ?? ''
+            expect(words, where).toContain('content/levels/level-1.json: things[0].x: This must be a number.')
+            expect(words, where).toContain('Fix the file named above')
           } finally {
             writeFileSync(level, original)
           }

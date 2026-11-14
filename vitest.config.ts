@@ -82,7 +82,10 @@ const config: ViteUserConfig = defineConfig({
     ],
   },
   optimizeDeps: { exclude: [RAPIER] },
-  test: { server: { deps: { inline: [RAPIER] } }, projects: [node, journeys, create, ...ENGINES.map(inBrowser)] },
+  test: {
+    server: { deps: { inline: [RAPIER] } },
+    projects: [node, journeys, create, ...ENGINES.map(inBrowser)],
+  },
 })
 
 export default config

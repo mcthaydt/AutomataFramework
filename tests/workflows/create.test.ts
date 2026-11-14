@@ -19,7 +19,7 @@ test('the create job runs on Linux, Windows and macOS, and one failing does not 
   const create = job('create')
   expect(create).toContain('os: [ubuntu-latest, windows-latest, macos-latest]')
   expect(create).toContain('fail-fast: false')
-  expect(create).toContain('runs-on: ${{ matrix.os }}')
+  expect(create).toMatch(/runs-on: \$\{\{ matrix\.os \}\}/)
 })
 
 test('the create matrix has one key, os, and the job no name, so the checks are named create (os)', () => {
@@ -36,8 +36,8 @@ test('both jobs install the packed package, never the working folder', () => {
     expect(text, name).toContain('needs: create-pack')
     expect(text, name).toContain('--name create-tarball')
   }
-  expect(job('create')).toContain('node tests/install/create-smoke.mjs "${{ runner.temp }}/tarball"')
-  expect(job('create-play')).toContain('CREATE_TARBALL: ${{ runner.temp }}/tarball')
+  expect(job('create')).toMatch(/node tests\/install\/create-smoke\.mjs "\$\{\{ runner\.temp \}\}\/tarball"/)
+  expect(job('create-play')).toMatch(/CREATE_TARBALL: \$\{\{ runner\.temp \}\}\/tarball/)
 })
 
 test('create-pack makes the one tarball, and uploads it under the name the others ask for', () => {
