@@ -833,6 +833,34 @@ interface Input {
 function isHeld(player: EntityRef, action: string): boolean;
 ```
 
+### `Joint` (const)
+
+```ts
+const Joint: ComponentDef<typeof jointFields>;
+```
+
+### `joint` (const)
+
+```ts
+const joint: {
+    pin(a: number, b: number, opts?: JointEnds & {
+        min?: number;
+        max?: number;
+    }): SpawnPart;
+    rope(a: number, b: number, length: number, opts?: JointEnds): SpawnPart;
+};
+```
+
+### `JointKind` (const)
+
+```ts
+const JointKind: {
+    readonly pin: 0;
+    readonly rope: 1;
+};
+type JointKind = (typeof JointKind)[keyof typeof JointKind];
+```
+
 ### `jsonSchemaFor` (function)
 
 ```ts
@@ -1105,6 +1133,7 @@ interface PhysicsOptions {
         readonly x: number;
         readonly y: number;
     };
+    readonly joints?: boolean;
 }
 ```
 
@@ -1443,6 +1472,9 @@ interface SimContext {
         of<Z extends z.ZodType>(def: CommandDef<Z>): ReadonlyArray<CommandRecord<z.output<Z>>>;
     };
     emit<Z extends z.ZodType>(def: EventDef<Z>, payload: z.input<Z>): void;
+    readonly events: {
+        of<Z extends z.ZodType>(def: EventDef<Z>): ReadonlyArray<z.output<Z>>;
+    };
     resource<Z extends z.ZodType>(def: ResourceDef<Z>): z.output<Z>;
     readonly pluginState: unknown;
 }
@@ -2640,6 +2672,34 @@ const Id: z.ZodString;
 function isHeld(player: EntityRef, action: string): boolean;
 ```
 
+### `Joint` (const)
+
+```ts
+const Joint: ComponentDef<typeof jointFields>;
+```
+
+### `joint` (const)
+
+```ts
+const joint: {
+    pin(a: number, b: number, opts?: JointEnds & {
+        min?: number;
+        max?: number;
+    }): SpawnPart;
+    rope(a: number, b: number, length: number, opts?: JointEnds): SpawnPart;
+};
+```
+
+### `JointKind` (const)
+
+```ts
+const JointKind: {
+    readonly pin: 0;
+    readonly rope: 1;
+};
+type JointKind = (typeof JointKind)[keyof typeof JointKind];
+```
+
 ### `jsonSchemaFor` (function)
 
 ```ts
@@ -2906,6 +2966,7 @@ interface PhysicsOptions {
         readonly x: number;
         readonly y: number;
     };
+    readonly joints?: boolean;
 }
 ```
 
@@ -3223,6 +3284,9 @@ interface SimContext {
         of<Z extends z.ZodType>(def: CommandDef<Z>): ReadonlyArray<CommandRecord<z.output<Z>>>;
     };
     emit<Z extends z.ZodType>(def: EventDef<Z>, payload: z.input<Z>): void;
+    readonly events: {
+        of<Z extends z.ZodType>(def: EventDef<Z>): ReadonlyArray<z.output<Z>>;
+    };
     resource<Z extends z.ZodType>(def: ResourceDef<Z>): z.output<Z>;
     readonly pluginState: unknown;
 }
