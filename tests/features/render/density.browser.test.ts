@@ -59,8 +59,8 @@ test('moving to a sharper screen sharpens the canvas without a reload', async ()
   density.set(2)
   expect(renderer.canvas.width).toBe(400)
   expect(renderer.canvas.height).toBe(200)
-  // The picture was put back: the hero is in the middle of the canvas, in CSS pixels as before.
-  const [r = 0, g = 0, b = 0] = pixel(renderer.canvas, 100, 50)
+  // The picture was put back: the hero is in the middle of the canvas (`pixel` takes device pixels of the page's own).
+  const [r = 0, g = 0, b = 0] = pixel(renderer.canvas, renderer.canvas.width / 2, renderer.canvas.height / 2)
   expect(Math.abs(r - 0xe4) + Math.abs(g - 0x57) + Math.abs(b - 0x2e)).toBeLessThan(40)
 })
 

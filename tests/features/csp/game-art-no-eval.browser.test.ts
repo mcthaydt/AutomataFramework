@@ -1,11 +1,11 @@
 // A game with pictures, drawn for a few frames, builds no code from strings: it is what runs on itch and Wavedash under a
 // strict CSP. It has its own file because it must be the first thing to load the game and the renderer.
 import { expect, test } from 'vitest'
+import { readFullGamePicture } from '../../fixtures/full-game/pictures.ts'
+import { readFullGame } from '../../fixtures/full-game/read.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
-import { readFullGamePicture } from '../../fixtures/full-game/pictures.ts'
-import { readFullGame } from '../../fixtures/full-game/read.ts'
 import { attemptsToBuildCode } from '../../fixtures/strict-csp.ts'
 
 test('starting and drawing a game with pictures builds no code from strings', async () => {

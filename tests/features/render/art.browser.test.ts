@@ -2,6 +2,7 @@
 // colours for player 2), the level's tiles are their squares, and a picture that is missing, old or the wrong size
 // stops the game with one sentence. The full game's own pictures are painted by the same painters `automata art` uses.
 import { afterEach, beforeEach, expect, test } from 'vitest'
+import { page } from 'vitest/browser'
 import { type GameContent, loadGame } from '#src/features/content/content.ts'
 import { Sprite } from '#src/features/level/level.ts'
 import { type Art, ArtError, createRenderer, loadArt, type Renderer } from '#src/features/render/render.ts'
@@ -300,18 +301,24 @@ async function drawnWith(
 }
 
 test('the backdrop is behind the level: sky at the top, hills low down, a tree on them', async () => {
-  const at = await drawnWith(WORLD.w * TILE)
+  // The level (512 pixels wide) is in the middle of a canvas of 1200, so its ground tiles are not in the bars: the bottom
+  // row there is the hills'. The first tree stands 6 tiles in, its trunk 1.5 tiles above the bottom.
+  const at = await drawnWith(1200)
+  const left = (1200 - WORLD.w * TILE) / 2
   // Above the mountains is sky; the bottom row is the hills' green; and the first tree's trunk is ink.
-  expect(near(at(10, 10), SKY)).toBe(true)
-  expect(near(at(100, 287), 0xafd472)).toBe(true)
-  expect(near(at(193, 233), 0x111314)).toBe(true)
+  const [top, low, trunk] = [at(10, 10), at(10, 287), at(left + 6 * TILE + 1, 233)]
+  expect(near(top, SKY), `the top pixel is ${top}`).toBe(true)
+  expect(near(low, 0xafd472), `the bottom row's pixel is ${low}`).toBe(true)
+  expect(near(trunk, 0x111314), `the trunk's pixel is ${trunk}`).toBe(true)
+  await page.screenshot({ element: mount, path: '__screenshots__/backdrop.png' })
 })
 
 test('a layer repeats across a screen wider than the layer', async () => {
   // The hills' strip is 32 tiles, 1024 pixels; the canvas is 1200 pixels, with the 512 pixel level in its middle.
   const at = await drawnWith(1200)
-  expect(near(at(10, 287), 0xafd472)).toBe(true)
-  expect(near(at(1190, 287), 0xafd472)).toBe(true)
+  const [left, right] = [at(10, 287), at(1190, 287)]
+  expect(near(left, 0xafd472), `the left bar's pixel is ${left}`).toBe(true)
+  expect(near(right, 0xafd472), `the right bar's pixel is ${right}`).toBe(true)
 })
 
 test('a hero who stands still is drawn the same while the camera eases', async () => {

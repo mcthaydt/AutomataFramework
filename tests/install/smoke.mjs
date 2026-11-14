@@ -88,7 +88,9 @@ const recordedArt = JSON.parse(await readFile(here('art.json'), 'utf8'))
 for (const file of painted) {
   const got = xxhash64Reference(file.bytes).toString(16).padStart(16, '0')
   if (got !== recordedArt[file.path]) {
-    console.error(`The installed package painted ${file.path} as ${got}, but the golden says ${recordedArt[file.path]}.`)
+    console.error(
+      `The installed package painted ${file.path} as ${got}, but the golden says ${recordedArt[file.path]}.`,
+    )
     process.exit(1)
   }
   await mkdir(new URL('.', here(`art/${file.path}`)), { recursive: true })

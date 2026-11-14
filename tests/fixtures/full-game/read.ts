@@ -2,8 +2,8 @@
 // imported as text with Vite's `?raw`, so it loads in Node and in a browser. Do not edit them by hand: change the value,
 // write it again with writeContent, and commit the result.
 import automata from './automata.toml?raw'
-import backdropsValley from './content/backdrops/valley.json?raw'
 import marks from './automata.translations.toml?raw'
+import backdropsValley from './content/backdrops/valley.json?raw'
 import behavioursCritter from './content/behaviours/critter.json?raw'
 import charactersCrate from './content/characters/crate.json?raw'
 import charactersCritter from './content/characters/critter.json?raw'

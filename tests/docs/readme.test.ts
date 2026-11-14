@@ -228,7 +228,7 @@ test('the README gives the exit codes, and every verdict of a replay', () => {
 })
 
 // A game finds out how to make a figure and keep its picture from here, and copies a figure that works.
-test('the README has an Art section whose figure reads, paints, and whose names are the package\'s', () => {
+test("the README has an Art section whose figure reads, paints, and whose names are the package's", () => {
   const art = section('## Art')
   for (const word of [
     'schemas/figure.schema.json',

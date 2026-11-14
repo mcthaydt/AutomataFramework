@@ -97,13 +97,13 @@ export const backdrop: BackdropFile | undefined = undefined
 export const atlas: Atlas | undefined = undefined
 export const shot: Shot | undefined = undefined
 export const fetchPicture: ReadPicture = async () => new Blob()
-export const art: [typeof artFiles, typeof artProblems, typeof loadArt, typeof needsPictures, typeof ArtError] = [
-  artFiles,
-  artProblems,
-  loadArt,
-  needsPictures,
-  ArtError,
-]
+export const art: [
+  typeof artFiles,
+  typeof artProblems,
+  typeof loadArt,
+  typeof needsPictures,
+  typeof ArtError,
+] = [artFiles, artProblems, loadArt, needsPictures, ArtError]
 
 // The player's language: `typed` is a game's own typed `words`, over its messages file, and a `Locale` is what the
 // game's screens take; both resolve from the tarball alone.

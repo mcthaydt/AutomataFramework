@@ -5,7 +5,9 @@
 /**
  * A function from a position in CSS pixels to [r, g, b]. A position off the canvas is the nearest one on it.
  */
-export function snapshot(canvas: HTMLCanvasElement): (cssX: number, cssY: number) => [number, number, number] {
+export function snapshot(
+  canvas: HTMLCanvasElement,
+): (cssX: number, cssY: number) => [number, number, number] {
   const { width, height } = canvas
   const copy = document.createElement('canvas')
   copy.width = width

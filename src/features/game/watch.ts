@@ -89,7 +89,12 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
     const level = options.content.levels[options.level ?? options.content.project.start]
     if (level === undefined) throw new Error('The level this game opens is missing.')
     // The pictures first: a game that cannot be drawn leaves nothing on the page.
-    const art = await levelArt('watchReplay', options.content, options.level ?? options.content.project.start, options.readPicture)
+    const art = await levelArt(
+      'watchReplay',
+      options.content,
+      options.level ?? options.content.project.start,
+      options.readPicture,
+    )
     cleanup = () => {
       art?.destroy()
       sim.dispose()
