@@ -40,7 +40,7 @@ const isLanguage = (value: unknown): value is Language => LANGUAGES.some((langua
 
 const ReadMarksFileSchema = z
   .strictObject({
-    format: z.union([z.literal(1), z.literal(2)]).describe('The version of this file format. Write 2.'),
+    format: z.literal([1, 2]).describe('The version of this file format. Write 2.'),
     source: z.custom<Language>(isLanguage, SOURCE_HINT).optional(),
     read: z.record(z.string(), z.record(MessageKey, Mark)).optional(),
   })
