@@ -47,7 +47,9 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
 - 2026-11-14: The spec's Visual direction takes its colours from "A Dictionary of Color Combinations" (the Owner):
   No. 325 for the site, No. 310 for the editors, No. 340 for the demo game's screens and No. 276 for the example
   games' own art, replacing the Blueprint blue and yellow and the tint per editor. The product is "Automata
-  Framework" and its wordmark is the word "automata". Layout, type, icons and the drawing notes are unchanged. No
+  Framework" and its wordmark is the word "automata". Fonts: Fraunces, Onest and JetBrains Mono for the site and
+  the editors; Fredoka with rounded Japanese, Korean and Chinese partners for the demo's screens and the demo
+  games; IBM Plex Sans Condensed leaves the UI. Layout, type, icons and the drawing notes are unchanged. No
   change to the progress figure.
 - 2026-11-14: The spec gains a Visual direction section (the Owner): Blueprint as the editors' and the site's skin,
   dark by default, canvas first with floating tools, a drawing-notes layer over the game's real art, Phosphor

@@ -329,10 +329,24 @@ change, where it acts).
   it. Its mark is the word **automata**, set in lower case, with no drawn logo or symbol (the Owner, 2026-11-14).
   The repos keep their names (AutomataFramework, AutomataFrameworkExamples, and so on).
 
-- **Type.** IBM Plex Sans Condensed for labels, set in capitals like notes on a drawing, and JetBrains Mono for
-  numbers and measures (tabular). Both are under the SIL Open Font License and cover Latin and Cyrillic; Korean,
-  Japanese and Chinese use Noto Sans for that language. How the font files are shipped is the plan's choice; a font
-  package added as a dependency needs the Owner's yes.
+- **Type** (the Owner, 2026-11-14; the options and the sample screens are in the site's design audit, and the Owner's
+  yes covers the packages named). All fonts are under the SIL Open Font License and come as Fontsource packages, so
+  each product serves its own files. IBM Plex Sans Condensed leaves the UI; JetBrains Mono stays for numbers and
+  measures.
+  - **The site and the editors: Fraunces** for the claim and titles, **Onest** for words and buttons, and
+    **JetBrains Mono** for numbers and measures (tabular). Packages: `@fontsource-variable/fraunces`,
+    `@fontsource-variable/onest` and `@fontsource/jetbrains-mono`. They cover Latin and Cyrillic; the editors add
+    `@fontsource/noto-sans-kr`, `@fontsource/noto-sans-jp` and `@fontsource/noto-sans-sc` for Korean, Japanese and
+    Chinese. Labels and drawing notes are still set in capitals, like notes on a drawing, in Onest.
+  - **The Examples screens and the demo games: Fredoka**, with rounded partners for the other languages and no second
+    font for Latin: **M PLUS Rounded 1c** (Japanese), **Jua** (Korean) and **ZCOOL KuaiLe** (Chinese). Packages:
+    `@fontsource/fredoka`, `@fontsource/m-plus-rounded-1c`, `@fontsource/jua` and `@fontsource/zcool-kuaile`. Fredoka
+    is first in the list, so numbers and Latin letters are Fredoka's in every language. The page sets
+    `font-synthesis: none` so the browser never fakes a bold, and Korean and Chinese show what matters with size and
+    colour, since Jua and ZCOOL KuaiLe have one weight. No word is smaller than 18 px. A game that draws its words on
+    a canvas has to ask for the fonts itself, which the game's plan settles.
+  These fonts are for the products' own screens: a game's own art and the framework itself impose no font. Which
+  files are shipped is each plan's choice.
 - **Dark by default.** Dark is the first theme. A light theme comes later, made with the same care.
 - **The layout is canvas first.** The level (or the character, or the timeline) fills the screen. The tools, the
   editor switcher, Save and Share, the picked thing's card, and undo and redo float on top at the edges: tools on the
