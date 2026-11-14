@@ -5,6 +5,7 @@
 #   request's branch is already deleted by the repository's "delete branch on merge" setting.)
 # - `sweep`: every day, and by hand (`gh workflow run delete-closed-pr-branch.yml`), delete what the first job and that
 #   setting miss:
+#     * a branch whose every commit is already in `main`, so deleting it loses nothing;
 #     * a branch whose pull request was merged or closed, if nothing was pushed to it since (its newest commit is the
 #       one the pull request ended on);
 #     * a `claude/*` branch that never had an open pull request and has had no commit for two days (work in flight
@@ -84,7 +85,11 @@ jobs:
             if grep -qxF -- "$name" open.txt; then echo "Keeping $name: its pull request is open."; continue; fi
 
             reason=""
-            if grep -qxF -- "$name"$'\t'"$sha" closed.tsv; then
+            # How many of its commits `main` lacks: 0 means everything on it is already in `main`.
+            ahead=$(gh api "repos/$REPO/compare/main...$sha" --jq '.ahead_by')
+            if [ "$ahead" = "0" ]; then
+              reason="everything on it is already in main"
+            elif grep -qxF -- "$name"$'\t'"$sha" closed.tsv; then
               reason="its pull request was merged or closed"
             elif awk -F'\t' -v n="$name" '$1 == n { found = 1 } END { exit !found }' closed.tsv; then
               echo "Keeping $name: commits were pushed after its pull request closed."
