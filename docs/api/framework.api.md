@@ -1768,6 +1768,12 @@ interface Project {
 
 ### `PROJECT_FILE` (const)
 
+### `playVoice` (function)
+
+```ts
+function playVoice(context: BaseAudioContext, out: AudioNode, voice: SoundVoice, when: number): void;
+```
+
 ```ts
 const PROJECT_FILE = "automata.toml";
 ```
@@ -2611,6 +2617,16 @@ interface SystemDef {
 interface SystemSpec {
     name: string;
     phase: Phase;
+### `SpeakerSeams` (interface)
+
+```ts
+interface SpeakerSeams {
+    readonly context: () => AudioContext;
+    readonly target: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>;
+    readonly every: (ms: number, run: () => void) => () => void;
+}
+```
+
     before?: readonly string[];
     after?: readonly string[];
     run: (ctx: SimContext) => void;
@@ -3057,6 +3073,15 @@ function body(kind: BodyKind, opts?: {
     vx?: number;
     vy?: number;
     angvel?: number;
+```
+
+### `webSpeaker` (function)
+
+```ts
+function webSpeaker(options?: {
+    readonly host?: Host;
+    readonly seams?: Partial<SpeakerSeams>;
+}): Speaker;
     fixedRotation?: boolean;
 }): SpawnPart;
 ```
