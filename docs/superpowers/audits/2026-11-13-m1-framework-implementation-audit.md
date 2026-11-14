@@ -12,7 +12,7 @@ The build is what the plan asked for, and it holds together. Every M1 framework 
 tasks are done except the publish check (Task 15 Step 5), the plan audit's B1 to B5 and S1 to S9 were applied where
 they fall, and `main` is green: 370 Node tests in 56 files, 106 browser tests in 13 files on Chromium, the WebKit,
 Firefox and `package` jobs passing. The three goldens were recorded once from Node's log and have never moved since.
-WebKit and Firefox match them in CI. No commit carries AI attribution, every commit is by Dawson McThay, and no strategy text is
+WebKit and Firefox match them in CI. No commit carries AI attribution, every commit is by McThayDT, and no strategy text is
 in the tree or its history.
 
 Nothing here blocks M1. There are **eight should-fix findings** for Stage 6 (Fixes), F1 to F8. The two that matter most
