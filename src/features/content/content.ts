@@ -48,7 +48,7 @@ export {
   type Ease,
 } from './cutscene.ts'
 export { type Diagnostic, formatDiagnostic } from './diagnostics.ts'
-export { type Dust, type FeelFile, FeelSchema, type Freeze, type Shake } from './feel.ts'
+export { type Buzz, type Dust, type FeelFile, FeelSchema, type Freeze, type Shake } from './feel.ts'
 export {
   type FigureFile,
   type FigureMove,
