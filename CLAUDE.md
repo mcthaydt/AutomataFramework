@@ -140,6 +140,7 @@ implementations or incomplete integrations. Do your best work."
 src/index.ts                  the public surface
 src/headless.ts               the entry for Node and editors: everything that needs no page
 src/server.ts                 the Node-only entry: the room server (`@automataframework/framework/server`)
+src/cli.ts                    the package's `bin`, `automata`: Node only, calls the `cli` feature
 src/lib/                      shared helpers, no feature logic; `zod.ts` is the one way into Zod (it turns its eval probe off first)
 src/features/<feature>/       <feature>.ts entry, <part>.ts one job per file, library/ JSON data
 scripts/                      thin CLI wrappers
@@ -156,4 +157,6 @@ docs/superpowers/             specs/, plans/, audits/, progress.md
 
 The networking is two features: `net` (pure: the wire, the room's rules and the client that predicts, just above
 `commands`) and `server` (Node only, above `level`: the Colyseus room and the process; only `src/server.ts` may import it).
+The `automata` command is the last feature, `cli` (Node only, on Effect, using only what `src/headless.ts` re-exports; only
+`src/cli.ts` may import it).
 Features import only from features below them. No top-level `components/`, `services/` or `utils/`.

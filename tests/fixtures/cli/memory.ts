@@ -61,8 +61,7 @@ export function memoryLayer(
   const out: string[] = []
   const err: string[] = []
   const ran: ToolCall[] = []
-  const answer = (tool: ToolName): ToolResult | 'missing' =>
-    options.tools?.[tool] ?? { code: 0, output: '' }
+  const answer = (tool: ToolName): ToolResult | 'missing' => options.tools?.[tool] ?? { code: 0, output: '' }
   const layer = Layer.mergeAll(
     Layer.succeed(Files, {
       readText: (path) => Effect.sync(() => asText(files.get(keyOf(path)))),

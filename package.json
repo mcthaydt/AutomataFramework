@@ -13,9 +13,15 @@
     "provenance": true
   },
   "type": "module",
+  "bin": {
+    "automata": "./dist/cli.js"
+  },
   "files": [
     "dist",
-    "schemas"
+    "schemas",
+    "template",
+    "skills",
+    "docs/api/framework.api.md"
   ],
   "exports": {
     ".": {

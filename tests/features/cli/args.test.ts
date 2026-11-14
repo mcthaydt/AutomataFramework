@@ -46,7 +46,8 @@ test('an unknown word is a problem that names it', () => {
 
 test('an option the command does not have is a problem that says where to see its options', () => {
   expect(parseArgs(['check', '--wat'])).toEqual({
-    problem: 'automata check does not have an option called --wat. Run automata check --help to see its options.',
+    problem:
+      'automata check does not have an option called --wat. Run automata check --help to see its options.',
   })
   // An option of another command is not this command's.
   expect(parseArgs(['check', '--accept'])).toMatchObject({ problem: expect.stringContaining('--accept') })

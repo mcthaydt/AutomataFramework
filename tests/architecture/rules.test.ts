@@ -203,9 +203,9 @@ test('cli is the last layer and may import the headless features through their e
 })
 
 test('only src/cli.ts may import the cli feature', () => {
-  expect(
-    one({ 'src/features/cli/cli.ts': '', 'src/index.ts': "import './features/cli/cli.ts'" }),
-  ).toEqual(['cli-is-node-only'])
+  expect(one({ 'src/features/cli/cli.ts': '', 'src/index.ts': "import './features/cli/cli.ts'" })).toEqual([
+    'cli-is-node-only',
+  ])
   expect(
     one({ 'src/features/cli/cli.ts': '', 'src/features/game/game.ts': "import '../cli/cli.ts'" }),
   ).toEqual(['cli-is-node-only'])
