@@ -4,6 +4,7 @@ import { BodyKind, body, collider, transform } from '../physics/physics.ts'
 import type { Sim, SpawnPart } from '../sim/sim.ts'
 import { colourNumber, groundOf } from './colours.ts'
 import { Look, Thing } from './components.ts'
+import { jointParts, type Placed } from './joints.ts'
 import { tileRuns } from './tile-runs.ts'
 
 /** The level cannot be spawned as asked: an unknown level, or a player the level has no start point for. */
@@ -22,14 +23,17 @@ function characterParts(character: Character, at: { x: number; y: number }): Spa
     body(character.body === 'dynamic' ? BodyKind.dynamic : BodyKind.fixed, {
       fixedRotation: character.upright,
     }),
-    collider.cuboid(character.size.w / 2, character.size.h / 2),
+    // A touched character lets things through: the game is told, and nothing is pushed.
+    collider.cuboid(character.size.w / 2, character.size.h / 2, { sensor: character.touch !== undefined }),
     [Look, { w: character.size.w, h: character.size.h, color: colourNumber(character.color) }],
   ]
 }
 
 /**
  * Puts a level into `sim`, in a fixed order so the same level always gives the same entity ids: the tile runs, then
- * the things in the order of the file, then one hero per player, lowest number first. Throws a `LevelError` that
+ * the things in the order of the file, then the level's anchor (one fixed body with no collider, only when a joint has
+ * no holder), then the joints in the order of the file, then one hero per player, lowest number first. A level's own
+ * entities so get the same ids whoever plays. Throws a `LevelError` that
  * says what to fix if the level, a character or a player's start point is missing.
  */
 export function spawnLevel(
@@ -78,11 +82,31 @@ export function spawnLevel(
       collider.cuboid(run.length / 2, 0.5),
       [Look, { w: run.length, h: 1, color: ground }],
     ])
+  const placed = new Map<string, Placed>()
   for (const thing of level.things)
-    sim.spawn([
-      ...characterParts(character(thing.character, `Thing "${thing.id}"`), thing),
-      [Thing, { id: thing.id, character: thing.character }],
-    ])
+    placed.set(thing.id, {
+      sid: sim.spawn([
+        ...characterParts(character(thing.character, `Thing "${thing.id}"`), thing),
+        [Thing, { id: thing.id, character: thing.character }],
+      ]),
+      x: thing.x,
+      y: thing.y,
+    })
+  const joints = level.joints ?? []
+  // The level itself, as a joint's holder: a fixed body at the corner, so a place on the level is its own offset.
+  const anchor: Placed | undefined = joints.some((j) => j.holder === undefined)
+    ? { sid: sim.spawn([transform(), body(BodyKind.fixed)]), x: 0, y: 0 }
+    : undefined
+  for (const j of joints) {
+    const find = (id: string, how: string): Placed => {
+      const found = placed.get(id)
+      if (found === undefined)
+        throw new LevelError(`Joint "${j.id}" ${how} "${id}", and level "${levelId}" has no such thing.`)
+      return found
+    }
+    const holder = j.holder === undefined ? (anchor as Placed) : find(j.holder, 'is held by')
+    sim.spawn([jointParts(j, find(j.thing, 'holds'), holder)])
+  }
   const hero = character(content.project.hero, 'The hero')
   for (const number of numbers) {
     const start = level.starts.find((s) => s.player === number) as { x: number; y: number }

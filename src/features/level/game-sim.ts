@@ -4,6 +4,7 @@ import { physics } from '../physics/physics.ts'
 import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
 import { levelPlugin } from './plugin.ts'
 import { spawnLevel } from './spawn-level.ts'
+import { usesJoints } from './uses.ts'
 
 /** What `createGameSim` takes. Only the content is required. */
 export interface GameSimOptions {
@@ -31,7 +32,7 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
     seed: options.seed ?? 1,
     content,
     plugins: [
-      physics({ gravity: options.gravity ?? { x: 0, y: 30 } }),
+      physics({ gravity: options.gravity ?? { x: 0, y: 30 }, joints: usesJoints(content) }),
       commandsPlugin,
       levelPlugin,
       ...(options.plugins ?? []),
