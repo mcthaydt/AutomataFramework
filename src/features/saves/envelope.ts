@@ -19,6 +19,17 @@ export interface Envelope {
 /** The longest label, so a saves screen has a size to design for. */
 const MAX_LABEL = 80
 
+/** The one rule for a label, shared by what is written and what is read back: 1 to 80 characters. */
+function isLabel(value: unknown): value is string {
+  return typeof value === 'string' && value.length >= 1 && value.length <= MAX_LABEL
+}
+
+/** Throws a `RangeError` in plain words for a label the reader would refuse, so a save is never written damaged. */
+export function checkLabel(label: string): void {
+  const length = label.length
+  if (!isLabel(label)) throw new RangeError(`A save's label is 1 to ${MAX_LABEL} characters. Got ${length}.`)
+}
+
 /**
  * Canonical JSON for something a game or a setting stored. A value JSON cannot keep exactly (a Date, `undefined`,
  * NaN, a class instance) is a mistake in the game, and is thrown as a `RangeError` in plain words, before anything
@@ -67,8 +78,7 @@ export function readEnvelope(text: string): EnvelopeRead {
     return fail('This save has no version.')
   if (typeof savedAt !== 'number' || !Number.isFinite(savedAt)) return fail('This save has no date.')
   if (!('data' in found)) return fail('This save has nothing in it.')
-  if (label !== undefined && (typeof label !== 'string' || label.length < 1 || label.length > MAX_LABEL))
-    return fail('This save has a label that cannot be read.')
+  if (label !== undefined && !isLabel(label)) return fail('This save has a label that cannot be read.')
   return {
     ok: true,
     envelope: {

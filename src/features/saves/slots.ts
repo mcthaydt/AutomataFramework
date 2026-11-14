@@ -3,8 +3,8 @@
 // empty), and the host's "no" is an answer the game is given, never something quietly kept in memory instead.
 // Nothing here waits on a timer, an event or a frame, so a save asked for as a page closes is already with the host.
 import { type SaveDef, type SaveProblem, slotKey, upgrade } from './define.ts'
-import { readEnvelope, writeEnvelope } from './envelope.ts'
-import type { SaveStore, StoreResult } from './store.ts'
+import { checkLabel, readEnvelope, writeEnvelope } from './envelope.ts'
+import { guardStore, type SaveStore, type StoreResult } from './store.ts'
 
 /** One slot, as a saves screen lists it. */
 export type SlotState =
@@ -83,7 +83,9 @@ export function createSaves<S>(options: {
   /** Milliseconds since 1970. Default `Date.now`. */
   readonly now?: () => number
 }): Saves<S> {
-  const { def, store, now = Date.now } = options
+  const { def, now = Date.now } = options
+  // An adapter answers and never rejects; one that does is a `failed` answer here, not a crash.
+  const store = guardStore(options.store)
   return {
     check: () => store.check(),
     async list() {
@@ -113,6 +115,8 @@ export function createSaves<S>(options: {
           `This is not what "${def.game}" saves: ${checked.error.issues.map((i) => i.message).join('; ')}.`,
         )
       const { label, replace = false } = saveOptions
+      // Before anything is written: a label the reader refuses would make this save list as damaged and lose the old one.
+      if (label !== undefined) checkLabel(label)
       // Written to text first, so data JSON cannot keep throws here and the host is not touched.
       const text = writeEnvelope({
         format: 1,

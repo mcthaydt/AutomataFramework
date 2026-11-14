@@ -24,8 +24,20 @@ function refusalOf(error: unknown): { refusal: StoreRefusal; detail: string } {
 export function webStore(storage: () => Storage): SaveStore {
   /** Runs one storage call and answers with its value, or with what the browser's "no" means. */
   const run = <T>(call: (s: Storage) => T): Promise<StoreResult<T>> => {
+    // Handing the storage over is its own step: a getter that throws, or gives nothing, means the browser has none for
+    // this page, whatever the error is called. Only the calls on it are read by name (blocked, full, failed).
+    let held: Storage
     try {
-      return Promise.resolve({ ok: true, value: call(storage()) })
+      const got: Storage | null = storage()
+      if (!got)
+        return Promise.resolve({ ok: false, refusal: 'unavailable', detail: 'This page has no storage.' })
+      held = got
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      return Promise.resolve({ ok: false, refusal: 'unavailable', detail })
+    }
+    try {
+      return Promise.resolve({ ok: true, value: call(held) })
     } catch (error) {
       return Promise.resolve({ ok: false, ...refusalOf(error) })
     }
