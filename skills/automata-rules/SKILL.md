@@ -24,6 +24,20 @@ with no page, no clock and no files. Skill `automata` says why. Skill `automata-
 6. **Check, then the recording.** Run `npx --no automata check`. If the play changed on purpose, the replays step says the
    recording no longer ends where it did: run `npx --no automata replay --accept`, and say why it moved.
 
+## Answering an event
+
+An **event** says what happened in a tick, and a rule can answer it. The template does this for its spark: a character
+whose file says `"touch": "take"` is taken away when the hero touches it, and the game says `spark.taken` (the character's
+`kind`, then what happened). `src/features/hero/score.ts` answers it. `touchEvent('spark', 'taken')` names the event,
+`ctx.events.of(...)` lists the ones raised in this tick, and the answer is kept in a **resource**, a value the whole game
+shares, made with `defineResource(id, schema, start)` and listed in the plugin's `resources`.
+
+To answer another event, copy that file, name the event you want and list the system in the plugin, the way
+`src/features/hero/hero.ts` lists `countSparks`. Put the system in `gameplay`: it runs after the touches of the tick, so
+it hears them. A plugin that answers a touch lists `level` and `touch` in `dependsOn`, and a game with no character that
+can be touched has no `touch`, so add one before you depend on it. Test it by stepping a sim and reading the resource
+with `sim.resource(Score)`, as `tests/features/hero/hero.test.ts` does for the sparks.
+
 ## A whole example: a double jump
 
 The hero jumps once from the ground. This plugin lets it jump once more in the air, and not a third time. It runs
