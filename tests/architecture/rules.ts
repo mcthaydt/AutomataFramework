@@ -11,6 +11,7 @@ export const LAYERS = [
   'level',
   'render',
   'input',
+  'saves',
   'host',
   'game',
 ] as const
