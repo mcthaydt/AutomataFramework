@@ -13,7 +13,7 @@ if (textureConfig === undefined)
   throw new Error('pixi.js loadTextures has no config, so the renderer cannot turn off its worker probe')
 textureConfig.preferWorkers = false
 
-// Every box gets a dark edge. The sky is a fixed light blue and a game picks its own colours, so without an edge a pale
+// Every box gets a dark edge. A level may pick its own sky and a game its own colours, so without an edge a pale
 // box (or one close to the sky) can hardly be made out.
 const OUTLINE_COLOR = 0x1b1b24
 
@@ -42,15 +42,15 @@ interface Drawn {
 }
 
 /**
- * Starts Pixi (WebGL) on a new canvas. The sky colour fills the canvas, so the bars beside a world that does not
+ * Starts Pixi (WebGL) on a new canvas. The sky colour (the level's, or the framework's light blue) fills the canvas, so the bars beside a world that does not
  * fill it are sky too. Pixi's own ticker is off: the game's loop decides when to draw.
  */
-export async function createStage(world: { w: number; h: number }): Promise<Stage> {
+export async function createStage(world: { w: number; h: number }, sky: number = SKY_COLOR): Promise<Stage> {
   const app = new Application()
   await app.init({
     width: 1,
     height: 1,
-    background: SKY_COLOR,
+    background: sky,
     antialias: true,
     resolution: window.devicePixelRatio || 1,
     autoDensity: false,

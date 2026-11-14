@@ -4,7 +4,7 @@
 import { createRecorder, type Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
 import { type Controls, checkControls, createInput } from '../input/input.ts'
-import { createGameSim, type GameSimOptions, levelSize } from '../level/level.ts'
+import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import { createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { createLoop, type Frames } from './loop.ts'
@@ -50,7 +50,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
   try {
     const level = options.content.levels[options.level ?? options.content.project.start]
     if (level === undefined) throw new Error('The level this game opens is missing.')
-    const renderer = await createRenderer({ mount, world: levelSize(level) })
+    const renderer = await createRenderer({ mount, world: levelSize(level), sky: skyOf(level) })
     cleanup = () => {
       renderer.destroy()
       sim.dispose()

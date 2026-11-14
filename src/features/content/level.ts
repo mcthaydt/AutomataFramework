@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { colour } from './colour.ts'
 import { Id } from './ids.ts'
 
 /** A thing standing in a level: one placed copy of a character. `x` and `y` are its centre, in tiles. */
@@ -16,10 +17,15 @@ export interface LevelStart {
   readonly y: number
 }
 
-/** A level file once read. One string per row of tiles, `#` for solid and `.` for empty; y points down. */
+/**
+ * A level file once read. One string per row of tiles, `#` for solid and `.` for empty; y points down. `sky` and
+ * `ground` are `#rrggbb` and may be left out, and then the level has the framework's own light blue and slate.
+ */
 export interface Level {
   readonly format: 1
   readonly id: string
+  readonly sky?: string | undefined
+  readonly ground?: string | undefined
   readonly tiles: readonly string[]
   readonly things: readonly LevelThing[]
   readonly starts: readonly LevelStart[]
@@ -113,6 +119,12 @@ export const LevelSchema: z.ZodType<Level, Level> = z
   .strictObject({
     format: z.literal(1).describe('The version of this file format. Always 1.'),
     id: Id.describe('A name for this level, like "level-1". It matches the file name.'),
+    sky: colour(
+      'The colour behind the level, which also fills the bars beside it',
+      '#9fd3f0',
+      'Left out means that light blue.',
+    ).optional(),
+    ground: colour('The colour of the solid tiles', '#3b4a5a', 'Left out means that slate.').optional(),
     tiles: z
       .array(row)
       .min(1)
