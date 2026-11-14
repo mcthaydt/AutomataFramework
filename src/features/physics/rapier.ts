@@ -5,7 +5,7 @@
 import RAPIER from '@dimforge/rapier2d-deterministic-compat'
 import type { EntityRef } from '../sim/sim.ts'
 import { checkBody, checkCollider } from './checks.ts'
-import { Body, Collider, Transform } from './components.ts'
+import { Body, Collider, Joint, Transform } from './components.ts'
 import { CollisionEnded, CollisionStarted } from './events.ts'
 import { BodyKind, ShapeKind } from './kinds.ts'
 import type { PhysicsAdapter } from './physics-world.ts'
@@ -59,6 +59,7 @@ export async function createRapier(setup: {
     Transform,
     RigidBody: Body,
     Collider,
+    Joint,
     started: CollisionStarted,
     ended: CollisionEnded,
 
@@ -81,6 +82,7 @@ export async function createRapier(setup: {
       rotationLocked.clear()
     },
     handles(world) {
+      const joints: number[] = []
       const bodies: number[] = []
       const colliders: number[] = []
       world.bodies.forEach((body) => {
@@ -89,7 +91,20 @@ export async function createRapier(setup: {
       world.colliders.forEach((collider) => {
         colliders.push(collider.handle)
       })
-      return { bodies, colliders }
+      return { bodies, colliders, joints }
+    },
+
+    validateJoint() {
+      throw new Error('joints: Task 3')
+    },
+    createJoint() {
+      throw new Error('joints: Task 3')
+    },
+    removeJoint() {
+      throw new Error('joints: Task 3')
+    },
+    jointBodies() {
+      throw new Error('joints: Task 3')
     },
 
     validate(entity) {

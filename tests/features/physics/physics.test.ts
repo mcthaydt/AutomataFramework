@@ -7,6 +7,8 @@ import {
   body,
   Collider,
   collider,
+  Joint,
+  joint,
   type PhysicsOptions,
   physics,
   ShapeKind,
@@ -162,4 +164,26 @@ test('a rotated lone collider is not re-rotated every tick (audit: Rapier stores
   for (let t = 0; t < 10; t++) sim.step([])
   expect(spy).not.toHaveBeenCalled()
   spy.mockRestore()
+})
+
+test('physics() without joints registers no joint, so nothing recorded moves', () => {
+  const plain = physics()
+  expect(plain.components.map((c) => c.id)).toEqual(['transform', 'physics.body', 'physics.collider'])
+  expect(plain.config).toEqual({ gravity: { x: 0, y: 9.81 } })
+  expect(physics({ joints: true }).components.map((c) => c.id)).toContain('physics.joint')
+  expect(physics({ joints: true }).config).toEqual({ gravity: { x: 0, y: 9.81 }, joints: true })
+})
+
+test('joint.pin and joint.rope fill every field', () => {
+  expect(joint.pin(1, 2, { bx: 3, min: -0.5, max: 0.5 })).toEqual([
+    Joint,
+    { kind: 0, a: 1, b: 2, ax: 0, ay: 0, bx: 3, by: 0, limited: true, min: -0.5, max: 0.5 },
+  ])
+  expect((joint.rope(1, 2, 4) as readonly [unknown, unknown])[1]).toMatchObject({
+    kind: 1,
+    limited: false,
+    min: 0,
+    max: 4,
+  })
+  expect((joint.pin(1, 2, { min: -1 }) as readonly [unknown, unknown])[1]).toMatchObject({ limited: false })
 })
