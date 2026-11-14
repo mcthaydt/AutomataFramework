@@ -50,7 +50,7 @@ const tuning = (
 })
 
 describe('the numbers', () => {
-  test('the eighteen ids, values and limits are the spec\'s table', () => {
+  test("the eighteen ids, values and limits are the spec's table", () => {
     expect(MOVE_NUMBERS.map((n) => [n.id, n.value, n.min, n.max])).toEqual(SPEC)
     for (const n of MOVE_NUMBERS) {
       expect(n.about.length, n.id).toBeGreaterThan(0)
@@ -92,7 +92,7 @@ describe('the controls', () => {
   test('the framework controls are left, right, jump and dash, in that order', () =>
     expect(DEFAULT_HERO_CONTROLS.map((c) => c.action)).toEqual(['left', 'right', 'jump', 'dash']))
 
-  test('the framework controls pass the tuning file\'s own control checks, with dash and without', () => {
+  test("the framework controls pass the tuning file's own control checks, with dash and without", () => {
     const file = (controls: TuningFile['controls']) =>
       writeContent('tuning', tuning([['walk-speed', 6, 1, 20]], controls) as never)
     for (const controls of [DEFAULT_HERO_CONTROLS, DEFAULT_HERO_CONTROLS.slice(0, 3)]) {
@@ -165,7 +165,7 @@ describe('the checks, in a game', () => {
     ])
   })
 
-  test('a tuning file with no controls is left to the framework\'s', async () =>
+  test("a tuning file with no controls is left to the framework's", async () =>
     expect(await gameProblems(game(tuning([['walk-speed', 6, 1, 20]])))).toEqual([]))
 
   test('a tuning no hero names is checked for none of this', async () => {

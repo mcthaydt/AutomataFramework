@@ -302,7 +302,7 @@ describe('moves', () => {
         'content/characters/hero.json: moves.tuning: There is no tuning called "hero-move". This game has: hero-moves.',
       ]))
 
-    test('moves on a character that is not the project\'s hero is refused', async () =>
+    test("moves on a character that is not the project's hero is refused", async () =>
       expect(await gameProblems(withMoves('crate', 'hero-moves'))).toEqual([
         'content/characters/crate.json: moves: Only the hero is moved by a player: "moves" belongs on "hero", the character automata.toml names as hero.',
       ]))

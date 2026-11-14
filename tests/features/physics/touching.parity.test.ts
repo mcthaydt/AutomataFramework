@@ -17,8 +17,13 @@ import { createSim, type Sim } from '#src/features/sim/sim.ts'
 const FLOOR_TOP = 6
 const stage = (options: { joints?: boolean } = {}): Promise<Sim> =>
   createSim({ seed: 1, plugins: [physics({ touching: true, ...options })] })
-const floor = (sim: Sim): number =>
-  sim.spawn([transform({ y: FLOOR_TOP + 0.1 }), collider.cuboid(10, 0.1)])
+const floor = (sim: Sim): number => sim.spawn([transform({ y: FLOOR_TOP + 0.1 }), collider.cuboid(10, 0.1)])
+/** Eight runs of wall, one on top of the next, from y = -6 to y = 6, whose face is at x = 1.5. */
+function stackedWall(sim: Sim): void {
+  for (let i = 0; i < 8; i++) {
+    sim.spawn([transform({ x: 2, y: -5.25 + i * 1.5 }), collider.cuboid(0.5, 0.75)])
+  }
+}
 /** A hero-shaped box: upright, so it never tips, and with the component that is filled in. */
 const hero = (sim: Sim, x: number, y: number): number =>
   sim.spawn([
@@ -90,7 +95,11 @@ describe('touching', () => {
 
     const beside = await stage()
     floor(beside)
-    beside.spawn([transform({ x: 1.3, y: FLOOR_TOP - 0.5 }), body(BodyKind.dynamic), collider.cuboid(0.5, 0.5)])
+    beside.spawn([
+      transform({ x: 1.3, y: FLOOR_TOP - 0.5 }),
+      body(BodyKind.dynamic),
+      collider.cuboid(0.5, 0.5),
+    ])
     const walker = hero(beside, 0, FLOOR_TOP - 0.5)
     const seen = walk(beside, walker, 3, 40)
     expect(seen.every((s) => s.left === false && s.right === false)).toBe(true)
@@ -114,9 +123,10 @@ describe('touching', () => {
   test('sliding down a wall of four stacked runs never says below before the floor', async () => {
     const sim = await stage()
     floor(sim)
-    // Four runs, one on top of the next, from y = 0 to y = 6: a wall whose face is at x = 1.5.
-    for (let i = 0; i < 4; i++) sim.spawn([transform({ x: 2, y: 0.75 + i * 1.5 }), collider.cuboid(0.5, 0.75)])
-    const sid = hero(sim, 1.05, -3)
+    // Eight runs, one on top of the next, from y = -6 to y = 6: a wall whose face is at x = 1.5 and that is far
+    // taller than the fall, so the box leans on it the whole way down.
+    stackedWall(sim)
+    const sid = hero(sim, 1.05, -4)
     const seen = walk(sim, sid, 3, 120)
     // Until its feet are within a tenth of the floor, the box is in the air, whatever the seams under its side say.
     const falling = seen.filter((s) => s.y + 0.5 < FLOOR_TOP - 0.1)
@@ -152,8 +162,8 @@ describe('touching', () => {
     const make = async (): Promise<{ sim: Sim; sid: number }> => {
       const sim = await stage()
       floor(sim)
-      for (let i = 0; i < 4; i++) sim.spawn([transform({ x: 2, y: 0.75 + i * 1.5 }), collider.cuboid(0.5, 0.75)])
-      return { sim, sid: hero(sim, 1.05, -3) }
+      stackedWall(sim)
+      return { sim, sid: hero(sim, 1.05, -4) }
     }
     const straight = await make()
     const restored = await make()
