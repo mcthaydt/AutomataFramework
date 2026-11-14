@@ -225,8 +225,7 @@ for (const [first, second] of PAIRS) {
       .toBe(`Waiting for 1 more player. Share this code so a friend can join: ${code}`)
 
     // 2. The friend joins by the code; both are playing, in seats 1 and 2, with nothing to read.
-    // The friend's line is slow: their keys reach the room a quarter of a second late (see the page's `late`).
-    const two = await seatOf(second, `&room=${encodeURIComponent(code)}&late=250`)
+    const two = await seatOf(second, `&room=${encodeURIComponent(code)}`)
     for (const seat of [one, two]) await expect.poll(() => seat.data('state'), POLL).toBe('playing')
     for (const seat of [one, two]) await expect.poll(() => seat.status(), POLL).toBe('')
     await expect.poll(() => one.data('seat'), POLL).toBe('1')
@@ -237,6 +236,9 @@ for (const [first, second] of PAIRS) {
     await two.hold('left')
     await expect.poll(async () => num(await one.data('p2-x')), POLL).toBeLessThan(12.5)
     await expect.poll(async () => num(await two.data('p1-x')), POLL).toBeGreaterThan(3.5)
+    // From here the friend's line is slow: their keys reach the room a quarter of a second late (the page's
+    // `slowLine`). It starts only now, so who reaches the crate first above is the same race it always was.
+    await two.page.evaluate(() => (window as unknown as { slowLine(ms: number): void }).slowLine(250))
     await one.release('right')
     await two.release('left')
     await two.tap('jump')

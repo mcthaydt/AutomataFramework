@@ -52,7 +52,8 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 
 - 2026-11-14, plan S (audio): the implementation audit is written. The `online` journey's one failure was real: a
   page whose frame took longer than its lead confirmed past its own guess, and the old rule counted no rollback, so
-  the count is now of guesses the room put right, and the journey's friend has a slow line so a correction is certain.
+  the count is now of guesses the room put right, and the journey's friend has a slow line from the let-go on, so a correction is certain. A second sighting of
+  the same failure was on another branch (job 132442260066).
 - 2026-11-14, plan S (audio): executed. The game hears its events on their own ticks, online too (`Advance`
   gained `steps`, one entry per tick the page predicted, and the page calls `audio.begin()` after a sync). The
   sound button is a browser journey with the real speaker on five screens; Firefox on a runner with no sound card

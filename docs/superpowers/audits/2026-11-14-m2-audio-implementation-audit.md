@@ -61,9 +61,11 @@ none were. The journey then asked of real timing what only the count could say.
 **Fix** (below, I1): a rollback is counted when the room's commands for a tick the page had guessed (it is in
 `predictedAt`) differ from the guess, whatever the batch then does to `confirmed`. This counts every case the old rule
 did, and the ones it missed; no existing session test changes. And the journey no longer leans on frame timing: the
-friend's page in each pair has a slow line (`?late=250` on the page fixture holds each key back a quarter of a second
-before it is sent), so the room puts the friend's first keys on later ticks than the friend's page guessed, and the
-journey asks the friend's page for a rollback. A new session test, red on the old count, has a page that advances only
+friend's page in each pair is given a slow line once both heroes have been seen to move (`slowLine(250)` on the page
+fixture holds each key back a quarter of a second before it is sent), so the room puts the friend's let-go and jump on
+later ticks than the friend's page guessed, and the journey asks the friend's page for a rollback. The slow line starts
+only then because a first try had it from the start, and the friend's first key, reaching the room late, lost the race
+to the crate that player one pushes towards them (`p2-x` stopped at 12.67, the check wants under 12.5). A new session test, red on the old count, has a page that advances only
 every third tick.
 
 ## Critical
@@ -75,7 +77,7 @@ None.
 **I1. The session's rollback count misses every correction on a page slower than its lead** (the flake above). A
 `SessionStats.rollbacks` of 0 on a page that was put right many times is a wrong answer to a debugging tool and to the
 journey. *Fix:* count a guess the room put right, as above; a session test with a page that advances every third
-tick; the journey's friend on a slow line, and the check asked of the friend's page.
+tick; the journey's friend on a slow line from the let-go on, and the check asked of the friend's page.
 
 **I2. The sound journey proves less than the plan asked.** Task 10's `sound-journey.browser.test.ts` was to show, with
 the real speaker, the button, a real tap, the sound on, the real clock running, `meadow` wanted and a held jump key in
@@ -121,8 +123,8 @@ Each test was pushed red first, then the code.
 1. `tests/features/net/session.test.ts`: `a page whose frames are longer than its lead still counts the guesses the
    room put right` (red on the old count). `src/features/net/session.ts`: `confirmWaiting` also says whether a tick
    the page had guessed was put right, and `advance` counts a rollback on that (I1).
-2. `tests/fixtures/online/page/main.ts`: `?late=<ms>`, a slow line that holds each key back. The online journey opens
-   the friend with `&late=250` and asks the friend's page for a rollback (I1).
+2. `tests/fixtures/online/page/main.ts`: `slowLine(ms)`, a slow line that holds each key back from then on. The online
+   journey turns it on for the friend before the let-go and asks the friend's page for a rollback (I1).
 3. `tests/features/web/sound-journey.browser.test.ts`: `meadow` wanted, the real clock running where the sound is on,
    a real jump key in the cue log, nothing skipped (I2).
 
