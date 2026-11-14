@@ -6,7 +6,6 @@ import { MAX_PLAYERS, type Sequence } from '../commands/commands.ts'
 import type { GameContent } from '../content/content.ts'
 import type { Claim, Input } from '../input/input.ts'
 import { joinCommand, leaveCommand, playersIn } from '../level/level.ts'
-import { frameworkWords } from '../locale/locale.ts'
 import type { Command, Sim } from '../sim/sim.ts'
 
 /** The answer to `addPlayer`: the new player's number, or why not, in the player's words (`GameOptions.locale`). */
@@ -39,11 +38,11 @@ export function createPlayers(options: {
   readonly sequence: Sequence
   /** Whether the controls have keys for two people on one keyboard. */
   readonly canShare: boolean
-  /** The words a refusal is said in, read when the answer is made. Default: English. */
-  readonly words?: Words
+  /** The words a refusal is said in, read when the answer is made: a `Locale`'s `words`. */
+  readonly words: Words
 }): Players {
   const { sim, content, input, sequence } = options
-  const words = options.words ?? frameworkWords('en')
+  const { words } = options
   const most = Math.min(content.project.players ?? 1, MAX_PLAYERS)
   const starts = content.levels[options.level]?.starts.map((start) => start.player) ?? []
   // Asked for, and not yet in the sim: joins that will be sent next step, and leaves.

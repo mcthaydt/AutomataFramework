@@ -65,21 +65,14 @@ const BUTTON_STYLE = [
 const groupStyle = (side: 'left' | 'right'): string =>
   `display:flex;gap:${GAP_PX}px;pointer-events:auto;${side === 'left' ? '' : 'margin-left:auto'}`
 
-/** The key of the overlay's name for a screen reader, and the words used when nobody gives any. */
+/** The key of the overlay's name for a screen reader, in the player's words. */
 const OVERLAY_KEY = 'automata.touch.label'
-const OVERLAY_WORDS = 'Touch controls'
 
-/** The overlay's name: `words`' own, else English. */
-function overlayLabel(words: Words | undefined): string {
-  const said = words?.(OVERLAY_KEY)
-  return said === undefined || said === OVERLAY_KEY ? OVERLAY_WORDS : said
-}
-
-/** A button's words: the game's `controls.<action>` when `words` has it, else the control's own label. */
-function buttonLabel(words: Words | undefined, action: string, label: string): string {
+/** A button's words: the game's `controls.<action>` when `words` has it, else the control's own label, the game's. */
+function buttonLabel(words: Words, action: string, label: string): string {
   const key = `controls.${action}`
-  const said = words?.(key)
-  return said === undefined || said === key ? label : said
+  const said = words(key)
+  return said === key ? label : said
 }
 
 /**
@@ -89,7 +82,7 @@ function buttonLabel(words: Words | undefined, action: string, label: string): s
 export function createTouch(
   mount: HTMLElement,
   controls: Controls,
-  options: { readonly win?: Window; readonly words?: Words } = {},
+  options: { readonly win?: Window; readonly words: Words },
 ): Touch {
   const win = options.win ?? window
   // The buttons sit against the mount's own corners, so the mount has to be what they are positioned against.
@@ -99,7 +92,7 @@ export function createTouch(
   const overlay = document.createElement('div')
   overlay.className = 'automata-touch'
   overlay.setAttribute('role', 'group')
-  overlay.setAttribute('aria-label', overlayLabel(options.words))
+  overlay.setAttribute('aria-label', options.words(OVERLAY_KEY))
   // Notches and the home bar: stay inside the safe area on every edge.
   overlay.style.cssText = [
     'position:absolute',
@@ -213,7 +206,7 @@ export function createTouch(
       insetListeners.add(listener)
     },
     relabel(words) {
-      overlay.setAttribute('aria-label', overlayLabel(words))
+      overlay.setAttribute('aria-label', words(OVERLAY_KEY))
       for (const [action, b] of buttons) {
         const said = buttonLabel(words, action, controls[action]?.label ?? action)
         b.textContent = said

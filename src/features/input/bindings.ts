@@ -188,11 +188,19 @@ export function settingsOf(defaults: Controls, current: Controls): InputSettings
 }
 
 /**
- * The answer to a change: the new controls, or why not. A refusal is also a `Message` (`key`, `values`), so a screen
- * says it in the player's language with `locale.say(answer)`; `message` is the sentence in the words the input was
- * given (`InputOptions.words`), in English when it has none. The English here is the framework library's, word for
- * word (a test holds them together): `input` sits below `locale` and cannot read the library itself.
+ * Why a change was refused. It is also a `Message` (`key`, `values`): a screen says it in the player's language with
+ * `locale.say(answer)`. It carries no sentence of its own, because `input` sits below `locale` and no language is the
+ * default: the words are the player's, and `Input.rebind` adds them as `message` (`SaidRebound`).
  */
+export interface RebindRefusal {
+  readonly ok: false
+  readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half'
+  /** The sentence's key in the framework's library: `automata.rebind.*`. */
+  readonly key: string
+  readonly values?: Values
+}
+
+/** The answer to a change: the new controls, or why not. */
 export type Rebound =
   | {
       readonly ok: true
@@ -200,65 +208,37 @@ export type Rebound =
       /** The action that gave the input up and took the old one. */
       readonly swapped?: string
     }
-  | {
-      readonly ok: false
-      readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half'
-      readonly message: string
-      /** The sentence's key in the framework's library: `automata.rebind.*`. */
-      readonly key: string
-      readonly values?: Values
-    }
+  | RebindRefusal
 
-/** A refusal: its reason, its key in the library, its English, and what goes into it. */
-function refused(
-  reason: Extract<Rebound, { ok: false }>['reason'],
-  key: string,
-  message: string,
-  values?: Values,
-): Rebound {
-  return {
-    ok: false,
-    reason,
-    message,
-    key: `automata.rebind.${key}`,
-    ...(values === undefined ? {} : { values }),
-  }
+/** What `Input.rebind` answers: a refusal always comes with its `message`, in the words the input was given. */
+export type SaidRebound = Extract<Rebound, { ok: true }> | (RebindRefusal & { readonly message: string })
+
+/** A refusal: its reason, its key in the library, and what goes into it. */
+function refused(reason: RebindRefusal['reason'], key: string, values?: Values): Rebound {
+  return { ok: false, reason, key: `automata.rebind.${key}`, ...(values === undefined ? {} : { values }) }
 }
 
 /** `input` (a key code, or a PadInput for the `pad` slot) becomes the action's only input in that slot. */
 export function rebind(current: Controls, action: string, slot: BindingSlot, input: string): Rebound {
   const target = current[action]
   if (target === undefined)
-    return refused('unknown-action', 'unknown-action', `This game has no action called "${action}".`, {
-      action,
-    })
+    return refused('unknown-action', 'unknown-action', { action })
   if (slot === 'pad') {
     if (RESERVED_PAD_NAMES.has(input))
-      return refused(
-        'reserved',
-        'reserved.button',
-        `The ${input} button is kept for the game's menus. Pick another button.`,
-        { input },
-      )
+      return refused('reserved', 'reserved.button', { input })
     if (
       !(PAD_BUTTONS as readonly string[]).includes(input) &&
       !(PAD_STICKS as readonly string[]).includes(input)
     )
-      return refused(
-        'unknown-input',
-        'unknown-input',
-        'That is not a button on a gamepad. Pick another button.',
-      )
+      return refused('unknown-input', 'unknown-input')
   } else if (RESERVED_KEYS.includes(input))
-    return refused('reserved', 'reserved.key', `${input} is kept for the game's menus. Pick another key.`, {
-      input,
-    })
+    return refused('reserved', 'reserved.key', { input })
   if (slot === 'shared-1' || slot === 'shared-2') {
     if (!Object.values(current).some((control) => control.shared !== undefined))
-      return refused('no-shared', 'no-shared', "This game's keys cannot be shared.")
+      return refused('no-shared', 'no-shared')
     const otherSlot: BindingSlot = slot === 'shared-1' ? 'shared-2' : 'shared-1'
     if (Object.values(current).some((control) => slotOf(control, otherSlot)?.includes(input)))
-      return refused('other-half', 'other-half', "That key is the other person's. Pick another key.")
+      return refused('other-half', 'other-half')
   }
 
   const gave = slotOf(target, slot) ?? []

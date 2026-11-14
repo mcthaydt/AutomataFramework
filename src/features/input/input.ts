@@ -19,6 +19,7 @@ import {
   type InputSettings,
   type Rebound,
   rebind as rebound,
+  type SaidRebound,
   settingsOf,
 } from './bindings.ts'
 import { type Capture, type RunningCapture, startCapture } from './capture.ts'
@@ -40,8 +41,10 @@ export {
   INPUT_SETTINGS_DEFAULT,
   type InputSettings,
   InputSettingsSchema,
+  type RebindRefusal,
   type Rebound,
   rebind,
+  type SaidRebound,
   settingsOf,
 } from './bindings.ts'
 export {
@@ -65,10 +68,11 @@ export interface InputOptions {
   /** Default: a new one. Share one with whoever else makes this game's commands, so no seq is used twice. */
   readonly sequence?: Sequence
   /**
-   * The player's words (a `Locale`'s `words`): the touch buttons' (`controls.<action>`, `automata.touch.label`) and a
-   * refused change's (`automata.rebind.*`). Default: each control's own label, and English.
+   * The player's words (a `Locale`'s `words`, or `frameworkWords(language)`): the touch buttons' (`controls.<action>`,
+   * `automata.touch.label`) and a refused change's (`automata.rebind.*`). A control with no `controls.<action>` word is
+   * labelled with its own `label`, which is the game's. No language is the default, so these are always given.
    */
-  readonly words?: Words
+  readonly words: Words
 }
 
 export interface Input {
@@ -114,7 +118,7 @@ export interface Input {
   /** Saved actions that could not be applied when the input was made (`'*'`: none of it could be read). */
   dropped(): readonly string[]
   /** Changes a binding now. On refusal nothing changes and the answer says why, in the input's words. */
-  rebind(action: string, slot: BindingSlot, input: string): Rebound
+  rebind(action: string, slot: BindingSlot, input: string): SaidRebound
   /** Back to the game's own controls. */
   resetBindings(): void
   /** Calls `listener` with what to save, whenever a binding changes or is reset. */
@@ -128,6 +132,7 @@ export interface Input {
 export type { Capture, CaptureAnswer } from './capture.ts'
 export type { PadLike } from './gamepad.ts'
 export type { MenuPress } from './menu.ts'
+export { padMenu } from './pad-menu.ts'
 export type { ListedPad } from './pads.ts'
 export type { Claim, Device, Seat } from './seats.ts'
 export type { DeviceKind } from './use.ts'
@@ -144,7 +149,7 @@ export function createInput(options: InputOptions): Input {
   let controls = applied.controls
   const bindingListeners = new Set<(settings: InputSettings) => void>()
   const keyboard = createKeyboard(() => boundKeys(controls))
-  const touch = createTouch(mount, controls, options.words === undefined ? {} : { words: options.words })
+  const touch = createTouch(mount, controls, { words: options.words })
   // The words a refusal is said in: the ones the input was given, and each new set `relabel` is given.
   let words = options.words
   const pads = createPads(options.gamepads)
@@ -340,9 +345,8 @@ export function createInput(options: InputOptions): Input {
         for (const listener of [...bindingListeners]) listener(settingsOf(defaults, controls))
         return answer
       }
-      // Said in the input's words; words that lack the sentence give back its key, and the English stands.
-      const said = words?.(answer.key, answer.values)
-      return said === undefined || said === answer.key ? answer : { ...answer, message: said }
+      // Said in the input's words: a refusal always carries its sentence, which is its key if the words lack it.
+      return { ...answer, message: words(answer.key, answer.values) }
     },
     resetBindings() {
       controls = defaults

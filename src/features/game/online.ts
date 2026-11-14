@@ -21,6 +21,7 @@ import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
 import type { GameOptions } from './game.ts'
+import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 
 export interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
@@ -32,7 +33,7 @@ export interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
   readonly level?: string
   /** How many players the room is for; used when this page makes the room. Default 2, or the game's own count if it is a co-op game. */
   readonly seats?: number
-  /** Called whenever what a person should be told about the room changes (`onlineWords` has the words, in the language of `locale.words` if you pass it). */
+  /** Called whenever what a person should be told about the room changes (`onlineWords` has the words, in the language of `locale.words`). */
   readonly onStatus?: (status: OnlineStatus) => void
   readonly onCheck?: (tick: number, hash: string, ok: boolean) => void
   /** A test's lag or a debug tool: sees the line to the room, and any line that takes over after a drop. */
@@ -82,6 +83,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     ...simOptions
   } = options
   checkControls(controls)
+  requireLanguage(locale)
   const level = levelOption ?? simOptions.content.project.start
   const levelData = simOptions.content.levels[level]
   if (levelData === undefined) throw new Error('The level this game opens is missing.')
@@ -199,12 +201,12 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       mount,
       controls,
       frames,
-      ...(locale === undefined ? {} : { words: locale.words }),
+      words: locale.words,
       ...(settings === undefined ? {} : { settings }),
       ...(gamepads === undefined ? {} : { gamepads }),
     })
     // A new language says the touch buttons again. Stopped with the game.
-    const unfollow = locale?.onChange(() => input.relabel(locale.words))
+    const unfollow = locale.onChange(() => input.relabel(locale.words))
     cleanup = () => {
       unfollow?.()
       input.destroy()
@@ -301,11 +303,8 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
         ? soundNotice({
             mount,
             audio,
-            ...(typeof noticeOption === 'string'
-              ? { words: noticeOption }
-              : locale === undefined
-                ? {}
-                : { locale }),
+            locale,
+            ...(typeof noticeOption === 'string' ? { words: noticeOption } : {}),
           })
         : undefined
     sync()

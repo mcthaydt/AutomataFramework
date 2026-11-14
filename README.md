@@ -90,8 +90,10 @@ import { formatDiagnostic, loadGame, startGame, webHost } from '@automataframewo
 const loaded = await loadGame((path) => fetch(`/game/${path}`).then((r) => r.text()))
 if (!loaded.ok) throw new Error(loaded.diagnostics.map(formatDiagnostic).join('\n'))
 
+// `locale` is the player's language (see "Languages"): the game starts only once the player has chosen one.
 const game = await startGame({
   content: loaded.value,
+  locale,
   mount: document.getElementById('game') as HTMLElement,
   host: webHost(),
   controls: {
@@ -278,21 +280,23 @@ with `{name}`, and the game gives it one.
 }
 ```
 
-The player's language is the one they picked, else the host's, else the device's, else English, and only a language
-the game has words in. `createLocale` gives a game the words in it, and keeps a pick with the settings:
+The player's language is the one they picked or the host says, and only a language the game has words in. A player who
+has done neither has no language: nobody is given one, and the device's language only decides which flag the picker opens
+on. `createLocale` gives a game the words in it, and keeps a pick with the settings:
 
 ```ts
 import { createLocale, levelName } from '@automataframework/framework/headless'
 
 const locale = createLocale({ content: loaded.value, host, settings }) // `settings` is `await openSettings(...)`
-locale.words('keeper.hello') // 'こんにちは！' on a Japanese device
+locale.words('keeper.hello') // 'こんにちは！' once the player has chosen Japanese
 locale.words('room.waiting', { count: 2 }) // a value goes where `{count}` is; a list is joined the way the language does
 levelName(locale.words, 'level-1') // the level's own name, or its id if no words give one
 await locale.set('ko') // the words change at once, every `locale.onChange` listener hears it, and the pick is kept
 ```
 
-A word a language lacks is said in English, and one English lacks is shown as its key, so a missing word never stops
-a game. Give `startGame` the locale (`startGame({ ..., locale })`) and the touch buttons say `controls.<action>`, a
+A word a language lacks is said in the language the game is written in (`source` in `automata.toml`), and one that
+language lacks is shown as its key, so a missing word never stops a game. `startGame` needs the locale
+(`startGame({ ..., locale })`) and throws until the player has chosen a language. With it, the touch buttons say `controls.<action>`, a
 refused `addPlayer` or `input.rebind` explains itself in the player's language, the sound's button asks for a tap in it,
 and all of it changes when the player picks another.
 In a page, `followLanguage(locale)` keeps `<html lang>` right, so a screen reader speaks the words properly. The
@@ -413,7 +417,7 @@ import { createAudio, startGame, webHost, webSpeaker } from '@automataframework/
 
 const host = webHost()
 const audio = createAudio({ content: loaded.value, speaker: webSpeaker({ host }) })
-const game = await startGame({ content: loaded.value, mount, host, controls, audio })
+const game = await startGame({ content: loaded.value, locale, mount, host, controls, audio })
 ```
 
 Events come from three places: your own plugin (`defineEvent`, then `ctx.emit(Jumped, {})` in a system), the
@@ -560,6 +564,7 @@ hold two who are apart, as far as `"most": { "w": 24, "h": 12 }` (the whole leve
 ```ts
 const game = await startGame({
   content: loaded.value,
+  locale,
   mount,
   host: webHost(),
   controls,
