@@ -1663,7 +1663,7 @@ interface TileRun {
 ### `tileRuns` (function)
 
 ```ts
-function tileRuns(tiles: readonly string[]): TileRun[];
+function tileRuns(tiles: readonly string[], isSolid?: (letter: string) => boolean): TileRun[];
 ```
 
 ### `TilesetFile` (interface)
@@ -3399,7 +3399,7 @@ interface TileRun {
 ### `tileRuns` (function)
 
 ```ts
-function tileRuns(tiles: readonly string[]): TileRun[];
+function tileRuns(tiles: readonly string[], isSolid?: (letter: string) => boolean): TileRun[];
 ```
 
 ### `TilesetFile` (interface)
