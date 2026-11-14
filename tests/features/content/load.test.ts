@@ -162,3 +162,25 @@ test('a read that throws at once, or rejects for the project file, never throws 
     ])
   }
 })
+
+test('a file listed as the wrong kind says so in one sentence', async () => {
+  const toml = (fixtureFiles['automata.toml'] ?? '').replace(
+    'type = "character"\npath = "content/characters/crate.json"',
+    'type = "level"\npath = "content/characters/crate.json"',
+  )
+  expect(await problems({ 'automata.toml': toml })).toContain(
+    'content/characters/crate.json: This file is listed as a level, but it reads as a character. Change its type in automata.toml.',
+  )
+})
+
+test('a name every object has is an ordinary name', async () => {
+  const level = edited('content/levels/level-1.json', (v) => {
+    ;((v.things as Record<string, unknown>[])[0] as Record<string, unknown>).character = 'constructor'
+  })
+  expect(await problems({ 'content/levels/level-1.json': level })).toEqual([
+    'content/levels/level-1.json: things[0].character: There is no character called "constructor". This game has: crate, hero.',
+  ])
+  const loaded = await loadGame(readFixture())
+  expect(loaded.ok).toBe(true)
+  if (loaded.ok) expect('toString' in loaded.value.characters).toBe(false)
+})
