@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
-import { tuningNumbers } from '#src/features/content/content.ts'
-import { expectRoundTrip, problemsOf } from '../../fixtures/content/kind.ts'
+import { tuningNumbers, writeContent } from '#src/features/content/content.ts'
+import { changed, expectRoundTrip, gameFiles, gameProblems, problemsOf } from '../../fixtures/content/kind.ts'
+import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 type Json = Record<string, unknown>
 const hero = () => ({
@@ -186,4 +187,24 @@ test('a missing field says what to write', () => {
 test('an unknown key', () =>
   expect(said({ ...hero(), mood: 'cross' })).toEqual([
     `${file}: mood: This is not something a tuning has. Remove it or check the spelling.`,
+  ]))
+
+/** The fixture game with a tuning called hero listed, and the hero naming `name` as its tuning. */
+const gameWithTuning = (name: string): Record<string, string | undefined> =>
+  gameFiles(fixtureFiles, [{ type: 'tuning', path: file, text: writeContent('tuning', hero() as never) }], {
+    'content/characters/hero.json': changed(
+      'character',
+      fixtureFiles['content/characters/hero.json'],
+      (c) => {
+        c.tuning = name
+      },
+    ),
+  })
+
+test('a hero that names a tuning the game has', async () =>
+  expect(await gameProblems(gameWithTuning('hero'))).toEqual([]))
+
+test('a character that names a tuning the game does not have', async () =>
+  expect(await gameProblems(gameWithTuning('hera'))).toEqual([
+    'content/characters/hero.json: tuning: There is no tuning called "hera". This game has: hero.',
   ]))

@@ -68,6 +68,13 @@ test('a character may say what kind of thing it is and which behaviour decides w
   ])
 })
 
+test('a tuning is named by id, and written last', () => {
+  const hero2 = { ...hero(), tuning: 'hero' }
+  const parsed = parseContent('character', JSON.stringify(hero2), 'content/characters/hero.json')
+  expect(parsed.ok && parsed.value).toEqual(hero2)
+  expect(Object.keys(JSON.parse(writeContent('character', hero2 as never))).at(-1)).toBe('tuning')
+})
+
 test('a character with neither is written as it was before, byte for byte', () =>
   expect(Object.keys(JSON.parse(writeContent('character', crate() as never)))).toEqual([
     'format',

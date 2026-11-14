@@ -64,3 +64,9 @@ test('the JSON Schema of a tuning', () =>
 
 test('the JSON Schema of a feel', () =>
   expectSchema('feel', 'Feel', ['format', 'id', 'on', 'dust', 'shake', 'freeze']))
+
+test('the JSON Schema of a sound, a track and a list of cues', () => {
+  expectSchema('sound', 'Sound', ['format', 'id', 'volume', 'voices'])
+  expectSchema('music', 'Music', ['format', 'id', 'tempo', 'stepsPerBeat', 'volume', 'loop', 'parts'])
+  expectSchema('cues', 'Cues', ['format', 'id', 'cues'])
+})

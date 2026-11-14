@@ -117,6 +117,7 @@ interface Character {
     readonly upright: boolean;
     readonly kind?: string | undefined;
     readonly behaviour?: string | undefined;
+    readonly tuning?: string | undefined;
 }
 ```
 
@@ -240,6 +241,9 @@ const CONTENT_TYPES: {
     readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
     readonly tuning: ContentTypeInfo<TuningFile, TuningFile>;
     readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
+    readonly sound: ContentTypeInfo<SoundFile, SoundFile>;
+    readonly music: ContentTypeInfo<MusicFile, MusicFile>;
+    readonly cues: ContentTypeInfo<CuesFile, CuesFile>;
 };
 ```
 
@@ -368,6 +372,28 @@ function createScene(): Scene;
 function createSim(opts: SimOptions): Promise<Sim>;
 ```
 
+### `Cue` (type)
+
+```ts
+type Cue = SoundCue | MusicCue | StopMusicCue;
+```
+
+### `CuesFile` (interface)
+
+```ts
+interface CuesFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly cues: readonly Cue[];
+}
+```
+
+### `CuesSchema` (const)
+
+```ts
+const CuesSchema: z.ZodType<CuesFile, CuesFile>;
+```
+
 ### `Def` (type)
 
 ```ts
@@ -438,6 +464,17 @@ interface Diagnostic {
     readonly file: string;
     readonly path: string;
     readonly message: string;
+}
+```
+
+### `DrumPart` (interface)
+
+```ts
+interface DrumPart {
+    readonly id: string;
+    readonly kind: 'drums';
+    readonly volume: number;
+    readonly notes: readonly string[];
 }
 ```
 
@@ -612,6 +649,9 @@ interface GameContent {
     readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
     readonly tunings?: Readonly<Record<string, TuningFile>>;
     readonly feels?: Readonly<Record<string, FeelFile>>;
+    readonly sounds?: Readonly<Record<string, SoundFile>>;
+    readonly music?: Readonly<Record<string, MusicFile>>;
+    readonly cues?: Readonly<Record<string, CuesFile>>;
 }
 ```
 
@@ -797,10 +837,64 @@ const MAX_ACTIONS = 16;
 const MAX_PLAYERS = 4;
 ```
 
+### `MAX_STEPS` (const)
+
+```ts
+const MAX_STEPS = 4096;
+```
+
 ### `MAX_STEPS_PER_FRAME` (const)
 
 ```ts
 const MAX_STEPS_PER_FRAME = 5;
+```
+
+### `MusicCue` (interface)
+
+```ts
+interface MusicCue {
+    readonly on: string;
+    readonly do: 'music';
+    readonly music: string;
+}
+```
+
+### `MusicFile` (interface)
+
+```ts
+interface MusicFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly tempo: number;
+    readonly stepsPerBeat: number;
+    readonly volume: number;
+    readonly loop: boolean;
+    readonly parts: readonly MusicPart[];
+}
+```
+
+### `MusicPart` (type)
+
+```ts
+type MusicPart = TonePart | DrumPart;
+```
+
+### `MusicSchema` (const)
+
+```ts
+const MusicSchema: z.ZodType<MusicFile, MusicFile>;
+```
+
+### `NoiseVoice` (interface)
+
+```ts
+interface NoiseVoice {
+    readonly kind: 'noise';
+    readonly pitch: number;
+    readonly at: number;
+    readonly length: number;
+    readonly volume: number;
+}
 ```
 
 ### `PAD_BUTTONS` (const)
@@ -1326,6 +1420,39 @@ interface SnapshotView {
 }
 ```
 
+### `SoundCue` (interface)
+
+```ts
+interface SoundCue {
+    readonly on: string;
+    readonly do: 'sound';
+    readonly sound: string;
+}
+```
+
+### `SoundFile` (interface)
+
+```ts
+interface SoundFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly volume: number;
+    readonly voices: readonly SoundVoice[];
+}
+```
+
+### `SoundSchema` (const)
+
+```ts
+const SoundSchema: z.ZodType<SoundFile, SoundFile>;
+```
+
+### `SoundVoice` (type)
+
+```ts
+type SoundVoice = ToneVoice | NoiseVoice;
+```
+
 ### `spawnLevel` (function)
 
 ```ts
@@ -1352,6 +1479,15 @@ interface StepResult {
     readonly events: readonly SimEvent[];
     readonly render: RenderDelta;
     readonly rejected: readonly RejectedCommand[];
+}
+```
+
+### `StopMusicCue` (interface)
+
+```ts
+interface StopMusicCue {
+    readonly on: string;
+    readonly do: 'stop-music';
 }
 ```
 
@@ -1461,6 +1597,32 @@ interface TileWhen {
     readonly down?: Neighbour | undefined;
     readonly left?: Neighbour | undefined;
     readonly right?: Neighbour | undefined;
+}
+```
+
+### `TonePart` (interface)
+
+```ts
+interface TonePart {
+    readonly id: string;
+    readonly kind: 'tone';
+    readonly wave: 'sine' | 'square' | 'sawtooth' | 'triangle';
+    readonly volume: number;
+    readonly notes: readonly string[];
+}
+```
+
+### `ToneVoice` (interface)
+
+```ts
+interface ToneVoice {
+    readonly kind: 'tone';
+    readonly wave: Wave;
+    readonly from: number;
+    readonly to: number;
+    readonly at: number;
+    readonly length: number;
+    readonly volume: number;
 }
 ```
 
@@ -1615,6 +1777,12 @@ class WatchSetupError extends Error {
 }
 ```
 
+### `Wave` (type)
+
+```ts
+type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
+```
+
 ### `webHost` (function)
 
 ```ts
@@ -1748,6 +1916,7 @@ interface Character {
     readonly upright: boolean;
     readonly kind?: string | undefined;
     readonly behaviour?: string | undefined;
+    readonly tuning?: string | undefined;
 }
 ```
 
@@ -1865,6 +2034,9 @@ const CONTENT_TYPES: {
     readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
     readonly tuning: ContentTypeInfo<TuningFile, TuningFile>;
     readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
+    readonly sound: ContentTypeInfo<SoundFile, SoundFile>;
+    readonly music: ContentTypeInfo<MusicFile, MusicFile>;
+    readonly cues: ContentTypeInfo<CuesFile, CuesFile>;
 };
 ```
 
@@ -1948,6 +2120,28 @@ function createRng(seed: number): Rng;
 function createSim(opts: SimOptions): Promise<Sim>;
 ```
 
+### `Cue` (type)
+
+```ts
+type Cue = SoundCue | MusicCue | StopMusicCue;
+```
+
+### `CuesFile` (interface)
+
+```ts
+interface CuesFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly cues: readonly Cue[];
+}
+```
+
+### `CuesSchema` (const)
+
+```ts
+const CuesSchema: z.ZodType<CuesFile, CuesFile>;
+```
+
 ### `Def` (type)
 
 ```ts
@@ -2018,6 +2212,17 @@ interface Diagnostic {
     readonly file: string;
     readonly path: string;
     readonly message: string;
+}
+```
+
+### `DrumPart` (interface)
+
+```ts
+interface DrumPart {
+    readonly id: string;
+    readonly kind: 'drums';
+    readonly volume: number;
+    readonly notes: readonly string[];
 }
 ```
 
@@ -2149,6 +2354,9 @@ interface GameContent {
     readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
     readonly tunings?: Readonly<Record<string, TuningFile>>;
     readonly feels?: Readonly<Record<string, FeelFile>>;
+    readonly sounds?: Readonly<Record<string, SoundFile>>;
+    readonly music?: Readonly<Record<string, MusicFile>>;
+    readonly cues?: Readonly<Record<string, CuesFile>>;
 }
 ```
 
@@ -2300,6 +2508,60 @@ const MAX_ACTIONS = 16;
 
 ```ts
 const MAX_PLAYERS = 4;
+```
+
+### `MAX_STEPS` (const)
+
+```ts
+const MAX_STEPS = 4096;
+```
+
+### `MusicCue` (interface)
+
+```ts
+interface MusicCue {
+    readonly on: string;
+    readonly do: 'music';
+    readonly music: string;
+}
+```
+
+### `MusicFile` (interface)
+
+```ts
+interface MusicFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly tempo: number;
+    readonly stepsPerBeat: number;
+    readonly volume: number;
+    readonly loop: boolean;
+    readonly parts: readonly MusicPart[];
+}
+```
+
+### `MusicPart` (type)
+
+```ts
+type MusicPart = TonePart | DrumPart;
+```
+
+### `MusicSchema` (const)
+
+```ts
+const MusicSchema: z.ZodType<MusicFile, MusicFile>;
+```
+
+### `NoiseVoice` (interface)
+
+```ts
+interface NoiseVoice {
+    readonly kind: 'noise';
+    readonly pitch: number;
+    readonly at: number;
+    readonly length: number;
+    readonly volume: number;
+}
 ```
 
 ### `PAD_BUTTONS` (const)
@@ -2804,6 +3066,39 @@ interface SnapshotView {
 }
 ```
 
+### `SoundCue` (interface)
+
+```ts
+interface SoundCue {
+    readonly on: string;
+    readonly do: 'sound';
+    readonly sound: string;
+}
+```
+
+### `SoundFile` (interface)
+
+```ts
+interface SoundFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly volume: number;
+    readonly voices: readonly SoundVoice[];
+}
+```
+
+### `SoundSchema` (const)
+
+```ts
+const SoundSchema: z.ZodType<SoundFile, SoundFile>;
+```
+
+### `SoundVoice` (type)
+
+```ts
+type SoundVoice = ToneVoice | NoiseVoice;
+```
+
 ### `spawnLevel` (function)
 
 ```ts
@@ -2824,6 +3119,15 @@ interface StepResult {
     readonly events: readonly SimEvent[];
     readonly render: RenderDelta;
     readonly rejected: readonly RejectedCommand[];
+}
+```
+
+### `StopMusicCue` (interface)
+
+```ts
+interface StopMusicCue {
+    readonly on: string;
+    readonly do: 'stop-music';
 }
 ```
 
@@ -2936,6 +3240,32 @@ interface TileWhen {
 }
 ```
 
+### `TonePart` (interface)
+
+```ts
+interface TonePart {
+    readonly id: string;
+    readonly kind: 'tone';
+    readonly wave: 'sine' | 'square' | 'sawtooth' | 'triangle';
+    readonly volume: number;
+    readonly notes: readonly string[];
+}
+```
+
+### `ToneVoice` (interface)
+
+```ts
+interface ToneVoice {
+    readonly kind: 'tone';
+    readonly wave: Wave;
+    readonly from: number;
+    readonly to: number;
+    readonly at: number;
+    readonly length: number;
+    readonly volume: number;
+}
+```
+
 ### `Transform` (const)
 
 ```ts
@@ -3034,6 +3364,12 @@ function verifyReplay(sim: Sim, replay: Replay): Verdict;
 
 ```ts
 function wasPressed(player: EntityRef, action: string): boolean;
+```
+
+### `Wave` (type)
+
+```ts
+type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
 ```
 
 ### `writeContent` (function)

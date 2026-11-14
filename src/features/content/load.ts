@@ -2,13 +2,16 @@ import { deepFreeze } from '../../lib/deep-freeze.ts'
 import type { BehaviourFile } from './behaviour.ts'
 import type { Character } from './character.ts'
 import { CONTENT_TYPES, type ContentType } from './content-types.ts'
+import type { CuesFile } from './cues.ts'
 import type { Diagnostic } from './diagnostics.ts'
 import type { FeelFile } from './feel.ts'
 import type { Level } from './level.ts'
+import type { MusicFile } from './music.ts'
 import { type Parsed, parseContent } from './parse.ts'
 import type { ContentRef } from './project.ts'
 import { PROJECT_FILE, type Project, parseProject } from './project.ts'
 import { noSuch } from './shared.ts'
+import type { SoundFile } from './sound.ts'
 import type { TilesetFile } from './tileset.ts'
 import type { TuningFile } from './tuning.ts'
 import type { Listed } from './type-info.ts'
@@ -27,6 +30,9 @@ export interface GameContent {
   readonly behaviours?: Readonly<Record<string, BehaviourFile>>
   readonly tunings?: Readonly<Record<string, TuningFile>>
   readonly feels?: Readonly<Record<string, FeelFile>>
+  readonly sounds?: Readonly<Record<string, SoundFile>>
+  readonly music?: Readonly<Record<string, MusicFile>>
+  readonly cues?: Readonly<Record<string, CuesFile>>
 }
 
 /** What a file's id has to be: its name without `.json`. */

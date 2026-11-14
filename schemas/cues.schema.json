@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this list of cues, like \"cues\". It matches the file name."
+    },
+    "cues": {
+      "maxItems": 256,
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "on": {
+                "type": "string",
+                "maxLength": 96,
+                "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$",
+                "description": "The event that sets it off, like \"hero.jumped\"."
+              },
+              "do": {
+                "type": "string",
+                "const": "sound",
+                "description": "Play a sound."
+              },
+              "sound": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Which sound to play, by id, like \"jump\"."
+              }
+            },
+            "required": [
+              "on",
+              "do",
+              "sound"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "on": {
+                "type": "string",
+                "maxLength": 96,
+                "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$",
+                "description": "The event that sets it off, like \"hero.jumped\"."
+              },
+              "do": {
+                "type": "string",
+                "const": "music",
+                "description": "Start a track."
+              },
+              "music": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "Which track to start, by id, like \"meadow\"."
+              }
+            },
+            "required": [
+              "on",
+              "do",
+              "music"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "on": {
+                "type": "string",
+                "maxLength": 96,
+                "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$",
+                "description": "The event that sets it off, like \"hero.jumped\"."
+              },
+              "do": {
+                "type": "string",
+                "const": "stop-music",
+                "description": "Stop the music."
+              }
+            },
+            "required": [
+              "on",
+              "do"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "description": "What plays when, one entry for each thing that happens."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "cues"
+  ],
+  "additionalProperties": false,
+  "title": "Cues"
+}

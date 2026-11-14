@@ -20,6 +20,8 @@ export interface Character {
   readonly kind?: string | undefined
   /** The behaviour file that decides what it does. */
   readonly behaviour?: string | undefined
+  /** The tuning file whose numbers decide how it moves. */
+  readonly tuning?: string | undefined
 }
 
 /** What a person may write: `upright` can be left out, and then it is false. */
@@ -52,6 +54,7 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z.strictObj
     'What this is to the game\'s rules and to behaviour files, like "crate", "spark" or "door".',
   ).optional(),
   behaviour: Id.describe('The behaviour file that decides what it does, by id, like "critter".').optional(),
+  tuning: Id.describe('The tuning file whose numbers decide how it moves, by id, like "hero".').optional(),
 })
 
 /** The character's row of the content table. */
@@ -74,5 +77,7 @@ export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
   check(character, game, report) {
     if (character.behaviour !== undefined && !game.has('behaviour', character.behaviour))
       report('behaviour', noSuch('behaviour', character.behaviour, game.ids('behaviour')))
+    if (character.tuning !== undefined && !game.has('tuning', character.tuning))
+      report('tuning', noSuch('tuning', character.tuning, game.ids('tuning')))
   },
 }

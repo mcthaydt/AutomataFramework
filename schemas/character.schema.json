@@ -65,6 +65,12 @@
       "maxLength": 64,
       "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
       "description": "The behaviour file that decides what it does, by id, like \"critter\"."
+    },
+    "tuning": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "The tuning file whose numbers decide how it moves, by id, like \"hero\"."
     }
   },
   "required": [
