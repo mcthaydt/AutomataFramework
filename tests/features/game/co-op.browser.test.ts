@@ -356,3 +356,21 @@ test('the keyboard given to a player through input.claim cannot be shared again'
     message: 'The keyboard is already shared.',
   })
 })
+
+// Audit M10: a level with one start point has room for one player, said as people say it.
+test('a level with one start point says it has room for one player', async () => {
+  const content = await loadFixtureGame(coopFiles)
+  const level = content.levels['level-1']
+  if (level === undefined) throw new Error('no level-1')
+  const narrow = {
+    ...content,
+    levels: { ...content.levels, 'level-1': { ...level, starts: level.starts.slice(0, 1) } },
+  }
+  const { game: g } = await startCoop(mount, { content: narrow })
+  game = g
+  expect(g.addPlayer('pad-1')).toEqual({
+    ok: false,
+    reason: 'no-start',
+    message: 'This level has room for one player.',
+  })
+})

@@ -738,3 +738,26 @@ test('inputsFor follows a shared keyboard and a rebind', () => {
   i.rebind('jump', 'shared-2', 'KeyK')
   expect(i.inputsFor(2, 'jump')).toEqual(['KeyK'])
 })
+
+// Audit M9: what a tick holds and who holds it come from one reading of the browser's pads.
+test('a poll reads the browser pads once, and so does a frame', () => {
+  let reads = 0
+  input = createInput({
+    mount,
+    controls: fixtureControls,
+    gamepads: () => {
+      reads++
+      return fake.getGamepads()
+    },
+    frames,
+  })
+  fake.connect(0)
+  input.setPlayers([1, 2])
+  input.claim(2, 'pad-1')
+  reads = 0
+  input.poll(0)
+  expect(reads).toBe(1)
+  reads = 0
+  frames.advance(16)
+  expect(reads).toBe(1)
+})
