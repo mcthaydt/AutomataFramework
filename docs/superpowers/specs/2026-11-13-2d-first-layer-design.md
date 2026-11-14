@@ -96,6 +96,7 @@ The editors also ship as an app for iPad, Android and desktop.
 | Edits that collide | Handled the way GitHub does: a three-way merge, with conflicts shown and resolved before the save commits. |
 | Sign-in step and site host | Sign-in is a GitHub App. Cloudflare Pages Functions do its token exchange and, as the App, all the editor's GitHub work; the site is on Cloudflare Pages. |
 | New repo names | AutomataFrameworkEditors and AutomataFrameworkSite. |
+| The look | Blueprint, dark by default, canvas first with floating tools, a drawing-notes layer that never changes the game's art, and Phosphor regular icons; on the editors, the site and the Examples demo game's screens, not on games in general (the Owner, 2026-11-14). See Visual direction. |
 | Plans | Written in separate sessions (Fable 5.2, medium), one per plan, after this spec is committed. |
 
 ## Approaches considered
@@ -291,6 +292,54 @@ Its own repo, a static site in the style of pixijs.com:
 Hosted as static files on Cloudflare Pages. (The editors' sign-in step and API are Pages Functions in the editors' own
 Pages project in M1.)
 
+## Visual direction
+
+Decided by the Owner, 2026-11-14. The research behind it, with its references, is in the private notes. It serves
+principle 2 (iPad-first editors) and principle 1 (agent-first: the drawing notes show every setting an agent can
+change, where it acts).
+
+- **The look is called Blueprint**: the editor is a drafting table. Deep blue paper, chalk-white lines and text,
+  pencil-blue for quieter text, and one marker yellow that means "you can touch this" (the picked thing, the main
+  button, the values in notes). Square corners (2 to 3 px), 1 px chalk borders, a soft shadow only on floating
+  panels. Each editor tints its own paper so a person always knows where they are: World blueprint blue, Characters
+  sepia, Feel graph-paper green, Sound teal, Story grey.
+
+  | Token | Value | Job |
+  |---|---|---|
+  | paper | `#0A1F3C` | the panels and the ground of every screen |
+  | hatch | `#0E2A50` | raised or grouped areas |
+  | chalk | `#EAF2FA` | text, borders, icons |
+  | pencil | `#8FB0D3` | quieter text and hints |
+  | marker | `#FFD447` | what can be touched: the picked thing, the main button, values in notes |
+
+- **Type.** IBM Plex Sans Condensed for labels, set in capitals like notes on a drawing, and JetBrains Mono for
+  numbers and measures (tabular). Both are under the SIL Open Font License and cover Latin and Cyrillic; Korean,
+  Japanese and Chinese use Noto Sans for that language. How the font files are shipped is the plan's choice; a font
+  package added as a dependency needs the Owner's yes.
+- **Dark by default.** Dark is the first theme. A light theme comes later, made with the same care.
+- **The layout is canvas first.** The level (or the character, or the timeline) fills the screen. The tools, the
+  editor switcher, Save and Share, the picked thing's card, and undo and redo float on top at the edges: tools on the
+  edge the hand holds, Save top right, undo and redo bottom right. On an iPad held upright and on a phone the
+  picked thing's card becomes a bottom sheet.
+- **The game's art is never restyled** (the Owner: "having the art forced into an art style is stupid"). The canvas
+  always shows the game's real art, exactly as players see it. Blueprint is only the editor's own skin.
+- **The drawing notes** are a layer drawn over the art, never into it: the picked thing's settings written beside
+  it with a leader line ("HOW HEAVY 2.0"), measure lines ("3 TILES"), and the tile grid. Notes show only for what is
+  picked, plus the grid, so busy levels stay calm. Each note is also a control: tapping one opens the same − and +
+  as the card. They are navy chips with a thin white edge so they read over light or dark art. One "Drawing notes"
+  switch sets them to on, faded or hidden, and Play always hides them. The switch is a setting on the device, like
+  the first-run tips, so it never changes a game's files, and it has a plain-words command ("Hide notes") in the find
+  bar.
+- **Moments.** Saving lands as a rubber stamp ("SAVED by Sam"); approving a waiting change stamps "APPROVED". Notes
+  draw themselves in when something is picked (200 ms) and fade when it is let go; undo rubs the last note out. With
+  reduced motion, all of it is a plain fade.
+- **Icons: Phosphor, regular weight** (`@phosphor-icons/core`, MIT licence), approved as a dependency by the Owner
+  (2026-11-14). Every tool has a word under its icon.
+- **Where it applies.** The editors, the site, and the Examples demo game's own title, pause and settings screens.
+  Not games in general: a game made with the framework keeps its own look, and the framework never imposes Blueprint.
+- **Still true:** touch targets of 44 px and primary actions of 48 px, every word passes the drunk-grandma test, and
+  every empty screen says what goes there and offers to fill it with an example.
+
 ## The demo game
 
 A small original physics platformer. You run and jump, push crates, ride a seesaw and a swinging platform, collect
@@ -460,4 +509,4 @@ Things only the Owner can decide or provide; each plan that needs one stops and 
 - The networking protocol details, the snapshot format, and the replay file format.
 - Which old code is lifted, with the source commit noted, and which is written fresh.
 - The examples gallery's first set.
-- The editors' screens, within the iPad-first rules.
+- The editors' screens, within the iPad-first rules and the Visual direction.

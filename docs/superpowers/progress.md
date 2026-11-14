@@ -40,6 +40,10 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
 
 ### Log
 
+- 2026-11-14: The spec gains a Visual direction section (the Owner): Blueprint as the editors' and the site's skin,
+  dark by default, canvas first with floating tools, a drawing-notes layer over the game's real art, Phosphor
+  regular icons as an approved dependency, and the Examples demo game's screens in the same look. No change to the
+  progress figure.
 - 2026-11-13: The spec combines the editors into five (the Owner): World (Levels, Tiles, the environment builder),
   Characters (the figure builder, clips and entity kinds, Schematic), Feel (Feel, Tuner), Sound (Audio) and Story
   (Writer, Sequence). World and Characters have a 2D and a 3D version; the 2D ones work the way the old 3D builders
