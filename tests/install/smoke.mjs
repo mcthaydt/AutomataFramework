@@ -64,6 +64,16 @@ if (!full.ok) {
   for (const problem of full.diagnostics) console.error(formatDiagnostic(problem))
   process.exit(1)
 }
+// Rapier's code is inside the package, so its licence has to be there to read and ship.
+const rapierLicence = await readFile(
+  new URL(import.meta.resolve('@automataframework/framework/rapier.LICENSE')),
+  'utf8',
+)
+if (!rapierLicence.includes('Apache License')) {
+  console.error("The installed package's rapier.LICENSE is not the Apache licence.")
+  process.exit(1)
+}
+
 const kinds = Object.keys(CONTENT_TYPES)
 const missing = kinds.filter((type) => Object.keys(full.value[CONTENT_TYPES[type].plural] ?? {}).length === 0)
 if (missing.length > 0) {

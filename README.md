@@ -286,6 +286,20 @@ and this is the whole file `content/sounds/door.json`:
 A mistake is reported with the file, the place in it and what to write, for example `content/cues/cues.json:
 cues[3].sound: There is no sound called "dor". This game has: door, jump, land.`
 
+## Shipping a game: Rapier's licence
+
+The physics engine, Rapier, is Apache-2.0, and its code is built into this package's files (its binary comes out as
+`rapier_wasm2d_bg.wasm` beside them, which a bundler such as Vite copies into your game). The licence asks that a copy
+of it travels with the game you ship. The package exports that copy by name, so put it where your game keeps its other
+notices, for example:
+
+```js
+import { copyFile } from 'node:fs/promises'
+await copyFile(new URL(import.meta.resolve('@automataframework/framework/rapier.LICENSE')), 'dist/rapier.LICENSE')
+```
+
+or paste its text into your game's own licence page. The demo game does the second.
+
 ## The public API
 
 `docs/api/framework.api.md` lists every export of both entries. It is generated (`pnpm api-report --update`), and CI
