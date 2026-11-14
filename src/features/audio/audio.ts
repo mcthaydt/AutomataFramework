@@ -4,6 +4,7 @@
 import type { GameContent } from '../content/content.ts'
 import type { SimEvent } from '../sim/sim.ts'
 import { type CueAction, type CueLogEntry, createCueLog, createLimiter, cueTable } from './cues.ts'
+import { createMusicPlayer } from './music-player.ts'
 import type { Speaker, SpeakerState } from './speaker.ts'
 
 export { type CueLogEntry, LOG_MAX, MAX_SAME, MAX_SOUNDS } from './cues.ts'
@@ -24,6 +25,8 @@ export interface GameAudio {
   raise(event: string): void
   /** What the cues asked for, oldest first. A copy. */
   log(): readonly CueLogEntry[]
+  /** The track wanted now, playing or waiting for the first tap; `undefined` for none. */
+  music(): string | undefined
   state(): SpeakerState
   onState(listener: (state: SpeakerState) => void): () => void
 }
@@ -42,27 +45,41 @@ export function createAudio(options: {
   const table = cueTable(options.content, options.tickHz ?? 60)
   const log = createCueLog()
   const limiter = createLimiter()
+  const player = createMusicPlayer(speaker)
   /** The last tick heard since `begin`; undefined before any. */
   let heard: number | undefined
 
-  const run = (action: CueAction, on: string, tick: number, from: 'sim' | 'page'): void => {
-    // Music is the next task's.
-    if (action.do !== 'sound') return
-    const entry = { tick, from, on, do: 'sound', id: action.sound.id } as const
-    if (from === 'sim' && !limiter.admit(action.sound.id, tick, action.ticks)) {
-      log.add({ ...entry, skipped: 'busy' })
+  /** Does one action of a cue. `last` is whether it is the last change to the music that its event asked for. */
+  const run = (action: CueAction, on: string, tick: number, from: 'sim' | 'page', last: boolean): void => {
+    if (action.do === 'sound') {
+      const entry = { tick, from, on, do: 'sound', id: action.sound.id } as const
+      if (from === 'sim' && !limiter.admit(action.sound.id, tick, action.ticks)) {
+        log.add({ ...entry, skipped: 'busy' })
+        return
+      }
+      log.add(entry)
+      // A sound asked for while nothing can be heard is logged and not played, and is not played late.
+      if (speaker.state() !== 'on') return
+      for (const voice of action.sound.voices)
+        speaker.play('sound', { ...voice, volume: voice.volume * action.sound.volume }, speaker.now())
       return
     }
-    log.add(entry)
-    // A sound asked for while nothing can be heard is logged and not played, and is not played late.
-    if (speaker.state() !== 'on') return
-    for (const voice of action.sound.voices)
-      speaker.play('sound', { ...voice, volume: voice.volume * action.sound.volume }, speaker.now())
+    log.add(
+      action.do === 'music'
+        ? { tick, from, on, do: 'music', id: action.music.id }
+        : { tick, from, on, do: 'stop-music' },
+    )
+    if (!last) return
+    if (action.do === 'music') player.want(action.music)
+    else player.stop()
   }
 
   /** Does what the cues for `on` say. A page event is not limited, and its sounds are not counted. */
   const answer = (on: string, tick: number, from: 'sim' | 'page'): void => {
-    for (const action of table.get(on) ?? []) run(action, on, tick, from)
+    const actions = table.get(on) ?? []
+    // Every change to the music is logged, but of several for one event only the last one counts.
+    const lastMusic = actions.findLastIndex((action) => action.do !== 'sound')
+    actions.forEach((action, i) => run(action, on, tick, from, i === lastMusic))
   }
 
   return {
@@ -80,6 +97,7 @@ export function createAudio(options: {
       answer(event, heard ?? 0, 'page')
     },
     log: () => log.entries(),
+    music: () => player.wanted(),
     state: () => speaker.state(),
     onState: (listener) => speaker.onState(listener),
   }
