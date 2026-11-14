@@ -14,7 +14,7 @@ import zh from './library/flags/zh.svg?raw'
 import globe from './library/globe.svg?raw'
 
 const FLAGS: Readonly<Record<Language, string>> = { zh, es, en, pt, ja, ko }
-const ICONS = { globe, check } as const
+const ICONS: Readonly<Record<'globe' | 'check', string>> = { globe, check }
 
 /** A drawing from its text, as a node of this page. Said to no one: its button or its place says what it is. */
 function drawing(text: string): SVGSVGElement {
@@ -33,7 +33,7 @@ export function languageFlag(language: Language): SVGSVGElement {
 }
 
 /** One of the picker's two icons, drawn in the colour of the words around it. */
-export function pickerIcon(name: keyof typeof ICONS, size: number): SVGSVGElement {
+export function pickerIcon(name: 'globe' | 'check', size: number): SVGSVGElement {
   const icon = drawing(ICONS[name])
   icon.style.cssText = `width:${size}px;height:${size}px;display:block`
   return icon
