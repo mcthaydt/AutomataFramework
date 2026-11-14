@@ -2412,6 +2412,12 @@ class SimCapacityError extends Error {
 }
 ```
 
+### `simContent` (function)
+
+```ts
+function simContent(content: GameContent): GameContent;
+```
+
 ### `SimContext` (interface)
 
 ```ts
@@ -5078,6 +5084,12 @@ interface Sim {
 class SimCapacityError extends Error {
     constructor(cause: unknown);
 }
+```
+
+### `simContent` (function)
+
+```ts
+function simContent(content: GameContent): GameContent;
 ```
 
 ### `SimContext` (interface)
