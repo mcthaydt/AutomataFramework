@@ -63,3 +63,14 @@ test('the three files with another name are there, and the real names are not', 
     expect(tree[name], name).toBeDefined()
   for (const name of ['package.json', 'biome.json', '.gitignore']) expect(tree[name], name).toBeUndefined()
 })
+
+test("the template's page says no language of its own: no lang on the page, no English in its code", () => {
+  expect(tree['index.html']).toBeDefined()
+  expect(tree['index.html']).not.toMatch(/<html[^>]*\blang=/)
+  const inCode = Object.entries(tree).filter(
+    ([path, text]) => path.startsWith('src/') && /(['"])en\1/.test(text),
+  )
+  expect(inCode.map(([path]) => path)).toEqual([])
+  // Its one English: the language its own words are written in, named once in the project file.
+  expect((tree['automata.toml'] ?? '').match(/^source = "en"$/gm)).toHaveLength(1)
+})

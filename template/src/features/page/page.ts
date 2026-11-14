@@ -11,6 +11,7 @@ import {
   type Host,
   INPUT_SETTINGS_DEFAULT,
   InputSettingsSchema,
+  languagePicker,
   loadGame,
   openSettings,
   type ReadPicture,
@@ -28,13 +29,13 @@ const ACTIONS: readonly string[] = Object.keys(CONTROLS)
 const GAME_ID = 'my-game'
 
 /**
- * The sentences the page says before it has any of the game's words: while the files are loading, and when they could not
- * be read at all. `problemTitle` and `cannotStart` are also in the messages (`page.problem-title`, `page.cannot-start`)
- * and said in the player's language once there is one. Everything else it says is in `content/messages/`, in six
- * languages.
+ * The sentences the page says before it has a language to say them in: when the game's files could not be read at all.
+ * They are for the developer, who reads English. `problemTitle` and `cannotStart` are also in the messages
+ * (`page.problem-title`, `page.cannot-start`) and said in the player's language once there is one. Everything else it
+ * says is in `content/messages/`, in six languages. While loading the page says nothing: a mark that turns, with no
+ * letters, because no language is the default.
  */
 export const WORDS = {
-  loading: 'Loading the game…',
   problemTitle: 'This game has a problem and cannot start.',
   problemFix: 'Fix the file named above, then load this page again.',
   cannotStart: 'This game could not start in this browser. Try another browser.',
@@ -88,10 +89,13 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string): 
   return made
 }
 
-function loading(): HTMLParagraphElement {
-  const text = element('p', WORDS.loading)
-  text.className = 'loading'
-  return text
+/** The mark shown while the files load: no letters, since the player has no language yet. */
+function loading(): HTMLDivElement {
+  const mark = element('div')
+  mark.className = 'loading'
+  mark.setAttribute('role', 'status')
+  mark.setAttribute('aria-busy', 'true')
+  return mark
 }
 
 /** Loads the game and starts it in `root`. Never rejects: anything that goes wrong is words in `root`. */
@@ -103,6 +107,7 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
   let stopped = false
   let forgetHint = (): void => {}
   let forgetLanguage = (): void => {}
+  let forgetPicker = (): void => {}
   /** Says a sentence in the player's language; `undefined` until there are words to say it in. */
   let say: Words | undefined
 
@@ -115,6 +120,7 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       stopped = true
       forgetHint()
       forgetLanguage()
+      forgetPicker()
       game?.stop()
       game = undefined
       root.replaceChildren()
@@ -136,6 +142,20 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
     return page
   }
 
+  /** What went wrong that is not a bad file: a read that failed some other way, or a browser that cannot play. */
+  const report = (error: unknown): Page => {
+    const reason = error instanceof Error ? error.message : String(error)
+    // A picture that is missing or old: it is the game's pictures that need painting again, not the browser. The words
+    // are there by now, so the player reads it in their language.
+    if (error instanceof ArtError)
+      return problem(
+        say?.('page.problem-title') ?? WORDS.problemTitle,
+        [reason],
+        say?.('page.paint-again') ?? WORDS.problemFix,
+      )
+    return problem(say?.('page.cannot-start') ?? WORDS.cannotStart, [reason])
+  }
+
   root.replaceChildren(loading())
   root.dataset.state = 'loading'
   try {
@@ -151,70 +171,88 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       initial: INPUT_SETTINGS_DEFAULT,
     })
 
-    // The words in the player's language: the one they picked, else the host's. This page has no picker yet (a later
-    // step gives it one), so until then a player nobody has asked gets the device's language, else the game's first.
+    // The words in the player's language: the one they picked, else the host's. A player who has neither is asked, with
+    // flags, before anything is said in any language.
     const locale = createLocale({ content: loaded.value, host, settings })
-    // Interim, until the page shows the picker (Task 7 removes this line): the device's language, else English if the
-    // game has it, else the first.
-    const first = locale.suggested() ?? locale.languages.find((l) => l === 'en') ?? locale.languages[0]
-    if (!locale.asked() && first !== undefined) await locale.set(first)
     forgetLanguage = followLanguage(locale)
-    say = locale.words
 
+    /** The game, in the player's language. Anything that goes wrong is words in `root`. */
+    const play = async (): Promise<Page> => {
+      try {
+        say = locale.words
+        root.replaceChildren()
+        const started = await startGame({
+          content: loaded.value,
+          plugins: gamePlugins,
+          mount: root,
+          controls: CONTROLS,
+          host,
+          locale,
+          readPicture,
+          settings: controls.get(),
+          ...(options.frames === undefined ? {} : { frames: options.frames }),
+        })
+        if (stopped) {
+          started.stop()
+          return page
+        }
+        game = started
+        game.input.onBindings((changed) => void controls.set(changed))
+        root.dataset.state = 'playing'
+
+        // A player at a keyboard is told which keys to press, until the first time they press one of them.
+        if (!coarse) {
+          const hint = element('p')
+          const draw = (): void => {
+            hint.textContent = hintFor((action) => started.input.inputsFor(1, action)[0], locale.words)
+          }
+          draw()
+          const unfollow = locale.onChange(draw)
+          hint.className = 'hint'
+          root.append(hint)
+          const gone = (event: KeyboardEvent): void => {
+            const used = ACTIONS.some((action) => started.input.inputsFor(1, action).includes(event.code))
+            if (used) forgetHint()
+          }
+          forgetHint = () => {
+            window.removeEventListener('keydown', gone)
+            unfollow()
+            hint.remove()
+            forgetHint = () => {}
+          }
+          window.addEventListener('keydown', gone)
+        }
+        return page
+      } catch (error) {
+        return report(error)
+      }
+    }
+
+    if (locale.asked()) return await play()
+
+    // Nobody has said what language to play in: show the flags, and start the game when Go is pressed. The page is
+    // handed back now, so a caller can stop it while it waits.
     root.replaceChildren()
-    const started = await startGame({
-      content: loaded.value,
-      plugins: gamePlugins,
+    root.dataset.state = 'picking'
+    const picker = languagePicker({
       mount: root,
-      controls: CONTROLS,
-      host,
       locale,
-      readPicture,
-      settings: controls.get(),
       ...(options.frames === undefined ? {} : { frames: options.frames }),
     })
-    if (stopped) {
-      started.stop()
-      return page
+    forgetPicker = () => {
+      picker.destroy()
+      forgetPicker = () => {}
     }
-    game = started
-    game.input.onBindings((changed) => void controls.set(changed))
-    root.dataset.state = 'playing'
-
-    // A player at a keyboard is told which keys to press, until the first time they press one of them.
-    if (!coarse) {
-      const hint = element('p')
-      const draw = (): void => {
-        hint.textContent = hintFor((action) => started.input.inputsFor(1, action)[0], locale.words)
-      }
-      draw()
-      const unfollow = locale.onChange(draw)
-      hint.className = 'hint'
-      root.append(hint)
-      const gone = (event: KeyboardEvent): void => {
-        const used = ACTIONS.some((action) => started.input.inputsFor(1, action).includes(event.code))
-        if (used) forgetHint()
-      }
-      forgetHint = () => {
-        window.removeEventListener('keydown', gone)
-        unfollow()
-        hint.remove()
-        forgetHint = () => {}
-      }
-      window.addEventListener('keydown', gone)
-    }
+    void picker.done.then(
+      () => {
+        forgetPicker()
+        if (!stopped) return play()
+        return undefined
+      },
+      (error: unknown) => report(error),
+    )
     return page
   } catch (error) {
-    // `loadGame` reports a bad file as words; this is a read that failed some other way, or a browser that cannot play.
-    const reason = error instanceof Error ? error.message : String(error)
-    // A picture that is missing or old: it is the game's pictures that need painting again, not the browser. The words
-    // are there by now, so the player reads it in their language.
-    if (error instanceof ArtError)
-      return problem(
-        say?.('page.problem-title') ?? WORDS.problemTitle,
-        [reason],
-        say?.('page.paint-again') ?? WORDS.problemFix,
-      )
-    return problem(say?.('page.cannot-start') ?? WORDS.cannotStart, [reason])
+    return report(error)
   }
 }
