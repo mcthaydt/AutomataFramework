@@ -91,7 +91,16 @@ test(
 
 test("a folder that is not the generated code's own is refused, and nothing is written", async () => {
   const memory = memoryLayer(under('game', GAME))
-  for (const outdir of ['content/words', 'content', '../x', '/tmp/x', 'src\\paraglide', '', 'src//x', 'automata.toml']) {
+  for (const outdir of [
+    'content/words',
+    'content',
+    '../x',
+    '/tmp/x',
+    'src\\paraglide',
+    '',
+    'src//x',
+    'automata.toml',
+  ]) {
     const sentence = await failure(memory, outdir)
     expect(sentence, outdir).toContain(outdir === '' ? 'must be a folder inside the game' : outdir)
   }
