@@ -6,4 +6,5 @@ export { JoinCommand, joinCommand, joinPlugin, LeaveCommand, leaveCommand, playe
 export { levelPlugin } from './plugin.ts'
 export { LevelError, spawnLevel } from './spawn-level.ts'
 export { levelSize, type TileRun, tileRuns } from './tile-runs.ts'
+export { type Touch, touchEvent, touchPlugin } from './touch.ts'
 export { touchKinds, usesJoints } from './uses.ts'
