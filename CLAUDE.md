@@ -144,6 +144,8 @@ src/cli.ts                    the package's `bin`, `automata`: Node only, calls 
 src/lib/                      shared helpers, no feature logic; `zod.ts` is the one way into Zod (it turns its eval probe off first)
 src/features/<feature>/       <feature>.ts entry, <part>.ts one job per file, library/ JSON data
 scripts/                      thin CLI wrappers
+template/                     the game `automata create` writes: a real game folder; `template/replays/level-1.json` is a golden
+skills/                       the skills an agent reads to work on a game (shipped in the package)
 tests/architecture.test.ts    imports go down, no cycles, no tests in src
 tests/features/<feature>/     mirrors src/features
 tests/lib/                    tests of src/lib
@@ -151,6 +153,7 @@ tests/fixtures/               shared test helpers and the example game's files
 tests/install/                installs the packed package in a clean folder and uses it
 tests/journeys/               real browsers play one room against a server CI starts (own Vitest project, the `online` job)
 tests/workflows/, tests/docs/ checks that read a workflow or the README
+tests/template/               checks of the template: its files, its words, its recorded play, its page in real browsers
 tests/golden/                 recorded hashes and replays
 docs/superpowers/             specs/, plans/, audits/, progress.md
 ```
