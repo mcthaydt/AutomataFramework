@@ -22,9 +22,8 @@ let online: Online | undefined
 
 // The first load of the framework and the SDK, and the whole join, happen inside this with `new Function` refused as a
 // strict CSP does: whatever tried to build code from a string is listed in `data-built-code`.
-Error.stackTraceLimit = 40
 const stacks: string[] = []
-const where = (): string => (new Error().stack ?? '').split('\n').slice(2, 30).join(' | ')
+const where = (): string => (new Error().stack ?? '').split('\n').slice(2, 9).join(' | ')
 const built = await attemptsToBuildCode(async () => {
   // Where each attempt came from, for the journey to print if there is one: a stack's first lines say which package asked.
   const refusing = globalThis.Function

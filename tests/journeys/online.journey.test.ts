@@ -84,7 +84,17 @@ beforeAll(async () => {
   await build({
     ...common,
     // Scripts beside Rapier's binary, which the plugin writes at the top of the output: its address is relative.
-    build: { outDir, emptyOutDir: true, target: 'es2023', sourcemap: false, assetsDir: '' },
+    build: {
+      outDir,
+      emptyOutDir: true,
+      target: 'es2023',
+      sourcemap: false,
+      assetsDir: '',
+      // One script, run in the order written: split into chunks, a bundler may run a file the framework's modules share
+      // before the framework's first line, which sets Zod's `jitless` (src/lib/no-eval.ts), and the page would build code
+      // from a string while it loads. A game for itch or Wavedash ships one script too.
+      rolldownOptions: { output: { codeSplitting: false } },
+    },
   })
   pageServer = await preview({
     ...common,
