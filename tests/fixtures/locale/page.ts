@@ -64,7 +64,8 @@ export interface LocalePage {
 }
 
 const FRAME = 1000 / 60
-const params = new URLSearchParams(location.search)
+// The page lives in a `srcdoc` frame, which has no address of its own: what the test asked is on the script's.
+const params = new URL(import.meta.url).searchParams
 
 /** Which game's settings the page keeps: test files that run side by side in one browser each use their own. */
 const gameId = params.get('game') ?? 'language-fixture'
