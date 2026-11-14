@@ -2,6 +2,16 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 3: the demo game plays itself (watch mode)
+
+Spec: [`specs/2026-11-14-watch-mode-design.md`](specs/2026-11-14-watch-mode-design.md). The plan, its audit and the
+tracker for the other three parts are in AutomataFrameworkExamples (`docs/superpowers/plans/2026-11-14-watch-mode.md`).
+This repo has Part A only: one function.
+
+| Task | State |
+|---|---|
+| 1. `watchReplay` draws a replay with no input | Built and pushed, waiting for CI; the pin move in Examples (Task 2) waits for its merge |
+
 ## Cycle 1: the 2D first layer
 
 Spec: [`specs/2026-11-13-2d-first-layer-design.md`](specs/2026-11-13-2d-first-layer-design.md)
