@@ -17,7 +17,6 @@ import {
   applySettings,
   type BindingSlot,
   type InputSettings,
-  type Rebound,
   rebind as rebound,
   type SaidRebound,
   settingsOf,

@@ -221,18 +221,15 @@ function refused(reason: RebindRefusal['reason'], key: string, values?: Values):
 /** `input` (a key code, or a PadInput for the `pad` slot) becomes the action's only input in that slot. */
 export function rebind(current: Controls, action: string, slot: BindingSlot, input: string): Rebound {
   const target = current[action]
-  if (target === undefined)
-    return refused('unknown-action', 'unknown-action', { action })
+  if (target === undefined) return refused('unknown-action', 'unknown-action', { action })
   if (slot === 'pad') {
-    if (RESERVED_PAD_NAMES.has(input))
-      return refused('reserved', 'reserved.button', { input })
+    if (RESERVED_PAD_NAMES.has(input)) return refused('reserved', 'reserved.button', { input })
     if (
       !(PAD_BUTTONS as readonly string[]).includes(input) &&
       !(PAD_STICKS as readonly string[]).includes(input)
     )
       return refused('unknown-input', 'unknown-input')
-  } else if (RESERVED_KEYS.includes(input))
-    return refused('reserved', 'reserved.key', { input })
+  } else if (RESERVED_KEYS.includes(input)) return refused('reserved', 'reserved.key', { input })
   if (slot === 'shared-1' || slot === 'shared-2') {
     if (!Object.values(current).some((control) => control.shared !== undefined))
       return refused('no-shared', 'no-shared')

@@ -665,7 +665,14 @@ function createLocale(options: {
     readonly content: GameContent;
     readonly host: Pick<Host, 'language' | 'deviceLanguages'>;
     readonly settings: Settings;
+    readonly watching?: boolean;
 }): Locale;
+```
+
+### `createPicker` (function)
+
+```ts
+function createPicker(locale: Locale): Picker;
 ```
 
 ### `createRecorder` (function)
@@ -1298,7 +1305,7 @@ interface GameOptions extends GameSimOptions {
     readonly audio?: GameAudio;
     readonly soundNotice?: string | false;
     readonly readPicture?: ReadPicture;
-    readonly locale?: Locale;
+    readonly locale: Locale;
 }
 ```
 
@@ -1416,7 +1423,7 @@ interface Input {
     controls(): Controls;
     settings(): InputSettings;
     dropped(): readonly string[];
-    rebind(action: string, slot: BindingSlot, input: string): Rebound;
+    rebind(action: string, slot: BindingSlot, input: string): SaidRebound;
     resetBindings(): void;
     onBindings(listener: (settings: InputSettings) => void): () => void;
     capture(slot: BindingSlot): Capture;
@@ -1440,7 +1447,7 @@ interface InputOptions {
     readonly gamepads?: () => readonly (PadLike | null)[];
     readonly frames?: Frames;
     readonly sequence?: Sequence;
-    readonly words?: Words;
+    readonly words: Words;
 }
 ```
 
@@ -1602,6 +1609,18 @@ const LANGUAGE_TAGS: Readonly<Record<Language, string>>;
 
 ```ts
 function languageName(language: Language): string;
+```
+
+### `LanguagePick` (type)
+
+```ts
+type LanguagePick = {
+    readonly language: Language;
+    readonly from: 'saved' | 'host';
+} | {
+    readonly language: undefined;
+    readonly suggested: Language | undefined;
+};
 ```
 
 ### `LANGUAGES` (const)
@@ -1858,12 +1877,15 @@ type LoadResult<S> = {
 
 ```ts
 interface Locale {
-    language(): Language;
-    choice(): Language | 'auto';
+    language(): Language | undefined;
+    asked(): boolean;
+    suggested(): Language | undefined;
     readonly languages: readonly Language[];
+    listed(): readonly Language[];
     readonly words: Words;
+    wordsIn(language: Language): Words;
     say(message: Message): string;
-    set(choice: Language | 'auto'): Promise<StoreResult<void>>;
+    set(language: Language): Promise<StoreResult<void>>;
     onChange(listener: (language: Language) => void): () => void;
 }
 ```
@@ -2164,7 +2186,7 @@ type OnlineStatus = {
 ### `onlineWords` (function)
 
 ```ts
-function onlineWords(status: OnlineStatus, words?: Words): string;
+function onlineWords(status: OnlineStatus, words: Words): string;
 ```
 
 ### `openSettings` (function)
@@ -2208,6 +2230,18 @@ interface PadLike {
         readonly value: number;
     }[];
 }
+```
+
+### `padMenu` (function)
+
+```ts
+function padMenu(options?: {
+    readonly frames?: Frames;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+}): {
+    on(listener: (press: MenuPress) => void): () => void;
+    destroy(): void;
+};
 ```
 
 ### `pageDensity` (const)
@@ -2329,6 +2363,23 @@ interface PhysicsOptions {
 }
 ```
 
+### `Picker` (interface)
+
+```ts
+interface Picker {
+    readonly flags: readonly Language[];
+    chosen(): Language | undefined;
+    choose(language: Language): void;
+    move(step: -1 | 1): void;
+    words(): {
+        readonly title: string;
+        readonly go: string;
+    } | undefined;
+    go(): Promise<StoreResult<void> | undefined>;
+    onChange(listener: () => void): () => void;
+}
+```
+
 ### `pickLanguage` (function)
 
 ```ts
@@ -2337,7 +2388,7 @@ function pickLanguage(options: {
     readonly host?: string | undefined;
     readonly device: readonly string[];
     readonly shipped: readonly Language[];
-}): Language;
+}): LanguagePick;
 ```
 
 ### `placeholdersOf` (function)
@@ -2375,6 +2426,12 @@ const Player: ComponentDef<typeof playerFields>;
 
 ```ts
 function playersIn(sim: Sim): number[];
+```
+
+### `playersOrder` (function)
+
+```ts
+function playersOrder(own: Language | undefined, shipped: readonly Language[]): readonly Language[];
 ```
 
 ### `playReplay` (function)
@@ -2504,6 +2561,17 @@ type ReadPicture = (path: string) => Promise<Blob>;
 function rebind(current: Controls, action: string, slot: BindingSlot, input: string): Rebound;
 ```
 
+### `RebindRefusal` (interface)
+
+```ts
+interface RebindRefusal {
+    readonly ok: false;
+    readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half';
+    readonly key: string;
+    readonly values?: Values;
+}
+```
+
 ### `Rebound` (type)
 
 ```ts
@@ -2511,13 +2579,7 @@ type Rebound = {
     readonly ok: true;
     readonly controls: Controls;
     readonly swapped?: string;
-} | {
-    readonly ok: false;
-    readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half';
-    readonly message: string;
-    readonly key: string;
-    readonly values?: Values;
-};
+} | RebindRefusal;
 ```
 
 ### `RECONNECT_DELAYS_MS` (const)
@@ -2769,6 +2831,16 @@ interface RopeLine {
     readonly x2: number;
     readonly y2: number;
 }
+```
+
+### `SaidRebound` (type)
+
+```ts
+type SaidRebound = Extract<Rebound, {
+    ok: true;
+}> | (RebindRefusal & {
+    readonly message: string;
+});
 ```
 
 ### `SaveDef` (interface)
@@ -3324,7 +3396,7 @@ function soundNotice(options: {
     readonly mount: HTMLElement;
     readonly audio: Pick<GameAudio, 'state' | 'onState' | 'silent'>;
     readonly words?: string;
-    readonly locale?: Pick<Locale, 'words' | 'onChange'>;
+    readonly locale: Pick<Locale, 'words' | 'onChange'>;
 }): () => void;
 ```
 
@@ -4552,7 +4624,14 @@ function createLocale(options: {
     readonly content: GameContent;
     readonly host: Pick<Host, 'language' | 'deviceLanguages'>;
     readonly settings: Settings;
+    readonly watching?: boolean;
 }): Locale;
+```
+
+### `createPicker` (function)
+
+```ts
+function createPicker(locale: Locale): Picker;
 ```
 
 ### `createRecorder` (function)
@@ -5279,6 +5358,18 @@ const LANGUAGE_TAGS: Readonly<Record<Language, string>>;
 function languageName(language: Language): string;
 ```
 
+### `LanguagePick` (type)
+
+```ts
+type LanguagePick = {
+    readonly language: Language;
+    readonly from: 'saved' | 'host';
+} | {
+    readonly language: undefined;
+    readonly suggested: Language | undefined;
+};
+```
+
 ### `LANGUAGES` (const)
 
 ```ts
@@ -5513,12 +5604,15 @@ type LoadResult<S> = {
 
 ```ts
 interface Locale {
-    language(): Language;
-    choice(): Language | 'auto';
+    language(): Language | undefined;
+    asked(): boolean;
+    suggested(): Language | undefined;
     readonly languages: readonly Language[];
+    listed(): readonly Language[];
     readonly words: Words;
+    wordsIn(language: Language): Words;
     say(message: Message): string;
-    set(choice: Language | 'auto'): Promise<StoreResult<void>>;
+    set(language: Language): Promise<StoreResult<void>>;
     onChange(listener: (language: Language) => void): () => void;
 }
 ```
@@ -5767,7 +5861,7 @@ type OnlineStatus = {
 ### `onlineWords` (function)
 
 ```ts
-function onlineWords(status: OnlineStatus, words?: Words): string;
+function onlineWords(status: OnlineStatus, words: Words): string;
 ```
 
 ### `openSettings` (function)
@@ -5910,6 +6004,23 @@ interface PhysicsOptions {
 }
 ```
 
+### `Picker` (interface)
+
+```ts
+interface Picker {
+    readonly flags: readonly Language[];
+    chosen(): Language | undefined;
+    choose(language: Language): void;
+    move(step: -1 | 1): void;
+    words(): {
+        readonly title: string;
+        readonly go: string;
+    } | undefined;
+    go(): Promise<StoreResult<void> | undefined>;
+    onChange(listener: () => void): () => void;
+}
+```
+
 ### `pickLanguage` (function)
 
 ```ts
@@ -5918,7 +6029,7 @@ function pickLanguage(options: {
     readonly host?: string | undefined;
     readonly device: readonly string[];
     readonly shipped: readonly Language[];
-}): Language;
+}): LanguagePick;
 ```
 
 ### `placeholdersOf` (function)
@@ -5956,6 +6067,12 @@ const Player: ComponentDef<typeof playerFields>;
 
 ```ts
 function playersIn(sim: Sim): number[];
+```
+
+### `playersOrder` (function)
+
+```ts
+function playersOrder(own: Language | undefined, shipped: readonly Language[]): readonly Language[];
 ```
 
 ### `playReplay` (function)

@@ -11,10 +11,7 @@ import { createPads } from './pads.ts'
  * again. Stops asking for frames on `destroy`.
  */
 export function padMenu(
-  options: {
-    readonly frames?: Frames
-    readonly gamepads?: () => readonly (PadLike | null)[]
-  } = {},
+  options: { readonly frames?: Frames; readonly gamepads?: () => readonly (PadLike | null)[] } = {},
 ): { on(listener: (press: MenuPress) => void): () => void; destroy(): void } {
   const frames = options.frames ?? pageFrames
   const pads = createPads(options.gamepads)
