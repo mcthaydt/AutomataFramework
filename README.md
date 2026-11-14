@@ -555,13 +555,20 @@ const game = await startGame({
   mount,
   host: webHost(),
   controls,
-  readPicture: (path) => fetch(`/game/${path}`).then((response) => response.blob()),
+  readPicture: async (path) => {
+    const response = await fetch(`/game/${path}`)
+    if (!response.ok) throw new Error(`${path} is not there`)
+    return response.blob()
+  },
 })
 ```
 
 A picture that is missing, older than its file or the wrong size stops the game with one sentence that says what to run
-(an `ArtError`), and nothing is left on the page. `game.heroes()` gives each hero's box on the canvas, in CSS pixels, so a
-tutorial can point at one. A game with no figure, no tileset and no backdrop needs no `readPicture`.
+(an `ArtError`), and nothing is left on the page. (`fetch` answers a missing file with a page that says so, which is why
+the reader above throws when the answer is not `ok`: otherwise a missing picture is called one a browser cannot read.)
+`game.heroes()` gives each hero's box on the canvas, in CSS pixels, so a tutorial can point at one. A game with no
+figure, no tileset and no backdrop needs no `readPicture`. `startOnlineGame` and `watchReplay` take the same
+`readPicture`, and an online game draws its pictures and follows its heroes with the camera as a game on one screen does.
 
 ## The automata command
 

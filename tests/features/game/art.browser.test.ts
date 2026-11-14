@@ -145,19 +145,28 @@ for (const [name, w, h] of SCREENS) {
   })
 }
 
-test('holding right runs: the pose changes, the hero moves, and the camera goes with it', async () => {
+test('holding the Right button runs: the pose changes, the hero moves, and the camera goes with it', async () => {
   const { game: g, frames } = await begin(390, 844)
+  // A finger on the screen brings up the buttons, and a thumb holds Right, as a player on a phone does.
   window.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }))
   run(frames, 30)
+  await new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())))
   const before = heroBox(g).x
   const poses = new Set<string>()
   const clips = new Set<string>()
-  key('keydown', 'ArrowRight')
+  const right = mount.querySelector('[data-action="right"]')
+  if (right === null) throw new Error('no Right button')
+  const thumb = (type: 'pointerdown' | 'pointerup'): boolean =>
+    right.dispatchEvent(
+      new PointerEvent(type, { pointerId: 2, pointerType: 'touch', bubbles: true, cancelable: true }),
+    )
+  thumb('pointerdown')
   for (let i = 0; i < 60; i++) {
     run(frames, 1)
     poses.add(spriteOf(g).pose)
     clips.add(spriteOf(g).clip)
   }
+  thumb('pointerup')
   const box = heroBox(g)
   expect(clips.has('run')).toBe(true)
   expect(poses.size).toBeGreaterThan(1)

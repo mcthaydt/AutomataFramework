@@ -366,3 +366,46 @@ test('a hero who stands still is drawn the same while the camera eases', async (
   expect(counts[0]).toBeGreaterThan(0)
   expect(new Set(counts).size).toBe(1)
 })
+
+test('a tile whose edge falls part way across a pixel shows nothing of the square beside it in the picture', async () => {
+  // The flowers at row 5, column 2 of the full game's level have air to their left, and their square in the meadow's
+  // picture has the plain grass square beside it. When the tile's left edge is between a pixel's middle and its right
+  // side, an antialiased canvas colours that pixel from the pixel's middle, which is left of the tile: a texture cut from
+  // the shared picture read the grass square's last column there, a thin dark line (the implementation audit's I1). The
+  // backdrop is left out, so the air is the sky and the pixel must be the sky. Widths are tried until at least two put the
+  // edge where the line showed.
+  const game = await loaded()
+  const loadedArt = await loadArt({ content: game, readPicture: readFullGamePicture })
+  art = loadedArt
+  const dpr = window.devicePixelRatio
+  let tried = 0
+  for (let width = 300; width <= 340 && tried < 4; width++) {
+    // The level fills the width: 16 tiles, a tile `width / 16` pixels, so column 2 starts at `width / 8`.
+    const edge = (width / 8) * dpr
+    const part = edge - Math.floor(edge)
+    if (part < 0.55 || part > 0.85) continue
+    tried++
+    mount.style.width = `${width}px`
+    mount.style.height = '300px'
+    renderer = await createRenderer({
+      mount,
+      world: WORLD,
+      art: { ...loadedArt, backdrop: undefined, destroy: () => undefined },
+    })
+    renderer.apply({ resync: true, added: [], changed: [], removed: [] })
+    renderer.draw(1)
+    const at = snapshot(renderer.canvas)
+    const scale = width / 16
+    const y = (300 - WORLD.h * scale) / 2 + 5.5 * scale
+    const pixel = (Math.floor(edge) + 0.5) / dpr
+    const there = at(pixel, y)
+    const air = at(pixel - 2 / dpr, y)
+    expect(
+      near(there, (air[0] << 16) | (air[1] << 8) | air[2], 6),
+      `at ${width} pixels wide: ${there} beside ${air}`,
+    ).toBe(true)
+    renderer.destroy()
+    renderer = undefined
+  }
+  expect(tried).toBeGreaterThanOrEqual(2)
+})

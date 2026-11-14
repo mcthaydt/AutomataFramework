@@ -16,9 +16,10 @@ import {
   type SessionState,
   type SessionStats,
 } from '../net/net.ts'
-import { createRenderer } from '../render/render.ts'
+import { type Art, createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
+import { levelArt } from './art.ts'
 import type { GameOptions } from './game.ts'
 import { createLoop } from './loop.ts'
 
@@ -77,6 +78,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     audio,
     soundNotice: noticeOption,
     locale,
+    readPicture,
     ...simOptions
   } = options
   checkControls(controls)
@@ -84,23 +86,34 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
   const levelData = simOptions.content.levels[level]
   if (levelData === undefined) throw new Error('The level this game opens is missing.')
 
+  // The pictures first, as `startGame` loads them: a game that cannot be drawn joins no room and puts nothing on the page.
+  const art: Art | undefined = await levelArt('startOnlineGame', simOptions.content, level, readPicture)
   // A co-op game's room has the places its level has starts for, and its heroes come by the sim's own `join`: both sims
   // then start with nobody, as the room's does. Any other game's room is for two unless this page says, and all of its
   // players are in from the start.
   const coop = coopSeats(simOptions.content.project, levelData.starts)
   const seats = coop ?? seatsOption ?? 2
   const players = coop === undefined ? Array.from({ length: seats }, (_, i) => i + 1) : []
-  const confirmed = await createGameSim({ ...simOptions, level, players })
+  let confirmed: Sim
+  try {
+    confirmed = await createGameSim({ ...simOptions, level, players })
+  } catch (error) {
+    art?.destroy()
+    throw error
+  }
   let predicted: Sim
   try {
     predicted = await createGameSim({ ...simOptions, level, players })
   } catch (error) {
     confirmed.dispose()
+    art?.destroy()
     throw error
   }
+  // Leaving frees the art with the sims (the renderer frees it too once it has it; a second free does nothing).
   const disposeSims = (): void => {
     confirmed.dispose()
     predicted.dispose()
+    art?.destroy()
   }
 
   let status: OnlineStatus =
@@ -171,7 +184,13 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
 
   let cleanup = leaveRoom
   try {
-    const renderer = await createRenderer({ mount, world: levelSize(levelData), sky: skyOf(levelData) })
+    const renderer = await createRenderer({
+      mount,
+      world: levelSize(levelData),
+      sky: skyOf(levelData),
+      art,
+      view: levelData.view,
+    })
     cleanup = () => {
       renderer.destroy()
       leaveRoom()
