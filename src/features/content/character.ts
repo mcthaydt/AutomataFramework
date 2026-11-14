@@ -19,7 +19,7 @@ export interface Clip {
 }
 
 /** How the framework moves a hero. Walk and jump are always on. */
-export interface Moves {
+export interface HeroMoves {
   /** The tuning file with the numbers and the controls, by id. */
   readonly tuning: string
   readonly 'double-jump': boolean
@@ -28,7 +28,7 @@ export interface Moves {
 }
 
 /** What a person may write for `moves`: the three switches may be left out, and are then false. */
-export interface MovesInput {
+export interface HeroMovesInput {
   readonly tuning: string
   readonly 'double-jump'?: boolean | undefined
   readonly 'wall-jump'?: boolean | undefined
@@ -66,13 +66,13 @@ export interface Character {
    * Set on the project's hero: the framework walks and jumps it from the numbers and controls of a tuning file, with no
    * game code. The three switches turn on the double jump, the wall jump and the dash.
    */
-  readonly moves?: Moves | undefined
+  readonly moves?: HeroMoves | undefined
 }
 
 /** What a person may write: `upright` can be left out, and then it is false; so can the three switches of `moves`. */
 export interface CharacterInput extends Omit<Character, 'upright' | 'moves'> {
   readonly upright?: boolean | undefined
-  readonly moves?: MovesInput | undefined
+  readonly moves?: HeroMovesInput | undefined
 }
 
 const MAX_SIZE = 16

@@ -21,8 +21,8 @@ export {
   type CharacterInput,
   CharacterSchema,
   type Clip,
-  type Moves,
-  type MovesInput,
+  type HeroMoves,
+  type HeroMovesInput,
 } from './character.ts'
 export { CONTENT_TYPES, type ContentType, type ContentValue } from './content-types.ts'
 export {
