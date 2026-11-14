@@ -1601,7 +1601,7 @@ function languageName(language: Language): string;
 ### `LANGUAGES` (const)
 
 ```ts
-const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+const LANGUAGES: readonly ["zh", "es", "en", "pt", "ja", "ko"];
 ```
 
 ### `LanguageSettings` (interface)
@@ -5265,7 +5265,7 @@ function languageName(language: Language): string;
 ### `LANGUAGES` (const)
 
 ```ts
-const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+const LANGUAGES: readonly ["zh", "es", "en", "pt", "ja", "ko"];
 ```
 
 ### `LanguageSettings` (interface)

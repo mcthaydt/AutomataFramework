@@ -3,19 +3,23 @@ import { z } from '../../lib/zod.ts'
 import { MessageKey } from './shared.ts'
 import type { ContentTypeInfo, Listed, Report } from './type-info.ts'
 
-/** The languages a game ships in: English, Spanish, Korean, Japanese, Chinese and Portuguese. */
-export const LANGUAGES = ['en', 'es', 'ko', 'ja', 'zh', 'pt'] as const
+/**
+ * The languages a game ships in: Chinese, Spanish, English, Portuguese, Japanese and Korean. The order is fixed and is
+ * by how many people speak each as a first language, as Ethnologue (28th edition, 2025) ranks them; no count is kept
+ * here, only the order. Every list a person reads follows it, and no list puts the game's own language first.
+ */
+export const LANGUAGES = ['zh', 'es', 'en', 'pt', 'ja', 'ko'] as const
 
 /** One of the languages a game ships in. */
 export type Language = (typeof LANGUAGES)[number]
 
 const LANGUAGE_NAMES_IN_ENGLISH: Readonly<Record<Language, string>> = {
-  en: 'English',
-  es: 'Spanish',
-  ko: 'Korean',
-  ja: 'Japanese',
   zh: 'Chinese',
+  es: 'Spanish',
+  en: 'English',
   pt: 'Portuguese',
+  ja: 'Japanese',
+  ko: 'Korean',
 }
 
 /** A language's name in English, for a check's sentence: `Korean`. A player's own names are `locale`'s. */
@@ -46,7 +50,7 @@ const MAX_MESSAGES = 5000
 /** A messages file once read: every word a player reads, in one language, by key. */
 export interface MessagesFile {
   readonly format: 1
-  /** The language, which is also the file's name: `en`, `es`, `ko`, `ja`, `zh` or `pt`. */
+  /** The language, which is also the file's name: `zh`, `es`, `en`, `pt`, `ja` or `ko`. */
   readonly id: Language
   readonly messages: Readonly<Record<string, string>>
 }
@@ -57,7 +61,7 @@ export const MessagesSchema: z.ZodType<MessagesFile, MessagesFile> = z
     format: z.literal(1).describe('The version of this file format. Always 1.'),
     id: z
       .enum(LANGUAGES)
-      .describe('The language this file is in: en, es, ko, ja, zh or pt. It matches the file name.'),
+      .describe('The language this file is in: zh, es, en, pt, ja or ko. It matches the file name.'),
     messages: z
       .record(MessageKey, z.string().min(1).max(2000))
       .describe(
@@ -105,7 +109,7 @@ export const messagesInfo: ContentTypeInfo<MessagesFile, MessagesFile> = {
   noun: 'messages file',
   missing: {
     format: 'Write "format": 1.',
-    id: 'Write the language this file is in: en, es, ko, ja, zh or pt.',
+    id: 'Write the language this file is in: zh, es, en, pt, ja or ko.',
     messages: 'Write the words as keys and texts, like { "keeper.hello": "Hello!" }.',
   },
   // Free keys in one order, so two writers of the same messages make the same bytes.
