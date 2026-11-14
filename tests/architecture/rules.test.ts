@@ -176,3 +176,76 @@ test('headless and the page entry never reach src/server.ts, through any chain',
   expect(one({ ...node, 'src/headless.ts': "export * from './server.ts'" })).toEqual(['server-is-node-only'])
   expect(one({ ...node, 'src/index.ts': "export * from './server.ts'" })).toEqual(['server-is-node-only'])
 })
+
+// Plan K: the `automata` command. `cli` is the last layer, Node only, reached only through `src/cli.ts` (the package's
+// bin), and it may use only what the headless entry re-exports.
+const HEADLESS_COMMANDS = {
+  'src/headless.ts': "export * from './features/commands/commands.ts'",
+  'src/features/commands/commands.ts': '',
+}
+const CLI_ENTRY_FILES = { 'src/features/cli/cli.ts': '', 'src/cli.ts': "import './features/cli/cli.ts'" }
+
+test('cli is the last layer and may import the headless features through their entries', () => {
+  expect(
+    one({
+      ...HEADLESS_COMMANDS,
+      ...CLI_ENTRY_FILES,
+      'src/features/cli/check.ts': "import '../commands/commands.ts'",
+    }),
+  ).toEqual([])
+  expect(
+    one({
+      ...HEADLESS_COMMANDS,
+      ...CLI_ENTRY_FILES,
+      'src/features/commands/commands.ts': "import '../cli/cli.ts'",
+    }),
+  ).toEqual(['cli-is-node-only'])
+})
+
+test('only src/cli.ts may import the cli feature', () => {
+  expect(
+    one({ 'src/features/cli/cli.ts': '', 'src/index.ts': "import './features/cli/cli.ts'" }),
+  ).toEqual(['cli-is-node-only'])
+  expect(
+    one({ 'src/features/cli/cli.ts': '', 'src/features/game/game.ts': "import '../cli/cli.ts'" }),
+  ).toEqual(['cli-is-node-only'])
+})
+
+test('neither page entry reaches src/cli.ts, through any chain', () => {
+  expect(one({ ...CLI_ENTRY_FILES, 'src/headless.ts': "export * from './cli.ts'" })).toEqual([
+    'cli-is-node-only',
+  ])
+  expect(one({ ...CLI_ENTRY_FILES, 'src/index.ts': "export * from './cli.ts'" })).toEqual([
+    'cli-is-node-only',
+  ])
+})
+
+test('the cli feature reaches nothing that needs a page, and not the server', () => {
+  const base = {
+    ...HEADLESS_COMMANDS,
+    ...CLI_ENTRY_FILES,
+    'src/features/render/render.ts': '',
+    'src/features/saves/saves.ts': '',
+    'src/features/server/server.ts': '',
+  }
+  expect(one({ ...base, 'src/features/cli/play.ts': "import '../render/render.ts'" })).toEqual([
+    'cli-has-no-page',
+  ])
+  expect(one({ ...base, 'src/features/cli/play.ts': "import '../server/server.ts'" })).toEqual([
+    'server-is-node-only',
+  ])
+  // A feature the headless entry does not re-export is out, so one that joins later is covered the day it lands.
+  expect(one({ ...base, 'src/features/cli/play.ts': "import '../saves/saves.ts'" })).toEqual([
+    'cli-has-no-page',
+  ])
+})
+
+test('Effect may be imported under src/features/cli/ and in server/process.ts, and nowhere else', () => {
+  expect(
+    one({
+      ...CLI_ENTRY_FILES,
+      'src/features/cli/check.ts': "import { Effect } from 'effect'",
+    }),
+  ).toEqual([])
+  expect(one({ 'src/features/net/net.ts': "import { Effect } from 'effect'" })).toEqual(['package-confined'])
+})
