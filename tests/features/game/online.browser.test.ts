@@ -293,6 +293,30 @@ test('reconnecting, then lost, after each of the waits', async () => {
   expect(s.statuses.map((status) => status.state)).toEqual(['waiting', 'reconnecting', 'ended'])
 })
 
+test('a failed try is tried again at the next wait, and a good one plays on', async () => {
+  vi.useFakeTimers()
+  const s = await room()
+  const rejoin = vi
+    .fn<() => Promise<void>>()
+    .mockRejectedValueOnce(new OnlineError('no-server', 'The server did not answer.'))
+    .mockResolvedValue(undefined)
+  let closed: (() => void) | undefined
+  const join = async (o: JoinOptions): Promise<Joined> => {
+    const joined = await s.join(o)
+    closed = o.onLinkClosed
+    return { ...joined, rejoin }
+  }
+  const game = await start(s, { join })
+  closed?.()
+  expect(game.status()).toEqual({ state: 'reconnecting' })
+  await vi.advanceTimersByTimeAsync(500)
+  expect(rejoin).toHaveBeenCalledTimes(1)
+  expect(game.status()).toEqual({ state: 'reconnecting' })
+  await vi.advanceTimersByTimeAsync(1000)
+  expect(rejoin).toHaveBeenCalledTimes(2)
+  expect(s.statuses.map((status) => status.state)).toEqual(['waiting', 'reconnecting', 'playing'])
+})
+
 test('a phone-size picture of two heroes in a room', async () => {
   await page.viewport(390, 844)
   const s = await room()
