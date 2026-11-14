@@ -54,13 +54,14 @@ and `compileWords` is in no entry's import graph (no command and no export reach
 loads them. Yet every game that installs the framework would have installed the inlang SDK. `dependencies` is right
 only once a command runs the compiler, because that command resolves them from the installed package. Fixed: they are
 `devDependencies` (in `package.json` and the lockfile's importer, with no version change). `tests/package.test.ts`
-says the PR that gives `compileWords` a command moves them back. Whether to add that command (`automata words`) is an
-open Owner question. It isn't built here.
+says the PR that gives `compileWords` a command moves them back. The Owner has since answered plan K's Q1: `automata
+words` is built, once a game names its own source language (the "no default language" spec). That pull request moves
+them back. The command isn't built here.
 
 The same fact has a second side, recorded for that question. `bindParaglide` is exported and documented, but no game
 can make the `runtime.js` it takes with this package alone, because no command runs `compileWords`. The README already
-says "no command runs it yet". Task 12 is complete as the plan wrote it, but nobody can use it end to end until the
-Owner answers.
+says "no command runs it yet". Task 12 is complete as the plan wrote it, but nobody can use it end to end until
+`automata words` lands.
 
 ## Minor (all fixed)
 
@@ -99,7 +100,8 @@ Owner answers.
 - **The page reads its settings from its script's address.** Right. A `srcdoc` frame has no address of its own.
 - **`bindParaglide` and `ParaglideRuntime` exported.** Right as the plan's contract. See I3 for what a game cannot yet do
   with them.
-- **`compileWords` wired to no command.** As the plan wrote Task 12. It is the Owner's open question (I3); not built.
+- **`compileWords` wired to no command.** As the plan wrote Task 12. The Owner's answer: `automata words`, after the
+  source-language change (I3). Not built here.
 - **The outdir check.** Sound for the folders it names, and widened at removal time (M3).
 - **API report entries written by hand.** The `package` job compares the report with what the build prints, so a
   hand-written entry that differed would have failed. This PR's three changed entries are held the same way.

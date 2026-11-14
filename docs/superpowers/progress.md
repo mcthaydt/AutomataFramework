@@ -71,7 +71,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
   `automata.rebind.*` sentences join the library in six languages: the sound's button follows the locale, and a refused
   `rebind` is a key and values said in the input's words. `createLocale` asks its host for its two languages only; the
   words compiler removes only a word's own generated file; Paraglide's packages are `devDependencies` while no command
-  loads them (the open `automata words` question moves them back). Before Release 1: 135 framework words and the
+  loads them (`automata words`, the Owner's answer to plan K's Q1, moves them back). Before Release 1: 135 framework words and the
   full game's 45 wait for a native read.
 
 - 2026-11-14, plan K, Part 2 Steps P, L and A, implementation audit: skill `automata` and the template's `AGENTS.md` now send
