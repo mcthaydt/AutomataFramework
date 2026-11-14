@@ -1,5 +1,15 @@
 {
   "ticks": 600,
-  "finalHash": "",
-  "checks": []
+  "finalHash": "9a418cafacfa1dd1",
+  "checks": [
+    { "tick": 60, "hash": "9ac047ccbac45f76" },
+    { "tick": 120, "hash": "fb08edfa82ac7fa3" },
+    { "tick": 180, "hash": "9a3956c6c981df12" },
+    { "tick": 240, "hash": "8d436da154363da7" },
+    { "tick": 300, "hash": "93fd3fe31164afb0" },
+    { "tick": 360, "hash": "c1cf512cc6fb2fb1" },
+    { "tick": 420, "hash": "6725cc1664e5e644" },
+    { "tick": 480, "hash": "b3203a9b664b36ef" },
+    { "tick": 540, "hash": "8a9b76e725f32666" }
+  ]
 }
