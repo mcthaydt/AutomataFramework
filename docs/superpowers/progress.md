@@ -18,7 +18,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan C (content): 5. Implementation audit | Written, in review; stage at 100%, plan C at 80%: no critical, two important (a cutscene's `clip` is unchecked and belongs to plan A; the duplicate-id sentence reads "a cues"), eight minor; nine fixes for stage 6; no Owner question | `audits/2026-11-14-m2-content-implementation-audit.md` |
 | Plan V (saves and the host port): 2. Plan | Done, 100% (merged, PR 32) | `plans/2026-11-14-m2-saves-host.md` |
 | Plan V: 3. Plan audit | Written, in review; stage at 100%, plan V at 20%. Ten findings, all applied to the plan | `audits/2026-11-14-m2-saves-host-plan-audit.md` |
-| Plan V: 4. Execution | In progress, 72% (Tasks 1 to 6 of 8 green on PR 40; each task is 12%, the last 4% is the final green run) | `plans/2026-11-14-m2-saves-host.md`, ticked as it goes |
+| Plan V: 4. Execution | In progress, 84% (Tasks 1 to 7 of 8 green on PR 40; each task is 12%, the last 4% is the final green run) | `plans/2026-11-14-m2-saves-host.md`, ticked as it goes |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
 | Plan I (input), stage 3: plan audit | Done, 100%: 3 blocking, 12 should-fix and 5 notes, all applied to the plan; ready for stage 4 | `audits/2026-11-14-m2-input-plan-audit.md` |
 | Plan I (input), stage 4: execution | Done, **100%** (all ten tasks built; Tasks 1 to 8 green in CI, Tasks 9 and 10 in CI at the last push), AutomataFramework PR 42 | `plans/2026-11-14-m2-input.md` |

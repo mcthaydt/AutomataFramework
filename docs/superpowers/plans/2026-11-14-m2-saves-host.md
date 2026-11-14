@@ -734,7 +734,7 @@ export function openPage(size?: { width: number; height: number }): Promise<{ pa
   frame, so closing with no yield would pass or fail on how many `await`s `save` has. Task 3's fake-timer test proves
   the other half: no step of a save waits on a timer, an event or a frame.
 
-- [ ] **Step 1: Write the failing test.** `beforeEach` and `afterEach` remove every `localStorage` key starting
+- [x] **Step 1: Write the failing test.** `beforeEach` and `afterEach` remove every `localStorage` key starting
   `automata.fixture-game.`.
 
 ```ts
@@ -757,13 +757,13 @@ test.each([[390, 844], [844, 390], [820, 1180], [1180, 820], [1280, 720]])('at %
   // phone, tablet and desktop, upright and sideways: play(60) returns a hash, save then load round-trips
 ```
 
-- [ ] **Step 2: Push; the `engines` jobs fail** because the fixtures do not exist.
-- [ ] **Step 3: Implement the two fixtures.** If a browser's test server will not serve `page.ts` to the frame, or a
+- [x] **Step 2: Push; the `engines` jobs fail** because the fixtures do not exist.
+- [x] **Step 3: Implement the two fixtures.** If a browser's test server will not serve `page.ts` to the frame, or a
   frame cannot be made same-origin, stop and report: do not swap the frame for a second `webHost()` in the same page,
   which would prove less.
-- [ ] **Step 4: Push; all three `engines` jobs pass.** If "a save made as the page closes" fails in one engine, stop
+- [x] **Step 4: Push; all three `engines` jobs pass.** If "a save made as the page closes" fails in one engine, stop
   and report with the engine's name: it is a finding about that browser, not a test to loosen.
-- [ ] **Step 5: Commit** (`test(web): a save outlives the page that made it, in three browsers`).
+- [x] **Step 5: Commit** (`test(web): a save outlives the page that made it, in three browsers`).
 
 ### Task 8: The public surface, the packed package and the README
 
