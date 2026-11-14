@@ -737,7 +737,7 @@ function joinSession(options: {
   `await runRoomServer({ game: { content, plugins: [heroPlugin] } })`. `scripts/write-schemas.ts` already runs `src/`
   under plain Node; if this file cannot be run that way, stop and report rather than adding a build step.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `process.test.ts` spawns `node tests/fixtures/online/server.ts` (Node 24 runs the TypeScript as it is): reads the
     `listening` line and its port; a headless player with `seats: 1` joins that port and reaches a check; SIGTERM
     gives `{"event":"stopped"}` and exit code 0 within 5 seconds. With `PORT=abc` the process exits 1 with the line
@@ -752,12 +752,12 @@ function joinSession(options: {
     `seats: 1` on two `createGameSim`s, advanced on a 60 Hz timer with no commands until the check for tick 59
     arrives; that hash must be `push-crate.json`'s `idleHash60` (the same sim, the same sixty idle ticks, this time
     through a socket). It closes everything and exits 0, or prints both hashes and exits 1.
-- [ ] **Step 2: Push; `check` and `package` fail.**
-- [ ] **Step 3: Write `process.ts`, the build entry and the exports; update the API report.** Run `pnpm build` locally
+- [x] **Step 2: Push; `check` and `package` fail.**
+- [x] **Step 3: Write `process.ts`, the build entry and the exports; update the API report.** Run `pnpm build` locally
   and check `dist/server.js` and `dist/server.d.ts` exist and that `dist/index.js` and `dist/headless.js` contain
   neither `@colyseus/core` nor `effect`.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** `feat: runRoomServer and the package's server entry`.
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** `feat: runRoomServer and the package's server entry`.
 
 ### Task 9: A page in a room
 

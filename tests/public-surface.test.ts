@@ -70,6 +70,7 @@ test('headless exports what a game sim and an editor need', async () => {
     'createRoomEngine',
     'OnlineError',
     'PROTOCOL_VERSION',
+    'onlineWords',
   ])
     expect(api, name).toHaveProperty(name)
 })

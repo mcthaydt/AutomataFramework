@@ -1415,10 +1415,62 @@ class OnlineError extends Error {
 }
 ```
 
+### `OnlineGame` (interface)
+
+```ts
+interface OnlineGame {
+    readonly sim: Sim;
+    readonly seat: number;
+    readonly code: string;
+    status(): OnlineStatus;
+    stats(): SessionStats;
+    leave(): void;
+}
+```
+
+### `OnlineOptions` (interface)
+
+```ts
+interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
+    readonly server: string;
+    readonly room?: string;
+    readonly level?: string;
+    readonly seats?: number;
+    readonly onStatus?: (status: OnlineStatus) => void;
+    readonly onCheck?: (tick: number, hash: string, ok: boolean) => void;
+    readonly wrapLink?: (link: Link) => Link;
+    readonly join?: typeof joinSession;
+}
+```
+
 ### `OnlineProblem` (type)
 
 ```ts
 type OnlineProblem = 'different-version' | 'room-full' | 'no-room' | 'server-full' | 'bad-room' | 'no-server' | 'lost';
+```
+
+### `OnlineStatus` (type)
+
+```ts
+type OnlineStatus = {
+    readonly state: 'waiting';
+    readonly code: string;
+    readonly missing: number;
+} | {
+    readonly state: 'playing';
+    readonly away: readonly number[];
+} | {
+    readonly state: 'reconnecting';
+} | {
+    readonly state: 'ended';
+    readonly problem: OnlineProblem;
+};
+```
+
+### `onlineWords` (function)
+
+```ts
+function onlineWords(status: OnlineStatus): string;
 ```
 
 ### `PAD_BUTTONS` (const)
@@ -2271,6 +2323,12 @@ const START_LEAD = 2;
 
 ```ts
 function startGame(options: GameOptions): Promise<Game>;
+```
+
+### `startOnlineGame` (function)
+
+```ts
+function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>;
 ```
 
 ### `StepResult` (interface)
@@ -3730,6 +3788,30 @@ class OnlineError extends Error {
 
 ```ts
 type OnlineProblem = 'different-version' | 'room-full' | 'no-room' | 'server-full' | 'bad-room' | 'no-server' | 'lost';
+```
+
+### `OnlineStatus` (type)
+
+```ts
+type OnlineStatus = {
+    readonly state: 'waiting';
+    readonly code: string;
+    readonly missing: number;
+} | {
+    readonly state: 'playing';
+    readonly away: readonly number[];
+} | {
+    readonly state: 'reconnecting';
+} | {
+    readonly state: 'ended';
+    readonly problem: OnlineProblem;
+};
+```
+
+### `onlineWords` (function)
+
+```ts
+function onlineWords(status: OnlineStatus): string;
 ```
 
 ### `PAD_BUTTONS` (const)

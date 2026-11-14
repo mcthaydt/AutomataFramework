@@ -20,6 +20,7 @@ import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
 
 export { type Frames, MAX_STEPS_PER_FRAME } from './loop.ts'
+export { type OnlineGame, type OnlineOptions, startOnlineGame } from './online.ts'
 export type { JoinAnswer } from './players.ts'
 export { type Watch, type WatchOptions, WatchSetupError, watchReplay } from './watch.ts'
 
