@@ -71,10 +71,16 @@ function sentence(issue: z.core.$ZodIssue, data: unknown, voice: Voice): string 
           : 'This must be an object: it should start with { and end with }.'
       return TYPE_WORDS[String(issue.expected)] ?? issue.message
     }
-    case 'invalid_value':
-      return issue.values.length === 1
-        ? `This must be ${String(issue.values[0])}.`
-        : `This must be one of: ${issue.values.map(String).join(', ')}.`
+    case 'invalid_value': {
+      const choices =
+        issue.values.length === 1
+          ? `This must be ${String(issue.values[0])}.`
+          : `This must be one of: ${issue.values.map(String).join(', ')}.`
+      if (valueAt(data, issue.path) !== undefined) return choices
+      // A field of fixed choices that is not there at all is missing, and its own advice is the better sentence.
+      const hint = voice.missing[issue.path.filter((p) => typeof p !== 'number').join('.')]
+      return `This is missing. ${hint ?? choices}`
+    }
     case 'invalid_union': {
       // A shape told apart by one field: the issue names the field's choices, and its path ends in the field.
       if (issue.discriminator === undefined || !('options' in issue) || !Array.isArray(issue.options))
