@@ -14,6 +14,7 @@ import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { snapshot } from '../../fixtures/game/snapshot.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 
 const FRAME = 1000 / 60
 /** The colours of the boxes of the hero and the crate: the hero has a figure, the crate has none. */
@@ -72,13 +73,14 @@ function standIn(joins: { count: number }) {
   }
 }
 
-function start(
+async function start(
   content: GameContent,
   joins: { count: number },
   readPicture?: (path: string) => Promise<Blob>,
 ): Promise<OnlineGame> {
   return startOnlineGame({
     content,
+    locale: await chosenLocale(content, 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,
@@ -125,6 +127,7 @@ test('an online game draws its hero as its figure, and a thing with no figure as
   const frames = manualFrames()
   online = await startOnlineGame({
     content: await full(),
+    locale: await chosenLocale(await full(), 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,

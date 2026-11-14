@@ -13,6 +13,7 @@ import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { drawnRows } from '../../fixtures/game/pixels.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 
 const FRAME = 1000 / 60
 
@@ -46,6 +47,7 @@ for (const [name, w, h] of SCREENS) {
     const frames = manualFrames()
     game = await startGame({
       content: await loadFixtureGame(),
+      locale: await chosenLocale(await loadFixtureGame(), 'ko'),
       plugins: [heroPlugin],
       mount,
       controls: fixtureControls,
@@ -107,6 +109,7 @@ for (const [name, w, h] of SCREENS) {
     const frames = manualFrames()
     game = await startGame({
       content: await loadFixtureGame(coopFiles),
+      locale: await chosenLocale(await loadFixtureGame(coopFiles), 'ko'),
       plugins: [heroPlugin],
       mount,
       controls: fixtureControls,

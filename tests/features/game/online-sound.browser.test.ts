@@ -11,6 +11,7 @@ import { loadSoundingGame } from '../../fixtures/audio/sounding-game.ts'
 import { soundingHeroPlugin } from '../../fixtures/audio/sounding-hero.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 
 const FRAME = 1000 / 60
 
@@ -65,6 +66,7 @@ async function start(answers: Advance[], syncs = { count: 0 }, tapped = true) {
   const frames = manualFrames()
   online = await startOnlineGame({
     content: await loadSoundingGame(),
+    locale: await chosenLocale(await loadSoundingGame(), 'en'),
     plugins: [soundingHeroPlugin],
     mount,
     controls: fixtureControls,

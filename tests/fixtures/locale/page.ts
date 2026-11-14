@@ -1,14 +1,21 @@
 // What one page of the full game does about the player's language, loaded inside a frame by
 // `tests/fixtures/saves/open-page.ts`. It builds everything from the real `webHost()` with no seams a game's own page
 // would not have: the address may say what the device's languages are (`?device=ko-KR`), that its storage refuses
-// (`?storage=refused`) or which game's settings it keeps (`?game=`), because a test cannot change a browser's own. The page opens the settings, makes a locale,
+// (`?storage=refused`), which language the player chose last time (`?saved=ko`) or which game's settings it keeps
+// (`?game=`), because a test cannot change a browser's own. The page opens the settings, makes a locale,
 // follows it with `<html lang>`, starts the full game with it and shows, as text a test can read, the keeper's greeting,
 // the level's name and what the game answers to a second player who cannot join. It has one real button for each
 // language the game has. Every method runs in this frame: its own memory, with nothing in common with the next page
 // but what the browser stored.
 import { LANGUAGES, type Language, loadGame } from '#src/features/content/content.ts'
 import { startGame } from '#src/features/game/game.ts'
-import { createLocale, LANGUAGE_NAMES, levelName } from '#src/features/locale/locale.ts'
+import {
+  createLocale,
+  LANGUAGE_NAMES,
+  LANGUAGE_SETTINGS_DEFAULT,
+  LanguageSettingsSchema,
+  levelName,
+} from '#src/features/locale/locale.ts'
 import { openSettings } from '#src/features/saves/saves.ts'
 import { followLanguage, webHost } from '#src/features/web/web.ts'
 import { readFullGamePicture } from '../full-game/pictures.ts'
@@ -73,7 +80,7 @@ const gameId = params.get('game') ?? 'language-fixture'
 const device = params.get('device')
 const refused = params.get('storage') === 'refused'
 const host = webHost({
-  ...(device === null ? {} : { navigator: { language: device, languages: [device, 'en-US'] } }),
+  ...(device === null ? {} : { navigator: { language: device, languages: [device] } }),
   ...(refused
     ? {
         storage: () => {
@@ -87,8 +94,14 @@ const loaded = await loadGame(readFullGame())
 if (!loaded.ok) throw new Error('the full game did not load')
 const content = loaded.value
 const settings = await openSettings({ game: gameId, store: host.store })
-// Watching, for now: this page has no picker yet, so nobody is asked and the words are in the suggested language.
-const locale = createLocale({ content, host, settings, watching: true })
+// `?saved=ko` is a player who chose Korean last time: it is kept before the locale is made, as the picker's own `go`
+// would have kept it. With no `saved` and no host language nobody has chosen, and `startGame` below says so.
+const saved = params.get('saved')
+if (saved !== null)
+  await settings
+    .section({ name: 'language', schema: LanguageSettingsSchema, initial: LANGUAGE_SETTINGS_DEFAULT })
+    .set({ format: 1, language: saved as Language })
+const locale = createLocale({ content, host, settings })
 followLanguage(locale)
 
 // The page's own words and buttons, over the game.

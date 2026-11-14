@@ -6,6 +6,7 @@ import { page } from 'vitest/browser'
 import { Player } from '#src/features/commands/commands.ts'
 import { type OnlineGame, startOnlineGame } from '#src/features/game/online.ts'
 import { type TestHost, testHost } from '#src/features/host/host.ts'
+import { createLocale } from '#src/features/locale/locale.ts'
 import {
   type ClientMessage,
   createRoomEngine,
@@ -20,10 +21,12 @@ import {
   type Session,
 } from '#src/features/net/net.ts'
 import { Transform } from '#src/features/physics/physics.ts'
+import { openSettings } from '#src/features/saves/saves.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 import { loadOnlineGame, onlineSim } from '../../fixtures/online/game.ts'
 import { createWire, type Delay, type Wire } from '../../fixtures/online/wire.ts'
 
@@ -147,6 +150,7 @@ async function room(): Promise<Setup> {
 async function start(s: Setup, extra: { join?: typeof joinSession } = {}): Promise<OnlineGame> {
   online = await startOnlineGame({
     content: await loadOnlineGame(),
+    locale: await chosenLocale(await loadOnlineGame(), 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,
@@ -329,4 +333,63 @@ test('a phone-size picture of two heroes in a room', async () => {
   key('keyup', 'ArrowLeft')
   expect(game.status().state).toBe('playing')
   await page.screenshot({ element: mount, path: '__screenshots__/online-two-heroes-phone-390x844.png' })
+})
+
+test('an online game does not start before the player has a language, and joins no room', async () => {
+  const s = await room()
+  const content = await loadOnlineGame()
+  const host = testHost({ deviceLanguages: ['fr-FR'] })
+  const locale = createLocale({
+    content,
+    host,
+    settings: await openSettings({ game: 'no-language', store: host.store }),
+  })
+  let joined = 0
+  const join: typeof joinSession = (...args) => {
+    joined++
+    return s.join(...args)
+  }
+  await expect(
+    startOnlineGame({
+      content,
+      locale,
+      plugins: [heroPlugin],
+      mount,
+      controls: fixtureControls,
+      host,
+      frames: s.frames,
+      server: 'ws://room.test',
+      join,
+    }),
+  ).rejects.toThrow(
+    'No language is chosen yet. Show the language picker first (languagePicker), then start the game.',
+  )
+  expect(joined).toBe(0)
+  expect(mount.childElementCount).toBe(0)
+})
+
+test('a locale that only watches cannot start an online game either', async () => {
+  const s = await room()
+  const content = await loadOnlineGame()
+  const host = testHost({ deviceLanguages: ['ja-JP'] })
+  const locale = createLocale({
+    content,
+    host,
+    settings: await openSettings({ game: 'watching', store: host.store }),
+    watching: true,
+  })
+  await expect(
+    startOnlineGame({
+      content,
+      locale,
+      plugins: [heroPlugin],
+      mount,
+      controls: fixtureControls,
+      host,
+      frames: s.frames,
+      server: 'ws://room.test',
+      join: s.join,
+    }),
+  ).rejects.toThrow('No language is chosen yet.')
+  expect(mount.childElementCount).toBe(0)
 })

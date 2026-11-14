@@ -2,7 +2,7 @@
 // and every word said again, with what is held kept, when the language changes.
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { createInput, type Input } from '#src/features/input/input.ts'
-import { fill } from '#src/features/locale/locale.ts'
+import { fill, frameworkWords } from '#src/features/locale/locale.ts'
 import type { Words } from '#src/lib/message.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
@@ -30,13 +30,13 @@ const said =
   (key) =>
     Object.hasOwn(table, key) ? (table[key] as string) : key
 
-const make = (words?: Words): Input => {
+const make = (words: Words): Input => {
   input = createInput({
     mount,
     controls: fixtureControls,
     gamepads: fakeGamepads().getGamepads,
     frames: manualFrames(),
-    ...(words === undefined ? {} : { words }),
+    words,
   })
   return input
 }
@@ -51,9 +51,9 @@ const button = (action: string): HTMLButtonElement => {
   return found
 }
 
-test('with no words the overlay is "Touch controls" and each button says its own label', () => {
-  make()
-  expect(overlay().getAttribute('aria-label')).toBe('Touch controls')
+test("with the framework's Japanese words the overlay is Japanese and each button says its own label", () => {
+  make(frameworkWords('ja'))
+  expect(overlay().getAttribute('aria-label')).toBe('タッチ操作')
   expect(['left', 'right', 'jump'].map((a) => button(a).textContent)).toEqual(['Left', 'Right', 'Jump'])
 })
 
@@ -90,10 +90,10 @@ test('relabel says every word again, the aria-label too, and keeps what is held'
   expect(button('jump').getAttribute('aria-label')).toBe('跳')
   // The finger is still on Jump: it was not lifted, and the button was not made again.
   expect(button('jump').getAttribute('aria-pressed')).toBe('true')
-  // A word taken away goes back to the control's own label.
-  made.relabel(filled({}))
+  // A button's word taken away goes back to the control's own label, the game's.
+  made.relabel(filled({ 'automata.touch.label': 'Controles táctiles' }))
   expect(button('jump').textContent).toBe('Jump')
-  expect(overlay().getAttribute('aria-label')).toBe('Touch controls')
+  expect(overlay().getAttribute('aria-label')).toBe('Controles táctiles')
 })
 
 /** Words from a table that fill their values in, as a locale's do. */
@@ -103,24 +103,27 @@ const filled =
     Object.hasOwn(table, key) ? fill(table[key] as string, values, 'en') : key
 
 // Plan L's implementation audit, I2: a change of key that is refused is said in the input's words, and in the new
-// words after `relabel`; with none, in English.
+// words after `relabel`. No language is the default, so the input is always given words, and the answer always has a
+// sentence in them.
 test('a refused change is said in the words the input has now', () => {
-  const english = make()
-  expect(english.rebind('jump', 'keys', 'Escape')).toMatchObject({
+  const spanish = make(frameworkWords('es'))
+  expect(spanish.rebind('jump', 'keys', 'Escape')).toMatchObject({
     ok: false,
-    message: "Escape is kept for the game's menus. Pick another key.",
+    reason: 'reserved',
+    key: 'automata.rebind.reserved.key',
+    message: 'La tecla Escape está reservada para los menús del juego. Elige otra tecla.',
   })
-  english.destroy()
+  spanish.destroy()
   const made = make(filled({ 'automata.rebind.reserved.key': '{input} es para los menús.' }))
   expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({
     ok: false,
     message: 'Escape es para los menús.',
   })
-  // Words that do not have the sentence leave it in English.
+  // Words that do not have the sentence say its key, as every word nobody wrote is said.
   made.relabel(filled({}))
   expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({
     ok: false,
-    message: "Escape is kept for the game's menus. Pick another key.",
+    message: 'automata.rebind.reserved.key',
   })
   made.relabel(filled({ 'automata.rebind.reserved.key': '{input}はメニュー用です。' }))
   expect(made.rebind('jump', 'keys', 'Escape')).toMatchObject({

@@ -16,7 +16,7 @@ const c = fixtureControls
 /** The controls after a change that must have been allowed. */
 function changed(...args: Parameters<typeof rebind>): Controls {
   const answer = rebind(...args)
-  if (!answer.ok) throw new Error(answer.message)
+  if (!answer.ok) throw new Error(answer.key)
   return answer.controls
 }
 
@@ -189,9 +189,9 @@ test('a name that is not a gamepad button is refused as unknown, not as reserved
   })
 })
 
-// Plan L's implementation audit, I2: a refusal is also a message, so a screen says it in the player's language with
-// `locale.say(answer)`, and its English is the framework library's, word for word.
-test("every refusal is a key and values whose English is the library's own sentence", () => {
+// Plan L's implementation audit, I2: a refusal is a message (a key and values), so a screen says it in the player's
+// language with `locale.say(answer)`. It has no sentence of its own: no language is the default.
+test('every refusal has a reason, a key and values, and no message of its own', () => {
   const plain: Controls = { jump: { label: 'Jump', keys: ['Space'], side: 'right' } }
   const refusals = [
     rebind(c, 'fly', 'keys', 'KeyF'),
@@ -201,12 +201,22 @@ test("every refusal is a key and values whose English is the library's own sente
     rebind(plain, 'jump', 'shared-1', 'KeyW'),
     rebind(c, 'jump', 'shared-1', 'ArrowUp'),
   ]
-  const english = frameworkWords('en')
+  const library = frameworkWords('en')
   for (const answer of refusals) {
     expect(answer.ok).toBe(false)
     if (answer.ok) continue
-    expect(english(answer.key, answer.values), answer.key).toBe(answer.message)
+    expect(Object.hasOwn(answer, 'message'), answer.key).toBe(false)
+    expect(library(answer.key, answer.values), answer.key).not.toBe(answer.key)
   }
+  expect(refusals.map((answer) => (answer.ok ? '' : answer.reason))).toEqual([
+    'unknown-action',
+    'reserved',
+    'reserved',
+    'unknown-input',
+    'no-shared',
+    'other-half',
+  ])
+  expect(refusals[0]).toMatchObject({ key: 'automata.rebind.unknown-action', values: { action: 'fly' } })
 })
 
 // Audit M4: a key moved from one person's half to the other's is a change, even when the keys read the same flattened.

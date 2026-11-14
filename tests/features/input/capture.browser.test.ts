@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { controlsCommand } from '#src/features/commands/commands.ts'
 import { createInput, type Input } from '#src/features/input/input.ts'
+import { frameworkWords } from '#src/features/locale/locale.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
@@ -17,6 +18,7 @@ const make = (settings?: unknown): Input => {
     controls: fixtureControls,
     gamepads: fake.getGamepads,
     frames,
+    words: frameworkWords('ko'),
     ...(settings === undefined ? {} : { settings }),
   })
   return input

@@ -1,6 +1,7 @@
 // Gamepad presses for menus: a held direction repeats like a held key, and the buttons answer once.
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { createInput, type Input, type MenuPress } from '#src/features/input/input.ts'
+import { frameworkWords } from '#src/features/locale/locale.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
@@ -18,7 +19,13 @@ beforeEach(() => {
   mount.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:844px;overflow:hidden'
   document.body.append(mount)
   vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList)
-  input = createInput({ mount, controls: fixtureControls, gamepads: fake.getGamepads, frames })
+  input = createInput({
+    mount,
+    controls: fixtureControls,
+    gamepads: fake.getGamepads,
+    frames,
+    words: frameworkWords('ko'),
+  })
   heard = []
   input.onMenu((press) => heard.push(press))
 })

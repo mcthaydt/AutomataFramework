@@ -20,8 +20,8 @@ afterEach(() => localStorage.removeItem(KEY))
 const open = (size: { width: number; height: number }, query = '') =>
   openPage<LocalePage>(size, `${PAGE}?game=${GAME}${query}`)
 
-test('a first-time player whose device says Korean is greeted in Korean', async () => {
-  const { page, close } = await open({ width: 390, height: 844 }, '&device=ko-KR')
+test('a player who chose Korean is greeted in Korean', async () => {
+  const { page, close } = await open({ width: 390, height: 844 }, '&saved=ko')
   try {
     const shown = await page.shown()
     expect(shown.language).toBe('ko')
@@ -33,7 +33,7 @@ test('a first-time player whose device says Korean is greeted in Korean', async 
 })
 
 test('a player taps 日本語 and everything on the page is Japanese', async () => {
-  const { page, close } = await open({ width: 390, height: 844 }, '&device=en-US')
+  const { page, close } = await open({ width: 390, height: 844 }, '&device=en-US&saved=en')
   try {
     const before = await page.shown()
     expect([before.language, before.greeting, before.level]).toEqual(['en', 'Hello there! 👋', 'Level 1'])
@@ -68,7 +68,7 @@ for (const [name, width, height] of SCREENS) {
   test(`on ${name} every language's button can be read and pressed`, async () => {
     await browser.viewport(width, height)
     expect([window.innerWidth, window.innerHeight]).toEqual([width, height])
-    const { page, close } = await open({ width, height })
+    const { page, close } = await open({ width, height }, '&saved=en')
     try {
       const boxes = await page.buttons()
       expect(boxes.map((b) => b.language)).toEqual([...LANGUAGES])
@@ -89,7 +89,7 @@ for (const [name, width, height] of SCREENS) {
 }
 
 test('changing the language moves no hash', async () => {
-  const { page, close } = await open({ width: 390, height: 844 })
+  const { page, close } = await open({ width: 390, height: 844 }, '&saved=en')
   try {
     const same = await page.hashOfPlay(120)
     const changed = await page.hashOfPlay(120, { at: 60, to: 'ko' })
@@ -105,7 +105,7 @@ test('changing the language moves no hash', async () => {
 test('a picture of the page in each language', async () => {
   await browser.viewport(390, 844)
   for (const language of LANGUAGES) {
-    const { page, close } = await open({ width: 390, height: 844 }, '&device=en-US')
+    const { page, close } = await open({ width: 390, height: 844 }, '&device=en-US&saved=en')
     try {
       await page.run(20)
       await page.tap(language)

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { controlsCommand } from '#src/features/commands/commands.ts'
 import { createInput, type Input, type ListedPad } from '#src/features/input/input.ts'
 import { SKY_COLOR } from '#src/features/level/level.ts'
+import { frameworkWords } from '#src/features/locale/locale.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
@@ -29,7 +30,13 @@ afterEach(() => {
 })
 
 const make = (): Input => {
-  input = createInput({ mount, controls: fixtureControls, gamepads: fake.getGamepads, frames })
+  input = createInput({
+    mount,
+    controls: fixtureControls,
+    gamepads: fake.getGamepads,
+    frames,
+    words: frameworkWords('ko'),
+  })
   return input
 }
 /** Sends a key event to the window the way a browser does, and says whether the page's default was stopped. */
@@ -302,7 +309,11 @@ test('destroy removes the buttons and the listeners', () => {
 test('a player who cannot exist, or controls that are wrong, stop it at the start', () => {
   expect(() => make().setPlayers([5])).toThrow('Player 5 does not exist. Players are numbered 1 to 4.')
   expect(() =>
-    createInput({ mount, controls: { 'Jump!': { label: 'Jump', keys: [], side: 'right' } } }),
+    createInput({
+      mount,
+      controls: { 'Jump!': { label: 'Jump', keys: [], side: 'right' } },
+      words: frameworkWords('ko'),
+    }),
   ).toThrow('"Jump!" cannot be an action name')
 })
 
@@ -366,7 +377,7 @@ function withGetGamepads(value: unknown, body: () => void): void {
 
 test('a browser with no getGamepads has no pads and does not throw', () => {
   withGetGamepads(undefined, () => {
-    const i = createInput({ mount, controls: fixtureControls, frames })
+    const i = createInput({ mount, controls: fixtureControls, frames, words: frameworkWords('ko') })
     input = i
     key('keydown', 'ArrowRight')
     expect(i.poll(0)).toEqual([controlsCommand(0, 1, 0, ['right'])])
@@ -380,7 +391,7 @@ test('a getGamepads that throws is no pads, and the keyboard still plays', () =>
       throw new DOMException('Gamepads are not allowed here.', 'SecurityError')
     },
     () => {
-      const i = createInput({ mount, controls: fixtureControls, frames })
+      const i = createInput({ mount, controls: fixtureControls, frames, words: frameworkWords('ko') })
       input = i
       key('keydown', 'ArrowRight')
       expect(i.poll(0)).toEqual([controlsCommand(0, 1, 0, ['right'])])
@@ -783,6 +794,7 @@ test('a poll reads the browser pads once, and so does a frame', () => {
       return fake.getGamepads()
     },
     frames,
+    words: frameworkWords('ko'),
   })
   fake.connect(0)
   input.setPlayers([1, 2])
