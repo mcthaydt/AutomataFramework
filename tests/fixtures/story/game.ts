@@ -1,7 +1,7 @@
 // The story game, loaded, and the game code it needs: the hero's controls, and the one line of code a game writes to
 // have the keeper talk when a hero comes up to it.
 import { type GameContent, loadGame } from '#src/features/content/content.ts'
-import { startConversation, Story } from '#src/features/level/level.ts'
+import { Story, startConversation } from '#src/features/level/level.ts'
 import { definePlugin, defineSystem, type PluginDef } from '#src/features/sim/sim.ts'
 import { heroPlugin } from '../game/hero.ts'
 import { readStory } from './read.ts'

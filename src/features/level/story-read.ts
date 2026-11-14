@@ -1,9 +1,10 @@
 // What a page or a save reads of the story, from the sim's own state: plain values, no sim writes. Each gives
 // `undefined` (or nothing played) for a game with no story, so a caller need not know whether the plugin is in.
+import type { Replay } from '../commands/commands.ts'
 import type { GameContent } from '../content/content.ts'
 import type { Sim } from '../sim/sim.ts'
 import { usesStory } from './story.ts'
-import { Story, type StoryProgress } from './story-state.ts'
+import { Story, type StoryProgress, StoryProgressSchema } from './story-state.ts'
 import { cameraAt, linesAt, type SceneCamera } from './timeline.ts'
 
 /** What the speech box shows: who says which line, and what the player may pick now. */
@@ -68,4 +69,19 @@ export function storyProgress(sim: Sim, content: GameContent): StoryProgress {
   if (!usesStory(content)) return { ended: {}, seen: [] }
   const { ended, seen } = sim.resource(Story)
   return { ended: { ...ended }, seen: [...seen] }
+}
+
+/**
+ * The progress a replay was recorded from (its `meta.story`, written by `startGame` for a game that continued), or
+ * `undefined` for a fresh start or a value that is not progress: the replay is then played from the start, as ever.
+ */
+export function storyOfReplay(replay: Replay): StoryProgress | undefined {
+  const text = replay.meta.story
+  if (text === undefined) return undefined
+  try {
+    const read = StoryProgressSchema.safeParse(JSON.parse(text))
+    return read.success ? read.data : undefined
+  } catch {
+    return undefined
+  }
 }

@@ -53,7 +53,11 @@ async function record(): Promise<Played & { content: Awaited<ReturnType<typeof l
   let tipAt = -1
   for (let t = 0; t < STORY_TICKS; t++) {
     for (const e of storyEventsOf(recorder.step(storyScript(sim.tick)))) types.push(e.type)
-    const rule = sim.query(Mind, Thing).find((e) => e.get(Thing).id === 'critter-1')?.get(Mind).rule ?? ''
+    const rule =
+      sim
+        .query(Mind, Thing)
+        .find((e) => e.get(Thing).id === 'critter-1')
+        ?.get(Mind).rule ?? ''
     if (rule !== '' && !rules.includes(rule)) rules.push(rule)
     const story = sim.resource(Story)
     if (talkAt < 0 && story.talk !== null) talkAt = sim.tick

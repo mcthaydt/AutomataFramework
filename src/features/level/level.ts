@@ -7,7 +7,8 @@ export { JoinCommand, joinCommand, joinPlugin, LeaveCommand, leaveCommand, playe
 export { Mind } from './mind.ts'
 export { levelPlugin } from './plugin.ts'
 export { LevelError, spawnLevel } from './spawn-level.ts'
-export { startCutscene, storyPlugin, usesStory } from './story.ts'
+export { startConversation, startCutscene, storyPlugin, usesStory } from './story.ts'
+export { type SceneView, sceneOf, storyOfReplay, storyProgress, type TalkView, talkOf } from './story-read.ts'
 export {
   ChooseCommand,
   ConversationChosen,
