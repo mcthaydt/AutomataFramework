@@ -316,7 +316,7 @@ change, where it acts).
   |---|---|---|---|---|---|
   | The site | No. 325 | Deep Slate Green `#112f2c` | Naples Yellow `#fbe6a0` | Yellow Ocher `#e2b540` | Eugenia Red `#da525d` |
   | The editors | No. 310 | Deep Slate Olive `#253122` | Sulphur Yellow `#f5ecc2` | Pinkish Cinnamon `#eeb480` | Olive `#837e31` |
-  | The Examples demo game's own screens (title, pause, settings) and its chrome | No. 340 | Black `#111314` | Neutral Gray `#b6bfc1` | Sea Green `#00b49b` | Peach Red `#f15a30` |
+  | The Examples demo game's own screens (title, pause, settings) and its chrome | No. 340 | Black `#111314` | Neutral Gray `#b6bfc1` | Peach Red `#f15a30` | Sea Green `#00b49b` (not used yet) |
   | The example games' own art, 2D and 3D | No. 276 | Black `#111314` | Seashell Pink `#fdd4bd` | Yellow Green `#afd472` | Eosine Pink `#f37f94` |
 
   The hex values are the book's, as read from its open data set and recorded in the site's design audit
@@ -325,6 +325,8 @@ change, where it acts).
   switcher tells a person where they are with the editor's name and icon. The framework imposes none of them: a game
   made with it keeps its own look, and No. 276 is only what the example games are drawn in. If the Owner meant No.
   276 to replace No. 340 on the demo's screens as well, the Examples plan asks before it starts.
+  On the demo's screens the Owner chose Peach Red as the touchable colour (a held touch button), so that a held button
+  cannot be taken for the example games' green crate; Sea Green has no job there yet (the Owner, 2026-11-14).
 - **The name and the wordmark.** The product is called **Automata Framework**, two words, wherever a person reads
   it. Its mark is the word **automata**, set in lower case, with no drawn logo or symbol (the Owner, 2026-11-14).
   The repos keep their names (AutomataFramework, AutomataFrameworkExamples, and so on).
