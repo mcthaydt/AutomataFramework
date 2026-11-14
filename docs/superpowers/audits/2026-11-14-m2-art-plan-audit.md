@@ -62,6 +62,8 @@ size, its `Math.sin` and `Math.cos`, its `@napi-rs/canvas`). Nothing was run.
 
 ## The open format question
 
+*Answered (the Owner, 2026-11-14):* (a), the new small formats. Stage 4 may start; no task waits.
+
 Audited as if the Owner answers (a), the new small formats. What changes under the others:
 
 - **(b), port the old painter.** Most of the plan. The old painter is about 14,600 lines of TypeScript under
