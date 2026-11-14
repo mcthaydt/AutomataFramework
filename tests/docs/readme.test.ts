@@ -54,3 +54,13 @@ test("the README's door.json is exactly what writeContent makes of it", () => {
   const written = framework.writeContent('sound', JSON.parse(block ?? '') as never)
   expect(written).toBe(block)
 })
+
+// A game finds out how to hold things and how to hear a touch from this section.
+test('the README shows a pin, a rope, a touched character and the event a game reads', () => {
+  const start = readme.indexOf('## Joints and touch')
+  expect(start).toBeGreaterThan(-1)
+  const section = readme.slice(start, readme.indexOf('\n## ', start + 1))
+  for (const word of ['"kind": "pin"', '"kind": "rope"', '"touch": "take"', 'touchEvent('])
+    expect(section, word).toContain(word)
+  expect(typeof framework.touchEvent).toBe('function')
+})

@@ -4,9 +4,11 @@ import { startGame, watchReplay } from '@automataframework/framework'
 import {
   createGameSim,
   type GameContent,
+  type LevelJoint,
   loadGame,
   type MessagesFile,
   type TilesetFile,
+  type Touch,
 } from '@automataframework/framework/headless'
 
 export const used: [typeof createGameSim, typeof loadGame, typeof startGame, typeof watchReplay] = [
@@ -20,3 +22,7 @@ export const used: [typeof createGameSim, typeof loadGame, typeof startGame, typ
 export const sound: NonNullable<GameContent['sounds']>[string] | undefined = undefined
 export const words: MessagesFile | undefined = undefined
 export const tiles: TilesetFile | undefined = undefined
+
+// Joints and touch are in the packed declarations too.
+export const held: LevelJoint | undefined = undefined
+export const touched: Touch | undefined = undefined
