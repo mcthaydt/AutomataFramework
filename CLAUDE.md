@@ -127,6 +127,9 @@ implementations or incomplete integrations. Do your best work."
 - **No AI attribution anywhere.** No `Co-Authored-By: Claude`, no session-link trailer and no "Generated with Claude Code" in
   commits, pull request bodies or docs (the Owner, 2026-11-13). Before any commit, set the author with
   `git config --global user.name "McThayDT" && git config --global user.email "107786093+mcthaydt@users.noreply.github.com"`.
+  The `commit-authors` check (`.github/workflows/commit-authors.yml`) fails a pull request when one of the Owner's
+  commits is not exactly that author and committer, when any commit is by Claude, or when a commit message or the
+  pull request's words have a Claude credit. Its failure message gives the fix.
 - Refresh sessions after 90 minutes.
 - Branches: `main` plus branches with CI running, five at most.
 - **Tests run only in GitHub-hosted CI, never locally.** Verify through the pull request's CI runs.
