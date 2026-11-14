@@ -35,7 +35,7 @@ test('with no marks, every translated word waits for a read, and English never d
   // Five languages, nine words each: the keeper's five, the level's name and three buttons.
   expect(unread).toHaveLength(45)
   expect(unread.some((word) => word.language === 'en')).toBe(false)
-  expect(unread.slice(0, 9).map((word) => word.language)).toEqual(Array(9).fill('es'))
+  expect(unread.slice(0, 9).map((word) => word.language)).toEqual(Array(9).fill('zh'))
   const keys = unread.slice(0, 9).map((word) => word.key)
   expect(keys).toEqual([...keys].sort())
 })

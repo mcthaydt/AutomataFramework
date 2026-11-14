@@ -7,6 +7,7 @@ import { compileWords, functionName, outdirProblem } from '#src/features/cli/wor
 import { LANGUAGES } from '#src/features/content/content.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, memoryLayer } from '../../fixtures/cli/memory.ts'
+import { withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles } from '../../fixtures/full-game/read.ts'
 
 /** Paraglide starts a compiler and loads a plugin: allow it well over the usual. */
@@ -126,9 +127,20 @@ test('two words that would be one function are named, and nothing is written', a
   expect(functionName('level.level-1.name')).toBe('level_level_1_name')
 })
 
+test(
+  "the game's own language is the base language of the compile, whichever of the six it is, so a Korean game's is Korean",
+  async () => {
+    const toml = withSource(GAME['automata.toml'] ?? '', 'ko')
+    const memory = memoryLayer(under('game', { ...GAME, 'automata.toml': toml }))
+    await run(memory)
+    expect(textOf(memory.files.get(`game/${OUTDIR}/runtime.js`))).toMatch(/baseLocale = "ko"/)
+  },
+  SLOW,
+)
+
 test('a game with no words gets a sentence that says what to add', async () => {
   const memory = memoryLayer(under('game', smallGame()))
-  expect(await failure(memory)).toContain('no English words to compile')
+  expect(await failure(memory)).toContain('This game has no words to compile')
   expect(written(memory)).toEqual([])
 })
 

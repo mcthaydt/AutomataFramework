@@ -102,7 +102,8 @@ test('a host that will not keep the choice: the game still changes, and the answ
 })
 
 describe('a game with words in English and Spanish only', () => {
-  const small = (): Promise<GameContent> => wordsGame({ en: { [hello]: 'Hello' }, es: { [hello]: 'Hola' } })
+  const small = (): Promise<GameContent> =>
+    wordsGame({ en: { [hello]: 'Hello' }, es: { [hello]: 'Hola' } }, 'en')
 
   test('a saved language it does not have is as good as none, and is left stored', async () => {
     for (const language of ['fr', 'ko', null, 7]) {
@@ -127,7 +128,7 @@ describe('a game with words in English and Spanish only', () => {
 
   test('it offers the languages it has, in order', async () => {
     const { locale } = await open(await small())
-    expect(locale.languages).toEqual(['en', 'es'])
+    expect(locale.languages).toEqual(['es', 'en'])
   })
 })
 

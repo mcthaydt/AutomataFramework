@@ -1,6 +1,6 @@
 // The example figures, a backdrop and the characters that wear them: the fixture game with art, for the tests of what
 // refers to a figure. (The full game's own art is in tests/fixtures/full-game.) No colour is named in an id or a word.
-import { writeContent } from '#src/features/content/content.ts'
+import { type Language, writeContent } from '#src/features/content/content.ts'
 import type { GameFile } from './kind.ts'
 import { KEEPER_PATH, storyGame, type Written } from './story.ts'
 
@@ -105,15 +105,21 @@ export const figureFiles = (): GameFile[] => [
 
 /**
  * The fixture game with a keeper standing in level 1, the hero and the keeper wearing figures, and the two figures
- * listed. `extra` lists more files and `replace` has the last word on any path.
+ * listed. `extra` lists more files and `replace` has the last word on any path. A game that lists messages names
+ * `source`, the language its words are written in.
  */
 export function artGame(
   extra: readonly GameFile[] = [],
   replace: Record<string, string | undefined> = {},
+  source?: Language,
 ): Record<string, string | undefined> {
-  return storyGame([...figureFiles(), ...extra], {
-    [KEEPER_PATH]: writeContent('character', keeperWithClips() as never),
-    'content/characters/hero.json': writeContent('character', heroCharacter() as never),
-    ...replace,
-  })
+  return storyGame(
+    [...figureFiles(), ...extra],
+    {
+      [KEEPER_PATH]: writeContent('character', keeperWithClips() as never),
+      'content/characters/hero.json': writeContent('character', heroCharacter() as never),
+      ...replace,
+    },
+    source,
+  )
 }

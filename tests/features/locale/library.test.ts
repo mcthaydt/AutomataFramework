@@ -46,14 +46,17 @@ describe.each(LANGUAGES)('the %s file', (language) => {
 
 /** A game with the six library files as its words. */
 const everyLanguage = (): ReturnType<typeof wordsGame> =>
-  wordsGame({
-    en: wordsIn('en'),
-    es: wordsIn('es'),
-    ko: wordsIn('ko'),
-    ja: wordsIn('ja'),
-    zh: wordsIn('zh'),
-    pt: wordsIn('pt'),
-  })
+  wordsGame(
+    {
+      en: wordsIn('en'),
+      es: wordsIn('es'),
+      ko: wordsIn('ko'),
+      ja: wordsIn('ja'),
+      zh: wordsIn('zh'),
+      pt: wordsIn('pt'),
+    },
+    'en',
+  )
 
 test('the six files are translated in full', async () => {
   expect(translationProblems(await everyLanguage())).toEqual([])

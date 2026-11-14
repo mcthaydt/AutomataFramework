@@ -32,11 +32,11 @@ test('the page says which language it is in, and keeps saying so', async () => {
   await locale.set('pt')
   expect(element.lang).toBe('pt-BR')
   await locale.set('en')
-  expect(element.lang).toBe('en')
+  expect(element.lang).toBe('en-US')
   stop()
   await locale.set('ja')
   // After `stop` the page is left as it was.
-  expect(element.lang).toBe('en')
+  expect(element.lang).toBe('en-US')
 })
 
 test("with no element it is the page's own <html>", async () => {

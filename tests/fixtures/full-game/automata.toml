@@ -2,6 +2,7 @@ format = 1
 name = "Full Game"
 start = "level-1"
 hero = "hero"
+source = "en"
 
 [[content]]
 type = "level"

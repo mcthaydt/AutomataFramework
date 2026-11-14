@@ -9,10 +9,8 @@ import { wordsGame } from '../../fixtures/locale/content.ts'
 const hello = 'keeper.hello'
 
 test('the language asked for, then English, then the key', async () => {
-  const content = await wordsGame({
-    en: { [hello]: 'Hello', 'keeper.tip': 'A tip' },
-    ko: { [hello]: '안녕' },
-  })
+  const words = { en: { [hello]: 'Hello', 'keeper.tip': 'A tip' }, ko: { [hello]: '안녕' } }
+  const content = await wordsGame(words, 'en')
   const ko = wordsOf(content, 'ko')
   expect(ko(hello)).toBe('안녕')
   expect(ko('keeper.tip')).toBe('A tip')
@@ -29,16 +27,14 @@ test("the framework's own words are there in a game that says nothing of them", 
 })
 
 test("a game may say a framework sentence its own way; a language it leaves out keeps the framework's", async () => {
-  const content = await wordsGame({ en: { 'automata.touch.label': 'Buttons' } })
+  const content = await wordsGame({ en: { 'automata.touch.label': 'Buttons' } }, 'en')
   expect(wordsOf(content, 'en')('automata.touch.label')).toBe('Buttons')
   expect(wordsOf(content, 'ko')('automata.touch.label')).toBe('터치 조작')
 })
 
 test("a game's own English stands in before the framework's, whatever the language", async () => {
-  const content = await wordsGame({
-    en: { 'automata.touch.label': 'Buttons', [hello]: 'Hi' },
-    es: { [hello]: 'Hola' },
-  })
+  const words = { en: { 'automata.touch.label': 'Buttons', [hello]: 'Hi' }, es: { [hello]: 'Hola' } }
+  const content = await wordsGame(words, 'en')
   // Spanish has no say on the label: the framework's Spanish comes before the game's English.
   expect(wordsOf(content, 'es')('automata.touch.label')).toBe('Controles táctiles')
 })
@@ -54,12 +50,9 @@ test('values are put in, in the language asked for', () => {
 
 describe("the game's languages", () => {
   test('in order, whatever order the files were listed in', async () => {
-    const content = await wordsGame({
-      pt: { [hello]: 'Olá' },
-      en: { [hello]: 'Hi' },
-      ko: { [hello]: '안녕' },
-    })
-    expect(languagesOf(content)).toEqual(['en', 'ko', 'pt'])
+    const words = { pt: { [hello]: 'Olá' }, en: { [hello]: 'Hi' }, ko: { [hello]: '안녕' } }
+    const content = await wordsGame(words, 'en')
+    expect(languagesOf(content)).toEqual(['en', 'pt', 'ko'])
   })
 
   test('all six for a game with no words', async () => {

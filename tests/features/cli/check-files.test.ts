@@ -14,6 +14,7 @@ import {
 } from '#src/features/content/content.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, type MemoryOptions, memoryLayer } from '../../fixtures/cli/memory.ts'
+import { withSource } from '../../fixtures/content/kind.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const LEVEL = 'content/levels/level-1.json'
@@ -184,7 +185,7 @@ function withWords(lacking: boolean): Record<string, string> {
     (id) => `\n[[content]]\ntype = "messages"\npath = "content/messages/${id}.json"\n`,
   )
   return {
-    'automata.toml': `${toml}\n${listed.join('')}`,
+    'automata.toml': withSource(`${toml}\n${listed.join('')}`, 'en'),
     'content/messages/en.json': messages('en', { 'controls.jump': 'Jump', 'keeper.hello': 'Hello there!' }),
     'content/messages/es.json': messages(
       'es',
@@ -197,7 +198,7 @@ test('a word a language lacks is a problem that names the file, the key and what
   const [step] = report.steps
   expect(step?.state).toBe('failed')
   expect(step?.problems.map((p) => p.message)).toContain(
-    'This file has no "keeper.hello". English says "Hello there!". Write it in Spanish.',
+    'This file has no "keeper.hello". The English file says "Hello there!". Write it in Spanish.',
   )
   expect(step?.problems.some((p) => p.file === 'content/messages/es.json')).toBe(true)
 })
