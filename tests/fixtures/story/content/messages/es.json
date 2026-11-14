@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "es",
+  "messages": {
+    "hero.ask": "¿Algún consejo?",
+    "hero.bye": "Hasta luego.",
+    "keeper.bye": "Cuídate.",
+    "keeper.hello": "¡Hola!",
+    "keeper.look": "Mira allí.",
+    "keeper.name": "Guardián",
+    "keeper.tip": "Salta sobre mí cuando quieras.",
+    "keeper.tip-more": "El pequeño huye de ti.",
+    "keeper.welcome": "Bienvenido al claro."
+  }
+}

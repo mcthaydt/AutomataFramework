@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "en",
+  "messages": {
+    "hero.ask": "Any tips?",
+    "hero.bye": "See you.",
+    "keeper.bye": "Take care.",
+    "keeper.hello": "Hello there!",
+    "keeper.look": "Look over there.",
+    "keeper.name": "Keeper",
+    "keeper.tip": "Jump over me when you are ready.",
+    "keeper.tip-more": "The little one runs from you.",
+    "keeper.welcome": "Welcome to the glade."
+  }
+}

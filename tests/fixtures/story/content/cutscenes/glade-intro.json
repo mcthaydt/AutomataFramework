@@ -1,0 +1,45 @@
+{
+  "format": 1,
+  "id": "glade-intro",
+  "level": "glade",
+  "length": 120,
+  "camera": [
+    {
+      "at": 0,
+      "x": 15,
+      "y": 4.5,
+      "zoom": 1,
+      "ease": "cut"
+    },
+    {
+      "at": 90,
+      "x": 6,
+      "y": 4.5,
+      "zoom": 1,
+      "ease": "smooth"
+    }
+  ],
+  "actors": [
+    {
+      "at": 0,
+      "who": "keeper",
+      "x": 12.5,
+      "y": 7.5
+    },
+    {
+      "at": 90,
+      "who": "keeper",
+      "x": 10.5,
+      "y": 7.5
+    }
+  ],
+  "lines": [
+    {
+      "at": 30,
+      "until": 110,
+      "line": "keeper.welcome",
+      "speaker": "keeper"
+    }
+  ],
+  "opens": true
+}

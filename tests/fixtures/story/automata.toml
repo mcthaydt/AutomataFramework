@@ -1,0 +1,45 @@
+format = 1
+name = "Story Game"
+start = "glade"
+hero = "hero"
+players = 2
+
+[[content]]
+type = "level"
+path = "content/levels/glade.json"
+
+[[content]]
+type = "character"
+path = "content/characters/hero.json"
+
+[[content]]
+type = "character"
+path = "content/characters/keeper.json"
+
+[[content]]
+type = "character"
+path = "content/characters/critter.json"
+
+[[content]]
+type = "behaviour"
+path = "content/behaviours/critter.json"
+
+[[content]]
+type = "conversation"
+path = "content/conversations/keeper.json"
+
+[[content]]
+type = "cutscene"
+path = "content/cutscenes/glade-intro.json"
+
+[[content]]
+type = "cutscene"
+path = "content/cutscenes/glade-tip.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/en.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/es.json"

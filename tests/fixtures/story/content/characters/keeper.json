@@ -1,0 +1,14 @@
+{
+  "format": 1,
+  "id": "keeper",
+  "body": "fixed",
+  "size": {
+    "w": 0.8,
+    "h": 1
+  },
+  "color": "#7a9e3b",
+  "upright": false,
+  "kind": "keeper",
+  "name": "keeper.name",
+  "conversation": "keeper"
+}

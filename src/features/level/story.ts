@@ -12,8 +12,8 @@ import { Body, Transform } from '../physics/physics.ts'
 import {
   definePlugin,
   defineSystem,
-  hypot,
   type EntityRef,
+  hypot,
   type PluginDef,
   type SimContext,
   type SystemDef,

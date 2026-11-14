@@ -135,7 +135,10 @@ const thingX = (sim: Sim, id: string): number =>
     .find((e) => e.get(Thing).id === id)
     ?.get(Transform).x ?? Number.NaN
 const heroX = (sim: Sim, number: number): number =>
-  sim.query(Player).find((e) => e.get(Player).number === number)?.get(Transform).x ?? Number.NaN
+  sim
+    .query(Player)
+    .find((e) => e.get(Player).number === number)
+    ?.get(Transform).x ?? Number.NaN
 
 /** Steps to tick `until`, sending `send(tick)`'s commands, and returns the story's events by the tick they came on. */
 function run(sim: Sim, until: number, send: (tick: number) => Command[] = () => []) {
