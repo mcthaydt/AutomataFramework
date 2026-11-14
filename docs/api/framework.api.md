@@ -685,6 +685,21 @@ const MAX_PLAYERS = 4;
 const MAX_STEPS_PER_FRAME = 5;
 ```
 
+### `MemoryStore` (interface)
+
+```ts
+interface MemoryStore extends SaveStore {
+    refuse(refusal: StoreRefusal | undefined): void;
+    entries(): Readonly<Record<string, string>>;
+}
+```
+
+### `memoryStore` (function)
+
+```ts
+function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
+```
+
 ### `parseContent` (function)
 
 ```ts
@@ -963,6 +978,17 @@ interface Rng {
 type RngState = [number, number, number, number];
 ```
 
+### `SaveStore` (interface)
+
+```ts
+interface SaveStore {
+    check(): Promise<StoreResult<void>>;
+    get(key: string): Promise<StoreResult<string | null>>;
+    set(key: string, value: string): Promise<StoreResult<void>>;
+    remove(key: string): Promise<StoreResult<void>>;
+}
+```
+
 ### `Scene` (interface)
 
 ```ts
@@ -1166,6 +1192,25 @@ interface StepResult {
     readonly render: RenderDelta;
     readonly rejected: readonly RejectedCommand[];
 }
+```
+
+### `StoreRefusal` (type)
+
+```ts
+type StoreRefusal = 'unavailable' | 'full' | 'failed';
+```
+
+### `StoreResult` (type)
+
+```ts
+type StoreResult<T> = {
+    readonly ok: true;
+    readonly value: T;
+} | {
+    readonly ok: false;
+    readonly refusal: StoreRefusal;
+    readonly detail: string;
+};
 ```
 
 ### `SystemDef` (interface)
@@ -1898,6 +1943,21 @@ const MAX_ACTIONS = 16;
 const MAX_PLAYERS = 4;
 ```
 
+### `MemoryStore` (interface)
+
+```ts
+interface MemoryStore extends SaveStore {
+    refuse(refusal: StoreRefusal | undefined): void;
+    entries(): Readonly<Record<string, string>>;
+}
+```
+
+### `memoryStore` (function)
+
+```ts
+function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
+```
+
 ### `parseContent` (function)
 
 ```ts
@@ -2164,6 +2224,17 @@ interface Rng {
 type RngState = [number, number, number, number];
 ```
 
+### `SaveStore` (interface)
+
+```ts
+interface SaveStore {
+    check(): Promise<StoreResult<void>>;
+    get(key: string): Promise<StoreResult<string | null>>;
+    set(key: string, value: string): Promise<StoreResult<void>>;
+    remove(key: string): Promise<StoreResult<void>>;
+}
+```
+
 ### `ShapeKind` (const)
 
 ```ts
@@ -2352,6 +2423,25 @@ interface StepResult {
     readonly render: RenderDelta;
     readonly rejected: readonly RejectedCommand[];
 }
+```
+
+### `StoreRefusal` (type)
+
+```ts
+type StoreRefusal = 'unavailable' | 'full' | 'failed';
+```
+
+### `StoreResult` (type)
+
+```ts
+type StoreResult<T> = {
+    readonly ok: true;
+    readonly value: T;
+} | {
+    readonly ok: false;
+    readonly refusal: StoreRefusal;
+    readonly detail: string;
+};
 ```
 
 ### `SystemDef` (interface)
