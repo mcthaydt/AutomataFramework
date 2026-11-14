@@ -19,19 +19,37 @@ const BUTTON_PX = 64
 const GAP_PX = 12
 const EDGE_PX = 16
 
+/**
+ * The CSS custom properties a game sets (on the mount, or any element above it) to give the buttons its own look. Each
+ * one falls back to the framework's own look, so a game that sets none sees what it always saw. The size, the gaps, the
+ * safe-area padding and the touch-safety styles are not among them: a thumb must still find the button.
+ */
+export const TOUCH_PROPERTIES: readonly string[] = [
+  '--automata-touch-background',
+  '--automata-touch-color',
+  '--automata-touch-border',
+  '--automata-touch-radius',
+  '--automata-touch-font',
+  '--automata-touch-pressed-background',
+  '--automata-touch-pressed-color',
+]
+
 // Dark enough that white 18 px bold words reach 4.5 to 1 over the lightest thing they can sit on, the sky.
-const RESTING_BACKGROUND = 'rgba(20,20,30,0.55)'
+const BACKGROUND = 'var(--automata-touch-background,rgba(20,20,30,0.55))'
+const COLOR = 'var(--automata-touch-color,#fff)'
+const PRESSED_BACKGROUND = 'var(--automata-touch-pressed-background,rgba(255,255,255,0.55))'
+const PRESSED_COLOR = 'var(--automata-touch-pressed-color,#111)'
 
 const BUTTON_STYLE = [
   `min-width:${BUTTON_PX}px`,
   `min-height:${BUTTON_PX}px`,
   'padding:8px 14px',
   'box-sizing:border-box',
-  'border:2px solid rgba(255,255,255,0.85)',
-  'border-radius:16px',
-  `background:${RESTING_BACKGROUND}`,
-  'color:#fff',
-  'font:700 18px/1.1 system-ui,sans-serif',
+  'border:var(--automata-touch-border,2px solid rgba(255,255,255,0.85))',
+  'border-radius:var(--automata-touch-radius,16px)',
+  `background:${BACKGROUND}`,
+  `color:${COLOR}`,
+  'font:var(--automata-touch-font,700 18px/1.1 system-ui,sans-serif)',
   'touch-action:none',
   'user-select:none',
   '-webkit-user-select:none',
@@ -48,6 +66,7 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
   if (restorePosition !== undefined) mount.style.position = 'relative'
 
   const overlay = document.createElement('div')
+  overlay.className = 'automata-touch'
   overlay.setAttribute('role', 'group')
   overlay.setAttribute('aria-label', 'Touch controls')
   // Notches and the home bar: stay inside the safe area on every edge.
@@ -79,8 +98,8 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
     for (const [action, b] of buttons) {
       const pressed = held.has(action)
       b.setAttribute('aria-pressed', String(pressed))
-      b.style.background = pressed ? 'rgba(255,255,255,0.55)' : RESTING_BACKGROUND
-      b.style.color = pressed ? '#111' : '#fff'
+      b.style.background = pressed ? PRESSED_BACKGROUND : BACKGROUND
+      b.style.color = pressed ? PRESSED_COLOR : COLOR
     }
   }
   // The overlay is anchored to the bottom and as tall as its padding and buttons, so its height is the room taken. Hidden
@@ -99,6 +118,9 @@ export function createTouch(mount: HTMLElement, controls: Controls, win: Window 
   for (const [action, control] of Object.entries(controls)) {
     const b = document.createElement('button')
     b.type = 'button'
+    // Hooks for a game's stylesheet: which button this is.
+    b.className = 'automata-touch-button'
+    b.dataset.action = action
     b.textContent = control.label
     b.setAttribute('aria-label', control.label)
     b.setAttribute('aria-pressed', 'false')

@@ -2,7 +2,10 @@
 // reader is an author or an agent who has just typed it; every message says what to change.
 import { ACTION_NAME, MAX_ACTIONS } from '../commands/commands.ts'
 
-/** One action a player can take. `label` is the words on its touch button and its accessible name. */
+/**
+ * One action a player can take. `label` is the words on its touch button and its accessible name. The button carries
+ * `data-action` with the action's name, so a stylesheet can tell the buttons apart.
+ */
 export interface Control {
   /** 1 to 12 characters, e.g. 'Jump'. */
   readonly label: string
