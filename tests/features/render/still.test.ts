@@ -50,8 +50,9 @@ test('the views of the full game’s level are the things its sim has at tick 0'
   if (level === undefined) throw new Error('the full game has no level-1')
   const sim = await createGameSim({ content, players: [1, 2] })
   made.push(sim)
+  // The sim keeps its numbers in 32 bits, the views in 64: held to the same 32 bits they are the same place.
   const drawn = (v: { x: number; y: number; w: number; h: number; color: number }): string =>
-    `${v.x}|${v.y}|${v.w}|${v.h}|${v.color}`
+    [v.x, v.y, v.w, v.h].map(Math.fround).concat(v.color).join('|')
   const wanted = sim.query(Transform, Look).map((e) => {
     const t = e.get(Transform)
     const l = e.get(Look)
