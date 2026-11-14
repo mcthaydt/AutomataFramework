@@ -787,6 +787,8 @@ test('a poll reads the browser pads once, and so does a frame', () => {
   fake.connect(0)
   input.setPlayers([1, 2])
   input.claim(2, 'pad-1')
+  // The first look notices the pad that was plugged in; the ordinary tick and frame are what is counted.
+  frames.advance(16)
   reads = 0
   input.poll(0)
   expect(reads).toBe(1)
