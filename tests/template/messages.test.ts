@@ -2,15 +2,14 @@
 import { expect, test } from 'vitest'
 import {
   LANGUAGES,
+  type Language,
   loadGame,
   parseReadMarks,
   translationProblems,
   unreadWords,
 } from '#src/features/content/content.ts'
-import { testHost } from '#src/features/host/host.ts'
-import { createLocale } from '#src/features/locale/locale.ts'
-import { openSettings } from '#src/features/saves/saves.ts'
 import { keyName } from '../../template/src/features/page/controls.ts'
+import { chosenLocale } from '../fixtures/locale/chosen.ts'
 import { readTemplate, templateTree } from './tree.ts'
 
 const tree = templateTree()
@@ -46,11 +45,8 @@ test('every word the template asks for is in its English file', async () => {
 
 test('a key says its name in the language of the player, a letter says itself', async () => {
   const content = await loaded()
-  const say = async (device: string, code: string): Promise<string> => {
-    const host = testHost({ deviceLanguages: [device] })
-    const settings = await openSettings({ game: 'my-game', store: host.store })
-    return keyName(code, createLocale({ content, host, settings }).words)
-  }
+  const say = async (language: Language, code: string): Promise<string> =>
+    keyName(code, (await chosenLocale(content, language)).words)
   expect(await say('en', 'ArrowLeft')).toBe('Left arrow')
   expect(await say('ja', 'ArrowLeft')).toBe('左矢印')
   expect(await say('pt', 'Space')).toBe('Espaço')

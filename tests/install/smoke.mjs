@@ -150,14 +150,20 @@ console.log(
   `The installed package loaded the full game with ${kinds.length} kinds of file and has every schema.`,
 )
 
-// The player's language, from the packed package alone: a device that says Japanese is greeted in Japanese, from the
-// full game's own words, and every word of the full game is written in every language.
+// The player's language, from the packed package alone: a device that says Japanese is offered Japanese, and a player who
+// chooses it is greeted in Japanese, from the full game's own words, and every word of the full game is written in every language.
 const languageHost = testHost({ deviceLanguages: ['ja-JP'] })
 const locale = createLocale({
   content: full.value,
   host: languageHost,
   settings: await openSettings({ game: 'smoke-language', store: languageHost.store }),
 })
+// Nobody is given a language: the device only says which flag the picker opens on.
+if (locale.language() !== undefined || locale.asked() || locale.suggested() !== 'ja') {
+  console.error('The installed package gave a first-time player a language, or did not suggest Japanese.')
+  process.exit(1)
+}
+await locale.set('ja')
 if (locale.language() !== 'ja' || locale.words('keeper.hello') !== 'こんにちは！') {
   console.error('The installed package did not greet a Japanese device in Japanese.')
   process.exit(1)

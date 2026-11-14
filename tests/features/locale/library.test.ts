@@ -62,6 +62,35 @@ test('the six files are translated in full', async () => {
   expect(translationProblems(await everyLanguage())).toEqual([])
 })
 
+test("every file has every key the others have, none is 'the first', and the picker's two words are among them", () => {
+  const keys = (language: Language): string[] => Object.keys(wordsIn(language)).sort()
+  for (const a of LANGUAGES)
+    for (const b of LANGUAGES) expect(keys(a), `${a} against ${b}`).toEqual(keys(b))
+  for (const language of LANGUAGES)
+    expect(keys(language), language).toEqual(
+      expect.arrayContaining(['automata.picker.go', 'automata.picker.title']),
+    )
+})
+
+test('the picker names its own language in that language, so each flag reads its own title', () => {
+  expect(LANGUAGES.map((language) => wordsIn(language)['automata.picker.title'])).toEqual([
+    '用中文玩',
+    'Jugar en español',
+    'Play in English',
+    'Jogar em português',
+    '日本語でプレイ',
+    '한국어로 플레이',
+  ])
+  expect(LANGUAGES.map((language) => wordsIn(language)['automata.picker.go'])).toEqual([
+    '开始',
+    'Vamos',
+    'Go',
+    'Vamos',
+    'スタート',
+    '시작',
+  ])
+})
+
 // A key on a keyboard is a word a player knows ("Pick another key"); the key of a message is not, and is said as
 // "a word's name" if ever. So "key" is not banned here, and "message key", "translation" and "fallback" are.
 test('no sentence names a colour or says locale, message key, translation, fallback, socket or tick', () => {

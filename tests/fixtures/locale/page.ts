@@ -87,7 +87,8 @@ const loaded = await loadGame(readFullGame())
 if (!loaded.ok) throw new Error('the full game did not load')
 const content = loaded.value
 const settings = await openSettings({ game: gameId, store: host.store })
-const locale = createLocale({ content, host, settings })
+// Watching, for now: this page has no picker yet, so nobody is asked and the words are in the suggested language.
+const locale = createLocale({ content, host, settings, watching: true })
 followLanguage(locale)
 
 // The page's own words and buttons, over the game.
@@ -163,7 +164,7 @@ const page: LocalePage = {
       buttons.find((b) => b.dataset.action === action)?.textContent ?? ''
     return {
       lang: document.documentElement.lang,
-      language: locale.language(),
+      language: locale.language() as Language,
       greeting: lines[0]?.textContent ?? '',
       level: lines[1]?.textContent ?? '',
       refused: lines[2]?.textContent ?? '',
@@ -231,7 +232,7 @@ const page: LocalePage = {
     own.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden;visibility:hidden'
     document.body.append(own)
     const playFrames = manualFrames()
-    const before = locale.choice()
+    const before = locale.language() as Language
     const playing = await startGame({
       content,
       plugins: [heroPlugin],

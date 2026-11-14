@@ -1,40 +1,42 @@
 // What a person reads about a room: every English sentence the first words file had, word for word, and the same room
-// said in the other languages.
+// said in the other languages. The words are always passed in: no language is the default.
 import { expect, test } from 'vitest'
 import { LANGUAGES } from '#src/features/content/content.ts'
 import { frameworkWords, onlineWords } from '#src/features/locale/locale.ts'
 import { ONLINE_PROBLEMS, type OnlineStatus } from '#src/features/net/net.ts'
 
+const en = frameworkWords('en')
+
 test('waiting for one more player says how to share the code', () => {
-  expect(onlineWords({ state: 'waiting', code: 'K7QX', missing: 1 })).toBe(
+  expect(onlineWords({ state: 'waiting', code: 'K7QX', missing: 1 }, en)).toBe(
     'Waiting for 1 more player. Share this code so a friend can join: K7QX',
   )
 })
 
 test('waiting for several players', () => {
-  expect(onlineWords({ state: 'waiting', code: 'K7QX', missing: 3 })).toBe(
+  expect(onlineWords({ state: 'waiting', code: 'K7QX', missing: 3 }, en)).toBe(
     'Waiting for 3 more players. Share this code so friends can join: K7QX',
   )
 })
 
 test('playing with everyone here says nothing', () => {
-  expect(onlineWords({ state: 'playing', away: [] })).toBe('')
+  expect(onlineWords({ state: 'playing', away: [] }, en)).toBe('')
 })
 
 test('a player who is away is named, and the game goes on', () => {
-  expect(onlineWords({ state: 'playing', away: [2] })).toBe(
+  expect(onlineWords({ state: 'playing', away: [2] }, en)).toBe(
     'Player 2 lost their connection. The game goes on.',
   )
-  expect(onlineWords({ state: 'playing', away: [1, 3] })).toBe(
+  expect(onlineWords({ state: 'playing', away: [1, 3] }, en)).toBe(
     'Players 1 and 3 lost their connection. The game goes on.',
   )
-  expect(onlineWords({ state: 'playing', away: [1, 2, 4] })).toBe(
+  expect(onlineWords({ state: 'playing', away: [1, 2, 4] }, en)).toBe(
     'Players 1, 2, and 4 lost their connection. The game goes on.',
   )
 })
 
 test('reconnecting', () => {
-  expect(onlineWords({ state: 'reconnecting' })).toBe('Connection lost. Trying to get you back in.')
+  expect(onlineWords({ state: 'reconnecting' }, en)).toBe('Connection lost. Trying to get you back in.')
 })
 
 const ended = {
@@ -51,7 +53,7 @@ const ended = {
 test('every way a room can end has its words', () => {
   expect(Object.keys(ended).sort()).toEqual([...ONLINE_PROBLEMS].sort())
   for (const problem of ONLINE_PROBLEMS)
-    expect(onlineWords({ state: 'ended', problem }), problem).toBe(ended[problem])
+    expect(onlineWords({ state: 'ended', problem }, en), problem).toBe(ended[problem])
 })
 
 test('the same room in Korean', () => {
@@ -82,7 +84,15 @@ test('no words of the machinery, in English', () => {
     ...ONLINE_PROBLEMS.map((problem): OnlineStatus => ({ state: 'ended', problem })),
   ]
   for (const status of statuses)
-    expect(onlineWords(status).toLowerCase(), JSON.stringify(status)).not.toMatch(
+    expect(onlineWords(status, en).toLowerCase(), JSON.stringify(status)).not.toMatch(
       /socket|server tick|desync|rollback|\bsync\b|\bseat\b/,
+    )
+})
+
+test('the room is said in the language it is given, whichever it is, and not in English by default', () => {
+  const status: OnlineStatus = { state: 'ended', problem: 'no-room' }
+  for (const language of LANGUAGES)
+    expect(onlineWords(status, frameworkWords(language)), language).toBe(
+      frameworkWords(language)('automata.online.ended.no-room'),
     )
 })
