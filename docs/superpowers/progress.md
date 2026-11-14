@@ -27,9 +27,15 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan N, networking: 2. Plan, 3. Plan audit | Plan written; audit done (stage 3 at 100%), ten findings F1 to F10 applied to the plan, in review; 0% built (12 tasks; Task 11 waits for plan I's `join` and `leave`) | `plans/2026-11-14-m2-networking.md`, `audits/2026-11-14-m2-networking-plan-audit.md` |
 | Plan P (physics: joints and touch): 2. Plan | Written, in review; twelve tasks; stage at 100%, plan P at 10%; waits on plan C | `plans/2026-11-14-m2-physics.md` |
 | Plan P (physics: joints and touch): 3. Plan audit | Written, in review; stage at 100%, plan P at 20%: one critical (a rope's length through `Math.hypot`, now `dmath`'s `hypot`), eight important and nine minor findings, all but one minor applied to the plan; no Owner question; waits on plan C | `audits/2026-11-14-m2-physics-plan-audit.md` |
+| Plan A (art): 2. Plan | Written, in review; fourteen tasks; stage at 100%, plan A at 10%. The `figure` and `backdrop` formats, their painter (our own PNG writer, the same bytes in four engines), clips, tiles, backdrops, the camera, and M1's minors M7 and M8. One Owner question open (these formats, or the old painter ported), which holds every task but 1, 8 and 11 | `plans/2026-11-14-m2-art.md` |
 
 ### Log
 
+- 2026-11-14, plan A (art): the plan is written. A `figure` is parts with poses and paints anything (a character,
+  a tile, a prop); a `backdrop` is layers that repeat and drift, with figures as props. Both are painted by the
+  `content` feature with no page and no Node in it, into a PNG our own writer makes, so `automata art`, a browser
+  and the M3 builders give the same bytes. Which pose shows is sim state (`Sprite`), switched on by content, so no
+  recorded hash moves. Asked of the Owner through the coordinator: these formats, or the old painter ported.
 - 2026-11-14: plan V executed (PR 40). `saves` (slots, one settings record, versions and upgrades), the grown `Host`
   port with `testHost`, and the `web` feature (`webHost` with seams, saves in `localStorage`). Two things differ from
   the plan, both recorded in the plan's Task 7 and the PR: a frame's page is loaded with a `<script src>` (WebKit
