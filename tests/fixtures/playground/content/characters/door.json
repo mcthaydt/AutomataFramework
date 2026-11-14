@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "id": "door",
+  "body": "fixed",
+  "size": {
+    "w": 1,
+    "h": 2
+  },
+  "color": "#7a4fa3",
+  "upright": false,
+  "kind": "door",
+  "touch": "sense"
+}
