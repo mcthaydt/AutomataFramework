@@ -2,7 +2,7 @@
 // so often. `replay()` may be asked for at any time, so a game can offer "save what I just did" without stopping.
 import { canonicalJson } from '../../lib/canonical.ts'
 import { type Command, FRAMEWORK_VERSION, type Sim, type StepResult } from '../sim/sim.ts'
-import type { Replay, ReplayCheck } from './replay.ts'
+import { REPLAY_FORMAT, type Replay, type ReplayCheck } from './replay.ts'
 
 export interface Recorder {
   /** Steps the sim and records what it accepted. */
@@ -45,11 +45,12 @@ export function createRecorder(
     },
     replay() {
       return {
-        format: 1,
+        format: REPLAY_FORMAT,
         framework: FRAMEWORK_VERSION,
         tickHz: sim.tickHz,
         seed: sim.seed,
         contentHash: sim.contentHash,
+        schemaHash: sim.describeSnapshot().header.schemaHash,
         ticks: sim.tick,
         commands: commands.map((c) => ({ ...c })),
         checks: checks.filter((c) => c.tick < sim.tick),

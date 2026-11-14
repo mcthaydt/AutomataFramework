@@ -2057,11 +2057,12 @@ interface RenderRow {
 
 ```ts
 interface Replay {
-    readonly format: 1;
+    readonly format: 1 | 2;
     readonly framework: string;
     readonly tickHz: number;
     readonly seed: number;
     readonly contentHash: string;
+    readonly schemaHash?: string;
     readonly ticks: number;
     readonly commands: readonly Command[];
     readonly checks: readonly ReplayCheck[];
@@ -3176,6 +3177,12 @@ type Verdict = {
 } | {
     readonly ok: false;
     readonly reason: 'content-changed';
+    readonly expected: string;
+    readonly actual: string;
+    readonly rulesChanged: boolean;
+} | {
+    readonly ok: false;
+    readonly reason: 'code-changed';
     readonly expected: string;
     readonly actual: string;
 } | {
@@ -4981,11 +4988,12 @@ interface RenderRow {
 
 ```ts
 interface Replay {
-    readonly format: 1;
+    readonly format: 1 | 2;
     readonly framework: string;
     readonly tickHz: number;
     readonly seed: number;
     readonly contentHash: string;
+    readonly schemaHash?: string;
     readonly ticks: number;
     readonly commands: readonly Command[];
     readonly checks: readonly ReplayCheck[];
@@ -6029,6 +6037,12 @@ type Verdict = {
 } | {
     readonly ok: false;
     readonly reason: 'content-changed';
+    readonly expected: string;
+    readonly actual: string;
+    readonly rulesChanged: boolean;
+} | {
+    readonly ok: false;
+    readonly reason: 'code-changed';
     readonly expected: string;
     readonly actual: string;
 } | {

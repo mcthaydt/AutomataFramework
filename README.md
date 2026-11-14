@@ -7,6 +7,53 @@ Node, Chromium, WebKit and Firefox, so an agent can change a game and prove that
 This package is `@automataframework/framework`. It is the 2D runtime: the simulation, physics (Rapier), commands and
 replays, level and character content, rendering (PixiJS), keyboard and touch input, and the web host.
 
+## Start here
+
+You need [Node](https://nodejs.org) 24.21.0 or later. Then:
+
+```sh
+npx @automataframework/framework create my-game
+cd my-game
+npm install
+npm run check
+npm run dev
+```
+
+`create` makes a small game: one level, a hero, a crate to push. `npm run check` says whether the game is sound, in
+plain words. `npm run dev` plays it in your browser: hold the arrow keys to move and press Space to jump, or touch
+the screen on a phone. If a command says `automata: not found`, the `npm install` step was missed: run it, then try
+again.
+
+Not on npm yet: the first release is Release 1. Until then, make a game with
+`--framework github:mcthaydt/AutomataFramework#<commit>`, which tells `create` which framework the new game installs.
+
+### Change a number
+
+Open `content/levels/level-1.json` and change `x` of `crate-1`, the crate. Run `npm run check`. It says the game's
+content has changed since the play in `replays/` was recorded, so it did not compare the play with the recording, and
+it names the command to run. If the new level is what you meant, run `npm run accept` to record the play again; the next
+`npm run check` ends with `Everything passed.` If you break a file, such as writing `"far"` where a number goes, `check`
+names the file and the place in it, and exits with 1.
+
+### Working with an agent
+
+A new game has an `AGENTS.md` (and a `CLAUDE.md` that points to it) that tells a coding agent where things are and
+which rules the game keeps. The package also ships `skills/` for any agent that reads skills: `automata` (start here),
+`automata-content` (a content file of each kind), `automata-rules` (a change to how the game plays) and `automata-api`
+(what the framework exports). An agent changes the game's files and runs `npx --no automata check` to
+see whether the game is still sound; it writes `npx --no automata`, with `--no`, because without it the command can
+fetch an unrelated package of that name from npm.
+
+### The commands
+
+| Command | What it does |
+|---|---|
+| `automata create <name>` | Makes a new game in a new folder called `<name>`. |
+| `automata check` | Says whether the game is sound, step by step, and what to fix if it is not. |
+| `automata play` | Plays the game in your browser, and shows your changes as you make them. |
+| `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
+| `automata mcp` | Lets an agent use these commands as tools (an MCP server). Not built yet. |
+
 ## Install
 
 ```sh
@@ -133,9 +180,18 @@ named by `game.input.dropped()`; the game still starts.
 
 ## Replays
 
-`game.replay()` returns everything the player did, as JSON. `verifyReplay(sim, replay)` plays it on a fresh game and says
-whether it ends where it was recorded, and if not whether the game's content changed or the play diverged.
-`playReplay` only plays and returns the hashes, so two machines can compare them with each other.
+`game.replay()` returns everything the player did, as JSON, with the level and the players it started with in `meta`.
+`verifyReplay(sim, replay)` plays it on a fresh game and says whether it ends where it was recorded, and if not why:
+`content-changed` (the game's content is not the content it was recorded on; `rulesChanged` says whether the rules
+changed too), `code-changed` (the rules changed shape: a plugin, a component, a command or an event was added or taken
+out, or the framework's own version changed them), `diverged` (the play ends somewhere else, with the first tick that
+differs) or `wrong-setup` (another seed or tick rate). The content is checked before the rules, because content can
+switch a plugin on. `playReplay` only plays and returns the hashes, so two machines can compare them with each other.
+
+A replay file's `format` is 2: it carries `schemaHash` beside `contentHash`, the hash of the shape of the rules. A
+format 1 file (no `schemaHash`) is still read and played, and can never be `code-changed`. Its `checks` are for ticks
+the run had, in order, each tick once, and never the last tick (that one is `finalHash`); a file that breaks that is
+refused with a sentence that says where. `schemas/replay.schema.json` is its JSON Schema.
 
 ### Watch a recorded play
 
@@ -311,6 +367,68 @@ To check a game's sound with no ears, give `createAudio` a `testSpeaker()` and r
 for, in order, with the tick. Too many of one sound at once (`MAX_SAME`, 4) or in all (`MAX_SOUNDS`, 16) are logged as
 `skipped: 'busy'` and not played, counted in ticks so every device agrees; the log keeps the newest `LOG_MAX` (1024).
 Sound never changes the game: the sim does not see it, and changing a sound file moves no replay.
+
+## The automata command
+
+`automata` is the package's command. A game's own scripts call it, so a person types `npm run check` and an agent types
+`npx --no automata check`. Run any command with `--help` to see this page's words about it. Each works on the game in
+the folder you are in, or in the folder you name.
+
+**Exit codes**, for every command: `0` everything is fine, `1` the game has something to fix, `2` the command could not
+do its work (a folder that is not a game, a tool that is not installed). Add `--json` to read the answer as JSON.
+
+### automata create
+
+`automata create <name>` makes a new game in a new folder called `<name>` (small letters, numbers and dashes, like
+`my-game`): one level, a hero, a crate to push, and everything a game needs to be checked and played.
+
+- `--framework <spec>`: which framework the game installs. Leave it out for the one that made the game.
+- `--json`: print what was made as JSON.
+
+### automata check
+
+`automata check [folder]` runs these steps in order, and each says what to fix:
+
+| Step | What it looks at |
+|---|---|
+| `files` | every content file reads, is listed, and is written the standard way |
+| `rules` | the game's rules can be replayed: no clock, no dice of their own, no files |
+| `lint` | the code's style (Biome) |
+| `types` | the code's types (TypeScript) |
+| `replays` | every recording in `replays/` still ends where it did |
+| `tests` | the game's own tests (Vitest) |
+
+- `--fix`: rewrite content files the standard way, and fix the code's style where that is safe.
+- `--only <step>`: run one step.
+- `--json`: print the answer as JSON: `ok`, and a `steps` list, each with its `step`, its `state` (`passed`, `failed`,
+  `could-not-run` or `skipped`), its `problems` (each a `file`, a `path` and a `message`) and its `notes`.
+
+### automata play
+
+`automata play [folder]` plays the game in your browser. It stays running and shows your changes as you make them.
+Press Ctrl+C to stop.
+
+- `--no-open`: do not open the browser: just print the address.
+- `--port <n>`: use this port.
+
+### automata replay
+
+`automata replay [folder or file]` plays the game's recordings, with nobody at the controls, and checks each ends where
+it was recorded. A recording is a file in `replays/`: the keys that were held, tick by tick. A result is one of: `ok`
+(it ends where it did), `content-changed` (the game's content is not what it was recorded on, so the hashes were not
+compared), `code-changed` (the rules changed shape since), `diverged` (it ends somewhere else, and the first tick
+that differs is named), `wrong-setup` (it cannot be played on this game) or `not-a-replay` (the file is not a
+recording). The first two exit with 0, the others with 1.
+
+- `--accept`: record again: keep the keys, write the hashes the game gives now.
+- `--state`: also print where everything is after the last tick.
+- `--json`: print the answer as JSON: a list with each recording's `file`, `verdict` and `message`, and its `ticks` and
+  `finalHash` when it was played.
+
+### automata mcp
+
+`automata mcp` is meant to let an agent use these commands as tools, over the Model Context Protocol. It is not built
+yet, and says so when run.
 
 ## Without a page
 
