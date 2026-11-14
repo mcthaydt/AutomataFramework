@@ -521,6 +521,16 @@ function createGameSim(options: GameSimOptions): Promise<Sim>;
 function createInput(options: InputOptions): Input;
 ```
 
+### `createLocale` (function)
+
+```ts
+function createLocale(options: {
+    readonly content: GameContent;
+    readonly host: Host;
+    readonly settings: Settings;
+}): Locale;
+```
+
 ### `createRecorder` (function)
 
 ```ts
@@ -874,6 +884,12 @@ type FieldValues<S extends FieldSchema> = {
 };
 ```
 
+### `fill` (function)
+
+```ts
+function fill(text: string, values: Values | undefined, language: Language): string;
+```
+
 ### `Fit` (interface)
 
 ```ts
@@ -882,6 +898,12 @@ interface Fit {
     readonly left: number;
     readonly top: number;
 }
+```
+
+### `fitLabel` (function)
+
+```ts
+function fitLabel(label: string): string;
 ```
 
 ### `fitWorld` (function)
@@ -915,6 +937,12 @@ interface Frames {
 
 ```ts
 const FRAMEWORK_VERSION: string;
+```
+
+### `frameworkWords` (function)
+
+```ts
+function frameworkWords(language: Language): Words;
 ```
 
 ### `Freeze` (interface)
@@ -1258,6 +1286,12 @@ type Language = (typeof LANGUAGES)[number];
 const LANGUAGE_NAMES: Readonly<Record<Language, string>>;
 ```
 
+### `LANGUAGE_SETTINGS_DEFAULT` (const)
+
+```ts
+const LANGUAGE_SETTINGS_DEFAULT: LanguageSettings;
+```
+
 ### `LANGUAGE_TAGS` (const)
 
 ```ts
@@ -1274,6 +1308,27 @@ function languageName(language: Language): string;
 
 ```ts
 const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+```
+
+### `LanguageSettings` (interface)
+
+```ts
+interface LanguageSettings {
+    readonly format: 1;
+    readonly language: Language | null;
+}
+```
+
+### `LanguageSettingsSchema` (const)
+
+```ts
+const LanguageSettingsSchema: z.ZodType<LanguageSettings, LanguageSettings>;
+```
+
+### `languagesOf` (function)
+
+```ts
+function languagesOf(content: GameContent): readonly Language[];
 ```
 
 ### `latestSlot` (function)
@@ -1346,6 +1401,12 @@ type LevelJoint = {
     readonly to: LevelPoint;
     readonly slack?: number | undefined;
 };
+```
+
+### `levelName` (function)
+
+```ts
+function levelName(words: Words, levelId: string): string;
 ```
 
 ### `levelPlugin` (const)
@@ -1458,6 +1519,20 @@ type LoadResult<S> = {
     readonly ok: false;
     readonly problem: SaveProblem;
 };
+```
+
+### `Locale` (interface)
+
+```ts
+interface Locale {
+    language(): Language;
+    choice(): Language | 'auto';
+    readonly languages: readonly Language[];
+    readonly words: Words;
+    say(message: Message): string;
+    set(choice: Language | 'auto'): Promise<StoreResult<void>>;
+    onChange(listener: (language: Language) => void): () => void;
+}
 ```
 
 ### `log` (function)
@@ -1581,6 +1656,15 @@ function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
 
 ```ts
 type MenuPress = 'up' | 'down' | 'left' | 'right' | 'accept' | 'back' | 'pause';
+```
+
+### `Message` (interface)
+
+```ts
+interface Message {
+    readonly key: string;
+    readonly values?: Values;
+}
 ```
 
 ### `MESSAGE_CHANNEL` (const)
@@ -3236,6 +3320,14 @@ function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
 const TuningSchema: z.ZodType<TuningFile, TuningFile>;
 ```
 
+### `typed` (function)
+
+```ts
+function typed<M extends Readonly<Record<string, string>>>(_file: {
+    readonly messages: M;
+}, words: Words): (key: Extract<keyof M, string>, values?: Values) => string;
+```
+
 ### `unreadWords` (function)
 
 ```ts
@@ -3249,6 +3341,18 @@ function unreadWords(content: GameContent, marks: ReadMarks): readonly {
 
 ```ts
 function usesJoints(content: GameContent): boolean;
+```
+
+### `Value` (type)
+
+```ts
+type Value = string | number | readonly (string | number)[];
+```
+
+### `Values` (type)
+
+```ts
+type Values = Readonly<Record<string, Value>>;
 ```
 
 ### `Verdict` (type)
@@ -3375,6 +3479,18 @@ function webSpeaker(options?: {
     readonly host?: Host;
     readonly seams?: Partial<SpeakerSeams>;
 }): Speaker;
+```
+
+### `Words` (type)
+
+```ts
+type Words = (key: string, values?: Values) => string;
+```
+
+### `wordsOf` (function)
+
+```ts
+function wordsOf(content: GameContent, language: Language): Words;
 ```
 
 ### `writeContent` (function)
@@ -3824,6 +3940,16 @@ function createAudio(options: {
 function createGameSim(options: GameSimOptions): Promise<Sim>;
 ```
 
+### `createLocale` (function)
+
+```ts
+function createLocale(options: {
+    readonly content: GameContent;
+    readonly host: Host;
+    readonly settings: Settings;
+}): Locale;
+```
+
 ### `createRecorder` (function)
 
 ```ts
@@ -4146,6 +4272,18 @@ type FieldValues<S extends FieldSchema> = {
 };
 ```
 
+### `fill` (function)
+
+```ts
+function fill(text: string, values: Values | undefined, language: Language): string;
+```
+
+### `fitLabel` (function)
+
+```ts
+function fitLabel(label: string): string;
+```
+
 ### `formatDiagnostic` (function)
 
 ```ts
@@ -4156,6 +4294,12 @@ function formatDiagnostic(d: Diagnostic): string;
 
 ```ts
 const FRAMEWORK_VERSION: string;
+```
+
+### `frameworkWords` (function)
+
+```ts
+function frameworkWords(language: Language): Words;
 ```
 
 ### `Freeze` (interface)
@@ -4391,6 +4535,12 @@ type Language = (typeof LANGUAGES)[number];
 const LANGUAGE_NAMES: Readonly<Record<Language, string>>;
 ```
 
+### `LANGUAGE_SETTINGS_DEFAULT` (const)
+
+```ts
+const LANGUAGE_SETTINGS_DEFAULT: LanguageSettings;
+```
+
 ### `LANGUAGE_TAGS` (const)
 
 ```ts
@@ -4407,6 +4557,27 @@ function languageName(language: Language): string;
 
 ```ts
 const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+```
+
+### `LanguageSettings` (interface)
+
+```ts
+interface LanguageSettings {
+    readonly format: 1;
+    readonly language: Language | null;
+}
+```
+
+### `LanguageSettingsSchema` (const)
+
+```ts
+const LanguageSettingsSchema: z.ZodType<LanguageSettings, LanguageSettings>;
+```
+
+### `languagesOf` (function)
+
+```ts
+function languagesOf(content: GameContent): readonly Language[];
 ```
 
 ### `latestSlot` (function)
@@ -4479,6 +4650,12 @@ type LevelJoint = {
     readonly to: LevelPoint;
     readonly slack?: number | undefined;
 };
+```
+
+### `levelName` (function)
+
+```ts
+function levelName(words: Words, levelId: string): string;
 ```
 
 ### `levelPlugin` (const)
@@ -4581,6 +4758,20 @@ type LoadResult<S> = {
     readonly ok: false;
     readonly problem: SaveProblem;
 };
+```
+
+### `Locale` (interface)
+
+```ts
+interface Locale {
+    language(): Language;
+    choice(): Language | 'auto';
+    readonly languages: readonly Language[];
+    readonly words: Words;
+    say(message: Message): string;
+    set(choice: Language | 'auto'): Promise<StoreResult<void>>;
+    onChange(listener: (language: Language) => void): () => void;
+}
 ```
 
 ### `log` (function)
@@ -4692,6 +4883,15 @@ interface MemoryStore extends SaveStore {
 
 ```ts
 function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
+```
+
+### `Message` (interface)
+
+```ts
+interface Message {
+    readonly key: string;
+    readonly values?: Values;
+}
 ```
 
 ### `MESSAGE_CHANNEL` (const)
@@ -6188,6 +6388,14 @@ function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
 const TuningSchema: z.ZodType<TuningFile, TuningFile>;
 ```
 
+### `typed` (function)
+
+```ts
+function typed<M extends Readonly<Record<string, string>>>(_file: {
+    readonly messages: M;
+}, words: Words): (key: Extract<keyof M, string>, values?: Values) => string;
+```
+
 ### `unreadWords` (function)
 
 ```ts
@@ -6201,6 +6409,18 @@ function unreadWords(content: GameContent, marks: ReadMarks): readonly {
 
 ```ts
 function usesJoints(content: GameContent): boolean;
+```
+
+### `Value` (type)
+
+```ts
+type Value = string | number | readonly (string | number)[];
+```
+
+### `Values` (type)
+
+```ts
+type Values = Readonly<Record<string, Value>>;
 ```
 
 ### `Verdict` (type)
@@ -6248,6 +6468,18 @@ function wasPressed(player: EntityRef, action: string): boolean;
 
 ```ts
 type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
+```
+
+### `Words` (type)
+
+```ts
+type Words = (key: string, values?: Values) => string;
+```
+
+### `wordsOf` (function)
+
+```ts
+function wordsOf(content: GameContent, language: Language): Words;
 ```
 
 ### `writeContent` (function)
