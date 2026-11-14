@@ -91,6 +91,15 @@ const BOX_STYLE = [
   'font:var(--automata-story-font,18px/1.35 system-ui,sans-serif)',
 ].join(';')
 
+/** The words take the room left over and scroll inside the box, so the buttons never scroll away. */
+const TEXT_STYLE = [
+  'flex:1 1 auto',
+  'min-height:0',
+  'overflow-y:auto',
+  'white-space:pre-wrap',
+  'overflow-wrap:anywhere',
+].join(';')
+
 const BUTTON_STYLE = [
   `min-height:${BUTTON_PX}px`,
   'box-sizing:border-box',
@@ -139,7 +148,7 @@ export function createBox(
   const text = document.createElement('div')
   text.dataset.story = 'text'
   text.setAttribute('aria-live', 'polite')
-  text.style.cssText = 'flex:1 1 auto;min-height:0;overflow-y:auto;white-space:pre-wrap;overflow-wrap:anywhere'
+  text.style.cssText = TEXT_STYLE
   const choices = document.createElement('div')
   choices.dataset.story = 'choices'
   choices.style.cssText = 'display:grid;gap:8px;flex:none'

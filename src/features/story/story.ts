@@ -137,7 +137,8 @@ export function createStoryView(options: StoryViewOptions): StoryView {
       },
       choose(choice) {
         const player = talker()
-        if (player !== undefined) queue({ player, make: (tick, seq) => chooseCommand(tick, player, seq, choice) })
+        if (player !== undefined)
+          queue({ player, make: (tick, seq) => chooseCommand(tick, player, seq, choice) })
       },
       skip() {
         const player = lowest()
@@ -158,8 +159,10 @@ export function createStoryView(options: StoryViewOptions): StoryView {
 
   // A gamepad's presses: the talker's own pad moves the box and presses; any pad's "back" skips a cutscene that can be
   // skipped. `accept` does not skip, because it is most games' jump button.
+  const devicesOf = (seat: Seat): readonly string[] => seat.devices
   const seatHas = (player: number, pad: number): boolean =>
-    seats === undefined || seats().some((seat) => seat.player === player && seat.devices.includes(`pad-${pad}`))
+    seats === undefined ||
+    seats().some((seat) => seat.player === player && devicesOf(seat).includes(`pad-${pad}`))
   let held = false
   const unlisten =
     watching || onMenu === undefined

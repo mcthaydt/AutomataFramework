@@ -39,3 +39,7 @@ export function readStory(
     return text
   }
 }
+
+/** The story game's words in English and in Spanish, by key. */
+export const englishWords: Readonly<Record<string, string>> = JSON.parse(messagesEn).messages
+export const spanishWords: Readonly<Record<string, string>> = JSON.parse(messagesEs).messages

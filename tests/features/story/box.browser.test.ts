@@ -46,7 +46,11 @@ afterEach(() => {
 
 const root = (): HTMLElement => mount.querySelector('.automata-story') as HTMLElement
 const part = (name: string): HTMLElement => root().querySelector(`[data-story="${name}"]`) as HTMLElement
-const choiceButtons = (): HTMLButtonElement[] => [...root().querySelectorAll<HTMLButtonElement>('[data-choice]')]
+const choiceButtons = (): HTMLButtonElement[] => [
+  ...root().querySelectorAll<HTMLButtonElement>('[data-choice]'),
+]
+const apart = (p: DOMRect, q: DOMRect): boolean =>
+  p.right <= q.left + 1 || q.right <= p.left + 1 || p.bottom <= q.top + 1 || q.bottom <= p.top + 1
 const settle = (): Promise<void> =>
   new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())))
 const key = (type: 'keydown' | 'keyup', code: string, init: KeyboardEventInit = {}): KeyboardEvent => {
@@ -56,7 +60,11 @@ const key = (type: 'keydown' | 'keyup', code: string, init: KeyboardEventInit = 
 }
 
 /** Makes the box with `inset` pixels of touch buttons under it, and shows `state`. */
-async function shown(state: BoxState, inset = 0, options?: Parameters<typeof createBox>[3]): Promise<StoryBox> {
+async function shown(
+  state: BoxState,
+  inset = 0,
+  options?: Parameters<typeof createBox>[3],
+): Promise<StoryBox> {
   const made = createBox(mount, press, undefined, options)
   box = made
   made.setInset(inset)
@@ -65,39 +73,39 @@ async function shown(state: BoxState, inset = 0, options?: Parameters<typeof cre
   return made
 }
 
-test.each(SIZES)('at %i by %i the box and every button are whole, big enough and above the touch buttons', async (w, h, inset) => {
-  await page.viewport(w, h)
-  expect([window.innerWidth, window.innerHeight]).toEqual([w, h])
-  await shown(FOUR, inset)
-  const frame = root().getBoundingClientRect()
-  expect(frame.left).toBeGreaterThanOrEqual(0)
-  expect(frame.right).toBeLessThanOrEqual(w)
-  expect(frame.top).toBeGreaterThanOrEqual(0)
-  expect(frame.bottom, 'at or above the touch buttons').toBeLessThanOrEqual(h - inset - 12 + 1)
-  expect(frame.width).toBeLessThanOrEqual(640 + 1)
+for (const [w, h, inset] of SIZES) {
+  test(`at ${w} by ${h} every button is whole, big and above the touch buttons`, async () => {
+    await page.viewport(w, h)
+    expect([window.innerWidth, window.innerHeight]).toEqual([w, h])
+    await shown(FOUR, inset)
+    const frame = root().getBoundingClientRect()
+    expect(frame.left).toBeGreaterThanOrEqual(0)
+    expect(frame.right).toBeLessThanOrEqual(w)
+    expect(frame.top).toBeGreaterThanOrEqual(0)
+    expect(frame.bottom, 'at or above the touch buttons').toBeLessThanOrEqual(h - inset - 12 + 1)
+    expect(frame.width).toBeLessThanOrEqual(640 + 1)
 
-  const buttons = choiceButtons()
-  expect(buttons).toHaveLength(4)
-  for (const b of buttons) {
-    const r = b.getBoundingClientRect()
-    expect(r.height, b.textContent ?? '').toBeGreaterThanOrEqual(48)
-    expect(r.left).toBeGreaterThanOrEqual(frame.left - 1)
-    expect(r.right).toBeLessThanOrEqual(frame.right + 1)
-    expect(r.top).toBeGreaterThanOrEqual(frame.top - 1)
-    expect(r.bottom).toBeLessThanOrEqual(frame.bottom + 1)
-    expect(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)).toBe(b)
-  }
-  for (const a of buttons)
+    const buttons = choiceButtons()
+    expect(buttons).toHaveLength(4)
     for (const b of buttons) {
-      if (a === b) continue
-      const p = a.getBoundingClientRect()
-      const q = b.getBoundingClientRect()
-      const apart = p.right <= q.left + 1 || q.right <= p.left + 1 || p.bottom <= q.top + 1 || q.bottom <= p.top + 1
-      expect(apart, 'answers do not overlap').toBe(true)
+      const r = b.getBoundingClientRect()
+      expect(r.height, b.textContent ?? '').toBeGreaterThanOrEqual(48)
+      expect(r.left).toBeGreaterThanOrEqual(frame.left - 1)
+      expect(r.right).toBeLessThanOrEqual(frame.right + 1)
+      expect(r.top).toBeGreaterThanOrEqual(frame.top - 1)
+      expect(r.bottom).toBeLessThanOrEqual(frame.bottom + 1)
+      expect(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)).toBe(b)
     }
-  expect(Number.parseFloat(getComputedStyle(part('text')).fontSize)).toBeGreaterThanOrEqual(18)
-  await page.screenshot({ element: mount, path: `__screenshots__/story-box-${w}x${h}.png` })
-})
+    for (const a of buttons)
+      for (const b of buttons) {
+        if (a === b) continue
+        const p = a.getBoundingClientRect()
+        expect(apart(p, b.getBoundingClientRect()), 'answers do not overlap').toBe(true)
+      }
+    expect(Number.parseFloat(getComputedStyle(part('text')).fontSize)).toBeGreaterThanOrEqual(18)
+    await page.screenshot({ element: mount, path: `__screenshots__/story-box-${w}x${h}.png` })
+  })
+}
 
 test('at 844 by 390, four choices sit two to a row and every one is whole', async () => {
   await page.viewport(844, 390)
@@ -111,20 +119,22 @@ test('at 844 by 390, four choices sit two to a row and every one is whole', asyn
   }
 })
 
-test.each([
+for (const [w, h] of [
   [390, 844],
   [844, 390],
-])('a line of 2000 characters scrolls inside the box and the Next button stays on screen at %i by %i', async (w, h) => {
-  await page.viewport(w, h)
-  await shown({ text: 'word '.repeat(400).slice(0, 2000), choices: [], next: true, skip: true }, 96)
-  const text = part('text')
-  expect(text.scrollHeight).toBeGreaterThan(text.clientHeight)
-  expect(text.getBoundingClientRect().height).toBeLessThanOrEqual(h * 0.4 + 1)
-  const next = part('next').getBoundingClientRect()
-  expect(next.bottom).toBeLessThanOrEqual(h - 96 - 12 + 1)
-  expect(next.top).toBeGreaterThanOrEqual(0)
-  expect(next.height).toBeGreaterThanOrEqual(48)
-})
+] as const) {
+  test(`a 2000-character line scrolls in the box and Next stays on screen at ${w} by ${h}`, async () => {
+    await page.viewport(w, h)
+    await shown({ text: 'word '.repeat(400).slice(0, 2000), choices: [], next: true, skip: true }, 96)
+    const text = part('text')
+    expect(text.scrollHeight).toBeGreaterThan(text.clientHeight)
+    expect(text.getBoundingClientRect().height).toBeLessThanOrEqual(h * 0.4 + 1)
+    const next = part('next').getBoundingClientRect()
+    expect(next.bottom).toBeLessThanOrEqual(h - 96 - 12 + 1)
+    expect(next.top).toBeGreaterThanOrEqual(0)
+    expect(next.height).toBeGreaterThanOrEqual(48)
+  })
+}
 
 test('words are shown as they were typed', async () => {
   await shown({ text: '<b>Hello</b> 👋', choices: [], next: true, skip: false })

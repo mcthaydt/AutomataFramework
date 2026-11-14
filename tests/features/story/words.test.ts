@@ -1,10 +1,7 @@
 import { expect, test } from 'vitest'
 import { wordsOf } from '#src/features/story/words.ts'
 import { loadStory } from '../../fixtures/story/game.ts'
-import { storyFiles } from '../../fixtures/story/read.ts'
-
-const en = JSON.parse(storyFiles['content/messages/en.json'] as string).messages as Record<string, string>
-const es = JSON.parse(storyFiles['content/messages/es.json'] as string).messages as Record<string, string>
+import { englishWords as en, spanishWords as es } from '../../fixtures/story/read.ts'
 
 test('Spanish when asked and it has the key, English when it has not, the key when nobody has', async () => {
   const content = await loadStory()

@@ -114,7 +114,8 @@ export async function startGame(options: GameOptions): Promise<Game> {
           sequence,
           onMenu: input.onMenu,
           seats: input.seats,
-          keysOf: (player) => Object.keys(input.controls()).flatMap((action) => input.inputsFor(player, action)),
+          keysOf: (player) =>
+            Object.keys(input.controls()).flatMap((action) => input.inputsFor(player, action)),
           inset: input.inset,
           ...(options.words === undefined ? {} : { words: options.words }),
           ...(options.boxWords === undefined ? {} : { boxWords: options.boxWords }),
@@ -140,9 +141,8 @@ export async function startGame(options: GameOptions): Promise<Game> {
       tickHz: sim.tickHz,
       step() {
         const tick = sim.tick
-        renderer.apply(
-          recorder.step([...people.commands(tick), ...(story?.commands(tick) ?? []), ...input.poll(tick)]).render,
-        )
+        const commands = [...people.commands(tick), ...(story?.commands(tick) ?? []), ...input.poll(tick)]
+        renderer.apply(recorder.step(commands).render)
         people.afterStep()
         story?.update()
       },
