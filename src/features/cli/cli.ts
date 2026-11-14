@@ -5,8 +5,10 @@ import { Cause, Effect, type Layer } from 'effect'
 import { FRAMEWORK_VERSION } from '../sim/sim.ts'
 import { type CommandInput, type CommandName, parseArgs } from './args.ts'
 import { runCheck } from './check.ts'
+import { createGame, nameOf } from './create.ts'
 import { helpFor } from './help.ts'
 import { liveLayer } from './live.ts'
+import { runPlay } from './play.ts'
 import { CliError, Out, type OutService, type Ports } from './ports.ts'
 import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
@@ -55,11 +57,54 @@ const replay: Command = (input) =>
     return replayExitCode(results)
   })
 
+/** `automata create <name>`: a new game, and what to type next. */
+const create: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    if (input.folder === undefined)
+      return yield* Effect.fail(new CliError('Give the new game a name: automata create my-game'))
+    const { framework } = input.flags
+    const made = yield* createGame({
+      folder: input.folder,
+      ...(typeof framework === 'string' ? { framework } : {}),
+    })
+    if (input.flags.json === true) {
+      yield* out.line(JSON.stringify(made, null, 2))
+      return 0
+    }
+    for (const line of [
+      `Made ${nameOf(input.folder)}.`,
+      '',
+      'Next:',
+      `  cd ${made.folder}`,
+      '  npm install',
+      '  npm run dev',
+      '',
+      'npm run check says whether the game is sound. AGENTS.md tells an agent where everything is.',
+    ])
+      yield* out.line(line)
+    return 0
+  })
+
+/** `automata play`: the game in a browser, until Ctrl+C. */
+const play: Command = (input) =>
+  Effect.gen(function* () {
+    const { port } = input.flags
+    const number = typeof port === 'string' ? Number(port) : undefined
+    if (number !== undefined && !(Number.isInteger(number) && number > 0 && number < 65536))
+      return yield* Effect.fail(new CliError('--port needs a number, like --port 4000.'))
+    return yield* runPlay({
+      folder: input.folder ?? '.',
+      open: input.flags['no-open'] !== true,
+      ...(number === undefined ? {} : { port: number }),
+    })
+  })
+
 /** One row per command, so a new command (M4's `ship` and `build`) is one row and one help text. */
 const COMMANDS: Readonly<Record<CommandName, Command>> = {
-  create: notBuilt('create'),
+  create,
   check,
-  play: notBuilt('play'),
+  play,
   replay,
   mcp: notBuilt('mcp'),
 }
