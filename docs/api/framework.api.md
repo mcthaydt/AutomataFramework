@@ -237,6 +237,12 @@ interface BindingOverride {
 type BindingSlot = 'keys' | 'shared-1' | 'shared-2' | 'pad';
 ```
 
+### `bindParaglide` (function)
+
+```ts
+function bindParaglide(runtime: ParaglideRuntime, locale: Locale): void;
+```
+
 ### `Body` (const)
 
 ```ts
@@ -2221,6 +2227,17 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 function paintFigure(figure: FigureFile): IndexedPicture;
 ```
 
+### `ParaglideRuntime` (interface)
+
+```ts
+interface ParaglideRuntime {
+    readonly locales: readonly string[];
+    readonly baseLocale: string;
+    overwriteGetLocale(fn: () => string): void;
+    overwriteSetLocale(fn: (locale: string) => void): void;
+}
+```
+
 ### `parseClientMessage` (function)
 
 ```ts
@@ -4164,6 +4181,12 @@ interface BehaviourRule {
 const BehaviourSchema: z.ZodType<BehaviourFile, BehaviourFile>;
 ```
 
+### `bindParaglide` (function)
+
+```ts
+function bindParaglide(runtime: ParaglideRuntime, locale: Locale): void;
+```
+
 ### `Body` (const)
 
 ```ts
@@ -5769,6 +5792,17 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 
 ```ts
 function paintFigure(figure: FigureFile): IndexedPicture;
+```
+
+### `ParaglideRuntime` (interface)
+
+```ts
+interface ParaglideRuntime {
+    readonly locales: readonly string[];
+    readonly baseLocale: string;
+    overwriteGetLocale(fn: () => string): void;
+    overwriteSetLocale(fn: (locale: string) => void): void;
+}
 ```
 
 ### `parseClientMessage` (function)

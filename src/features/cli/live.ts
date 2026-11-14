@@ -4,7 +4,7 @@
 // process-runner.ts (a service with a live layer and a memory one); the code is new.
 import { type ChildProcess, type SpawnOptions, type StdioOptions, spawn } from 'node:child_process'
 import type { Dirent } from 'node:fs'
-import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
+import { access, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -106,6 +106,11 @@ const filesLive: FilesService = {
       const found: string[] = []
       await walk(dir, '', found)
       return found.sort()
+    }),
+  remove: (path) =>
+    Effect.tryPromise({
+      try: () => rm(path, { force: true }),
+      catch: (error) => new CliError(`Could not remove ${path}: ${firstLine(error)}`),
     }),
 }
 
