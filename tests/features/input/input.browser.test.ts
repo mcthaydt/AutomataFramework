@@ -1,7 +1,7 @@
 // The input in each real browser: real DOM events in, `controls` commands out.
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { controlsCommand } from '#src/features/commands/commands.ts'
-import { createInput, type Input } from '#src/features/input/input.ts'
+import { createInput, type Input, type ListedPad } from '#src/features/input/input.ts'
 import { SKY_COLOR } from '#src/features/level/level.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
@@ -737,6 +737,39 @@ test('inputsFor follows a shared keyboard and a rebind', () => {
   expect(i.inputsFor(1, 'jump')).toEqual(['KeyW'])
   i.rebind('jump', 'shared-2', 'KeyK')
   expect(i.inputsFor(2, 'jump')).toEqual(['KeyK'])
+})
+
+// Audit M5: what `pads()` returns can be named by a screen that keeps it.
+test('pads() lists every pad the browser shows, in a type a screen can name', () => {
+  const i = make()
+  fake.connect(0)
+  fake.connect(1, { mapping: '' })
+  const listed: readonly ListedPad[] = i.pads()
+  expect(listed.map((pad) => [pad.index, pad.usable])).toEqual([
+    [0, true],
+    [1, false],
+  ])
+})
+
+// Audit M8: a pad the game cannot read is still a pad that arrived; a screen says "this gamepad cannot be used here".
+test('onPads is told when a pad arrives, goes, or is one the game cannot read', () => {
+  const i = make()
+  const told = vi.fn()
+  i.onPads(told)
+  frames.advance(16)
+  expect(told).not.toHaveBeenCalled()
+  fake.connect(0, { mapping: '' })
+  frames.advance(16)
+  expect(told).toHaveBeenCalledTimes(1)
+  expect(told).toHaveBeenLastCalledWith([expect.objectContaining({ index: 0, usable: false })])
+  frames.advance(16)
+  expect(told).toHaveBeenCalledTimes(1)
+  fake.connect(1)
+  frames.advance(16)
+  expect(told).toHaveBeenCalledTimes(2)
+  fake.unplug(0)
+  frames.advance(16)
+  expect(told).toHaveBeenCalledTimes(3)
 })
 
 // Audit M9: what a tick holds and who holds it come from one reading of the browser's pads.
