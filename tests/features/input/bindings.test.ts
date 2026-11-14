@@ -132,7 +132,10 @@ test('saved bindings for an action the game no longer has are dropped and named'
 })
 
 test("a saved key the game now uses for another action is dropped, and the game's own controls stand for it", () => {
-  const defaults: Controls = { ...c, fire: { label: 'Fire', keys: ['KeyK'], side: 'right' } }
+  const defaults: Controls = {
+    ...c,
+    fire: { label: 'Fire', keys: ['KeyK'], side: 'right', pad: ['north'], shared: [['KeyG'], ['KeyH']] },
+  }
   const back = applySettings(defaults, { format: 1, bindings: { jump: { keys: ['KeyK'] } } })
   expect(back.controls.jump?.keys).toEqual(['Space', 'ArrowUp'])
   expect(back.dropped).toEqual(['jump'])
