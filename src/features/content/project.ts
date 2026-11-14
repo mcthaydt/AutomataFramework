@@ -23,6 +23,11 @@ export interface Project {
   readonly start: string
   /** The character each player controls. */
   readonly hero: string
+  /**
+   * The most people who can play at once on one screen, 2 to 4. Left out, the game is for one player (and the parsed
+   * project has no `players` key at all, so a one-player game's content hash is what it always was).
+   */
+  readonly players?: number | undefined
   readonly content: readonly ContentRef[]
 }
 
@@ -30,6 +35,9 @@ const PATH_HINT = 'Use a path inside the game, like content/levels/level-1.json.
 
 /** Every kind in the table: `z.enum` wants a non-empty list, and the table always has rows. */
 const KINDS = Object.keys(CONTENT_TYPES) as [ContentType, ...ContentType[]]
+
+const PLAYERS_HINT =
+  'Write how many can play at once, 2, 3 or 4, like players = 2. Leave the line out for a one-player game.'
 
 const ref = z.strictObject({
   type: z.enum(KINDS),
@@ -43,6 +51,9 @@ export const ProjectSchema: z.ZodType<Project, Project> = z
     name: z.string().min(1).max(80),
     start: Id,
     hero: Id,
+    players: z
+      .custom<number>((n) => typeof n === 'number' && Number.isInteger(n) && n >= 2 && n <= 4, PLAYERS_HINT)
+      .optional(),
     content: z.array(ref).max(1024),
   })
   .superRefine((project, ctx) => {

@@ -88,6 +88,49 @@ The row of buttons has the class `automata-touch`, each button the class `automa
 What a hero does with the controls (run, jump) is the game's own code, a plugin built with `definePlugin` and
 `defineSystem`; pass it to `startGame` as `plugins: [...]`.
 
+## Gamepads, changing keys and playing together
+
+Each control can name gamepad buttons (`pad:`) and two lists of keys for two people on one keyboard (`shared:`: the
+first person's, then the second's). Pad names come from `PAD_BUTTONS` and `PAD_STICKS`, such as `south`, `dpad-left` or
+`left-stick-left`. A game that keeps its controls in a tuning file passes the list through `controlsFromList`.
+
+```ts
+const controls = {
+  left: { label: 'Left', keys: ['ArrowLeft', 'KeyA'], side: 'left', pad: ['dpad-left', 'left-stick-left'], shared: [['KeyA'], ['ArrowLeft']] },
+  jump: { label: 'Jump', keys: ['Space', 'ArrowUp'], side: 'right', pad: ['south'], shared: [['KeyW'], ['ArrowUp']] },
+}
+```
+
+A game with one player needs nothing more: a gamepad plugged in just works. For two to four people on one screen, say
+`players = 2` (up to 4) in `automata.toml` and give each level a start point for each player. Then let people in:
+
+```ts
+// "Press a button on your gamepad to join": each free gamepad that is pressed becomes the next player.
+const stop = game.input.invite((pad) => game.addPlayer(`pad-${pad}` as Claim))
+// Or share the keyboard: the second player uses the `shared` keys.
+game.addPlayer('keyboard')
+game.removePlayer(2)
+```
+
+`addPlayer` answers `{ ok: true, player }`, or `{ ok: false, message }` in words a person can read. Joins and leaves are
+recorded like any other command, so a replay plays them back the same.
+
+To let a player change a key or button, wait for their next press, then use it:
+
+```ts
+const capture = game.input.capture('keys') // or 'pad'
+const answer = await capture.done // { ok: true, input: 'KeyK' }, or { ok: false, reason: 'cancelled' }
+if (answer.ok) {
+  const done = game.input.rebind('jump', 'keys', answer.input)
+  if (!done.ok) showMessage(done.message)
+}
+```
+
+The game does not hear the key or button that answers, and Escape (or Start on a gamepad) gives up. Keep the changes
+with `game.input.settings()`, which is plain JSON (`game.input.onBindings` tells you when it changes), and give them back
+with `startGame({ settings })`. Changes that no longer fit the game, such as an action that was removed, are dropped and
+named by `game.input.dropped()`; the game still starts.
+
 ## Replays
 
 `game.replay()` returns everything the player did, as JSON. `verifyReplay(sim, replay)` plays it on a fresh game and says

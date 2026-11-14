@@ -189,6 +189,19 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
     })
   }
 
+  // A game for several players needs a start point for each of them in every level.
+  for (const slot of slots) {
+    if (slot.ref.type !== 'level' || slot.value === undefined) continue
+    const starts = (slot.value as { starts: readonly { player: number }[] }).starts
+    for (let player = 1; player <= (project.players ?? 0); player++)
+      if (!starts.some((s) => s.player === player))
+        slot.problems.push({
+          file: slot.ref.path,
+          path: 'starts',
+          message: `This game is for up to ${project.players} players, but this level has no start point for player ${player}. Add one to "starts", or lower players in automata.toml.`,
+        })
+  }
+
   const problems = [...projectProblems, ...slots.flatMap((slot) => slot.problems)]
   if (problems.length > 0) return fail(problems)
 

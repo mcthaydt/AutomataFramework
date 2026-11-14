@@ -163,6 +163,27 @@ test('a read that throws at once, or rejects for the project file, never throws 
   }
 })
 
+const FOUR = (fixtureFiles['automata.toml'] ?? '').replace('hero = "hero"\n', 'hero = "hero"\nplayers = 4\n')
+
+test('a game for four whose level has two start points says which are missing', async () => {
+  const two = edited('content/levels/level-1.json', (level) => {
+    level.starts = [
+      { player: 1, x: 2.5, y: 7.5 },
+      { player: 2, x: 4.5, y: 7.5 },
+    ]
+  })
+  expect(await problems({ 'automata.toml': FOUR, 'content/levels/level-1.json': two })).toEqual(
+    [3, 4].map(
+      (n) =>
+        `content/levels/level-1.json: starts: This game is for up to 4 players, but this level has no start point for player ${n}. Add one to "starts", or lower players in automata.toml.`,
+    ),
+  )
+})
+
+test('a one-player game with one start point loads as before', async () => {
+  expect(await problems()).toEqual([])
+})
+
 test('a file listed as the wrong kind says so in one sentence', async () => {
   const toml = (fixtureFiles['automata.toml'] ?? '').replace(
     'type = "character"\npath = "content/characters/crate.json"',
