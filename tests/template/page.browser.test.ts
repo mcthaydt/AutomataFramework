@@ -80,6 +80,26 @@ test('a broken level is shown in words, in the page', async () => {
   expect(root.querySelector('canvas')).toBeNull()
 })
 
+test("a picture that was never painted is said in the player's language, with the command that paints it", async () => {
+  const frames = manualFrames()
+  const unpainted = async (path: string): Promise<Blob> => {
+    if (path === 'content/figures/hero.png') throw new Error(`${path}: no such file`)
+    return readPicture(path)
+  }
+  started = await startPage(root, {
+    read: readFiles(),
+    readPicture: unpainted,
+    host: testHost({ deviceLanguages: ['es-ES'] }),
+    frames,
+    coarse: false,
+  })
+  expect(root.dataset.state).toBe('problem')
+  expect(root.textContent).toContain('Este juego tiene un problema y no puede empezar.')
+  expect(root.textContent).toContain('content/figures/hero.png')
+  expect(root.querySelector('.problem p')?.textContent).toContain('npm run art')
+  expect(root.textContent).not.toContain('Fix the file named above')
+})
+
 test('a changed key is still there on a fresh page', async () => {
   const host = testHost()
   const first = await open({ host })
