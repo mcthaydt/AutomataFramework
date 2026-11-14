@@ -84,15 +84,6 @@ export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'
 export { type ContentRef, PROJECT_FILE, type Project, ProjectSchema, parseProject } from './project.ts'
 export {
-  type Atlas,
-  atlasOf,
-  backdropSheet,
-  type Frame,
-  figureSheet,
-  SHEET_COLUMNS,
-  type Sheet,
-} from './sheet.ts'
-export {
   markRead,
   parseReadMarks,
   READ_MARKS_FILE,
@@ -101,6 +92,15 @@ export {
   unreadWords,
   writeReadMarks,
 } from './read-marks.ts'
+export {
+  type Atlas,
+  atlasOf,
+  backdropSheet,
+  type Frame,
+  figureSheet,
+  SHEET_COLUMNS,
+  type Sheet,
+} from './sheet.ts'
 export {
   type NoiseVoice,
   type SoundFile,
