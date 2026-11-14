@@ -1,8 +1,9 @@
 // The replay file: a play recorded as JSON, small enough for a person or an agent to read, diff and edit.
 // It holds the seed, the tick rate and the commands, plus the hashes seen while it was recorded; it holds no snapshot,
 // so it can be played against content that has changed since, and `verifyReplay` says so when it has.
-import { z } from 'zod'
+
 import { canonicalJson } from '../../lib/canonical.ts'
+import { z } from '../../lib/zod.ts'
 import type { Command } from '../sim/sim.ts'
 
 export interface ReplayCheck {

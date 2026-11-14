@@ -1,5 +1,5 @@
 import { parse as parseToml } from 'smol-toml'
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { CONTENT_TYPES, type ContentType } from './content-types.ts'
 import type { Voice } from './diagnostics.ts'
 import { Id } from './ids.ts'

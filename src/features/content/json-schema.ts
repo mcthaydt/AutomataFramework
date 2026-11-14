@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 import { CONTENT_TYPES, type ContentType } from './content-types.ts'
 
 /**
