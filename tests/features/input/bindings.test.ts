@@ -50,7 +50,6 @@ test('Escape, Tab, start and home are refused, in words', () => {
   expect(rebind(c, 'jump', 'keys', 'Escape')).toEqual({
     ok: false,
     reason: 'reserved',
-    message: "Escape is kept for the game's menus. Pick another key.",
     key: 'automata.rebind.reserved.key',
     values: { input: 'Escape' },
   })
@@ -58,7 +57,6 @@ test('Escape, Tab, start and home are refused, in words', () => {
   expect(rebind(c, 'jump', 'pad', 'start')).toEqual({
     ok: false,
     reason: 'reserved',
-    message: "The start button is kept for the game's menus. Pick another button.",
     key: 'automata.rebind.reserved.button',
     values: { input: 'start' },
   })
@@ -69,7 +67,6 @@ test('an action the game does not have is refused', () => {
   expect(rebind(c, 'fly', 'keys', 'KeyF')).toEqual({
     ok: false,
     reason: 'unknown-action',
-    message: 'This game has no action called "fly".',
     key: 'automata.rebind.unknown-action',
     values: { action: 'fly' },
   })
@@ -80,7 +77,6 @@ test('a shared slot on controls with no shared keys is refused', () => {
   expect(rebind(plain, 'jump', 'shared-1', 'KeyW')).toEqual({
     ok: false,
     reason: 'no-shared',
-    message: "This game's keys cannot be shared.",
     key: 'automata.rebind.no-shared',
   })
 })
@@ -89,7 +85,6 @@ test("a key from the other person's half is refused", () => {
   expect(rebind(c, 'jump', 'shared-1', 'ArrowUp')).toEqual({
     ok: false,
     reason: 'other-half',
-    message: "That key is the other person's. Pick another key.",
     key: 'automata.rebind.other-half',
   })
   expect(rebind(c, 'jump', 'shared-1', 'KeyK').ok).toBe(true)
@@ -184,7 +179,6 @@ test('a name that is not a gamepad button is refused as unknown, not as reserved
   expect(rebind(c, 'jump', 'pad', 'nonsense')).toEqual({
     ok: false,
     reason: 'unknown-input',
-    message: 'That is not a button on a gamepad. Pick another button.',
     key: 'automata.rebind.unknown-input',
   })
 })

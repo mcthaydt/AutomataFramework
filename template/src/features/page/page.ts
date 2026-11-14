@@ -154,7 +154,9 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
     // The words in the player's language: the one they picked, else the host's. This page has no picker yet (a later
     // step gives it one), so until then a player nobody has asked gets the device's language, else the game's first.
     const locale = createLocale({ content: loaded.value, host, settings })
-    const first = locale.suggested() ?? locale.languages[0]
+    // Interim, until the page shows the picker (Task 7 removes this line): the device's language, else English if the
+    // game has it, else the first.
+    const first = locale.suggested() ?? locale.languages.find((l) => l === 'en') ?? locale.languages[0]
     if (!locale.asked() && first !== undefined) await locale.set(first)
     forgetLanguage = followLanguage(locale)
     say = locale.words
