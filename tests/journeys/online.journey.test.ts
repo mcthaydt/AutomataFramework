@@ -90,10 +90,8 @@ beforeAll(async () => {
       target: 'es2023',
       sourcemap: false,
       assetsDir: '',
-      // One script, run in the order written: split into chunks, a bundler may run a file the framework's modules share
-      // before the framework's first line, which sets Zod's `jitless` (src/lib/no-eval.ts), and the page would build code
-      // from a string while it loads. A game for itch or Wavedash ships one script too.
-      rolldownOptions: { output: { codeSplitting: false } },
+      // Left to split the page into chunks as a game's bundler may: the page's `data-built-code` of `[]` then proves that
+      // Zod's probe stays off whatever order the chunks run in (`src/lib/zod.ts`).
     },
   })
   pageServer = await preview({

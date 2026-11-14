@@ -129,6 +129,22 @@ test('the Colyseus server packages are only for the server feature', () => {
   ).toEqual([])
 })
 
+// Zod probes whether it may compile validators with `new Function` the first time a schema is built, and a strict CSP
+// reports even that caught attempt. `lib/zod.ts` turns the probe off before anything is built; a file that reached Zod
+// by another way could run first, in a bundler's chunk order.
+test('Zod is only reached through lib/zod.ts', () => {
+  expect(one({ 'src/features/content/shared.ts': "import { z } from 'zod'" })).toEqual(['package-confined'])
+  expect(one({ 'src/features/content/shared.ts': "import type { z } from 'zod'" })).toEqual([
+    'package-confined',
+  ])
+  expect(
+    one({
+      'src/lib/zod.ts': "import { config, z } from 'zod'",
+      'src/features/content/shared.ts': "import { z } from '../../lib/zod.ts'",
+    }),
+  ).toEqual([])
+})
+
 test('Effect is only for the server process', () => {
   expect(one({ 'src/features/net/net.ts': "import { Effect } from 'effect'" })).toEqual(['package-confined'])
   expect(

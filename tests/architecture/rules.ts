@@ -63,6 +63,11 @@ const CONFINED: readonly {
   { package: /^pixi\.js(\/|$)/, only: ['src/features/render/'], why: 'PixiJS is only for rendering' },
   { package: /^smol-toml$/, only: ['src/features/content/'], why: 'TOML is read only by content' },
   {
+    package: /^zod(\/|$)/,
+    only: ['src/lib/zod.ts'],
+    why: 'Zod is reached through lib/zod.ts, which turns its eval probe off first',
+  },
+  {
     package: /^@colyseus\/sdk$/,
     only: ['src/features/net/colyseus-link.ts'],
     why: 'the SDK is loaded on demand by one file, so loading the package loads no SDK',
