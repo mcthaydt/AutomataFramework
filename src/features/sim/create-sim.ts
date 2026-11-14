@@ -319,6 +319,13 @@ export async function createSim(opts: SimOptions): Promise<Sim> {
         if (!parsed.success) throw new Error(`event "${def.id}" payload invalid: ${parsed.error.message}`)
         events.push({ type: def.id, payload: parsed.data })
       },
+      events: {
+        of: <Z extends z.ZodType>(def: EventDef<Z>) => {
+          if (eventDefs.get(def.id) !== def)
+            throw new Error(`unknown event "${def.id}": register it in a plugin`)
+          return events.filter((e) => e.type === def.id).map((e) => e.payload as z.output<Z>)
+        },
+      },
       resource: resourceOf,
       pluginState: stateOfSystem.get(system.name),
     }
