@@ -92,7 +92,8 @@ function checkCutscene(file: Partial<CutsceneFile>, ctx: z.core.$RefinementCtx):
       if (before !== undefined && key.at < before)
         add(
           [name, i, 'at'],
-          `This key is at tick ${key.at}, before the one above it (${before}). Keys go in time order.`,
+          // Two actors' keys may interleave, so the key above is the same actor's, and the words say whose.
+          `This key is at tick ${key.at}, before ${owner === '' ? 'the one above it' : `"${owner}"'s key above it`} (${before}). Keys go in time order.`,
         )
       else last.set(owner, key.at)
       if (key.at > end) add([name, i, 'at'], `This is after the cutscene ends, at tick ${end}.`)
@@ -105,6 +106,7 @@ function checkCutscene(file: Partial<CutsceneFile>, ctx: z.core.$RefinementCtx):
   ;(file.lines ?? []).forEach((l, i) => {
     if (l.at > end) add(['lines', i, 'at'], `This is after the cutscene ends, at tick ${end}.`)
     if (l.until <= l.at) add(['lines', i, 'until'], 'A line must end after it starts.')
+    if (l.until > end) add(['lines', i, 'until'], `This is after the cutscene ends, at tick ${end}.`)
   })
 }
 

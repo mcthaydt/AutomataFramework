@@ -72,8 +72,8 @@ const part = variants('kind', [
 const NOTE = /^(?:[A-G][#b]?[0-8]|-|=)$/
 const DRUM = /^[x-]$/
 
-/** The steps of one row: the row split at single spaces. */
-const stepsOf = (row: string): string[] => row.split(' ')
+/** The steps of one row: the row split at single spaces. An empty row has none. */
+const stepsOf = (row: string): string[] => (row === '' ? [] : row.split(' '))
 
 /** How many steps a part has: every row's steps, together. */
 const countSteps = (rows: readonly string[]): number =>
@@ -85,6 +85,14 @@ function checkMusic(music: Partial<MusicFile>, ctx: z.core.$RefinementCtx): void
   unique(parts, 'id', 'part', ['parts'], ctx)
   parts.forEach((p, i) => {
     p.notes.forEach((row, r) => {
+      if (row === '') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['parts', i, 'notes', r],
+          message: `This row has no steps. Write at least one, like ${p.kind === 'tone' ? 'C4' : 'x'} or -.`,
+        })
+        return
+      }
       const bad = stepsOf(row).find((step) => !(p.kind === 'tone' ? NOTE : DRUM).test(step))
       if (bad === undefined) return
       ctx.addIssue({

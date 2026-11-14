@@ -63,18 +63,22 @@ const withArticle = (noun: string): string => `${/^[aeiou]/i.test(noun) ? 'an' :
 
 /**
  * When a file does not read as its listed kind, says so in one sentence if exactly one other kind reads it: a
- * sound listed as music should not give a page of "this is missing" and "this is not something a music has".
+ * sound listed as music should not give a page of "this is missing" and "this is not something a music has". It also
+ * says which kind that is, so what refers to the file is not told it is missing as well.
  */
-function wrongKind(ref: ContentRef, text: string): Diagnostic | undefined {
+function wrongKind(ref: ContentRef, text: string): { problem: Diagnostic; readsAs: ContentType } | undefined {
   const reads = (Object.keys(CONTENT_TYPES) as ContentType[]).filter(
     (type) => type !== ref.type && parseContent(type, text, ref.path).ok,
   )
   const [only] = reads
   if (reads.length !== 1 || only === undefined) return undefined
   return {
-    file: ref.path,
-    path: '',
-    message: `This file is listed as ${withArticle(CONTENT_TYPES[ref.type].noun)}, but it reads as ${withArticle(CONTENT_TYPES[only].noun)}. Change its type in ${PROJECT_FILE}.`,
+    readsAs: only,
+    problem: {
+      file: ref.path,
+      path: '',
+      message: `This file is listed as ${withArticle(CONTENT_TYPES[ref.type].noun)}, but it reads as ${withArticle(CONTENT_TYPES[only].noun)}. Change its type in ${PROJECT_FILE}.`,
+    },
   }
 }
 
@@ -99,29 +103,16 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
   if (!parsedProject.ok) return fail([...parsedProject.diagnostics])
   const project = parsedProject.value
 
+  // Files listed as the wrong kind, with the kind each reads as: they count under both, so one slip in `type` is the
+  // only problem reported, not also every reference to the file.
+  const readsAs: { ref: ContentRef; kind: ContentType }[] = []
   // Ids that files will have, taken from the file names, so one broken file does not make every reference to it
   // look wrong as well.
   const named = (type: ContentType): string[] =>
-    project.content.filter((r) => r.type === type).map((r) => fileId(r.path))
-
-  const projectProblems: Diagnostic[] = []
-  const unknown = (path: string, what: string, id: string): void => {
-    projectProblems.push({
-      file: PROJECT_FILE,
-      path,
-      message: noSuch(what, id, named(what as ContentType)),
-    })
-  }
-  if (!named('level').includes(project.start)) unknown('start', 'level', project.start)
-  if (!named('character').includes(project.hero)) unknown('hero', 'character', project.hero)
-
-  // A game with words needs English first: every other language is checked against it.
-  if (named('messages').length > 0 && !named('messages').includes('en'))
-    projectProblems.push({
-      file: PROJECT_FILE,
-      path: 'content',
-      message: 'A game with words needs them in English first. List a messages file called en.json.',
-    })
+    [
+      ...project.content.filter((r) => r.type === type),
+      ...readsAs.filter((a) => a.kind === type).map((a) => a.ref),
+    ].map((r) => fileId(r.path))
 
   const texts = await Promise.all(project.content.map((r) => readText(read, r.path)))
   const values = new Map<string, unknown>()
@@ -142,7 +133,7 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
       slot.problems.push({
         file: ref.path,
         path: 'id',
-        message: `There is already a ${ref.type} called "${id}", in ${earlier}.`,
+        message: `There is already ${withArticle(CONTENT_TYPES[ref.type].noun)} called "${id}", in ${earlier}.`,
       })
     else {
       firstPath.set(key, ref.path)
@@ -166,13 +157,33 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
     const parsed = parseContent(ref.type, text, ref.path)
     if (!parsed.ok) {
       const wrong = wrongKind(ref, text)
-      slot.problems.push(...(wrong === undefined ? parsed.diagnostics : [wrong]))
+      if (wrong !== undefined) readsAs.push({ ref, kind: wrong.readsAs })
+      slot.problems.push(...(wrong === undefined ? parsed.diagnostics : [wrong.problem]))
     } else if (claim(slot, (parsed.value as { id: string }).id)) {
       slot.value = parsed.value
       values.set(`${ref.type}:${(parsed.value as { id: string }).id}`, parsed.value)
     }
     return slot
   })
+
+  const projectProblems: Diagnostic[] = []
+  const unknown = (path: string, what: string, id: string): void => {
+    projectProblems.push({
+      file: PROJECT_FILE,
+      path,
+      message: noSuch(what, id, named(what as ContentType)),
+    })
+  }
+  if (!named('level').includes(project.start)) unknown('start', 'level', project.start)
+  if (!named('character').includes(project.hero)) unknown('hero', 'character', project.hero)
+
+  // A game with words needs English first: every other language is checked against it.
+  if (named('messages').length > 0 && !named('messages').includes('en'))
+    projectProblems.push({
+      file: PROJECT_FILE,
+      path: 'content',
+      message: 'A game with words needs them in English first. List a messages file called en.json.',
+    })
 
   const game: Listed = {
     has: (type, id) => named(type).includes(id),

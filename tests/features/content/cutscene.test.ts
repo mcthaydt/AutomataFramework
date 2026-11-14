@@ -32,7 +32,7 @@ test('an actor’s keys go in time order, but two actors may interleave', () => 
     Object.assign((v.actors as Json[])[0] as Json, { at: 30 })
   })
   expect(said(swapped)).toEqual([
-    `${file}: actors[1].at: This key is at tick 0, before the one above it (30). Keys go in time order.`,
+    `${file}: actors[1].at: This key is at tick 0, before "keeper"'s key above it (30). Keys go in time order.`,
   ])
   const interleaved = edit((v) => {
     ;(v.actors as Json[]).splice(1, 0, { at: 10, who: 'crate-1', x: 6.5, y: 7.5 })
@@ -42,14 +42,22 @@ test('an actor’s keys go in time order, but two actors may interleave', () => 
 })
 
 test('a key after the cutscene ends', () =>
-  expect(said({ ...intro(), length: 100 })).toEqual([
+  expect(said({ ...intro(), length: 100, lines: [] })).toEqual([
     `${file}: camera[1].at: This is after the cutscene ends, at tick 100.`,
   ]))
 
-test('a line that starts after the cutscene ends', () =>
-  expect(said({ ...intro(), length: 60 })).toEqual([
-    `${file}: camera[1].at: This is after the cutscene ends, at tick 60.`,
-  ]))
+test('a line that starts, or stays up, after the cutscene ends', () => {
+  const camera = [{ at: 0, x: 4, y: 4, zoom: 1, ease: 'cut' }]
+  const scene = (length: number, line: Json) => ({ ...intro(), length, camera, lines: [line] })
+  const base = { line: 'keeper.hello', speaker: 'keeper' }
+  expect(said(scene(100, { at: 120, until: 150, ...base }))).toEqual([
+    `${file}: lines[0].at: This is after the cutscene ends, at tick 100.`,
+    `${file}: lines[0].until: This is after the cutscene ends, at tick 100.`,
+  ])
+  expect(said(scene(100, { at: 60, until: 180, ...base }))).toEqual([
+    `${file}: lines[0].until: This is after the cutscene ends, at tick 100.`,
+  ])
+})
 
 test('a line that does not end after it starts', () =>
   expect(said(edit((v) => Object.assign((v.lines as Json[])[0] as Json, { until: 60 })))).toEqual([
