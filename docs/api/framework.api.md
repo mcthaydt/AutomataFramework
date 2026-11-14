@@ -33,6 +33,19 @@ type Act = {
 const ACTION_NAME: RegExp;
 ```
 
+### `ActorKey` (interface)
+
+```ts
+interface ActorKey {
+    readonly at: number;
+    readonly who: string;
+    readonly x: number;
+    readonly y: number;
+    readonly clip?: string | undefined;
+    readonly face?: 'left' | 'right' | undefined;
+}
+```
+
 ### `atan` (function)
 
 ```ts
@@ -100,6 +113,18 @@ const BodyKind: {
     readonly kinematicVelocity: 3;
 };
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
+```
+
+### `CameraKey` (interface)
+
+```ts
+interface CameraKey {
+    readonly at: number;
+    readonly x: number;
+    readonly y: number;
+    readonly zoom: number;
+    readonly ease: Ease;
+}
 ```
 
 ### `Character` (interface)
@@ -244,6 +269,9 @@ const CONTENT_TYPES: {
     readonly sound: ContentTypeInfo<SoundFile, SoundFile>;
     readonly music: ContentTypeInfo<MusicFile, MusicFile>;
     readonly cues: ContentTypeInfo<CuesFile, CuesFile>;
+    readonly conversation: ContentTypeInfo<ConversationFile, ConversationFile>;
+    readonly cutscene: ContentTypeInfo<CutsceneFile, CutsceneFile>;
+    readonly messages: ContentTypeInfo<MessagesFile, MessagesFile>;
 };
 ```
 
@@ -394,6 +422,37 @@ interface CuesFile {
 const CuesSchema: z.ZodType<CuesFile, CuesFile>;
 ```
 
+### `CutsceneFile` (interface)
+
+```ts
+interface CutsceneFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly level: string;
+    readonly length: number;
+    readonly camera: readonly CameraKey[];
+    readonly actors: readonly ActorKey[];
+    readonly lines: readonly CutsceneLine[];
+}
+```
+
+### `CutsceneLine` (interface)
+
+```ts
+interface CutsceneLine {
+    readonly at: number;
+    readonly until: number;
+    readonly line: string;
+    readonly speaker?: string | undefined;
+}
+```
+
+### `CutsceneSchema` (const)
+
+```ts
+const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
+```
+
 ### `Def` (type)
 
 ```ts
@@ -487,6 +546,12 @@ interface Dust {
     readonly speed: number;
     readonly life: number;
 }
+```
+
+### `Ease` (type)
+
+```ts
+type Ease = 'cut' | 'linear' | 'smooth';
 ```
 
 ### `EditorName` (type)
@@ -652,6 +717,9 @@ interface GameContent {
     readonly sounds?: Readonly<Record<string, SoundFile>>;
     readonly music?: Readonly<Record<string, MusicFile>>;
     readonly cues?: Readonly<Record<string, CuesFile>>;
+    readonly conversations?: Readonly<Record<string, ConversationFile>>;
+    readonly cutscenes?: Readonly<Record<string, CutsceneFile>>;
+    readonly messages?: Readonly<Record<string, MessagesFile>>;
 }
 ```
 
@@ -731,6 +799,18 @@ function isHeld(player: EntityRef, action: string): boolean;
 
 ```ts
 function jsonSchemaFor(type: ContentType): object;
+```
+
+### `Language` (type)
+
+```ts
+type Language = (typeof LANGUAGES)[number];
+```
+
+### `LANGUAGES` (const)
+
+```ts
+const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
 ```
 
 ### `Level` (interface)
@@ -847,6 +927,22 @@ const MAX_STEPS = 4096;
 
 ```ts
 const MAX_STEPS_PER_FRAME = 5;
+```
+
+### `MessagesFile` (interface)
+
+```ts
+interface MessagesFile {
+    readonly format: 1;
+    readonly id: Language;
+    readonly messages: Readonly<Record<string, string>>;
+}
+```
+
+### `MessagesSchema` (const)
+
+```ts
+const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 ```
 
 ### `MusicCue` (interface)
@@ -1832,6 +1928,19 @@ type Act = {
 const ACTION_NAME: RegExp;
 ```
 
+### `ActorKey` (interface)
+
+```ts
+interface ActorKey {
+    readonly at: number;
+    readonly who: string;
+    readonly x: number;
+    readonly y: number;
+    readonly clip?: string | undefined;
+    readonly face?: 'left' | 'right' | undefined;
+}
+```
+
 ### `atan` (function)
 
 ```ts
@@ -1899,6 +2008,18 @@ const BodyKind: {
     readonly kinematicVelocity: 3;
 };
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
+```
+
+### `CameraKey` (interface)
+
+```ts
+interface CameraKey {
+    readonly at: number;
+    readonly x: number;
+    readonly y: number;
+    readonly zoom: number;
+    readonly ease: Ease;
+}
 ```
 
 ### `Character` (interface)
@@ -2037,6 +2158,9 @@ const CONTENT_TYPES: {
     readonly sound: ContentTypeInfo<SoundFile, SoundFile>;
     readonly music: ContentTypeInfo<MusicFile, MusicFile>;
     readonly cues: ContentTypeInfo<CuesFile, CuesFile>;
+    readonly conversation: ContentTypeInfo<ConversationFile, ConversationFile>;
+    readonly cutscene: ContentTypeInfo<CutsceneFile, CutsceneFile>;
+    readonly messages: ContentTypeInfo<MessagesFile, MessagesFile>;
 };
 ```
 
@@ -2142,6 +2266,37 @@ interface CuesFile {
 const CuesSchema: z.ZodType<CuesFile, CuesFile>;
 ```
 
+### `CutsceneFile` (interface)
+
+```ts
+interface CutsceneFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly level: string;
+    readonly length: number;
+    readonly camera: readonly CameraKey[];
+    readonly actors: readonly ActorKey[];
+    readonly lines: readonly CutsceneLine[];
+}
+```
+
+### `CutsceneLine` (interface)
+
+```ts
+interface CutsceneLine {
+    readonly at: number;
+    readonly until: number;
+    readonly line: string;
+    readonly speaker?: string | undefined;
+}
+```
+
+### `CutsceneSchema` (const)
+
+```ts
+const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
+```
+
 ### `Def` (type)
 
 ```ts
@@ -2235,6 +2390,12 @@ interface Dust {
     readonly speed: number;
     readonly life: number;
 }
+```
+
+### `Ease` (type)
+
+```ts
+type Ease = 'cut' | 'linear' | 'smooth';
 ```
 
 ### `EditorName` (type)
@@ -2357,6 +2518,9 @@ interface GameContent {
     readonly sounds?: Readonly<Record<string, SoundFile>>;
     readonly music?: Readonly<Record<string, MusicFile>>;
     readonly cues?: Readonly<Record<string, CuesFile>>;
+    readonly conversations?: Readonly<Record<string, ConversationFile>>;
+    readonly cutscenes?: Readonly<Record<string, CutsceneFile>>;
+    readonly messages?: Readonly<Record<string, MessagesFile>>;
 }
 ```
 
@@ -2404,6 +2568,18 @@ function isHeld(player: EntityRef, action: string): boolean;
 
 ```ts
 function jsonSchemaFor(type: ContentType): object;
+```
+
+### `Language` (type)
+
+```ts
+type Language = (typeof LANGUAGES)[number];
+```
+
+### `LANGUAGES` (const)
+
+```ts
+const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
 ```
 
 ### `Level` (interface)
@@ -2514,6 +2690,22 @@ const MAX_PLAYERS = 4;
 
 ```ts
 const MAX_STEPS = 4096;
+```
+
+### `MessagesFile` (interface)
+
+```ts
+interface MessagesFile {
+    readonly format: 1;
+    readonly id: Language;
+    readonly messages: Readonly<Record<string, string>>;
+}
+```
+
+### `MessagesSchema` (const)
+
+```ts
+const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 ```
 
 ### `MusicCue` (interface)

@@ -2,10 +2,13 @@ import { deepFreeze } from '../../lib/deep-freeze.ts'
 import type { BehaviourFile } from './behaviour.ts'
 import type { Character } from './character.ts'
 import { CONTENT_TYPES, type ContentType } from './content-types.ts'
+import type { ConversationFile } from './conversation.ts'
 import type { CuesFile } from './cues.ts'
+import type { CutsceneFile } from './cutscene.ts'
 import type { Diagnostic } from './diagnostics.ts'
 import type { FeelFile } from './feel.ts'
 import type { Level } from './level.ts'
+import type { MessagesFile } from './messages.ts'
 import type { MusicFile } from './music.ts'
 import { type Parsed, parseContent } from './parse.ts'
 import type { ContentRef } from './project.ts'
@@ -33,6 +36,9 @@ export interface GameContent {
   readonly sounds?: Readonly<Record<string, SoundFile>>
   readonly music?: Readonly<Record<string, MusicFile>>
   readonly cues?: Readonly<Record<string, CuesFile>>
+  readonly conversations?: Readonly<Record<string, ConversationFile>>
+  readonly cutscenes?: Readonly<Record<string, CutsceneFile>>
+  readonly messages?: Readonly<Record<string, MessagesFile>>
 }
 
 /** What a file's id has to be: its name without `.json`. */
@@ -108,6 +114,14 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
   }
   if (!named('level').includes(project.start)) unknown('start', 'level', project.start)
   if (!named('character').includes(project.hero)) unknown('hero', 'character', project.hero)
+
+  // A game with words needs English first: every other language is checked against it.
+  if (named('messages').length > 0 && !named('messages').includes('en'))
+    projectProblems.push({
+      file: PROJECT_FILE,
+      path: 'content',
+      message: 'A game with words needs them in English first. List a messages file called en.json.',
+    })
 
   const texts = await Promise.all(project.content.map((r) => readText(read, r.path)))
   const values = new Map<string, unknown>()

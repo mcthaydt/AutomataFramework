@@ -18,12 +18,21 @@ export {
   type SoundCue,
   type StopMusicCue,
 } from './cues.ts'
+export {
+  type ActorKey,
+  type CameraKey,
+  type CutsceneFile,
+  type CutsceneLine,
+  CutsceneSchema,
+  type Ease,
+} from './cutscene.ts'
 export { type Diagnostic, formatDiagnostic } from './diagnostics.ts'
 export { type Dust, type FeelFile, FeelSchema, type Freeze, type Shake } from './feel.ts'
 export { Id } from './ids.ts'
 export { jsonSchemaFor } from './json-schema.ts'
 export { type Level, LevelSchema, type LevelStart, type LevelThing } from './level.ts'
 export { type GameContent, loadGame } from './load.ts'
+export { LANGUAGES, type Language, type MessagesFile, MessagesSchema } from './messages.ts'
 export {
   type DrumPart,
   MAX_STEPS,

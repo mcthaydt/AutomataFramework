@@ -70,3 +70,9 @@ test('the JSON Schema of a sound, a track and a list of cues', () => {
   expectSchema('music', 'Music', ['format', 'id', 'tempo', 'stepsPerBeat', 'volume', 'loop', 'parts'])
   expectSchema('cues', 'Cues', ['format', 'id', 'cues'])
 })
+
+test('the JSON Schema of messages, a conversation and a cutscene', () => {
+  expectSchema('messages', 'Messages', ['format', 'id', 'messages'])
+  expectSchema('conversation', 'Conversation', ['format', 'id', 'start', 'nodes'])
+  expectSchema('cutscene', 'Cutscene', ['format', 'id', 'level', 'length', 'camera', 'actors', 'lines'])
+})

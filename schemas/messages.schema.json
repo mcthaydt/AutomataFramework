@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "enum": [
+        "en",
+        "es",
+        "ko",
+        "ja",
+        "zh",
+        "pt"
+      ],
+      "description": "The language this file is in: en, es, ko, ja, zh or pt. It matches the file name."
+    },
+    "messages": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "maxLength": 96,
+        "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2000
+      },
+      "description": "Every word a player reads, by key, like \"keeper.hello\": \"Hello!\". Each text is 1 to 2000 characters."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "messages"
+  ],
+  "additionalProperties": false,
+  "title": "Messages"
+}
