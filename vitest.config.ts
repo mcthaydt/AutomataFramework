@@ -1,7 +1,8 @@
-// Four Vitest projects. Test file suffixes decide where a test runs:
+// Five Vitest projects. Test file suffixes decide where a test runs:
 //   *.test.ts          Node
 //   *.parity.test.ts   Node and all three browsers: the same hash must come out of every engine
 //   *.browser.test.ts  the three browsers only (layout, DOM, canvas)
+//   *.journey.test.ts  Node, driving real browsers of its own (Playwright) against a server it starts
 // Node is the fourth engine of the determinism proof; the browsers are real Chromium, WebKit and Firefox.
 import { playwright } from '@vitest/browser-playwright'
 import { defineConfig, type ViteUserConfig } from 'vitest/config'
@@ -15,7 +16,20 @@ const node = {
     name: 'node',
     environment: 'node',
     include: ['tests/**/*.test.ts'],
-    exclude: ['**/*.browser.test.ts', '**/node_modules/**'],
+    exclude: ['**/*.browser.test.ts', '**/*.journey.test.ts', '**/node_modules/**'],
+  },
+}
+
+// A journey starts the room server and a built page, and opens them in real browsers it launches itself, so it is a Node
+// test that takes minutes: its own project, run by the `online` job and never by the fast `node` one.
+const journeys = {
+  extends: true,
+  test: {
+    name: 'journeys',
+    environment: 'node',
+    include: ['tests/journeys/**/*.journey.test.ts'],
+    testTimeout: 120_000,
+    hookTimeout: 120_000,
   },
 }
 
@@ -45,7 +59,7 @@ const RAPIER = '@dimforge/rapier2d-deterministic'
 const config: ViteUserConfig = defineConfig({
   plugins: [rapierWasm()],
   optimizeDeps: { exclude: [RAPIER] },
-  test: { server: { deps: { inline: [RAPIER] } }, projects: [node, ...ENGINES.map(inBrowser)] },
+  test: { server: { deps: { inline: [RAPIER] } }, projects: [node, journeys, ...ENGINES.map(inBrowser)] },
 })
 
 export default config

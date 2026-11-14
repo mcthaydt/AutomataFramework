@@ -298,7 +298,7 @@ What the spec implies and a person will meet, most likely first. Each has its te
   `src/features/server/process.ts` (the message becomes "Effect is only for the server's process."). New rule
   `server-is-node-only`.
 
-- [ ] **Step 1: Write the failing rule tests** in `rules.test.ts`, each on a made-up map that includes the entry files
+- [x] **Step 1: Write the failing rule tests** in `rules.test.ts`, each on a made-up map that includes the entry files
   it needs (M1 audit, B5), each expecting exactly one violation:
   - `net` importing `content` gives `imports-go-down`; `server` importing `level` and `net` gives none.
   - `src/features/net/net.ts` containing `setTimeout` gives `sim-is-pure`.
@@ -310,12 +310,12 @@ What the spec implies and a person will meet, most likely first. Each has its te
     import the server feature: it needs Node.").
   - `src/headless.ts` reaching `src/features/server/server.ts` through any chain gives `server-is-node-only`, and so
     does `src/index.ts`.
-- [ ] **Step 2: Push; `check` fails** on the new cases.
-- [ ] **Step 3: Change `rules.ts`** as the Interfaces block says. `server-is-node-only` is reported instead of
+- [x] **Step 2: Push; `check` fails** on the new cases.
+- [x] **Step 3: Change `rules.ts`** as the Interfaces block says. `server-is-node-only` is reported instead of
   `imports-go-down` for an import of `server` from a feature above it, so each case has one violation.
-- [ ] **Step 4: Push; every job passes.** The real tree has no `net` or `server` yet, so `architecture.test.ts` is
+- [x] **Step 4: Push; every job passes.** The real tree has no `net` or `server` yet, so `architecture.test.ts` is
   unchanged.
-- [ ] **Step 5: Commit** `test: layers and rules for net and the room server`.
+- [x] **Step 5: Commit** `test: layers and rules for net and the room server`.
 
 ### Task 2: The wire
 
@@ -336,7 +336,7 @@ What the spec implies and a person will meet, most likely first. Each has its te
   - `type OnlineProblem = 'different-version' | 'room-full' | 'no-room' | 'server-full' | 'bad-room' | 'no-server' |
     'lost'`.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
   - `parseClientMessage` returns the message for a good `cmd` and a good `sync`, and `undefined` for: a string, `null`,
     an unknown `t`, a `cmd` with an extra key, `seq: -1`, `seq: 1.5`, `tick: 4294967296`, `type: ''`.
   - `parseServerMessage` round-trips one of each message in the table, and returns `undefined` for a `tick` whose
@@ -345,11 +345,11 @@ What the spec implies and a person will meet, most likely first. Each has its te
   - `roomOptionsOf(sim, { level: 'level-1', seats: 2 })` on a fixture game sim gives `protocol: 1`,
     `framework: FRAMEWORK_VERSION`, `contentHash: sim.contentHash`, `tickHz: 60`, `seed: sim.seed`, and a `schemaHash`
     of 16 hex digits that differs when the sim is made with `heroPlugin` and without.
-- [ ] **Step 2: Push; `check` fails** ("Cannot find module").
-- [ ] **Step 3: Write `protocol.ts` and the entry.** A command's `payload` is `z.json()` here; the sim's own schema
+- [x] **Step 2: Push; `check` fails** ("Cannot find module").
+- [x] **Step 3: Write `protocol.ts` and the entry.** A command's `payload` is `z.json()` here; the sim's own schema
   judges it when the room steps.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** `feat: the room's wire messages`.
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** `feat: the room's wire messages`.
 
 ### Task 3: The room engine
 
@@ -403,7 +403,7 @@ function createRoomEngine(setup: {
   through `readFixture`, with that level) and `onlineSim(seats = 2): Promise<Sim>` (`createGameSim` with `heroPlugin`
   and `players` 1 to `seats`).
 
-- [ ] **Step 1: Write the failing tests** (each with fake peers that collect what they are sent):
+- [x] **Step 1: Write the failing tests** (each with fake peers that collect what they are sent):
   - "waits, then starts": with `seats: 2`, the first join gets `seat 1` and `waiting { missing: 1 }`; `step()` does
     nothing; the second join gets `seat 2` and both get `start`; `step()` then sends both `tick { tick: 0, commands: [] }`.
   - "another version is refused": a join whose `contentHash` differs returns `{ problem: 'different-version' }` and
@@ -430,10 +430,10 @@ function createRoomEngine(setup: {
   - "sync on request": `receive(1, { t: 'sync' })` sends seat 1 `sync` and bytes, and seat 2 nothing.
   - "the room's play is a replay": after 120 steps with a few commands, `verifyReplay(await onlineSim(),
     engine.replay())` is `{ ok: true }`, and `replay().meta` is `{ level: 'level-1', players: '1,2', seats: '2' }`.
-- [ ] **Step 2: Push; `check` fails.**
-- [ ] **Step 3: Write `room-engine.ts`** to "The room's queue rules". The engine owns a `createRecorder(sim)`.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** `feat: the room engine`.
+- [x] **Step 2: Push; `check` fails.**
+- [x] **Step 3: Write `room-engine.ts`** to "The room's queue rules". The engine owns a `createRecorder(sim)`.
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** `feat: the room engine`.
 
 ### Task 4: The client session
 
@@ -502,7 +502,7 @@ function createSession(setup: {
   steps that tick. With the room stepping first, the same command is one tick late, and "agrees without a rollback
   when alone" cannot hold (audit F3).
 
-- [ ] **Step 1: Write the failing tests** (each builds an engine on one `onlineSim()` and sessions on two more each, and
+- [x] **Step 1: Write the failing tests** (each builds an engine on one `onlineSim()` and sessions on two more each, and
   disposes them):
   - "predicts at once": after `start`, `advance([controls right])` moves player 1's hero in `session.sim` on the same
     advance, before any tick message has come back.
@@ -528,10 +528,10 @@ function createSession(setup: {
     new link given to `resume`; the session ends agreeing with the room, and seat 1's state listed seat 2 in `away`
     in between.
   - "a refused command is forgotten": a `refused` for a pending `seq` removes it; the next rollback does not replay it.
-- [ ] **Step 2: Push; `check` fails.**
-- [ ] **Step 3: Write `link.ts` and `session.ts`** to "The client's rules".
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** `feat: the client session, with prediction and rollback`.
+- [x] **Step 2: Push; `check` fails.**
+- [x] **Step 3: Write `link.ts` and `session.ts`** to "The client's rules".
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** `feat: the client session, with prediction and rollback`.
 
 ### Task 5: Proof 1, two players on one hash in four engines
 
@@ -549,7 +549,7 @@ function createSession(setup: {
   `advance(onlineScript(seat, predicted tick))`;
   it beats until both sessions have confirmed `ONLINE_TICKS`, and `hashes` are the two confirmed sims' final hashes.
 
-- [ ] **Step 1: Write the test and an empty golden** (`{ "ticks": 600, "finalHash": "", "checks": [] }`):
+- [x] **Step 1: Write the test and an empty golden** (`{ "ticks": 600, "finalHash": "", "checks": [] }`):
   - "two players and the room end on the same hash, with a lag and a late command": `runOnline({ 1: { up: 1, down: 1 },
     2: { up: 9, down: 6 } })`. Both `hashes` equal `room.finalHash`; each player's `rollbacks` is above 0; player 2's
     `late` is above 0; every `desyncs` is 0; every `checked` is 10 (ticks 59 to 599); `verifyReplay(await onlineSim(), room)` is
@@ -557,10 +557,10 @@ function createSession(setup: {
   - "with no lag they agree too": `runOnline` with every delay at 1 ends with both `hashes` equal to its own
     `room.finalHash` and `verifyReplay` ok. (Its hash may differ from the laggy run's, because late commands land on
     later ticks; nothing compares the two runs.)
-- [ ] **Step 2: Push; the Node job fails `GOLDEN NOT RECORDED`.** Copy the JSON from its log into the golden. Name the
+- [x] **Step 2: Push; the Node job fails `GOLDEN NOT RECORDED`.** Copy the JSON from its log into the golden. Name the
   golden in the commit message.
-- [ ] **Step 3: Push; Node, Chromium, WebKit and Firefox all pass.** A browser that differs from Node is a stop.
-- [ ] **Step 4: Commit** `test: two online players and the room end on one hash in four engines (new golden
+- [x] **Step 3: Push; Node, Chromium, WebKit and Firefox all pass.** A browser that differs from Node is a stop.
+- [x] **Step 4: Commit** `test: two online players and the room end on one hash in four engines (new golden
   online-two-players)`.
 
 ### Task 6: The room server
@@ -615,13 +615,13 @@ function createRoomServer(options: RoomServerOptions): Promise<RoomServer>
   `knip.json`'s `ignoreDependencies`, and `tests/package.test.ts` says why in a comment and asserts all three are
   dependencies at the exact versions.
 
-- [ ] **Step 1: Lift the scheduler and its test**, and nothing else: no `src/features/server/server.ts` yet, because
+- [x] **Step 1: Lift the scheduler and its test**, and nothing else: no `src/features/server/server.ts` yet, because
   knip fails a file nothing imports (audit F5); the test imports the scheduler's own file. Push once; every job
   passes. The dependencies and the entry wait for Step 3, because knip fails a dependency nothing imports too.
-- [ ] **Step 2: Commit** `feat: the room's tick scheduler, lifted`.
-- [ ] **Step 3: Add the three dependencies; write `room.ts`, `room-server.ts`, the entries.** No test of its own here: Task 7 tests it through
+- [x] **Step 2: Commit** `feat: the room's tick scheduler, lifted`.
+- [x] **Step 3: Add the three dependencies; write `room.ts`, `room-server.ts`, the entries.** No test of its own here: Task 7 tests it through
   real sockets, and writes those tests first. Run `pnpm lint`, `pnpm typecheck`, `pnpm knip` locally.
-- [ ] **Step 4: Do not push Step 3 alone.** It is committed with Task 7's Step 3.
+- [x] **Step 4: Do not push Step 3 alone.** It is committed with Task 7's Step 3.
 
 ### Task 7: Proof 2, real sockets
 
@@ -674,7 +674,7 @@ function joinSession(options: {
   string>; stop(): void }>`. It makes two `onlineSim(seats)`s, joins, and calls `advance` on a 60 Hz timer; `lagMs` wraps
   the link so every message each way waits that long.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `colyseus-link.test.ts`, on a fake SDK room: a message on `m` that parses reaches `message`, one that does not is
     dropped; bytes on `b` reach `bytes`; the SDK's leave calls `closed` once; a rejected join whose message is
     `room-full: …`, and one whose message is `room "abc" is locked`, each throw `OnlineError` with
@@ -706,11 +706,11 @@ function joinSession(options: {
       test waits 1.5 seconds (the one wait on time in this plan: the grace is Colyseus's own timer); `rejoin()` then
       rejects with `problem: 'lost'`, and player 1 reaches a later check.
     - "close frees the port": after `close()`, a new server can listen on the same port.
-- [ ] **Step 2: Push the tests with Task 6's Step 3 held back; `check` fails** ("Cannot find module" for
+- [x] **Step 2: Push the tests with Task 6's Step 3 held back; `check` fails** ("Cannot find module" for
   `colyseus-link.ts`).
-- [ ] **Step 3: Write `colyseus-link.ts` and `join.ts`; push with Task 6's Step 3. Every job passes.** If the two-player
+- [x] **Step 3: Write `colyseus-link.ts` and `join.ts`; push with Task 6's Step 3. Every job passes.** If the two-player
   test is ever red and then green on a rerun, that is a defect to find, not a flake: stop and report.
-- [ ] **Step 4: Commit** `feat: the room server and joining it, proven over real sockets`.
+- [x] **Step 4: Commit** `feat: the room server and joining it, proven over real sockets`.
 
 ### Task 8: The server process and the package's third entry
 
@@ -737,7 +737,7 @@ function joinSession(options: {
   `await runRoomServer({ game: { content, plugins: [heroPlugin] } })`. `scripts/write-schemas.ts` already runs `src/`
   under plain Node; if this file cannot be run that way, stop and report rather than adding a build step.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `process.test.ts` spawns `node tests/fixtures/online/server.ts` (Node 24 runs the TypeScript as it is): reads the
     `listening` line and its port; a headless player with `seats: 1` joins that port and reaches a check; SIGTERM
     gives `{"event":"stopped"}` and exit code 0 within 5 seconds. With `PORT=abc` the process exits 1 with the line
@@ -752,12 +752,12 @@ function joinSession(options: {
     `seats: 1` on two `createGameSim`s, advanced on a 60 Hz timer with no commands until the check for tick 59
     arrives; that hash must be `push-crate.json`'s `idleHash60` (the same sim, the same sixty idle ticks, this time
     through a socket). It closes everything and exits 0, or prints both hashes and exits 1.
-- [ ] **Step 2: Push; `check` and `package` fail.**
-- [ ] **Step 3: Write `process.ts`, the build entry and the exports; update the API report.** Run `pnpm build` locally
+- [x] **Step 2: Push; `check` and `package` fail.**
+- [x] **Step 3: Write `process.ts`, the build entry and the exports; update the API report.** Run `pnpm build` locally
   and check `dist/server.js` and `dist/server.d.ts` exist and that `dist/index.js` and `dist/headless.js` contain
   neither `@colyseus/core` nor `effect`.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** `feat: runRoomServer and the package's server entry`.
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** `feat: runRoomServer and the package's server entry`.
 
 ### Task 9: A page in a room
 
@@ -834,7 +834,7 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
   reports `reconnecting` and calls `rejoin()` after each of `RECONNECT_DELAYS_MS` (`setTimeout`: `game` is a page
   feature, not a pure one), then `ended: lost`.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `words.test.ts`: one assertion per row of the table, and that no string holds any of `socket`, `server tick`,
     `desync`, `rollback`, `sync` or `seat`.
   - `online.browser.test.ts` (three engines), with `join` given a function that joins a `createRoomEngine` in the page
@@ -856,10 +856,10 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
       `ended: lost`, with Vitest's fake timers driving the delays.
     - a phone-size picture (390 by 844) of two heroes in a room, saved to `__screenshots__` for the drunk-grandma
       read, as the M1 browser tests do.
-- [ ] **Step 2: Push; `check` and the engines fail.**
-- [ ] **Step 3: Write `words.ts` and `online.ts`.**
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** `feat: startOnlineGame, a page in a room`.
+- [x] **Step 2: Push; `check` and the engines fail.**
+- [x] **Step 3: Write `words.ts` and `online.ts`.**
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** `feat: startOnlineGame, a page in a room`.
 
 ### Task 10: Proof 3, two real browsers and a server CI starts
 
@@ -887,7 +887,7 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
     webkit firefox`, `pnpm test:journeys`, and uploads `tests/journeys/__screenshots__/**` as `screens-online`
     (the `screens` job's pattern `screens-*` then copies it to `ci-screens`; add `online` to that job's `needs`).
 
-- [ ] **Step 1: Write the failing journey**, once per pair:
+- [x] **Step 1: Write the failing journey**, once per pair:
 
   | Player 1 | Player 2 |
   |---|---|
@@ -915,11 +915,11 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
 
   `tests/workflows/online.test.ts` reads `ci.yml`: the `online` job installs all three browsers, runs
   `pnpm test:journeys`, has no `contents: write`, and `screens` needs it.
-- [ ] **Step 2: Push; `online` fails** (no page), the rest pass.
-- [ ] **Step 3: Write the page and the job.**
-- [ ] **Step 4: Push; every job passes, `online` included.** Read the six pictures on the `ci-screens` branch
+- [x] **Step 2: Push; `online` fails** (no page), the rest pass.
+- [x] **Step 3: Write the page and the job.**
+- [x] **Step 4: Push; every job passes, `online` included.** Read the six pictures on the `ci-screens` branch
   (`pr-<number>/online/`) and say in the report whether two heroes and the buttons are plain to see at phone size.
-- [ ] **Step 5: Commit** `test: two real browsers play together against a server CI starts`.
+- [x] **Step 5: Commit** `test: two real browsers play together against a server CI starts`.
 
 ### Task 11: Coming and going, with plan I's commands
 
@@ -958,7 +958,7 @@ then says so.
   - **The input stays on this page's seat.** Plan I's `startGame` tells the input about every player who joins; the
     online page does not, because the other players' hands are on other devices.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - Engine: "a co-op room starts with one player" (join 1: `seat`, `start`, `sync`; the tick message for the next
     tick carries a `join` from source 1; `playersIn` of the engine's sim is `[1]` after it); "a second player joins
     a game that is going" (after 90 steps, join 2: its `sync` restores on a fresh `coopSim()` to the engine's hash,
@@ -979,30 +979,30 @@ then says so.
     `?room=<code>`; each page shows the other's hero move; both get an equal later check; player 2 closes its page
     and, after the grace (the co-op fixture server runs with `graceSeconds: 2`), player 1's page shows one hero
     (`data-players="1"`) and an empty `#status`.
-- [ ] **Step 2: Push; `check` and `online` fail** on the new cases; every earlier test passes.
-- [ ] **Step 3: Implement.** No change to the lobby path: a game without `players` behaves as Tasks 3 to 10 left it,
+- [x] **Step 2: Push; `check` and `online` fail** on the new cases; every earlier test passes.
+- [x] **Step 3: Implement.** No change to the lobby path: a game without `players` behaves as Tasks 3 to 10 left it,
   and `tests/golden/online-two-players.json` must not move.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** `feat: players join and leave a room that is going, by the sim's own commands`.
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** `feat: players join and leave a room that is going, by the sim's own commands`.
 
 ### Task 12: The docs, and what the Owner does after
 
 **Files:**
 - Modify: `README.md`, `tests/docs/readme.test.ts`, `CLAUDE.md` (Structure), `docs/superpowers/progress.md`
 
-- [ ] **Step 1: Write the failing README test**: the README has a section `## Play online` that contains
+- [x] **Step 1: Write the failing README test**: the README has a section `## Play online` that contains
   `runRoomServer`, `startOnlineGame`, `@automataframework/framework/server` and `onlineWords`, each of which the
   package exports, and the sentence `Online play is built and checked in CI. It is not deployed anywhere yet.`
-- [ ] **Step 2: Push; `check` fails.**
-- [ ] **Step 3: Write the section**, short, in the README's voice: the five-line `server.ts` of a game; `node
+- [x] **Step 2: Push; `check` fails.**
+- [x] **Step 3: Write the section**, short, in the README's voice: the five-line `server.ts` of a game; `node
   server.ts` and the line it prints; `startOnlineGame({ ...the options of startGame, server: 'ws://localhost:<port>'
   })`; how a friend joins with the code; where the words for each status come from; that the room's play is an
   ordinary replay (`server.replays()`); and the sentence above. Add `src/server.ts`, `tests/journeys/` and the two
   features to `CLAUDE.md`'s Structure, with the rule that only `src/server.ts` reaches the server feature.
-- [ ] **Step 4: Update the tracker** (this plan's row to "Execution: done, 100%, in review") and push; every job
+- [x] **Step 4: Update the tracker** (this plan's row to "Execution: done, 100%, in review") and push; every job
   passes.
-- [ ] **Step 5: Commit** `docs: play online, in the README and the structure`.
-- [ ] **Step 6: Report to the coordinator**, with the summary and these for the Owner:
+- [x] **Step 5: Commit** `docs: play online, in the README and the structure`.
+- [x] **Step 6: Report to the coordinator**, with the summary and these for the Owner:
   - The new check `online` is not a required check until the Owner adds it. The command, to run after the merge:
     `gh api repos/mcthaydt/AutomataFramework/branches/main/protection/required_status_checks/contexts -X POST -f
     'contexts[]=online'`.

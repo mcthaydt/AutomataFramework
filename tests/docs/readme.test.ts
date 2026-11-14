@@ -93,3 +93,19 @@ test('the README has a host section that names every member of the port and both
   ])
     expect(host, word).toContain(word)
 })
+
+// A game finds out how to host a room and put a page in it from here, and is told that nothing is deployed.
+test('the README has a Play online section: the server, the page, the words, and that nothing is deployed', () => {
+  const online = section('## Play online')
+  for (const word of [
+    'runRoomServer',
+    'startOnlineGame',
+    '@automataframework/framework/server',
+    'onlineWords',
+    'OnlineError',
+    'Online play is built and checked in CI. It is not deployed anywhere yet.',
+  ])
+    expect(online, word).toContain(word)
+  expect(online.split('\n').length).toBeLessThan(60)
+  for (const name of ['onlineWords', 'joinSession']) expect(framework, name).toHaveProperty(name)
+})

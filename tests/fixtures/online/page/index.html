@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Online test page</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #111; color: #fff; font: 18px system-ui, sans-serif; }
+      #mount { position: fixed; inset: 0; }
+      #status { position: fixed; left: 0; right: 0; top: 0; z-index: 5; margin: 0; padding: 8px 12px; background: rgba(0, 0, 0, 0.75); }
+      #status:empty { display: none; }
+    </style>
+  </head>
+  <body>
+    <div id="mount"></div>
+    <p id="status"></p>
+    <div id="game" data-state="starting"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
