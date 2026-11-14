@@ -834,7 +834,7 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
   reports `reconnecting` and calls `rejoin()` after each of `RECONNECT_DELAYS_MS` (`setTimeout`: `game` is a page
   feature, not a pure one), then `ended: lost`.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `words.test.ts`: one assertion per row of the table, and that no string holds any of `socket`, `server tick`,
     `desync`, `rollback`, `sync` or `seat`.
   - `online.browser.test.ts` (three engines), with `join` given a function that joins a `createRoomEngine` in the page
@@ -856,10 +856,10 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
       `ended: lost`, with Vitest's fake timers driving the delays.
     - a phone-size picture (390 by 844) of two heroes in a room, saved to `__screenshots__` for the drunk-grandma
       read, as the M1 browser tests do.
-- [ ] **Step 2: Push; `check` and the engines fail.**
-- [ ] **Step 3: Write `words.ts` and `online.ts`.**
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** `feat: startOnlineGame, a page in a room`.
+- [x] **Step 2: Push; `check` and the engines fail.**
+- [x] **Step 3: Write `words.ts` and `online.ts`.**
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** `feat: startOnlineGame, a page in a room`.
 
 ### Task 10: Proof 3, two real browsers and a server CI starts
 
@@ -887,7 +887,7 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
     webkit firefox`, `pnpm test:journeys`, and uploads `tests/journeys/__screenshots__/**` as `screens-online`
     (the `screens` job's pattern `screens-*` then copies it to `ci-screens`; add `online` to that job's `needs`).
 
-- [ ] **Step 1: Write the failing journey**, once per pair:
+- [x] **Step 1: Write the failing journey**, once per pair:
 
   | Player 1 | Player 2 |
   |---|---|
@@ -915,11 +915,11 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>
 
   `tests/workflows/online.test.ts` reads `ci.yml`: the `online` job installs all three browsers, runs
   `pnpm test:journeys`, has no `contents: write`, and `screens` needs it.
-- [ ] **Step 2: Push; `online` fails** (no page), the rest pass.
-- [ ] **Step 3: Write the page and the job.**
-- [ ] **Step 4: Push; every job passes, `online` included.** Read the six pictures on the `ci-screens` branch
+- [x] **Step 2: Push; `online` fails** (no page), the rest pass.
+- [x] **Step 3: Write the page and the job.**
+- [x] **Step 4: Push; every job passes, `online` included.** Read the six pictures on the `ci-screens` branch
   (`pr-<number>/online/`) and say in the report whether two heroes and the buttons are plain to see at phone size.
-- [ ] **Step 5: Commit** `test: two real browsers play together against a server CI starts`.
+- [x] **Step 5: Commit** `test: two real browsers play together against a server CI starts`.
 
 ### Task 11: Coming and going, with plan I's commands
 
@@ -958,7 +958,7 @@ then says so.
   - **The input stays on this page's seat.** Plan I's `startGame` tells the input about every player who joins; the
     online page does not, because the other players' hands are on other devices.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - Engine: "a co-op room starts with one player" (join 1: `seat`, `start`, `sync`; the tick message for the next
     tick carries a `join` from source 1; `playersIn` of the engine's sim is `[1]` after it); "a second player joins
     a game that is going" (after 90 steps, join 2: its `sync` restores on a fresh `coopSim()` to the engine's hash,
@@ -979,30 +979,30 @@ then says so.
     `?room=<code>`; each page shows the other's hero move; both get an equal later check; player 2 closes its page
     and, after the grace (the co-op fixture server runs with `graceSeconds: 2`), player 1's page shows one hero
     (`data-players="1"`) and an empty `#status`.
-- [ ] **Step 2: Push; `check` and `online` fail** on the new cases; every earlier test passes.
-- [ ] **Step 3: Implement.** No change to the lobby path: a game without `players` behaves as Tasks 3 to 10 left it,
+- [x] **Step 2: Push; `check` and `online` fail** on the new cases; every earlier test passes.
+- [x] **Step 3: Implement.** No change to the lobby path: a game without `players` behaves as Tasks 3 to 10 left it,
   and `tests/golden/online-two-players.json` must not move.
-- [ ] **Step 4: Push; every job passes.**
-- [ ] **Step 5: Commit** `feat: players join and leave a room that is going, by the sim's own commands`.
+- [x] **Step 4: Push; every job passes.**
+- [x] **Step 5: Commit** `feat: players join and leave a room that is going, by the sim's own commands`.
 
 ### Task 12: The docs, and what the Owner does after
 
 **Files:**
 - Modify: `README.md`, `tests/docs/readme.test.ts`, `CLAUDE.md` (Structure), `docs/superpowers/progress.md`
 
-- [ ] **Step 1: Write the failing README test**: the README has a section `## Play online` that contains
+- [x] **Step 1: Write the failing README test**: the README has a section `## Play online` that contains
   `runRoomServer`, `startOnlineGame`, `@automataframework/framework/server` and `onlineWords`, each of which the
   package exports, and the sentence `Online play is built and checked in CI. It is not deployed anywhere yet.`
-- [ ] **Step 2: Push; `check` fails.**
-- [ ] **Step 3: Write the section**, short, in the README's voice: the five-line `server.ts` of a game; `node
+- [x] **Step 2: Push; `check` fails.**
+- [x] **Step 3: Write the section**, short, in the README's voice: the five-line `server.ts` of a game; `node
   server.ts` and the line it prints; `startOnlineGame({ ...the options of startGame, server: 'ws://localhost:<port>'
   })`; how a friend joins with the code; where the words for each status come from; that the room's play is an
   ordinary replay (`server.replays()`); and the sentence above. Add `src/server.ts`, `tests/journeys/` and the two
   features to `CLAUDE.md`'s Structure, with the rule that only `src/server.ts` reaches the server feature.
-- [ ] **Step 4: Update the tracker** (this plan's row to "Execution: done, 100%, in review") and push; every job
+- [x] **Step 4: Update the tracker** (this plan's row to "Execution: done, 100%, in review") and push; every job
   passes.
-- [ ] **Step 5: Commit** `docs: play online, in the README and the structure`.
-- [ ] **Step 6: Report to the coordinator**, with the summary and these for the Owner:
+- [x] **Step 5: Commit** `docs: play online, in the README and the structure`.
+- [x] **Step 6: Report to the coordinator**, with the summary and these for the Owner:
   - The new check `online` is not a required check until the Owner adds it. The command, to run after the merge:
     `gh api repos/mcthaydt/AutomataFramework/branches/main/protection/required_status_checks/contexts -X POST -f
     'contexts[]=online'`.
