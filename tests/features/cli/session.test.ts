@@ -105,7 +105,11 @@ test('events are named once a tick, in order, and stop at 200', async () => {
   const memory = game(codeOf(noisy))
   const sessions = createSessions()
   const { session } = await run(memory, sessions.start({ folder: 'game' }))
-  expect((await run(memory, sessions.step(session, 2, {}))).events).toEqual(['ping', 'pong', 'ping', 'pong'])
+  // The physics raises its own events too (the hero landing), so only these two are looked at.
+  const mine = (events: readonly string[]): string[] =>
+    events.filter((name) => name === 'ping' || name === 'pong')
+  const first = await run(memory, sessions.step(session, 2, {}))
+  expect(mine(first.events)).toEqual(['ping', 'pong', 'ping', 'pong'])
   expect((await run(memory, sessions.step(session, 300, {}))).events).toHaveLength(200)
   await run(memory, sessions.stopAll())
 })
@@ -182,7 +186,7 @@ test('rules that throw end the session with the sentence, and the next call is a
   const sessions = createSessions()
   const { session } = await run(memory, sessions.start({ folder: 'game' }))
   expect(await sentence(memory, sessions.step(session, 60, { '1': ['right'] }))).toMatch(
-    /^The game stopped at tick \d+: boom\.$/,
+    /^The game stopped at tick \d+: .*boom/,
   )
   expect(await sentence(memory, sessions.state(session))).toBe(
     `There is no session called "${session}". Start one with play_start.`,

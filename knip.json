@@ -3,7 +3,6 @@
   "ignoreExportsUsedInFile": true,
   "entry": [
     "src/cli.ts",
-    "src/features/cli/session-worker.ts",
     "scripts/*.ts",
     "tests/**/*.test.ts",
     "tests/fixtures/online/server.ts",
