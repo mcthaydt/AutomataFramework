@@ -125,6 +125,69 @@ The pictures for a level's tile letters: which letter is solid, and which frame 
 }
 ```
 
+## figure
+
+A picture made of blocks and rounds, and the poses it can take. A character names one with its `figure`, and a backdrop's props use them too. Put the files in `content/figures/`; the kind's rules are in `schemas/figure.schema.json`.
+
+```json
+{
+  "format": 1,
+  "id": "hero",
+  "tile": 16,
+  "frame": {
+    "w": 24,
+    "h": 24
+  },
+  "paints": [
+    {
+      "id": "body",
+      "color": "#f37f94"
+    }
+  ],
+  "parts": [
+    {
+      "id": "body",
+      "shape": "block",
+      "x": 12,
+      "y": 14,
+      "w": 10,
+      "h": 16,
+      "paint": "body"
+    }
+  ],
+  "poses": [
+    {
+      "id": "idle",
+      "moves": []
+    }
+  ]
+}
+```
+
+## backdrop
+
+What is behind a level: strips of hills, mountains, clouds or flat colour that repeat sideways, with figures standing on them. A level names one with its `backdrop`. Put the files in `content/backdrops/`; the kind's rules are in `schemas/backdrop.schema.json`.
+
+```json
+{
+  "format": 1,
+  "id": "valley",
+  "seed": 7,
+  "tile": 8,
+  "width": 32,
+  "layers": [
+    {
+      "id": "hills",
+      "kind": "hills",
+      "color": "#afd472",
+      "height": 3,
+      "drift": 0.5
+    }
+  ],
+  "props": []
+}
+```
+
 ## behaviour
 
 What a character does by itself: rules that say "when this is near, do that". Put the files in `content/behaviours/`; the kind's rules are in `schemas/behaviour.schema.json`.

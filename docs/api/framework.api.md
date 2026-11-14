@@ -41,6 +41,7 @@ interface ActorKey {
     readonly who: string;
     readonly x: number;
     readonly y: number;
+    readonly clip?: string | undefined;
     readonly face?: 'left' | 'right' | undefined;
 }
 ```
@@ -67,6 +68,46 @@ function applySettings(defaults: Controls, saved: unknown): {
 };
 ```
 
+### `Art` (interface)
+
+```ts
+interface Art {
+    figure(character: string, pose: string, player: number): Picture | undefined;
+    readonly tiles: readonly TileSprite[];
+    readonly ground: readonly TileBox[];
+    readonly backdrop: BackdropArt | undefined;
+    destroy(): void;
+}
+```
+
+### `ArtError` (class)
+
+```ts
+class ArtError extends Error {
+}
+```
+
+### `ArtFile` (interface)
+
+```ts
+interface ArtFile {
+    readonly path: string;
+    readonly bytes: Uint8Array;
+}
+```
+
+### `artFiles` (function)
+
+```ts
+function artFiles(content: GameContent): ArtFile[];
+```
+
+### `artProblems` (function)
+
+```ts
+function artProblems(content: GameContent, read: (path: string) => Promise<Uint8Array | undefined>): Promise<Diagnostic[]>;
+```
+
 ### `atan` (function)
 
 ```ts
@@ -77,6 +118,81 @@ function atan(x0: number): number;
 
 ```ts
 function atan2(y: number, x: number): number;
+```
+
+### `Atlas` (interface)
+
+```ts
+interface Atlas {
+    readonly frames: Readonly<Record<string, {
+        readonly frame: Box;
+    }>>;
+    readonly meta: {
+        readonly image: string;
+        readonly size: {
+            readonly w: number;
+            readonly h: number;
+        };
+        readonly scale: '1';
+    };
+}
+```
+
+### `atlasOf` (function)
+
+```ts
+function atlasOf(sheet: Sheet, image: string): Atlas;
+```
+
+### `BackdropFile` (interface)
+
+```ts
+interface BackdropFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly seed: number;
+    readonly tile: number;
+    readonly width: number;
+    readonly layers: readonly BackdropLayer[];
+    readonly props: readonly BackdropProp[];
+}
+```
+
+### `BackdropLayer` (interface)
+
+```ts
+interface BackdropLayer {
+    readonly id: string;
+    readonly kind: LayerKind;
+    readonly color: string;
+    readonly height: number;
+    readonly drift: number;
+}
+```
+
+### `BackdropProp` (interface)
+
+```ts
+interface BackdropProp {
+    readonly id: string;
+    readonly figure: string;
+    readonly pose?: string | undefined;
+    readonly layer: string;
+    readonly x: number;
+    readonly up: number;
+}
+```
+
+### `BackdropSchema` (const)
+
+```ts
+const BackdropSchema: z.ZodType<BackdropFile, BackdropFile>;
+```
+
+### `backdropSheet` (function)
+
+```ts
+function backdropSheet(backdrop: BackdropFile): Sheet;
 ```
 
 ### `BehaviourFile` (interface)
@@ -211,6 +327,8 @@ interface Character {
     readonly color: string;
     readonly upright: boolean;
     readonly kind?: string | undefined;
+    readonly figure?: string | undefined;
+    readonly clips?: readonly Clip[] | undefined;
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
     readonly touch?: 'sense' | 'take' | undefined;
@@ -255,6 +373,17 @@ type ClientMessage = {
 } | {
     readonly t: 'sync';
 };
+```
+
+### `Clip` (interface)
+
+```ts
+interface Clip {
+    readonly id: string;
+    readonly poses: readonly string[];
+    readonly fps: number;
+    readonly loop: boolean;
+}
 ```
 
 ### `Collider` (const)
@@ -353,7 +482,9 @@ interface ComponentDef<S extends FieldSchema = FieldSchema> {
 const CONTENT_TYPES: {
     readonly level: ContentTypeInfo<Level, Level>;
     readonly character: ContentTypeInfo<Character, CharacterInput>;
+    readonly figure: ContentTypeInfo<FigureFile, FigureFile>;
     readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
+    readonly backdrop: ContentTypeInfo<BackdropFile, BackdropFile>;
     readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
     readonly tuning: ContentTypeInfo<TuningFile, TuningFile>;
     readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
@@ -550,6 +681,16 @@ function createRenderer(options: {
         h: number;
     };
     sky?: number;
+    art?: Art | undefined;
+    density?: Density | undefined;
+    view?: {
+        readonly w: number;
+        readonly h: number;
+        readonly most?: {
+            readonly w: number;
+            readonly h: number;
+        } | undefined;
+    } | undefined;
 }): Promise<Renderer>;
 ```
 
@@ -742,6 +883,15 @@ function defineSystem(name: string, phase: Phase, run: (ctx: SimContext) => void
 function defineSystem(spec: SystemSpec): SystemDef;
 ```
 
+### `Density` (interface)
+
+```ts
+interface Density {
+    now(): number;
+    onChange(listener: () => void): () => void;
+}
+```
+
 ### `deriveSeed` (function)
 
 ```ts
@@ -802,6 +952,12 @@ type Ease = 'cut' | 'linear' | 'smooth';
 
 ```ts
 type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
+```
+
+### `encodePng` (function)
+
+```ts
+function encodePng(picture: IndexedPicture): Uint8Array<ArrayBuffer>;
 ```
 
 ### `EntityRef` (interface)
@@ -884,6 +1040,90 @@ type FieldValues<S extends FieldSchema> = {
 };
 ```
 
+### `FigureFile` (interface)
+
+```ts
+interface FigureFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly tile: number;
+    readonly frame: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly outline?: string | undefined;
+    readonly paints: readonly FigurePaint[];
+    readonly parts: readonly FigurePart[];
+    readonly poses: readonly FigurePose[];
+    readonly variants?: readonly FigureVariant[] | undefined;
+}
+```
+
+### `FigureMove` (interface)
+
+```ts
+interface FigureMove {
+    readonly part: string;
+    readonly dx?: number | undefined;
+    readonly dy?: number | undefined;
+    readonly turn?: number | undefined;
+}
+```
+
+### `FigurePaint` (interface)
+
+```ts
+interface FigurePaint {
+    readonly id: string;
+    readonly color: string;
+}
+```
+
+### `FigurePart` (interface)
+
+```ts
+interface FigurePart {
+    readonly id: string;
+    readonly shape: 'block' | 'round';
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+    readonly paint: string;
+    readonly turn?: number | undefined;
+}
+```
+
+### `FigurePose` (interface)
+
+```ts
+interface FigurePose {
+    readonly id: string;
+    readonly moves: readonly FigureMove[];
+}
+```
+
+### `FigureSchema` (const)
+
+```ts
+const FigureSchema: z.ZodType<FigureFile, FigureFile>;
+```
+
+### `figureSheet` (function)
+
+```ts
+function figureSheet(figure: FigureFile): Sheet;
+```
+
+### `FigureVariant` (interface)
+
+```ts
+interface FigureVariant {
+    readonly id: string;
+    readonly paints: readonly FigurePaint[];
+}
+```
+
 ### `fill` (function)
 
 ```ts
@@ -930,6 +1170,18 @@ function followLanguage(locale: Locale, element?: HTMLElement): () => void;
 function formatDiagnostic(d: Diagnostic): string;
 ```
 
+### `Frame` (interface)
+
+```ts
+interface Frame {
+    readonly name: string;
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+}
+```
+
 ### `Frames` (interface)
 
 ```ts
@@ -970,6 +1222,7 @@ interface Game {
     removePlayer(player: number): boolean;
     pause(): void;
     resume(): void;
+    heroes(): readonly HeroBox[];
     replay(): Replay;
     stop(): void;
 }
@@ -1006,6 +1259,8 @@ interface GameContent {
     readonly levels: Readonly<Record<string, Level>>;
     readonly characters: Readonly<Record<string, Character>>;
     readonly tilesets?: Readonly<Record<string, TilesetFile>>;
+    readonly backdrops?: Readonly<Record<string, BackdropFile>>;
+    readonly figures?: Readonly<Record<string, FigureFile>>;
     readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
     readonly tunings?: Readonly<Record<string, TuningFile>>;
     readonly feels?: Readonly<Record<string, FeelFile>>;
@@ -1030,6 +1285,7 @@ interface GameOptions extends GameSimOptions {
     readonly gamepads?: () => readonly (PadLike | null)[];
     readonly audio?: GameAudio;
     readonly soundNotice?: string | false;
+    readonly readPicture?: ReadPicture;
     readonly locale?: Locale;
 }
 ```
@@ -1060,6 +1316,18 @@ const groundOf: (level: Level) => number;
 
 ```ts
 const HASH_EVERY = 60;
+```
+
+### `HeroBox` (interface)
+
+```ts
+interface HeroBox {
+    readonly player: number;
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+}
 ```
 
 ### `hertzOf` (function)
@@ -1100,6 +1368,17 @@ function hypot(x: number, y: number): number;
 
 ```ts
 const Id: z.ZodString;
+```
+
+### `IndexedPicture` (interface)
+
+```ts
+interface IndexedPicture {
+    readonly width: number;
+    readonly height: number;
+    readonly palette: readonly number[];
+    readonly pixels: Uint8Array;
+}
 ```
 
 ### `Input` (interface)
@@ -1346,6 +1625,12 @@ function languagesOf(content: GameContent): readonly Language[];
 function latestSlot(states: readonly SlotState[]): number | undefined;
 ```
 
+### `LayerKind` (type)
+
+```ts
+type LayerKind = 'flat' | 'hills' | 'mountains' | 'clouds';
+```
+
 ### `LEAD_DECAY_TICKS` (const)
 
 ```ts
@@ -1371,8 +1656,10 @@ interface Level {
     readonly format: 1;
     readonly id: string;
     readonly tileset?: string | undefined;
+    readonly backdrop?: string | undefined;
     readonly sky?: string | undefined;
     readonly ground?: string | undefined;
+    readonly view?: LevelView | undefined;
     readonly tiles: readonly string[];
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
@@ -1469,6 +1756,19 @@ interface LevelThing {
 }
 ```
 
+### `LevelView` (interface)
+
+```ts
+interface LevelView {
+    readonly w: number;
+    readonly h: number;
+    readonly most?: {
+        readonly w: number;
+        readonly h: number;
+    } | undefined;
+}
+```
+
 ### `Link` (interface)
 
 ```ts
@@ -1496,6 +1796,7 @@ type LinkAnswer = 'opened' | 'blocked' | 'refused';
 interface Listed {
     has(type: ContentType, id: string): boolean;
     ids(type: ContentType): readonly string[];
+    readonly hero: string;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
 }
 ```
@@ -1508,6 +1809,16 @@ interface ListedPad {
     readonly id: string;
     readonly usable: boolean;
 }
+```
+
+### `loadArt` (function)
+
+```ts
+function loadArt(options: {
+    content: GameContent;
+    level?: string;
+    readPicture: ReadPicture;
+}): Promise<Art>;
 ```
 
 ### `loadGame` (function)
@@ -1740,6 +2051,12 @@ type MusicPart = TonePart | DrumPart;
 const MusicSchema: z.ZodType<MusicFile, MusicFile>;
 ```
 
+### `needsPictures` (function)
+
+```ts
+function needsPictures(content: GameContent, level?: string): boolean;
+```
+
 ### `NoiseVoice` (interface)
 
 ```ts
@@ -1878,6 +2195,30 @@ interface PadLike {
         readonly value: number;
     }[];
 }
+```
+
+### `pageDensity` (const)
+
+```ts
+const pageDensity: Density;
+```
+
+### `paintBackdrop` (function)
+
+```ts
+function paintBackdrop(backdrop: BackdropFile): IndexedPicture;
+```
+
+### `paintedPath` (function)
+
+```ts
+function paintedPath(content: GameContent, type: Painted, id: string): string | undefined;
+```
+
+### `paintFigure` (function)
+
+```ts
+function paintFigure(figure: FigureFile): IndexedPicture;
 ```
 
 ### `parseClientMessage` (function)
@@ -2123,6 +2464,12 @@ function readMark(english: string, translated: string): string;
 type ReadMarks = Readonly<Partial<Record<Translated, Readonly<Record<string, string>>>>>;
 ```
 
+### `ReadPicture` (type)
+
+```ts
+type ReadPicture = (path: string) => Promise<Blob>;
+```
+
 ### `rebind` (function)
 
 ```ts
@@ -2210,6 +2557,12 @@ interface Renderer {
     apply(delta: RenderDelta): void;
     draw(alpha: number): void;
     setInset(px: number): void;
+    look(at: {
+        readonly x: number;
+        readonly y: number;
+        readonly zoom: number;
+    } | undefined): void;
+    heroes(): readonly HeroBox[];
     destroy(): void;
 }
 ```
@@ -2624,6 +2977,18 @@ interface SessionStats {
 }
 ```
 
+### `setClip` (function)
+
+```ts
+function setClip(entity: EntityRef, clip: string | undefined): void;
+```
+
+### `setFacing` (function)
+
+```ts
+function setFacing(entity: EntityRef, face: 'left' | 'right'): void;
+```
+
 ### `Settings` (interface)
 
 ```ts
@@ -2683,6 +3048,33 @@ type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind];
 
 ```ts
 type SharedKeys = readonly [readonly string[], readonly string[]];
+```
+
+### `Sheet` (interface)
+
+```ts
+interface Sheet {
+    readonly w: number;
+    readonly h: number;
+    readonly frames: readonly Frame[];
+}
+```
+
+### `SHEET_COLUMNS` (const)
+
+```ts
+const SHEET_COLUMNS = 8;
+```
+
+### `Shot` (interface)
+
+```ts
+interface Shot {
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+}
 ```
 
 ### `Sim` (interface)
@@ -2976,6 +3368,18 @@ interface SpeakerSeams {
 type SpeakerState = 'waiting' | 'on' | 'unavailable';
 ```
 
+### `Sprite` (const)
+
+```ts
+const Sprite: ComponentDef<typeof spriteFields>;
+```
+
+### `spritesPlugin` (const)
+
+```ts
+const spritesPlugin: PluginDef;
+```
+
 ### `START_LEAD` (const)
 
 ```ts
@@ -3133,6 +3537,23 @@ const Thing: ComponentDef<typeof thingFields>;
 
 ```ts
 const TILE_COLOR = 3885658;
+```
+
+### `TileBox` (interface)
+
+```ts
+interface TileBox {
+    readonly row: number;
+    readonly col: number;
+    readonly w: number;
+    readonly h: number;
+}
+```
+
+### `tileBoxes` (function)
+
+```ts
+function tileBoxes(tiles: readonly string[], isSolid?: (letter: string) => boolean): TileBox[];
 ```
 
 ### `TileKind` (interface)
@@ -3358,6 +3779,12 @@ function unreadWords(content: GameContent, marks: ReadMarks): readonly {
 function usesJoints(content: GameContent): boolean;
 ```
 
+### `usesSprites` (function)
+
+```ts
+function usesSprites(content: GameContent): boolean;
+```
+
 ### `Value` (type)
 
 ```ts
@@ -3416,6 +3843,18 @@ interface View {
     readonly w: number;
     readonly h: number;
     readonly color: number;
+    readonly sprite?: ViewSprite;
+}
+```
+
+### `ViewSprite` (interface)
+
+```ts
+interface ViewSprite {
+    readonly character: string;
+    readonly pose: string;
+    readonly face: number;
+    readonly player: number;
 }
 ```
 
@@ -3431,6 +3870,7 @@ function wasPressed(player: EntityRef, action: string): boolean;
 interface Watch {
     readonly sim: Sim;
     readonly rounds: number;
+    heroes(): readonly HeroBox[];
     stop(): void;
 }
 ```
@@ -3445,6 +3885,7 @@ interface WatchOptions extends GameSimOptions {
     readonly frames?: Frames;
     readonly rounds?: number;
     readonly restTicks?: number;
+    readonly readPicture?: ReadPicture;
 }
 ```
 
@@ -3571,6 +4012,7 @@ interface ActorKey {
     readonly who: string;
     readonly x: number;
     readonly y: number;
+    readonly clip?: string | undefined;
     readonly face?: 'left' | 'right' | undefined;
 }
 ```
@@ -3588,6 +4030,27 @@ interface Advance {
 }
 ```
 
+### `ArtFile` (interface)
+
+```ts
+interface ArtFile {
+    readonly path: string;
+    readonly bytes: Uint8Array;
+}
+```
+
+### `artFiles` (function)
+
+```ts
+function artFiles(content: GameContent): ArtFile[];
+```
+
+### `artProblems` (function)
+
+```ts
+function artProblems(content: GameContent, read: (path: string) => Promise<Uint8Array | undefined>): Promise<Diagnostic[]>;
+```
+
 ### `atan` (function)
 
 ```ts
@@ -3598,6 +4061,81 @@ function atan(x0: number): number;
 
 ```ts
 function atan2(y: number, x: number): number;
+```
+
+### `Atlas` (interface)
+
+```ts
+interface Atlas {
+    readonly frames: Readonly<Record<string, {
+        readonly frame: Box;
+    }>>;
+    readonly meta: {
+        readonly image: string;
+        readonly size: {
+            readonly w: number;
+            readonly h: number;
+        };
+        readonly scale: '1';
+    };
+}
+```
+
+### `atlasOf` (function)
+
+```ts
+function atlasOf(sheet: Sheet, image: string): Atlas;
+```
+
+### `BackdropFile` (interface)
+
+```ts
+interface BackdropFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly seed: number;
+    readonly tile: number;
+    readonly width: number;
+    readonly layers: readonly BackdropLayer[];
+    readonly props: readonly BackdropProp[];
+}
+```
+
+### `BackdropLayer` (interface)
+
+```ts
+interface BackdropLayer {
+    readonly id: string;
+    readonly kind: LayerKind;
+    readonly color: string;
+    readonly height: number;
+    readonly drift: number;
+}
+```
+
+### `BackdropProp` (interface)
+
+```ts
+interface BackdropProp {
+    readonly id: string;
+    readonly figure: string;
+    readonly pose?: string | undefined;
+    readonly layer: string;
+    readonly x: number;
+    readonly up: number;
+}
+```
+
+### `BackdropSchema` (const)
+
+```ts
+const BackdropSchema: z.ZodType<BackdropFile, BackdropFile>;
+```
+
+### `backdropSheet` (function)
+
+```ts
+function backdropSheet(backdrop: BackdropFile): Sheet;
 ```
 
 ### `BehaviourFile` (interface)
@@ -3695,6 +4233,8 @@ interface Character {
     readonly color: string;
     readonly upright: boolean;
     readonly kind?: string | undefined;
+    readonly figure?: string | undefined;
+    readonly clips?: readonly Clip[] | undefined;
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
     readonly touch?: 'sense' | 'take' | undefined;
@@ -3727,6 +4267,17 @@ type ClientMessage = {
 } | {
     readonly t: 'sync';
 };
+```
+
+### `Clip` (interface)
+
+```ts
+interface Clip {
+    readonly id: string;
+    readonly poses: readonly string[];
+    readonly fps: number;
+    readonly loop: boolean;
+}
 ```
 
 ### `Collider` (const)
@@ -3825,7 +4376,9 @@ interface ComponentDef<S extends FieldSchema = FieldSchema> {
 const CONTENT_TYPES: {
     readonly level: ContentTypeInfo<Level, Level>;
     readonly character: ContentTypeInfo<Character, CharacterInput>;
+    readonly figure: ContentTypeInfo<FigureFile, FigureFile>;
     readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
+    readonly backdrop: ContentTypeInfo<BackdropFile, BackdropFile>;
     readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
     readonly tuning: ContentTypeInfo<TuningFile, TuningFile>;
     readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
@@ -4207,6 +4760,12 @@ type Ease = 'cut' | 'linear' | 'smooth';
 type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
 ```
 
+### `encodePng` (function)
+
+```ts
+function encodePng(picture: IndexedPicture): Uint8Array<ArrayBuffer>;
+```
+
 ### `EntityRef` (interface)
 
 ```ts
@@ -4287,6 +4846,90 @@ type FieldValues<S extends FieldSchema> = {
 };
 ```
 
+### `FigureFile` (interface)
+
+```ts
+interface FigureFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly tile: number;
+    readonly frame: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly outline?: string | undefined;
+    readonly paints: readonly FigurePaint[];
+    readonly parts: readonly FigurePart[];
+    readonly poses: readonly FigurePose[];
+    readonly variants?: readonly FigureVariant[] | undefined;
+}
+```
+
+### `FigureMove` (interface)
+
+```ts
+interface FigureMove {
+    readonly part: string;
+    readonly dx?: number | undefined;
+    readonly dy?: number | undefined;
+    readonly turn?: number | undefined;
+}
+```
+
+### `FigurePaint` (interface)
+
+```ts
+interface FigurePaint {
+    readonly id: string;
+    readonly color: string;
+}
+```
+
+### `FigurePart` (interface)
+
+```ts
+interface FigurePart {
+    readonly id: string;
+    readonly shape: 'block' | 'round';
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+    readonly paint: string;
+    readonly turn?: number | undefined;
+}
+```
+
+### `FigurePose` (interface)
+
+```ts
+interface FigurePose {
+    readonly id: string;
+    readonly moves: readonly FigureMove[];
+}
+```
+
+### `FigureSchema` (const)
+
+```ts
+const FigureSchema: z.ZodType<FigureFile, FigureFile>;
+```
+
+### `figureSheet` (function)
+
+```ts
+function figureSheet(figure: FigureFile): Sheet;
+```
+
+### `FigureVariant` (interface)
+
+```ts
+interface FigureVariant {
+    readonly id: string;
+    readonly paints: readonly FigurePaint[];
+}
+```
+
 ### `fill` (function)
 
 ```ts
@@ -4303,6 +4946,18 @@ function fitLabel(label: string): string;
 
 ```ts
 function formatDiagnostic(d: Diagnostic): string;
+```
+
+### `Frame` (interface)
+
+```ts
+interface Frame {
+    readonly name: string;
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+}
 ```
 
 ### `FRAMEWORK_VERSION` (const)
@@ -4356,6 +5011,8 @@ interface GameContent {
     readonly levels: Readonly<Record<string, Level>>;
     readonly characters: Readonly<Record<string, Character>>;
     readonly tilesets?: Readonly<Record<string, TilesetFile>>;
+    readonly backdrops?: Readonly<Record<string, BackdropFile>>;
+    readonly figures?: Readonly<Record<string, FigureFile>>;
     readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
     readonly tunings?: Readonly<Record<string, TuningFile>>;
     readonly feels?: Readonly<Record<string, FeelFile>>;
@@ -4434,6 +5091,17 @@ function hypot(x: number, y: number): number;
 
 ```ts
 const Id: z.ZodString;
+```
+
+### `IndexedPicture` (interface)
+
+```ts
+interface IndexedPicture {
+    readonly width: number;
+    readonly height: number;
+    readonly palette: readonly number[];
+    readonly pixels: Uint8Array;
+}
 ```
 
 ### `isHeld` (function)
@@ -4601,6 +5269,12 @@ function languagesOf(content: GameContent): readonly Language[];
 function latestSlot(states: readonly SlotState[]): number | undefined;
 ```
 
+### `LayerKind` (type)
+
+```ts
+type LayerKind = 'flat' | 'hills' | 'mountains' | 'clouds';
+```
+
 ### `LEAD_DECAY_TICKS` (const)
 
 ```ts
@@ -4626,8 +5300,10 @@ interface Level {
     readonly format: 1;
     readonly id: string;
     readonly tileset?: string | undefined;
+    readonly backdrop?: string | undefined;
     readonly sky?: string | undefined;
     readonly ground?: string | undefined;
+    readonly view?: LevelView | undefined;
     readonly tiles: readonly string[];
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
@@ -4724,6 +5400,19 @@ interface LevelThing {
 }
 ```
 
+### `LevelView` (interface)
+
+```ts
+interface LevelView {
+    readonly w: number;
+    readonly h: number;
+    readonly most?: {
+        readonly w: number;
+        readonly h: number;
+    } | undefined;
+}
+```
+
 ### `Link` (interface)
 
 ```ts
@@ -4751,6 +5440,7 @@ type LinkAnswer = 'opened' | 'blocked' | 'refused';
 interface Listed {
     has(type: ContentType, id: string): boolean;
     ids(type: ContentType): readonly string[];
+    readonly hero: string;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
 }
 ```
@@ -5061,6 +5751,24 @@ const PAD_STICKS: readonly ["left-stick-up", "left-stick-down", "left-stick-left
 
 ```ts
 type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
+```
+
+### `paintBackdrop` (function)
+
+```ts
+function paintBackdrop(backdrop: BackdropFile): IndexedPicture;
+```
+
+### `paintedPath` (function)
+
+```ts
+function paintedPath(content: GameContent, type: Painted, id: string): string | undefined;
+```
+
+### `paintFigure` (function)
+
+```ts
+function paintFigure(figure: FigureFile): IndexedPicture;
 ```
 
 ### `parseClientMessage` (function)
@@ -5736,6 +6444,18 @@ interface SessionStats {
 }
 ```
 
+### `setClip` (function)
+
+```ts
+function setClip(entity: EntityRef, clip: string | undefined): void;
+```
+
+### `setFacing` (function)
+
+```ts
+function setFacing(entity: EntityRef, face: 'left' | 'right'): void;
+```
+
 ### `Settings` (interface)
 
 ```ts
@@ -5789,6 +6509,22 @@ type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind];
 
 ```ts
 type SharedKeys = readonly [readonly string[], readonly string[]];
+```
+
+### `Sheet` (interface)
+
+```ts
+interface Sheet {
+    readonly w: number;
+    readonly h: number;
+    readonly frames: readonly Frame[];
+}
+```
+
+### `SHEET_COLUMNS` (const)
+
+```ts
+const SHEET_COLUMNS = 8;
 ```
 
 ### `Sim` (interface)
@@ -6062,6 +6798,18 @@ interface Speaker {
 type SpeakerState = 'waiting' | 'on' | 'unavailable';
 ```
 
+### `Sprite` (const)
+
+```ts
+const Sprite: ComponentDef<typeof spriteFields>;
+```
+
+### `spritesPlugin` (const)
+
+```ts
+const spritesPlugin: PluginDef;
+```
+
 ### `START_LEAD` (const)
 
 ```ts
@@ -6207,6 +6955,23 @@ const Thing: ComponentDef<typeof thingFields>;
 
 ```ts
 const TILE_COLOR = 3885658;
+```
+
+### `TileBox` (interface)
+
+```ts
+interface TileBox {
+    readonly row: number;
+    readonly col: number;
+    readonly w: number;
+    readonly h: number;
+}
+```
+
+### `tileBoxes` (function)
+
+```ts
+function tileBoxes(tiles: readonly string[], isSolid?: (letter: string) => boolean): TileBox[];
 ```
 
 ### `TileKind` (interface)
@@ -6430,6 +7195,12 @@ function unreadWords(content: GameContent, marks: ReadMarks): readonly {
 
 ```ts
 function usesJoints(content: GameContent): boolean;
+```
+
+### `usesSprites` (function)
+
+```ts
+function usesSprites(content: GameContent): boolean;
 ```
 
 ### `Value` (type)

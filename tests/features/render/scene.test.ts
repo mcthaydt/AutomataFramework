@@ -166,3 +166,31 @@ test('a scene with no joints has no links', () => {
   scene.apply(delta({ added: [row(1, 1), row(2, 2)] }))
   expect(scene.links(1)).toEqual([])
 })
+
+test('a row with a sprite gives a view its character, pose, facing and player', () => {
+  const scene = createScene()
+  const withSprite: RenderRow = {
+    ...row(1, 4, 5),
+    components: {
+      ...row(1, 4, 5).components,
+      sprite: {
+        character: 'hero',
+        pose: 'run-1',
+        face: -1,
+        player: 2,
+        clip: 'run',
+        since: 3,
+        by: '',
+        still: 0,
+      },
+    },
+  }
+  scene.apply(delta({ added: [withSprite] }))
+  expect(scene.views(1)[0]?.sprite).toEqual({ character: 'hero', pose: 'run-1', face: -1, player: 2 })
+})
+
+test('a row with no sprite is the box it always was, with no sprite key at all', () => {
+  const scene = createScene()
+  scene.apply(delta({ added: [row(1, 4, 5)] }))
+  expect(Object.keys(scene.views(1)[0] ?? {})).toEqual(['sid', 'x', 'y', 'rotation', 'w', 'h', 'color'])
+})

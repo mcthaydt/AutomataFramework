@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this backdrop, like \"valley\". It matches the file name."
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295,
+      "description": "Change this number for another painting of the same description."
+    },
+    "tile": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 64,
+      "description": "How many pixels of the picture make one tile of the game."
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 128,
+      "description": "How many tiles wide a layer is before it repeats."
+    },
+    "layers": {
+      "minItems": 1,
+      "maxItems": 8,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this layer, used once in this backdrop, like \"hills\"."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "flat",
+              "hills",
+              "mountains",
+              "clouds"
+            ],
+            "description": "How it is painted: \"flat\" is a band, then \"hills\", \"mountains\" or \"clouds\"."
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "The colour of the layer, as # and six digits, like #afd472."
+          },
+          "height": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 64,
+            "description": "How high it reaches, in tiles above the level's bottom edge."
+          },
+          "drift": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "How much it moves with the level: 0 stays still on the screen like far mountains, 1 moves with it."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "color",
+          "height",
+          "drift"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The layers, back to front. Each stands on the bottom edge of the level and repeats sideways."
+    },
+    "props": {
+      "maxItems": 256,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this prop, used once in this backdrop, like \"tree-1\"."
+          },
+          "figure": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "Which figure stands there, by id, like \"tree\"."
+          },
+          "pose": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "Which of the figure's poses. Left out means its first."
+          },
+          "layer": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "The layer it stands on and moves with, by id, like \"hills\"."
+          },
+          "x": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 256,
+            "description": "Where the middle of its foot is, in tiles from the level's left edge."
+          },
+          "up": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 64,
+            "description": "How far its foot is above the level's bottom edge, in tiles."
+          }
+        },
+        "required": [
+          "id",
+          "figure",
+          "layer",
+          "x",
+          "up"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Figures that stand on a layer, like trees on hills. Write [] for none."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "seed",
+    "tile",
+    "width",
+    "layers",
+    "props"
+  ],
+  "additionalProperties": false,
+  "title": "Backdrop"
+}

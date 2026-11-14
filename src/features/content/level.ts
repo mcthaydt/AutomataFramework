@@ -53,6 +53,17 @@ export type LevelJoint =
     }
 
 /**
+ * How much of a level the screen shows while the players are close together, in tiles: `w` by `h`. As they spread the
+ * camera pulls back, as far as `most` (the whole level when it is left out). Beyond that a player who is left behind is
+ * pulled along by the game's rules, which read `most` too, so the limit is one number both sides use.
+ */
+export interface LevelView {
+  readonly w: number
+  readonly h: number
+  readonly most?: { readonly w: number; readonly h: number } | undefined
+}
+
+/**
  * A level file once read. One string per row of tiles, `#` for solid and `.` for empty (or, with a tileset, one letter
  * per tile of it); y points down. `sky` and
  * `ground` are `#rrggbb` and may be left out, and then the level has the framework's own light blue and slate.
@@ -62,8 +73,12 @@ export interface Level {
   readonly id: string
   /** The tileset whose letters the rows use. Without one, `#` is solid and `.` is empty. */
   readonly tileset?: string | undefined
+  /** The backdrop behind it. Left out means only the sky. */
+  readonly backdrop?: string | undefined
   readonly sky?: string | undefined
   readonly ground?: string | undefined
+  /** Switches the camera on. Left out, the whole level is always in view. */
+  readonly view?: LevelView | undefined
   readonly tiles: readonly string[]
   readonly things: readonly LevelThing[]
   readonly starts: readonly LevelStart[]
@@ -133,8 +148,47 @@ const rope = z.strictObject({
     .optional(),
 })
 
+const sizeInTiles = (what: string): z.ZodNumber => z.number().gt(0).max(256).describe(`${what}, in tiles.`)
+
+const screen = z.strictObject({
+  w: sizeInTiles('How wide a part of the level the screen shows while the players are close together'),
+  h: sizeInTiles('How tall a part of the level the screen shows while the players are close together'),
+  most: z
+    .strictObject({
+      w: sizeInTiles('The widest the camera pulls back to as the players spread'),
+      h: sizeInTiles('The tallest the camera pulls back to as the players spread'),
+    })
+    .describe(
+      'The most of the level the camera pulls back to as the players spread. Left out means the whole level.',
+    )
+    .optional(),
+})
+
 /** One row of the map. Which letters it may hold depends on the tileset, so `checkLevel` looks at them. */
 const row = z.string().min(1).max(MAX_SIDE)
+
+/** The view and the most the camera pulls back to must fit in the level, and `most` must not be less than the view. */
+function checkView(view: LevelView, width: number, height: number, ctx: z.core.$RefinementCtx): void {
+  const add = (path: readonly PropertyKey[], message: string): void =>
+    ctx.addIssue({ code: 'custom', path: [...path], message })
+  const sides = [
+    { key: 'w', size: width, word: 'wide' },
+    { key: 'h', size: height, word: 'tall' },
+  ] as const
+  for (const { key, size, word } of sides) {
+    const tooBig = `The level is ${size} tiles ${word}, so the view cannot be`
+    const leave = `Make "${key}" ${size} or less, or leave "view" out to show the whole level.`
+    if (size > 0 && view[key] > size) add(['view', key], `${tooBig} ${view[key]}. ${leave}`)
+    const most = view.most?.[key]
+    if (most === undefined) continue
+    if (size > 0 && most > size) add(['view', 'most', key], `${tooBig} ${most}. ${leave}`)
+    else if (most < view[key])
+      add(
+        ['view', 'most', key],
+        `The camera cannot pull back to less than it shows. Make "${key}" ${view[key]} or more.`,
+      )
+  }
+}
 
 /**
  * The checks that look across fields: every row as long as the first, ids and player numbers used once, and
@@ -181,6 +235,8 @@ function checkLevel(level: Partial<Level>, ctx: z.core.$RefinementCtx): void {
         message: `${at.y} is outside the level, which is ${height} tiles tall.`,
       })
   }
+
+  if (level.view !== undefined) checkView(level.view, width, height, ctx)
 
   const thingIds = new Set<string>()
   ;(level.things ?? []).forEach((t, i) => {
@@ -253,12 +309,20 @@ export const LevelSchema: z.ZodType<Level, Level> = z
     tileset: Id.describe(
       'The tileset whose letters the rows use, by the id in its file, like "meadow". Left out means # is solid and . is empty.',
     ).optional(),
+    backdrop: Id.describe(
+      'The backdrop behind the level, by the id in its file, like "valley". Left out means only the sky.',
+    ).optional(),
     sky: colour(
       'The colour behind the level, which also fills the bars beside it',
       '#9fd3f0',
       'Left out means that light blue.',
     ).optional(),
     ground: colour('The colour of the solid tiles', '#3b4a5a', 'Left out means that slate.').optional(),
+    view: screen
+      .describe(
+        'How much of the level the screen shows, which switches the camera on: it follows the players and pulls back as they spread. Left out means the whole level is always in view.',
+      )
+      .optional(),
     tiles: z
       .array(row)
       .min(1)
@@ -299,6 +363,10 @@ export const levelInfo: ContentTypeInfo<Level, Level> = {
     'starts.player': 'Say which player starts here: 1, 2, 3 or 4.',
     'starts.x': 'Say where the hero starts, in tiles from the left.',
     'starts.y': 'Say where the hero starts, in tiles from the top.',
+    'view.w': 'Write how many tiles wide the screen shows, like 16.',
+    'view.h': 'Write how many tiles tall the screen shows, like 9.',
+    'view.most.w': 'Write the most tiles wide the camera pulls back to, like 32.',
+    'view.most.h': 'Write the most tiles tall the camera pulls back to, like 18.',
     'joints.id': 'Give the joint a name like "seesaw".',
     'joints.thing': 'Say which thing is held, like "plank-1".',
     'joints.x': 'Say where the pin is, in tiles from the left.',
@@ -313,6 +381,8 @@ export const levelInfo: ContentTypeInfo<Level, Level> = {
     'joints.to.y': 'Say where the other end is tied, in tiles from the top.',
   },
   check(level, game, report) {
+    if (level.backdrop !== undefined && !game.has('backdrop', level.backdrop))
+      report('backdrop', noSuch('backdrop', level.backdrop, game.ids('backdrop')))
     if (level.tileset !== undefined) {
       if (!game.has('tileset', level.tileset))
         report('tileset', noSuch('tileset', level.tileset, game.ids('tileset')))

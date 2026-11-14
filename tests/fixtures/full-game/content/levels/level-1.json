@@ -2,6 +2,11 @@
   "format": 1,
   "id": "level-1",
   "tileset": "meadow",
+  "backdrop": "valley",
+  "view": {
+    "w": 10,
+    "h": 9
+  },
   "tiles": [
     "................",
     "................",

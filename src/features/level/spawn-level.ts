@@ -6,7 +6,8 @@ import { groundOf } from './colours.ts'
 import { Look, Thing } from './components.ts'
 import { characterParts, heroParts } from './hero.ts'
 import { jointParts, type Placed } from './joints.ts'
-import { tileRuns } from './tile-runs.ts'
+import { tileBoxes, tileRuns } from './tile-runs.ts'
+import { usesSprites } from './uses.ts'
 
 /** The level cannot be spawned as asked: an unknown level, or a player the level has no start point for. */
 export class LevelError extends Error {}
@@ -51,6 +52,7 @@ export function spawnLevel(
   }
 
   const ground = groundOf(level)
+  const sprites = usesSprites(content)
   // A level with a tileset takes "solid" from it; the content a game was loaded from always has the tileset, so it is
   // only a hand-built content that can be missing it, and then nothing is guessed.
   let isSolid: ((letter: string) => boolean) | undefined
@@ -63,18 +65,24 @@ export function spawnLevel(
     const letters = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
     isSolid = (letter) => letters.has(letter)
   }
-  for (const run of tileRuns(level.tiles, isSolid))
+  // A level with a tileset joins stacked tiles of one width into one box, so a wall has no seams; a level without one
+  // keeps one box a row, as every game recorded before tilesets does.
+  const solids =
+    level.tileset === undefined
+      ? tileRuns(level.tiles, isSolid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
+      : tileBoxes(level.tiles, isSolid)
+  for (const box of solids)
     sim.spawn([
-      transform({ x: run.col + run.length / 2, y: run.row + 0.5 }),
+      transform({ x: box.col + box.w / 2, y: box.row + box.h / 2 }),
       body(BodyKind.fixed),
-      collider.cuboid(run.length / 2, 0.5),
-      [Look, { w: run.length, h: 1, color: ground }],
+      collider.cuboid(box.w / 2, box.h / 2),
+      [Look, { w: box.w, h: box.h, color: ground }],
     ])
   const placed = new Map<string, Placed>()
   for (const thing of level.things)
     placed.set(thing.id, {
       sid: sim.spawn([
-        ...characterParts(character(thing.character, `Thing "${thing.id}"`), thing),
+        ...characterParts(character(thing.character, `Thing "${thing.id}"`), thing, sprites),
         [Thing, { id: thing.id, character: thing.character }],
       ]),
       x: thing.x,

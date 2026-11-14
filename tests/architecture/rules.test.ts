@@ -267,3 +267,46 @@ test('the sim side may not import audio', () =>
 
 test('audio keeps no clock of its own: its speaker has the only one', () =>
   expect(one({ 'src/features/audio/audio.ts': 'setTimeout(() => {}, 1)' })).toEqual(['sim-is-pure']))
+
+// The painter's files give the same bytes in every engine (audit I8): a `Math` function an engine may round its own way,
+// or a clock or I/O, would make a picture differ between machines.
+const painterFile = (text: string, name = 'paint-figure'): SourceFiles => ({
+  'src/features/content/content.ts': '',
+  [`src/features/content/${name}.ts`]: text,
+})
+
+test.each(['sin', 'cos', 'tan', 'atan', 'atan2', 'pow', 'exp', 'log', 'hypot', 'random'])(
+  'the painter may not call Math.%s',
+  (name) => {
+    const rules = checkArchitecture(painterFile(`const x = Math.${name}(1, 2)`))
+    expect(rules.map((v) => v.rule)).toContain('painter-math')
+    expect(rules.find((v) => v.rule === 'painter-math')?.detail).toContain(`Math.${name}`)
+  },
+)
+
+test('the painter may use the Math functions that are exact', () => {
+  const text = 'const x = Math.floor(1.5) + Math.round(2.5) + Math.abs(-1) + Math.min(1, 2) + Math.max(1, 2)'
+  expect(one(painterFile(text))).toEqual([])
+})
+
+test.each([
+  ['a clock', 'const t = Date.now()'],
+  ['a date', 'const t = new Date()'],
+  ['a timer', 'setTimeout(() => {}, 1)'],
+  ['the network', "fetch('/a')"],
+])('the painter has %s nowhere: it is held to the pure features list too', (_what, text) =>
+  expect(one(painterFile(text))).toEqual(['sim-is-pure']),
+)
+
+test('the painter imports nothing from Node', () =>
+  expect(one(painterFile("import { deflateSync } from 'node:zlib'"))).toEqual(['sim-is-pure']))
+
+test.each(['pixels', 'sheet', 'art'])('%s is a painter file too', (name) =>
+  expect(one(painterFile('const x = Math.sin(1)', name))).toEqual(['painter-math']),
+)
+
+test('the PNG writer is held to the painter rule', () =>
+  expect(one({ 'src/lib/png.ts': 'const x = Math.pow(2, 3)' })).toEqual(['painter-math']))
+
+test('another file of content may use any Math function', () =>
+  expect(one(painterFile('const x = Math.hypot(3, 4)', 'level'))).toEqual([]))

@@ -1,8 +1,22 @@
-import { Look } from '../level/level.ts'
+import { Look, Sprite } from '../level/level.ts'
 import { Joint, Transform } from '../physics/physics.ts'
 import type { RenderDelta, RenderRow } from '../sim/sim.ts'
 
-/** One box to draw: its centre and turn in tiles and radians, its size in tiles and its colour (0xrrggbb). */
+/** What a sprite says of how its thing is drawn: which character, which pose, which way it faces, whose hero it is. */
+export interface ViewSprite {
+  readonly character: string
+  /** The pose to show; empty means the figure's first. */
+  readonly pose: string
+  /** 1 faces right, -1 left. */
+  readonly face: number
+  /** 1 to 4 for a hero, 0 for a thing that is nobody's. */
+  readonly player: number
+}
+
+/**
+ * One box to draw: its centre and turn in tiles and radians, its size in tiles and its colour (0xrrggbb). A thing of
+ * a game with figures also says how its figure is drawn (`sprite`); a thing of any other game has no such key.
+ */
 export interface View {
   readonly sid: number
   readonly x: number
@@ -11,6 +25,7 @@ export interface View {
   readonly w: number
   readonly h: number
   readonly color: number
+  readonly sprite?: ViewSprite
 }
 
 /**
@@ -51,6 +66,8 @@ interface Entry {
   curr: Pose
   /** Left out for an entity that has a pose and no look: it is not drawn, but a joint may hold it. */
   look: { readonly w: number; readonly h: number; readonly color: number } | undefined
+  /** Left out for a thing with no sprite. */
+  sprite: ViewSprite | undefined
 }
 
 /** The fields of a joint the scene keeps. */
@@ -77,15 +94,30 @@ const num = (record: Readonly<Record<string, number | boolean | string>>, key: s
   return typeof v === 'number' ? v : 0
 }
 
+const text = (record: Readonly<Record<string, number | boolean | string>>, key: string): string => {
+  const v = record[key]
+  return typeof v === 'string' ? v : ''
+}
+
 /** An entity with a transform has a pose; with a look as well it is drawn. Without a transform it is nothing. */
-function read(row: RenderRow): { pose: Pose; look: Entry['look'] } | undefined {
+function read(row: RenderRow): { pose: Pose; look: Entry['look']; sprite: Entry['sprite'] } | undefined {
   const transform = row.components[Transform.id]
   if (transform === undefined) return undefined
   const look = row.components[Look.id]
+  const sprite = row.components[Sprite.id]
   return {
     pose: { x: num(transform, 'x'), y: num(transform, 'y'), rotation: num(transform, 'rotation') },
     look:
       look === undefined ? undefined : { w: num(look, 'w'), h: num(look, 'h'), color: num(look, 'color') },
+    sprite:
+      sprite === undefined
+        ? undefined
+        : {
+            character: text(sprite, 'character'),
+            pose: text(sprite, 'pose'),
+            face: num(sprite, 'face') < 0 ? -1 : 1,
+            player: num(sprite, 'player'),
+          },
   }
 }
 
@@ -146,7 +178,12 @@ export function createScene(): Scene {
         if (now === undefined) entries.delete(row.sid)
         else {
           const before = fresh ? undefined : entries.get(row.sid)
-          entries.set(row.sid, { prev: before?.curr ?? now.pose, curr: now.pose, look: now.look })
+          entries.set(row.sid, {
+            prev: before?.curr ?? now.pose,
+            curr: now.pose,
+            look: now.look,
+            sprite: now.sprite,
+          })
         }
         const joint = readJoint(row)
         if (joint === undefined) joints.delete(row.sid)
@@ -163,7 +200,16 @@ export function createScene(): Scene {
         .flatMap((sid) => {
           const e = entries.get(sid) as Entry
           if (e.look === undefined) return []
-          return [{ sid, ...blend(e, t), w: e.look.w, h: e.look.h, color: e.look.color }]
+          return [
+            {
+              sid,
+              ...blend(e, t),
+              w: e.look.w,
+              h: e.look.h,
+              color: e.look.color,
+              ...(e.sprite === undefined ? {} : { sprite: e.sprite }),
+            },
+          ]
         })
     },
     links(alpha) {

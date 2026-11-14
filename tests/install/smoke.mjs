@@ -6,6 +6,8 @@ import { execFileSync } from 'node:child_process'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import {
+  artFiles,
+  artProblems,
   CONTENT_TYPES,
   createAudio,
   createGameSim,
@@ -21,6 +23,7 @@ import {
   z,
 } from '@automataframework/framework/headless'
 import { createRoomServer, runRoomServer } from '@automataframework/framework/server'
+import { xxhash64Reference } from './xxhash64-reference.ts'
 
 // The server entry loads under plain Node (it carries its own Rapier), and exports what a game's server file calls.
 if (typeof createRoomServer !== 'function' || typeof runRoomServer !== 'function') {
@@ -77,6 +80,30 @@ if (!full.ok) {
   for (const problem of full.diagnostics) console.error(formatDiagnostic(problem))
   process.exit(1)
 }
+// Art, from the packed package alone: the full game's figures and backdrop are painted, and each file is the very bytes
+// recorded in art.json (hashed with a plain BigInt xxhash64 of the tests' own, so the package is not checked by itself).
+// Written into a folder, they are what `automata art` would leave, so the check finds nothing wrong with them.
+const painted = artFiles(full.value)
+const recordedArt = JSON.parse(await readFile(here('art.json'), 'utf8'))
+for (const file of painted) {
+  const got = xxhash64Reference(file.bytes).toString(16).padStart(16, '0')
+  if (got !== recordedArt[file.path]) {
+    console.error(
+      `The installed package painted ${file.path} as ${got}, but the golden says ${recordedArt[file.path]}.`,
+    )
+    process.exit(1)
+  }
+  await mkdir(new URL('.', here(`art/${file.path}`)), { recursive: true })
+  await writeFile(here(`art/${file.path}`), file.bytes)
+}
+const stale = await artProblems(full.value, (path) => readFile(here(`art/${path}`)))
+if (painted.length === 0 || stale.length > 0) {
+  for (const problem of stale) console.error(formatDiagnostic(problem))
+  console.error('The installed package did not paint the full game as a game keeps it.')
+  process.exit(1)
+}
+console.log(`The installed package painted ${painted.length} files, each as recorded.`)
+
 // Rapier's code is inside the package, so its licence has to be there to read and ship.
 const rapierLicence = await readFile(
   new URL(import.meta.resolve('@automataframework/framework/rapier.LICENSE')),

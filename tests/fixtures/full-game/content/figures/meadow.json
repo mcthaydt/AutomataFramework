@@ -1,0 +1,165 @@
+{
+  "format": 1,
+  "id": "meadow",
+  "tile": 16,
+  "frame": {
+    "w": 16,
+    "h": 16
+  },
+  "paints": [
+    {
+      "id": "soil",
+      "color": "#111314"
+    },
+    {
+      "id": "blade",
+      "color": "#afd472"
+    },
+    {
+      "id": "bloom",
+      "color": "#f37f94"
+    }
+  ],
+  "parts": [
+    {
+      "id": "soil",
+      "shape": "block",
+      "x": 8,
+      "y": 8,
+      "w": 16,
+      "h": 16,
+      "paint": "soil"
+    },
+    {
+      "id": "cap",
+      "shape": "block",
+      "x": 8,
+      "y": 3,
+      "w": 16,
+      "h": 6,
+      "paint": "blade"
+    },
+    {
+      "id": "side",
+      "shape": "block",
+      "x": 2,
+      "y": 8,
+      "w": 4,
+      "h": 16,
+      "paint": "blade"
+    },
+    {
+      "id": "speck",
+      "shape": "block",
+      "x": 5,
+      "y": 11,
+      "w": 2,
+      "h": 2,
+      "paint": "blade"
+    },
+    {
+      "id": "stem",
+      "shape": "block",
+      "x": 8,
+      "y": 11,
+      "w": 2,
+      "h": 8,
+      "paint": "blade"
+    },
+    {
+      "id": "bloom",
+      "shape": "round",
+      "x": 8,
+      "y": 6,
+      "w": 6,
+      "h": 6,
+      "paint": "bloom"
+    }
+  ],
+  "poses": [
+    {
+      "id": "grass-top",
+      "moves": [
+        {
+          "part": "side",
+          "dy": 100
+        },
+        {
+          "part": "speck",
+          "dy": 100
+        },
+        {
+          "part": "stem",
+          "dy": 100
+        },
+        {
+          "part": "bloom",
+          "dy": 100
+        }
+      ]
+    },
+    {
+      "id": "grass-edge",
+      "moves": [
+        {
+          "part": "cap",
+          "dy": 100
+        },
+        {
+          "part": "speck",
+          "dy": 100
+        },
+        {
+          "part": "stem",
+          "dy": 100
+        },
+        {
+          "part": "bloom",
+          "dy": 100
+        }
+      ]
+    },
+    {
+      "id": "grass",
+      "moves": [
+        {
+          "part": "cap",
+          "dy": 100
+        },
+        {
+          "part": "side",
+          "dy": 100
+        },
+        {
+          "part": "stem",
+          "dy": 100
+        },
+        {
+          "part": "bloom",
+          "dy": 100
+        }
+      ]
+    },
+    {
+      "id": "flowers",
+      "moves": [
+        {
+          "part": "soil",
+          "dy": 100
+        },
+        {
+          "part": "cap",
+          "dy": 100
+        },
+        {
+          "part": "side",
+          "dy": 100
+        },
+        {
+          "part": "speck",
+          "dy": 100
+        }
+      ]
+    }
+  ]
+}

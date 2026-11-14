@@ -1,4 +1,5 @@
 import { deepFreeze } from '../../lib/deep-freeze.ts'
+import type { BackdropFile } from './backdrop.ts'
 import type { BehaviourFile } from './behaviour.ts'
 import type { Character } from './character.ts'
 import { CONTENT_TYPES, type ContentType } from './content-types.ts'
@@ -7,6 +8,7 @@ import type { CuesFile } from './cues.ts'
 import type { CutsceneFile } from './cutscene.ts'
 import type { Diagnostic } from './diagnostics.ts'
 import type { FeelFile } from './feel.ts'
+import type { FigureFile } from './figure.ts'
 import type { Level } from './level.ts'
 import type { MessagesFile } from './messages.ts'
 import type { MusicFile } from './music.ts'
@@ -30,6 +32,8 @@ export interface GameContent {
   readonly levels: Readonly<Record<string, Level>>
   readonly characters: Readonly<Record<string, Character>>
   readonly tilesets?: Readonly<Record<string, TilesetFile>>
+  readonly backdrops?: Readonly<Record<string, BackdropFile>>
+  readonly figures?: Readonly<Record<string, FigureFile>>
   readonly behaviours?: Readonly<Record<string, BehaviourFile>>
   readonly tunings?: Readonly<Record<string, TuningFile>>
   readonly feels?: Readonly<Record<string, FeelFile>>
@@ -186,6 +190,7 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
     })
 
   const game: Listed = {
+    hero: project.hero,
     has: (type, id) => named(type).includes(id),
     ids: (type) => named(type).sort(),
     get: ((type: ContentType, id: string) => values.get(`${type}:${id}`)) as Listed['get'],

@@ -41,6 +41,14 @@ const MAX_LINES = 600
  * demand, and it reads no clock, so nothing here can change what a sim computes.
  */
 const PURE_FEATURES: ReadonlySet<string> = new Set(['sim', 'physics', 'commands', 'net', 'level', 'audio'])
+/**
+ * The painter's files: they turn a figure or a backdrop into the bytes of a picture, and those bytes must be the same in
+ * Node and in every browser, so they use whole-number work, `Math.floor`, `Math.round`, `Math.abs`, `Math.min`,
+ * `Math.max` and `dmath`'s `sin` and `cos`, and no other `Math` function whose last bit an engine may choose. `content`
+ * is not one of the pure features, so these files are also held to their list (no clock, no I/O) by name.
+ */
+const PAINTER_FILES = /^src\/features\/content\/(?:paint-[^/]+|pixels|sheet|art)\.ts$|^src\/lib\/png\.ts$/
+const PAINTER_MATH = /\bMath\.(sin|cos|tan|atan2|atan|pow|exp|log|hypot|random)\b/g
 /** Features that need a page (a DOM, a canvas): the headless entry may not reach them. */
 const PAGE_FEATURES: ReadonlySet<string> = new Set(['render', 'input', 'web', 'game'])
 
@@ -251,7 +259,17 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
       }
     }
 
-    const pure = file.startsWith('src/lib/') || (feature !== undefined && PURE_FEATURES.has(feature))
+    const painter = PAINTER_FILES.test(file)
+    if (painter) {
+      for (const call of source.text.matchAll(PAINTER_MATH))
+        add(
+          file,
+          'painter-math',
+          `Math.${call[1]} is not allowed in the painter: its last bit may differ between engines. Use dmath's sin and cos, or whole numbers.`,
+        )
+    }
+    const pure =
+      painter || file.startsWith('src/lib/') || (feature !== undefined && PURE_FEATURES.has(feature))
     if (pure) {
       for (const { pattern, what } of IMPURE) {
         if (pattern.test(source.text)) add(file, 'sim-is-pure', `${what} is not allowed on the sim side.`)
