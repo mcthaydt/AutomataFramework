@@ -175,7 +175,11 @@ export function settingsOf(defaults: Controls, current: Controls): InputSettings
     if (was === undefined || now === undefined) continue
     const changed: { keys?: readonly string[]; shared?: Control['shared']; pad?: readonly PadInput[] } = {}
     if (!same(was.keys, now.keys)) changed.keys = now.keys
-    if (now.shared !== undefined && !same(was.shared?.flat(), now.shared.flat())) changed.shared = now.shared
+    if (
+      now.shared !== undefined &&
+      !(same(was.shared?.[0], now.shared[0]) && same(was.shared?.[1], now.shared[1]))
+    )
+      changed.shared = now.shared
     if (now.pad !== undefined && !same(was.pad, now.pad)) changed.pad = now.pad
     if (Object.keys(changed).length > 0) bindings[action] = changed
   }
@@ -192,7 +196,7 @@ export type Rebound =
     }
   | {
       readonly ok: false
-      readonly reason: 'unknown-action' | 'reserved' | 'no-shared' | 'other-half'
+      readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half'
       readonly message: string
     }
 
@@ -214,7 +218,7 @@ export function rebind(current: Controls, action: string, slot: BindingSlot, inp
     )
       return {
         ok: false,
-        reason: 'reserved',
+        reason: 'unknown-input',
         message: 'That is not a button on a gamepad. Pick another button.',
       }
   } else if (RESERVED_KEYS.includes(input))

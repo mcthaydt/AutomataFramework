@@ -67,3 +67,15 @@ test('onChange fires when a pad arrives and when it goes, not on every read', ()
   pads.read()
   expect(changed).toHaveBeenCalledTimes(2)
 })
+
+// Audit M8: the change that is announced is any pad arriving or going, usable or not, or turning usable.
+test('onChange also fires for a pad the game cannot read', () => {
+  const fake = fakeGamepads()
+  const pads = createPads(fake.getGamepads)
+  const changed = vi.fn()
+  pads.onChange(changed)
+  fake.connect(0, { mapping: '' })
+  pads.read()
+  expect(changed).toHaveBeenCalledTimes(1)
+  expect(pads.list()).toEqual([expect.objectContaining({ index: 0, usable: false })])
+})

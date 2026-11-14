@@ -15,7 +15,7 @@ export interface PadLike {
 
 /** Radial, so a stick resting slightly off centre on both axes stays still. */
 export const DEADZONE = 0.25
-/** A trigger counts as pressed from half travel, as browsers count it. */
+/** A trigger counts as pressed from half travel. A browser's own `pressed` for a trigger is not trusted: some say it early. */
 export const TRIGGER_PRESSED = 0.5
 /**
  * Past the deadzone, an axis counts when it carries at least sin(22.5 degrees) of the push: a stick reads as eight
@@ -47,7 +47,10 @@ export function readPad(pad: PadLike): Set<PadInput> {
   if (!isUsable(pad)) return held
   PAD_BUTTONS.forEach((name, i) => {
     const button = pad.buttons[i]
-    if (button !== undefined && (button.pressed || button.value >= TRIGGER_PRESSED)) held.add(name)
+    if (button === undefined) return
+    // The triggers go by how far they are pushed; every other button is down when the browser says so.
+    const down = name === 'l2' || name === 'r2' ? button.value >= TRIGGER_PRESSED : button.pressed
+    if (down) held.add(name)
   })
   for (const side of ['left', 'right'] as const) {
     const first = side === 'left' ? 0 : 2

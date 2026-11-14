@@ -169,3 +169,27 @@ test('nothing passed in is changed', () => {
   expect(() => applySettings(frozen, saved)).not.toThrow()
   expect(() => settingsOf(frozen, frozen)).not.toThrow()
 })
+
+// Audit M3: a name that is not a gamepad button is not "kept for menus"; a screen that switches on the reason says so.
+test('a name that is not a gamepad button is refused as unknown, not as reserved', () => {
+  expect(rebind(c, 'jump', 'pad', 'nonsense')).toEqual({
+    ok: false,
+    reason: 'unknown-input',
+    message: 'That is not a button on a gamepad. Pick another button.',
+  })
+})
+
+// Audit M4: a key moved from one person's half to the other's is a change, even when the keys read the same flattened.
+test('a key moved between the halves of a shared keyboard is saved', () => {
+  const was: Controls = {
+    jump: { label: 'Jump', keys: ['Space'], side: 'right', shared: [['KeyA', 'KeyB'], ['KeyC']] },
+  }
+  const now: Controls = {
+    jump: { label: 'Jump', keys: ['Space'], side: 'right', shared: [['KeyA'], ['KeyB', 'KeyC']] },
+  }
+  expect(settingsOf(was, now)).toEqual({
+    format: 1,
+    bindings: { jump: { shared: [['KeyA'], ['KeyB', 'KeyC']] } },
+  })
+  expect(settingsOf(was, was)).toEqual({ format: 1, bindings: {} })
+})
