@@ -75,7 +75,14 @@ test('an empty slot loads as null, not as a problem', async () => {
 test('a version 1 save lists as ready and loads upgraded; the stored text is not changed by loading', async () => {
   const old = writeEnvelope({ format: 1, version: 1, savedAt: 5, data: { level: 'level-1' } })
   const { saves, store } = setup(progress, { [key(0)]: old })
-  expect(await saves.list()).toMatchObject({ ok: true, value: [{ slot: 0, kind: 'ready', savedAt: 5 }] })
+  expect(await saves.list()).toEqual({
+    ok: true,
+    value: [
+      { slot: 0, kind: 'ready', savedAt: 5 },
+      { slot: 1, kind: 'empty' },
+      { slot: 2, kind: 'empty' },
+    ],
+  })
   expect(await saves.load(0)).toEqual({ ok: true, data: { level: 'level-1', doors: 0 }, savedAt: 5 })
   expect(store.entries()[key(0)]).toBe(old)
 })
