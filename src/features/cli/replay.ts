@@ -64,15 +64,19 @@ const result = (
 
 const withoutFullStop = (text: string): string => text.replace(/\.$/, '')
 
-/** The numbers in `meta.players`, like `1,2`; a game for one player has `1`. */
-const playersOf = (meta: string | undefined): number[] => {
-  const numbers = (meta ?? '')
-    .split(',')
-    .filter((word) => word.trim() !== '')
-    .map(Number)
-    .filter(Number.isInteger)
-  return numbers.length > 0 ? numbers : [1]
-}
+/**
+ * The players a recording started with, from `meta.players` (`1,2`). A recording with no such line (a format 1 one, or
+ * one recorded by hand) is a game for player 1; `''` is a game that started with nobody, as a co-op room does (heroes
+ * join by command), so it is played with nobody, not with player 1 (audit M16). A word that is not a player's number is
+ * kept, so the level's own sentence says what is wrong with it.
+ */
+const playersOf = (meta: string | undefined): number[] =>
+  meta === undefined
+    ? [1]
+    : meta
+        .split(',')
+        .filter((word) => word.trim() !== '')
+        .map(Number)
 
 interface Played {
   readonly result: ReplayResult
@@ -265,11 +269,16 @@ export function replayExitCode(results: readonly ReplayResult[]): 0 | 1 {
   return results.every((r) => fine.includes(r.verdict)) ? 0 : 1
 }
 
-/** `automata replay <folder or file>`: which game, and the one recording when a file is named. */
+/**
+ * `automata replay <folder or file>`: which game, and the one recording when a file is named. The game is the folder
+ * above the last `replays` in the path, so a recording in a folder of its own under `replays/` is found too.
+ */
 export function replayTarget(target: string): { folder: string; file?: string } {
-  return target.endsWith('.json')
-    ? { folder: dirname(dirname(target)), file: `replays/${basename(target)}` }
-    : { folder: target }
+  if (!target.endsWith('.json')) return { folder: target }
+  const parts = target.split(/[\\/]/)
+  const at = parts.lastIndexOf('replays')
+  if (at === -1) return { folder: dirname(dirname(target)), file: `replays/${basename(target)}` }
+  return { folder: at === 0 ? '.' : parts.slice(0, at).join('/'), file: parts.slice(at).join('/') }
 }
 
 /** The `replays` step of `automata check`. */

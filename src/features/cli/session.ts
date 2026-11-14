@@ -123,7 +123,8 @@ export function sessionHost(load: () => Promise<GameFolder>): SessionHost {
   function step(now: Running, message: Extract<SessionMessage, { kind: 'step' }>): SessionReply {
     // Everything is checked before the first tick is played, so a refused step changes nothing.
     for (const [who, actions] of Object.entries(message.hold)) {
-      if (!now.players.includes(Number(who)))
+      // Exactly the number as the step reads it: "01" or "1.0" would pass a looser test and then hold nothing.
+      if (!now.players.map(String).includes(who))
         return failed(`There is no player ${who} in this game. It has: ${now.players.join(', ')}.`)
       for (const action of actions)
         if (now.actions !== undefined && !now.actions.includes(action))
@@ -292,9 +293,17 @@ export function createSessions(max: number = MAX_SESSIONS): Sessions {
             new CliError("A recording's name is small letters, numbers and dashes, like level-1."),
           )
         const found = yield* find(id)
-        const reply = yield* send(id, found, { kind: 'recording' })
         const file = `replays/${name}.json`
-        yield* (yield* Files).write(join(found.folder, file), reply.recording ?? '')
+        const files = yield* Files
+        // A recording already there may be the game's own, which only `automata replay --accept` records again.
+        if ((yield* files.readText(join(found.folder, file))) !== undefined)
+          return yield* Effect.fail(
+            new CliError(
+              `There is already a recording called ${name}, in ${file}. Pick another name, or delete that file first.`,
+            ),
+          )
+        const reply = yield* send(id, found, { kind: 'recording' })
+        yield* files.write(join(found.folder, file), reply.recording ?? '')
         return { file, ticks: reply.state.tick, finalHash: reply.state.hash }
       }),
     stop: (id) =>

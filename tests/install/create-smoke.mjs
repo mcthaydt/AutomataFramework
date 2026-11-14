@@ -149,6 +149,13 @@ step('a broken file is named, at its place')
 // 6. Break the rules: a game's rules may not roll their own dice.
 const movePath = join(game, 'src', 'features', 'hero', 'move.ts')
 const move = readFileSync(movePath, 'utf8')
+// The rules changed the way an agent debugging them might: slower, and printing a line on every tick. What they print
+// must never reach where an answer is read: `--json`'s stdout, or `automata mcp`'s.
+const slowerAndNoisy = move
+  .replace('const RUN = 6', 'const RUN = 3')
+  .replace('run(ctx) {', "run(ctx) {\n    console.log('the rules said hello')")
+if (!slowerAndNoisy.includes('const RUN = 3') || !slowerAndNoisy.includes('the rules said hello'))
+  fail('the smoke could not change move.ts: its RUN line or its run(ctx) line has moved.')
 writeFileSync(movePath, `${move}\nexport const luck = Math.random()\n`)
 const brokenRun = run('npx', ['--no', 'automata', 'check', '--json'], game)
 if (brokenRun.status !== 1) fail('a broken rule: check --json did not exit with 1.', brokenRun.output)
@@ -200,12 +207,18 @@ const replayed = replayRun.stdout
 const verdicts = JSON.parse(replayed).map((result) => `${result.file}: ${result.verdict}`)
 if (!verdicts.includes('replays/agent-run.json: ok') || !verdicts.includes('replays/level-1.json: ok'))
   fail(`replay: the recordings are ${verdicts.join(', ')}.`, replayed)
-writeFileSync(movePath, move.replace('const RUN = 6', 'const RUN = 3'))
+writeFileSync(movePath, slowerAndNoisy)
 const slower = await playRight(60)
 if (!(slower.x < ran.x))
   fail(`a session after the rules changed still plays the old ones: x ${slower.x}, was ${ran.x}.`)
 const diverged = run('npx', ['--no', 'automata', 'replay', 'replays/agent-run.json', '--json'], game)
-if (!diverged.output.includes('diverged'))
+let divergedJson
+try {
+  divergedJson = JSON.parse(diverged.stdout)
+} catch {
+  fail('replay --json: stdout is not JSON when the rules print.', diverged.stdout)
+}
+if (divergedJson[0]?.verdict !== 'diverged')
   fail('replay: the agent run does not say diverged after the rules changed.', diverged.output)
 writeFileSync(movePath, move)
 rmSync(join(game, 'replays', 'agent-run.json'))
@@ -307,8 +320,8 @@ const same = await mcp.tool('replay', { folder: '.', file: 'mcp-run' })
 if (same.isError || JSON.parse(same.text)[0].verdict !== 'ok')
   fail('mcp replay: the saved play is not ok.', same.text)
 await mcp.tool('play_stop', { session: firstSession })
-// The rules change under the running server.
-writeFileSync(movePath, move.replace('const RUN = 6', 'const RUN = 3'))
+// The rules change under the running server, and now print on every tick: a line that is not JSON fails the smoke.
+writeFileSync(movePath, slowerAndNoisy)
 const secondStart = await mcp.tool('play_start', { folder: '.' })
 const secondStep = await mcp.tool('play_step', {
   session: JSON.parse(secondStart.text).session,
@@ -318,7 +331,13 @@ const secondStep = await mcp.tool('play_step', {
 if (!(heroX(JSON.parse(secondStep.text).state) < ran.x))
   fail('mcp: a session started after the rules changed still plays the old ones.', secondStep.text)
 const changed = await mcp.tool('replay', { folder: '.', file: 'mcp-run' })
-if (!changed.isError || !changed.text.includes('diverged'))
+let changedJson
+try {
+  changedJson = JSON.parse(changed.text)
+} catch {
+  fail('mcp replay: the answer is not JSON when the rules print.', changed.text)
+}
+if (!changed.isError || changedJson[0]?.verdict !== 'diverged')
   fail('mcp replay: the saved play does not say diverged after the rules changed.', changed.text)
 writeFileSync(movePath, move)
 const again = await mcp.tool('replay', { folder: '.', file: 'mcp-run' })
