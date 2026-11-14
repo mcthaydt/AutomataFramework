@@ -12,6 +12,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 |---|---|---|
 | 1. Spec | Written, in review | `specs/2026-11-14-m2-design.md` |
 | 2 to 7, per plan | Not started (plans C, I, V and N can start at once) | |
+| Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
 
 ### Log
 
