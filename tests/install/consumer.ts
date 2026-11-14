@@ -1,11 +1,27 @@
 // A game's `.ts` file, typechecked against the packed package's declarations: proves `dist/*.d.ts` resolve for
 // someone who only has the tarball. It is never run.
-import { soundNotice, startGame, watchReplay, webHost, webSpeaker } from '@automataframework/framework'
 import {
+  ArtError,
+  loadArt,
+  needsPictures,
+  type ReadPicture,
+  type Shot,
+  soundNotice,
+  startGame,
+  watchReplay,
+  webHost,
+  webSpeaker,
+} from '@automataframework/framework'
+import {
+  type Atlas,
+  artFiles,
+  artProblems,
+  type BackdropFile,
   createAudio,
   createGameSim,
   createSaves,
   defineSave,
+  type FigureFile,
   type GameContent,
   type Host,
   type LevelJoint,
@@ -73,6 +89,21 @@ export const touched: Touch | undefined = undefined
 // A speaker is a plain interface a game can fill in itself, and `testSpeaker` is one; the declarations of both resolve
 // from the tarball alone.
 export const speaker: Speaker = testSpeaker()
+
+// A figure, a backdrop and the atlas a picture comes with are in the packed declarations, and so are the page's loader of
+// pictures, the check of a level's pictures, and the camera's shot.
+export const figure: FigureFile | undefined = undefined
+export const backdrop: BackdropFile | undefined = undefined
+export const atlas: Atlas | undefined = undefined
+export const shot: Shot | undefined = undefined
+export const fetchPicture: ReadPicture = async () => new Blob()
+export const art: [
+  typeof artFiles,
+  typeof artProblems,
+  typeof loadArt,
+  typeof needsPictures,
+  typeof ArtError,
+] = [artFiles, artProblems, loadArt, needsPictures, ArtError]
 
 // The player's language: `typed` is a game's own typed `words`, over its messages file, and a `Locale` is what the
 // game's screens take; both resolve from the tarball alone.

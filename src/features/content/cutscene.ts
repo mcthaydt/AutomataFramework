@@ -23,6 +23,8 @@ export interface ActorKey {
   readonly who: string
   readonly x: number
   readonly y: number
+  /** The clip it plays from here on, like "talk". Left out means no change. */
+  readonly clip?: string | undefined
   readonly face?: 'left' | 'right' | undefined
 }
 
@@ -69,6 +71,7 @@ const actor = z.strictObject({
   who: Id.describe("Which thing: its id in the level, or player-1 to player-4 for a player's hero."),
   x: tilesFromLeft('Where it stands'),
   y: tilesFromTop('Where it stands'),
+  clip: Id.describe('The clip it plays from here on, like "talk". Left out means no change.').optional(),
   face: z.enum(['left', 'right']).optional().describe('Which way it faces. Left out means no change.'),
 })
 
@@ -118,6 +121,23 @@ function actorsIn(level: {
   return [...level.things.map((t) => t.id), ...level.starts.map((s) => `player-${s.player}`)]
 }
 
+/** An actor's clip must be one its character has. Skipped when the character cannot be seen. */
+function checkClip(clip: string, path: string, id: string | undefined, game: Listed, report: Report): void {
+  const character = id === undefined ? undefined : game.get('character', id)
+  if (character === undefined) return
+  const clips = character.clips ?? []
+  if (clips.length === 0)
+    report(
+      path,
+      `The character "${character.id}" has no clips, so it cannot play "${clip}". Give it clips, or remove "clip".`,
+    )
+  else if (!clips.some((c) => c.id === clip))
+    report(
+      path,
+      `The character "${character.id}" has no clip called "${clip}". It has: ${list(clips.map((c) => c.id))}.`,
+    )
+}
+
 /** Everything a cutscene names must be in the game, and every place it names must be inside the level. */
 function checkNames(file: CutsceneFile, game: Listed, report: Report): void {
   const level = game.get('level', file.level)
@@ -134,6 +154,9 @@ function checkNames(file: CutsceneFile, game: Listed, report: Report): void {
       inside(`camera[${i}]`, k.x, k.y)
     })
     const names = actorsIn(level)
+    /** The character an actor is: a thing's, or the game's hero for a player's hero. */
+    const characterOf = (who: string): string | undefined =>
+      /^player-[1-4]$/.test(who) ? game.hero : level.things.find((t) => t.id === who)?.character
     file.actors.forEach((a, i) => {
       if (!names.includes(a.who))
         report(
@@ -141,6 +164,7 @@ function checkNames(file: CutsceneFile, game: Listed, report: Report): void {
           `There is nothing called "${a.who}" in the level "${level.id}". It has: ${list(names)}.`,
         )
       inside(`actors[${i}]`, a.x, a.y)
+      if (a.clip !== undefined) checkClip(a.clip, `actors[${i}].clip`, characterOf(a.who), game, report)
     })
   }
   file.lines.forEach((l, i) => {
@@ -191,6 +215,7 @@ export const cutsceneInfo: ContentTypeInfo<CutsceneFile, CutsceneFile> = {
     'actors.who': 'Write which thing it is, by its id in the level, like "keeper".',
     'actors.x': 'Write where it stands, in tiles from the left.',
     'actors.y': 'Write where it stands, in tiles from the top.',
+    'actors.clip': 'Write the clip it plays, like "talk".',
     'lines.at': 'Write the tick it appears at, like 60.',
     'lines.until': 'Write the tick it goes away, like 180.',
     'lines.line': 'Write what is said, as a message key, like "keeper.hello".',

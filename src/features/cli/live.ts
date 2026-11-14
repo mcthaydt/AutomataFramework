@@ -279,7 +279,10 @@ const sessionWorkerFile = (): URL =>
 
 /** A session's Worker, spoken to by numbered messages. A Worker that stops answers every message waiting with a sentence. */
 function startWorker(folder: string): SessionWorker {
-  const worker = new Worker(sessionWorkerFile(), { workerData: { folder } })
+  // `stdout: true`: a Worker's output would otherwise go straight to this process's stdout, past the console that
+  // `automata mcp` points at stderr, and a game's rules that print would break the protocol. It goes to stderr instead.
+  const worker = new Worker(sessionWorkerFile(), { workerData: { folder }, stdout: true })
+  worker.stdout.on('data', (chunk: Buffer) => void process.stderr.write(chunk))
   const waiting = new Map<number, (reply: SessionReply) => void>()
   let next = 0
   let over: string | undefined

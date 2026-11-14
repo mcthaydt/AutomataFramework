@@ -26,3 +26,14 @@ export function touchKinds(content: GameContent): {
   const sorted = (list: string[]): string[] => list.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
   return { sense: sorted(kinds('sense')), take: sorted(kinds('take')) }
 }
+
+/**
+ * Whether the game has any figure to show or any camera to run: a character with a `figure`, or a level with a `view`.
+ * It switches the sprite component on for the whole game, so a game with neither keeps exactly the sim it had.
+ */
+export function usesSprites(content: GameContent): boolean {
+  return (
+    Object.values(content.characters).some((character) => character.figure !== undefined) ||
+    Object.values(content.levels).some((level) => level.view !== undefined)
+  )
+}
