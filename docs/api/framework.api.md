@@ -1605,6 +1605,12 @@ const LANGUAGE_SETTINGS_DEFAULT: LanguageSettings;
 const LANGUAGE_TAGS: Readonly<Record<Language, string>>;
 ```
 
+### `languageFlag` (function)
+
+```ts
+function languageFlag(language: Language): SVGSVGElement;
+```
+
 ### `languageName` (function)
 
 ```ts
@@ -1620,6 +1626,35 @@ type LanguagePick = {
 } | {
     readonly language: undefined;
     readonly suggested: Language | undefined;
+};
+```
+
+### `languagePicker` (function)
+
+```ts
+function languagePicker(options: {
+    readonly mount: HTMLElement;
+    readonly locale: Locale;
+    readonly frames?: Frames;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+}): {
+    readonly done: Promise<Language>;
+    destroy(): void;
+};
+```
+
+### `languageRow` (function)
+
+```ts
+function languageRow(options: {
+    readonly mount: HTMLElement;
+    readonly languages: readonly Language[];
+    readonly chosen: Language | undefined;
+    readonly onChoose: (language: Language) => void;
+}): {
+    choose(language: Language | undefined): void;
+    focus(language: Language): void;
+    destroy(): void;
 };
 ```
 
@@ -2378,6 +2413,12 @@ interface Picker {
     go(): Promise<StoreResult<void> | undefined>;
     onChange(listener: () => void): () => void;
 }
+```
+
+### `PICKER_PROPERTIES` (const)
+
+```ts
+const PICKER_PROPERTIES: readonly string[];
 ```
 
 ### `pickLanguage` (function)
