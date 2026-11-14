@@ -155,6 +155,9 @@ a change to the Editors' rule) and keeps pictures out of git's history; its cost
 paint step and a picture cannot be seen on GitHub without one. Either way this plan's tasks stand as written: (a) or
 (b) changes plan D, plan K's template and the Editors, not the framework. So it holds nothing here.
 
+*Answered (the Owner, 2026-11-14):* (a). An editor's save writes the pictures too, because people may need to share
+them. Pictures stay committed, plan D's CI job stays, and the plan's "What the other plans rely on" says so.
+
 **I8. The painter's rule guards less than the plan says.** "The same bytes everywhere" is enforced by a new
 `painter-math` rule that bans some `Math` calls. But the `content` feature is not one of `rules.ts`'s pure features
 (`sim`, `physics`, `commands`, `level`), so the painter's files are not held to the clock, `fetch` or `node:` rules
