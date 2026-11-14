@@ -106,9 +106,8 @@ test('source = "ko" is kept', () => {
 
 test('a source that is not one of the six is refused, in words', () => {
   const message = 'automata.toml: source: Write one of zh, es, en, pt, ja or ko, like source = "es".'
-  for (const value of ['"fr"', '"EN"', '1', '""'])
-    expect(
-      problems(FIXTURE.replace('hero = "hero"\n', `hero = "hero"\nsource = ${value}\n`)),
-      value,
-    ).toEqual([message])
+  for (const value of ['"fr"', '"EN"', '1', '""']) {
+    const file = FIXTURE.replace('hero = "hero"\n', `hero = "hero"\nsource = ${value}\n`)
+    expect(problems(file), value).toEqual([message])
+  }
 })
