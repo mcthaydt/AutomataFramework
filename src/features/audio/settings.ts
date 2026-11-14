@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from '../../lib/zod.ts'
 
 /** The player's two volumes, 0 (silent) to 1 (full). The `sound` section of the settings. */
 export interface SoundSettings {
