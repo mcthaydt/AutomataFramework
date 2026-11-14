@@ -8,6 +8,7 @@ import { runCheck } from './check.ts'
 import { helpFor } from './help.ts'
 import { liveLayer } from './live.ts'
 import { CliError, Out, type OutService, type Ports } from './ports.ts'
+import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
 
 type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
@@ -37,12 +38,29 @@ const check: Command = (input) =>
     return exitCodeOf(report)
   })
 
+/** `automata replay`: each recording played to its hash (or recorded again), as words or as JSON. */
+const replay: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const { folder, file } = replayTarget(input.folder ?? '.')
+    const results = yield* runReplays({
+      folder,
+      ...(file === undefined ? {} : { file }),
+      accept: input.flags.accept === true,
+      state: input.flags.state === true,
+    })
+    if (input.flags.json === true) yield* out.line(JSON.stringify(results, null, 2))
+    else if (results.length === 0) yield* out.line(NO_RECORDINGS)
+    else for (const result of results) yield* out.line(describeResult(result))
+    return replayExitCode(results)
+  })
+
 /** One row per command, so a new command (M4's `ship` and `build`) is one row and one help text. */
 const COMMANDS: Readonly<Record<CommandName, Command>> = {
   create: notBuilt('create'),
   check,
   play: notBuilt('play'),
-  replay: notBuilt('replay'),
+  replay,
   mcp: notBuilt('mcp'),
 }
 
