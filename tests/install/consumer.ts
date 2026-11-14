@@ -10,6 +10,7 @@ import {
   type Host,
   type LevelJoint,
   loadGame,
+  type Locale,
   type MessagesFile,
   openSettings,
   type SaveDef,
@@ -18,6 +19,7 @@ import {
   type Touch,
   testHost,
   testSpeaker,
+  typed,
   z,
 } from '@automataframework/framework/headless'
 
@@ -71,3 +73,11 @@ export const touched: Touch | undefined = undefined
 // A speaker is a plain interface a game can fill in itself, and `testSpeaker` is one; the declarations of both resolve
 // from the tarball alone.
 export const speaker: Speaker = testSpeaker()
+
+// The player's language: `typed` is a game's own typed `words`, over its messages file, and a `Locale` is what the
+// game's screens take; both resolve from the tarball alone.
+export const say: (key: 'greeting', values?: Record<string, string>) => string = typed(
+  { messages: { greeting: 'Hello' } },
+  (key) => key,
+)
+export const language: Locale | undefined = undefined
