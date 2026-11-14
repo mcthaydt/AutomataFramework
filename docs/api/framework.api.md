@@ -344,6 +344,12 @@ function createRng(seed: number): Rng;
 function createScene(): Scene;
 ```
 
+### `createSequence` (function)
+
+```ts
+function createSequence(): Sequence;
+```
+
 ### `createSim` (function)
 
 ```ts
@@ -642,10 +648,43 @@ const InputSettingsSchema: z.ZodType<InputSettings, InputSettings>;
 function isHeld(player: EntityRef, action: string): boolean;
 ```
 
+### `JoinCommand` (const)
+
+```ts
+const JoinCommand: CommandDef<typeof emptyPayload>;
+```
+
+### `joinCommand` (function)
+
+```ts
+function joinCommand(tick: number, player: number, seq: number): Command;
+```
+
+### `joinPlugin` (function)
+
+```ts
+function joinPlugin(options: {
+    readonly level: string;
+    readonly max: number;
+}): PluginDef;
+```
+
 ### `jsonSchemaFor` (function)
 
 ```ts
 function jsonSchemaFor(type: ContentType): object;
+```
+
+### `LeaveCommand` (const)
+
+```ts
+const LeaveCommand: CommandDef<typeof emptyPayload>;
+```
+
+### `leaveCommand` (function)
+
+```ts
+function leaveCommand(tick: number, player: number, seq: number): Command;
 ```
 
 ### `Level` (interface)
@@ -839,6 +878,12 @@ interface Played {
 const Player: ComponentDef<typeof playerFields>;
 ```
 
+### `playersIn` (function)
+
+```ts
+function playersIn(sim: Sim): number[];
+```
+
 ### `playReplay` (function)
 
 ```ts
@@ -903,6 +948,7 @@ interface Project {
     readonly name: string;
     readonly start: string;
     readonly hero: string;
+    readonly players?: number | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -1081,6 +1127,14 @@ type RngState = [number, number, number, number];
 interface Scene {
     apply(delta: RenderDelta): void;
     views(alpha: number): View[];
+}
+```
+
+### `Sequence` (interface)
+
+```ts
+interface Sequence {
+    next(source: number): number;
 }
 ```
 
@@ -1715,6 +1769,12 @@ function createRecorder(sim: Sim, options?: {
 function createRng(seed: number): Rng;
 ```
 
+### `createSequence` (function)
+
+```ts
+function createSequence(): Sequence;
+```
+
 ### `createSim` (function)
 
 ```ts
@@ -1917,10 +1977,43 @@ const Id: z.ZodString;
 function isHeld(player: EntityRef, action: string): boolean;
 ```
 
+### `JoinCommand` (const)
+
+```ts
+const JoinCommand: CommandDef<typeof emptyPayload>;
+```
+
+### `joinCommand` (function)
+
+```ts
+function joinCommand(tick: number, player: number, seq: number): Command;
+```
+
+### `joinPlugin` (function)
+
+```ts
+function joinPlugin(options: {
+    readonly level: string;
+    readonly max: number;
+}): PluginDef;
+```
+
 ### `jsonSchemaFor` (function)
 
 ```ts
 function jsonSchemaFor(type: ContentType): object;
+```
+
+### `LeaveCommand` (const)
+
+```ts
+const LeaveCommand: CommandDef<typeof emptyPayload>;
+```
+
+### `leaveCommand` (function)
+
+```ts
+function leaveCommand(tick: number, player: number, seq: number): Command;
 ```
 
 ### `Level` (interface)
@@ -2108,6 +2201,12 @@ interface Played {
 const Player: ComponentDef<typeof playerFields>;
 ```
 
+### `playersIn` (function)
+
+```ts
+function playersIn(sim: Sim): number[];
+```
+
 ### `playReplay` (function)
 
 ```ts
@@ -2172,6 +2271,7 @@ interface Project {
     readonly name: string;
     readonly start: string;
     readonly hero: string;
+    readonly players?: number | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -2310,6 +2410,14 @@ interface Rng {
 
 ```ts
 type RngState = [number, number, number, number];
+```
+
+### `Sequence` (interface)
+
+```ts
+interface Sequence {
+    next(source: number): number;
+}
 ```
 
 ### `ShapeKind` (const)

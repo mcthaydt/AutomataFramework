@@ -109,6 +109,14 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
       if (!parsed.ok) problems.push(...parsed.diagnostics)
       else {
         if (claim(ref, parsed.value.id)) levels[parsed.value.id] = parsed.value
+        // A game for several players needs a start point for each of them in every level.
+        for (let player = 1; player <= (project.players ?? 0); player++)
+          if (!parsed.value.starts.some((s) => s.player === player))
+            problems.push({
+              file: ref.path,
+              path: 'starts',
+              message: `This game is for up to ${project.players} players, but this level has no start point for player ${player}. Add one to "starts", or lower players in automata.toml.`,
+            })
         parsed.value.things.forEach((thing, t) => {
           if (!characterIds.includes(thing.character))
             problems.push({

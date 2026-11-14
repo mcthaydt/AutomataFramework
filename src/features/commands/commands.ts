@@ -28,3 +28,4 @@ export {
   ReplaySchema,
   writeReplay,
 } from './replay.ts'
+export { createSequence, type Sequence } from './sequence.ts'
