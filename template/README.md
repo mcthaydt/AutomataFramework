@@ -1,7 +1,7 @@
 # My Game
 
 A small game made with [Automata Framework](https://github.com/mcthaydt/AutomataFramework): a hero, a crate to push,
-and everything a game needs to be checked and played. Change it, make it yours, and keep it in a repository of your own.
+a spark to take, and everything a game needs to be checked and played. Change it, make it yours, and keep it in a repository of your own.
 
 ## Play it
 
@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-The game opens in your browser. Hold the left or right arrow key to move, and press Space to jump. Push the crate.
+The game opens in your browser. Hold the left or right arrow key to move, and press Space to jump. Push the crate, and touch the spark to take it.
 
 ## Change something
 

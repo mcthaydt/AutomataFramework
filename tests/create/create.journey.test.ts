@@ -181,6 +181,20 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
         const before = await tickOf(page)
         await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(before)
 
+        // The new game has a spark to take: the level lists it, and the game has put every one of its things on the screen.
+        const listed = (JSON.parse(readFileSync(level, 'utf8')) as { things: { character: string }[] }).things
+        expect(
+          listed.some((thing) => thing.character === 'spark'),
+          `${where}: the level has a spark`,
+        ).toBe(true)
+        const placed = await page.evaluate(
+          () =>
+            (window as unknown as PageWindow).automataGame?.sim
+              .describeSnapshot()
+              .entities.filter((entity) => 'thing' in entity.components).length ?? 0,
+        )
+        expect(placed, `${where}: the level's things are in the game`).toBeGreaterThanOrEqual(listed.length)
+
         // The keys' hint is for a keyboard: shown at the desktop size and gone once the hero has moved, never on touch.
         const hint = page.locator('.hint')
         if (size.touch) expect(await hint.count(), `${where}: the hint on a touch screen`).toBe(0)
