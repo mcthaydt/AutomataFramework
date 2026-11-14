@@ -1,1 +1,10 @@
-{ "ticks": 240, "finalHash": "", "checks": [], "cueLog": "" }
+{
+  "ticks": 240,
+  "finalHash": "b51b6ca8588f039e",
+  "checks": [
+    { "tick": 60, "hash": "9cf9eb8c50ef80de" },
+    { "tick": 120, "hash": "733ca5957c78df5f" },
+    { "tick": 180, "hash": "5d8116df3045eb12" }
+  ],
+  "cueLog": ""
+}
