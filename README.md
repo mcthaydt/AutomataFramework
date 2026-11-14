@@ -163,15 +163,63 @@ and levels). It is safe in Node and in an editor that only checks and writes fil
 import { createGameSim, loadGame } from '@automataframework/framework/headless'
 ```
 
-## Schemas
+## Content files
 
-Every kind of content file has a JSON Schema, shipped in the package so an agent can read the format without running
-anything:
+Everything a person can author is a JSON file, one thing per file, and `automata.toml` lists every file the game uses.
+Each kind has a JSON Schema, shipped in the package so an agent can read the format without running anything.
 
-- `@automataframework/framework/schemas/level.schema.json`
-- `@automataframework/framework/schemas/character.schema.json`
+| Kind | What it holds | Folder | Schema |
+|---|---|---|---|
+| `level` | a map of tiles, the things standing on it and where each player starts | `content/levels/` | `schemas/level.schema.json` |
+| `character` | a body, its size and colour, and the kind, behaviour and tuning it uses | `content/characters/` | `schemas/character.schema.json` |
+| `tileset` | the letters a level's map may use, and which of them are solid | `content/tilesets/` | `schemas/tileset.schema.json` |
+| `behaviour` | rules for what a character does: flee, follow, wander, jump | `content/behaviours/` | `schemas/behaviour.schema.json` |
+| `tuning` | numbers a player can change, and the controls | `content/tunings/` | `schemas/tuning.schema.json` |
+| `feel` | a burst of dust, a shake or a freeze for a moment in the game | `content/feels/` | `schemas/feel.schema.json` |
+| `sound` | a sound made of tones and noise | `content/sounds/` | `schemas/sound.schema.json` |
+| `music` | a track of notes and drums | `content/music/` | `schemas/music.schema.json` |
+| `cues` | which sound or music plays when something happens | `content/cues/` | `schemas/cues.schema.json` |
+| `conversation` | what a character says, and the choices a player has | `content/conversations/` | `schemas/conversation.schema.json` |
+| `cutscene` | a camera move and the lines said during it | `content/cutscenes/` | `schemas/cutscene.schema.json` |
+| `messages` | every word a player reads, in one language | `content/messages/` | `schemas/messages.schema.json` |
 
-`writeContent(type, value)` is the one way to write a content file, so two writers of the same value make the same bytes.
+Each schema is at `@automataframework/framework/schemas/<kind>.schema.json`. Three rules hold for every kind:
+
+- One thing per file, and the file's `id` is its name: `content/sounds/door.json` holds the sound `door`.
+- `writeContent(type, value)` is the only writer, so two writers of the same value make the same bytes.
+- A game's words live in `messages` files, one per language, and English (`en.json`) comes first.
+
+A file is listed in `automata.toml` with its kind and its path. This lists a sound called `door`:
+
+```toml
+[[content]]
+type = "sound"
+path = "content/sounds/door.json"
+```
+
+and this is the whole file `content/sounds/door.json`:
+
+```json
+{
+  "format": 1,
+  "id": "door",
+  "volume": 0.8,
+  "voices": [
+    {
+      "kind": "tone",
+      "wave": "sine",
+      "from": 220,
+      "to": 110,
+      "at": 0,
+      "length": 0.4,
+      "volume": 1
+    }
+  ]
+}
+```
+
+A mistake is reported with the file, the place in it and what to write, for example `content/cues/cues.json:
+cues[3].sound: There is no sound called "dor". This game has: door, jump, land.`
 
 ## The public API
 

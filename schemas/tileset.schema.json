@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this tileset, like \"meadow\". It matches the file name."
+    },
+    "image": {
+      "type": "string",
+      "description": "The picture every tile is cut from, as a path inside the game, like art/tiles.png."
+    },
+    "tileSize": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 256,
+      "description": "One tile's side in the picture, in pixels."
+    },
+    "columns": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 64,
+      "description": "How many tiles wide the picture is."
+    },
+    "tiles": {
+      "minItems": 1,
+      "maxItems": 93,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this kind of tile, like \"grass\"."
+          },
+          "letter": {
+            "type": "string",
+            "pattern": "^[!-~]$",
+            "description": "The letter a level uses for this tile in its rows, like \"G\"."
+          },
+          "solid": {
+            "type": "boolean",
+            "description": "True if things stand on this tile and bump into it, false if they pass through."
+          },
+          "pictures": {
+            "minItems": 1,
+            "maxItems": 16,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "frame": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4095,
+                  "description": "Which square of the picture to draw, counted left to right and top to bottom from 0."
+                },
+                "when": {
+                  "description": "What the neighbours must be for this picture to be drawn. Left out means always. The last picture has none.",
+                  "type": "object",
+                  "properties": {
+                    "up": {
+                      "description": "\"same\" if the tile above is this kind of tile, \"other\" if not.",
+                      "type": "string",
+                      "enum": [
+                        "same",
+                        "other"
+                      ]
+                    },
+                    "down": {
+                      "description": "\"same\" if the tile below is this kind of tile, \"other\" if not.",
+                      "type": "string",
+                      "enum": [
+                        "same",
+                        "other"
+                      ]
+                    },
+                    "left": {
+                      "description": "\"same\" if the tile on the left is this kind of tile, \"other\" if not.",
+                      "type": "string",
+                      "enum": [
+                        "same",
+                        "other"
+                      ]
+                    },
+                    "right": {
+                      "description": "\"same\" if the tile on the right is this kind of tile, \"other\" if not.",
+                      "type": "string",
+                      "enum": [
+                        "same",
+                        "other"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "frame"
+              ],
+              "additionalProperties": false
+            },
+            "description": "How the tile looks. The first picture whose \"when\" fits is drawn; the last is the one drawn otherwise."
+          }
+        },
+        "required": [
+          "id",
+          "letter",
+          "solid",
+          "pictures"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Every kind of tile this tileset has."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "image",
+    "tileSize",
+    "columns",
+    "tiles"
+  ],
+  "additionalProperties": false,
+  "title": "Tileset"
+}

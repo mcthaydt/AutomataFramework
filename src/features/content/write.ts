@@ -15,5 +15,7 @@ export function writeContent<T extends ContentType>(
   const result = (entry.schema as z.ZodType).safeParse(value)
   if (!result.success)
     throw new Error(toDiagnostics(result.error.issues, value, type, entry).map(formatDiagnostic).join('\n'))
-  return `${JSON.stringify(result.data, null, 2)}\n`
+  // Cast: which kind `type` picked is not known to the type system here, and `result.data` came from its schema.
+  const tidy = entry.tidy as ((value: unknown) => unknown) | undefined
+  return `${JSON.stringify(tidy?.(result.data) ?? result.data, null, 2)}\n`
 }

@@ -28,3 +28,8 @@ test('the pictures go only to the ci-screens branch, one writer at a time', () =
   expect(screens.match(/git push/g)).toHaveLength(1)
   expect(screens).toMatch(/group: ci-screens\n {6}cancel-in-progress: false/)
 })
+
+test('the package job copies the full game, so the packed install loads every kind of file', () => {
+  const pack = jobs.slice(jobs.indexOf('\n  package:'))
+  expect(pack).toContain('cp -r tests/fixtures/full-game "$smoke/full-game"')
+})

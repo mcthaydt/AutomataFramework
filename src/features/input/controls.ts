@@ -22,12 +22,12 @@ export interface Control {
   /** Which thumb's corner the touch button sits in. */
   readonly side: 'left' | 'right'
   /** Gamepad buttons and stick directions, by name, e.g. ['south'] or ['dpad-left', 'left-stick-left']. */
-  readonly pad?: readonly PadInput[]
+  readonly pad?: readonly PadInput[] | undefined
   /**
    * Keys for two people sharing one keyboard: the first person's, then the second's. A game gives every action
    * `shared` keys, or none of them.
    */
-  readonly shared?: readonly [readonly string[], readonly string[]]
+  readonly shared?: readonly [readonly string[], readonly string[]] | undefined
 }
 
 /** One control as a content file lists it (plan C's `tuning.controls`): the same fields, with the action's name inside. */

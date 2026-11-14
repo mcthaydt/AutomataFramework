@@ -123,6 +123,7 @@ jobs:
           mkdir "$smoke"
           cp tests/install/* tests/golden/push-crate.json "$smoke"/
           cp -r tests/fixtures/game "$smoke/game"
+          cp -r tests/fixtures/full-game "$smoke/full-game"
           cd "$smoke"
           echo '{ "private": true, "type": "module" }' > package.json
           npm install --no-audit --no-fund "$RUNNER_TEMP"/pack/*.tgz

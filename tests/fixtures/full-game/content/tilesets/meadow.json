@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "id": "meadow",
+  "image": "art/meadow.png",
+  "tileSize": 16,
+  "columns": 4,
+  "tiles": [
+    {
+      "id": "grass",
+      "letter": "G",
+      "solid": true,
+      "pictures": [
+        {
+          "frame": 0,
+          "when": {
+            "up": "other"
+          }
+        },
+        {
+          "frame": 1,
+          "when": {
+            "left": "other"
+          }
+        },
+        {
+          "frame": 2
+        }
+      ]
+    },
+    {
+      "id": "flowers",
+      "letter": "~",
+      "solid": false,
+      "pictures": [
+        {
+          "frame": 3
+        }
+      ]
+    }
+  ]
+}

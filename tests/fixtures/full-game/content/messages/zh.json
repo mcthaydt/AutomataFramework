@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "zh",
+  "messages": {
+    "hero.ask": "有什么建议吗？",
+    "hero.bye": "再见。",
+    "keeper.bye": "保重。",
+    "keeper.hello": "你好！",
+    "keeper.tip": "把箱子推到台阶上。"
+  }
+}

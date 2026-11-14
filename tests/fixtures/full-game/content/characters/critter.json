@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "id": "critter",
+  "body": "dynamic",
+  "size": {
+    "w": 0.6,
+    "h": 0.6
+  },
+  "color": "#4f9d9d",
+  "upright": true,
+  "kind": "critter",
+  "behaviour": "critter"
+}

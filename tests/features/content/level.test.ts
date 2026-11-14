@@ -1,6 +1,8 @@
 import { expect, test } from 'vitest'
 import { formatDiagnostic, parseContent, writeContent } from '#src/features/content/content.ts'
 import { exampleLevel } from '../../fixtures/content/example-level.ts'
+import { gameProblems } from '../../fixtures/content/kind.ts'
+import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const FILE = 'content/levels/a.json'
 
@@ -159,4 +161,77 @@ test('parseContent never throws', () => {
 test('a file that is not an object says what a level file looks like', () =>
   expect(problems('[]')).toEqual([
     'content/levels/a.json: This must be an object: the file should start with { and end with }.',
+  ]))
+
+test('a level may name a tileset, written right after the id', () => {
+  const level = {
+    ...exampleLevel(),
+    tileset: 'meadow',
+    tiles: ['....~~~~........', '................', 'GGGGGGGGGGGGGGGG'],
+  }
+  const written = writeContent('level', level as never)
+  expect(Object.keys(JSON.parse(written))).toEqual(['format', 'id', 'tileset', 'tiles', 'things', 'starts'])
+  expect(parseContent('level', written, FILE).ok).toBe(true)
+})
+
+test('with a tileset a row may hold any letter from ! to ~, and the sentence changes', () => {
+  const tilesetRows = (rows: string[]) =>
+    withLevel((l) => {
+      l.tileset = 'meadow'
+      l.tiles = rows
+    })
+  expect(problems(tilesetRows(['....~~~~........', '................', 'GGGGGGGGGGGGGGGG']))).toEqual([])
+  expect(problems(tilesetRows(['.... ~~~........', '................', 'GGGGGGGGGGGGGGGG']))).toEqual([
+    'content/levels/a.json: tiles[0]: Use one letter per tile, with no spaces. Found " ".',
+  ])
+})
+
+test('without a tileset a row still holds only # and .', () =>
+  expect(
+    problems(withLevel((l) => (l.tiles = ['....GGGG........', '................', '################']))),
+  ).toEqual(['content/levels/a.json: tiles[0]: Use only # (solid) and . (empty). Found "G".']))
+
+test('a thing named like a player’s hero is refused', () => {
+  expect(
+    problems(withLevel((l) => (l.things = [{ id: 'player-1', character: 'crate', x: 3.5, y: 1.5 }]))),
+  ).toEqual([
+    'content/levels/a.json: things[0].id: "player-1" is the name of player 1\'s hero. Give this thing another id.',
+  ])
+  expect(
+    problems(withLevel((l) => (l.things = [{ id: 'player-5', character: 'crate', x: 3.5, y: 1.5 }]))),
+  ).toEqual([])
+})
+
+/** The fixture game with a tileset called meadow listed, and its level using it. */
+const withTilesetFiles = (letters: string[]): Record<string, string | undefined> => ({
+  ...fixtureFiles,
+  'automata.toml': `${fixtureFiles['automata.toml'] ?? ''}\n[[content]]\ntype = "tileset"\npath = "content/tilesets/meadow.json"\n`,
+  'content/tilesets/meadow.json': writeContent('tileset', {
+    format: 1,
+    id: 'meadow',
+    image: 'art/meadow.png',
+    tileSize: 16,
+    columns: 4,
+    tiles: letters.map((letter, i) => ({ id: `tile-${i}`, letter, solid: true, pictures: [{ frame: i }] })),
+  } as never),
+  'content/levels/level-1.json': `${JSON.stringify({ ...JSON.parse(fixtureFiles['content/levels/level-1.json'] ?? ''), tileset: 'meadow' }, null, 2)}\n`,
+})
+
+test('a level whose letters are all in its tileset loads', async () =>
+  expect(await gameProblems(withTilesetFiles(['G', '#']))).toEqual([]))
+
+test('a level names a tileset the game does not have', async () => {
+  const files = withTilesetFiles(['G', '#'])
+  files['content/levels/level-1.json'] = (files['content/levels/level-1.json'] ?? '').replace(
+    '"meadow"',
+    '"medow"',
+  )
+  expect(await gameProblems(files)).toEqual([
+    'content/levels/level-1.json: tileset: There is no tileset called "medow". This game has: meadow.',
+  ])
+})
+
+test('a row uses a letter the tileset does not have', async () =>
+  expect(await gameProblems(withTilesetFiles(['G', '~']))).toEqual([
+    'content/levels/level-1.json: tiles[8]: The letter "#" is not in the tileset "meadow". It has: G, ~.',
   ]))
