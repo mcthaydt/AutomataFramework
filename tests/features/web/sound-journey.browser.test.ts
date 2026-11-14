@@ -60,8 +60,8 @@ for (const [name, w, h] of SCREENS) {
     expect(speaker.state()).toBe('waiting')
     expect(notice()).not.toBeNull()
 
-    // A real key press is a gesture: the sound starts and the button goes.
-    await userEvent.keyboard('{Shift}')
+    // A real key press is a gesture: the sound starts and the button goes. (A bare Shift is not one in Firefox.)
+    await userEvent.keyboard('a')
     await vi.waitFor(() => expect(speaker.state()).toBe('on'), { timeout: 5000 })
     expect(notice()).toBeNull()
 
