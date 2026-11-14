@@ -106,11 +106,15 @@ export async function startGame(options: GameOptions): Promise<Game> {
     renderer.setInset(input.inset())
     input.onInset((px) => renderer.setInset(px))
     input.setPlayers(options.players ?? [1])
-    const recorder = createRecorder(sim)
+    const levelId = options.level ?? options.content.project.start
+    // The level and the players are written into the recording, so `automata replay` can set the same game up.
+    const recorder = createRecorder(sim, {
+      meta: { level: levelId, players: (options.players ?? [1]).join(',') },
+    })
     const people = createPlayers({
       sim,
       content: options.content,
-      level: options.level ?? options.content.project.start,
+      level: levelId,
       input,
       sequence,
       canShare: Object.values(input.controls()).every((control) => control.shared !== undefined),

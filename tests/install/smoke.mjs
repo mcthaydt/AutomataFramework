@@ -2,7 +2,9 @@
 // stepping it 60 ticks with no game code, then loading the full game (every kind of content file, as `full-game/`) and
 // reading every kind's schema, then loading the playground (ropes, a seesaw, a spark and a door) and stepping it. CI copies this file, the fixture games and the golden beside it. It exits non-zero unless
 // the hash is the one the sim, in every engine, ends on.
-import { readFile } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import {
   CONTENT_TYPES,
   createAudio,
@@ -137,3 +139,26 @@ if (joinedHash !== recorded.idleHash60) {
   process.exit(1)
 }
 console.log(`The installed package ran the playground 60 ticks and ended on ${joinedHash}, as recorded.`)
+
+// The `automata` command is the package's bin: npm links it into node_modules/.bin, and it prints the installed version.
+const windows = process.platform === 'win32'
+const installed = JSON.parse(
+  await readFile(here('node_modules/@automataframework/framework/package.json'), 'utf8'),
+)
+const bin = fileURLToPath(here(`node_modules/.bin/automata${windows ? '.cmd' : ''}`))
+const said = execFileSync(bin, ['--version'], { encoding: 'utf8', shell: windows }).trim()
+if (said !== installed.version) {
+  console.error(`automata --version said "${said}", but the installed package is ${installed.version}.`)
+  process.exit(1)
+}
+console.log(`The installed package has the automata command, version ${said}.`)
+
+// A game's own TypeScript is loaded as it is, with nothing to build: the command runs a game's rules this way, so Node
+// has to take the types out itself. If this fails, the command cannot work in a game, and nothing built on it should.
+await mkdir(here('probe'), { recursive: true })
+await writeFile(here('probe/rules.ts'), 'export const answer: number = 42\n')
+if ((await import('./probe/rules.ts')).answer !== 42) {
+  console.error("Node did not load a game's TypeScript file as it is.")
+  process.exit(1)
+}
+console.log("Node loads a game's TypeScript as it is.")

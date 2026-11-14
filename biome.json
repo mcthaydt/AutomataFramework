@@ -8,7 +8,9 @@
       "!pnpm-lock.yaml",
       "!schemas",
       "!docs/api",
-      "!tests/fixtures/full-game/content"
+      "!tests/fixtures/full-game/content",
+      "!template/content",
+      "!template/replays"
     ]
   },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },

@@ -1,0 +1,71 @@
+/* The page's look. Colours are named here and nowhere else, so changing the look is one file. */
+:root {
+  color-scheme: dark;
+  --paper: #111314;
+  --ink: #f2efe6;
+  --soft: #b9b5a8;
+  --edge: #6b6a60;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+  overscroll-behavior: none;
+}
+
+/* The game fills the screen, including the part a phone's notch or bar would hide. */
+#game {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+}
+
+#game > .loading {
+  margin: 0;
+  padding: 24px;
+  font-size: 18px;
+}
+
+/* The words over the game that tell a player at a keyboard what to press, until they press it. */
+.hint {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 12px 20px;
+  max-width: calc(100% - 32px);
+  box-sizing: border-box;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 18px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* What goes wrong, in words, in place of the game. */
+.problem {
+  box-sizing: border-box;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 24px;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.problem h1 {
+  margin: 0 0 16px;
+  font-size: 24px;
+}
+
+.problem ul {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  color: var(--soft);
+}

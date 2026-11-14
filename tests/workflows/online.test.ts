@@ -21,7 +21,7 @@ test('the online job never writes to the repository', () => {
 test('its pictures are kept as screens-online, which the screens job waits for and copies', () => {
   expect(online).toContain('name: screens-online')
   expect(jobs.slice(jobs.indexOf('\n  screens:'), jobs.indexOf('\n  package:'))).toContain(
-    'needs: [engines, online]',
+    'needs: [engines, online, create-play]',
   )
 })
 

@@ -1,6 +1,7 @@
 // The repo's architecture rules, as one pure function over made-up or real file maps.
 // `tests/architecture.test.ts` runs it over `src/`; `rules.test.ts` proves each rule fires on a small made-up map.
 // Nothing here reads the file system, so a rule can be tested without one.
+import { importsOf, resolveImport, withoutComments } from '#src/lib/imports.ts'
 
 /** Feature folders, lowest first. A feature may import only itself, `src/lib/` and features before it in this list. */
 export const LAYERS = [
@@ -18,6 +19,7 @@ export const LAYERS = [
   'host',
   'web',
   'game',
+  'cli',
 ] as const
 
 /** Path from the repo root (with `/`) to the file's text. */
@@ -82,14 +84,17 @@ const CONFINED: readonly {
   },
   {
     package: /^(effect(\/|$)|@effect\/)/,
-    only: ['src/features/server/process.ts'],
-    why: "Effect is only for the server's process",
+    only: ['src/features/server/process.ts', 'src/features/cli/'],
+    why: "Effect is only for the server's process and the command",
   },
 ]
 
 /** The one Node-only feature: only `src/server.ts` (the package's Node entry) may import it. */
 const SERVER_FEATURE = 'server'
 const SERVER_ENTRY = 'src/server.ts'
+/** The other Node-only feature: the `automata` command. Only `src/cli.ts` (the package's `bin`) may import it. */
+const CLI_FEATURE = 'cli'
+const CLI_ENTRY = 'src/cli.ts'
 
 interface Source {
   readonly file: string
@@ -103,52 +108,14 @@ interface Source {
   readonly packages: readonly string[]
 }
 
-/** Comments say why and may name the very things a rule forbids, so rules read the code without them. */
-function withoutComments(text: string): string {
-  return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(?<![:'"`\w])\/\/.*$/gm, '')
-}
-
-const IMPORT_PATTERNS: readonly RegExp[] = [
-  /\b(?:import|export)\s[^'";]*?\bfrom\s*['"]([^'"]+)['"]/g,
-  /\bimport\s*['"]([^'"]+)['"]/g,
-  /\bimport\(\s*['"]([^'"]+)['"]\s*\)/g,
-]
-
-interface Specifier {
-  readonly spec: string
-  /** `import type ... from` or `export type ... from`: gone after compiling. */
-  readonly typeOnly: boolean
-}
-
-function specifiers(code: string): Specifier[] {
-  const found: Specifier[] = []
-  for (const pattern of IMPORT_PATTERNS) {
-    for (const m of code.matchAll(pattern)) {
-      found.push({ spec: m[1] ?? '', typeOnly: /^(?:import|export)\s+type\b/.test(m[0]) })
-    }
-  }
-  return found
-}
-
-/** `from` is a file path; `to` a relative specifier. Gives a normalised path from the repo root. */
-function resolve(from: string, to: string): string {
-  const parts = from.split('/').slice(0, -1)
-  for (const part of to.split('/')) {
-    if (part === '.' || part === '') continue
-    if (part === '..') parts.pop()
-    else parts.push(part)
-  }
-  return parts.join('/')
-}
-
 function read(file: string, text: string): Source {
   const code = withoutComments(text)
   const local: string[] = []
   const runtime: string[] = []
   const packages: string[] = []
-  for (const { spec, typeOnly } of specifiers(code)) {
+  for (const { spec, typeOnly } of importsOf(code)) {
     const path = spec.startsWith('.')
-      ? resolve(file, spec)
+      ? resolveImport(file, spec)
       : spec.startsWith('#src/')
         ? `src/${spec.slice(5)}`
         : undefined
@@ -213,6 +180,16 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
   const sources = new Map<string, Source>()
   for (const [file, text] of Object.entries(files)) sources.set(file, read(file, text))
   const layerOf = (feature: string): number => (LAYERS as readonly string[]).indexOf(feature)
+  // The features `src/headless.ts` re-exports run with no page, which is all the command may use. Read from that file's
+  // text, so a feature that joins the headless entry later (story, ui, screens) is covered the day it lands.
+  const headlessText = files['src/headless.ts']
+  const headlessFeatures = new Set<string | undefined>(
+    headlessText === undefined
+      ? []
+      : importsOf(withoutComments(headlessText))
+          .filter((i) => i.spec.startsWith('.'))
+          .map((i) => featureOf(resolveImport('src/headless.ts', i.spec))),
+  )
 
   for (const source of sources.values()) {
     const { file } = source
@@ -246,6 +223,20 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
           )
         }
         continue
+      }
+      if (into === CLI_FEATURE && file !== CLI_ENTRY) {
+        add(file, 'cli-is-node-only', `Only ${CLI_ENTRY} may import the cli feature: it needs Node.`)
+        if (target !== `src/features/${into}/${into}.ts`) {
+          add(
+            file,
+            'through-the-entry',
+            `Import ${into} through src/features/${into}/${into}.ts, not ${target}.`,
+          )
+        }
+        continue
+      }
+      if (feature === CLI_FEATURE && !headlessFeatures.has(into)) {
+        add(file, 'cli-has-no-page', `${into} needs a page, and the command runs in Node.`)
       }
       if (feature !== undefined && layerOf(into) > layerOf(feature)) {
         add(file, 'imports-go-down', `${feature} may not import ${into}, which is above it.`)
@@ -315,6 +306,9 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
     const reached = reachFrom(entry)
     if (reached.includes(SERVER_ENTRY)) {
       add(entry, 'server-is-node-only', `${entry} reaches ${SERVER_ENTRY}, which needs Node.`)
+    }
+    if (reached.includes(CLI_ENTRY)) {
+      add(entry, 'cli-is-node-only', `${entry} reaches ${CLI_ENTRY}, which needs Node.`)
     }
     if (entry !== 'src/headless.ts') continue
     for (const target of reached) {
