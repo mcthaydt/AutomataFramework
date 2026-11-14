@@ -1,7 +1,7 @@
 // One cue log everywhere: the sounding run is played in Node and in three browsers, and what the cues asked for is the
 // same text in all four. The hashes are held to the golden as every run's are; the log is held to it as recorded text.
 import { afterEach, expect, test } from 'vitest'
-import { createAudio, type CueLogEntry, type GameAudio, testSpeaker } from '#src/features/audio/audio.ts'
+import { type CueLogEntry, createAudio, type GameAudio, testSpeaker } from '#src/features/audio/audio.ts'
 import { createRecorder } from '#src/features/commands/commands.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
