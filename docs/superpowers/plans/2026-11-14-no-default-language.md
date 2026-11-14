@@ -57,8 +57,9 @@ The spec leaves these to the builder, or is silent. They are settled here so the
    This is a breaking change to the public surface; plan D and the Editors' pin take it.
 3. **The chosen flag follows focus.** Tapping, tabbing to, or arrowing to a flag chooses it; Enter, Space and the
    pad's confirm press Go. With no flag suggested, nothing is focused on a flag, so nothing is chosen.
-4. **The sound button's words join the library** (`automata.sound.start`). Today `soundNotice` says "Tap to start the
-   sound" in English to every player by default, which the spec's goal forbids.
+4. **Two English fallbacks plan L's audit fixes left** (PR 88, merged while this plan was written) go too, though the
+   spec's table does not list them: `soundNotice` falls back to `frameworkWords('en')`, and the pure `rebind` carries
+   an English `message`. Both are the hidden fallback the spec's anti-goals name (Task 5).
 5. **The template's "Loading the game…" becomes a wordless mark.** Every player sees it before a language is known.
    The page's "this game has a problem" screen stays as it is: it is made of the check's sentences and file paths,
    which are developer text (Q1).
@@ -71,10 +72,6 @@ The spec leaves these to the builder, or is silent. They are settled here so the
 9. **The first-language counts** (Ethnologue, 28th edition, 2025; millions): Chinese (Mandarin) 990, Spanish 484,
    English 390, Portuguese 250, Russian 145, Japanese 124, Korean 81, German 76, French 74. The order is the spec's;
    the plan audit checks the counts against the edition before they are written into a code comment.
-
-**Found on the way, not in this plan:** `input/bindings.ts` answers a refused `rebind` with English sentences
-(`message`), which a remap screen would show a player. Plan U's remap screen should say them from `reason`, as
-`players.ts` does. Reported to the coordinator.
 
 ## Review Focus
 
@@ -104,14 +101,15 @@ src/features/locale/pick.ts             pickLanguage (a language or none), playe
 src/features/locale/words.ts            the chain through the source; frameworkWords with no fallback
 src/features/locale/create.ts           Locale: language() may be undefined, asked(), suggested(), listed(), wordsIn()
 src/features/locale/picker.ts           NEW the picker's rules, no page
-src/features/locale/library/*.json      + automata.picker.title, automata.picker.go, automata.sound.start
+src/features/locale/library/*.json      + automata.picker.title, automata.picker.go
 src/features/locale/library/flags/      NEW zh.svg es.svg en.svg pt.svg ja.svg ko.svg
 src/features/input/pad-menu.ts          NEW gamepad menu presses with no running game
 src/features/web/flags.ts               NEW languageFlag, languageRow
 src/features/web/picker.ts              NEW languagePicker (the screen)
 src/features/web/library/               NEW globe.svg, check.svg
 src/features/web/ambient.d.ts           NEW declares '*.svg?raw'
-src/features/web/notice.ts              words required
+src/features/web/notice.ts              locale required
+src/features/input/bindings.ts          a refusal is a key and values, no English sentence
 src/features/game/{game,online,players}.ts   locale required
 src/features/cli/unread.ts              NEW `automata words`
 src/features/cli/{args,cli,help,mcp-tools,create,ports,live,check-files,words}.ts
@@ -444,7 +442,7 @@ export interface Locale {
 }
 export function createLocale(options: {
   readonly content: GameContent
-  readonly host: Host
+  readonly host: Pick<Host, 'language' | 'deviceLanguages'>
   readonly settings: Settings
   /** Watch mode: nobody is there to ask, so until a choice the words are in `suggested()`, else the game's `source`. */
   readonly watching?: boolean
@@ -511,7 +509,7 @@ is the Korean text; a key no file has comes back as the key; `frameworkWords('ja
 Japanese text and `frameworkWords('ja')('nobody.wrote.this')` is the key.
 
 `library.test.ts`: every one of the six files has every key the others have (compare each with each, no file is "the
-first"), including `automata.picker.title`, `automata.picker.go` and `automata.sound.start`.
+first"), including `automata.picker.title` and `automata.picker.go`.
 
 `create.test.ts`:
 - French device, nothing saved: `language()` is `undefined`, `asked()` false, `suggested()` undefined,
@@ -539,13 +537,12 @@ locale and a picker; choose Korea; go; make a second locale on the same host's s
 
 - [ ] **Step 2: Push; they fail**
 
-- [ ] **Step 3: The library's three new words, in all six files, in `writeContent`'s key order**
+- [ ] **Step 3: The library's two new words, in all six files, in `writeContent`'s key order**
 
 | Key | zh | es | en | pt | ja | ko |
 |---|---|---|---|---|---|---|
 | `automata.picker.go` | 开始 | Vamos | Go | Vamos | スタート | 시작 |
 | `automata.picker.title` | 用中文玩 | Jugar en español | Play in English | Jogar em português | 日本語でプレイ | 한국어로 플레이 |
-| `automata.sound.start` | 点按开启声音 | Toca para activar el sonido | Tap to start the sound | Toque para ativar o som | タップして音を出す | 탭하여 소리 켜기 |
 
 - [ ] **Step 4: `pick.ts`, `words.ts`, `online.ts`**
 
@@ -572,12 +569,13 @@ yet"; "follow my device" is gone from every comment.
 
 **Files:**
 - Modify: `src/features/game/players.ts`, `game.ts`, `online.ts`, `src/features/input/touch.ts`, `input.ts`,
-  `src/features/web/notice.ts`
+  `bindings.ts`, `src/features/web/notice.ts`
 - Modify: every test and fixture that calls `startGame`, `startOnlineGame`, `createInput`, `createTouch`,
   `createPlayers` or `soundNotice` (find them with a search; about twenty files), `tests/install/smoke.mjs`,
   `tests/install/consumer.ts`
 - Test: `tests/features/game/players.test.ts`, `game.browser.test.ts`, `language.browser.test.ts`,
-  `tests/features/input/touch-words.browser.test.ts`, `tests/features/web/notice.browser.test.ts`
+  `tests/features/input/touch-words.browser.test.ts`, `bindings.test.ts`, `input.browser.test.ts`,
+  `tests/features/web/notice.browser.test.ts`
 
 **Interfaces:**
 - Consumes: `Locale`, `chosenLocale` (Task 4).
@@ -586,7 +584,11 @@ yet"; "follow my device" is gone from every comment.
   - `createTouch(mount, controls, options: { readonly win?: Window; readonly words: Words })`.
   - `InputOptions.words: Words` required.
   - `GameOptions.locale: Locale` and `OnlineOptions.locale: Locale` required.
-  - `soundNotice(options)`: `words: string | (() => string)` required; a function is read each time the button shows.
+  - `soundNotice(options)`: `locale: Pick<Locale, 'words' | 'onChange'>` required; `words?: string` stays the game's
+    own words in its place.
+  - `bindings.ts`: the pure `rebind` answers a refusal as `{ ok: false, reason, key, values? }`, with no `message`.
+    `Input.rebind` answers `Rebound | (Refusal & { readonly message: string })`, exported as `SaidRebound`, where
+    `Refusal` is the pure refusal and `message` is always in the input's words.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -603,7 +605,10 @@ test('a game does not start before the player has a language', async () => {
 ```
 
 `notice.browser.test.ts`: with a Korean locale and a game that has a cue, the button `startGame` shows reads
-`탭하여 소리 켜기`. `touch-words.browser.test.ts`: with `frameworkWords('ja')` the overlay's `aria-label` is the
+`눌러서 소리를 켜세요`; there is no test left for "no locale given". `bindings.test.ts`: a refusal has `reason`, `key`
+and `values` and no own property `message`; the test that held the English in `bindings.ts` to the library's is
+deleted with the English. `input.browser.test.ts`: `input.rebind` of a reserved key, with `frameworkWords('es')`,
+answers the Spanish sentence as `message`. `touch-words.browser.test.ts`: with `frameworkWords('ja')` the overlay's `aria-label` is the
 Japanese text; there is no test left for "no words given". `players.test.ts`: a refusal's `message` is in the
 language of the `words` it was made with (`es`).
 
@@ -612,8 +617,10 @@ language of the `words` it was made with (`es`).
 - [ ] **Step 3: Implement**
 
 `startGame` and `startOnlineGame`: right after `checkControls`, throw the sentence above when
-`locale.language() === undefined`. Every `locale === undefined ? {} : …` goes. The notice's words are the game's own
-string when `soundNotice` is one, else `() => locale.words('automata.sound.start')`. `touch.ts`: `OVERLAY_WORDS` and
+`locale.language() === undefined`. Every `locale === undefined ? {} : …` goes. `soundNotice` is always given
+`locale`, and the game's own string as `words` when `soundNotice` is one; inside it, `frameworkWords('en')` goes.
+`bindings.ts`: `refused` no longer takes or returns an English sentence, and `Input.rebind` says every refusal with
+its words (`words(answer.key, answer.values)`). `touch.ts`: `OVERLAY_WORDS` and
 the "else English" comment are deleted; the overlay's name is `words('automata.touch.label')`. A button's words stay
 `controls.<action>`, else the control's own `label`, which is the game's. Doc comments that say "Default: English"
 are rewritten.
@@ -1200,7 +1207,7 @@ widen the list of files.
 - [ ] **Step 5: `progress.md`, Cycle 5**
 
 Stage 4 at 100% for plan W, the commit and test counts, and under "Before Release 1": the framework's library now has
-23 words in each language, so 115 wait for a native speaker's read. Add the handoffs below as the tracker's notes.
+29 words in each language, so 145 wait for a native speaker's read. Add the handoffs below as the tracker's notes.
 
 - [ ] **Step 6: Push; every job green, on the last commit. Commit** `docs: no default language, and the rule that holds it`
 
@@ -1211,8 +1218,7 @@ Stage 4 at 100% for plan W, the commit and test counts, and under "Before Releas
 - **Plan U (screens).** The default flow is Warnings (if needed), Language picker, Splash, Main menu, Gameplay (with
   pause), Main menu. The picker is `languagePicker` and is already the template page's first step; plan U moves it
   into the flow between the warnings and the splash. Settings' language part is `languageRow` over `locale.listed()`
-  with `locale.set`. `padMenu` gives a screen gamepad presses while no game runs. The remap screen says a refused
-  `rebind` from its `reason`, not its English `message`. `automata.saves.refused.*` (plan L's audit, M3) joins the
+  with `locale.set`. `padMenu` gives a screen gamepad presses while no game runs. `automata.saves.refused.*` (plan L's audit, M3) joins the
   library in all six.
 - **Plan D (Examples).** `source = "en"` in the demo's `automata.toml`; marks to format 2; the page shows the picker
   on a first visit, and in watch mode makes its locale with `watching: true` and shows the picker when a player takes
@@ -1221,7 +1227,10 @@ Stage 4 at 100% for plan W, the commit and test counts, and under "Before Releas
   the commit that lands this plan. Neither golden moves.
 - **Editors.** The pin moves with this plan; a game with words and no `source` shows the load sentence. The nine
   flags and the editors' own picker are M3.
-- **Plan K.** `compileWords` takes the `source` as its base language. If it is put on the command line under
-  `words`, it is `automata words --compile <outdir>`.
+- **Plan K.** `compileWords` takes the `source` as its base language. This plan does not put it on the command
+  line (the spec leaves that to plan K), so the two inlang packages stay development dependencies and
+  `bindParaglide` still has no command that makes its `runtime.js`. When plan K wires it, it is
+  `automata words --compile <outdir>`, and that pull request moves the two packages to `dependencies`
+  (`tests/package.test.ts` says so).
 - **The other repos' `CLAUDE.md` pages** list the languages in the old order; each is corrected with that repo's next
   pull request.
