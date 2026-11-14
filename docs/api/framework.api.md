@@ -152,6 +152,12 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `Bus` (type)
+
+```ts
+type Bus = 'sound' | 'music';
+```
+
 ### `BYTES_CHANNEL` (const)
 
 ```ts
@@ -493,6 +499,16 @@ function coopSeats(project: {
 function cos(x: number): number;
 ```
 
+### `createAudio` (function)
+
+```ts
+function createAudio(options: {
+    readonly content: GameContent;
+    readonly speaker: Speaker;
+    readonly tickHz?: number;
+}): GameAudio;
+```
+
 ### `createGameSim` (function)
 
 ```ts
@@ -585,6 +601,19 @@ function createSim(opts: SimOptions): Promise<Sim>;
 
 ```ts
 type Cue = SoundCue | MusicCue | StopMusicCue;
+```
+
+### `CueLogEntry` (interface)
+
+```ts
+interface CueLogEntry {
+    readonly tick: number;
+    readonly from: 'sim' | 'page';
+    readonly on: string;
+    readonly do: 'sound' | 'music' | 'stop-music';
+    readonly id?: string;
+    readonly skipped?: 'busy';
+}
 ```
 
 ### `CuesFile` (interface)
@@ -912,6 +941,29 @@ interface Game {
 }
 ```
 
+### `GameAudio` (interface)
+
+```ts
+interface GameAudio {
+    readonly silent: boolean;
+    begin(): void;
+    hear(result: {
+        readonly tick: number;
+        readonly events: readonly SimEvent[];
+    }): void;
+    raise(event: string): void;
+    log(): readonly CueLogEntry[];
+    music(): string | undefined;
+    volumes(): SoundSettings;
+    setVolumes(volumes: SoundSettings): void;
+    sample(bus: Bus): void;
+    state(): SpeakerState;
+    onState(listener: (state: SpeakerState) => void): () => void;
+    stop(): void;
+    close(): void;
+}
+```
+
 ### `GameContent` (interface)
 
 ```ts
@@ -973,6 +1025,12 @@ const groundOf: (level: Level) => number;
 
 ```ts
 const HASH_EVERY = 60;
+```
+
+### `hertzOf` (function)
+
+```ts
+function hertzOf(note: string): number | undefined;
 ```
 
 ### `Host` (interface)
@@ -1390,6 +1448,12 @@ type LoadResult<S> = {
 function log(x0: number): number;
 ```
 
+### `LOG_MAX` (const)
+
+```ts
+const LOG_MAX = 1024;
+```
+
 ### `Look` (const)
 
 ```ts
@@ -1442,6 +1506,18 @@ const MAX_PLAYERS = 4;
 
 ```ts
 const MAX_QUEUED_COMMANDS = 32;
+```
+
+### `MAX_SAME` (const)
+
+```ts
+const MAX_SAME = 4;
+```
+
+### `MAX_SOUNDS` (const)
+
+```ts
+const MAX_SOUNDS = 16;
 ```
 
 ### `MAX_STEPS` (const)
@@ -1759,6 +1835,16 @@ interface PhysicsOptions {
 interface Played {
     readonly finalHash: string;
     readonly checks: readonly ReplayCheck[];
+}
+```
+
+### `PlayedVoice` (interface)
+
+```ts
+interface PlayedVoice {
+    readonly bus: Bus;
+    readonly voice: SoundVoice;
+    readonly when: number;
 }
 ```
 
@@ -2209,6 +2295,33 @@ interface Scene {
 }
 ```
 
+### `Score` (interface)
+
+```ts
+interface Score {
+    readonly id: string;
+    readonly seconds: number;
+    readonly loop: boolean;
+    readonly notes: readonly ScoreNote[];
+}
+```
+
+### `ScoreNote` (interface)
+
+```ts
+interface ScoreNote {
+    readonly part: string;
+    readonly at: number;
+    readonly voice: SoundVoice;
+}
+```
+
+### `scoreOf` (function)
+
+```ts
+function scoreOf(music: MusicFile): Score;
+```
+
 ### `Seat` (interface)
 
 ```ts
@@ -2584,6 +2697,12 @@ interface SnapshotView {
 }
 ```
 
+### `SOUND_SETTINGS_DEFAULT` (const)
+
+```ts
+const SOUND_SETTINGS_DEFAULT: SoundSettings;
+```
+
 ### `SoundCue` (interface)
 
 ```ts
@@ -2621,6 +2740,22 @@ function soundNotice(options: {
 const SoundSchema: z.ZodType<SoundFile, SoundFile>;
 ```
 
+### `SoundSettings` (interface)
+
+```ts
+interface SoundSettings {
+    readonly format: 1;
+    readonly music: number;
+    readonly sound: number;
+}
+```
+
+### `SoundSettingsSchema` (const)
+
+```ts
+const SoundSettingsSchema: z.ZodType<SoundSettings, SoundSettings>;
+```
+
 ### `SoundVoice` (type)
 
 ```ts
@@ -2639,6 +2774,21 @@ function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: re
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
 ```
 
+### `Speaker` (interface)
+
+```ts
+interface Speaker {
+    state(): SpeakerState;
+    onState(listener: (state: SpeakerState) => void): () => void;
+    now(): number;
+    onClock(listener: () => void): () => void;
+    play(bus: Bus, voice: SoundVoice, when: number): void;
+    volume(bus: Bus, value: number): void;
+    cut(bus: Bus): void;
+    close(): void;
+}
+```
+
 ### `SpeakerSeams` (interface)
 
 ```ts
@@ -2647,6 +2797,12 @@ interface SpeakerSeams {
     readonly target: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>;
     readonly every: (ms: number, run: () => void) => () => void;
 }
+```
+
+### `SpeakerState` (type)
+
+```ts
+type SpeakerState = 'waiting' | 'on' | 'unavailable';
 ```
 
 ### `START_LEAD` (const)
@@ -2772,6 +2928,28 @@ interface TestHostOptions {
     readonly canQuit?: boolean;
     readonly blockLinks?: boolean;
 }
+```
+
+### `TestSpeaker` (interface)
+
+```ts
+interface TestSpeaker extends Speaker {
+    tap(): void;
+    interrupt(): void;
+    advance(seconds: number): void;
+    readonly played: readonly PlayedVoice[];
+    readonly cuts: readonly Bus[];
+    readonly levels: Readonly<Record<Bus, number>>;
+    readonly closed: boolean;
+}
+```
+
+### `testSpeaker` (function)
+
+```ts
+function testSpeaker(options?: {
+    readonly state?: SpeakerState;
+}): TestSpeaker;
 ```
 
 ### `Thing` (const)
@@ -3249,6 +3427,12 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `Bus` (type)
+
+```ts
+type Bus = 'sound' | 'music';
+```
+
 ### `BYTES_CHANNEL` (const)
 
 ```ts
@@ -3525,6 +3709,16 @@ function coopSeats(project: {
 function cos(x: number): number;
 ```
 
+### `createAudio` (function)
+
+```ts
+function createAudio(options: {
+    readonly content: GameContent;
+    readonly speaker: Speaker;
+    readonly tickHz?: number;
+}): GameAudio;
+```
+
 ### `createGameSim` (function)
 
 ```ts
@@ -3592,6 +3786,19 @@ function createSim(opts: SimOptions): Promise<Sim>;
 
 ```ts
 type Cue = SoundCue | MusicCue | StopMusicCue;
+```
+
+### `CueLogEntry` (interface)
+
+```ts
+interface CueLogEntry {
+    readonly tick: number;
+    readonly from: 'sim' | 'page';
+    readonly on: string;
+    readonly do: 'sound' | 'music' | 'stop-music';
+    readonly id?: string;
+    readonly skipped?: 'busy';
+}
 ```
 
 ### `CuesFile` (interface)
@@ -3860,6 +4067,29 @@ interface Freeze {
 }
 ```
 
+### `GameAudio` (interface)
+
+```ts
+interface GameAudio {
+    readonly silent: boolean;
+    begin(): void;
+    hear(result: {
+        readonly tick: number;
+        readonly events: readonly SimEvent[];
+    }): void;
+    raise(event: string): void;
+    log(): readonly CueLogEntry[];
+    music(): string | undefined;
+    volumes(): SoundSettings;
+    setVolumes(volumes: SoundSettings): void;
+    sample(bus: Bus): void;
+    state(): SpeakerState;
+    onState(listener: (state: SpeakerState) => void): () => void;
+    stop(): void;
+    close(): void;
+}
+```
+
 ### `GameContent` (interface)
 
 ```ts
@@ -3906,6 +4136,12 @@ const groundOf: (level: Level) => number;
 
 ```ts
 const HASH_EVERY = 60;
+```
+
+### `hertzOf` (function)
+
+```ts
+function hertzOf(note: string): number | undefined;
 ```
 
 ### `Host` (interface)
@@ -4236,6 +4472,12 @@ type LoadResult<S> = {
 function log(x0: number): number;
 ```
 
+### `LOG_MAX` (const)
+
+```ts
+const LOG_MAX = 1024;
+```
+
 ### `Look` (const)
 
 ```ts
@@ -4288,6 +4530,18 @@ const MAX_PLAYERS = 4;
 
 ```ts
 const MAX_QUEUED_COMMANDS = 32;
+```
+
+### `MAX_SAME` (const)
+
+```ts
+const MAX_SAME = 4;
+```
+
+### `MAX_SOUNDS` (const)
+
+```ts
+const MAX_SOUNDS = 16;
 ```
 
 ### `MAX_STEPS` (const)
@@ -4543,6 +4797,16 @@ interface PhysicsOptions {
 interface Played {
     readonly finalHash: string;
     readonly checks: readonly ReplayCheck[];
+}
+```
+
+### `PlayedVoice` (interface)
+
+```ts
+interface PlayedVoice {
+    readonly bus: Bus;
+    readonly voice: SoundVoice;
+    readonly when: number;
 }
 ```
 
@@ -4932,6 +5196,33 @@ interface SaveStore {
 }
 ```
 
+### `Score` (interface)
+
+```ts
+interface Score {
+    readonly id: string;
+    readonly seconds: number;
+    readonly loop: boolean;
+    readonly notes: readonly ScoreNote[];
+}
+```
+
+### `ScoreNote` (interface)
+
+```ts
+interface ScoreNote {
+    readonly part: string;
+    readonly at: number;
+    readonly voice: SoundVoice;
+}
+```
+
+### `scoreOf` (function)
+
+```ts
+function scoreOf(music: MusicFile): Score;
+```
+
 ### `Sense` (type)
 
 ```ts
@@ -5291,6 +5582,12 @@ interface SnapshotView {
 }
 ```
 
+### `SOUND_SETTINGS_DEFAULT` (const)
+
+```ts
+const SOUND_SETTINGS_DEFAULT: SoundSettings;
+```
+
 ### `SoundCue` (interface)
 
 ```ts
@@ -5318,6 +5615,22 @@ interface SoundFile {
 const SoundSchema: z.ZodType<SoundFile, SoundFile>;
 ```
 
+### `SoundSettings` (interface)
+
+```ts
+interface SoundSettings {
+    readonly format: 1;
+    readonly music: number;
+    readonly sound: number;
+}
+```
+
+### `SoundSettingsSchema` (const)
+
+```ts
+const SoundSettingsSchema: z.ZodType<SoundSettings, SoundSettings>;
+```
+
 ### `SoundVoice` (type)
 
 ```ts
@@ -5334,6 +5647,27 @@ function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: re
 
 ```ts
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
+```
+
+### `Speaker` (interface)
+
+```ts
+interface Speaker {
+    state(): SpeakerState;
+    onState(listener: (state: SpeakerState) => void): () => void;
+    now(): number;
+    onClock(listener: () => void): () => void;
+    play(bus: Bus, voice: SoundVoice, when: number): void;
+    volume(bus: Bus, value: number): void;
+    cut(bus: Bus): void;
+    close(): void;
+}
+```
+
+### `SpeakerState` (type)
+
+```ts
+type SpeakerState = 'waiting' | 'on' | 'unavailable';
 ```
 
 ### `START_LEAD` (const)
@@ -5447,6 +5781,28 @@ interface TestHostOptions {
     readonly canQuit?: boolean;
     readonly blockLinks?: boolean;
 }
+```
+
+### `TestSpeaker` (interface)
+
+```ts
+interface TestSpeaker extends Speaker {
+    tap(): void;
+    interrupt(): void;
+    advance(seconds: number): void;
+    readonly played: readonly PlayedVoice[];
+    readonly cuts: readonly Bus[];
+    readonly levels: Readonly<Record<Bus, number>>;
+    readonly closed: boolean;
+}
+```
+
+### `testSpeaker` (function)
+
+```ts
+function testSpeaker(options?: {
+    readonly state?: SpeakerState;
+}): TestSpeaker;
 ```
 
 ### `Thing` (const)
