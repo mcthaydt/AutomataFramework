@@ -79,7 +79,7 @@ export function createAudio(options: {
     const actions = table.get(on) ?? []
     // Every change to the music is logged, but of several for one event only the last one counts.
     const lastMusic = actions.findLastIndex((action) => action.do !== 'sound')
-    actions.forEach((action, i) => run(action, on, tick, from, i === lastMusic))
+    for (const [i, action] of actions.entries()) run(action, on, tick, from, i === lastMusic)
   }
 
   return {
