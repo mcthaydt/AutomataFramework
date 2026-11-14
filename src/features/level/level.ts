@@ -7,4 +7,6 @@ export { JoinCommand, joinCommand, joinPlugin, LeaveCommand, leaveCommand, playe
 export { Mind } from './mind.ts'
 export { levelPlugin } from './plugin.ts'
 export { LevelError, spawnLevel } from './spawn-level.ts'
+export { choosePlace, nextPlace, openAt, type TalkPlace } from './talk.ts'
+export { type ActorPlace, actorsAt, cameraAt, linesAt, type SceneCamera } from './timeline.ts'
 export { levelSize, type TileRun, tileRuns } from './tile-runs.ts'
