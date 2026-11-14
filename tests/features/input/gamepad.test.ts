@@ -70,3 +70,20 @@ test('a pad with fewer buttons or axes than the standard does not throw', () => 
   expect(readPad(bare)).toEqual(new Set())
   expect(isUsable(bare)).toBe(true)
 })
+
+// Audit M2: a browser that calls a trigger pressed early must not make it count before half travel.
+test('a trigger a browser calls pressed early still counts only from half way, and a face button by pressed alone', () => {
+  const buttons = Array.from({ length: PAD_BUTTONS.length }, () => ({ pressed: false, value: 0 }))
+  buttons[PAD_BUTTONS.indexOf('l2')] = { pressed: true, value: 0.2 }
+  buttons[PAD_BUTTONS.indexOf('r2')] = { pressed: true, value: 0.7 }
+  buttons[PAD_BUTTONS.indexOf('south')] = { pressed: true, value: 0 }
+  const early: PadLike = {
+    id: 'Standard Gamepad',
+    index: 0,
+    connected: true,
+    mapping: 'standard',
+    axes: [0, 0, 0, 0],
+    buttons,
+  }
+  expect([...readPad(early)].sort()).toEqual(['r2', 'south'])
+})

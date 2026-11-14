@@ -972,6 +972,7 @@ interface Input {
     seats(): readonly Seat[];
     onSeats(listener: (seats: readonly Seat[]) => void): () => void;
     pads(): readonly ListedPad[];
+    onPads(listener: (pads: readonly ListedPad[]) => void): () => void;
     silence(): () => void;
     invite(onPad: (pad: number) => void): () => void;
     onMenu(listener: (press: MenuPress, pad: number) => void): () => void;
@@ -1220,6 +1221,16 @@ interface Listed {
     has(type: ContentType, id: string): boolean;
     ids(type: ContentType): readonly string[];
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
+}
+```
+
+### `ListedPad` (interface)
+
+```ts
+interface ListedPad {
+    readonly index: number;
+    readonly id: string;
+    readonly usable: boolean;
 }
 ```
 
@@ -1644,7 +1655,7 @@ type Rebound = {
     readonly swapped?: string;
 } | {
     readonly ok: false;
-    readonly reason: 'unknown-action' | 'reserved' | 'no-shared' | 'other-half';
+    readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half';
     readonly message: string;
 };
 ```

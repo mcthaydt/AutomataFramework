@@ -120,7 +120,7 @@ for (const [name, w, h] of SCREENS) {
       host: visibleHost,
       frames,
     })
-    game.addPlayer('keyboard')
+    expect(game.addPlayer('keyboard')).toEqual({ ok: true, player: 2 })
     window.dispatchEvent(
       new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }),
     )
@@ -129,6 +129,7 @@ for (const [name, w, h] of SCREENS) {
     await frames2()
     frames.advance(FRAME)
 
+    expect(game.players()).toEqual([1, 2])
     const canvas = mount.querySelector('canvas') as HTMLCanvasElement
     const tops = [...mount.querySelectorAll('button')].map((b) => b.getBoundingClientRect().top)
     expect(tops.length).toBeGreaterThan(0)
