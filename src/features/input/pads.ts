@@ -20,6 +20,8 @@ export interface Pads {
   list(): readonly ListedPad[]
   /** Whatever is held right now, on one pad or on all, does nothing until it is let go. */
   mask(index?: number): void
+  /** The left stick of a usable pad as the browser reports it, for a menu to pick its stronger axis. */
+  leftStick(index: number): { readonly x: number; readonly y: number }
   /** Called after a `read` that found a pad arrive or go. */
   onChange(listener: () => void): () => void
 }
@@ -84,6 +86,10 @@ export function createPads(gamepads: () => readonly (PadLike | null)[] = browser
         for (const input of now) hidden.add(input)
         if (hidden.size > 0) masked.set(pad.index, hidden)
       }
+    },
+    leftStick(index) {
+      const pad = snapshot().find((one) => one.index === index && usable(one))
+      return { x: pad?.axes[0] ?? 0, y: pad?.axes[1] ?? 0 }
     },
     onChange(listener) {
       listeners.add(listener)

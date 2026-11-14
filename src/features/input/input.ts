@@ -4,7 +4,13 @@
 // the controls, `pads.ts` reads the pads, and the bindings are `bindings.ts`.
 
 import { type Frames, pageFrames } from '../../lib/frames.ts'
-import { controlsCommand, createSequence, MAX_PLAYERS, type Sequence } from '../commands/commands.ts'
+import {
+  controlsCommand,
+  createSequence,
+  MAX_PLAYERS,
+  type PadInput,
+  type Sequence,
+} from '../commands/commands.ts'
 import type { Command } from '../sim/sim.ts'
 import {
   applySettings,
@@ -18,10 +24,13 @@ import { type Capture, type RunningCapture, startCapture } from './capture.ts'
 import { type Controls, checkControls } from './controls.ts'
 import type { PadLike } from './gamepad.ts'
 import { heldBy } from './held.ts'
+import { createInvites } from './invite.ts'
 import { createKeyboard } from './keyboard.ts'
+import { createMenu, type MenuPress } from './menu.ts'
 import { createPads, type ListedPad } from './pads.ts'
 import { type Claim as ClaimType, type Seat, seatsFor } from './seats.ts'
 import { createTouch } from './touch.ts'
+import { createUse, type DeviceKind } from './use.ts'
 
 export {
   applySettings,
@@ -75,6 +84,16 @@ export interface Input {
   pads(): readonly ListedPad[]
   /** Every player lets go until the returned function is called; what is down then does nothing until let go. */
   silence(): () => void
+  /** Waits for people to pick up a gamepad: calls `onPad` with the index of each free pad a button is pressed on. Returns stop. */
+  invite(onPad: (pad: number) => void): () => void
+  /** Gamepad presses for menus, from any usable pad, silenced or not. */
+  onMenu(listener: (press: MenuPress, pad: number) => void): () => void
+  /** What this player last used. */
+  device(player: number): DeviceKind
+  /** Calls `listener` when a player starts using a different kind of device. */
+  onDevice(listener: (player: number, kind: DeviceKind) => void): () => void
+  /** What to press for an action on the device the player is using: key codes, PadInput names, or [] for touch. */
+  inputsFor(player: number, action: string): readonly string[]
   /** The controls in use now: the game's own with the player's changes. */
   controls(): Controls
   /** What to save. `{ format: 1, bindings: {} }` when nothing was changed. */
@@ -94,7 +113,9 @@ export interface Input {
 }
 
 export type { Capture, CaptureAnswer } from './capture.ts'
+export type { MenuPress } from './menu.ts'
 export type { Claim, Device, Seat } from './seats.ts'
+export type { DeviceKind } from './use.ts'
 
 /**
  * Listens to the keyboard (on the window), on-screen buttons (inside `mount`) and gamepads for every player, and
@@ -119,6 +140,16 @@ export function createInput(options: InputOptions): Input {
   let lastSeats = ''
   let silent = 0
   let waiting: RunningCapture | undefined
+  const invites = createInvites()
+  const menu = createMenu()
+  const coarse = (): boolean => window.matchMedia?.('(pointer: coarse)').matches === true
+  // Before a player has pressed anything: what they brought, and for the first player the screen's own kind.
+  const use = createUse((player) => {
+    const claim = claims.get(player)
+    if (claim === 'keyboard') return 'keyboard'
+    if (claim !== undefined) return 'gamepad'
+    return player === players[0] && coarse() ? 'touch' : 'keyboard'
+  })
   let destroyed = false
 
   const usable = (): number[] =>
@@ -161,12 +192,25 @@ export function createInput(options: InputOptions): Input {
 
   // Pads are read on every frame, not only on a tick: arrivals and departures are noticed while the game is paused.
   let frame: number | undefined
-  const onFrame = (): void => {
+  /** A pad the next player may take: nobody but the first player has it, and it is not the one the first player uses. */
+  const free = (pad: number): boolean => {
+    const [first] = players
+    const claimed = [...claims].some(([player, claim]) => player !== first && claim === `pad-${pad}`)
+    return !claimed && (first === undefined || use.lastPad(first) !== pad)
+  }
+  const observe = (held: ReadonlyMap<number, ReadonlySet<PadInput>>): void =>
+    use.observe(seats(), controls, { keys: keyboard.down(), touch: touch.held(), pads: held })
+  const onFrame = (ms: number): void => {
     frame = undefined
     if (destroyed) return
     const held = pads.read()
+    const capturing = waiting !== undefined && !waiting.ended
     waiting?.step(held)
     if (waiting?.ended) waiting = undefined
+    // A press that answers a capture, or joins an invite, is that and nothing else: the menu does not hear it too.
+    const taken = capturing ? new Set(held.keys()) : invites.step(held, free)
+    menu.step(held, ms, pads.leftStick, taken)
+    observe(held)
     announce()
     frame = frames.request(onFrame)
   }
@@ -176,6 +220,7 @@ export function createInput(options: InputOptions): Input {
     poll(tick) {
       if (destroyed) return []
       const down = { keys: keyboard.down(), touch: touch.held(), pads: pads.read() }
+      use.observe(seats(), controls, down)
       const commands: Command[] = []
       for (const seat of seats()) {
         // Sorted, so the same hands always make the same command, whichever finger or key came first.
@@ -199,6 +244,7 @@ export function createInput(options: InputOptions): Input {
         if (!staying.has(player)) {
           claims.delete(player)
           sent.delete(player)
+          use.forget(player)
         }
       for (const player of next) if (!sent.has(player)) sent.set(player, '')
       players = [...staying].sort((a, b) => a - b)
@@ -230,6 +276,22 @@ export function createInput(options: InputOptions): Input {
           pads.mask()
         }
       }
+    },
+    invite: (onPad) => invites.open(onPad, pads.read()),
+    onMenu: (listener) => menu.on(listener),
+    device: use.device,
+    onDevice: use.onDevice,
+    inputsFor(player, action) {
+      const control = controls[action]
+      const seat = seats().find((one) => one.player === player)
+      if (control === undefined || seat === undefined) return []
+      const kind = use.device(player)
+      if (kind === 'touch') return []
+      if (kind === 'gamepad') return control.pad ?? []
+      if (seat.devices.includes('keyboard')) return control.keys
+      if (seat.devices.includes('keyboard-1')) return control.shared?.[0] ?? []
+      if (seat.devices.includes('keyboard-2')) return control.shared?.[1] ?? []
+      return []
     },
     controls: () => controls,
     settings: () => settingsOf(defaults, controls),

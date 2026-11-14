@@ -78,6 +78,27 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `Capture` (interface)
+
+```ts
+interface Capture {
+    readonly done: Promise<CaptureAnswer>;
+    cancel(): void;
+}
+```
+
+### `CaptureAnswer` (type)
+
+```ts
+type CaptureAnswer = {
+    readonly ok: true;
+    readonly input: string;
+} | {
+    readonly ok: false;
+    readonly reason: 'cancelled';
+};
+```
+
 ### `Character` (interface)
 
 ```ts
@@ -427,6 +448,12 @@ function deriveSeed(rootSeed: number, name: string): number;
 type Device = 'keyboard' | 'keyboard-1' | 'keyboard-2' | 'touch' | 'pad-0' | 'pad-1' | 'pad-2' | 'pad-3';
 ```
 
+### `DeviceKind` (type)
+
+```ts
+type DeviceKind = 'keyboard' | 'touch' | 'gamepad';
+```
+
 ### `Diagnostic` (interface)
 
 ```ts
@@ -631,6 +658,18 @@ interface Input {
     onSeats(listener: (seats: readonly Seat[]) => void): () => void;
     pads(): readonly ListedPad[];
     silence(): () => void;
+    invite(onPad: (pad: number) => void): () => void;
+    onMenu(listener: (press: MenuPress, pad: number) => void): () => void;
+    device(player: number): DeviceKind;
+    onDevice(listener: (player: number, kind: DeviceKind) => void): () => void;
+    inputsFor(player: number, action: string): readonly string[];
+    controls(): Controls;
+    settings(): InputSettings;
+    dropped(): readonly string[];
+    rebind(action: string, slot: BindingSlot, input: string): Rebound;
+    resetBindings(): void;
+    onBindings(listener: (settings: InputSettings) => void): () => void;
+    capture(slot: BindingSlot): Capture;
     destroy(): void;
 }
 ```
@@ -811,6 +850,12 @@ const MAX_PLAYERS = 4;
 
 ```ts
 const MAX_STEPS_PER_FRAME = 5;
+```
+
+### `MenuPress` (type)
+
+```ts
+type MenuPress = 'up' | 'down' | 'left' | 'right' | 'accept' | 'back' | 'pause';
 ```
 
 ### `PAD_BUTTONS` (const)
