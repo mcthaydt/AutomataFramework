@@ -137,6 +137,15 @@ test('the server says when it is full', async () => {
   expect((result as OnlineError).problem).toBe('server-full')
 })
 
+// Two rooms asked for at once must not both pass the limit: a room counts from the moment it is asked for.
+test('two rooms made at the same moment do not both fit a server of one', async () => {
+  const { url } = await start({ maxRooms: 1 })
+  const results = await Promise.allSettled([join({ server: url }), join({ server: url })])
+  expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1)
+  const refused = results.find((r) => r.status === 'rejected')
+  expect((refused as PromiseRejectedResult).reason).toMatchObject({ problem: 'server-full' })
+})
+
 test('a dropped connection gets back into its seat and plays on', async () => {
   const { url } = await start()
   const one = await join({ server: url, script: onlineScript })

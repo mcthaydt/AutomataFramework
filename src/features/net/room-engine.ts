@@ -10,7 +10,9 @@
 //
 // A game with `seatCommands` (a co-op game, where heroes come and go) has no lobby: the room starts on the first join,
 // and each player's hero appears when the room queues that seat's `join` command, and goes when it queues `leave`.
-// Everyone after the first is brought up to date the way a returning player is: `seat`, then the state.
+// Everyone after the first is brought up to date the way a returning player is: `seat`, then the state. A seat whose
+// player left stays taken (`gone`): a room of four that lost a player cannot give that number to a newcomer, because the
+// sim would have to take a `join` for a number that just had a `leave`.
 import { controlsCommand, createRecorder, type Recorder, type Replay } from '../commands/commands.ts'
 import type { Command, Sim } from '../sim/sim.ts'
 import {
@@ -247,6 +249,8 @@ export function createRoomEngine(setup: {
       }
       state.gone = true
       state.away = true
+      // Gone for good: the others take the player off the list of those who lost their connection.
+      tellOthers(seat, { t: 'gone', seat })
     },
 
     step() {
