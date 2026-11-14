@@ -94,8 +94,9 @@ test('with no marks at all, a language is marked from nothing', async () => {
 })
 
 test("the game's own language is not read against anything", async () => {
-  expect(() => markRead(await korean(), none('ko'), 'ko')).toThrow(RangeError)
-  expect(() => markRead(await korean(), none('ko'), 'ko')).toThrow(
+  const content = await korean()
+  expect(() => markRead(content, none('ko'), 'ko')).toThrow(RangeError)
+  expect(() => markRead(content, none('ko'), 'ko')).toThrow(
     'This game is written in Korean, so Korean is not read against anything.',
   )
 })
