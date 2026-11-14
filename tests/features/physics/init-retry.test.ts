@@ -3,20 +3,20 @@ import { expect, test, vi } from 'vitest'
 
 const IMP_ENTRY = '#src/features/physics/physics.ts'
 
-// Audit (spec §5): a failed RAPIER.init() must not be cached, so a sim created after a transient wasm failure
+// Audit (spec §5): a failed start of Rapier (its binary's fetch) must not be cached, so a sim created after a transient wasm failure
 // (a dropped fetch) can retry instead of failing for the rest of the page's life.
-test.each([[IMP_ENTRY, '@dimforge/rapier2d-deterministic-compat', 'physics']] as const)(
-  '%s: createSim retries RAPIER.init after it rejected once',
+test.each([[IMP_ENTRY, '#src/features/physics/rapier-wasm.ts', 'physics']] as const)(
+  "%s: createSim retries Rapier's start after it rejected once",
   async (entry, rapier, factory) => {
     vi.resetModules()
     let calls = 0
     vi.doMock(rapier, async (importOriginal) => {
-      const original = (await importOriginal()) as { default: { init(): Promise<void> } }
-      const init = () => {
+      const original = (await importOriginal()) as { loadRapier(): Promise<void> }
+      const loadRapier = () => {
         calls += 1
-        return calls === 1 ? Promise.reject(new Error('wasm fetch failed')) : original.default.init()
+        return calls === 1 ? Promise.reject(new Error('wasm fetch failed')) : original.loadRapier()
       }
-      return { ...original, default: { ...original.default, init } }
+      return { ...original, loadRapier }
     })
     const mod = (await import(/* @vite-ignore */ entry)) as Record<string, () => never>
     const { createSim } = await import('#src/features/sim/sim.ts')

@@ -4,7 +4,7 @@ import { expect, test, vi } from 'vitest'
 const IMP_ENTRY = '#src/features/physics/physics.ts'
 
 // Spec §3.5: importing an entry point loads no Rapier; the wasm loads inside createSim.
-test.each([[IMP_ENTRY, '@dimforge/rapier2d-deterministic-compat', 'physics']] as const)(
+test.each([[IMP_ENTRY, '@dimforge/rapier2d-deterministic', 'physics']] as const)(
   'importing %s loads no Rapier until createSim',
   async (entry, rapier, factory) => {
     vi.resetModules()

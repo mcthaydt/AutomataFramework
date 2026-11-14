@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@dimforge/rapier2d-deterministic-compat':
-        specifier: 0.21.0
-        version: 0.21.0
       koota:
         specifier: 0.6.6
         version: 0.6.6
@@ -30,6 +27,9 @@ importers:
       '@changesets/cli':
         specifier: 3.0.3
         version: 3.0.3
+      '@dimforge/rapier2d-deterministic':
+        specifier: 0.21.0
+        version: 0.21.0
       '@types/node':
         specifier: 24.19.1
         version: 24.19.1
@@ -186,8 +186,8 @@ packages:
     resolution: {integrity: sha512-tEj8X2No2A1c9NDnZECxiiJ8TP3vmFlN9tLlLeSaMqVW4tUmVG2R4qpv/eP4zymWxnymYLkLcIYVV0VcWj3RCQ==}
     engines: {node: '>= 20.12.0'}
 
-  '@dimforge/rapier2d-deterministic-compat@0.21.0':
-    resolution: {integrity: sha512-qVwHqqpRX73ktQRqiAa/0JdBfWdzsGHg8r8d+snaZB0WRXaTs3m7GU6jN+Qf3gEjMEUqk3Rc9q87yGXHkktTbA==}
+  '@dimforge/rapier2d-deterministic@0.21.0':
+    resolution: {integrity: sha512-QnZNjvbSSEolAz3ub6NlnOG96DlN1T9Zw/v3UjWtbEnGWDtlh31QlYcWv9MUStf5KJZglB8HEct0Hm+Dz5b0ig==}
 
   '@emnapi/core@1.11.2':
     resolution: {integrity: sha512-TC8MkTuZUtcTSiFeuC0ksCh9QIJ5+F21MvZ4Wn4ORfYaFJ/0dsiudv5tVkejgwZlwQ39jL9WWDe2lz8x0WglOA==}
@@ -1377,7 +1377,7 @@ snapshots:
       fast-wrap-ansi: 0.2.2
       sisteransi: 2.0.0
 
-  '@dimforge/rapier2d-deterministic-compat@0.21.0': {}
+  '@dimforge/rapier2d-deterministic@0.21.0': {}
 
   '@emnapi/core@1.11.2':
     dependencies:
