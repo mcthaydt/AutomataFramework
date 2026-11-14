@@ -10,8 +10,8 @@ import {
   createGameSim,
   leaveCommand,
   nextCommand,
-  startConversation,
   Story,
+  startConversation,
   Thing,
 } from '#src/features/level/level.ts'
 import { talkOf } from '#src/features/level/story-read.ts'
@@ -319,4 +319,6 @@ test('a hero never counts as a thing to talk to, even if its character names a c
 })
 
 test.todo('walking up to the keeper opens the conversation: waits for the Owner’s answer on when it opens')
-test.todo('it opens again only when the Owner’s rule says so, and two heroes arriving together: the lower player talks')
+test.todo(
+  'it opens again only when the Owner’s rule says so, and two heroes arriving together: the lower player talks',
+)

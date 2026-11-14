@@ -2,8 +2,8 @@
 // `undefined` (or nothing played) for a game with no story, so a caller need not know whether the plugin is in.
 import type { GameContent } from '../content/content.ts'
 import type { Sim } from '../sim/sim.ts'
-import { Story, type StoryProgress } from './story-state.ts'
 import { usesStory } from './story.ts'
+import { Story, type StoryProgress } from './story-state.ts'
 import { cameraAt, linesAt, type SceneCamera } from './timeline.ts'
 
 /** What the speech box shows: who says which line, and what the player may pick now. */

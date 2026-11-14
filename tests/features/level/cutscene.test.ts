@@ -9,11 +9,11 @@ import {
   createGameSim,
   nextCommand,
   SKIP_AFTER,
+  Story,
+  type StoryProgress,
   skipCommand,
   startConversation,
   startCutscene,
-  Story,
-  type StoryProgress,
   Thing,
 } from '#src/features/level/level.ts'
 import { sceneOf, storyProgress } from '#src/features/level/story-read.ts'

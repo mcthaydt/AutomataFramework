@@ -102,7 +102,7 @@ export function startCutscene(ctx: SimContext, id: string): boolean {
 /** The id of the thing with this sid, or '' when it has none or is gone. */
 function thingId(ctx: SimContext, sid: number): string {
   const e = sid === 0 ? undefined : ctx.entity(sid)
-  return e !== undefined && e.has(Thing) ? e.get(Thing).id : ''
+  return e?.has(Thing) ? e.get(Thing).id : ''
 }
 
 /** Tells the page the line the conversation is on. */

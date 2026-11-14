@@ -8,9 +8,9 @@ import {
   joinCommand,
   leaveCommand,
   nextCommand,
+  Story,
   skipCommand,
   startCutscene,
-  Story,
 } from '#src/features/level/level.ts'
 import { Body, Transform } from '#src/features/physics/physics.ts'
 import type { Sim, SimContext } from '#src/features/sim/sim.ts'

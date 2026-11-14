@@ -15,8 +15,8 @@ import {
 } from '../sim/sim.ts'
 import { Thing } from './components.ts'
 import { firstRule, Mind, type Sensed, stepOf } from './mind.ts'
-import { Story, type StoryState } from './story-state.ts'
 import { usesStory } from './story.ts'
+import { Story, type StoryState } from './story-state.ts'
 
 /** True when some character of the game has a behaviour: the only games that get this plugin. */
 export function usesBehaviours(content: GameContent): boolean {

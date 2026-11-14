@@ -6,8 +6,8 @@ import { behaviourPlugin, usesBehaviours } from './behaviour.ts'
 import { joinPlugin } from './join.ts'
 import { levelPlugin } from './plugin.ts'
 import { spawnLevel } from './spawn-level.ts'
-import { Story, type StoryProgress } from './story-state.ts'
 import { storyPlugin, usesStory } from './story.ts'
+import { Story, type StoryProgress } from './story-state.ts'
 
 /** What `createGameSim` takes. Only the content is required. */
 export interface GameSimOptions {
