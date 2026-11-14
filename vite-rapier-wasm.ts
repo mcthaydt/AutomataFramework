@@ -22,7 +22,9 @@ export function rapierWasm(): Plugin {
   return {
     name: 'automata:rapier-wasm',
     enforce: 'pre',
-    resolveId(source, importer) {
+    async resolveId(source, importer) {
+      // The package names its entry only as `module`, which a Node-side Vite (Vitest) does not read.
+      if (source === PACKAGE) return this.resolve(`${PACKAGE}/rapier.js`, importer, { skipSelf: true })
       if (source === ADDRESS) return ADDRESS_ID
       if (source === './rapier_wasm2d_bg.wasm' && importer?.includes('rapier2d-deterministic')) return EMPTY
       return undefined
