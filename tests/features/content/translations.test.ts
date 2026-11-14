@@ -1,7 +1,12 @@
 // "A check fails when a message is missing in any of the six languages": a check of its own, not part of loadGame, so a
 // game with a missing word still loads and plays. Every sentence names the file, the key and what to write.
 import { describe, expect, test } from 'vitest'
-import { formatDiagnostic, type GameContent, loadGame, translationProblems } from '#src/features/content/content.ts'
+import {
+  formatDiagnostic,
+  type GameContent,
+  loadGame,
+  translationProblems,
+} from '#src/features/content/content.ts'
 import { readFullGame } from '../../fixtures/full-game/read.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { type Words, wordsGame } from '../../fixtures/locale/content.ts'
@@ -127,13 +132,17 @@ test('a key named "constructor" or "toString" is a key like any other', async ()
   const words = { constructor: 'Hello' }
   expect(await sayWords({ en: words, es: words, ko: words, ja: words, zh: words, pt: words })).toEqual([])
   // English has `constructor` and Korean does not: the sentence is the ordinary one, not "every object has one".
-  expect(await sayWords({ en: words, es: words, ko: { 'keeper.bye': 'x' }, ja: words, zh: words, pt: words })).toEqual([
+  expect(
+    await sayWords({ en: words, es: words, ko: { 'keeper.bye': 'x' }, ja: words, zh: words, pt: words }),
+  ).toEqual([
     'content/messages/ko.json: messages: This file has no "constructor". English says "Hello". Write it in Korean.',
   ])
 })
 
 test('a thousand missing words are a thousand sentences, sorted', async () => {
-  const many = Object.fromEntries(Array.from({ length: 1000 }, (_, i) => [`word.${String(i).padStart(4, '0')}`, 'x']))
+  const many = Object.fromEntries(
+    Array.from({ length: 1000 }, (_, i) => [`word.${String(i).padStart(4, '0')}`, 'x']),
+  )
   const problems = translationProblems(await wordsGame({ en: many, ko: { 'word.0000': 'x' } }))
   const korean = problems.filter((d) => d.file === 'content/messages/ko.json')
   expect(korean).toHaveLength(999)

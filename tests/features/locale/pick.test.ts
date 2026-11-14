@@ -12,7 +12,9 @@ test('the same tag, whatever its case', () => {
 })
 
 test('a longer tag finds its language', () => {
-  const found = ['pt-BR', 'es-419', 'ES-mx', 'zh-Hant-TW', 'zh-CN', 'ja-JP'].map((tag) => matchLanguage(tag, all))
+  const found = ['pt-BR', 'es-419', 'ES-mx', 'zh-Hant-TW', 'zh-CN', 'ja-JP'].map((tag) =>
+    matchLanguage(tag, all),
+  )
   expect(found).toEqual(['pt', 'es', 'es', 'zh', 'zh', 'ja'])
 })
 
@@ -22,7 +24,18 @@ test('a tag written with _ or ending in .UTF-8 is read as one with -', () => {
 })
 
 test('a tag that is no language of ours finds nothing', () => {
-  for (const tag of ['fr', '', '*', 'k', 'korean', 'a'.repeat(300), 'en-'.repeat(100), 'ko kr', 'ko/KR', 'ko\u0000'])
+  for (const tag of [
+    'fr',
+    '',
+    '*',
+    'k',
+    'korean',
+    'a'.repeat(300),
+    'en-'.repeat(100),
+    'ko kr',
+    'ko/KR',
+    'ko\u0000',
+  ])
     expect(matchLanguage(tag, all), JSON.stringify(tag)).toBeUndefined()
 })
 
@@ -48,5 +61,12 @@ test('each language is named in its own words, and has a tag for a page', () => 
     '中文',
     'Português',
   ])
-  expect(LANGUAGES.map((language) => LANGUAGE_TAGS[language])).toEqual(['en', 'es', 'ko', 'ja', 'zh-Hans', 'pt-BR'])
+  expect(LANGUAGES.map((language) => LANGUAGE_TAGS[language])).toEqual([
+    'en',
+    'es',
+    'ko',
+    'ja',
+    'zh-Hans',
+    'pt-BR',
+  ])
 })

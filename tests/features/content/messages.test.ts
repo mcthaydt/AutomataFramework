@@ -170,7 +170,16 @@ test('the names in a text, each once, in order', () =>
   expect(placeholdersOf('Waiting for {count} more. Code: {code}. {count}!')).toEqual(['count', 'code']))
 
 test('what is not a name is not one', () => {
-  for (const text of ['{}', '{ count }', '{Count}', '{1st}', '{count', 'count}', '{a-b}', `{${'a'.repeat(33)}}`])
+  for (const text of [
+    '{}',
+    '{ count }',
+    '{Count}',
+    '{1st}',
+    '{count',
+    'count}',
+    '{a-b}',
+    `{${'a'.repeat(33)}}`,
+  ])
     expect(placeholdersOf(text), text).toEqual([])
   expect(placeholdersOf(`{${'a'.repeat(32)}}`)).toEqual(['a'.repeat(32)])
 })

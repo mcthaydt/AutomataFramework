@@ -1,7 +1,13 @@
 // A game with words, made in memory: the M1 fixture game and one messages file per language a test names.
-import { type GameContent, type Language, LANGUAGES, loadGame, writeContent } from '#src/features/content/content.ts'
-import { fixtureFiles } from '../game/read.ts'
+import {
+  type GameContent,
+  type Language,
+  LANGUAGES,
+  loadGame,
+  writeContent,
+} from '#src/features/content/content.ts'
 import { gameFiles, readFiles } from '../content/kind.ts'
+import { fixtureFiles } from '../game/read.ts'
 
 /** The words of each language a test gives, by key. A language left out has no file. */
 export type Words = Readonly<Partial<Record<Language, Readonly<Record<string, string>>>>>
