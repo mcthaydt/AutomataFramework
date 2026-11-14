@@ -136,6 +136,7 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
           content: options.content,
           sequence: createSequence(),
           watching: true,
+          look: (camera) => renderer.look(camera),
           ...(options.words === undefined ? {} : { words: options.words }),
           ...(options.boxWords === undefined ? {} : { boxWords: options.boxWords }),
         })

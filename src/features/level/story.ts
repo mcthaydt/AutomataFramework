@@ -7,7 +7,7 @@
 // on a skip, and a player's input is ignored while it plays; a start while one plays replaces it (AutomataFrameworkFailed
 // at ed8592e8, `extensions/cutscenes/src/shared/sim/cutscene.system.ts`).
 import { ControlsCommand, Player } from '../commands/commands.ts'
-import type { ConversationFile, GameContent } from '../content/content.ts'
+import type { ConversationFile, CutsceneFile, GameContent } from '../content/content.ts'
 import { Body, Transform } from '../physics/physics.ts'
 import {
   definePlugin,
@@ -19,6 +19,7 @@ import {
   type SystemDef,
 } from '../sim/sim.ts'
 import { Thing } from './components.ts'
+import { Sprite, setClip, setFacing } from './sprite.ts'
 import {
   ChooseCommand,
   ConversationChosen,
@@ -36,6 +37,7 @@ import {
 } from './story-state.ts'
 import { choosePlace, nextPlace, openAt, type TalkPlace } from './talk.ts'
 import { type ActorPlace, actorsAt } from './timeline.ts'
+import { usesSprites } from './uses.ts'
 
 /** True when the project lists a conversation or a cutscene: the only games that get this plugin. */
 export function usesStory(content: GameContent): boolean {
@@ -52,6 +54,8 @@ function withId(list: readonly string[], id: string): string[] {
 /** Puts each actor where `places` says: the thing whose id it is, one that is not in the game is passed over. */
 function placeActors(ctx: SimContext, places: readonly ActorPlace[]): void {
   if (places.length === 0) return
+  // Only a game with figures has the sprite component to ask about.
+  const sprites = usesSprites(ctx.content as GameContent)
   const things = new Map<string, EntityRef>()
   for (const e of ctx.query(Thing)) things.set(e.get(Thing).id, e)
   for (const place of places) {
@@ -65,7 +69,23 @@ function placeActors(ctx: SimContext, places: readonly ActorPlace[]): void {
       const body = e.get(Body)
       if (body.vx !== 0 || body.vy !== 0 || body.angvel !== 0) e.set(Body, { vx: 0, vy: 0, angvel: 0 })
     }
+    // A character with a figure faces and plays what its keys say; one with none is moved and nothing more. Each is
+    // set only when it changes, so a held pose is not started over every tick.
+    if (sprites && e.has(Sprite)) {
+      const sprite = e.get(Sprite)
+      if (place.face !== undefined && sprite.face !== (place.face === 'right' ? 1 : -1))
+        setFacing(e, place.face)
+      if (place.clip !== undefined && sprite.by !== place.clip) setClip(e, place.clip)
+    }
   }
+}
+
+/** Lets go of every clip the cutscene asked for, so each actor goes back to the clip its motion picks. */
+function releaseClips(ctx: SimContext, file: CutsceneFile): void {
+  if (!usesSprites(ctx.content as GameContent)) return
+  const told = new Set(file.actors.filter((key) => key.clip !== undefined).map((key) => key.who))
+  if (told.size === 0) return
+  for (const e of ctx.query(Thing, Sprite)) if (told.has(e.get(Thing).id)) setClip(e, undefined)
 }
 
 /**
@@ -77,7 +97,10 @@ function endScene(ctx: SimContext, story: StoryState, skipped: boolean): void {
   if (scene === null) return
   story.scene = null
   const file = (ctx.content as GameContent).cutscenes?.[scene.cutscene]
-  if (file !== undefined) placeActors(ctx, actorsAt(file, file.length))
+  if (file !== undefined) {
+    placeActors(ctx, actorsAt(file, file.length))
+    releaseClips(ctx, file)
+  }
   story.seen = withId(story.seen, scene.cutscene)
   ctx.emit(CutsceneEnded, { cutscene: scene.cutscene, skipped })
 }

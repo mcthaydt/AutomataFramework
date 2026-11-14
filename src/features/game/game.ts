@@ -184,6 +184,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
           keysOf: (player) =>
             Object.keys(input.controls()).flatMap((action) => input.inputsFor(player, action)),
           inset: input.inset,
+          look: (camera) => renderer.look(camera),
           ...(words === undefined ? {} : { words }),
           ...(firstBoxWords === undefined ? {} : { boxWords: firstBoxWords }),
         })

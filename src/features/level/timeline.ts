@@ -9,12 +9,13 @@ export interface SceneCamera {
   readonly zoom: number
 }
 
-/** Where one actor is at a tick, and the way it last faced. */
+/** Where one actor is at a tick, the way it last faced and the clip it was last told to play. */
 export interface ActorPlace {
   readonly who: string
   readonly x: number
   readonly y: number
   readonly face?: 'left' | 'right'
+  readonly clip?: string
 }
 
 /** The last key at or before `t`, with the key it moves towards: the later of two keys at one tick counts. */
@@ -68,7 +69,8 @@ export function actorsAt(file: CutsceneFile, t: number): readonly ActorPlace[] {
     const x = to === undefined ? from.x : blend(from.x, to.x, u)
     const y = to === undefined ? from.y : blend(from.y, to.y, u)
     const face = keys.findLast((key) => key.at <= t && key.face !== undefined)?.face
-    places.push(face === undefined ? { who, x, y } : { who, x, y, face })
+    const clip = keys.findLast((key) => key.at <= t && key.clip !== undefined)?.clip
+    places.push({ who, x, y, ...(face === undefined ? {} : { face }), ...(clip === undefined ? {} : { clip }) })
   }
   return places
 }

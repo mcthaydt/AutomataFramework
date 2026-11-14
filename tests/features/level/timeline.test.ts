@@ -144,3 +144,20 @@ test('lines that overlap are on together, in file order', () => {
   expect(linesAt(both, 75).map((l) => l.line)).toEqual(['first', 'second'])
   expect(linesAt(both, 120).map((l) => l.line)).toEqual(['second'])
 })
+
+test('an actor plays the clip last named at or before the tick, and has none before one is named', () => {
+  const talk = scene({
+    actors: [
+      { at: 0, who: 'keeper', x: 1, y: 1 },
+      { at: 10, who: 'keeper', x: 1, y: 1, clip: 'talk' },
+      { at: 30, who: 'keeper', x: 1, y: 1, clip: 'idle', face: 'left' },
+      { at: 50, who: 'keeper', x: 1, y: 1 },
+    ],
+  })
+  expect(actorsAt(talk, 9)).toEqual([{ who: 'keeper', x: 1, y: 1 }])
+  expect(actorsAt(talk, 10)).toEqual([{ who: 'keeper', x: 1, y: 1, clip: 'talk' }])
+  expect(actorsAt(talk, 29)).toEqual([{ who: 'keeper', x: 1, y: 1, clip: 'talk' }])
+  expect(actorsAt(talk, 30)).toEqual([{ who: 'keeper', x: 1, y: 1, face: 'left', clip: 'idle' }])
+  // A key that names neither changes neither.
+  expect(actorsAt(talk, 80)).toEqual([{ who: 'keeper', x: 1, y: 1, face: 'left', clip: 'idle' }])
+})

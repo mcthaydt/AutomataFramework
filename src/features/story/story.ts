@@ -8,6 +8,7 @@ import type { Input, Seat } from '../input/input.ts'
 import {
   chooseCommand,
   nextCommand,
+  type SceneCamera,
   type SceneView,
   SKIP_AFTER,
   sceneOf,
@@ -55,6 +56,11 @@ export interface StoryViewOptions {
   readonly keysOf?: (player: number) => readonly string[]
   /** How many CSS pixels the touch buttons take from the bottom. */
   readonly inset?: () => number
+  /**
+   * Where a cutscene's camera is, after every step while one plays, and `undefined` once when it has ended, so the
+   * camera goes back to the heroes. Left out, the camera is not told (a game with no view has no camera to move).
+   */
+  readonly look?: (camera: SceneCamera | undefined) => void
   /** A page that only watches: the box shows what is said, with no buttons and no keys, and sends nothing. */
   readonly watching?: boolean
 }
@@ -121,6 +127,8 @@ export function createStoryView(options: StoryViewOptions): StoryView {
     if (talk === undefined) return undefined
     return seats === undefined || local().includes(talk.player) ? talk.player : undefined
   }
+  const { look } = options
+  let looking = false
   // What the box shows now, so it is told only when that changes and the focus is not thrown about.
   let shown = ''
   const queue = (press: Press): void => {
@@ -193,6 +201,16 @@ export function createStoryView(options: StoryViewOptions): StoryView {
     update() {
       const talk = talkOf(sim, content)
       const scene = talk === undefined ? sceneOf(sim, content) : undefined
+      // The camera follows the cutscene every step, and lets go once.
+      if (look !== undefined) {
+        if (scene !== undefined) {
+          look(scene.camera)
+          looking = true
+        } else if (looking) {
+          look(undefined)
+          looking = false
+        }
+      }
       const state =
         talk !== undefined
           ? talkState(content, words, talk)

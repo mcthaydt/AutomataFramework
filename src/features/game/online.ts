@@ -212,6 +212,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
           onMenu: input.onMenu,
           seats: input.seats,
           inset: input.inset,
+          look: (camera) => renderer.look(camera),
           ...(words === undefined ? {} : { words }),
           ...(boxWords === undefined ? {} : { boxWords }),
         })
