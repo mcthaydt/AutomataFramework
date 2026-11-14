@@ -20,6 +20,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan V: 3. Plan audit | Written, in review; stage at 100%, plan V at 20%. Ten findings, all applied to the plan | `audits/2026-11-14-m2-saves-host-plan-audit.md` |
 | Plan V: 4. Execution | Done, 100% (all eight tasks, PR 40, green in Node and in Chromium, WebKit and Firefox, and the packed package; merged as `8811935`) | `plans/2026-11-14-m2-saves-host.md`, ticked |
 | Plan V: 5. Implementation audit | Written, in review; stage at 100%, plan V at 80%: no critical, one important (a save's label is not checked on write, so a save can be written that its own reader calls damaged, losing the save it replaced), ten minor, five notes; eleven fixes for stage 6; no Owner question | `audits/2026-11-14-m2-saves-host-implementation-audit.md` |
+| Plan V: 6. Fixes | Done, **100%** (the implementation audit's 11 fixes; the tests pushed red first, then the fixes; CI green), AutomataFramework PR 55 | `audits/2026-11-14-m2-saves-host-implementation-audit.md` |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
 | Plan I (input), stage 3: plan audit | Done, 100%: 3 blocking, 12 should-fix and 5 notes, all applied to the plan; ready for stage 4 | `audits/2026-11-14-m2-input-plan-audit.md` |
 | Plan I (input), stage 4: execution | Done, 100%: all ten tasks built, merged (PR 42, `2aa020b`), green on `eb7e32e` | `plans/2026-11-14-m2-input.md` |

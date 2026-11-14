@@ -9,6 +9,7 @@ import {
   createSaves,
   latestSlot,
   openSettings,
+  type SaveResult,
   type SettingsSection,
   type SlotState,
 } from '#src/features/saves/saves.ts'
@@ -26,7 +27,7 @@ export interface SavesPage {
   /** Starts the game at `level` (default the project's start), runs `ticks` ticks, and returns the sim's hash. */
   play(ticks: number, level?: string): Promise<string>
   /** Saves `data` to `slot`. With `wait: false` it returns as soon as `save` has been called, not when it answers. */
-  save(slot: number, data: Progress, options?: { wait?: boolean }): Promise<void>
+  save(slot: number, data: Progress, options?: { wait?: boolean }): Promise<SaveResult | undefined>
   load(slot: number): Promise<Progress | null>
   setMusic(volume: number): Promise<void>
   music(): Promise<number>
@@ -79,8 +80,8 @@ const page: SavesPage = {
   },
   async save(slot, data, options = {}) {
     const saving = saves.save(slot, data)
-    if (options.wait === false) return
-    await saving
+    if (options.wait === false) return undefined
+    return await saving
   },
   async load(slot) {
     const loaded = await saves.load(slot)

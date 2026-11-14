@@ -111,14 +111,14 @@ test("a save from the game's last version is upgraded on the next page", async (
   }
 })
 
-test('a save broken by hand lists as damaged and is still there, untouched, after a page that tried to play', async () => {
+test('a save broken by hand lists as damaged, the game is told no when it saves over it, and the text is untouched', async () => {
   localStorage.setItem(`${PREFIX}save.2`, '{"oops')
   const { page, close } = await openPage()
   try {
     const title = await page.title()
     expect(title.slots[2]).toMatchObject({ slot: 2, kind: 'damaged' })
     expect(title.latest).toBeUndefined()
-    await page.save(2, level1)
+    expect(await page.save(2, level1)).toMatchObject({ ok: false, problem: { kind: 'damaged' } })
   } finally {
     close()
   }

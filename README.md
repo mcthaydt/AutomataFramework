@@ -194,8 +194,10 @@ one of `unavailable`, `full` or `failed`, and nothing is kept anywhere else. Tel
 before they have played for five minutes, and every `save` answers `{ ok: false, problem }` when it was not kept.
 
 Three rules keep a player's progress safe. A save from a newer version of your game is never changed. A save that
-cannot be read is kept and listed as damaged, never read as empty; `save` does not write over it unless you pass
-`replace: true` after the player has said yes. Raise `version` and add an upgrade when you change what a save holds,
+cannot be read is kept and listed as damaged, never read as empty; `save` does not write over it, or over a slot a
+newer or older version of your game made, unless you pass `replace: true` after the player has said yes. `save` rejects
+with a `RangeError`, before it writes anything, for a slot your game does not have, a label that is not 1 to 80
+characters, or data your schema refuses or JSON cannot keep; a host's "no" is an answer, never a rejection. Raise `version` and add an upgrade when you change what a save holds,
 and a save from an older version is brought up to date when it is loaded. Settings are gentler on purpose: a setting
 that cannot be read starts again from its first values.
 
