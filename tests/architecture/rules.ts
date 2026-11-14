@@ -7,8 +7,10 @@ export const LAYERS = [
   'sim',
   'physics',
   'commands',
+  'net',
   'content',
   'level',
+  'server',
   'render',
   'input',
   'host',
@@ -25,8 +27,12 @@ export interface Violation {
 }
 
 const MAX_LINES = 600
-/** The features that must run the same on every machine: no clock, no randomness, no I/O. */
-const PURE_FEATURES: ReadonlySet<string> = new Set(['sim', 'physics', 'commands', 'level'])
+/**
+ * The features that must run the same on every machine: no clock, no randomness, no I/O.
+ * `net` is one of them although `colyseus-link.ts` talks to a socket: that file's only I/O is the SDK it loads on
+ * demand, and it reads no clock, so nothing here can change what a sim computes.
+ */
+const PURE_FEATURES: ReadonlySet<string> = new Set(['sim', 'physics', 'commands', 'net', 'level'])
 /** Features that need a page (a DOM, a canvas): the headless entry may not reach them. */
 const PAGE_FEATURES: ReadonlySet<string> = new Set(['render', 'input', 'host', 'game'])
 
@@ -50,7 +56,26 @@ const CONFINED: readonly { readonly package: RegExp; readonly only: string; read
   },
   { package: /^pixi\.js(\/|$)/, only: 'src/features/render/', why: 'PixiJS is only for rendering' },
   { package: /^smol-toml$/, only: 'src/features/content/', why: 'TOML is read only by content' },
+  {
+    package: /^@colyseus\/sdk$/,
+    only: 'src/features/net/colyseus-link.ts',
+    why: 'the SDK is loaded on demand by one file, so loading the package loads no SDK',
+  },
+  {
+    package: /^@colyseus\/(core|ws-transport|schema)$/,
+    only: 'src/features/server/',
+    why: 'the room server is the only part that runs rooms',
+  },
+  {
+    package: /^(effect(\/|$)|@effect\/)/,
+    only: 'src/features/server/process.ts',
+    why: "Effect is only for the server's process",
+  },
 ]
+
+/** The one Node-only feature: only `src/server.ts` (the package's Node entry) may import it. */
+const SERVER_FEATURE = 'server'
+const SERVER_ENTRY = 'src/server.ts'
 
 interface Source {
   readonly file: string
@@ -196,6 +221,18 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
         continue
       }
       if (into === undefined || into === feature) continue
+      if (into === SERVER_FEATURE && file !== SERVER_ENTRY) {
+        // Reported instead of `imports-go-down`, so a fault has one name.
+        add(file, 'server-is-node-only', `Only ${SERVER_ENTRY} may import the server feature: it needs Node.`)
+        if (target !== `src/features/${into}/${into}.ts`) {
+          add(
+            file,
+            'through-the-entry',
+            `Import ${into} through src/features/${into}/${into}.ts, not ${target}.`,
+          )
+        }
+        continue
+      }
       if (feature !== undefined && layerOf(into) > layerOf(feature)) {
         add(file, 'imports-go-down', `${feature} may not import ${into}, which is above it.`)
       }
@@ -220,9 +257,6 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
     }
 
     for (const spec of source.packages) {
-      if (spec === 'effect' || spec.startsWith('effect/') || spec.startsWith('@effect/')) {
-        add(file, 'package-confined', 'Effect is for Node tooling, never for src/.')
-      }
       for (const rule of CONFINED) {
         if (!rule.package.test(spec)) continue
         const allowed = rule.only.endsWith('/') ? file.startsWith(rule.only) : file === rule.only
@@ -245,21 +279,31 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
     }
   }
 
-  // Walk the imports from the headless entry; nothing it reaches may need a page.
-  const reached = new Set<string>()
-  const walk = (file: string): void => {
-    for (const target of sources.get(file)?.local ?? []) {
-      if (reached.has(target)) continue
-      reached.add(target)
-      walk(target)
+  // Walk the imports from the page-free entries. Headless may reach nothing that needs a page; neither entry may
+  // reach the Node-only server, even through src/server.ts, because a game's page would load Node code.
+  const reachFrom = (entry: string): string[] => {
+    const reached = new Set<string>()
+    const walk = (file: string): void => {
+      for (const target of sources.get(file)?.local ?? []) {
+        if (reached.has(target)) continue
+        reached.add(target)
+        walk(target)
+      }
     }
+    walk(entry)
+    return [...reached].sort()
   }
-  if (sources.has('src/headless.ts')) {
-    walk('src/headless.ts')
-    for (const target of [...reached].sort()) {
+  for (const entry of ['src/headless.ts', 'src/index.ts']) {
+    if (!sources.has(entry)) continue
+    const reached = reachFrom(entry)
+    if (reached.includes(SERVER_ENTRY)) {
+      add(entry, 'server-is-node-only', `${entry} reaches ${SERVER_ENTRY}, which needs Node.`)
+    }
+    if (entry !== 'src/headless.ts') continue
+    for (const target of reached) {
       const feature = featureOf(target)
       if (feature !== undefined && PAGE_FEATURES.has(feature)) {
-        add('src/headless.ts', 'headless-is-headless', `${target} needs a page, so headless cannot reach it.`)
+        add(entry, 'headless-is-headless', `${target} needs a page, so headless cannot reach it.`)
       }
     }
   }
