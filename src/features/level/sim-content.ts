@@ -1,6 +1,5 @@
 import { deepFreeze } from '../../lib/deep-freeze.ts'
-import type { ContentType } from '../content/content-types.ts'
-import type { GameContent } from '../content/load.ts'
+import type { ContentType, GameContent } from '../content/content.ts'
 
 /**
  * The kinds of content the sim is not given. A player's words are read by the page, never by a system, and a word
