@@ -1,6 +1,7 @@
 // `automata check`: the game's steps, one after another, each one's answer in one report. A step that fails does not stop
 // the next, so one run says everything that is wrong. The command and the MCP tool both call `runCheck`.
 import { Effect } from 'effect'
+import { artStep } from './art.ts'
 import { filesStep } from './check-files.ts'
 import { rulesStep } from './check-rules.ts'
 import { isToolStep, toolStep } from './check-tools.ts'
@@ -21,6 +22,7 @@ export function runCheck(options: {
     for (const step of STEP_NAMES) {
       if (options.only !== undefined && options.only !== step) continue
       if (step === 'files') steps.push(yield* filesStep(game, options.fix === true))
+      else if (step === 'art') steps.push(yield* artStep(game))
       else if (step === 'rules') steps.push(yield* rulesStep(game))
       else if (step === 'replays') steps.push(yield* replaysStep(game))
       else if (isToolStep(step)) steps.push(yield* toolStep(step, game.folder, options.fix === true))

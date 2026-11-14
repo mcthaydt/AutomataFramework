@@ -1,4 +1,4 @@
-// The pictures of a level, loaded for `startGame` and `watchReplay` before anything is put on the page. A game with no
+// The pictures of a level, loaded for `startGame`, `startOnlineGame` and `watchReplay` before anything is put on the page. A game with no
 // figure, no tileset and no backdrop needs none and is given none, so a game made before there was art starts as it did.
 import type { GameContent } from '../content/content.ts'
 import { type Art, loadArt, needsPictures, type ReadPicture } from '../render/render.ts'
@@ -9,7 +9,7 @@ import { type Art, loadArt, needsPictures, type ReadPicture } from '../render/re
  * picture that is missing, old or the wrong size.
  */
 export async function levelArt(
-  who: 'startGame' | 'watchReplay',
+  who: 'startGame' | 'startOnlineGame' | 'watchReplay',
   content: GameContent,
   level: string,
   readPicture: ReadPicture | undefined,

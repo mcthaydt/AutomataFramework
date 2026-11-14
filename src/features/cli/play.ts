@@ -4,6 +4,7 @@
 import { join } from 'node:path'
 import { Effect } from 'effect'
 import { formatDiagnostic, parseProject } from '../content/content.ts'
+import { paintArt } from './art.ts'
 import { filesStep } from './check-files.ts'
 import { readGame } from './game-folder.ts'
 import { CliError, Files, Out, type Ports, Tools } from './ports.ts'
@@ -26,6 +27,8 @@ export function runPlay(options: {
     // What is wrong with the files, first: the page shows it too, but a person is looking at this terminal.
     const files = yield* filesStep(game, false)
     for (const problem of files.problems) yield* out.line(formatDiagnostic(problem))
+    // Pictures first, so the page never meets one that is missing or older than the file that makes it.
+    for (const path of yield* paintArt(game)) yield* out.line(`Painted ${path}`)
 
     const text = yield* (yield* Files).readText(join(folder, 'automata.toml'))
     const project = text === undefined ? undefined : parseProject(text)

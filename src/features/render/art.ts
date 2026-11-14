@@ -2,8 +2,14 @@
 // a character or a prop names. Each is read through `readPicture` (a page reads files its own way), turned into a
 // texture with sharp pixels, and checked against the file that painted it before anything is drawn, so a picture that
 // is missing, old or the wrong size stops the game with one sentence that says what to run, instead of a blank box.
+//
+// Each picture in a sheet (a pose, a tile's square, a backdrop's strip) is copied out into a texture of its own. Cut
+// from one shared texture, a picture whose edge falls part way across a screen pixel showed a thin line of its
+// neighbour in the sheet: with antialiasing on, that pixel is coloured from the middle of the pixel, which is past
+// the picture's edge, so it read the next square over (the dark line by a tile in the 1180 by 820 and 1280 by 720
+// pictures of plan A's build). A texture of its own ends at the picture's own edge, so nothing past it can be read.
 import 'pixi.js/unsafe-eval'
-import { ImageSource, Rectangle, Texture } from 'pixi.js'
+import { ImageSource, Texture } from 'pixi.js'
 import {
   type BackdropFile,
   backdropSheet,
@@ -15,7 +21,11 @@ import {
 import { type TileBox, tileBoxes } from '../level/level.ts'
 import { tilePictures } from './tiles.ts'
 
-/** Reads one picture of the game by its path, like `content/figures/hero.png`. Rejects when there is none. */
+/**
+ * Reads one picture of the game by its path, like `content/figures/hero.png`. Rejects when there is none: a `fetch`
+ * answers a missing file with a page that says so, so check `response.ok` and throw, or a missing picture is reported
+ * as one a browser cannot read.
+ */
 export type ReadPicture = (path: string) => Promise<Blob>
 
 /** A picture is missing, old or wrong. The message says what to run. */
@@ -85,6 +95,9 @@ export function needsPictures(content: GameContent, level?: string): boolean {
   )
 }
 
+/** Colours exactly as painted: no colour space and no premultiplied alpha, so a texel is the bytes the painter wrote. */
+const EXACT: ImageBitmapOptions = { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }
+
 /** The picture at `path` as a bitmap with its colours exactly as painted, or an `ArtError` that says what is wrong. */
 async function decode(path: string, readPicture: ReadPicture): Promise<ImageBitmap> {
   let blob: Blob
@@ -94,7 +107,7 @@ async function decode(path: string, readPicture: ReadPicture): Promise<ImageBitm
     throw new ArtError(`The picture ${path} is missing. Run "automata art" to paint it.`)
   }
   try {
-    return await createImageBitmap(blob, { colorSpaceConversion: 'none', premultiplyAlpha: 'none' })
+    return await createImageBitmap(blob, EXACT)
   } catch {
     throw new ArtError(`${path} is not a picture a browser can read.`)
   }
@@ -129,14 +142,19 @@ export async function loadArt(options: {
     for (const bitmap of bitmaps) bitmap.close()
   }
 
-  const source = (bitmap: ImageBitmap): ImageSource => {
+  /** A picture of the game, read and kept, so it is closed with the rest even when a check below stops the load. */
+  const read = async (path: string): Promise<ImageBitmap> => {
+    const bitmap = await decode(path, readPicture)
     bitmaps.push(bitmap)
-    const made = new ImageSource({ resource: bitmap, scaleMode: 'nearest' })
-    sources.push(made)
-    return made
+    return bitmap
   }
-  const cut = (from: ImageSource, x: number, y: number, w: number, h: number): Texture => {
-    const texture = new Texture({ source: from, frame: new Rectangle(x, y, w, h) })
+  /** One picture of a sheet, copied out into a texture of its own with sharp pixels (see the top of this file). */
+  const cut = async (from: ImageBitmap, x: number, y: number, w: number, h: number): Promise<Texture> => {
+    const piece = await createImageBitmap(from, x, y, w, h, EXACT)
+    bitmaps.push(piece)
+    const made = new ImageSource({ resource: piece, scaleMode: 'nearest' })
+    sources.push(made)
+    const texture = new Texture({ source: made })
     textures.push(texture)
     return texture
   }
@@ -153,7 +171,7 @@ export async function loadArt(options: {
     let ground: TileBox[] = []
     const tileset = level?.tileset === undefined ? undefined : content.tilesets?.[level.tileset]
     if (level !== undefined && tileset !== undefined) {
-      const bitmap = await decode(tileset.image, readPicture)
+      const bitmap = await read(tileset.image)
       const wide = tileset.columns * tileset.tileSize
       if (bitmap.width !== wide)
         throw new ArtError(
@@ -165,28 +183,17 @@ export async function loadArt(options: {
         throw new ArtError(
           `The tileset "${tileset.id}" uses picture ${used}, but its picture has only ${squares} squares, 0 to ${squares - 1}.`,
         )
-      const picture = source(bitmap)
+      // Each square the level uses, cut once.
+      const placed = tilePictures(level, tileset)
       const squareOf = new Map<number, Texture>()
-      const square = (frame: number): Texture => {
-        let texture = squareOf.get(frame)
-        if (texture === undefined) {
-          const size = tileset.tileSize
-          texture = cut(
-            picture,
-            (frame % tileset.columns) * size,
-            Math.floor(frame / tileset.columns) * size,
-            size,
-            size,
-          )
-          squareOf.set(frame, texture)
-        }
-        return texture
+      const size = tileset.tileSize
+      for (const { frame } of placed) {
+        if (squareOf.has(frame)) continue
+        const x = (frame % tileset.columns) * size
+        const y = Math.floor(frame / tileset.columns) * size
+        squareOf.set(frame, await cut(bitmap, x, y, size, size))
       }
-      tiles = tilePictures(level, tileset).map(({ col, row, frame }) => ({
-        col,
-        row,
-        texture: square(frame),
-      }))
+      tiles = placed.map(({ col, row, frame }) => ({ col, row, texture: squareOf.get(frame) as Texture }))
       const solid = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
       ground = tileBoxes(level.tiles, (letter) => solid.has(letter))
     }
@@ -208,14 +215,12 @@ export async function loadArt(options: {
       const path = paintedPath(content, 'figure', id)
       if (figure === undefined || path === undefined)
         throw new ArtError(`The figure "${id}" has no file in this game, so it cannot be drawn.`)
-      const bitmap = await decode(path, readPicture)
+      const bitmap = await read(path)
       const sheet = figureSheet(figure)
       sized(path, bitmap, sheet.w, sheet.h, 'figure file')
-      const picture = source(bitmap)
-      figures.set(id, {
-        figure,
-        frames: new Map(sheet.frames.map((f) => [f.name, cut(picture, f.x, f.y, f.w, f.h)])),
-      })
+      const frames = new Map<string, Texture>()
+      for (const f of sheet.frames) frames.set(f.name, await cut(bitmap, f.x, f.y, f.w, f.h))
+      figures.set(id, { figure, frames })
     }
     const pictureOf = (id: string, pose: string, player: number): Picture | undefined => {
       const found = figures.get(id)
@@ -235,19 +240,19 @@ export async function loadArt(options: {
       const path = paintedPath(content, 'backdrop', backdropFile.id)
       if (path === undefined)
         throw new ArtError(`The backdrop "${backdropFile.id}" has no file in this game.`)
-      const bitmap = await decode(path, readPicture)
+      const bitmap = await read(path)
       const sheet = backdropSheet(backdropFile)
       sized(path, bitmap, sheet.w, sheet.h, 'backdrop file')
-      const picture = source(bitmap)
-      const layers = backdropFile.layers.map((layer, i) => {
+      const layers: BackdropLayerArt[] = []
+      for (const [i, layer] of backdropFile.layers.entries()) {
         const at = sheet.frames[i] as (typeof sheet.frames)[number]
-        return {
+        layers.push({
           id: layer.id,
-          texture: cut(picture, at.x, at.y, at.w, at.h),
+          texture: await cut(bitmap, at.x, at.y, at.w, at.h),
           height: at.h / backdropFile.tile,
           drift: layer.drift,
-        }
-      })
+        })
+      }
       const props = backdropFile.props.flatMap((prop) => {
         const shown = pictureOf(prop.figure, prop.pose ?? '', 1)
         const layer = layers.findIndex((l) => l.id === prop.layer)

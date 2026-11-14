@@ -1,4 +1,4 @@
-// The tools `automata mcp` offers an agent. `create`, `check` and `replay` are the commands themselves, run as a child
+// The tools `automata mcp` offers an agent. `create`, `check`, `replay` and `art` are the commands themselves, run as a child
 // process through `Runner.command` with `--json` (audit C1: this long-lived server never loads a game's code, so every
 // answer comes from the files as they are now); `content_types`, `schema` and `skill` read what the package ships; the
 // `play_` tools run a game a few ticks at a time (`session.ts`). Every description is one sentence that says when to use
@@ -101,6 +101,18 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
           ...(input.accept === true ? ['--accept'] : []),
           ...(input.state === true ? ['--state'] : []),
         ]),
+    ),
+    tool(
+      'art',
+      "Paint a game's pictures from its figure and backdrop files: use it after you change one, and commit what it writes.",
+      z.object({
+        folder,
+        check: z
+          .boolean()
+          .optional()
+          .describe('Paint nothing; only say which pictures are missing or older than their file.'),
+      }),
+      (input) => command(['art', input.folder, ...(input.check === true ? ['--check'] : [])]),
     ),
     tool(
       'content_types',

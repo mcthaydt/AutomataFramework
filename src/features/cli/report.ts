@@ -3,8 +3,8 @@
 import { type Diagnostic, formatDiagnostic } from '../content/content.ts'
 
 /** The steps of `automata check`, in the order they run. */
-export type StepName = 'files' | 'rules' | 'lint' | 'types' | 'replays' | 'tests'
-export const STEP_NAMES: readonly StepName[] = ['files', 'rules', 'lint', 'types', 'replays', 'tests']
+export type StepName = 'files' | 'art' | 'rules' | 'lint' | 'types' | 'replays' | 'tests'
+export const STEP_NAMES: readonly StepName[] = ['files', 'art', 'rules', 'lint', 'types', 'replays', 'tests']
 
 export interface StepReport {
   readonly step: StepName

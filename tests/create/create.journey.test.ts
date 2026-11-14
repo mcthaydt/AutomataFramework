@@ -174,10 +174,17 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
         const where = `${name} ${size.width}x${size.height}`
         page.on('console', (message) => console.log(`[${where}] ${message.type()}: ${message.text()}`))
         page.on('pageerror', (error) => console.log(`[${where}] page error: ${error.message}`))
+        // The hero is drawn from its painted picture, which `create` made: the page asks for it, and the server has it.
+        const pictures: string[] = []
+        page.on('response', (response) => {
+          if (response.url().endsWith('/content/figures/hero.png') && response.ok())
+            pictures.push(response.url())
+        })
         await page.goto(address)
 
         // The game is on screen, and time passes in it.
         await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+        expect(pictures.length, `${where}: the hero's picture was fetched`).toBeGreaterThan(0)
         const before = await tickOf(page)
         await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(before)
 
@@ -236,6 +243,21 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
           }
           await page.reload()
           await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+
+          // A player whose device speaks Japanese is told the keys in Japanese, and the page says it is Japanese.
+          const japanese = await browser.newContext({
+            viewport: { width: size.width, height: size.height },
+            locale: 'ja-JP',
+          })
+          try {
+            const other = await japanese.newPage()
+            await other.goto(address)
+            const told = other.locator('.hint')
+            await expect.poll(() => told.textContent(), POLL).toContain('矢印キー')
+            expect(await other.evaluate(() => document.documentElement.lang), where).toBe('ja')
+          } finally {
+            await japanese.close()
+          }
         }
         await context.close()
       }
