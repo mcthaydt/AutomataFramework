@@ -45,6 +45,7 @@
     "typecheck": "tsc -p .",
     "knip": "knip",
     "test:node": "vitest run --project node",
+    "test:journeys": "vitest run --project journeys",
     "test:engine": "vitest run --passWithNoTests --project",
     "build": "vite build && tsc -p tsconfig.build.json",
     "prepare": "pnpm build",

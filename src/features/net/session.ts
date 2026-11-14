@@ -309,30 +309,28 @@ export function createSession(setup: SessionSetup): Session {
       const gap = predicted.tick - confirmed.tick
       const steps =
         gap >= MAX_AHEAD ? 0 : Math.max(0, Math.min(MAX_CATCH_UP, confirmed.tick + lead - predicted.tick))
-      for (let i = 0; i < steps; i++) {
-        if (i === 0) {
-          // The local commands go on the first new step, where `predicted` is, and are sent stamped with it.
-          for (const u of unsent) {
-            const p: Pending = {
-              seq: nextSeq++,
-              tick: predicted.tick,
-              type: u.type,
-              payload: u.payload,
-              stepped: false,
-            }
-            pending.push(p)
-            link.send({
-              t: 'cmd',
-              seq: p.seq,
-              tick: p.tick,
-              type: p.type,
-              payload: p.payload,
-            } satisfies ClientMessage)
-          }
-          unsent = []
+      // The local commands are sent now, stamped with the tick `predicted` is about to step, even when it may not step
+      // this time (it is as far ahead as it may be): a hand let go as the page is hidden must reach the room, and the
+      // page will not ask again.
+      for (const u of unsent) {
+        const p: Pending = {
+          seq: nextSeq++,
+          tick: predicted.tick,
+          type: u.type,
+          payload: u.payload,
+          stepped: false,
         }
-        stepPredicted(predicted.tick, true, out)
+        pending.push(p)
+        link.send({
+          t: 'cmd',
+          seq: p.seq,
+          tick: p.tick,
+          type: p.type,
+          payload: p.payload,
+        } satisfies ClientMessage)
       }
+      unsent = []
+      for (let i = 0; i < steps; i++) stepPredicted(predicted.tick, true, out)
       return out
     },
 

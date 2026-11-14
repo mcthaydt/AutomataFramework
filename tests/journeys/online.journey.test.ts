@@ -1,0 +1,249 @@
+// Proof 3 of M2's networking: two real browsers, a real room server. The room server is the built package running as a
+// process (`node tests/fixtures/online/server.ts`), the page is the fixture online game built by Vite, and each player
+// is a browser Playwright launches: three pairs, so every engine plays against every other kind at least once, on
+// phone, tablet and desktop sizes, by keyboard and by touch. Nothing is waited for with a sleep; each wait is for
+// something a person would see.
+import { type ChildProcess, spawn } from 'node:child_process'
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { createInterface } from 'node:readline'
+import { fileURLToPath } from 'node:url'
+import { type Browser, type BrowserContext, chromium, firefox, type Page, webkit } from 'playwright'
+import { build, type PreviewServer, preview } from 'vite'
+import { afterAll, beforeAll, expect, test } from 'vitest'
+import { rapierWasm } from '../../vite-rapier-wasm.ts'
+
+const root = fileURLToPath(new URL('../../', import.meta.url))
+const pageDir = fileURLToPath(new URL('../fixtures/online/page/', import.meta.url))
+const shots = fileURLToPath(new URL('./__screenshots__/', import.meta.url))
+
+const ENGINES = { chromium, webkit, firefox }
+type Engine = keyof typeof ENGINES
+interface Spec {
+  readonly engine: Engine
+  readonly width: number
+  readonly height: number
+  readonly touch: boolean
+}
+
+// [player 1, player 2]
+const PAIRS: readonly (readonly [Spec, Spec])[] = [
+  [
+    { engine: 'chromium', width: 1280, height: 720, touch: false },
+    { engine: 'webkit', width: 390, height: 844, touch: true },
+  ],
+  [
+    { engine: 'webkit', width: 1180, height: 820, touch: true },
+    { engine: 'firefox', width: 1280, height: 720, touch: false },
+  ],
+  [
+    { engine: 'firefox', width: 844, height: 390, touch: true },
+    { engine: 'chromium', width: 820, height: 1180, touch: true },
+  ],
+]
+
+let serverProcess: ChildProcess | undefined
+let roomServer = ''
+let pageServer: PreviewServer | undefined
+let pageUrl = ''
+let outDir = ''
+const browsers: Browser[] = []
+
+beforeAll(async () => {
+  if (!existsSync(`${root}dist/server.js`))
+    throw new Error('dist/server.js is missing: run `pnpm build` first.')
+  // The room server, as a process, and the port it says it listens on.
+  const child = spawn(process.execPath, [`${root}tests/fixtures/online/server.ts`], {
+    stdio: ['ignore', 'pipe', 'inherit'],
+  })
+  serverProcess = child
+  const port = await new Promise<number>((resolve, reject) => {
+    child.once('exit', (code) =>
+      reject(new Error(`The room server ended with code ${code} before it listened.`)),
+    )
+    createInterface({ input: child.stdout }).once('line', (line) =>
+      resolve((JSON.parse(line) as { port: number }).port),
+    )
+  })
+  roomServer = `ws://127.0.0.1:${port}`
+
+  // The page, built as a game would be and served from files: a dev server would reload the page when it found a
+  // dependency late, in the middle of a play.
+  outDir = mkdtempSync(`${tmpdir()}/online-page-`)
+  const common = {
+    root: pageDir,
+    configFile: false as const,
+    plugins: [rapierWasm()],
+    logLevel: 'warn' as const,
+  }
+  await build({
+    ...common,
+    build: { outDir, emptyOutDir: true, target: 'es2023', sourcemap: false },
+  })
+  pageServer = await preview({
+    ...common,
+    build: { outDir },
+    preview: { host: '127.0.0.1', port: 0, strictPort: false },
+  })
+  const address = pageServer.httpServer.address()
+  if (address === null || typeof address === 'string') throw new Error('The page server has no port.')
+  pageUrl = `http://127.0.0.1:${address.port}/`
+  mkdirSync(shots, { recursive: true })
+})
+
+afterAll(async () => {
+  for (const browser of browsers.splice(0)) await browser.close().catch(() => undefined)
+  await pageServer?.close()
+  if (serverProcess !== undefined && serverProcess.exitCode === null) {
+    const ended = new Promise((resolve) => serverProcess?.once('close', resolve))
+    serverProcess.kill('SIGTERM')
+    await ended
+  }
+  if (outDir !== '') rmSync(outDir, { recursive: true, force: true })
+})
+
+interface Seat {
+  readonly spec: Spec
+  readonly page: Page
+  readonly context: BrowserContext
+  /** The numbers the page shows. */
+  data(name: string): Promise<string | null>
+  status(): Promise<string>
+  hold(action: 'left' | 'right'): Promise<void>
+  release(action: 'left' | 'right'): Promise<void>
+  tap(action: 'jump'): Promise<void>
+}
+
+const KEYS = { left: 'ArrowLeft', right: 'ArrowRight', jump: 'Space' } as const
+
+async function seatOf(spec: Spec, query: string): Promise<Seat> {
+  const browser = await ENGINES[spec.engine].launch()
+  browsers.push(browser)
+  const context = await browser.newContext({
+    viewport: { width: spec.width, height: spec.height },
+  })
+  // A touch screen as the game's own question sees it: a coarse pointer, so the buttons are on from the start.
+  if (spec.touch)
+    await context.addInitScript(() => {
+      const real = window.matchMedia.bind(window)
+      const coarse = (media: string): MediaQueryList =>
+        ({
+          matches: true,
+          media,
+          onchange: null,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+          addListener: () => undefined,
+          removeListener: () => undefined,
+          dispatchEvent: () => false,
+        }) as MediaQueryList
+      window.matchMedia = (media: string) => (media.includes('pointer: coarse') ? coarse(media) : real(media))
+    })
+  const page = await context.newPage()
+  await page.goto(`${pageUrl}?server=${encodeURIComponent(roomServer)}${query}`)
+  const button = (action: string) => page.locator(`[data-action='${action}']`)
+  const finger = { pointerType: 'touch', pointerId: 7, isPrimary: true, bubbles: true } as const
+  return {
+    spec,
+    page,
+    context,
+    data: (name) => page.locator('#game').getAttribute(`data-${name}`),
+    status: async () => (await page.locator('#status').textContent()) ?? '',
+    async hold(action) {
+      if (spec.touch) await button(action).dispatchEvent('pointerdown', finger)
+      else await page.keyboard.down(KEYS[action])
+    },
+    async release(action) {
+      if (spec.touch) await button(action).dispatchEvent('pointerup', finger)
+      else await page.keyboard.up(KEYS[action])
+    },
+    async tap(action) {
+      if (spec.touch) {
+        await button(action).dispatchEvent('pointerdown', finger)
+        await button(action).dispatchEvent('pointerup', finger)
+      } else {
+        await page.keyboard.down(KEYS[action])
+        await page.keyboard.up(KEYS[action])
+      }
+    },
+  }
+}
+
+const POLL = { timeout: 60_000, intervals: [50, 100, 250] }
+const num = (value: string | null): number => (value === null || value === '' ? Number.NaN : Number(value))
+
+/** Check ticks that matched on the page, with the hash. */
+async function checks(seat: Seat): Promise<Map<number, string>> {
+  const names = await seat.page.locator('#game').evaluate((el) =>
+    el
+      .getAttributeNames()
+      .filter((n) => n.startsWith('data-check-'))
+      .map((n) => [n, el.getAttribute(n)]),
+  )
+  return new Map(names.map(([n, h]) => [Number((n as string).slice('data-check-'.length)), h as string]))
+}
+
+for (const [first, second] of PAIRS) {
+  test(`${first.engine} (${first.width}x${first.height}) and ${second.engine} (${second.width}x${second.height}) play one room`, async () => {
+    const one = await seatOf(first, '')
+    // 1. A new room waits, and says how to bring a friend.
+    await expect.poll(() => one.data('code'), POLL).toMatch(/\S/)
+    const code = (await one.data('code')) as string
+    await expect
+      .poll(() => one.status(), POLL)
+      .toBe(`Waiting for 1 more player. Share this code so a friend can join: ${code}`)
+
+    // 2. The friend joins by the code; both are playing, in seats 1 and 2, with nothing to read.
+    const two = await seatOf(second, `&room=${encodeURIComponent(code)}`)
+    for (const seat of [one, two]) await expect.poll(() => seat.data('state'), POLL).toBe('playing')
+    for (const seat of [one, two]) await expect.poll(() => seat.status(), POLL).toBe('')
+    expect(await one.data('seat')).toBe('1')
+    expect(await two.data('seat')).toBe('2')
+
+    // 3 and 4. One runs right, the other left; each sees the other move.
+    await one.hold('right')
+    await two.hold('left')
+    await expect.poll(async () => num(await one.data('p2-x')), POLL).toBeLessThan(12.5)
+    await expect.poll(async () => num(await two.data('p1-x')), POLL).toBeGreaterThan(3.5)
+    await one.release('right')
+    await two.release('left')
+    await two.tap('jump')
+    expect(num(await one.data('p2-x'))).toBeLessThan(13.5)
+    expect(num(await two.data('p1-x'))).toBeGreaterThan(2.5)
+    for (const [n, seat] of [one, two].entries())
+      await seat.page.screenshot({ path: `${shots}online-${first.engine}-${second.engine}-p${n + 1}.png` })
+
+    // 5. Both reach the check for tick 599 and agree; both had to put their picture right at least once; and nothing
+    // in either page tried to build code from a string.
+    for (const seat of [one, two])
+      await expect.poll(async () => (await checks(seat)).has(599), POLL).toBe(true)
+    expect((await checks(one)).get(599)).toBe((await checks(two)).get(599))
+    for (const seat of [one, two]) {
+      expect(num(await seat.data('rollbacks'))).toBeGreaterThan(0)
+      expect(await seat.data('built-code')).toBe('[]')
+    }
+
+    // 6. A dropped connection gets back into its place, and the room ends on one picture again.
+    const droppedAt = Math.max(...(await checks(one)).keys())
+    await two.page.evaluate(() => (window as unknown as { dropConnection(): void }).dropConnection())
+    await expect.poll(() => two.status(), POLL).toBe('Connection lost. Trying to get you back in.')
+    await expect.poll(() => one.status(), POLL).toBe('Player 2 lost their connection. The game goes on.')
+    for (const seat of [one, two]) await expect.poll(() => seat.status(), POLL).toBe('')
+    await expect
+      .poll(async () => {
+        const [a, b] = [await checks(one), await checks(two)]
+        return [...a].some(([tick, hash]) => tick > droppedAt && b.get(tick) === hash)
+      }, POLL)
+      .toBe(true)
+
+    // 7 and 8. A third player is told the room is full, and a made-up code is told there is no such room.
+    const third = await seatOf(first, `&room=${encodeURIComponent(code)}`)
+    await expect
+      .poll(() => third.status(), POLL)
+      .toBe('That room is full. Start a new room, or ask for another code.')
+    const nowhere = await seatOf(first, '&room=NOPE')
+    await expect
+      .poll(() => nowhere.status(), POLL)
+      .toBe('No room has that code. Check the code and try again.')
+  })
+}

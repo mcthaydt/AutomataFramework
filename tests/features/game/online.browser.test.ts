@@ -77,6 +77,7 @@ interface Scripted {
 
 interface Setup {
   readonly engine: RoomEngine
+  readonly engineSim: Sim
   readonly wire: Wire
   readonly frames: ReturnType<typeof manualFrames>
   readonly host: ReturnType<typeof fakeHost>
@@ -129,6 +130,7 @@ async function room(): Promise<Setup> {
   }
   const setup: Setup = {
     engine,
+    engineSim,
     wire,
     frames,
     host,
@@ -217,13 +219,13 @@ test('my key moves me before the room answers', async () => {
   const game = await start(s)
   await s.other()
   s.beat(5)
-  s.wire.silence(true)
   const before = x(game.sim, 1)
+  const room1 = x(s.engineSim, 1)
   key('keydown', 'ArrowRight')
-  s.frames.advance(FRAME)
-  s.frames.advance(FRAME)
+  // One beat: the page's frame sends the command and has predicted it, and the command has not reached the room yet.
+  s.beat()
   expect(x(game.sim, 1)).toBeGreaterThan(before)
-  s.wire.silence(false)
+  expect(x(s.engineSim, 1)).toBe(room1)
   key('keyup', 'ArrowRight')
 })
 

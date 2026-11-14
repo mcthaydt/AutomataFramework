@@ -133,6 +133,19 @@ test('a key press moves the hero at once, before the room has answered', async (
   expect(p.sent[0]).toMatchObject({ t: 'cmd', seq: 0, tick: 0, type: 'controls' })
 })
 
+test('a command given when predicted may not step is still sent at once, stamped with the next tick', async () => {
+  const r = await room([ONE])
+  const p = r.players[0] as Player1
+  r.beats(10)
+  const before = p.sent.length
+  const tick = p.session.sim.tick
+  // The beat's advance has already stepped; this second one has no step to give the command to.
+  p.session.advance([{ type: 'controls', payload: { held: [] } }])
+  expect(p.sent).toHaveLength(before + 1)
+  expect(p.sent.at(-1)).toMatchObject({ t: 'cmd', tick, type: 'controls', payload: { held: [] } })
+  expect(p.session.sim.tick).toBe(tick)
+})
+
 test('alone, it agrees with the room without a rollback', async () => {
   const r = await room([ONE])
   const p = r.players[0] as Player1
