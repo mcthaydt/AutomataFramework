@@ -23,6 +23,9 @@ export function simContent(content: GameContent): GameContent {
   const { messages: _words, ...kept } = content
   return deepFreeze({
     ...kept,
-    project: { ...content.project, content: content.project.content.filter((entry) => !LEFT_OUT.has(entry.type)) },
+    project: {
+      ...content.project,
+      content: content.project.content.filter((entry) => !LEFT_OUT.has(entry.type)),
+    },
   })
 }
