@@ -3,6 +3,7 @@
 import type { z } from '../../lib/zod.ts'
 import type { ContentType, ContentValue } from './content-types.ts'
 import type { Voice } from './diagnostics.ts'
+import type { Language } from './messages.ts'
 
 /** The five editors a kind of file belongs to (M3). Each editor has several parts; `part` names the one. */
 export type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story'
@@ -15,6 +16,8 @@ export interface Listed {
   ids(type: ContentType): readonly string[]
   /** The project's `hero`: whose character `player-1` to `player-4` are in a cutscene. */
   readonly hero: string
+  /** The project's `source`: the language the game's words are written in, or `undefined` for a game with no words. */
+  readonly source: Language | undefined
   /** The file's value, or undefined when it is not listed or did not read. A check skips what it cannot see. */
   get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined
 }

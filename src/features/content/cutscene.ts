@@ -1,6 +1,6 @@
 import { z } from '../../lib/zod.ts'
 import { Id } from './ids.ts'
-import { englishLacks, englishMissing } from './messages.ts'
+import { sourceLacks, sourceMissing } from './messages.ts'
 import { list, MessageKey, noSuch, ticks } from './shared.ts'
 import type { ContentTypeInfo, Listed, Report } from './type-info.ts'
 
@@ -168,7 +168,7 @@ function checkNames(file: CutsceneFile, game: Listed, report: Report): void {
     })
   }
   file.lines.forEach((l, i) => {
-    if (englishLacks(game, l.line)) report(`lines[${i}].line`, englishMissing(l.line))
+    if (sourceLacks(game, l.line)) report(`lines[${i}].line`, sourceMissing(game, l.line))
     if (l.speaker !== undefined && !game.has('character', l.speaker))
       report(`lines[${i}].speaker`, noSuch('character', l.speaker, game.ids('character')))
   })

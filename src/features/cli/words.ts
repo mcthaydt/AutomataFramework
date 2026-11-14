@@ -4,7 +4,7 @@
 // is the second way into the same files, for code.
 //
 // A game commits no inlang project: it is made in a temporary folder for each compile, from the messages files the game
-// loaded (English first, so it is Paraglide's base language). Paraglide's own strategies never run (`bindParaglide`
+// loaded (the game's own language first, `source`, so it is Paraglide's base language). Paraglide's own strategies never run (`bindParaglide`
 // answers `getLocale`). Paraglide empties the folder it writes to, so it writes to a temporary one and what differs is
 // copied into the game's `outdir`: an unchanged compile touches nothing, and a dev server watching `outdir` never sees
 // it empty. Ported from AutomataFrameworkFailed@ed8592e8: packages/content/src/shared/locale/compile-messages.ts and
@@ -18,7 +18,7 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Effect } from 'effect'
-import { formatDiagnostic, LANGUAGES, type Language, languageName } from '../content/content.ts'
+import { formatDiagnostic, LANGUAGES, type Language } from '../content/content.ts'
 import { readGame } from './game-folder.ts'
 import { CliError, Files, type Ports } from './ports.ts'
 
@@ -140,16 +140,19 @@ export function compileWords(options: {
         ),
       )
     const messages = game.loaded.value.messages
-    if (messages === undefined || !Object.hasOwn(messages, 'en'))
+    const source = game.loaded.value.project.source
+    if (messages === undefined || source === undefined || !Object.hasOwn(messages, source))
       return yield* Effect.fail(
         new CliError(
-          `This game has no ${languageName('en')} words to compile. Add content/messages/en.json and list it in automata.toml.`,
+          'This game has no words to compile. Add a messages file, list it in automata.toml, and write source.',
         ),
       )
-    // English first: it is Paraglide's base language, the one a missing word falls back to.
-    const languages = LANGUAGES.filter((language) => Object.hasOwn(messages, language))
-    const english = messages.en
-    const clashes = collisions(Object.keys(english?.messages ?? {}))
+    // The game's own language first: it is Paraglide's base language, the one a missing word falls back to.
+    const languages = [
+      source,
+      ...LANGUAGES.filter((language) => language !== source && Object.hasOwn(messages, language)),
+    ]
+    const clashes = collisions(Object.keys(messages[source]?.messages ?? {}))
     if (clashes.length > 0) return yield* Effect.fail(new CliError(clashes.join('\n')))
 
     const built = yield* Effect.tryPromise({

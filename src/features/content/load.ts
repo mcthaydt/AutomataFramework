@@ -10,7 +10,7 @@ import type { Diagnostic } from './diagnostics.ts'
 import type { FeelFile } from './feel.ts'
 import type { FigureFile } from './figure.ts'
 import type { Level } from './level.ts'
-import type { MessagesFile } from './messages.ts'
+import { languageName, type MessagesFile } from './messages.ts'
 import type { MusicFile } from './music.ts'
 import { type Parsed, parseContent } from './parse.ts'
 import type { ContentRef } from './project.ts'
@@ -181,16 +181,34 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
   if (!named('level').includes(project.start)) unknown('start', 'level', project.start)
   if (!named('character').includes(project.hero)) unknown('hero', 'character', project.hero)
 
-  // A game with words needs English first: every other language is checked against it.
-  if (named('messages').length > 0 && !named('messages').includes('en'))
+  // A game with words names the language its team writes them in, and lists that language's file: every other
+  // language is checked against it. A game with no words has no language to name.
+  const words = named('messages')
+  const firstFile = project.content.find((entry) => entry.type === 'messages')
+  const where = firstFile?.path ?? 'content/messages/x.json'
+  const folder = where.slice(0, where.lastIndexOf('/') + 1)
+  if (words.length > 0 && project.source === undefined)
     projectProblems.push({
       file: PROJECT_FILE,
-      path: 'content',
-      message: 'A game with words needs them in English first. List a messages file called en.json.',
+      path: 'source',
+      message: 'Write the language your team writes the game\'s words in, like source = "es".',
+    })
+  else if (words.length > 0 && project.source !== undefined && !words.includes(project.source))
+    projectProblems.push({
+      file: PROJECT_FILE,
+      path: 'source',
+      message: `This game's words are written in ${languageName(project.source)} (source = "${project.source}"), but no ${project.source}.json is listed. List ${folder}${project.source}.json, or change source.`,
+    })
+  else if (words.length === 0 && project.source !== undefined)
+    projectProblems.push({
+      file: PROJECT_FILE,
+      path: 'source',
+      message: `This game lists no words, so it has no language to name. Take the source line out, or list a messages file like ${folder}${project.source}.json.`,
     })
 
   const game: Listed = {
     hero: project.hero,
+    source: project.source,
     has: (type, id) => named(type).includes(id),
     ids: (type) => named(type).sort(),
     get: ((type: ContentType, id: string) => values.get(`${type}:${id}`)) as Listed['get'],
