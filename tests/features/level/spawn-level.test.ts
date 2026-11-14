@@ -85,3 +85,14 @@ test('a different level file is different content', async () => {
   })
   expect(a.contentHash).not.toBe(b.contentHash)
 })
+
+test("a level that sets its ground draws its floor in that colour, and one that does not keeps the framework's", async () => {
+  const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] as string) as Record<string, unknown>
+  const content = await loadFixtureGame({
+    'content/levels/level-1.json': JSON.stringify({ ...level, ground: '#111314' }),
+  })
+  const sim = await createGameSim({ content })
+  made.push(sim)
+  expect(sim.entity(1)?.get(Look)).toMatchObject({ w: 16, h: 1, color: 0x111314 })
+  expect((await gameSim()).entity(1)?.get(Look)).toMatchObject({ color: TILE_COLOR })
+})

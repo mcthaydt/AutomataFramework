@@ -1,6 +1,7 @@
 // The renderer in each real browser: a canvas that fills its mount, refits when the mount turns, and cleans up.
 import { Application } from 'pixi.js'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { SKY_COLOR } from '#src/features/level/level.ts'
 import { createRenderer, type Renderer } from '#src/features/render/render.ts'
 import type { RenderDelta } from '#src/features/sim/sim.ts'
 import { brightness, drawnRows, pixel } from '../../fixtures/game/pixels.ts'
@@ -193,4 +194,21 @@ test('room larger than half the mount is ignored, so the world never disappears'
   renderer.setInset(10_000)
   renderer.draw(1)
   expect(drawnRows(renderer.canvas)).toBeDefined()
+})
+
+test("the sky fills the canvas in the colour it is given, and in the framework's own when it is not", async () => {
+  size(390, 844)
+  renderer = await createRenderer({ mount, world: WORLD, sky: 0xfdd4bd })
+  renderer.apply(ONE_BOX)
+  renderer.draw(1)
+  expect(pixel(renderer.canvas, 2, 2)).toEqual([0xfd, 0xd4, 0xbd])
+  renderer.destroy()
+  renderer = await createRenderer({ mount, world: WORLD })
+  renderer.apply(ONE_BOX)
+  renderer.draw(1)
+  expect(pixel(renderer.canvas, 2, 2)).toEqual([
+    (SKY_COLOR >> 16) & 255,
+    (SKY_COLOR >> 8) & 255,
+    SKY_COLOR & 255,
+  ])
 })
