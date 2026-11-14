@@ -64,6 +64,7 @@ export function skills(): Effect.Effect<readonly Skill[], CliError, FilesService
       .filter((path) => path.endsWith('/SKILL.md'))
       .map((path) => path.slice(0, -'/SKILL.md'.length))
       .filter((name) => !name.includes('/'))
+      .sort()
     const found: Skill[] = []
     for (const name of names) {
       const text = yield* read(join(root, name, 'SKILL.md'), `The ${name} skill`)

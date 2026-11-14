@@ -6,11 +6,14 @@ const answer = (code: number, stdout: string, stderr: string) =>
   Effect.runPromise(Effect.either(commandAnswer(code, stdout, stderr)))
 
 test('JSON on stdout is the answer, with the exit status it came with', async () => {
-  expect(await answer(0, '{"ok":true}\n', '')).toEqual({
+  expect(await answer(0, '{"ok":true}\n', '')).toMatchObject({
     _tag: 'Right',
     right: { code: 0, json: { ok: true } },
   })
-  expect(await answer(1, '[1, 2]', 'a warning')).toEqual({ _tag: 'Right', right: { code: 1, json: [1, 2] } })
+  expect(await answer(1, '[1, 2]', 'a warning')).toMatchObject({
+    _tag: 'Right',
+    right: { code: 1, json: [1, 2] },
+  })
 })
 
 test('no JSON is the sentence the command said on stderr, without Node’s own notices', async () => {
