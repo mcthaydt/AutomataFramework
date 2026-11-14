@@ -14,7 +14,10 @@ import { fullGameFiles } from '../../fixtures/full-game/read.ts'
 const SLOW = 60_000
 
 const OUTDIR = 'src/paraglide'
-const GAME = { ...fullGameFiles, 'package.json': '{"name":"full-game","private":true,"type":"module"}\n' }
+const GAME: Record<string, string> = {
+  ...fullGameFiles,
+  'package.json': '{"name":"full-game","private":true,"type":"module"}\n',
+}
 
 /** The full game's six messages files with `words` added to every language, so the languages stay in step. */
 function withWords(words: Readonly<Record<string, string>>): Record<string, string> {
