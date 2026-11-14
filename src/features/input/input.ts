@@ -6,7 +6,15 @@
 import { type Frames, pageFrames } from '../../lib/frames.ts'
 import { controlsCommand, createSequence, MAX_PLAYERS, type Sequence } from '../commands/commands.ts'
 import type { Command } from '../sim/sim.ts'
-import { applySettings } from './bindings.ts'
+import {
+  applySettings,
+  type BindingSlot,
+  type InputSettings,
+  type Rebound,
+  rebind as rebound,
+  settingsOf,
+} from './bindings.ts'
+import { type Capture, type RunningCapture, startCapture } from './capture.ts'
 import { type Controls, checkControls } from './controls.ts'
 import type { PadLike } from './gamepad.ts'
 import { heldBy } from './held.ts'
@@ -67,10 +75,25 @@ export interface Input {
   pads(): readonly ListedPad[]
   /** Every player lets go until the returned function is called; what is down then does nothing until let go. */
   silence(): () => void
+  /** The controls in use now: the game's own with the player's changes. */
+  controls(): Controls
+  /** What to save. `{ format: 1, bindings: {} }` when nothing was changed. */
+  settings(): InputSettings
+  /** Saved actions that could not be applied when the input was made (`'*'`: none of it could be read). */
+  dropped(): readonly string[]
+  /** Changes a binding now. On refusal nothing changes and the answer says why, in words for the person. */
+  rebind(action: string, slot: BindingSlot, input: string): Rebound
+  /** Back to the game's own controls. */
+  resetBindings(): void
+  /** Calls `listener` with what to save, whenever a binding changes or is reset. */
+  onBindings(listener: (settings: InputSettings) => void): () => void
+  /** Waits for the next key (a keys or shared slot) or gamepad press (the pad slot). */
+  capture(slot: BindingSlot): Capture
   /** Removes the buttons and stops listening. Safe to call twice. */
   destroy(): void
 }
 
+export type { Capture, CaptureAnswer } from './capture.ts'
 export type { Claim, Device, Seat } from './seats.ts'
 
 /**
@@ -80,7 +103,10 @@ export type { Claim, Device, Seat } from './seats.ts'
 export function createInput(options: InputOptions): Input {
   const { mount, frames = pageFrames, sequence = createSequence() } = options
   checkControls(options.controls)
-  const { controls } = applySettings(options.controls, options.settings ?? { format: 1, bindings: {} })
+  const defaults = options.controls
+  const applied = applySettings(defaults, options.settings ?? { format: 1, bindings: {} })
+  let controls = applied.controls
+  const bindingListeners = new Set<(settings: InputSettings) => void>()
   const keyboard = createKeyboard(() => boundKeys(controls))
   const touch = createTouch(mount, controls)
   const pads = createPads(options.gamepads)
@@ -92,6 +118,7 @@ export function createInput(options: InputOptions): Input {
   const seatListeners = new Set<(seats: readonly Seat[]) => void>()
   let lastSeats = ''
   let silent = 0
+  let waiting: RunningCapture | undefined
   let destroyed = false
 
   const usable = (): number[] =>
@@ -137,13 +164,15 @@ export function createInput(options: InputOptions): Input {
   const onFrame = (): void => {
     frame = undefined
     if (destroyed) return
-    pads.read()
+    const held = pads.read()
+    waiting?.step(held)
+    if (waiting?.ended) waiting = undefined
     announce()
     frame = frames.request(onFrame)
   }
   frame = frames.request(onFrame)
 
-  return {
+  const api: Input = {
     poll(tick) {
       if (destroyed) return []
       const down = { keys: keyboard.down(), touch: touch.held(), pads: pads.read() }
@@ -202,15 +231,50 @@ export function createInput(options: InputOptions): Input {
         }
       }
     },
+    controls: () => controls,
+    settings: () => settingsOf(defaults, controls),
+    dropped: () => applied.dropped,
+    rebind(action, slot, input) {
+      const answer = rebound(controls, action, slot, input)
+      if (answer.ok) {
+        controls = answer.controls
+        for (const listener of [...bindingListeners]) listener(settingsOf(defaults, controls))
+      }
+      return answer
+    },
+    resetBindings() {
+      controls = defaults
+      for (const listener of [...bindingListeners]) listener(settingsOf(defaults, controls))
+    },
+    onBindings(listener) {
+      bindingListeners.add(listener)
+      return () => bindingListeners.delete(listener)
+    },
+    capture(slot) {
+      // A second capture ends the first.
+      waiting?.cancel()
+      const running = startCapture(slot, {
+        win: window,
+        silence: () => api.silence(),
+        maskPads: () => pads.mask(),
+      })
+      waiting = running
+      // What is held now is not an answer: the wait starts from here.
+      running.step(pads.read())
+      return running
+    },
     destroy() {
       if (destroyed) return
       destroyed = true
+      waiting?.cancel()
       if (frame !== undefined) frames.cancel(frame)
       keyboard.destroy()
       touch.destroy()
       seatListeners.clear()
+      bindingListeners.clear()
     },
   }
+  return api
 }
 
 /** Every key code any slot binds: the whole keyboard, and each half of a shared one. */
