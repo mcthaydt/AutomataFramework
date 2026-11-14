@@ -2,7 +2,7 @@
 // hands, opens a level, follows a conversation, and can be skipped; what it changed is the same whether or not it was
 // watched.
 import { afterEach, expect, test } from 'vitest'
-import { type Command, controlsCommand, Player } from '#src/features/commands/commands.ts'
+import { controlsCommand, Player } from '#src/features/commands/commands.ts'
 import type { CutsceneFile, GameContent } from '#src/features/content/content.ts'
 import {
   chooseCommand,
@@ -19,7 +19,7 @@ import {
 import { sceneOf, storyProgress } from '#src/features/level/story-read.ts'
 import { cameraAt } from '#src/features/level/timeline.ts'
 import { Transform } from '#src/features/physics/physics.ts'
-import type { PluginDef, Sim } from '#src/features/sim/sim.ts'
+import type { Command, PluginDef, Sim } from '#src/features/sim/sim.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import {
   critterBehaviour,

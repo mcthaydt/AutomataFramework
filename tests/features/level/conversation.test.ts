@@ -3,7 +3,7 @@
 // walking up, waits on the Owner's answer to plan T's question (see the todo tests); a game's own code opens one with
 // `startConversation`, which these tests use.
 import { afterEach, expect, test } from 'vitest'
-import { type Command, controlsCommand, Player } from '#src/features/commands/commands.ts'
+import { controlsCommand, Player } from '#src/features/commands/commands.ts'
 import type { GameContent } from '#src/features/content/content.ts'
 import {
   chooseCommand,
@@ -16,7 +16,7 @@ import {
 } from '#src/features/level/level.ts'
 import { talkOf } from '#src/features/level/story-read.ts'
 import { Transform } from '#src/features/physics/physics.ts'
-import type { PluginDef, Sim, SimContext } from '#src/features/sim/sim.ts'
+import type { Command, PluginDef, Sim, SimContext } from '#src/features/sim/sim.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import {
   keeperFile,

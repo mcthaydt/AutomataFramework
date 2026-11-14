@@ -23,7 +23,7 @@ test('a language the game has no file for falls back to English', async () => {
 })
 
 test('a game with no messages shows the key', async () => {
-  const content = { ...(await loadStory()), messages: undefined }
+  const { messages: _gone, ...content } = await loadStory()
   expect(wordsOf(content)('keeper.hello')).toBe('keeper.hello')
 })
 

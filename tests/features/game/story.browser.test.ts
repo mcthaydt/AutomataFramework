@@ -326,6 +326,7 @@ test('Enter tapped fast through the tip does not skip the cutscene after it', as
   run(frames, 40)
   key('keydown', 'Enter')
   key('keyup', 'Enter')
+  run(frames, 3)
   const skipped = sent(game, SkipCommand.id).length
   key('keydown', 'ArrowRight')
   expect(playUntil(frames, () => choicesOf(mount).length === 2)).toBe(true)

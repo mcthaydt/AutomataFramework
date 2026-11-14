@@ -1,7 +1,7 @@
 // The story's state, and a player's hands held while a cutscene plays: the sim blanks what a held player holds, so a
 // game's own hero code needs no change, and gives back what is still held when it ends.
 import { afterEach, expect, test } from 'vitest'
-import { type Command, controlsCommand, Player } from '#src/features/commands/commands.ts'
+import { controlsCommand, Player } from '#src/features/commands/commands.ts'
 import {
   chooseCommand,
   createGameSim,
@@ -13,7 +13,7 @@ import {
   startCutscene,
 } from '#src/features/level/level.ts'
 import { Body, Transform } from '#src/features/physics/physics.ts'
-import type { Sim, SimContext } from '#src/features/sim/sim.ts'
+import type { Command, Sim, SimContext } from '#src/features/sim/sim.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { type MiniGame, miniGame } from '../../fixtures/level/mini-game.ts'
