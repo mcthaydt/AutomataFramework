@@ -1,10 +1,13 @@
 // The page the online journey opens in each browser: the fixture online game on a real page, joined to a real room
 // server. It shows what the journey reads and nothing else: `#status` holds the words a person would read, and `#game`
 // carries the numbers (`data-*`). The address says where: `?server=ws://…`, `?room=<code>`, `?seats=<n>`, and
-// `?game=co-op` for the game made for four players, whose heroes come and go while it is played.
+// `?game=co-op` for the game made for four players, whose heroes come and go while it is played, and `?late=<ms>` for a
+// slow line: each key this page sends reaches the room that much later, so the room puts it on a later tick than the
+// one this page guessed, and the page must put its picture right.
 import { attemptsToBuildCode } from '../../strict-csp.ts'
 
 const params = new URLSearchParams(location.search)
+const late = Number(params.get('late') ?? 0)
 const status = document.querySelector<HTMLElement>('#status') as HTMLElement
 const game = document.querySelector<HTMLElement>('#game') as HTMLElement
 const mount = document.querySelector<HTMLElement>('#mount') as HTMLElement
@@ -58,7 +61,17 @@ const built = await attemptsToBuildCode(async () => {
       seats: Number(params.get('seats') ?? 2),
       wrapLink: (link) => {
         line = link
-        return link
+        if (!(late > 0)) return link
+        // Only the keys are held back, each by the same time, so they reach the room in the order they were pressed.
+        return {
+          send: (message) => {
+            if (message.t === 'cmd') setTimeout(() => link.send(message), late)
+            else link.send(message)
+          },
+          listen: (handlers) => link.listen(handlers),
+          close: () => link.close(),
+          ...(link.drop === undefined ? {} : { drop: () => link.drop?.() }),
+        }
       },
       onCheck: (tick, hash, ok) => {
         if (ok) game.setAttribute(`data-check-${tick}`, hash)
