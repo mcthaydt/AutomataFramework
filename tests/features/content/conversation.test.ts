@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { writeContent } from '#src/features/content/content.ts'
-import { expectRoundTrip, gameProblems, problemsOf } from '../../fixtures/content/kind.ts'
-import { english, keeperTalk, storyGame } from '../../fixtures/content/story.ts'
+import { changed, expectRoundTrip, gameProblems, problemsOf } from '../../fixtures/content/kind.ts'
+import { english, intro, keeperTalk, storyGame } from '../../fixtures/content/story.ts'
 
 type Json = Record<string, unknown>
 const file = 'content/conversations/keeper.json'
@@ -184,4 +184,102 @@ test('a game with a conversation and no English file at all reports every line',
   expect(found[0]).toBe(
     `${file}: nodes[0].lines[0]: English has no message called "keeper.hello". Add it to the English file or fix the spelling.`,
   )
+})
+
+test('a node may name the cutscene that plays when the conversation ends there, and writes it last', () => {
+  const talk = withNodes((n) => {
+    nodeAt(n, 1).cutscene = 'level-1-tip'
+  })
+  expectRoundTrip('conversation', talk)
+  const written = JSON.parse(writeContent('conversation', talk as never)) as { nodes: Json[] }
+  expect(Object.keys(nodeAt(written.nodes, 1))).toEqual(['id', 'speaker', 'lines', 'cutscene'])
+})
+
+test('a cutscene on a node with choices, or with a "next"', () => {
+  const sentence = (i: number): string =>
+    `${file}: nodes[${i}].cutscene: A cutscene plays when the conversation ends, so this node cannot have choices or a "next".`
+  expect(said(withNodes((n) => (nodeAt(n, 0).cutscene = 'level-1-tip')))).toEqual([sentence(0)])
+  expect(
+    said(
+      withNodes((n) => {
+        nodeAt(n, 1).next = 'bye'
+        nodeAt(n, 1).cutscene = 'level-1-tip'
+      }),
+    ),
+  ).toEqual([sentence(1)])
+})
+
+/** The fixture game with the keeper's talk, whose node `tip` plays `cutscene`, and these cutscenes (id, level). */
+const withScenes = (
+  scenes: readonly (readonly [string, string])[],
+  cutscene = 'level-1-tip',
+  more: Parameters<typeof storyGame>[0] = [],
+  replace: Parameters<typeof storyGame>[1] = {},
+) =>
+  storyGame(
+    [
+      {
+        type: 'messages',
+        path: 'content/messages/en.json',
+        text: writeContent('messages', english()),
+      },
+      {
+        type: 'conversation',
+        path: file,
+        text: writeContent(
+          'conversation',
+          withNodes((n) => {
+            nodeAt(n, 1).cutscene = cutscene
+          }) as never,
+        ),
+      },
+      ...scenes.map(([id, level]) => ({
+        type: 'cutscene' as const,
+        path: `content/cutscenes/${id}.json`,
+        text: writeContent('cutscene', { ...intro(), id, level } as never),
+      })),
+      ...more,
+    ],
+    {
+      'content/characters/keeper.json': writeContent('character', {
+        format: 1,
+        id: 'keeper',
+        body: 'fixed',
+        size: { w: 0.8, h: 1 },
+        color: '#7a9e3b',
+        conversation: 'keeper',
+      } as never),
+      ...replace,
+    },
+  )
+
+test('a cutscene the game has, staged in the keeper’s level, loads', async () =>
+  expect(await gameProblems(withScenes([['level-1-tip', 'level-1']]))).toEqual([]))
+
+test('a cutscene the game does not have', async () =>
+  expect(
+    await gameProblems(
+      withScenes(
+        [
+          ['level-1-intro', 'level-1'],
+          ['level-1-tip', 'level-1'],
+        ],
+        'level-1-tp',
+      ),
+    ),
+  ).toEqual([
+    `${file}: nodes[1].cutscene: There is no cutscene called "level-1-tp". This game has: level-1-intro, level-1-tip.`,
+  ]))
+
+test('a keeper who stands in a second level, where the cutscene cannot play', async () => {
+  const base = storyGame()
+  const cave = changed('level', base['content/levels/level-1.json'], (level) => {
+    level.id = 'cave'
+  })
+  const files = withScenes([['level-1-tip', 'level-1']], 'level-1-tip', [
+    { type: 'level', path: 'content/levels/cave.json', text: cave },
+  ])
+  expect(await gameProblems(files)).toEqual([
+    `${file}: nodes[1].cutscene: The cutscene "level-1-tip" is staged in the level "level-1", but "keeper" can be talked to in the level "cave" too, where it cannot play. Stage a cutscene there, or remove this one.`,
+  ])
 })

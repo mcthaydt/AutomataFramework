@@ -36,3 +36,10 @@ test('the M1 game is untouched: its files still read', async () => {
   // The byte check for these files is in load.test.ts and stays there.
   expect((await loadGame(readFixture())).ok).toBe(true)
 })
+
+test('the keeper has a name and a conversation, and the intro opens its level', async () => {
+  const loaded = await loadGame(readFullGame())
+  if (!loaded.ok) throw new Error('the full game did not load')
+  expect(loaded.value.characters.keeper).toMatchObject({ name: 'keeper.name', conversation: 'keeper' })
+  expect(loaded.value.cutscenes?.['level-1-intro']?.opens).toBe(true)
+})
