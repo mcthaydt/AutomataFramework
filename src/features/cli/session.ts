@@ -6,8 +6,8 @@
 // what the command (and, later, the MCP server) holds: the ids, the limit of four, and the sentences.
 import { join } from 'node:path'
 import { Effect } from 'effect'
-import { formatDiagnostic } from '../content/content.ts'
 import type { Recorder, Sequence } from '../commands/commands.ts'
+import { formatDiagnostic } from '../content/content.ts'
 import type { Command, Sim } from '../sim/sim.ts'
 import type { GameFolder } from './game-folder.ts'
 import {

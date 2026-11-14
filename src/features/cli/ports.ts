@@ -87,7 +87,11 @@ export type SessionMessage =
       readonly seed?: number
     }
   /** Holds, for each player named (`"1"`), those actions for `ticks` ticks. */
-  | { readonly kind: 'step'; readonly ticks: number; readonly hold: Readonly<Record<string, readonly string[]>> }
+  | {
+      readonly kind: 'step'
+      readonly ticks: number
+      readonly hold: Readonly<Record<string, readonly string[]>>
+    }
   | { readonly kind: 'state' }
   /** The recording so far, as the file `automata replay` reads. */
   | { readonly kind: 'recording' }

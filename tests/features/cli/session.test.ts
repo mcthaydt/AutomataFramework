@@ -161,7 +161,8 @@ test('a session started after the rules changed plays the new rules', async () =
   const memory = game(() => code)
   const sessions = createSessions()
   const first = await run(memory, sessions.start({ folder: 'game' }))
-  const before = heroOf((await run(memory, sessions.step(first.session, 60, { '1': ['right'] }))).state)?.x ?? 0
+  const before =
+    heroOf((await run(memory, sessions.step(first.session, 60, { '1': ['right'] }))).state)?.x ?? 0
   // The agent edits the rules: the hero now stands still.
   const still = definePlugin({
     name: 'hero',
@@ -170,7 +171,8 @@ test('a session started after the rules changed plays the new rules', async () =
   })
   code = { framework, rules: { plugins: [still], actions: ACTIONS } }
   const second = await run(memory, sessions.start({ folder: 'game' }))
-  const after = heroOf((await run(memory, sessions.step(second.session, 60, { '1': ['right'] }))).state)?.x ?? 0
+  const after =
+    heroOf((await run(memory, sessions.step(second.session, 60, { '1': ['right'] }))).state)?.x ?? 0
   expect(after).toBeLessThan(before)
   await run(memory, sessions.stopAll())
 })

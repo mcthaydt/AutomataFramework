@@ -1,6 +1,7 @@
 // The cli feature's ports on files in memory, so every command runs in a Node test with no disk, no child process and no
 // terminal. `files` is the folder as a map; a test reads it after the command ran to see what was written.
 import { Effect, Layer } from 'effect'
+import { readGame } from '#src/features/cli/game-folder.ts'
 import {
   CliError,
   Code,
@@ -13,7 +14,6 @@ import {
   type ToolResult,
   Tools,
 } from '#src/features/cli/ports.ts'
-import { readGame } from '#src/features/cli/game-folder.ts'
 import { sessionHost } from '#src/features/cli/session.ts'
 import * as framework from '#src/headless.ts'
 
