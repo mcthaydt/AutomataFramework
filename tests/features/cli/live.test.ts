@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { Effect } from 'effect'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { liveLayer, quoteForWindows } from '#src/features/cli/live.ts'
-import { Code, Files, type FilesService } from '#src/features/cli/ports.ts'
+import { type CliError, Code, Files, type FilesService } from '#src/features/cli/ports.ts'
 
 let folder: string
 beforeEach(async () => {
@@ -15,7 +15,7 @@ afterEach(async () => {
   await rm(folder, { recursive: true, force: true })
 })
 
-const files = <A>(use: (files: FilesService) => Effect.Effect<A>): Promise<A> =>
+const files = <A>(use: (files: FilesService) => Effect.Effect<A, CliError>): Promise<A> =>
   Effect.runPromise(Effect.flatMap(Files, use).pipe(Effect.provide(liveLayer)))
 const loadCode = () =>
   Effect.runPromise(
