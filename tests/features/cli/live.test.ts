@@ -74,6 +74,33 @@ test("broken rules still give the game's framework, and the problem (audit M1)",
   }
 })
 
+async function rulesProblem(headless: string): Promise<unknown> {
+  await installFramework({
+    name: '@automataframework/framework',
+    exports: { './headless': { import: './dist/headless.js' } },
+  })
+  await mkdir(join(folder, 'src'), { recursive: true })
+  await writeFile(join(folder, 'src', 'headless.ts'), headless)
+  const result = await loadCode()
+  return result._tag === 'Right' ? result.right.rules : undefined
+}
+
+test('a rules file with no gamePlugins says what it must export', async () => {
+  expect(await rulesProblem('export const other = 1\n')).toEqual({
+    problem: {
+      file: 'src/headless.ts',
+      path: '',
+      message: "This file must export gamePlugins, the list of the game's plugins.",
+    },
+  })
+})
+
+test('a rules file that throws when it loads says so, with the first line of the error', async () => {
+  expect(await rulesProblem("throw new Error('nope\\nsecond line')\n")).toEqual({
+    problem: { file: 'src/headless.ts', path: '', message: 'This file could not be loaded. nope' },
+  })
+})
+
 test('a framework with no headless entry says so', async () => {
   await installFramework({ name: '@automataframework/framework' })
   const result = await loadCode()

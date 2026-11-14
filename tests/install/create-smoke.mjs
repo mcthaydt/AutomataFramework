@@ -9,6 +9,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -55,7 +56,11 @@ function fail(sentence, output = '') {
 function run(command, args, cwd, env = NO_COLOUR) {
   const line = commandLine(command, args)
   const done = spawnSync(line, { cwd, env, shell: true, encoding: 'utf8', timeout: 900_000 })
-  return { status: done.status, output: `${done.stdout ?? ''}${done.stderr ?? ''}`, stdout: done.stdout ?? '' }
+  return {
+    status: done.status,
+    output: `${done.stdout ?? ''}${done.stderr ?? ''}`,
+    stdout: done.stdout ?? '',
+  }
 }
 
 /** Runs it and requires this exit status. Returns what it said. */
@@ -71,8 +76,9 @@ const said = (what, output, text) => {
 }
 const step = (what) => console.log(`ok  ${what}`)
 
-// A folder whose name has a space in it, as a person's own often has.
-const work = mkdtempSync(join(tmpdir(), 'create smoke '))
+// A folder whose name has a space in it, as a person's own often has. The temp folder is named in full: a Windows
+// runner's short form (RUNNER~1) is a second name for it, and Vite refuses a file it reaches under the other one.
+const work = mkdtempSync(join(realpathSync.native(tmpdir()), 'create smoke '))
 const game = join(work, GAME_FOLDER)
 
 // 1. The README's first command, with one swap: the package for the tarball. Nothing else in it is changed.
