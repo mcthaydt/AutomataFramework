@@ -1,0 +1,85 @@
+{
+  "format": 2,
+  "framework": "0.1.0",
+  "tickHz": 60,
+  "seed": 1,
+  "contentHash": "22d45e379ac5df24",
+  "schemaHash": "6dfe31c12bbfab6d",
+  "ticks": 300,
+  "commands": [
+    {
+      "tick": 0,
+      "source": 1,
+      "seq": 0,
+      "type": "controls",
+      "payload": {
+        "held": [
+          "right"
+        ]
+      }
+    },
+    {
+      "tick": 120,
+      "source": 1,
+      "seq": 1,
+      "type": "controls",
+      "payload": {
+        "held": [
+          "left"
+        ]
+      }
+    },
+    {
+      "tick": 130,
+      "source": 1,
+      "seq": 2,
+      "type": "controls",
+      "payload": {
+        "held": [
+          "jump",
+          "left"
+        ]
+      }
+    },
+    {
+      "tick": 131,
+      "source": 1,
+      "seq": 3,
+      "type": "controls",
+      "payload": {
+        "held": [
+          "left"
+        ]
+      }
+    },
+    {
+      "tick": 180,
+      "source": 1,
+      "seq": 4,
+      "type": "controls",
+      "payload": {
+        "held": []
+      }
+    }
+  ],
+  "checks": [
+    {
+      "tick": 60,
+      "hash": "fb95f85f82f09910"
+    },
+    {
+      "tick": 120,
+      "hash": "47f6ddb201a9280a"
+    },
+    {
+      "tick": 180,
+      "hash": "46d2d2509d060a0b"
+    },
+    {
+      "tick": 240,
+      "hash": "c775dee88ca979cd"
+    }
+  ],
+  "finalHash": "d0da8dfb33f7afc5",
+  "meta": {}
+}
