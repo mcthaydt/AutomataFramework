@@ -678,7 +678,14 @@ function createLocale(options: {
     readonly content: GameContent;
     readonly host: Pick<Host, 'language' | 'deviceLanguages'>;
     readonly settings: Settings;
+    readonly watching?: boolean;
 }): Locale;
+```
+
+### `createPicker` (function)
+
+```ts
+function createPicker(locale: Locale): Picker;
 ```
 
 ### `createRecorder` (function)
@@ -971,6 +978,12 @@ type Ease = 'cut' | 'linear' | 'smooth';
 
 ```ts
 type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
+```
+
+### `emptyReadMarks` (function)
+
+```ts
+function emptyReadMarks(source: Language): ReadMarks;
 ```
 
 ### `encodePng` (function)
@@ -1317,7 +1330,7 @@ interface GameOptions extends GameSimOptions {
     readonly audio?: GameAudio;
     readonly soundNotice?: string | false;
     readonly readPicture?: ReadPicture;
-    readonly locale?: Locale;
+    readonly locale: Locale;
 }
 ```
 
@@ -1435,7 +1448,7 @@ interface Input {
     controls(): Controls;
     settings(): InputSettings;
     dropped(): readonly string[];
-    rebind(action: string, slot: BindingSlot, input: string): Rebound;
+    rebind(action: string, slot: BindingSlot, input: string): SaidRebound;
     resetBindings(): void;
     onBindings(listener: (settings: InputSettings) => void): () => void;
     capture(slot: BindingSlot): Capture;
@@ -1459,7 +1472,7 @@ interface InputOptions {
     readonly gamepads?: () => readonly (PadLike | null)[];
     readonly frames?: Frames;
     readonly sequence?: Sequence;
-    readonly words?: Words;
+    readonly words: Words;
 }
 ```
 
@@ -1617,16 +1630,63 @@ const LANGUAGE_SETTINGS_DEFAULT: LanguageSettings;
 const LANGUAGE_TAGS: Readonly<Record<Language, string>>;
 ```
 
+### `languageFlag` (function)
+
+```ts
+function languageFlag(language: Language): SVGSVGElement;
+```
+
 ### `languageName` (function)
 
 ```ts
 function languageName(language: Language): string;
 ```
 
+### `LanguagePick` (type)
+
+```ts
+type LanguagePick = {
+    readonly language: Language;
+    readonly from: 'saved' | 'host';
+} | {
+    readonly language: undefined;
+    readonly suggested: Language | undefined;
+};
+```
+
+### `languagePicker` (function)
+
+```ts
+function languagePicker(options: {
+    readonly mount: HTMLElement;
+    readonly locale: Locale;
+    readonly frames?: Frames;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+}): {
+    readonly done: Promise<Language>;
+    destroy(): void;
+};
+```
+
+### `languageRow` (function)
+
+```ts
+function languageRow(options: {
+    readonly mount: HTMLElement;
+    readonly languages: readonly Language[];
+    readonly chosen: Language | undefined;
+    readonly onChoose: (language: Language) => void;
+}): {
+    choose(language: Language | undefined): void;
+    focus(language: Language): void;
+    destroy(): void;
+};
+```
+
 ### `LANGUAGES` (const)
 
 ```ts
-const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+const LANGUAGES: readonly ["zh", "es", "en", "pt", "ja", "ko"];
 ```
 
 ### `LanguageSettings` (interface)
@@ -1849,6 +1909,7 @@ interface Listed {
     has(type: ContentType, id: string): boolean;
     ids(type: ContentType): readonly string[];
     readonly hero: string;
+    readonly source: Language | undefined;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
 }
 ```
@@ -1897,12 +1958,15 @@ type LoadResult<S> = {
 
 ```ts
 interface Locale {
-    language(): Language;
-    choice(): Language | 'auto';
+    language(): Language | undefined;
+    asked(): boolean;
+    suggested(): Language | undefined;
     readonly languages: readonly Language[];
+    listed(): readonly Language[];
     readonly words: Words;
+    wordsIn(language: Language): Words;
     say(message: Message): string;
-    set(choice: Language | 'auto'): Promise<StoreResult<void>>;
+    set(language: Language): Promise<StoreResult<void>>;
     onChange(listener: (language: Language) => void): () => void;
 }
 ```
@@ -1928,7 +1992,7 @@ const Look: ComponentDef<typeof lookFields>;
 ### `markRead` (function)
 
 ```ts
-function markRead(content: GameContent, marks: ReadMarks, language: Translated, keys?: readonly string[]): ReadMarks;
+function markRead(content: GameContent, marks: ReadMarks | undefined, language: Language, keys?: readonly string[]): ReadMarks;
 ```
 
 ### `matchLanguage` (function)
@@ -2203,7 +2267,7 @@ type OnlineStatus = {
 ### `onlineWords` (function)
 
 ```ts
-function onlineWords(status: OnlineStatus, words?: Words): string;
+function onlineWords(status: OnlineStatus, words: Words): string;
 ```
 
 ### `openSettings` (function)
@@ -2247,6 +2311,18 @@ interface PadLike {
         readonly value: number;
     }[];
 }
+```
+
+### `padMenu` (function)
+
+```ts
+function padMenu(options?: {
+    readonly frames?: Frames;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+}): {
+    on(listener: (press: MenuPress) => void): () => void;
+    destroy(): void;
+};
 ```
 
 ### `pageDensity` (const)
@@ -2368,6 +2444,29 @@ interface PhysicsOptions {
 }
 ```
 
+### `Picker` (interface)
+
+```ts
+interface Picker {
+    readonly flags: readonly Language[];
+    chosen(): Language | undefined;
+    choose(language: Language): void;
+    move(step: -1 | 1): void;
+    words(): {
+        readonly title: string;
+        readonly go: string;
+    } | undefined;
+    go(): Promise<StoreResult<void> | undefined>;
+    onChange(listener: () => void): () => void;
+}
+```
+
+### `PICKER_PROPERTIES` (const)
+
+```ts
+const PICKER_PROPERTIES: readonly string[];
+```
+
 ### `pickLanguage` (function)
 
 ```ts
@@ -2376,7 +2475,7 @@ function pickLanguage(options: {
     readonly host?: string | undefined;
     readonly device: readonly string[];
     readonly shipped: readonly Language[];
-}): Language;
+}): LanguagePick;
 ```
 
 ### `placeholdersOf` (function)
@@ -2414,6 +2513,12 @@ const Player: ComponentDef<typeof playerFields>;
 
 ```ts
 function playersIn(sim: Sim): number[];
+```
+
+### `playersOrder` (function)
+
+```ts
+function playersOrder(own: Language | undefined, shipped: readonly Language[]): readonly Language[];
 ```
 
 ### `playReplay` (function)
@@ -2487,6 +2592,7 @@ interface Project {
     readonly start: string;
     readonly hero: string;
     readonly players?: number | undefined;
+    readonly source?: Language | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -2521,10 +2627,13 @@ const READ_MARKS_FILE = "automata.translations.toml";
 function readMark(english: string, translated: string): string;
 ```
 
-### `ReadMarks` (type)
+### `ReadMarks` (interface)
 
 ```ts
-type ReadMarks = Readonly<Partial<Record<Translated, Readonly<Record<string, string>>>>>;
+interface ReadMarks {
+    readonly source: Language;
+    readonly read: Readonly<Partial<Record<Language, Readonly<Record<string, string>>>>>;
+}
 ```
 
 ### `ReadPicture` (type)
@@ -2539,6 +2648,17 @@ type ReadPicture = (path: string) => Promise<Blob>;
 function rebind(current: Controls, action: string, slot: BindingSlot, input: string): Rebound;
 ```
 
+### `RebindRefusal` (interface)
+
+```ts
+interface RebindRefusal {
+    readonly ok: false;
+    readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half';
+    readonly key: string;
+    readonly values?: Values;
+}
+```
+
 ### `Rebound` (type)
 
 ```ts
@@ -2546,13 +2666,7 @@ type Rebound = {
     readonly ok: true;
     readonly controls: Controls;
     readonly swapped?: string;
-} | {
-    readonly ok: false;
-    readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half';
-    readonly message: string;
-    readonly key: string;
-    readonly values?: Values;
-};
+} | RebindRefusal;
 ```
 
 ### `RECONNECT_DELAYS_MS` (const)
@@ -2815,6 +2929,16 @@ interface RopeLine {
     readonly x2: number;
     readonly y2: number;
 }
+```
+
+### `SaidRebound` (type)
+
+```ts
+type SaidRebound = Extract<Rebound, {
+    ok: true;
+}> | (RebindRefusal & {
+    readonly message: string;
+});
 ```
 
 ### `SaveDef` (interface)
@@ -3370,7 +3494,7 @@ function soundNotice(options: {
     readonly mount: HTMLElement;
     readonly audio: Pick<GameAudio, 'state' | 'onState' | 'silent'>;
     readonly words?: string;
-    readonly locale?: Pick<Locale, 'words' | 'onChange'>;
+    readonly locale: Pick<Locale, 'words' | 'onChange'>;
 }): () => void;
 ```
 
@@ -3844,7 +3968,7 @@ function typed<M extends Readonly<Record<string, string>>>(_file: {
 ### `unreadWords` (function)
 
 ```ts
-function unreadWords(content: GameContent, marks: ReadMarks): readonly {
+function unreadWords(content: GameContent, marks: ReadMarks | undefined): readonly {
     readonly language: Language;
     readonly key: string;
 }[];
@@ -4598,7 +4722,14 @@ function createLocale(options: {
     readonly content: GameContent;
     readonly host: Pick<Host, 'language' | 'deviceLanguages'>;
     readonly settings: Settings;
+    readonly watching?: boolean;
 }): Locale;
+```
+
+### `createPicker` (function)
+
+```ts
+function createPicker(locale: Locale): Picker;
 ```
 
 ### `createRecorder` (function)
@@ -4841,6 +4972,12 @@ type Ease = 'cut' | 'linear' | 'smooth';
 
 ```ts
 type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
+```
+
+### `emptyReadMarks` (function)
+
+```ts
+function emptyReadMarks(source: Language): ReadMarks;
 ```
 
 ### `encodePng` (function)
@@ -5319,10 +5456,22 @@ const LANGUAGE_TAGS: Readonly<Record<Language, string>>;
 function languageName(language: Language): string;
 ```
 
+### `LanguagePick` (type)
+
+```ts
+type LanguagePick = {
+    readonly language: Language;
+    readonly from: 'saved' | 'host';
+} | {
+    readonly language: undefined;
+    readonly suggested: Language | undefined;
+};
+```
+
 ### `LANGUAGES` (const)
 
 ```ts
-const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+const LANGUAGES: readonly ["zh", "es", "en", "pt", "ja", "ko"];
 ```
 
 ### `LanguageSettings` (interface)
@@ -5524,6 +5673,7 @@ interface Listed {
     has(type: ContentType, id: string): boolean;
     ids(type: ContentType): readonly string[];
     readonly hero: string;
+    readonly source: Language | undefined;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
 }
 ```
@@ -5552,12 +5702,15 @@ type LoadResult<S> = {
 
 ```ts
 interface Locale {
-    language(): Language;
-    choice(): Language | 'auto';
+    language(): Language | undefined;
+    asked(): boolean;
+    suggested(): Language | undefined;
     readonly languages: readonly Language[];
+    listed(): readonly Language[];
     readonly words: Words;
+    wordsIn(language: Language): Words;
     say(message: Message): string;
-    set(choice: Language | 'auto'): Promise<StoreResult<void>>;
+    set(language: Language): Promise<StoreResult<void>>;
     onChange(listener: (language: Language) => void): () => void;
 }
 ```
@@ -5583,7 +5736,7 @@ const Look: ComponentDef<typeof lookFields>;
 ### `markRead` (function)
 
 ```ts
-function markRead(content: GameContent, marks: ReadMarks, language: Translated, keys?: readonly string[]): ReadMarks;
+function markRead(content: GameContent, marks: ReadMarks | undefined, language: Language, keys?: readonly string[]): ReadMarks;
 ```
 
 ### `matchLanguage` (function)
@@ -5806,7 +5959,7 @@ type OnlineStatus = {
 ### `onlineWords` (function)
 
 ```ts
-function onlineWords(status: OnlineStatus, words?: Words): string;
+function onlineWords(status: OnlineStatus, words: Words): string;
 ```
 
 ### `openSettings` (function)
@@ -5949,6 +6102,23 @@ interface PhysicsOptions {
 }
 ```
 
+### `Picker` (interface)
+
+```ts
+interface Picker {
+    readonly flags: readonly Language[];
+    chosen(): Language | undefined;
+    choose(language: Language): void;
+    move(step: -1 | 1): void;
+    words(): {
+        readonly title: string;
+        readonly go: string;
+    } | undefined;
+    go(): Promise<StoreResult<void> | undefined>;
+    onChange(listener: () => void): () => void;
+}
+```
+
 ### `pickLanguage` (function)
 
 ```ts
@@ -5957,7 +6127,7 @@ function pickLanguage(options: {
     readonly host?: string | undefined;
     readonly device: readonly string[];
     readonly shipped: readonly Language[];
-}): Language;
+}): LanguagePick;
 ```
 
 ### `placeholdersOf` (function)
@@ -5995,6 +6165,12 @@ const Player: ComponentDef<typeof playerFields>;
 
 ```ts
 function playersIn(sim: Sim): number[];
+```
+
+### `playersOrder` (function)
+
+```ts
+function playersOrder(own: Language | undefined, shipped: readonly Language[]): readonly Language[];
 ```
 
 ### `playReplay` (function)
@@ -6062,6 +6238,7 @@ interface Project {
     readonly start: string;
     readonly hero: string;
     readonly players?: number | undefined;
+    readonly source?: Language | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -6096,10 +6273,13 @@ const READ_MARKS_FILE = "automata.translations.toml";
 function readMark(english: string, translated: string): string;
 ```
 
-### `ReadMarks` (type)
+### `ReadMarks` (interface)
 
 ```ts
-type ReadMarks = Readonly<Partial<Record<Translated, Readonly<Record<string, string>>>>>;
+interface ReadMarks {
+    readonly source: Language;
+    readonly read: Readonly<Partial<Record<Language, Readonly<Record<string, string>>>>>;
+}
 ```
 
 ### `RECONNECT_DELAYS_MS` (const)
@@ -7279,7 +7459,7 @@ function typed<M extends Readonly<Record<string, string>>>(_file: {
 ### `unreadWords` (function)
 
 ```ts
-function unreadWords(content: GameContent, marks: ReadMarks): readonly {
+function unreadWords(content: GameContent, marks: ReadMarks | undefined): readonly {
     readonly language: Language;
     readonly key: string;
 }[];

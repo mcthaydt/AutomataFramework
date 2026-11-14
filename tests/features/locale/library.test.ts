@@ -46,17 +46,47 @@ describe.each(LANGUAGES)('the %s file', (language) => {
 
 /** A game with the six library files as its words. */
 const everyLanguage = (): ReturnType<typeof wordsGame> =>
-  wordsGame({
-    en: wordsIn('en'),
-    es: wordsIn('es'),
-    ko: wordsIn('ko'),
-    ja: wordsIn('ja'),
-    zh: wordsIn('zh'),
-    pt: wordsIn('pt'),
-  })
+  wordsGame(
+    {
+      en: wordsIn('en'),
+      es: wordsIn('es'),
+      ko: wordsIn('ko'),
+      ja: wordsIn('ja'),
+      zh: wordsIn('zh'),
+      pt: wordsIn('pt'),
+    },
+    'en',
+  )
 
 test('the six files are translated in full', async () => {
   expect(translationProblems(await everyLanguage())).toEqual([])
+})
+
+test("every file has every key the others have, none is 'the first', and the picker's two words are among them", () => {
+  const keys = (language: Language): string[] => Object.keys(wordsIn(language)).sort()
+  for (const a of LANGUAGES) {
+    expect(keys(a), a).toEqual(expect.arrayContaining(['automata.picker.go', 'automata.picker.title']))
+    for (const b of LANGUAGES) expect(keys(a), `${a} against ${b}`).toEqual(keys(b))
+  }
+})
+
+test('the picker names its own language in that language, so each flag reads its own title', () => {
+  expect(LANGUAGES.map((language) => wordsIn(language)['automata.picker.title'])).toEqual([
+    '用中文玩',
+    'Jugar en español',
+    'Play in English',
+    'Jogar em português',
+    '日本語でプレイ',
+    '한국어로 플레이',
+  ])
+  expect(LANGUAGES.map((language) => wordsIn(language)['automata.picker.go'])).toEqual([
+    '开始',
+    'Vamos',
+    'Go',
+    'Vamos',
+    'スタート',
+    '시작',
+  ])
 })
 
 // A key on a keyboard is a word a player knows ("Pick another key"); the key of a message is not, and is said as
@@ -65,6 +95,10 @@ test('no sentence names a colour or says locale, message key, translation, fallb
   const banned =
     /\b(red|green|blue|yellow|orange|purple|pink|black|white|gr[ae]y|colou?rs?|locale|message keys?|translations?|fallback|socket|ticks?)\b/i
   for (const [key, text] of Object.entries(wordsIn('en'))) expect(text, key).not.toMatch(banned)
+})
+
+test('the marks file is format 2 and says it was made against English, the language the words are written in', () => {
+  expect(marksRaw).toBe('format = 2\nsource = "en"\n')
 })
 
 test("how many of the framework's words wait for a native read is printed, and never fails", async () => {

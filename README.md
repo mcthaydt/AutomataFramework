@@ -12,12 +12,15 @@ replays, level and character content, rendering (PixiJS), keyboard and touch inp
 You need [Node](https://nodejs.org) 24.21.0 or later. Then:
 
 ```sh
-npx @automataframework/framework create my-game
+npx @automataframework/framework create my-game --source en
 cd my-game
 npm install
 npm run check
 npm run dev
 ```
+
+`--source` is the language you write the game's words in: `zh` (Chinese), `es` (Spanish), `en` (English), `pt`
+(Portuguese), `ja` (Japanese) or `ko` (Korean). The game ships in all six, and each player picks their own.
 
 `create` makes a small game: one level, a hero, a crate to push. `npm run check` says whether the game is sound, in
 plain words. `npm run dev` plays it in your browser: hold the arrow keys to move and press Space to jump, or touch
@@ -53,6 +56,7 @@ fetch an unrelated package of that name from npm.
 | `automata play` | Plays the game in your browser, and shows your changes as you make them. |
 | `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
 | `automata art` | Paints the game's pictures from its figure and backdrop files. |
+| `automata words` | Lists the translated words nobody has read, and marks them read. |
 | `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
 ## Install
@@ -90,8 +94,10 @@ import { formatDiagnostic, loadGame, startGame, webHost } from '@automataframewo
 const loaded = await loadGame((path) => fetch(`/game/${path}`).then((r) => r.text()))
 if (!loaded.ok) throw new Error(loaded.diagnostics.map(formatDiagnostic).join('\n'))
 
+// `locale` is the player's language (see "Languages"): the game starts only once the player has chosen one.
 const game = await startGame({
   content: loaded.value,
+  locale,
   mount: document.getElementById('game') as HTMLElement,
   host: webHost(),
   controls: {
@@ -260,39 +266,42 @@ that cannot be read starts again from its first values.
 
 ## Languages
 
-A game's words are content, not code. There is one file for each language, `content/messages/en.json`, `es.json`,
-`ko.json`, `ja.json`, `zh.json` and `pt.json` (each listed in `automata.toml` as `type = "messages"`), and one line for
-each word. English is the one that says what a word is for; the others carry the same keys. A word can ask for a value
+A game's words are content, not code. There is one file for each language, `content/messages/zh.json`, `es.json`,
+`en.json`, `pt.json`, `ja.json` and `ko.json` (each listed in `automata.toml` as `type = "messages"`), and one line for
+each word. The file of the game's own language (`source` in `automata.toml`) says what a word is for; the others carry
+the same keys. A word can ask for a value
 with `{name}`, and the game gives it one.
 
 ```json
 {
   "format": 1,
-  "id": "en",
+  "id": "es",
   "messages": {
-    "controls.jump": "Jump",
-    "keeper.hello": "Hello there! 👋",
-    "level.level-1.name": "Level 1",
-    "room.waiting": "Waiting for {count} more"
+    "controls.jump": "Saltar",
+    "keeper.hello": "¡Hola! 👋",
+    "level.level-1.name": "Nivel 1",
+    "room.waiting": "Esperando a {count} más"
   }
 }
 ```
 
-The player's language is the one they picked, else the host's, else the device's, else English, and only a language
-the game has words in. `createLocale` gives a game the words in it, and keeps a pick with the settings:
+The player's language is the one they picked on their first visit: a new player is shown six flags, with their device's
+language already chosen when the game has it. A player who has not picked has no language (`locale.language()` is
+`undefined`, and `locale.asked()` is false): nobody is given one. `createLocale` gives a game the words in it, and keeps a pick with the settings:
 
 ```ts
 import { createLocale, levelName } from '@automataframework/framework/headless'
 
 const locale = createLocale({ content: loaded.value, host, settings }) // `settings` is `await openSettings(...)`
-locale.words('keeper.hello') // 'こんにちは！' on a Japanese device
+locale.words('keeper.hello') // 'こんにちは！' once the player has chosen Japanese
 locale.words('room.waiting', { count: 2 }) // a value goes where `{count}` is; a list is joined the way the language does
 levelName(locale.words, 'level-1') // the level's own name, or its id if no words give one
 await locale.set('ko') // the words change at once, every `locale.onChange` listener hears it, and the pick is kept
 ```
 
-A word a language lacks is said in English, and one English lacks is shown as its key, so a missing word never stops
-a game. Give `startGame` the locale (`startGame({ ..., locale })`) and the touch buttons say `controls.<action>`, a
+A word a language lacks is said in the language the game is written in (`source` in `automata.toml`), and one that
+language lacks is shown as its key, so a missing word never stops a game. `startGame` needs the locale
+(`startGame({ ..., locale })`) and throws until the player has chosen a language. With it, the touch buttons say `controls.<action>`, a
 refused `addPlayer` or `input.rebind` explains itself in the player's language, the sound's button asks for a tap in it,
 and all of it changes when the player picks another.
 In a page, `followLanguage(locale)` keeps `<html lang>` right, so a screen reader speaks the words properly. The
@@ -303,15 +312,18 @@ moves no hash and no replay: the sim never sees words.
 Two checks are for a person or an agent to run, and neither is part of `loadGame`, because a game with a word missing
 in Korean still loads and plays:
 
-- `translationProblems(content)` says, in one sentence for each, where a word is missing, what English says, which
-  value is missing or misspelt (`{cuont}` for `{count}`), and what is too long for a button or a save. A sentence reads
-  `content/messages/ko.json: messages: This file has no "keeper.hello". English says "Hello there!". Write it in Korean.`
+- `translationProblems(content)` says, in one sentence for each, where a word is missing, what the game's own language
+  says, which value is missing or misspelt (`{cuont}` for `{count}`), and what is too long for a button or a save. A
+  sentence reads
+  `content/messages/es.json: messages: This file has no "keeper.hello". The English file says "Hello there!". Write it in Spanish.`
 - `unreadWords(content, marks)` lists the words no native speaker has read yet. The marks are in
-  `automata.translations.toml` (`parseReadMarks`, `markRead`, `writeReadMarks`); a mark is of the exact words that
-  were read, so changing a word makes it unread again.
+  `automata.translations.toml` (`parseReadMarks`, `markRead`, `writeReadMarks`), in format 2, which names the `source`
+  they were made against: marks made against another language count for nothing. A mark is of the exact words that were
+  read, so changing a word makes it unread again.
 
 `automata check` runs both for you, in its `files` step: a missing word fails it with the sentence above, and the words
-nobody has read yet are a note with a count for each language, never a failure.
+nobody has read yet are one note for each language, never a failure. `automata words` lists them, each beside the game's
+own text, and marks a language read once a native speaker has read it.
 
 Every translation the framework ships (the six languages' library, and the demo game's) waits for a native speaker's
 read before Release 1: machine-written words are a first draft, and the marks say which are still that.
@@ -413,7 +425,7 @@ import { createAudio, startGame, webHost, webSpeaker } from '@automataframework/
 
 const host = webHost()
 const audio = createAudio({ content: loaded.value, speaker: webSpeaker({ host }) })
-const game = await startGame({ content: loaded.value, mount, host, controls, audio })
+const game = await startGame({ content: loaded.value, locale, mount, host, controls, audio })
 ```
 
 Events come from three places: your own plugin (`defineEvent`, then `ctx.emit(Jumped, {})` in a system), the
@@ -560,6 +572,7 @@ hold two who are apart, as far as `"most": { "w": 24, "h": 12 }` (the whole leve
 ```ts
 const game = await startGame({
   content: loaded.value,
+  locale,
   mount,
   host: webHost(),
   controls,
@@ -592,8 +605,11 @@ do its work (a folder that is not a game, a tool that is not installed). Add `--
 `automata create <name>` makes a new game in a new folder called `<name>` (small letters, numbers and dashes, like
 `my-game`): one level, a hero, a crate to push, and everything a game needs to be checked and played.
 
+- `--source <language>`: the language you write the game's words in: `zh`, `es`, `en`, `pt`, `ja` or `ko`. It is the
+  `source` line of `automata.toml`, and the other five languages are read against it (see `automata words`). Left out,
+  your computer's own language is used when it is one of them; when it is not, `create` stops and asks you to say.
 - `--framework <spec>`: which framework the game installs. Leave it out for the one that made the game.
-- `--json`: print what was made as JSON.
+- `--json`: print what was made as JSON: the `folder`, the `source` language and the `files`.
 
 ### automata check
 
@@ -649,6 +665,37 @@ and names the command to run.
 - `--json`: print the answer as JSON: `ok`, the `painted` paths and the `problems` (each a `file`, a `path` and a
   `message`). A game that does not load is not painted, and says so in `sentence`.
 
+### automata words
+
+`automata words [folder]` lists the translated words no native speaker has read yet. A translation made by a machine is
+a first draft that plays fine; this is the list of what still needs a person. For each language that has some, it names
+the key and puts the game's own text (the language in `source`) beside the translation:
+
+```
+Checked against Korean (ko).
+
+Spanish (es): 2 words wait for a native speaker.
+  keeper.hello
+    Korean:  안녕하세요!
+    Spanish: ¡Hola!
+  keeper.bye
+    Korean:  안녕히 가세요!
+    Spanish: ¡Adiós!
+
+Once a native speaker has read a language, mark it: automata words --read es
+```
+
+Once a person who speaks the language has read the words, `--read` writes that into `automata.translations.toml`, the
+only file this command ever writes. A mark is of the exact texts that were read, so a word changed afterwards waits
+again. The exit code is `0` whenever the command ran: words that wait are not a fault.
+
+- `--read <language>`: mark every listed word of that language as read. The game's own language is never read against
+  anything, so it cannot be marked.
+- `--read <language> <key> …`: mark only those words. A key the language does not have is refused, and nothing is
+  written.
+- `--json`: print the answer as JSON: the `source` language, the `unread` words (each a `language`, a `key`, the game's
+  own `source` text and the translation's `text`) and, after `--read`, what was `marked`.
+
 ### automata mcp
 
 `automata mcp` lets an agent use these commands as tools, over the [Model Context Protocol](https://modelcontextprotocol.io).
@@ -674,6 +721,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 | `check` | `folder`, `only?`, `fix?` | `automata check <folder> --json` |
 | `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
 | `art` | `folder`, `check?` | `automata art <folder> --json` |
+| `words` | `folder`, `read?`, `keys?` | `automata words <folder> --json`, and `--read <read> <keys>` when `read` is given |
 | `content_types` | none | the table of content kinds above |
 | `schema` | `type` | reading `schemas/<type>.schema.json` |
 | `skill` | `name?` | reading `skills/<name>/SKILL.md` |
@@ -686,7 +734,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
 and `automata://skills/<name>`.
 
-The server never loads a game's rules itself. `create`, `check`, `replay` and `art` each run the command in a process of their
+The server never loads a game's rules itself. `create`, `check`, `replay`, `art` and `words` each run the command in a process of their
 own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
 keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
 goes to standard error, never into the messages.

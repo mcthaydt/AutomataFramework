@@ -38,6 +38,7 @@ test('tools/list has these tools, each with a description and an object schema',
     'check',
     'replay',
     'art',
+    'words',
     'content_types',
     'schema',
     'skill',
@@ -58,7 +59,7 @@ test('tools/list has these tools, each with a description and an object schema',
 test('every tool has a command of the same name, or a file or a session the table names', () => {
   const tools = mcpTools(createSessions()).map((tool) => tool.name)
   const commands = tools.filter((name) => (COMMAND_NAMES as readonly string[]).includes(name))
-  expect(commands).toEqual(['create', 'check', 'replay', 'art'])
+  expect(commands).toEqual(['create', 'check', 'replay', 'art', 'words'])
   expect(tools.filter((name) => !commands.includes(name))).toEqual([
     'content_types',
     'schema',
@@ -99,6 +100,35 @@ test('create, check and replay hand the command their words, and the command is 
     ['replay', join('game', 'replays', 'level-1.json')],
   ])
   expect(replies.map((reply) => JSON.parse(answerOf(reply).text))).toEqual(Array(6).fill({ ok: true }))
+})
+
+test('words hands the command its folder, the language to mark and the words, and keys need a language', async () => {
+  const asked: (readonly string[])[] = []
+  const memory = gameMemory()
+  const spy = Layer.succeed(Runner, {
+    command: (args) =>
+      Effect.sync(() => {
+        asked.push(args)
+        return { code: 0, json: { ok: true } }
+      }),
+    worker: () => Effect.die('a worker was not asked for'),
+  })
+  const replies = await talk(Layer.merge(memory.layer, spy), [
+    call(1, 'words', { folder: 'game' }),
+    call(2, 'words', { folder: 'game', read: 'pt' }),
+    call(3, 'words', { folder: 'game', read: 'es', keys: ['keeper.hello', 'keeper.bye'] }),
+    call(4, 'words', { folder: 'game', keys: ['keeper.hello'] }),
+  ])
+  expect(asked).toEqual([
+    ['words', 'game'],
+    ['words', 'game', '--read', 'pt'],
+    ['words', 'game', '--read', 'es', 'keeper.hello', 'keeper.bye'],
+  ])
+  const answers = replies.map(answerOf)
+  expect(answers[3]).toMatchObject({
+    isError: true,
+    text: 'keys needs read: name the language whose words these are.',
+  })
 })
 
 test('the live runner adds --json and starts the package’s own cli in a child process', () => {
@@ -152,7 +182,7 @@ test('a folder that is not a game is a result that is an error and holds the com
 test('create, then check, then replay, in one conversation', async () => {
   const memory = memoryLayer({ ...templateInMemory(), ...packageFilesInMemory() }, { code: templateCode })
   const replies = await talk(memory.layer, [
-    call(1, 'create', { folder: 'my-game' }),
+    call(1, 'create', { folder: 'my-game', source: 'en' }),
     call(2, 'check', { folder: 'my-game', only: 'files' }),
     call(3, 'replay', { folder: 'my-game' }),
   ])

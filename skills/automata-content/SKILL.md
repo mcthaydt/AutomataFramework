@@ -450,18 +450,18 @@ A scene that plays on its own: where the camera goes, who stands where and what 
 
 ## messages
 
-All of the game's words in one language, by key. One file for each language. Put the files in `content/messages/`; the kind's rules are in `schemas/messages.schema.json`.
+All of the game's words in one language, by key. One file for each language, listed in the fixed order `zh, es, en, pt, ja, ko`. Put the files in `content/messages/`; the kind's rules are in `schemas/messages.schema.json`. The file of the game's own language (`source` in `automata.toml`) says what a word is for, and the other five carry the same keys. Run `npx --no automata words` after you add or change a word: it lists the translations no native speaker has read.
 
 ```json
 {
   "format": 1,
-  "id": "en",
+  "id": "es",
   "messages": {
-    "hero.ask": "Any tips?",
-    "hero.bye": "See you.",
-    "keeper.bye": "Take care.",
-    "keeper.hello": "Hello there! 👋",
-    "keeper.tip": "Push the crate onto the ledge."
+    "hero.ask": "¿Algún consejo?",
+    "hero.bye": "Hasta luego.",
+    "keeper.bye": "Cuídate.",
+    "keeper.hello": "¡Hola! 👋",
+    "keeper.tip": "Empuja la caja hasta el borde."
   }
 }
 ```

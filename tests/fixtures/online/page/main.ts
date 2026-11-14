@@ -47,18 +47,28 @@ const built = await attemptsToBuildCode(async () => {
     },
   })
   framework = await import('#src/index.ts')
-  const { frameworkWords, onlineWords, startOnlineGame, webHost } = framework
-  const words = frameworkWords((params.get('lang') ?? 'en') as Parameters<typeof frameworkWords>[0])
+  const { createLocale, onlineWords, openSettings, startOnlineGame, testHost, webHost } = framework
   const { fixtureControls } = await import('../../game/controls.ts')
   const { heroPlugin } = await import('../../game/hero.ts')
   const { loadCoopGame, loadOnlineGame } = await import('../game.ts')
+  const content = await (params.get('game') === 'co-op' ? loadCoopGame() : loadOnlineGame())
+  // The player has chosen: a page that is asked nothing says which language the test reads.
+  const languageHost = testHost()
+  const locale = createLocale({
+    content,
+    host: languageHost,
+    settings: await openSettings({ game: 'online-fixture', store: languageHost.store }),
+  })
+  await locale.set((params.get('lang') ?? 'en') as Parameters<typeof locale.set>[0])
+  const words = locale.words
   const show = (text: string, state: string): void => {
     status.textContent = text
     game.dataset.state = state
   }
   try {
     online = await startOnlineGame({
-      content: await (params.get('game') === 'co-op' ? loadCoopGame() : loadOnlineGame()),
+      content,
+      locale,
       plugins: [heroPlugin],
       mount,
       controls: fixtureControls,

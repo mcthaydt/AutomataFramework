@@ -3,6 +3,7 @@ import { z } from '../../lib/zod.ts'
 import { CONTENT_TYPES, type ContentType } from './content-types.ts'
 import type { Voice } from './diagnostics.ts'
 import { Id } from './ids.ts'
+import { LANGUAGES, type Language, languageCodes } from './messages.ts'
 import { checkData, type Parsed, withoutMark } from './parse.ts'
 import { isGamePath } from './shared.ts'
 
@@ -28,6 +29,12 @@ export interface Project {
    * project has no `players` key at all, so a one-player game's content hash is what it always was).
    */
   readonly players?: number | undefined
+  /**
+   * The language the team writes the game's words in. Every other language is checked against it, and it stands in
+   * for a word a language lacks. Required as soon as the game lists any messages file, and that language's file must
+   * be listed; a game with no words leaves it out (and the parsed project has no `source` key at all).
+   */
+  readonly source?: Language | undefined
   readonly content: readonly ContentRef[]
 }
 
@@ -38,6 +45,8 @@ const KINDS = Object.keys(CONTENT_TYPES) as [ContentType, ...ContentType[]]
 
 const PLAYERS_HINT =
   'Write how many can play at once, 2, 3 or 4, like players = 2. Leave the line out for a one-player game.'
+
+const SOURCE_HINT = `Write one of ${languageCodes}, like source = "es".`
 
 const ref = z.strictObject({
   type: z.enum(KINDS),
@@ -53,6 +62,9 @@ export const ProjectSchema: z.ZodType<Project, Project> = z
     hero: Id,
     players: z
       .custom<number>((n) => typeof n === 'number' && Number.isInteger(n) && n >= 2 && n <= 4, PLAYERS_HINT)
+      .optional(),
+    source: z
+      .custom<Language>((value) => LANGUAGES.some((language) => language === value), SOURCE_HINT)
       .optional(),
     content: z.array(ref).max(1024),
   })

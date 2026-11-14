@@ -6,6 +6,7 @@ import { readFullGame } from '../../fixtures/full-game/read.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 import { attemptsToBuildCode } from '../../fixtures/strict-csp.ts'
 
 test('starting and drawing a game with pictures builds no code from strings', async () => {
@@ -21,6 +22,7 @@ test('starting and drawing a game with pictures builds no code from strings', as
     const frames = manualFrames()
     const game = await startGame({
       content: loaded.value,
+      locale: await chosenLocale(loaded.value, 'ko'),
       plugins: [heroPlugin],
       mount,
       controls: fixtureControls,

@@ -10,14 +10,14 @@
     "id": {
       "type": "string",
       "enum": [
-        "en",
-        "es",
-        "ko",
-        "ja",
         "zh",
-        "pt"
+        "es",
+        "en",
+        "pt",
+        "ja",
+        "ko"
       ],
-      "description": "The language this file is in: en, es, ko, ja, zh or pt. It matches the file name."
+      "description": "The language this file is in: zh, es, en, pt, ja or ko. It matches the file name."
     },
     "messages": {
       "type": "object",

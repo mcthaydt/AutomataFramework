@@ -18,14 +18,17 @@ Overall: **20%** (the spec is merged; plan H is written and in review; stages 3 
 
 Spec: [`specs/2026-11-14-no-default-language-design.md`](specs/2026-11-14-no-default-language-design.md)
 
-Overall: **30%** (the spec and plan W are merged; the plan audit is written and in review; stages 4 to 7 follow)
+Overall: **70%** (the spec, plan W and its audit are done; execution is built, Tasks 1 to 10, and waits on a green run of the last commit; stages 5 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Merged (PR 89), 100%. The Owner answered every question (2026-11-14): players and editor users only, an asked-for language with a flag-only picker on every first visit, the player's own language first, then by first-language speakers, the US flag for English and Mexico's for Spanish, US spelling. No golden moves | `specs/2026-11-14-no-default-language-design.md` |
 | 2. Plan (plan W) | Written, in review, 100%. Ten tasks (9% each, 10% for the last green run): the speakers' order and US English; `source` in `automata.toml`; read marks format 2; a locale that answers a language or none, with the picker's rules; every caller passes the player's language (`startGame` now needs a `locale` and refuses to start before a language is chosen); six SVG flags and the picker screen; the template's page; `automata words` and the MCP `words` tool; `automata create --source`; the rule that fails on English named as a fallback, and the docs. No golden moves and no dependency is added. No Owner question is open | `plans/2026-11-14-no-default-language.md` |
 | 3. Plan audit (plan W) | Written, fixes applied to the plan in the same pull request, in review; stage at 100%, plan W at 0% built. No critical, five important (the `startGame` guard let a watching locale through: it now tests `asked()`; the flags could not be imported from `locale/` under `through-the-entry`: they live in `web/library/flags/`, a recorded deviation; the no-English rule exempted two whole files: now two lines; the speakers' counts could not be checked, so none goes into code; `automata words --compile` had no owner: plan K Step U), three minor. No golden moves, no dependency, no Owner question | `audits/2026-11-14-no-default-language-plan-audit.md` |
-| 4 to 7 (plan W) | Not started | |
+| 4. Execution (plan W) | Built, 100% (Tasks 1 to 10 of 10; the last green run is still to be read; Tasks 1 to 5: Tasks 1 to 3 green in CI on `469b875`, Tasks 4 and 5 green on `044e2a9`; Tasks 6 to 10 below). Task 1: the languages are listed by first-language speakers and English is US English (`en-US`, US list joining). Task 2: `source` in `automata.toml` names the language a game's words are written in, and every check runs against it, not against English; `compileWords` takes it as the base language. Task 3: the read marks are format 2 and name the language they were made against (`source`); a format 1 file still reads, as made against English, and marks made against another source are ignored. Task 4: a locale answers a language or none (`asked()`, `suggested()`, `listed()`, `wordsIn`), the picker's rules are `createPicker`, and the words of the library are in each language. Task 5: `startGame` and `startOnlineGame` refuse to start until the player has a language, `words` is always given to input and touch, and a refused rebind is a key and values, never a sentence. Rulings so far: `compileWords` was pulled forward from Task 8 (the new order broke English as its base); a conversation in a game with no words keeps its "no words yet" sentence. The `online` journey's known crate race (`p2-x`, AF PR 85) failed once and passed on one rerun. No golden moved Task 6: six SVG flags (`web/library/flags/`) and the picker screen (`languagePicker`: flags only, Go does nothing until one is chosen, arrows, Enter, Space and the pad walk and press). Task 7: the template's page shows the picker first (`loading`, `picking`, `playing`, `problem`), a kept language skips it, and `index.html` has no `lang` of its own (the page sets it). Task 8: `automata words` lists the translated words nobody has read, each beside the game's own text, and `--read <language> [words]` marks them (the marks file is the only file it writes); the MCP server has a `words` tool (thirteen tools); `check`'s one note for each language says the same. Task 9: `automata create --source <language>` writes the game's own language (left out, the machine's first language the framework has words in; none is a sentence that asks, never English); the marks file is made against it. Task 10: the architecture rule `no-default-language` fails on English named as a language of its own in `src/` (the list of languages and the format 1 marks line are the two lines it allows), and the docs and skills list the languages in the fixed order with a game's own `source`. Further rulings: the flags live in `web/library/flags/`, not `locale/library/flags/` (the plan audit's I2); the fixture page's calls wait for the game to start; the words stop sentence for a key only the translation has was left out (such a game does not load); `emptyReadMarks` is not in the game's content API (unused). No golden moved | branch `claude/project-thread-tgb8f0`, PR 94 |
+| 5 to 7 (plan W) | Not started | |
+
+Plan W's handoffs (Task 10): see "Handoffs from plan W" in the Cycle 4 log below.
 
 ## Cycle 4: M2, the 2D framework in full
 
@@ -81,6 +84,31 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan L (languages): 5. Implementation audit | Written, in review; stage at 100%, plan L at 80%: no critical, three important (the sound's button stayed English, though plan L came after plan S; a refused change of key was English only, in a feature below `locale`; Paraglide's two packages were installed by every game though nothing a game installs loads them, now development dependencies until a command runs the compiler), four minor, all fixed in the same pull request with their tests first; seven of the builder's rulings accepted; no golden moved. The Owner's new direction (no default language) is its own spec. The framework words waiting for a native read are now 135 (27 keys, five languages) | `audits/2026-11-14-m2-plan-l-implementation-audit.md` |
 
 ### Log
+- 2026-11-14, plan W (no default language), execution: Tasks 1 to 10 built on PR 94. The framework's library now has 29 words in
+  each language, so 145 words wait for a native speaker's read before Release 1 (the "135" lines below are history).
+  Handoffs from plan W:
+  - **Plan U (screens):** the default flow is Warnings (if needed), Language picker, Splash, Main menu, Gameplay (with pause),
+    Main menu. The picker is `languagePicker` and is already the template page's first step; plan U moves it into the flow
+    between the warnings and the splash. Settings' language part is `languageRow` over `locale.listed()` with `locale.set`.
+    `padMenu` gives a screen gamepad presses while no game runs. `automata.saves.refused.*` (plan L's audit, M3) joins the
+    library in all six.
+  - **Plan D (Examples):** `source = "en"` in the demo's `automata.toml`, written in the same change as its first messages
+    file (a `source` with no words file is a load problem, and the demo has none today); marks to format 2; the page shows
+    the picker on a first visit, and in watch mode makes its locale with `watching: true` and, when a player takes over,
+    shows the picker whenever `!locale.asked()` (never by testing `language()`, which a watching locale has);
+    `--automata-picker-chosen` is Peach Red; the picker's title needs the demo's Korean, Japanese and Chinese fonts; the
+    `ci-screens` pictures add the picker at the five sizes; `startGame` now needs `locale`; the pin moves to the commit that
+    lands this plan. Neither golden moves.
+  - **Editors:** no call they make changes shape (`loadGame`, `parseProject`, `parseContent`, `writeContent` and the level
+    helpers). When their pin moves, a game with words and no `source` shows the load sentence; their fixture game lists no
+    words, so no test there moves. The nine flags and the editors' own picker are M3.
+  - **Plan K:** `compileWords` takes the `source` as its base language. The two inlang packages stay development dependencies
+    and `bindParaglide` still has no command that makes its `runtime.js`; plan K Step U wires `automata words --compile
+    <outdir>` and moves the two packages to `dependencies` (`tests/package.test.ts` says so), since plan U is the first to
+    show a game's words through Paraglide on a page. The coordinator may move it.
+  - **The other repos' `CLAUDE.md` pages** list the languages in the old order; each is corrected with that repo's next pull
+    request.
+
 - 2026-11-14, the editors' Blueprint redesign, Task 2 (AutomataFrameworkEditors plan): `createLevelPicture`, a level drawn
   still with room kept clear on four sides, for the editors' level screen and card pictures. The same pull request fixes
   a break found moving the editors' pin: `scripts/fix-dts.ts` ran in a package installed from git, which unpacks under
@@ -90,7 +118,8 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
   `automata.rebind.*` sentences join the library in six languages: the sound's button follows the locale, and a refused
   `rebind` is a key and values said in the input's words. `createLocale` asks its host for its two languages only; the
   words compiler removes only a word's own generated file; Paraglide's packages are `devDependencies` while no command
-  loads them (`automata words`, the Owner's answer to plan K's Q1, moves them back). Before Release 1: 135 framework words and the
+  loads them (plan W's `automata words` does not compile, so they stay development dependencies until plan K Step U wires
+  `automata words --compile`). Before Release 1: 135 framework words and the
   full game's 45 wait for a native read.
 
 - 2026-11-14, plan K, Part 2 Steps P, L and A, implementation audit: skill `automata` and the template's `AGENTS.md` now send

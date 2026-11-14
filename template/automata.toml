@@ -6,6 +6,8 @@ name = "My Game"
 start = "level-1"
 # The character the player controls.
 hero = "hero"
+# The language your team writes the game's words in. Every other language is checked against it.
+source = "en"
 
 # Each [[content]] block lists one file of the game. A file that is not listed here is not part of the game.
 
@@ -40,8 +42,8 @@ path = "content/figures/crate.json"
 type = "character"
 path = "content/characters/spark.json"
 
-# The game's words, one file for each language. English comes first and says what every word is for; the other five
-# carry the same keys. `automata check` names a word a language is missing.
+# The game's words, one file for each language. The file of the game's own language (source, above) says what every
+# word is for; the others carry the same keys. `automata check` names a word a language is missing.
 [[content]]
 type = "messages"
 path = "content/messages/en.json"

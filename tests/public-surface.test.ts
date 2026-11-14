@@ -136,6 +136,7 @@ test('headless exports what a game sim and an editor need', async () => {
     'writeReadMarks',
     'readMark',
     'markRead',
+    'emptyReadMarks',
     'unreadWords',
     'onlineMessage',
     'bindParaglide',

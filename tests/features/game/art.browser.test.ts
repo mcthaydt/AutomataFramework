@@ -19,6 +19,7 @@ import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import { snapshot } from '../../fixtures/game/snapshot.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 
 const FRAME = 1000 / 60
 const host = testHost()
@@ -72,6 +73,7 @@ async function begin(
   const frames = manualFrames()
   game = await startGame({
     content: await full(overrides),
+    locale: await chosenLocale(await full(overrides), 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,
@@ -291,6 +293,7 @@ test('a missing picture stops the game with one sentence and leaves the page cle
   const before = mount.children.length
   const stopped = startGame({
     content: await full(),
+    locale: await chosenLocale(await full(), 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,
@@ -310,8 +313,10 @@ test('a missing picture stops the game with one sentence and leaves the page cle
 })
 
 test('a game with pictures and no readPicture says what to pass', async () => {
+  const content = await full()
   const options = {
-    content: await full(),
+    content,
+    locale: await chosenLocale(content, 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,
@@ -341,6 +346,7 @@ test('the M1 game, with no pictures, starts with no readPicture as it always did
   const frames = manualFrames()
   game = await startGame({
     content: await loadFixtureGame(),
+    locale: await chosenLocale(await loadFixtureGame(), 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,

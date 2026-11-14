@@ -3,19 +3,26 @@ import { z } from '../../lib/zod.ts'
 import { MessageKey } from './shared.ts'
 import type { ContentTypeInfo, Listed, Report } from './type-info.ts'
 
-/** The languages a game ships in: English, Spanish, Korean, Japanese, Chinese and Portuguese. */
-export const LANGUAGES = ['en', 'es', 'ko', 'ja', 'zh', 'pt'] as const
+/**
+ * The languages a game ships in: Chinese, Spanish, English, Portuguese, Japanese and Korean. The order is fixed and is
+ * by how many people speak each as a first language, as Ethnologue (28th edition, 2025) ranks them; no count is kept
+ * here, only the order. Every list a person reads follows it, and no list puts the game's own language first.
+ */
+export const LANGUAGES = ['zh', 'es', 'en', 'pt', 'ja', 'ko'] as const
+
+/** The codes as a sentence lists them: `zh, es, en, pt, ja or ko`. */
+export const languageCodes: string = `${LANGUAGES.slice(0, -1).join(', ')} or ${LANGUAGES.at(-1)}`
 
 /** One of the languages a game ships in. */
 export type Language = (typeof LANGUAGES)[number]
 
 const LANGUAGE_NAMES_IN_ENGLISH: Readonly<Record<Language, string>> = {
-  en: 'English',
-  es: 'Spanish',
-  ko: 'Korean',
-  ja: 'Japanese',
   zh: 'Chinese',
+  es: 'Spanish',
+  en: 'English',
   pt: 'Portuguese',
+  ja: 'Japanese',
+  ko: 'Korean',
 }
 
 /** A language's name in English, for a check's sentence: `Korean`. A player's own names are `locale`'s. */
@@ -46,7 +53,7 @@ const MAX_MESSAGES = 5000
 /** A messages file once read: every word a player reads, in one language, by key. */
 export interface MessagesFile {
   readonly format: 1
-  /** The language, which is also the file's name: `en`, `es`, `ko`, `ja`, `zh` or `pt`. */
+  /** The language, which is also the file's name: `zh`, `es`, `en`, `pt`, `ja` or `ko`. */
   readonly id: Language
   readonly messages: Readonly<Record<string, string>>
 }
@@ -57,7 +64,7 @@ export const MessagesSchema: z.ZodType<MessagesFile, MessagesFile> = z
     format: z.literal(1).describe('The version of this file format. Always 1.'),
     id: z
       .enum(LANGUAGES)
-      .describe('The language this file is in: en, es, ko, ja, zh or pt. It matches the file name.'),
+      .describe('The language this file is in: zh, es, en, pt, ja or ko. It matches the file name.'),
     messages: z
       .record(MessageKey, z.string().min(1).max(2000))
       .describe(
@@ -74,25 +81,31 @@ export const MessagesSchema: z.ZodType<MessagesFile, MessagesFile> = z
   })
 
 /**
- * True when the English file does not have the key. With no `en.json` listed
- * every key is missing; with `en.json` listed but not read, it is not known, and the check is skipped (its own problems are
- * already said). Looked up with `Object.hasOwn`: a key like "constructor" is an ordinary key, not every object's own.
+ * True when the game's own language (`source`) has no such key in its file, so a line that asks for the key is wrong.
+ * A game with no words at all (no `source` and no messages file) lacks every key. With a `source` whose file is not
+ * listed, or listed but not read, it is not known, and the check is skipped: the project's own problem, or the file's,
+ * is already said. Looked up with `Object.hasOwn`: a key like "constructor" is an ordinary key, not every object's own.
  */
-export function englishLacks(game: Listed, key: string): boolean {
-  if (!game.has('messages', 'en')) return true
-  const english = game.get('messages', 'en')
-  return english !== undefined && !Object.hasOwn(english.messages, key)
+export function sourceLacks(game: Listed, key: string): boolean {
+  if (game.source === undefined) return game.ids('messages').length === 0
+  if (!game.has('messages', game.source)) return false
+  const own = game.get('messages', game.source)
+  return own !== undefined && !Object.hasOwn(own.messages, key)
 }
 
-/** The sentence for a key English does not have. */
-export const englishMissing = (key: string): string =>
-  `English has no message called "${key}". Add it to the English file or fix the spelling.`
+/** The sentence for a key the game's own language does not have. */
+export function sourceMissing(game: Listed, key: string): string {
+  if (game.source === undefined)
+    return `This game has no words yet, so it has no message called "${key}". Add a messages file or fix the spelling.`
+  const name = languageName(game.source)
+  return `${name} has no message called "${key}". Add it to the ${name} file or fix the spelling.`
+}
 
-/** Every key of a language other than English must be a key of English. A missing translation is plan L's. */
-function checkAgainstEnglish(file: MessagesFile, game: Listed, report: Report): void {
-  if (file.id === 'en' || !game.has('messages', 'en')) return
+/** Every key of a language other than the game's own must be a key of the game's own. A missing translation is plan L's. */
+function checkAgainstSource(file: MessagesFile, game: Listed, report: Report): void {
+  if (game.source === undefined || file.id === game.source || !game.has('messages', game.source)) return
   for (const key of sortedKeys(file.messages))
-    if (englishLacks(game, key)) report(`messages.${key}`, englishMissing(key))
+    if (sourceLacks(game, key)) report(`messages.${key}`, sourceMissing(game, key))
 }
 
 /** The messages' row of the content table. */
@@ -105,7 +118,7 @@ export const messagesInfo: ContentTypeInfo<MessagesFile, MessagesFile> = {
   noun: 'messages file',
   missing: {
     format: 'Write "format": 1.',
-    id: 'Write the language this file is in: en, es, ko, ja, zh or pt.',
+    id: 'Write the language this file is in: zh, es, en, pt, ja or ko.',
     messages: 'Write the words as keys and texts, like { "keeper.hello": "Hello!" }.',
   },
   // Free keys in one order, so two writers of the same messages make the same bytes.
@@ -113,5 +126,5 @@ export const messagesInfo: ContentTypeInfo<MessagesFile, MessagesFile> = {
     ...file,
     messages: Object.fromEntries(sortedKeys(file.messages).map((key) => [key, file.messages[key] as string])),
   }),
-  check: checkAgainstEnglish,
+  check: checkAgainstSource,
 }

@@ -2,7 +2,7 @@
 // so until then a game would be silent and nobody would know why; this says so, in words, on a button. It needs no
 // handler of its own: the speaker listens for every tap on the page, this one included.
 import type { GameAudio } from '../audio/audio.ts'
-import { frameworkWords, type Locale } from '../locale/locale.ts'
+import type { Locale } from '../locale/locale.ts'
 
 /** The button's sentence in the framework's library. */
 const KEY = 'automata.sound.start'
@@ -40,7 +40,7 @@ const STYLE = [
  * Shows a button at the top of `mount` while the sound waits for a first tap. It is there only while
  * `audio.state()` is `waiting` and the game has a cue at all, goes when the state changes, and comes back if the state
  * is `waiting` again (a phone call took the sound away). It says `words` when given; else `automata.sound.start` in
- * `locale`'s words, said again whenever the language changes; else the framework's English, "Tap to start the sound".
+ * `locale`'s words, said again whenever the language changes.
  * Returns a function that removes it and stops listening.
  */
 export function soundNotice(options: {
@@ -48,11 +48,11 @@ export function soundNotice(options: {
   readonly audio: Pick<GameAudio, 'state' | 'onState' | 'silent'>
   /** The game's own words for the button, in place of the framework's. */
   readonly words?: string
-  /** The player's language. */
-  readonly locale?: Pick<Locale, 'words' | 'onChange'>
+  /** The player's language: no language is the default, so it is always given. */
+  readonly locale: Pick<Locale, 'words' | 'onChange'>
 }): () => void {
   const { mount, audio, locale } = options
-  const said = (): string => options.words ?? (locale?.words ?? frameworkWords('en'))(KEY)
+  const said = (): string => options.words ?? locale.words(KEY)
   let button: HTMLButtonElement | undefined
   // The button is placed against the mount, so a mount that is not positioned is made so while the button is there.
   let restorePosition: string | undefined
@@ -85,7 +85,7 @@ export function soundNotice(options: {
   // A new language says the button again; words the game gave are its own and stay.
   const unfollow =
     options.words === undefined
-      ? locale?.onChange(() => {
+      ? locale.onChange(() => {
           if (button !== undefined) button.textContent = said()
         })
       : undefined

@@ -7,13 +7,17 @@ import { compileWords, functionName, outdirProblem } from '#src/features/cli/wor
 import { LANGUAGES } from '#src/features/content/content.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, memoryLayer } from '../../fixtures/cli/memory.ts'
+import { withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles } from '../../fixtures/full-game/read.ts'
 
 /** Paraglide starts a compiler and loads a plugin: allow it well over the usual. */
 const SLOW = 60_000
 
 const OUTDIR = 'src/paraglide'
-const GAME = { ...fullGameFiles, 'package.json': '{"name":"full-game","private":true,"type":"module"}\n' }
+const GAME: Record<string, string> = {
+  ...fullGameFiles,
+  'package.json': '{"name":"full-game","private":true,"type":"module"}\n',
+}
 
 /** The full game's six messages files with `words` added to every language, so the languages stay in step. */
 function withWords(words: Readonly<Record<string, string>>): Record<string, string> {
@@ -45,7 +49,7 @@ const written = (memory: Memory): string[] =>
   [...memory.files.keys()].filter((key) => key.startsWith(`game/${OUTDIR}/`)).sort()
 
 test(
-  'the words compile to a runtime with English as the base language and a function for each word',
+  "the words compile to a runtime with the game's own language as the base and a function for each word",
   async () => {
     const memory = memoryLayer(under('game', GAME))
     const files = await run(memory)
@@ -126,9 +130,22 @@ test('two words that would be one function are named, and nothing is written', a
   expect(functionName('level.level-1.name')).toBe('level_level_1_name')
 })
 
+test(
+  "the game's own language is the base language of the compile, whichever of the six it is, so a Korean game's is Korean",
+  async () => {
+    const toml = withSource(GAME['automata.toml'] ?? '', 'ko')
+    const memory = memoryLayer(under('game', { ...GAME, 'automata.toml': toml }))
+    await run(memory)
+    expect(textOf(memory.files.get(`game/${OUTDIR}/runtime.js`))).toMatch(/baseLocale = "ko"/)
+  },
+  SLOW,
+)
+
 test('a game with no words gets a sentence that says what to add', async () => {
   const memory = memoryLayer(under('game', smallGame()))
-  expect(await failure(memory)).toContain('no English words to compile')
+  expect(await failure(memory)).toBe(
+    'This game has no words to compile. Add a messages file, list it in automata.toml, and write source.',
+  )
   expect(written(memory)).toEqual([])
 })
 

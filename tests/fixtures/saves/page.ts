@@ -18,6 +18,7 @@ import { fixtureControls } from '../game/controls.ts'
 import { manualFrames } from '../game/frames.ts'
 import { loadFixtureGame } from '../game/game.ts'
 import { heroPlugin } from '../game/hero.ts'
+import { chosenLocale } from '../locale/chosen.ts'
 import { type Progress, progress } from './progress.ts'
 
 /** What the test can ask of one page of the fixture game. Every method runs inside that page. */
@@ -61,6 +62,7 @@ const page: SavesPage = {
     const frames = manualFrames()
     const game = await startGame({
       content: await loadFixtureGame(),
+      locale: await chosenLocale(await loadFixtureGame(), 'en'),
       plugins: [heroPlugin],
       mount,
       controls: fixtureControls,

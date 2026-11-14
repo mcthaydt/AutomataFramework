@@ -92,7 +92,7 @@ The editors also ship as an app for iPad, Android and desktop.
 | Order of work | A thin thread through all four repos first, then widen. |
 | Editor app | The editors as Tauri apps for iPad, Android and desktop. Android stays because it is the Owner's phone, so phone layouts are tested too. |
 | File formats | Game content files are JSON; everything else (the project file, configs, manifests) is TOML. |
-| Languages | Games ship English, Spanish, Korean, Japanese, Chinese and Portuguese. The editors ship those six plus French, Russian and German. The list follows the most popular languages for Godot. |
+| Languages | Games ship Chinese, Spanish, English, Portuguese, Japanese and Korean. The editors ship those six plus Russian, German and French. The list follows the most popular languages for Godot. |
 | Edits that collide | Handled the way GitHub does: a three-way merge, with conflicts shown and resolved before the save commits. |
 | Sign-in step and site host | Sign-in is a GitHub App. Cloudflare Pages Functions do its token exchange and, as the App, all the editor's GitHub work; the site is on Cloudflare Pages. |
 | New repo names | AutomataFrameworkEditors and AutomataFrameworkSite. |
@@ -397,9 +397,9 @@ Content, so that every editor has real work:
 | Story (Sequence) | A camera pan across the level at its start, and the door opening at the end |
 
 And every built-in from claim 1: saves (progress and settings), title, pause and settings screens, keyboard, touch and
-gamepad with remapping, music and sound with volume, phone, tablet and desktop layouts upright and sideways, and three
-languages: English, Spanish, Korean, Japanese, Chinese and Portuguese, the set every game ships with. The editors
-ship those six plus French, Russian and German (the list follows the most popular languages for Godot).
+gamepad with remapping, music and sound with volume, phone, tablet and desktop layouts upright and sideways, and six
+languages: Chinese, Spanish, English, Portuguese, Japanese and Korean, the set every game ships with. The editors
+ship those six plus Russian, German and French (the list follows the most popular languages for Godot).
 
 Its golden: a recorded play through level one that ends on the same hash in Node, Chromium, WebKit and Firefox.
 

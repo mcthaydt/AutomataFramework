@@ -1,13 +1,13 @@
 import type { Diagnostic } from './diagnostics.ts'
 import type { GameContent } from './load.ts'
-import { LANGUAGES, languageName, placeholdersOf } from './messages.ts'
+import { LANGUAGES, languageName, type MessagesFile, placeholdersOf } from './messages.ts'
 import { PROJECT_FILE } from './project.ts'
 
 /** A level's name is shown on a save, so it is short. */
 const MAX_LEVEL_NAME = 40
 /** A touch button's words fit on the button. */
 const MAX_BUTTON_WORDS = 12
-/** How much of the English text a sentence quotes. */
+/** How much of the game's own text a sentence quotes. */
 const QUOTED = 60
 
 const LEVEL_NAME_KEY = /^level\.(.+)\.name$/
@@ -35,26 +35,31 @@ function pathsOf(content: GameContent): ReadonlyMap<string, string> {
 /**
  * What is not translated, in plain sentences that name the file, the key and what to write; none for a game with no
  * words at all. Never throws. This is a check of its own and not part of `loadGame`: a game with a word missing in
- * Korean still loads and plays, with English standing in for that word, so a missing translation never stops a
- * player or locks a team out of an editor. CI and `automata check` call this and fail.
+ * Korean still loads and plays, with the game's own language (`source`) standing in for that word, so a missing
+ * translation never stops a player or locks a team out of an editor. CI and `automata check` call this and fail.
  *
- * The order is the missing files in `LANGUAGES` order, then each listed language in that order with its keys sorted.
+ * Every language is checked against the game's own: the file of the `source` says what each word is for, and is
+ * never checked against itself. The order is the missing files in `LANGUAGES` order, then each listed language in
+ * that order with its keys sorted.
  */
 export function translationProblems(content: GameContent): readonly Diagnostic[] {
   const files = content.messages
-  const english = files === undefined ? undefined : Object.hasOwn(files, 'en') ? files.en : undefined
-  if (files === undefined || english === undefined) return []
+  const source = content.project.source
+  if (files === undefined || source === undefined || !Object.hasOwn(files, source)) return []
+  const own = files[source] as MessagesFile
+  const sourceName = languageName(source)
   const paths = pathsOf(content)
-  const englishPath = paths.get('en') ?? 'content/messages/en.json'
+  const sourcePath = paths.get(source) ?? `content/messages/${source}.json`
+  const folder = sourcePath.slice(0, sourcePath.length - `${source}.json`.length)
   const found: Diagnostic[] = []
 
   for (const language of LANGUAGES) {
     if (Object.hasOwn(files, language)) continue
-    const path = `${englishPath.slice(0, -'en.json'.length)}${language}.json`
+    const path = `${folder}${language}.json`
     found.push({
       file: PROJECT_FILE,
       path: 'content',
-      message: `This game has no words in ${languageName(language)}. Add ${path} with every word English has, and list it here.`,
+      message: `This game has no words in ${languageName(language)}. Add ${path} with every word ${sourceName} has, and list it here.`,
     })
   }
 
@@ -64,45 +69,46 @@ export function translationProblems(content: GameContent): readonly Diagnostic[]
     const name = paths.get(language) ?? `content/messages/${language}.json`
     const say = (path: string, message: string): number => found.push({ file: name, path, message })
     const keys = new Set(Object.keys(file.messages))
-    if (language !== 'en') for (const key of Object.keys(english.messages)) keys.add(key)
+    if (language !== source) for (const key of Object.keys(own.messages)) keys.add(key)
     for (const key of [...keys].sort()) {
-      const own = Object.hasOwn(file.messages, key) ? file.messages[key] : undefined
-      const theirs = Object.hasOwn(english.messages, key) ? english.messages[key] : undefined
-      if (own === undefined) {
+      const text = Object.hasOwn(file.messages, key) ? file.messages[key] : undefined
+      const theirs = Object.hasOwn(own.messages, key) ? own.messages[key] : undefined
+      if (text === undefined) {
         if (theirs !== undefined)
           say(
             'messages',
-            `This file has no "${key}". English says "${quote(theirs)}". Write it in ${languageName(language)}.`,
+            `This file has no "${key}". The ${sourceName} file says "${quote(theirs)}". Write it in ${languageName(language)}.`,
           )
         continue
       }
-      if (language !== 'en' && theirs !== undefined) wrongValues(key, theirs, own, say)
-      tooLong(content, key, own, say)
+      if (language !== source && theirs !== undefined) wrongValues(sourceName, key, theirs, text, say)
+      tooLong(content, key, text, say)
     }
   }
   return found
 }
 
-/** The values English asks for that a text lacks, and the values a text asks for that English lacks. */
+/** The values the game's own text asks for that a text lacks, and the values a text asks for that it lacks. */
 function wrongValues(
+  sourceName: string,
   key: string,
-  english: string,
+  original: string,
   text: string,
   say: (path: string, message: string) => number,
 ): void {
-  const wanted = placeholdersOf(english)
+  const wanted = placeholdersOf(original)
   const given = placeholdersOf(text)
   for (const name of wanted)
     if (!given.includes(name))
       say(
         `messages.${key}`,
-        `English has {${name}} in this text and this one does not. Put {${name}} where the number or name belongs.`,
+        `${sourceName} has {${name}} in this text and this one does not. Put {${name}} where the number or name belongs.`,
       )
   for (const name of given)
     if (!wanted.includes(name))
       say(
         `messages.${key}`,
-        `This text has {${name}}, which English does not. Take it out, or fix its spelling.`,
+        `This text has {${name}}, which ${sourceName} does not. Take it out, or fix its spelling.`,
       )
 }
 

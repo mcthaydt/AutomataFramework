@@ -13,6 +13,7 @@ import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { brightness, pixel } from '../../fixtures/game/pixels.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 import { loadPlayground } from '../../fixtures/playground/game.ts'
 import { playgroundPlugin, Score } from '../../fixtures/playground/plugin.ts'
 
@@ -46,6 +47,7 @@ async function start(w: number, h: number): Promise<{ game: Game; frames: Return
   const frames = manualFrames()
   game = await startGame({
     content: await loadPlayground(),
+    locale: await chosenLocale(await loadPlayground(), 'ko'),
     plugins: [heroPlugin, playgroundPlugin],
     mount,
     controls: fixtureControls,

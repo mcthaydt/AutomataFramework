@@ -21,6 +21,8 @@
     "automata.online.reconnecting": "Connection lost. Trying to get you back in.",
     "automata.online.waiting.many": "Waiting for {count} more players. Share this code so friends can join: {code}",
     "automata.online.waiting.one": "Waiting for 1 more player. Share this code so a friend can join: {code}",
+    "automata.picker.go": "Go",
+    "automata.picker.title": "Play in English",
     "automata.rebind.no-shared": "This game's keys cannot be shared.",
     "automata.rebind.other-half": "That key is the other person's. Pick another key.",
     "automata.rebind.reserved.button": "The {input} button is kept for the game's menus. Pick another button.",

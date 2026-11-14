@@ -6,6 +6,7 @@ import { type Game, type GameOptions, startGame } from '#src/features/game/game.
 import { type TestHost, testHost } from '#src/features/host/host.ts'
 import { Transform } from '#src/features/physics/physics.ts'
 import { type FakeGamepads, fakeGamepads } from '../input/fake-gamepads.ts'
+import { chosenLocale } from '../locale/chosen.ts'
 import { coopFiles } from './co-op.ts'
 import { fixtureControls } from './controls.ts'
 import { type ManualFrames, manualFrames } from './frames.ts'
@@ -33,6 +34,7 @@ export async function startCoop(
   const pads = fakeGamepads()
   const game = await startGame({
     content: extra.content ?? (await loadFixtureGame(coopFiles)),
+    locale: await chosenLocale(extra.content ?? (await loadFixtureGame(coopFiles)), 'en'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,

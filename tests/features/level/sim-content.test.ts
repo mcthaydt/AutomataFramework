@@ -7,7 +7,7 @@ import { createGameSim } from '#src/features/level/level.ts'
 import { simContent } from '#src/features/level/sim-content.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
 import { artGame } from '../../fixtures/content/art.ts'
-import { readFiles } from '../../fixtures/content/kind.ts'
+import { readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
@@ -101,6 +101,17 @@ test('the sim is given no words, and the game keeps them', async () => {
   expect(given.characters).toBe(full.characters)
 })
 
+test("the team's language stays out of the sim: no source, and two games that differ only in it are one", async () => {
+  const english = simContent(await loadFull())
+  const korean = simContent(
+    await loadFull({ 'automata.toml': withSource(fullGameFiles['automata.toml'] ?? '', 'ko') }),
+  )
+  expect(Object.hasOwn(english.project, 'source')).toBe(false)
+  expect(korean).toEqual(english)
+  // The game itself keeps it.
+  expect((await loadFull()).project.source).toBe('en')
+})
+
 test('a game with no words is given the very same content', async () => {
   const content = await loadFixtureGame()
   expect(simContent(content)).toBe(content)
@@ -111,7 +122,7 @@ test('adding six words files to a game that had none moves no hash', async () =>
   const languages = ['en', 'es', 'ko', 'ja', 'zh', 'pt']
   const files: Record<string, string> = {
     'automata.toml':
-      (fixtureFiles['automata.toml'] ?? '') +
+      withSource(fixtureFiles['automata.toml'] ?? '', 'en') +
       languages
         .map((l) => `\n[[content]]\ntype = "messages"\npath = "content/messages/${l}.json"\n`)
         .join(''),

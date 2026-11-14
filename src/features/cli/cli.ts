@@ -2,6 +2,7 @@
 // the ports (`ports.ts`), and the answer is the exit status: 0 everything is fine, 1 the game has something to fix, 2 the
 // command could not do its work. Nothing here prints a stack trace: a person gets a sentence.
 import { Cause, Effect, Layer } from 'effect'
+import { languageName } from '../content/content.ts'
 import { FRAMEWORK_VERSION } from '../sim/sim.ts'
 import { type CommandInput, type CommandName, parseArgs } from './args.ts'
 import { describeArt, runArt } from './art.ts'
@@ -15,6 +16,7 @@ import { CliError, Out, type OutService, type Ports } from './ports.ts'
 import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
 import { printToStderr } from './stderr.ts'
+import { describeWords, runWords } from './unread.ts'
 
 type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
 
@@ -69,6 +71,20 @@ const art: Command = (input) =>
     return report.ok ? 0 : 1
   })
 
+/** `automata words`: the translated words nobody has read, or (with `--read`) those marked read, as words or JSON. */
+const words: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const [language, ...keys] = input.lists.read ?? []
+    const report = yield* runWords({
+      folder: input.folder ?? '.',
+      ...(language === undefined ? {} : { read: { language, keys } }),
+    })
+    if (input.flags.json === true) yield* out.line(JSON.stringify(report, null, 2))
+    else for (const line of describeWords(report)) yield* out.line(line)
+    return 0
+  })
+
 /** A folder as a person can paste it after `cd`: in quotes when it has a space or a quote in it. */
 const shellWord = (word: string): string =>
   /^[\w@%+=:,./\\-]+$/.test(word) ? word : `"${word.replaceAll('"', '\\"')}"`
@@ -79,10 +95,11 @@ const create: Command = (input) =>
     const out = yield* Out
     if (input.folder === undefined)
       return yield* Effect.fail(new CliError('Give the new game a name: automata create my-game'))
-    const { framework } = input.flags
+    const { framework, source } = input.flags
     const made = yield* createGame({
       folder: input.folder,
       ...(typeof framework === 'string' ? { framework } : {}),
+      ...(typeof source === 'string' ? { source } : {}),
     })
     if (input.flags.json === true) {
       yield* out.line(JSON.stringify(made, null, 2))
@@ -90,6 +107,7 @@ const create: Command = (input) =>
     }
     for (const line of [
       `Made ${nameOf(input.folder)}.`,
+      `Its words are written in ${languageName(made.source)}. To change that, change source in automata.toml.`,
       '',
       'Next:',
       `  cd ${shellWord(made.folder)}`,
@@ -132,6 +150,7 @@ const COMMANDS: Readonly<Record<CommandName, Command>> = {
   play,
   replay,
   art,
+  words,
   mcp,
 }
 

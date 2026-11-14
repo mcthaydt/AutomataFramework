@@ -5,6 +5,7 @@ import { helpFor } from '#src/features/cli/help.ts'
 import { PROTOCOL_VERSIONS } from '#src/features/cli/mcp.ts'
 import { mcpTools } from '#src/features/cli/mcp-tools.ts'
 import { createSessions } from '#src/features/cli/session.ts'
+import { LANGUAGES } from '#src/features/content/content.ts'
 import { CONTENT_TYPES } from '#src/features/content/content-types.ts'
 import { TOUCH_PROPERTIES } from '#src/features/input/touch.ts'
 import { FRAMEWORK_VERSION } from '#src/features/sim/sim.ts'
@@ -194,6 +195,13 @@ test('"Start here" is the first section, and its commands are the ones the creat
   expect(START_HERE[0]).toContain(PACKAGE_NAME)
   expect(START_HERE[1]).toBe(`cd ${GAME_FOLDER}`)
   expect(section('## Start here')).toContain('24.21.0')
+})
+
+test('"Start here" says what --source is and names the six codes', () => {
+  const start = section('## Start here')
+  expect(START_HERE[0]).toContain('--source en')
+  expect(start).toContain('--source')
+  for (const code of LANGUAGES) expect(start).toContain(code)
 })
 
 test('nothing in the README says npx automata without --no', () => {

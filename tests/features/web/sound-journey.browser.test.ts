@@ -12,6 +12,7 @@ import { soundingHeroPlugin } from '../../fixtures/audio/sounding-hero.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 
 const FRAME = 1000 / 60
 
@@ -44,6 +45,7 @@ for (const [name, w, h] of SCREENS) {
     const frames = manualFrames()
     game = await startGame({
       content: await loadSoundingGame(),
+      locale: await chosenLocale(await loadSoundingGame(), 'en'),
       plugins: [soundingHeroPlugin],
       mount,
       controls: fixtureControls,

@@ -2,10 +2,12 @@ import { expect, test } from 'vitest'
 import {
   type ContentType,
   formatDiagnostic,
+  type Language,
   loadGame,
   parseContent,
   writeContent,
 } from '#src/features/content/content.ts'
+import { withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { fixtureFiles, readFixture } from '../../fixtures/game/read.ts'
 
@@ -239,3 +241,38 @@ test('a sound listed as the wrong kind is one problem, and the cues that play it
     'content/sounds/jump.json: This file is listed as a music track, but it reads as a sound. Change its type in automata.toml.',
   ])
 })
+
+/** The fixture game with a messages file (one word) for each language, listed, and `source` when one is given. */
+function withWords(languages: readonly Language[], source?: Language): Record<string, string> {
+  const listing = languages.map((id) => listed('messages', `content/messages/${id}.json`)).join('')
+  const toml = `${fixtureFiles['automata.toml']}${listing}`
+  const text = source === undefined ? toml : withSource(toml, source)
+  const files: Record<string, string> = { 'automata.toml': text }
+  for (const id of languages)
+    files[`content/messages/${id}.json`] = writeContent('messages', {
+      format: 1,
+      id,
+      messages: { 'keeper.hello': 'x' },
+    })
+  return files
+}
+
+test('a game with words and no source does not load, and says what to write', async () =>
+  expect(await problems(withWords(['es']))).toEqual([
+    'automata.toml: source: Write the language your team writes the game\'s words in, like source = "es".',
+  ]))
+
+test('a source whose file is not listed does not load, and names the file to list', async () =>
+  expect(await problems(withWords(['es'], 'ko'))).toEqual([
+    'automata.toml: source: This game\'s words are written in Korean (source = "ko"), but no ko.json is listed. List content/messages/ko.json, or change source.',
+  ]))
+
+test('a source with no words at all does not load', async () => {
+  const toml = withSource(fixtureFiles['automata.toml'] ?? '', 'ko')
+  expect(await problems({ 'automata.toml': toml })).toEqual([
+    'automata.toml: source: This game lists no words, so it has no language to name. Take the source line out, or list a messages file like content/messages/ko.json.',
+  ])
+})
+
+test('a game written in Korean loads with no English file', async () =>
+  expect(await problems(withWords(['ko', 'es'], 'ko'))).toEqual([]))

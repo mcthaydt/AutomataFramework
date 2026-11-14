@@ -11,6 +11,7 @@ import {
   type GameContent,
   languageName,
   loadGame,
+  markRead,
   type Parsed,
   parseContent,
   parseReadMarks,
@@ -18,6 +19,7 @@ import {
   translationProblems,
   unreadWords,
   writeContent,
+  writeReadMarks,
 } from '../content/content.ts'
 import { CliError, Code, type CodeService, Files, type FilesService, type GameCode } from './ports.ts'
 
@@ -28,12 +30,14 @@ type ContentApi = Pick<
   | 'artProblems'
   | 'languageName'
   | 'loadGame'
+  | 'markRead'
   | 'parseContent'
   | 'parseReadMarks'
   | 'READ_MARKS_FILE'
   | 'translationProblems'
   | 'unreadWords'
   | 'writeContent'
+  | 'writeReadMarks'
 >
 
 /** This command's own copy, for a game that is not installed yet. */
@@ -42,12 +46,14 @@ const OWN_CONTENT: ContentApi = {
   artProblems,
   languageName,
   loadGame,
+  markRead,
   parseContent,
   parseReadMarks,
   READ_MARKS_FILE,
   translationProblems,
   unreadWords,
   writeContent,
+  writeReadMarks,
 }
 
 export interface GameFolder {

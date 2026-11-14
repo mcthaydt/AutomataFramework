@@ -1,6 +1,6 @@
 import { z } from '../../lib/zod.ts'
 import { Id } from './ids.ts'
-import { englishLacks, englishMissing } from './messages.ts'
+import { sourceLacks, sourceMissing } from './messages.ts'
 import { MessageKey, noSuch, unique } from './shared.ts'
 import type { ContentTypeInfo, Listed, Report } from './type-info.ts'
 
@@ -117,16 +117,16 @@ function checkConversation(file: Partial<ConversationFile>, ctx: z.core.$Refinem
     )
 }
 
-/** Speakers must be characters, and every line and choice must be in English. */
+/** Speakers must be characters, and every line and choice must be in the game's own language. */
 function checkNames(file: ConversationFile, game: Listed, report: Report): void {
   file.nodes.forEach((n, i) => {
     if (n.speaker !== undefined && !game.has('character', n.speaker))
       report(`nodes[${i}].speaker`, noSuch('character', n.speaker, game.ids('character')))
     n.lines.forEach((key, j) => {
-      if (englishLacks(game, key)) report(`nodes[${i}].lines[${j}]`, englishMissing(key))
+      if (sourceLacks(game, key)) report(`nodes[${i}].lines[${j}]`, sourceMissing(game, key))
     })
     n.choices?.forEach((c, j) => {
-      if (englishLacks(game, c.line)) report(`nodes[${i}].choices[${j}].line`, englishMissing(c.line))
+      if (sourceLacks(game, c.line)) report(`nodes[${i}].choices[${j}].line`, sourceMissing(game, c.line))
     })
   })
 }

@@ -77,10 +77,10 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
 }
 
 /**
- * The words of a game in every language: what is missing (a problem: a player in that language would see English) and
- * how many of the translated words no native speaker has read yet (a note, never a problem: a first draft plays). A
- * game with no messages says nothing. A game's own copy of the framework does the reading, so an older one that has no
- * such check is left alone.
+ * The words of a game in every language: what is missing (a problem: a player in that language would see the game's own
+ * words) and how many of the translated words no native speaker has read yet (a note for each language, never a
+ * problem: a first draft plays, and `automata words` lists them). A game with no messages says nothing. A game's own
+ * copy of the framework does the reading, so an older one that has no such check is left alone.
  */
 function translationStep(
   game: GameFolder,
@@ -95,17 +95,21 @@ function translationStep(
     const marksText = yield* files.readText(join(game.folder, api.READ_MARKS_FILE))
     const marks = marksText === undefined ? undefined : api.parseReadMarks(marksText)
     if (marks?.ok === false) return { problems: [...problems, ...marks.diagnostics], notes: [] }
-    const unread = api.unreadWords(content, marks?.value ?? {})
+    const unread = api.unreadWords(content, marks?.value)
     const counts = new Map<Language, number>()
     for (const word of unread) counts.set(word.language, (counts.get(word.language) ?? 0) + 1)
-    const notes =
-      counts.size === 0
-        ? []
-        : [
-            'Words no native speaker has read yet (a first draft plays fine): ' +
-              [...counts].map(([language, count]) => `${api.languageName(language)} ${count}`).join(', ') +
-              '.',
-          ]
+    const notes: string[] = []
+    // Marks made against another language than the game is written in count for nothing: say why every word waits.
+    const source = content.project.source
+    const made = marks?.value.source
+    if (made !== undefined && source !== undefined && made !== source && counts.size > 0)
+      notes.push(
+        `The read marks were made against ${api.languageName(made)}, and this game is now written in ${api.languageName(source)}, so every word waits again. See them with automata words.`,
+      )
+    for (const [language, count] of counts)
+      notes.push(
+        `${count} ${count === 1 ? 'word' : 'words'} in ${api.languageName(language)} ${count === 1 ? 'waits' : 'wait'} for a native speaker. See them with automata words.`,
+      )
     return { problems, notes }
   })
 }

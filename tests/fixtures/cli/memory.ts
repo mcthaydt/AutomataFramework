@@ -7,6 +7,7 @@ import { readGame } from '#src/features/cli/game-folder.ts'
 import {
   CliError,
   Code,
+  Device,
   Files,
   type GameCode,
   Out,
@@ -28,6 +29,8 @@ export interface MemoryOptions {
    * the game is loaded, so a test can change the rules between two sessions the way an agent edits a file.
    */
   readonly code?: GameCode | CliError | (() => GameCode | CliError)
+  /** The languages the machine says its person uses, as a system writes them (`ja_JP.UTF-8`). Default: none. */
+  readonly deviceLanguages?: readonly string[]
 }
 
 export interface ToolCall {
@@ -100,6 +103,7 @@ export function memoryLayer(
           return result === 'missing' ? result : result.code
         }),
     }),
+    Layer.succeed(Device, { languages: () => Effect.succeed(options.deviceLanguages ?? []) }),
     Layer.succeed(Code, {
       load: () => {
         const given = options.code ?? { framework, rules: { plugins: [] } }

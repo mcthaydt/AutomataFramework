@@ -21,6 +21,8 @@
     "automata.online.reconnecting": "연결이 끊겼어요. 다시 들어가는 중이에요.",
     "automata.online.waiting.many": "플레이어 {count}명을 기다리고 있어요. 친구들이 들어올 수 있게 이 코드를 알려 주세요: {code}",
     "automata.online.waiting.one": "플레이어 1명을 기다리고 있어요. 친구가 들어올 수 있게 이 코드를 알려 주세요: {code}",
+    "automata.picker.go": "시작",
+    "automata.picker.title": "한국어로 플레이",
     "automata.rebind.no-shared": "이 게임은 키보드를 같이 쓸 수 없어요.",
     "automata.rebind.other-half": "그 키는 다른 사람 거예요. 다른 키를 골라 주세요.",
     "automata.rebind.reserved.button": "{input} 버튼은 게임 메뉴에 쓰여요. 다른 버튼을 골라 주세요.",

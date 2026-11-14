@@ -4,8 +4,8 @@
 // would meet them.
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { page as browser } from 'vitest/browser'
-import { LANGUAGES } from '#src/features/content/content.ts'
-import { LANGUAGE_NAMES } from '#src/features/locale/locale.ts'
+import { LANGUAGES, type Language } from '#src/features/content/content.ts'
+import { LANGUAGE_NAMES, playersOrder } from '#src/features/locale/locale.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import type { LocalePage } from '../../fixtures/locale/page.ts'
 import { openPage } from '../../fixtures/saves/open-page.ts'
@@ -20,8 +20,8 @@ afterEach(() => localStorage.removeItem(KEY))
 const open = (size: { width: number; height: number }, query = '') =>
   openPage<LocalePage>(size, `${PAGE}?game=${GAME}${query}`)
 
-test('a first-time player whose device says Korean is greeted in Korean', async () => {
-  const { page, close } = await open({ width: 390, height: 844 }, '&device=ko-KR')
+test('a player who chose Korean is greeted in Korean', async () => {
+  const { page, close } = await open({ width: 390, height: 844 }, '&saved=ko')
   try {
     const shown = await page.shown()
     expect(shown.language).toBe('ko')
@@ -33,7 +33,7 @@ test('a first-time player whose device says Korean is greeted in Korean', async 
 })
 
 test('a player taps 日本語 and everything on the page is Japanese', async () => {
-  const { page, close } = await open({ width: 390, height: 844 }, '&device=en-US')
+  const { page, close } = await open({ width: 390, height: 844 }, '&device=en-US&saved=en')
   try {
     const before = await page.shown()
     expect([before.language, before.greeting, before.level]).toEqual(['en', 'Hello there! 👋', 'Level 1'])
@@ -68,19 +68,19 @@ for (const [name, width, height] of SCREENS) {
   test(`on ${name} every language's button can be read and pressed`, async () => {
     await browser.viewport(width, height)
     expect([window.innerWidth, window.innerHeight]).toEqual([width, height])
-    const { page, close } = await open({ width, height })
+    const { page, close } = await open({ width, height }, '&saved=en')
     try {
       const boxes = await page.buttons()
-      expect(boxes.map((b) => b.language)).toEqual([...LANGUAGES])
+      // The player's own language first, the rest as the players of each speak it.
+      expect(boxes.map((b) => b.language)).toEqual(playersOrder('en', LANGUAGES))
       for (const box of boxes) {
-        expect(box.name, box.language).toBe(LANGUAGE_NAMES[box.language])
+        expect(box.name, box.language).toBe(LANGUAGE_NAMES[box.language as Language])
         expect(box.height, `${box.name} height`).toBeGreaterThanOrEqual(48)
         expect(box.width, `${box.name} width`).toBeGreaterThanOrEqual(48)
         expect(box.inside, `${box.name} is whole on the screen`).toBe(true)
         expect(box.reachable, `${box.name} is not covered`).toBe(true)
       }
-      // Audit J3: each name is drawn, in the page's font: a picture of it differs from a picture of characters that
-      // have no letter, which is all an empty box is.
+      // Audit J3: each flag is drawn: a picture of it has more than one colour, which an empty box does not.
       expect(await page.drawn()).toEqual(Object.fromEntries(LANGUAGES.map((language) => [language, true])))
     } finally {
       close()
@@ -89,7 +89,7 @@ for (const [name, width, height] of SCREENS) {
 }
 
 test('changing the language moves no hash', async () => {
-  const { page, close } = await open({ width: 390, height: 844 })
+  const { page, close } = await open({ width: 390, height: 844 }, '&saved=en')
   try {
     const same = await page.hashOfPlay(120)
     const changed = await page.hashOfPlay(120, { at: 60, to: 'ko' })
@@ -105,7 +105,7 @@ test('changing the language moves no hash', async () => {
 test('a picture of the page in each language', async () => {
   await browser.viewport(390, 844)
   for (const language of LANGUAGES) {
-    const { page, close } = await open({ width: 390, height: 844 }, '&device=en-US')
+    const { page, close } = await open({ width: 390, height: 844 }, '&device=en-US&saved=en')
     try {
       await page.run(20)
       await page.tap(language)

@@ -21,6 +21,8 @@
     "automata.online.reconnecting": "Se perdió la conexión. Estamos intentando que vuelvas a entrar.",
     "automata.online.waiting.many": "Faltan {count} jugadores. Comparte este código para que tus amigos se unan: {code}",
     "automata.online.waiting.one": "Falta 1 jugador. Comparte este código para que un amigo se una: {code}",
+    "automata.picker.go": "Vamos",
+    "automata.picker.title": "Jugar en español",
     "automata.rebind.no-shared": "Las teclas de este juego no se pueden compartir.",
     "automata.rebind.other-half": "Esa tecla es de la otra persona. Elige otra tecla.",
     "automata.rebind.reserved.button": "El botón {input} está reservado para los menús del juego. Elige otro botón.",
