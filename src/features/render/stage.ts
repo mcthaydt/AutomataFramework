@@ -46,8 +46,17 @@ export interface Stage {
    */
   setRoom(room: Room): void
   /**
-   * Where the level is on the canvas for this shot: the whole level fitted (`fitWorld`) when there is no shot, and the
-   * camera's placement, with the offset rounded to whole device pixels, when there is one.
+   * Draws the world exactly here, in place of the fit in the room: `scale` pixels a tile, its top-left corner at `left`,
+   * `top` (CSS pixels, rounded to whole device pixels; either may be negative). `undefined` goes back to the fit in the
+   * room. A scale that is not above zero, or not a number, is taken as `undefined`. The sky and the backdrop still fill
+   * the canvas, the backdrop standing on the level's bottom edge as it does for a fitted level. Draws the last views
+   * again. It is for a level drawn without a shot: a draw with a shot is placed by its camera whatever the view.
+   */
+  setView(view: Fit | undefined): void
+  /**
+   * Where the level is on the canvas for this shot: the view while one is set, and otherwise the whole level fitted in
+   * the room (`fitInRoom`), when there is no shot; and the camera's placement, with the offset rounded to whole device
+   * pixels, when there is one.
    */
   fit(shot?: Shot): Fit
   /**
@@ -162,6 +171,8 @@ export async function createStage(
   // height) or, once `setRoom` is called, a room on every side as given. The sky still fills the whole canvas.
   let inset = 0
   let given: Room | undefined
+  // Where the world goes when it is set by hand (`setView`), in place of the fit in the room.
+  let view: Fit | undefined
   let destroyed = false
   // A sharper or softer screen: the canvas gets the pixels it now needs and the last picture is drawn again.
   const stopWatching = density.onChange(() => {
@@ -184,11 +195,12 @@ export async function createStage(
   /** The room a camera has: the canvas without the strip kept free at the bottom. */
   const room = (): { w: number; h: number } => ({ w: box.w, h: box.h - kept().bottom })
   const snap = (v: number): number => Math.round(v * app.renderer.resolution) / app.renderer.resolution
+  /** A view with its offset in whole device pixels. */
+  const placed = (at: Fit): Fit => ({ scale: at.scale, left: snap(at.left), top: snap(at.top) })
   const fitFor = (shot: Shot | undefined): Fit => {
-    if (shot === undefined) return fitInRoom(box, kept(), world)
-    const placed = placeCamera(room(), world, shot)
+    if (shot === undefined) return view === undefined ? fitInRoom(box, kept(), world) : placed(view)
     // Whole device pixels, so pixels move as one while the camera eases and do not shimmer.
-    return { scale: placed.scale, left: snap(placed.left), top: snap(placed.top) }
+    return placed(placeCamera(room(), world, shot))
   }
 
   const paintBackdrop = (backdrop: BackdropArt, fit: Fit, camera: boolean): void => {
@@ -235,7 +247,7 @@ export async function createStage(
     // The strip is covered with sky, over everything, so a camera's view cannot show the level through the buttons. A room
     // given on four sides is for a level drawn still, where nothing reaches into it and the backdrop must show there.
     cover.clear()
-    if (given === undefined) cover.rect(0, room().h, box.w, box.h - room().h).fill(sky)
+    if (given === undefined && view === undefined) cover.rect(0, room().h, box.w, box.h - room().h).fill(sky)
     if (art?.backdrop !== undefined) paintBackdrop(art.backdrop, fit, shot !== undefined)
     root.scale.set(fit.scale)
     root.position.set(fit.left, fit.top)
@@ -334,6 +346,12 @@ export async function createStage(
         bottom: side(next.bottom),
         left: side(next.left),
       }
+      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
+    },
+    setView(next) {
+      if (destroyed) return
+      const usable = next !== undefined && next.scale > 0 && Number.isFinite(next.left + next.top + next.scale)
+      view = usable ? next : undefined
       if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
     },
     fit: fitFor,
