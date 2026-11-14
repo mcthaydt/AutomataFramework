@@ -22,6 +22,11 @@ export interface Character {
   readonly behaviour?: string | undefined
   /** The tuning file whose numbers decide how it moves. */
   readonly tuning?: string | undefined
+  /**
+   * `sense`: things pass through it and the game is told when one touches it. `take`: the same, and it is taken away
+   * when a hero touches it. Needs a `kind`, and a `fixed` body.
+   */
+  readonly touch?: 'sense' | 'take' | undefined
 }
 
 /** What a person may write: `upright` can be left out, and then it is false. */
@@ -35,27 +40,50 @@ const MAX_SIZE = 16
 const side = (what: string): z.ZodNumber => z.number().gt(0).max(MAX_SIZE).describe(what)
 
 /** The rules for a character file; unknown keys are refused. */
-export const CharacterSchema: z.ZodType<Character, CharacterInput> = z.strictObject({
-  format: z.literal(1).describe('The version of this file format. Always 1.'),
-  id: Id.describe('A name for this character, like "hero". It matches the file name.'),
-  body: z.enum(['dynamic', 'fixed']).describe('"dynamic" moves and falls; "fixed" stays where it is put.'),
-  size: z
-    .strictObject({
-      w: side('How wide the character is, in tiles.'),
-      h: side('How tall the character is, in tiles.'),
-    })
-    .describe('The size of the character, in tiles.'),
-  color: colour('The colour it is drawn in', '#e4572e'),
-  upright: z
-    .boolean()
-    .default(false)
-    .describe('True if the character stays on its feet and cannot be tipped over. Left out means false.'),
-  kind: Id.describe(
-    'What this is to the game\'s rules and to behaviour files, like "crate", "spark" or "door".',
-  ).optional(),
-  behaviour: Id.describe('The behaviour file that decides what it does, by id, like "critter".').optional(),
-  tuning: Id.describe('The tuning file whose numbers decide how it moves, by id, like "hero".').optional(),
-})
+export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
+  .strictObject({
+    format: z.literal(1).describe('The version of this file format. Always 1.'),
+    id: Id.describe('A name for this character, like "hero". It matches the file name.'),
+    body: z.enum(['dynamic', 'fixed']).describe('"dynamic" moves and falls; "fixed" stays where it is put.'),
+    size: z
+      .strictObject({
+        w: side('How wide the character is, in tiles.'),
+        h: side('How tall the character is, in tiles.'),
+      })
+      .describe('The size of the character, in tiles.'),
+    color: colour('The colour it is drawn in', '#e4572e'),
+    upright: z
+      .boolean()
+      .default(false)
+      .describe('True if the character stays on its feet and cannot be tipped over. Left out means false.'),
+    kind: Id.describe(
+      'What this is to the game\'s rules and to behaviour files, like "crate", "spark" or "door".',
+    ).optional(),
+    behaviour: Id.describe('The behaviour file that decides what it does, by id, like "critter".').optional(),
+    tuning: Id.describe('The tuning file whose numbers decide how it moves, by id, like "hero".').optional(),
+    touch: z
+      .enum(['sense', 'take'])
+      .describe(
+        '"sense": things pass through it and the game is told when one touches it, like a door. "take": the same, and it is taken away when a hero touches it, like a spark.',
+      )
+      .optional(),
+  })
+  .superRefine((character, ctx) => {
+    if (character.touch === undefined) return
+    if (character.kind === undefined)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['kind'],
+        message: 'A character that is touched needs a "kind", so the game can say what was touched.',
+      })
+    if (character.body === 'dynamic')
+      ctx.addIssue({
+        code: 'custom',
+        path: ['body'],
+        message:
+          'A character that is touched lets everything through, so it would fall out of the level. Make its body "fixed".',
+      })
+  })
 
 /** The character's row of the content table. */
 export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {

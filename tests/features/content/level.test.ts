@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { formatDiagnostic, parseContent, writeContent } from '#src/features/content/content.ts'
 import { exampleLevel } from '../../fixtures/content/example-level.ts'
-import { gameProblems } from '../../fixtures/content/kind.ts'
+import { expectRoundTrip, gameFiles, gameProblems } from '../../fixtures/content/kind.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const FILE = 'content/levels/a.json'
@@ -235,3 +235,151 @@ test('a row uses a letter the tileset does not have', async () =>
   expect(await gameProblems(withTilesetFiles(['G', '~']))).toEqual([
     'content/levels/level-1.json: tiles[8]: The letter "#" is not in the tileset "meadow". It has: G, ~.',
   ]))
+
+// Joints: pins and ropes that hold things (plan P).
+
+const pin = () => ({ id: 'seesaw', kind: 'pin', thing: 'plank-1', x: 4, y: 1.5, turn: { min: -25, max: 25 } })
+const rope = () => ({
+  id: 'swing',
+  kind: 'rope',
+  thing: 'crate-1',
+  holder: 'plank-1',
+  from: { x: 8.5, y: 1 },
+  to: { x: 4, y: 0.5 },
+  slack: 0.5,
+})
+/** The example level with a plank beside its crate, and these joints. */
+const withJoints = (...joints: unknown[]): string =>
+  withLevel((l) => {
+    l.things = [
+      { id: 'crate-1', character: 'crate', x: 8.5, y: 1.5 },
+      { id: 'plank-1', character: 'plank', x: 4, y: 1.5 },
+    ]
+    l.joints = joints
+  })
+
+test('a level with one pin and one rope reads, and is written the same bytes twice', () => {
+  expect(problems(withJoints(pin(), rope()))).toEqual([])
+  expectRoundTrip('level', JSON.parse(withJoints(pin(), rope())))
+})
+
+test('joints are written last, and a level without them is written as it was', () => {
+  const written = writeContent('level', JSON.parse(withJoints(pin())))
+  expect(Object.keys(JSON.parse(written)).at(-1)).toBe('joints')
+  expect(Object.keys(JSON.parse(writeContent('level', exampleLevel() as never)))).toEqual([
+    'format',
+    'id',
+    'tiles',
+    'things',
+    'starts',
+  ])
+})
+
+test('the fixture game’s files still write to their committed bytes', () => {
+  for (const [path, type] of [
+    ['content/characters/crate.json', 'character'],
+    ['content/characters/hero.json', 'character'],
+    ['content/levels/level-1.json', 'level'],
+  ] as const) {
+    const text = fixtureFiles[path] as string
+    const parsed = parseContent(type, text, path)
+    expect(parsed.ok && writeContent(type, parsed.value as never), path).toBe(text)
+  }
+})
+
+test('a joint that names a thing the level does not have', () =>
+  expect(problems(withJoints({ ...pin(), thing: 'plnk' }))).toEqual([
+    'content/levels/a.json: joints[0].thing: There is no thing called "plnk". This level has: crate-1, plank-1.',
+  ]))
+
+test('a holder the level does not have', () =>
+  expect(problems(withJoints({ ...rope(), holder: 'plnk' }))).toEqual([
+    'content/levels/a.json: joints[0].holder: There is no thing called "plnk". This level has: crate-1, plank-1.',
+  ]))
+
+test('a hero cannot be joined to anything', () => {
+  const hero =
+    'content/levels/a.json: joints[0].thing: A hero cannot be joined to anything. Join a thing from this level\'s "things".'
+  expect(problems(withJoints({ ...pin(), thing: 'player-1' }))).toEqual([hero])
+  expect(problems(withJoints({ ...rope(), holder: 'player-2' }))).toEqual([hero.replace('thing', 'holder')])
+})
+
+test('a thing cannot be joined to itself', () =>
+  expect(problems(withJoints({ ...rope(), holder: 'crate-1' }))).toEqual([
+    'content/levels/a.json: joints[0].holder: A thing cannot be joined to itself. Leave "holder" out to join it to the level.',
+  ]))
+
+test('two joints with one id', () =>
+  expect(problems(withJoints(pin(), { ...rope(), id: 'seesaw' }))).toEqual([
+    'content/levels/a.json: joints[1].id: "seesaw" is used twice. Each joint needs its own id.',
+  ]))
+
+test('a turn whose min is not less than its max', () =>
+  expect(problems(withJoints({ ...pin(), turn: { min: 10, max: 10 } }))).toEqual([
+    'content/levels/a.json: joints[0].turn.min: "min" must be less than "max".',
+  ]))
+
+test('a turn that leaves out where the thing starts', () =>
+  expect(problems(withJoints({ ...pin(), turn: { min: 10, max: 30 } }))).toEqual([
+    'content/levels/a.json: joints[0].turn: The thing starts level, so "min" must be 0 or less and "max" 0 or more.',
+  ]))
+
+test('a rope whose ends are in one place needs slack', () => {
+  const stuck = { ...rope(), to: { x: 8.5, y: 1 } }
+  expect(problems(withJoints({ ...stuck, slack: undefined }))).toEqual([
+    'content/levels/a.json: joints[0].to: A rope needs some length. Move its two ends apart, or give it "slack".',
+  ])
+  expect(problems(withJoints({ ...stuck, slack: 0 }))).toHaveLength(1)
+  expect(problems(withJoints(stuck))).toEqual([])
+})
+
+test('a joint outside the level', () => {
+  expect(problems(withJoints({ ...pin(), x: 40 }))).toEqual([
+    'content/levels/a.json: joints[0].x: 40 is outside the level, which is 16 tiles wide.',
+  ])
+  expect(problems(withJoints({ ...rope(), to: { x: 4, y: 9 } }))).toEqual([
+    'content/levels/a.json: joints[0].to.y: 9 is outside the level, which is 3 tiles tall.',
+  ])
+})
+
+test('a joint with a field missing, or a kind that is not one', () => {
+  const { thing: _thing, ...noThing } = pin()
+  expect(problems(withJoints(noThing))).toEqual([
+    'content/levels/a.json: joints[0].thing: This is missing. Say which thing is held, like "plank-1".',
+  ])
+  expect(problems(withJoints({ ...pin(), kind: 'weld' }))).toEqual([
+    'content/levels/a.json: joints[0].kind: This must be one of: pin, rope.',
+  ])
+})
+
+/** The fixture game with a fixed wall character, a level that has one wall and a crate, and these joints. */
+function wallGame(...joints: unknown[]) {
+  const wall = writeContent('character', {
+    format: 1,
+    id: 'wall',
+    body: 'fixed',
+    size: { w: 1, h: 1 },
+    color: '#444444',
+    upright: false,
+  })
+  const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] as string)
+  level.things.push({ id: 'wall-1', character: 'wall', x: 4.5, y: 7.5 })
+  level.joints = joints
+  return gameFiles(fixtureFiles, [{ type: 'character', path: 'content/characters/wall.json', text: wall }], {
+    'content/levels/level-1.json': writeContent('level', level),
+  })
+}
+
+test('a fixed thing cannot be joined to the level or to another fixed thing', async () => {
+  const sentence =
+    'content/levels/level-1.json: joints[0].thing: The character "wall" is "fixed", so it never moves and cannot be joined to the level. Make it "dynamic", or remove this joint.'
+  const tie = { id: 'tie', kind: 'pin', thing: 'wall-1', x: 4.5, y: 7.5 }
+  expect(await gameProblems(wallGame(tie))).toEqual([sentence])
+  expect(await gameProblems(wallGame({ ...tie, holder: 'wall-1' }))).not.toEqual([])
+  // a fixed thing may be the holder of a thing that moves
+  expect(
+    await gameProblems(
+      wallGame({ id: 'hang', kind: 'pin', thing: 'crate-1', holder: 'wall-1', x: 4.5, y: 7.5 }),
+    ),
+  ).toEqual([])
+})

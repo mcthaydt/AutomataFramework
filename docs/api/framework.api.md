@@ -143,6 +143,7 @@ interface Character {
     readonly kind?: string | undefined;
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
+    readonly touch?: 'sense' | 'take' | undefined;
 }
 ```
 
@@ -891,6 +892,7 @@ interface Level {
     readonly tiles: readonly string[];
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
+    readonly joints?: readonly LevelJoint[] | undefined;
 }
 ```
 
@@ -901,10 +903,44 @@ class LevelError extends Error {
 }
 ```
 
+### `LevelJoint` (type)
+
+```ts
+type LevelJoint = {
+    readonly id: string;
+    readonly kind: 'pin';
+    readonly thing: string;
+    readonly holder?: string | undefined;
+    readonly x: number;
+    readonly y: number;
+    readonly turn?: {
+        readonly min: number;
+        readonly max: number;
+    } | undefined;
+} | {
+    readonly id: string;
+    readonly kind: 'rope';
+    readonly thing: string;
+    readonly holder?: string | undefined;
+    readonly from: LevelPoint;
+    readonly to: LevelPoint;
+    readonly slack?: number | undefined;
+};
+```
+
 ### `levelPlugin` (const)
 
 ```ts
 const levelPlugin: PluginDef;
+```
+
+### `LevelPoint` (interface)
+
+```ts
+interface LevelPoint {
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `LevelSchema` (const)
@@ -2108,6 +2144,7 @@ interface Character {
     readonly kind?: string | undefined;
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
+    readonly touch?: 'sense' | 'take' | undefined;
 }
 ```
 
@@ -2730,6 +2767,7 @@ interface Level {
     readonly tiles: readonly string[];
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
+    readonly joints?: readonly LevelJoint[] | undefined;
 }
 ```
 
@@ -2740,10 +2778,44 @@ class LevelError extends Error {
 }
 ```
 
+### `LevelJoint` (type)
+
+```ts
+type LevelJoint = {
+    readonly id: string;
+    readonly kind: 'pin';
+    readonly thing: string;
+    readonly holder?: string | undefined;
+    readonly x: number;
+    readonly y: number;
+    readonly turn?: {
+        readonly min: number;
+        readonly max: number;
+    } | undefined;
+} | {
+    readonly id: string;
+    readonly kind: 'rope';
+    readonly thing: string;
+    readonly holder?: string | undefined;
+    readonly from: LevelPoint;
+    readonly to: LevelPoint;
+    readonly slack?: number | undefined;
+};
+```
+
 ### `levelPlugin` (const)
 
 ```ts
 const levelPlugin: PluginDef;
+```
+
+### `LevelPoint` (interface)
+
+```ts
+interface LevelPoint {
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `LevelSchema` (const)

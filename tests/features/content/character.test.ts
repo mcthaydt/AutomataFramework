@@ -89,3 +89,38 @@ test('a kind that is not an id', () =>
   expect(problems('content/characters/hero.json', { ...hero(), kind: 'Big Crate' })).toEqual([
     'content/characters/hero.json: kind: Use lower-case words joined by dashes, like "level-1".',
   ]))
+
+const spark = () => ({
+  format: 1,
+  id: 'spark',
+  body: 'fixed',
+  size: { w: 0.5, h: 0.5 },
+  color: '#f2c14e',
+  upright: false,
+  kind: 'spark',
+  touch: 'take',
+})
+
+test('a touched character is written with touch last, and reads back the same', () => {
+  const parsed = parseContent('character', JSON.stringify(spark()), 'content/characters/spark.json')
+  expect(parsed.ok && parsed.value).toEqual(spark())
+  expect(Object.keys(JSON.parse(writeContent('character', spark() as never))).at(-1)).toBe('touch')
+  expect(problems('content/characters/spark.json', { ...spark(), touch: 'sense' })).toEqual([])
+})
+
+test('touch is one of sense and take', () =>
+  expect(problems('content/characters/spark.json', { ...spark(), touch: 'grab' })).toEqual([
+    'content/characters/spark.json: touch: This must be one of: sense, take.',
+  ]))
+
+test('a character that is touched needs a kind', () => {
+  const { kind: _kind, ...noKind } = spark()
+  expect(problems('content/characters/spark.json', noKind)).toEqual([
+    'content/characters/spark.json: kind: A character that is touched needs a "kind", so the game can say what was touched.',
+  ])
+})
+
+test('a character that is touched cannot be dynamic', () =>
+  expect(problems('content/characters/spark.json', { ...spark(), body: 'dynamic' })).toEqual([
+    'content/characters/spark.json: body: A character that is touched lets everything through, so it would fall out of the level. Make its body "fixed".',
+  ]))
