@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page } from 'vitest/browser'
 import { type Game, startGame } from '#src/features/game/game.ts'
 import type { Host } from '#src/features/host/host.ts'
+import { coopFiles } from '../../fixtures/game/co-op.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
@@ -102,5 +103,37 @@ for (const [name, w, h] of SCREENS) {
     expect(drawn?.bottom).toBeLessThanOrEqual(Math.min(...rects.map((r) => r.top)) + 1)
 
     await page.screenshot({ element: mount, path: `__screenshots__/${name}.png` })
+  })
+}
+
+// Two people on the screen add a hero, not a row of buttons: the level still ends above where the buttons begin.
+for (const [name, w, h] of SCREENS) {
+  test(`on ${name} with two players the level still ends above the touch buttons`, async () => {
+    await page.viewport(w, h)
+    expect([window.innerWidth, window.innerHeight]).toEqual([w, h])
+    const frames = manualFrames()
+    game = await startGame({
+      content: await loadFixtureGame(coopFiles),
+      plugins: [heroPlugin],
+      mount,
+      controls: fixtureControls,
+      host: visibleHost,
+      frames,
+    })
+    game.addPlayer('keyboard')
+    window.dispatchEvent(
+      new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }),
+    )
+    frames.at(0)
+    for (let i = 0; i < 30; i++) frames.advance(FRAME)
+    await frames2()
+    frames.advance(FRAME)
+
+    const canvas = mount.querySelector('canvas') as HTMLCanvasElement
+    const tops = [...mount.querySelectorAll('button')].map((b) => b.getBoundingClientRect().top)
+    expect(tops.length).toBeGreaterThan(0)
+    const drawn = drawnRows(canvas)
+    expect(drawn, 'the game drew something').toBeDefined()
+    expect(drawn?.bottom).toBeLessThanOrEqual(Math.min(...tops) + 1)
   })
 }

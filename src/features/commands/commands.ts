@@ -1,6 +1,5 @@
 // The commands feature's entry: numbered players, the one command a player sends (what they are holding down), and
 // replays. Everything a game or another feature may use of them is exported from here.
-
 export {
   PAD_BUTTONS,
   PAD_STICKS,
@@ -29,3 +28,4 @@ export {
   ReplaySchema,
   writeReplay,
 } from './replay.ts'
+export { createSequence, type Sequence } from './sequence.ts'

@@ -83,6 +83,17 @@ test('parts of different lengths', () =>
     `${file}: parts[1].notes: This part has 31 steps but the first part has 32. Every part must be the same length.`,
   ]))
 
+test('a row with no steps says to write one, in the words of its kind of part', () => {
+  expect(said(withPart(0, (p) => (p.notes = ['C4 - E4 - G4 - E4 - C4 - E4 - G4 - E4 -', ''])))).toEqual([
+    `${file}: parts[0].notes[1]: This row has no steps. Write at least one, like C4 or -.`,
+    `${file}: parts[1].notes: This part has 32 steps but the first part has 16. Every part must be the same length.`,
+  ])
+  expect(said(withPart(1, (p) => (p.notes = ['x - - - x - - - x - - - x - x -', ''])))).toEqual([
+    `${file}: parts[1].notes[1]: This row has no steps. Write at least one, like x or -.`,
+    `${file}: parts[1].notes: This part has 16 steps but the first part has 32. Every part must be the same length.`,
+  ])
+})
+
 test('a track of more than 4096 steps', () => {
   const row = Array.from({ length: 128 }, () => '-').join(' ')
   const rows = Array.from({ length: 33 }, () => row)
