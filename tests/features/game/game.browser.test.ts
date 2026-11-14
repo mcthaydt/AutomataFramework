@@ -118,6 +118,11 @@ test('what was played replays to the same hash in a headless sim', async () => {
   }
 })
 
+test('startGame records the level and the players it started with', async () => {
+  const { game: g } = await start()
+  expect(g.replay().meta).toEqual({ level: 'level-1', players: '1' })
+})
+
 test('a hidden page pauses the game and coming back does not fast-forward', async () => {
   const { game: g, frames, host } = await start()
   frames.at(0)
