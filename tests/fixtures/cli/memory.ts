@@ -1,6 +1,8 @@
 // The cli feature's ports on files in memory, so every command runs in a Node test with no disk, no child process and no
 // terminal. `files` is the folder as a map; a test reads it after the command ran to see what was written.
 import { Effect, Layer } from 'effect'
+import { main } from '#src/features/cli/cli.ts'
+import { commandAnswer } from '#src/features/cli/command-answer.ts'
 import { readGame } from '#src/features/cli/game-folder.ts'
 import {
   CliError,
@@ -10,6 +12,7 @@ import {
   Out,
   type Ports,
   Runner,
+  type RunnerService,
   type ToolName,
   type ToolResult,
   Tools,
@@ -68,7 +71,7 @@ export function memoryLayer(
   const err: string[] = []
   const ran: ToolCall[] = []
   const answer = (tool: ToolName): ToolResult | 'missing' => options.tools?.[tool] ?? { code: 0, output: '' }
-  const base = Layer.mergeAll(
+  const core = Layer.mergeAll(
     Layer.succeed(Files, {
       readText: (path) => Effect.sync(() => asText(files.get(keyOf(path)))),
       readBytes: (path) => Effect.sync(() => asBytes(files.get(keyOf(path)))),
@@ -103,21 +106,42 @@ export function memoryLayer(
         return code instanceof CliError ? Effect.fail(code) : Effect.succeed(code)
       },
     }),
+  )
+  const base = Layer.merge(
+    core,
     Layer.succeed(Out, {
       line: (text) => Effect.sync(() => void out.push(text)),
       error: (text) => Effect.sync(() => void err.push(text)),
     }),
   )
-  // A play session's "Worker" is the same session code in this process, loading the game afresh each time one starts.
-  const layer = Layer.merge(
-    base,
-    Layer.succeed(Runner, {
-      worker: (folder) =>
-        Effect.sync(() => {
-          const host = sessionHost(() => Effect.runPromise(Effect.provide(readGame(folder), base)))
-          return { call: async (message) => host.call(message), end: async () => host.end() }
+  // The child process a command runs in is `main` called here with its own output, on the same files and the same code
+  // (asked afresh each time, as a new process would). A play session's "Worker" is the same session code in this
+  // process, loading the game afresh each time one starts.
+  const runner: RunnerService = {
+    command: (args) =>
+      Effect.flatMap(
+        Effect.promise(async () => {
+          const stdout: string[] = []
+          const stderr: string[] = []
+          const child = Layer.mergeAll(
+            core,
+            Layer.succeed(Out, {
+              line: (text) => Effect.sync(() => void stdout.push(text)),
+              error: (text) => Effect.sync(() => void stderr.push(text)),
+            }),
+            Layer.succeed(Runner, runner),
+          )
+          const code = await main([...args, '--json'], child)
+          return { code, stdout: stdout.join('\n'), stderr: stderr.join('\n') }
         }),
-    }),
-  )
+        (ended) => commandAnswer(ended.code, ended.stdout, ended.stderr),
+      ),
+    worker: (folder) =>
+      Effect.sync(() => {
+        const host = sessionHost(() => Effect.runPromise(Effect.provide(readGame(folder), base)))
+        return { call: async (message) => host.call(message), end: async () => host.end() }
+      }),
+  }
+  const layer = Layer.merge(base, Layer.succeed(Runner, runner))
   return { layer, files, out, err, ran }
 }

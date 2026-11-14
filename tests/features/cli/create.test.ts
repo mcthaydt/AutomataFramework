@@ -28,7 +28,14 @@ test('it writes every template file, the three under their real names', async ()
   const memory = await made(['my-game'])
   const files = written(memory, 'my-game')
   expect(files).toEqual(
-    expect.arrayContaining(['package.json', 'biome.json', '.gitignore', 'automata.toml', 'src/headless.ts']),
+    expect.arrayContaining([
+      'package.json',
+      'biome.json',
+      '.gitignore',
+      '.mcp.json',
+      'automata.toml',
+      'src/headless.ts',
+    ]),
   )
   expect(files.filter((file) => file.endsWith('.template.json') || file === 'gitignore')).toEqual([])
 })
