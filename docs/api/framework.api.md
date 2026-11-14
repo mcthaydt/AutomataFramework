@@ -51,6 +51,10 @@ interface ActorKey {
 interface Advance {
     readonly deltas: readonly RenderDelta[];
     readonly events: readonly SimEvent[];
+    readonly steps: readonly {
+        readonly tick: number;
+        readonly events: readonly SimEvent[];
+    }[];
 }
 ```
 
@@ -937,6 +941,8 @@ interface GameOptions extends GameSimOptions {
     readonly frames?: Frames;
     readonly settings?: unknown;
     readonly gamepads?: () => readonly (PadLike | null)[];
+    readonly audio?: GameAudio;
+    readonly soundNotice?: string | false;
 }
 ```
 
@@ -3042,6 +3048,10 @@ interface ActorKey {
 interface Advance {
     readonly deltas: readonly RenderDelta[];
     readonly events: readonly SimEvent[];
+    readonly steps: readonly {
+        readonly tick: number;
+        readonly events: readonly SimEvent[];
+    }[];
 }
 ```
 
