@@ -1,20 +1,37 @@
-# When a pull request is closed WITHOUT being merged, delete its branch.
-# (A merged pull request's branch is already deleted by the repository's "delete branch on merge" setting.)
-# Why: cloud sessions cannot delete branches, so closed pull requests used to leave branches behind for the Owner.
-# Safe by design: it never touches `main` or `ci-screens`, ignores pull requests from forks, and treats a branch
-# that is already gone as fine.
+# Deletes branches nobody needs, so the Owner never has to. Cloud sessions cannot delete branches, so GitHub does it.
+#
+# Two jobs:
+# - `delete-branch`: when a pull request is closed WITHOUT being merged, delete its branch at once. (A merged pull
+#   request's branch is already deleted by the repository's "delete branch on merge" setting.)
+# - `sweep`: every day, and by hand (`gh workflow run delete-closed-pr-branch.yml`), delete what the first job and that
+#   setting miss:
+#     * a branch whose pull request was merged or closed, if nothing was pushed to it since (its newest commit is the
+#       one the pull request ended on);
+#     * a `claude/*` branch that never had an open pull request and has had no commit for two days (work in flight
+#       is younger than that).
+#
+# Safe by design: it never touches `main`, `ci-screens`, a protected branch or a branch with an open pull request,
+# ignores pull requests from forks, and treats a branch that is already gone as fine.
 name: delete-closed-pr-branch
 
 on:
   pull_request:
     types: [closed]
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: read
+
+concurrency:
+  group: delete-branches
+  cancel-in-progress: false
 
 jobs:
   delete-branch:
-    if: github.event.pull_request.merged == false && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == false && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Delete the branch
@@ -34,3 +51,65 @@ jobs:
           else
             echo "$BRANCH was already gone, or could not be deleted."
           fi
+
+  sweep:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete stray branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          # A `claude/*` branch with no pull request is kept until its newest commit is this old.
+          MAX_AGE_DAYS: 2
+        run: |
+          set -euo pipefail
+          now=$(date -u +%s)
+          # Every branch: name, newest commit, protected or not.
+          gh api --paginate "repos/$REPO/branches?per_page=100" \
+            --jq '.[] | [.name, .commit.sha, (.protected | tostring)] | @tsv' > branches.tsv
+          # Branches of this repository's pull requests (forks left out): open ones, and the commit each closed or
+          # merged one ended on.
+          gh api --paginate "repos/$REPO/pulls?state=open&per_page=100" \
+            --jq '.[] | select(.head.repo.full_name == env.REPO) | .head.ref' > open.txt
+          gh api --paginate "repos/$REPO/pulls?state=closed&per_page=100" \
+            --jq '.[] | select(.head.repo.full_name == env.REPO) | [.head.ref, .head.sha] | @tsv' > closed.tsv
+
+          deleted=0
+          while IFS=$'\t' read -r name sha protected; do
+            case "$name" in
+              main | ci-screens) continue ;;
+            esac
+            if [ "$protected" = "true" ]; then echo "Keeping $name: protected."; continue; fi
+            if grep -qxF -- "$name" open.txt; then echo "Keeping $name: its pull request is open."; continue; fi
+
+            reason=""
+            if grep -qxF -- "$name"$'\t'"$sha" closed.tsv; then
+              reason="its pull request was merged or closed"
+            elif awk -F'\t' -v n="$name" '$1 == n { found = 1 } END { exit !found }' closed.tsv; then
+              echo "Keeping $name: commits were pushed after its pull request closed."
+              continue
+            else
+              case "$name" in
+                claude/*)
+                  date=$(gh api "repos/$REPO/commits/$sha" --jq '.commit.committer.date')
+                  age_days=$(( (now - $(date -u -d "$date" +%s)) / 86400 ))
+                  if [ "$age_days" -ge "$MAX_AGE_DAYS" ]; then
+                    reason="no pull request and no commit for $age_days days"
+                  else
+                    echo "Keeping $name: no pull request yet, but its last commit is recent."
+                    continue
+                  fi
+                  ;;
+                *) echo "Keeping $name: not a claude/ branch and never had a pull request."; continue ;;
+              esac
+            fi
+
+            if gh api -X DELETE "repos/$REPO/git/refs/heads/$name" > /dev/null; then
+              echo "Deleted $name: $reason."
+              deleted=$((deleted + 1))
+            else
+              echo "Could not delete $name."
+            fi
+          done < branches.tsv
+          echo "Deleted $deleted branch(es)."
