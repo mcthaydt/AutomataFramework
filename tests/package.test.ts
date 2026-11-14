@@ -78,11 +78,15 @@ test('the MCP SDK is a development dependency at one exact version, and the pack
 })
 
 // The Owner's answer to the Paraglide question (2026-11-14): a game's words are also typed functions for its code. Both
-// packages are dependencies, exact, and only the words compiler (a file of `automata`, loaded only when words are
-// compiled) names them, so loading the framework in a page loads no inlang code.
-test('Paraglide and its message-format plugin are dependencies at exact versions, named by one file', () => {
-  expect(manifest.dependencies['@inlang/paraglide-js']).toBe('2.25.4')
-  expect(manifest.dependencies['@inlang/plugin-message-format']).toBe('4.4.4')
+// packages are exact, and only the words compiler names them. Nothing a game installs loads that compiler yet (no
+// command runs `compileWords`, and no entry reaches it), so they are development dependencies: a game does not install
+// the inlang SDK for nothing. The pull request that gives `compileWords` a command moves them to `dependencies` (the
+// command resolves them from the installed package) and changes this test.
+test('Paraglide and its message-format plugin are development dependencies at exact versions, named by one file', () => {
+  expect(manifest.devDependencies?.['@inlang/paraglide-js']).toBe('2.25.4')
+  expect(manifest.devDependencies?.['@inlang/plugin-message-format']).toBe('4.4.4')
+  expect(manifest.dependencies['@inlang/paraglide-js']).toBeUndefined()
+  expect(manifest.dependencies['@inlang/plugin-message-format']).toBeUndefined()
   const sources = readdirSync(new URL('../src/', import.meta.url), { recursive: true, encoding: 'utf8' })
   const naming = sources
     .filter((name) => name.endsWith('.ts'))
