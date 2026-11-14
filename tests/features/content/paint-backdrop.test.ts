@@ -54,7 +54,7 @@ test('a flat layer fills its whole strip', () => {
   const backdrop = backdropOf([layer('band', 'flat', 2)])
   const rows = strip(backdrop, paintBackdrop(backdrop), 'band')
   expect(rows).toHaveLength(16)
-  expect(solid(rows)).toBe(16 * 16)
+  expect(solid(rows)).toBe(16 * 8 * 16)
 })
 
 test('hills reach the bottom row of their strip and leave room above', () => {

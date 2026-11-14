@@ -423,7 +423,7 @@ test('a pin on a character that is upright cannot turn, and the sentence says so
 })
 
 describe('a level with a backdrop and a view', () => {
-  const view = { w: 10, h: 9 }
+  const view = { w: 10, h: 3 }
 
   test('they are written after the tileset and the colours, right where the schema says', () => {
     const full = { ...exampleLevel(), backdrop: 'valley', sky: '#fdd4bd', ground: '#111314', view }

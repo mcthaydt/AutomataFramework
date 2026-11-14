@@ -92,7 +92,7 @@ test('running right is run, then left turns the hero round', async () => {
 
 test('a jump is jump, then fall, then land, then idle', async () => {
   const sim = await settled()
-  const seen: string[] = []
+  const seen: string[] = [sprite(sim)?.clip as string]
   const watch = (): void => {
     const clip = sprite(sim)?.clip as string
     if (seen[seen.length - 1] !== clip) seen.push(clip)
