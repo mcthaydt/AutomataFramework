@@ -23,13 +23,18 @@ let online: Online | undefined
 // The first load of the framework and the SDK, and the whole join, happen inside this with `new Function` refused as a
 // strict CSP does: whatever tried to build code from a string is listed in `data-built-code`.
 const stacks: string[] = []
+const where = (): string => (new Error().stack ?? '').split('\n').slice(2, 9).join(' | ')
 const built = await attemptsToBuildCode(async () => {
   // Where each attempt came from, for the journey to print if there is one: a stack's first lines say which package asked.
   const refusing = globalThis.Function
   globalThis.Function = new Proxy(refusing, {
     construct: (target, args, newTarget) => {
-      stacks.push((new Error().stack ?? '').split('\n').slice(1, 8).join(' | '))
+      stacks.push(where())
       return Reflect.construct(target, args, newTarget)
+    },
+    apply: (target, self, args) => {
+      stacks.push(where())
+      return Reflect.apply(target, self, args)
     },
   })
   framework = await import('#src/index.ts')
