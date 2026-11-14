@@ -39,6 +39,17 @@ test('headless exports what a game sim and an editor need', async () => {
     'levelSize',
     'Look',
     'Thing',
+    'joinCommand',
+    'leaveCommand',
+    'JoinCommand',
+    'LeaveCommand',
+    'joinPlugin',
+    'playersIn',
+    'createSequence',
+    'PAD_BUTTONS',
+    'PAD_STICKS',
+    'RESERVED_KEYS',
+    'RESERVED_PAD',
     'FRAMEWORK_VERSION',
   ])
     expect(api, name).toHaveProperty(name)

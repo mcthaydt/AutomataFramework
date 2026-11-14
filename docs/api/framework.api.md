@@ -895,6 +895,22 @@ const PAD_STICKS: readonly ["left-stick-up", "left-stick-down", "left-stick-left
 type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
 ```
 
+### `PadLike` (interface)
+
+```ts
+interface PadLike {
+    readonly id: string;
+    readonly index: number;
+    readonly connected: boolean;
+    readonly mapping: string;
+    readonly axes: readonly number[];
+    readonly buttons: readonly {
+        readonly pressed: boolean;
+        readonly value: number;
+    }[];
+}
+```
+
 ### `parseContent` (function)
 
 ```ts

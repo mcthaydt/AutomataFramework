@@ -18,3 +18,21 @@ test('the README names every property a game can set on the touch buttons', () =
   expect(TOUCH_PROPERTIES).toHaveLength(7)
   for (const property of TOUCH_PROPERTIES) expect(readme).toContain(property)
 })
+
+// A game finds out how to use a gamepad, a changed key and a second player from this section.
+test('the README has a section on gamepads, changing keys and playing together, and names what it uses', () => {
+  const start = readme.indexOf('## Gamepads, changing keys and playing together')
+  expect(start).toBeGreaterThan(-1)
+  const next = readme.indexOf('\n## ', start + 1)
+  const section = readme.slice(start, next)
+  expect(section.split('\n').length).toBeLessThan(60)
+  for (const word of [
+    'players = 2',
+    'pad:',
+    'shared:',
+    'addPlayer',
+    'game.input.capture',
+    'game.input.settings()',
+  ])
+    expect(section, word).toContain(word)
+})

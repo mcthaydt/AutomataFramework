@@ -113,6 +113,7 @@ export interface Input {
 }
 
 export type { Capture, CaptureAnswer } from './capture.ts'
+export type { PadLike } from './gamepad.ts'
 export type { MenuPress } from './menu.ts'
 export type { Claim, Device, Seat } from './seats.ts'
 export type { DeviceKind } from './use.ts'
