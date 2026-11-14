@@ -1,0 +1,36 @@
+# When a pull request is closed WITHOUT being merged, delete its branch.
+# (A merged pull request's branch is already deleted by the repository's "delete branch on merge" setting.)
+# Why: cloud sessions cannot delete branches, so closed pull requests used to leave branches behind for the Owner.
+# Safe by design: it never touches `main` or `ci-screens`, ignores pull requests from forks, and treats a branch
+# that is already gone as fine.
+name: delete-closed-pr-branch
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  delete-branch:
+    if: github.event.pull_request.merged == false && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete the branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Passed through the environment, never pasted into the script, so a branch name cannot run as code.
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          case "$BRANCH" in
+            main | ci-screens)
+              echo "Keeping $BRANCH."
+              exit 0
+              ;;
+          esac
+          if gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$BRANCH"; then
+            echo "Deleted $BRANCH."
+          else
+            echo "$BRANCH was already gone, or could not be deleted."
+          fi
