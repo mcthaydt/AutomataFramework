@@ -4,10 +4,46 @@
 
 ## `.`
 
+### `Act` (type)
+
+```ts
+type Act = {
+    readonly act: 'stay';
+} | {
+    readonly act: 'wander';
+    readonly speed: number;
+    readonly turnEvery: number;
+} | {
+    readonly act: 'flee';
+    readonly from: string;
+    readonly speed: number;
+} | {
+    readonly act: 'follow';
+    readonly to: string;
+    readonly speed: number;
+} | {
+    readonly act: 'jump';
+    readonly speed: number;
+};
+```
+
 ### `ACTION_NAME` (const)
 
 ```ts
 const ACTION_NAME: RegExp;
+```
+
+### `ActorKey` (interface)
+
+```ts
+interface ActorKey {
+    readonly at: number;
+    readonly who: string;
+    readonly x: number;
+    readonly y: number;
+    readonly clip?: string | undefined;
+    readonly face?: 'left' | 'right' | undefined;
+}
 ```
 
 ### `atan` (function)
@@ -20,6 +56,32 @@ function atan(x0: number): number;
 
 ```ts
 function atan2(y: number, x: number): number;
+```
+
+### `BehaviourFile` (interface)
+
+```ts
+interface BehaviourFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly rules: readonly BehaviourRule[];
+}
+```
+
+### `BehaviourRule` (interface)
+
+```ts
+interface BehaviourRule {
+    readonly id: string;
+    readonly when: readonly Sense[];
+    readonly do: Act;
+}
+```
+
+### `BehaviourSchema` (const)
+
+```ts
+const BehaviourSchema: z.ZodType<BehaviourFile, BehaviourFile>;
 ```
 
 ### `Body` (const)
@@ -53,6 +115,18 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `CameraKey` (interface)
+
+```ts
+interface CameraKey {
+    readonly at: number;
+    readonly x: number;
+    readonly y: number;
+    readonly zoom: number;
+    readonly ease: Ease;
+}
+```
+
 ### `Character` (interface)
 
 ```ts
@@ -66,6 +140,9 @@ interface Character {
     };
     readonly color: string;
     readonly upright: boolean;
+    readonly kind?: string | undefined;
+    readonly behaviour?: string | undefined;
+    readonly tuning?: string | undefined;
 }
 ```
 
@@ -183,8 +260,18 @@ interface ComponentDef<S extends FieldSchema = FieldSchema> {
 
 ```ts
 const CONTENT_TYPES: {
-    readonly level: ContentTypeInfo<Level, Level, 'levels'>;
-    readonly character: ContentTypeInfo<Character, CharacterInput, 'characters'>;
+    readonly level: ContentTypeInfo<Level, Level>;
+    readonly character: ContentTypeInfo<Character, CharacterInput>;
+    readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
+    readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
+    readonly tuning: ContentTypeInfo<TuningFile, TuningFile>;
+    readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
+    readonly sound: ContentTypeInfo<SoundFile, SoundFile>;
+    readonly music: ContentTypeInfo<MusicFile, MusicFile>;
+    readonly cues: ContentTypeInfo<CuesFile, CuesFile>;
+    readonly conversation: ContentTypeInfo<ConversationFile, ConversationFile>;
+    readonly cutscene: ContentTypeInfo<CutsceneFile, CutsceneFile>;
+    readonly messages: ContentTypeInfo<MessagesFile, MessagesFile>;
 };
 ```
 
@@ -206,10 +293,14 @@ type ContentType = keyof typeof CONTENT_TYPES;
 ### `ContentTypeInfo` (interface)
 
 ```ts
-interface ContentTypeInfo<Out, In, Editor extends string> extends Voice {
+interface ContentTypeInfo<Out, In> extends Voice {
     readonly schema: z.ZodType<Out, In>;
-    readonly editor: Editor;
     readonly title: string;
+    readonly plural: string;
+    readonly editor: EditorName;
+    readonly part: string;
+    readonly tidy?: (value: Out) => Out;
+    readonly check?: (value: Out, game: Listed, report: Report) => void;
 }
 ```
 
@@ -245,6 +336,44 @@ const ControlsCommand: CommandDef<typeof controlsPayload>;
 
 ```ts
 function controlsCommand(tick: number, player: number, seq: number, held: readonly string[]): Command;
+```
+
+### `ConversationChoice` (interface)
+
+```ts
+interface ConversationChoice {
+    readonly line: string;
+    readonly next: string;
+}
+```
+
+### `ConversationFile` (interface)
+
+```ts
+interface ConversationFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly start: string;
+    readonly nodes: readonly ConversationNode[];
+}
+```
+
+### `ConversationNode` (interface)
+
+```ts
+interface ConversationNode {
+    readonly id: string;
+    readonly speaker?: string | undefined;
+    readonly lines: readonly string[];
+    readonly choices?: readonly Choice[] | undefined;
+    readonly next?: string | undefined;
+}
+```
+
+### `ConversationSchema` (const)
+
+```ts
+const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
 ```
 
 ### `cos` (function)
@@ -307,6 +436,59 @@ function createScene(): Scene;
 
 ```ts
 function createSim(opts: SimOptions): Promise<Sim>;
+```
+
+### `Cue` (type)
+
+```ts
+type Cue = SoundCue | MusicCue | StopMusicCue;
+```
+
+### `CuesFile` (interface)
+
+```ts
+interface CuesFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly cues: readonly Cue[];
+}
+```
+
+### `CuesSchema` (const)
+
+```ts
+const CuesSchema: z.ZodType<CuesFile, CuesFile>;
+```
+
+### `CutsceneFile` (interface)
+
+```ts
+interface CutsceneFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly level: string;
+    readonly length: number;
+    readonly camera: readonly CameraKey[];
+    readonly actors: readonly ActorKey[];
+    readonly lines: readonly CutsceneLine[];
+}
+```
+
+### `CutsceneLine` (interface)
+
+```ts
+interface CutsceneLine {
+    readonly at: number;
+    readonly until: number;
+    readonly line: string;
+    readonly speaker?: string | undefined;
+}
+```
+
+### `CutsceneSchema` (const)
+
+```ts
+const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
 ```
 
 ### `Def` (type)
@@ -382,6 +564,40 @@ interface Diagnostic {
 }
 ```
 
+### `DrumPart` (interface)
+
+```ts
+interface DrumPart {
+    readonly id: string;
+    readonly kind: 'drums';
+    readonly volume: number;
+    readonly notes: readonly string[];
+}
+```
+
+### `Dust` (interface)
+
+```ts
+interface Dust {
+    readonly count: number;
+    readonly color: string;
+    readonly speed: number;
+    readonly life: number;
+}
+```
+
+### `Ease` (type)
+
+```ts
+type Ease = 'cut' | 'linear' | 'smooth';
+```
+
+### `EditorName` (type)
+
+```ts
+type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
+```
+
 ### `EntityRef` (interface)
 
 ```ts
@@ -409,6 +625,25 @@ interface EventDef<Z extends z.ZodType = z.ZodType> {
 
 ```ts
 function exp(x: number): number;
+```
+
+### `FeelFile` (interface)
+
+```ts
+interface FeelFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly on: string;
+    readonly dust?: Dust | undefined;
+    readonly shake?: Shake | undefined;
+    readonly freeze?: Freeze | undefined;
+}
+```
+
+### `FeelSchema` (const)
+
+```ts
+const FeelSchema: z.ZodType<FeelFile, FeelFile>;
 ```
 
 ### `FieldRecord` (type)
@@ -486,6 +721,14 @@ interface Frames {
 const FRAMEWORK_VERSION: string;
 ```
 
+### `Freeze` (interface)
+
+```ts
+interface Freeze {
+    readonly ticks: number;
+}
+```
+
 ### `Game` (interface)
 
 ```ts
@@ -505,6 +748,16 @@ interface GameContent {
     readonly project: Project;
     readonly levels: Readonly<Record<string, Level>>;
     readonly characters: Readonly<Record<string, Character>>;
+    readonly tilesets?: Readonly<Record<string, TilesetFile>>;
+    readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
+    readonly tunings?: Readonly<Record<string, TuningFile>>;
+    readonly feels?: Readonly<Record<string, FeelFile>>;
+    readonly sounds?: Readonly<Record<string, SoundFile>>;
+    readonly music?: Readonly<Record<string, MusicFile>>;
+    readonly cues?: Readonly<Record<string, CuesFile>>;
+    readonly conversations?: Readonly<Record<string, ConversationFile>>;
+    readonly cutscenes?: Readonly<Record<string, CutsceneFile>>;
+    readonly messages?: Readonly<Record<string, MessagesFile>>;
 }
 ```
 
@@ -586,12 +839,25 @@ function isHeld(player: EntityRef, action: string): boolean;
 function jsonSchemaFor(type: ContentType): object;
 ```
 
+### `Language` (type)
+
+```ts
+type Language = (typeof LANGUAGES)[number];
+```
+
+### `LANGUAGES` (const)
+
+```ts
+const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+```
+
 ### `Level` (interface)
 
 ```ts
 interface Level {
     readonly format: 1;
     readonly id: string;
+    readonly tileset?: string | undefined;
     readonly sky?: string | undefined;
     readonly ground?: string | undefined;
     readonly tiles: readonly string[];
@@ -649,6 +915,16 @@ interface LevelThing {
 }
 ```
 
+### `Listed` (interface)
+
+```ts
+interface Listed {
+    has(type: ContentType, id: string): boolean;
+    ids(type: ContentType): readonly string[];
+    get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
+}
+```
+
 ### `loadGame` (function)
 
 ```ts
@@ -679,10 +955,98 @@ const MAX_ACTIONS = 16;
 const MAX_PLAYERS = 4;
 ```
 
+### `MAX_STEPS` (const)
+
+```ts
+const MAX_STEPS = 4096;
+```
+
 ### `MAX_STEPS_PER_FRAME` (const)
 
 ```ts
 const MAX_STEPS_PER_FRAME = 5;
+```
+
+### `MessagesFile` (interface)
+
+```ts
+interface MessagesFile {
+    readonly format: 1;
+    readonly id: Language;
+    readonly messages: Readonly<Record<string, string>>;
+}
+```
+
+### `MessagesSchema` (const)
+
+```ts
+const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
+```
+
+### `MusicCue` (interface)
+
+```ts
+interface MusicCue {
+    readonly on: string;
+    readonly do: 'music';
+    readonly music: string;
+}
+```
+
+### `MusicFile` (interface)
+
+```ts
+interface MusicFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly tempo: number;
+    readonly stepsPerBeat: number;
+    readonly volume: number;
+    readonly loop: boolean;
+    readonly parts: readonly MusicPart[];
+}
+```
+
+### `MusicPart` (type)
+
+```ts
+type MusicPart = TonePart | DrumPart;
+```
+
+### `MusicSchema` (const)
+
+```ts
+const MusicSchema: z.ZodType<MusicFile, MusicFile>;
+```
+
+### `NoiseVoice` (interface)
+
+```ts
+interface NoiseVoice {
+    readonly kind: 'noise';
+    readonly pitch: number;
+    readonly at: number;
+    readonly length: number;
+    readonly volume: number;
+}
+```
+
+### `PAD_BUTTONS` (const)
+
+```ts
+const PAD_BUTTONS: readonly ["south", "east", "west", "north", "l1", "r1", "l2", "r2", "select", "start", "l3", "r3", "dpad-up", "dpad-down", "dpad-left", "dpad-right", "home"];
+```
+
+### `PAD_STICKS` (const)
+
+```ts
+const PAD_STICKS: readonly ["left-stick-up", "left-stick-down", "left-stick-left", "left-stick-right", "right-stick-up", "right-stick-down", "right-stick-left", "right-stick-right"];
+```
+
+### `PadInput` (type)
+
+```ts
+type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
 ```
 
 ### `parseContent` (function)
@@ -935,6 +1299,24 @@ class ReplayFormatError extends Error {
 const ReplaySchema: z.ZodType<Replay>;
 ```
 
+### `Report` (type)
+
+```ts
+type Report = (path: string, message: string) => void;
+```
+
+### `RESERVED_KEYS` (const)
+
+```ts
+const RESERVED_KEYS: readonly string[];
+```
+
+### `RESERVED_PAD` (const)
+
+```ts
+const RESERVED_PAD: readonly PadInput[];
+```
+
 ### `ResourceDef` (interface)
 
 ```ts
@@ -972,6 +1354,33 @@ interface Scene {
 }
 ```
 
+### `Sense` (type)
+
+```ts
+type Sense = {
+    readonly sense: 'near';
+    readonly kind: string;
+    readonly within: number;
+} | {
+    readonly sense: 'far';
+    readonly kind: string;
+    readonly beyond: number;
+} | {
+    readonly sense: 'blocked';
+} | {
+    readonly sense: 'on-ground';
+};
+```
+
+### `Shake` (interface)
+
+```ts
+interface Shake {
+    readonly strength: number;
+    readonly ticks: number;
+}
+```
+
 ### `ShapeKind` (const)
 
 ```ts
@@ -981,6 +1390,12 @@ const ShapeKind: {
     readonly capsule: 2;
 };
 type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind];
+```
+
+### `SharedKeys` (type)
+
+```ts
+type SharedKeys = readonly [readonly string[], readonly string[]];
 ```
 
 ### `Sim` (interface)
@@ -1139,6 +1554,39 @@ interface SnapshotView {
 }
 ```
 
+### `SoundCue` (interface)
+
+```ts
+interface SoundCue {
+    readonly on: string;
+    readonly do: 'sound';
+    readonly sound: string;
+}
+```
+
+### `SoundFile` (interface)
+
+```ts
+interface SoundFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly volume: number;
+    readonly voices: readonly SoundVoice[];
+}
+```
+
+### `SoundSchema` (const)
+
+```ts
+const SoundSchema: z.ZodType<SoundFile, SoundFile>;
+```
+
+### `SoundVoice` (type)
+
+```ts
+type SoundVoice = ToneVoice | NoiseVoice;
+```
+
 ### `spawnLevel` (function)
 
 ```ts
@@ -1165,6 +1613,15 @@ interface StepResult {
     readonly events: readonly SimEvent[];
     readonly render: RenderDelta;
     readonly rejected: readonly RejectedCommand[];
+}
+```
+
+### `StopMusicCue` (interface)
+
+```ts
+interface StopMusicCue {
+    readonly on: string;
+    readonly do: 'stop-music';
 }
 ```
 
@@ -1211,6 +1668,26 @@ const Thing: ComponentDef<typeof thingFields>;
 const TILE_COLOR = 3885658;
 ```
 
+### `TileKind` (interface)
+
+```ts
+interface TileKind {
+    readonly id: string;
+    readonly letter: string;
+    readonly solid: boolean;
+    readonly pictures: readonly TilePicture[];
+}
+```
+
+### `TilePicture` (interface)
+
+```ts
+interface TilePicture {
+    readonly frame: number;
+    readonly when?: TileWhen | undefined;
+}
+```
+
 ### `TileRun` (interface)
 
 ```ts
@@ -1224,7 +1701,63 @@ interface TileRun {
 ### `tileRuns` (function)
 
 ```ts
-function tileRuns(tiles: readonly string[]): TileRun[];
+function tileRuns(tiles: readonly string[], isSolid?: (letter: string) => boolean): TileRun[];
+```
+
+### `TilesetFile` (interface)
+
+```ts
+interface TilesetFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly image: string;
+    readonly tileSize: number;
+    readonly columns: number;
+    readonly tiles: readonly TileKind[];
+}
+```
+
+### `TilesetSchema` (const)
+
+```ts
+const TilesetSchema: z.ZodType<TilesetFile, TilesetFile>;
+```
+
+### `TileWhen` (interface)
+
+```ts
+interface TileWhen {
+    readonly up?: Neighbour | undefined;
+    readonly down?: Neighbour | undefined;
+    readonly left?: Neighbour | undefined;
+    readonly right?: Neighbour | undefined;
+}
+```
+
+### `TonePart` (interface)
+
+```ts
+interface TonePart {
+    readonly id: string;
+    readonly kind: 'tone';
+    readonly wave: 'sine' | 'square' | 'sawtooth' | 'triangle';
+    readonly volume: number;
+    readonly notes: readonly string[];
+}
+```
+
+### `ToneVoice` (interface)
+
+```ts
+interface ToneVoice {
+    readonly kind: 'tone';
+    readonly wave: Wave;
+    readonly from: number;
+    readonly to: number;
+    readonly at: number;
+    readonly length: number;
+    readonly volume: number;
+}
 ```
 
 ### `Transform` (const)
@@ -1241,6 +1774,55 @@ function transform(at?: {
     y?: number;
     rotation?: number;
 }): SpawnPart;
+```
+
+### `TuningControl` (interface)
+
+```ts
+interface TuningControl {
+    readonly action: string;
+    readonly label: string;
+    readonly keys: readonly string[];
+    readonly side: 'left' | 'right';
+    readonly pad?: readonly PadInput[] | undefined;
+    readonly shared?: SharedKeys | undefined;
+}
+```
+
+### `TuningFile` (interface)
+
+```ts
+interface TuningFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly numbers: readonly TuningNumber[];
+    readonly controls?: readonly TuningControl[] | undefined;
+}
+```
+
+### `TuningNumber` (interface)
+
+```ts
+interface TuningNumber {
+    readonly id: string;
+    readonly about: string;
+    readonly value: number;
+    readonly min: number;
+    readonly max: number;
+    readonly step: number;
+}
+```
+
+### `tuningNumbers` (function)
+
+```ts
+function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
+```
+
+### `TuningSchema` (const)
+
+```ts
+const TuningSchema: z.ZodType<TuningFile, TuningFile>;
 ```
 
 ### `Verdict` (type)
@@ -1329,6 +1911,12 @@ class WatchSetupError extends Error {
 }
 ```
 
+### `Wave` (type)
+
+```ts
+type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
+```
+
 ### `webHost` (function)
 
 ```ts
@@ -1349,10 +1937,46 @@ function writeReplay(replay: Replay): string;
 
 ## `./headless`
 
+### `Act` (type)
+
+```ts
+type Act = {
+    readonly act: 'stay';
+} | {
+    readonly act: 'wander';
+    readonly speed: number;
+    readonly turnEvery: number;
+} | {
+    readonly act: 'flee';
+    readonly from: string;
+    readonly speed: number;
+} | {
+    readonly act: 'follow';
+    readonly to: string;
+    readonly speed: number;
+} | {
+    readonly act: 'jump';
+    readonly speed: number;
+};
+```
+
 ### `ACTION_NAME` (const)
 
 ```ts
 const ACTION_NAME: RegExp;
+```
+
+### `ActorKey` (interface)
+
+```ts
+interface ActorKey {
+    readonly at: number;
+    readonly who: string;
+    readonly x: number;
+    readonly y: number;
+    readonly clip?: string | undefined;
+    readonly face?: 'left' | 'right' | undefined;
+}
 ```
 
 ### `atan` (function)
@@ -1365,6 +1989,32 @@ function atan(x0: number): number;
 
 ```ts
 function atan2(y: number, x: number): number;
+```
+
+### `BehaviourFile` (interface)
+
+```ts
+interface BehaviourFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly rules: readonly BehaviourRule[];
+}
+```
+
+### `BehaviourRule` (interface)
+
+```ts
+interface BehaviourRule {
+    readonly id: string;
+    readonly when: readonly Sense[];
+    readonly do: Act;
+}
+```
+
+### `BehaviourSchema` (const)
+
+```ts
+const BehaviourSchema: z.ZodType<BehaviourFile, BehaviourFile>;
 ```
 
 ### `Body` (const)
@@ -1398,6 +2048,18 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `CameraKey` (interface)
+
+```ts
+interface CameraKey {
+    readonly at: number;
+    readonly x: number;
+    readonly y: number;
+    readonly zoom: number;
+    readonly ease: Ease;
+}
+```
+
 ### `Character` (interface)
 
 ```ts
@@ -1411,6 +2073,9 @@ interface Character {
     };
     readonly color: string;
     readonly upright: boolean;
+    readonly kind?: string | undefined;
+    readonly behaviour?: string | undefined;
+    readonly tuning?: string | undefined;
 }
 ```
 
@@ -1522,8 +2187,18 @@ interface ComponentDef<S extends FieldSchema = FieldSchema> {
 
 ```ts
 const CONTENT_TYPES: {
-    readonly level: ContentTypeInfo<Level, Level, 'levels'>;
-    readonly character: ContentTypeInfo<Character, CharacterInput, 'characters'>;
+    readonly level: ContentTypeInfo<Level, Level>;
+    readonly character: ContentTypeInfo<Character, CharacterInput>;
+    readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
+    readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
+    readonly tuning: ContentTypeInfo<TuningFile, TuningFile>;
+    readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
+    readonly sound: ContentTypeInfo<SoundFile, SoundFile>;
+    readonly music: ContentTypeInfo<MusicFile, MusicFile>;
+    readonly cues: ContentTypeInfo<CuesFile, CuesFile>;
+    readonly conversation: ContentTypeInfo<ConversationFile, ConversationFile>;
+    readonly cutscene: ContentTypeInfo<CutsceneFile, CutsceneFile>;
+    readonly messages: ContentTypeInfo<MessagesFile, MessagesFile>;
 };
 ```
 
@@ -1545,10 +2220,14 @@ type ContentType = keyof typeof CONTENT_TYPES;
 ### `ContentTypeInfo` (interface)
 
 ```ts
-interface ContentTypeInfo<Out, In, Editor extends string> extends Voice {
+interface ContentTypeInfo<Out, In> extends Voice {
     readonly schema: z.ZodType<Out, In>;
-    readonly editor: Editor;
     readonly title: string;
+    readonly plural: string;
+    readonly editor: EditorName;
+    readonly part: string;
+    readonly tidy?: (value: Out) => Out;
+    readonly check?: (value: Out, game: Listed, report: Report) => void;
 }
 ```
 
@@ -1568,6 +2247,44 @@ const ControlsCommand: CommandDef<typeof controlsPayload>;
 
 ```ts
 function controlsCommand(tick: number, player: number, seq: number, held: readonly string[]): Command;
+```
+
+### `ConversationChoice` (interface)
+
+```ts
+interface ConversationChoice {
+    readonly line: string;
+    readonly next: string;
+}
+```
+
+### `ConversationFile` (interface)
+
+```ts
+interface ConversationFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly start: string;
+    readonly nodes: readonly ConversationNode[];
+}
+```
+
+### `ConversationNode` (interface)
+
+```ts
+interface ConversationNode {
+    readonly id: string;
+    readonly speaker?: string | undefined;
+    readonly lines: readonly string[];
+    readonly choices?: readonly Choice[] | undefined;
+    readonly next?: string | undefined;
+}
+```
+
+### `ConversationSchema` (const)
+
+```ts
+const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
 ```
 
 ### `cos` (function)
@@ -1601,6 +2318,59 @@ function createRng(seed: number): Rng;
 
 ```ts
 function createSim(opts: SimOptions): Promise<Sim>;
+```
+
+### `Cue` (type)
+
+```ts
+type Cue = SoundCue | MusicCue | StopMusicCue;
+```
+
+### `CuesFile` (interface)
+
+```ts
+interface CuesFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly cues: readonly Cue[];
+}
+```
+
+### `CuesSchema` (const)
+
+```ts
+const CuesSchema: z.ZodType<CuesFile, CuesFile>;
+```
+
+### `CutsceneFile` (interface)
+
+```ts
+interface CutsceneFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly level: string;
+    readonly length: number;
+    readonly camera: readonly CameraKey[];
+    readonly actors: readonly ActorKey[];
+    readonly lines: readonly CutsceneLine[];
+}
+```
+
+### `CutsceneLine` (interface)
+
+```ts
+interface CutsceneLine {
+    readonly at: number;
+    readonly until: number;
+    readonly line: string;
+    readonly speaker?: string | undefined;
+}
+```
+
+### `CutsceneSchema` (const)
+
+```ts
+const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
 ```
 
 ### `Def` (type)
@@ -1676,6 +2446,40 @@ interface Diagnostic {
 }
 ```
 
+### `DrumPart` (interface)
+
+```ts
+interface DrumPart {
+    readonly id: string;
+    readonly kind: 'drums';
+    readonly volume: number;
+    readonly notes: readonly string[];
+}
+```
+
+### `Dust` (interface)
+
+```ts
+interface Dust {
+    readonly count: number;
+    readonly color: string;
+    readonly speed: number;
+    readonly life: number;
+}
+```
+
+### `Ease` (type)
+
+```ts
+type Ease = 'cut' | 'linear' | 'smooth';
+```
+
+### `EditorName` (type)
+
+```ts
+type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
+```
+
 ### `EntityRef` (interface)
 
 ```ts
@@ -1703,6 +2507,25 @@ interface EventDef<Z extends z.ZodType = z.ZodType> {
 
 ```ts
 function exp(x: number): number;
+```
+
+### `FeelFile` (interface)
+
+```ts
+interface FeelFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly on: string;
+    readonly dust?: Dust | undefined;
+    readonly shake?: Shake | undefined;
+    readonly freeze?: Freeze | undefined;
+}
+```
+
+### `FeelSchema` (const)
+
+```ts
+const FeelSchema: z.ZodType<FeelFile, FeelFile>;
 ```
 
 ### `FieldRecord` (type)
@@ -1749,6 +2572,14 @@ function formatDiagnostic(d: Diagnostic): string;
 const FRAMEWORK_VERSION: string;
 ```
 
+### `Freeze` (interface)
+
+```ts
+interface Freeze {
+    readonly ticks: number;
+}
+```
+
 ### `GameContent` (interface)
 
 ```ts
@@ -1756,6 +2587,16 @@ interface GameContent {
     readonly project: Project;
     readonly levels: Readonly<Record<string, Level>>;
     readonly characters: Readonly<Record<string, Character>>;
+    readonly tilesets?: Readonly<Record<string, TilesetFile>>;
+    readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
+    readonly tunings?: Readonly<Record<string, TuningFile>>;
+    readonly feels?: Readonly<Record<string, FeelFile>>;
+    readonly sounds?: Readonly<Record<string, SoundFile>>;
+    readonly music?: Readonly<Record<string, MusicFile>>;
+    readonly cues?: Readonly<Record<string, CuesFile>>;
+    readonly conversations?: Readonly<Record<string, ConversationFile>>;
+    readonly cutscenes?: Readonly<Record<string, CutsceneFile>>;
+    readonly messages?: Readonly<Record<string, MessagesFile>>;
 }
 ```
 
@@ -1805,12 +2646,25 @@ function isHeld(player: EntityRef, action: string): boolean;
 function jsonSchemaFor(type: ContentType): object;
 ```
 
+### `Language` (type)
+
+```ts
+type Language = (typeof LANGUAGES)[number];
+```
+
+### `LANGUAGES` (const)
+
+```ts
+const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+```
+
 ### `Level` (interface)
 
 ```ts
 interface Level {
     readonly format: 1;
     readonly id: string;
+    readonly tileset?: string | undefined;
     readonly sky?: string | undefined;
     readonly ground?: string | undefined;
     readonly tiles: readonly string[];
@@ -1868,6 +2722,16 @@ interface LevelThing {
 }
 ```
 
+### `Listed` (interface)
+
+```ts
+interface Listed {
+    has(type: ContentType, id: string): boolean;
+    ids(type: ContentType): readonly string[];
+    get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
+}
+```
+
 ### `loadGame` (function)
 
 ```ts
@@ -1896,6 +2760,94 @@ const MAX_ACTIONS = 16;
 
 ```ts
 const MAX_PLAYERS = 4;
+```
+
+### `MAX_STEPS` (const)
+
+```ts
+const MAX_STEPS = 4096;
+```
+
+### `MessagesFile` (interface)
+
+```ts
+interface MessagesFile {
+    readonly format: 1;
+    readonly id: Language;
+    readonly messages: Readonly<Record<string, string>>;
+}
+```
+
+### `MessagesSchema` (const)
+
+```ts
+const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
+```
+
+### `MusicCue` (interface)
+
+```ts
+interface MusicCue {
+    readonly on: string;
+    readonly do: 'music';
+    readonly music: string;
+}
+```
+
+### `MusicFile` (interface)
+
+```ts
+interface MusicFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly tempo: number;
+    readonly stepsPerBeat: number;
+    readonly volume: number;
+    readonly loop: boolean;
+    readonly parts: readonly MusicPart[];
+}
+```
+
+### `MusicPart` (type)
+
+```ts
+type MusicPart = TonePart | DrumPart;
+```
+
+### `MusicSchema` (const)
+
+```ts
+const MusicSchema: z.ZodType<MusicFile, MusicFile>;
+```
+
+### `NoiseVoice` (interface)
+
+```ts
+interface NoiseVoice {
+    readonly kind: 'noise';
+    readonly pitch: number;
+    readonly at: number;
+    readonly length: number;
+    readonly volume: number;
+}
+```
+
+### `PAD_BUTTONS` (const)
+
+```ts
+const PAD_BUTTONS: readonly ["south", "east", "west", "north", "l1", "r1", "l2", "r2", "select", "start", "l3", "r3", "dpad-up", "dpad-down", "dpad-left", "dpad-right", "home"];
+```
+
+### `PAD_STICKS` (const)
+
+```ts
+const PAD_STICKS: readonly ["left-stick-up", "left-stick-down", "left-stick-left", "left-stick-right", "right-stick-up", "right-stick-down", "right-stick-left", "right-stick-right"];
+```
+
+### `PadInput` (type)
+
+```ts
+type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
 ```
 
 ### `parseContent` (function)
@@ -2136,6 +3088,24 @@ class ReplayFormatError extends Error {
 const ReplaySchema: z.ZodType<Replay>;
 ```
 
+### `Report` (type)
+
+```ts
+type Report = (path: string, message: string) => void;
+```
+
+### `RESERVED_KEYS` (const)
+
+```ts
+const RESERVED_KEYS: readonly string[];
+```
+
+### `RESERVED_PAD` (const)
+
+```ts
+const RESERVED_PAD: readonly PadInput[];
+```
+
 ### `ResourceDef` (interface)
 
 ```ts
@@ -2164,6 +3134,33 @@ interface Rng {
 type RngState = [number, number, number, number];
 ```
 
+### `Sense` (type)
+
+```ts
+type Sense = {
+    readonly sense: 'near';
+    readonly kind: string;
+    readonly within: number;
+} | {
+    readonly sense: 'far';
+    readonly kind: string;
+    readonly beyond: number;
+} | {
+    readonly sense: 'blocked';
+} | {
+    readonly sense: 'on-ground';
+};
+```
+
+### `Shake` (interface)
+
+```ts
+interface Shake {
+    readonly strength: number;
+    readonly ticks: number;
+}
+```
+
 ### `ShapeKind` (const)
 
 ```ts
@@ -2173,6 +3170,12 @@ const ShapeKind: {
     readonly capsule: 2;
 };
 type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind];
+```
+
+### `SharedKeys` (type)
+
+```ts
+type SharedKeys = readonly [readonly string[], readonly string[]];
 ```
 
 ### `Sim` (interface)
@@ -2331,6 +3334,39 @@ interface SnapshotView {
 }
 ```
 
+### `SoundCue` (interface)
+
+```ts
+interface SoundCue {
+    readonly on: string;
+    readonly do: 'sound';
+    readonly sound: string;
+}
+```
+
+### `SoundFile` (interface)
+
+```ts
+interface SoundFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly volume: number;
+    readonly voices: readonly SoundVoice[];
+}
+```
+
+### `SoundSchema` (const)
+
+```ts
+const SoundSchema: z.ZodType<SoundFile, SoundFile>;
+```
+
+### `SoundVoice` (type)
+
+```ts
+type SoundVoice = ToneVoice | NoiseVoice;
+```
+
 ### `spawnLevel` (function)
 
 ```ts
@@ -2351,6 +3387,15 @@ interface StepResult {
     readonly events: readonly SimEvent[];
     readonly render: RenderDelta;
     readonly rejected: readonly RejectedCommand[];
+}
+```
+
+### `StopMusicCue` (interface)
+
+```ts
+interface StopMusicCue {
+    readonly on: string;
+    readonly do: 'stop-music';
 }
 ```
 
@@ -2397,6 +3442,26 @@ const Thing: ComponentDef<typeof thingFields>;
 const TILE_COLOR = 3885658;
 ```
 
+### `TileKind` (interface)
+
+```ts
+interface TileKind {
+    readonly id: string;
+    readonly letter: string;
+    readonly solid: boolean;
+    readonly pictures: readonly TilePicture[];
+}
+```
+
+### `TilePicture` (interface)
+
+```ts
+interface TilePicture {
+    readonly frame: number;
+    readonly when?: TileWhen | undefined;
+}
+```
+
 ### `TileRun` (interface)
 
 ```ts
@@ -2410,7 +3475,63 @@ interface TileRun {
 ### `tileRuns` (function)
 
 ```ts
-function tileRuns(tiles: readonly string[]): TileRun[];
+function tileRuns(tiles: readonly string[], isSolid?: (letter: string) => boolean): TileRun[];
+```
+
+### `TilesetFile` (interface)
+
+```ts
+interface TilesetFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly image: string;
+    readonly tileSize: number;
+    readonly columns: number;
+    readonly tiles: readonly TileKind[];
+}
+```
+
+### `TilesetSchema` (const)
+
+```ts
+const TilesetSchema: z.ZodType<TilesetFile, TilesetFile>;
+```
+
+### `TileWhen` (interface)
+
+```ts
+interface TileWhen {
+    readonly up?: Neighbour | undefined;
+    readonly down?: Neighbour | undefined;
+    readonly left?: Neighbour | undefined;
+    readonly right?: Neighbour | undefined;
+}
+```
+
+### `TonePart` (interface)
+
+```ts
+interface TonePart {
+    readonly id: string;
+    readonly kind: 'tone';
+    readonly wave: 'sine' | 'square' | 'sawtooth' | 'triangle';
+    readonly volume: number;
+    readonly notes: readonly string[];
+}
+```
+
+### `ToneVoice` (interface)
+
+```ts
+interface ToneVoice {
+    readonly kind: 'tone';
+    readonly wave: Wave;
+    readonly from: number;
+    readonly to: number;
+    readonly at: number;
+    readonly length: number;
+    readonly volume: number;
+}
 ```
 
 ### `Transform` (const)
@@ -2427,6 +3548,55 @@ function transform(at?: {
     y?: number;
     rotation?: number;
 }): SpawnPart;
+```
+
+### `TuningControl` (interface)
+
+```ts
+interface TuningControl {
+    readonly action: string;
+    readonly label: string;
+    readonly keys: readonly string[];
+    readonly side: 'left' | 'right';
+    readonly pad?: readonly PadInput[] | undefined;
+    readonly shared?: SharedKeys | undefined;
+}
+```
+
+### `TuningFile` (interface)
+
+```ts
+interface TuningFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly numbers: readonly TuningNumber[];
+    readonly controls?: readonly TuningControl[] | undefined;
+}
+```
+
+### `TuningNumber` (interface)
+
+```ts
+interface TuningNumber {
+    readonly id: string;
+    readonly about: string;
+    readonly value: number;
+    readonly min: number;
+    readonly max: number;
+    readonly step: number;
+}
+```
+
+### `tuningNumbers` (function)
+
+```ts
+function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
+```
+
+### `TuningSchema` (const)
+
+```ts
+const TuningSchema: z.ZodType<TuningFile, TuningFile>;
 ```
 
 ### `Verdict` (type)
@@ -2462,6 +3632,12 @@ function verifyReplay(sim: Sim, replay: Replay): Verdict;
 
 ```ts
 function wasPressed(player: EntityRef, action: string): boolean;
+```
+
+### `Wave` (type)
+
+```ts
+type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
 ```
 
 ### `writeContent` (function)

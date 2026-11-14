@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this conversation, like \"keeper\". It matches the file name."
+    },
+    "start": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "The node it opens on, by id, like \"hello\"."
+    },
+    "nodes": {
+      "minItems": 1,
+      "maxItems": 128,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this node, like \"hello\"."
+          },
+          "speaker": {
+            "description": "The character who says the lines, by id, like \"keeper\".",
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          },
+          "lines": {
+            "minItems": 1,
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 96,
+              "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$"
+            },
+            "description": "What is said, as message keys, in order."
+          },
+          "choices": {
+            "description": "What the player may pick. Left out means no choice.",
+            "minItems": 2,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "type": "string",
+                  "maxLength": 96,
+                  "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$",
+                  "description": "What the player says, as a message key, like \"keeper.ask\"."
+                },
+                "next": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                  "description": "The node it leads to."
+                }
+              },
+              "required": [
+                "line",
+                "next"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "next": {
+            "description": "The node that follows. Left out, with no choices, ends the conversation.",
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          }
+        },
+        "required": [
+          "id",
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The steps of the conversation."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "start",
+    "nodes"
+  ],
+  "additionalProperties": false,
+  "title": "Conversation"
+}

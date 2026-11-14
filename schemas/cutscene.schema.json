@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this cutscene, like \"level-1-intro\". It matches the file name."
+    },
+    "level": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "The level it is staged in, by id, like \"level-1\"."
+    },
+    "length": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3600,
+      "description": "How long the cutscene lasts, in ticks. 60 ticks is one second."
+    },
+    "camera": {
+      "minItems": 1,
+      "maxItems": 64,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3600,
+            "description": "The tick it happens at. 60 ticks is one second."
+          },
+          "x": {
+            "type": "number",
+            "description": "The middle of the picture, in tiles from the left edge of the level."
+          },
+          "y": {
+            "type": "number",
+            "description": "The middle of the picture, in tiles from the top edge of the level."
+          },
+          "zoom": {
+            "type": "number",
+            "minimum": 0.25,
+            "maximum": 4,
+            "description": "How close the camera is: 1 is the usual, 2 is twice as close."
+          },
+          "ease": {
+            "type": "string",
+            "enum": [
+              "cut",
+              "linear",
+              "smooth"
+            ],
+            "description": "How it gets here: \"cut\" at once, \"linear\" steadily, \"smooth\" slowing at the ends."
+          }
+        },
+        "required": [
+          "at",
+          "x",
+          "y",
+          "zoom",
+          "ease"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Where the camera is, key by key, in time order."
+    },
+    "actors": {
+      "maxItems": 256,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3600,
+            "description": "The tick it happens at. 60 ticks is one second."
+          },
+          "who": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "Which thing: its id in the level, or player-1 to player-4 for a player's hero."
+          },
+          "x": {
+            "type": "number",
+            "description": "Where it stands, in tiles from the left edge of the level."
+          },
+          "y": {
+            "type": "number",
+            "description": "Where it stands, in tiles from the top edge of the level."
+          },
+          "clip": {
+            "description": "The clip it plays, by name, like \"talk\". Left out means no change.",
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          },
+          "face": {
+            "description": "Which way it faces. Left out means no change.",
+            "type": "string",
+            "enum": [
+              "left",
+              "right"
+            ]
+          }
+        },
+        "required": [
+          "at",
+          "who",
+          "x",
+          "y"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Where each thing stands and what it does, key by key, in time order."
+    },
+    "lines": {
+      "maxItems": 64,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3600,
+            "description": "The tick it happens at. 60 ticks is one second."
+          },
+          "until": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3600,
+            "description": "The tick it goes away."
+          },
+          "line": {
+            "type": "string",
+            "maxLength": 96,
+            "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$",
+            "description": "What is said, as a message key, like \"keeper.hello\"."
+          },
+          "speaker": {
+            "description": "The character who says it, by id, like \"keeper\".",
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          }
+        },
+        "required": [
+          "at",
+          "until",
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "description": "What is said, and when."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "level",
+    "length",
+    "camera",
+    "actors",
+    "lines"
+  ],
+  "additionalProperties": false,
+  "title": "Cutscene"
+}

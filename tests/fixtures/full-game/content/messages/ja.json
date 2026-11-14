@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "ja",
+  "messages": {
+    "hero.ask": "ヒントはありますか？",
+    "hero.bye": "またね。",
+    "keeper.bye": "お気をつけて。",
+    "keeper.hello": "こんにちは！",
+    "keeper.tip": "箱を棚の上に押してみて。"
+  }
+}

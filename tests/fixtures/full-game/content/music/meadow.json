@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "id": "meadow",
+  "tempo": 100,
+  "stepsPerBeat": 4,
+  "volume": 0.6,
+  "loop": true,
+  "parts": [
+    {
+      "id": "lead",
+      "kind": "tone",
+      "wave": "triangle",
+      "volume": 0.5,
+      "notes": [
+        "C4 - E4 - G4 - E4 - C4 - E4 - G4 - E4 -",
+        "D4 - F4 - A4 - F4 - D4 - F4 - A4 - G4 ="
+      ]
+    },
+    {
+      "id": "drums",
+      "kind": "drums",
+      "volume": 0.4,
+      "notes": [
+        "x - - - x - - - x - - - x - x -",
+        "x - - - x - - - x - - - x x x -"
+      ]
+    }
+  ]
+}
