@@ -89,6 +89,20 @@ const CharacterSchema: z.ZodType<Character, CharacterInput>;
 function checkControls(controls: Controls): void;
 ```
 
+### `ClientMessage` (type)
+
+```ts
+type ClientMessage = {
+    readonly t: 'cmd';
+    readonly seq: number;
+    readonly tick: number;
+    readonly type: string;
+    readonly payload: unknown;
+} | {
+    readonly t: 'sync';
+};
+```
+
 ### `Collider` (const)
 
 ```ts
@@ -313,6 +327,12 @@ function createSim(opts: SimOptions): Promise<Sim>;
 
 ```ts
 type Def = ComponentDef | CommandDef | EventDef | ResourceDef | SystemDef;
+```
+
+### `DEFAULT_MAX_ROOMS` (const)
+
+```ts
+const DEFAULT_MAX_ROOMS = 8;
 ```
 
 ### `defineCommand` (function)
@@ -541,6 +561,12 @@ interface GameSimOptions {
 const groundOf: (level: Level) => number;
 ```
 
+### `HASH_EVERY` (const)
+
+```ts
+const HASH_EVERY = 60;
+```
+
 ### `Host` (interface)
 
 ```ts
@@ -584,6 +610,12 @@ function isHeld(player: EntityRef, action: string): boolean;
 
 ```ts
 function jsonSchemaFor(type: ContentType): object;
+```
+
+### `LEAD_DECAY_TICKS` (const)
+
+```ts
+const LEAD_DECAY_TICKS = 300;
 ```
 
 ### `Level` (interface)
@@ -673,16 +705,82 @@ const Look: ComponentDef<typeof lookFields>;
 const MAX_ACTIONS = 16;
 ```
 
+### `MAX_AHEAD` (const)
+
+```ts
+const MAX_AHEAD = 120;
+```
+
+### `MAX_CATCH_UP` (const)
+
+```ts
+const MAX_CATCH_UP = 4;
+```
+
+### `MAX_CLIENT_LEAD` (const)
+
+```ts
+const MAX_CLIENT_LEAD = 30;
+```
+
+### `MAX_CONFIRM_PER_ADVANCE` (const)
+
+```ts
+const MAX_CONFIRM_PER_ADVANCE = 240;
+```
+
+### `MAX_LEAD_TICKS` (const)
+
+```ts
+const MAX_LEAD_TICKS = 60;
+```
+
+### `MAX_MESSAGE_BYTES` (const)
+
+```ts
+const MAX_MESSAGE_BYTES = 16384;
+```
+
 ### `MAX_PLAYERS` (const)
 
 ```ts
 const MAX_PLAYERS = 4;
 ```
 
+### `MAX_QUEUED_COMMANDS` (const)
+
+```ts
+const MAX_QUEUED_COMMANDS = 32;
+```
+
 ### `MAX_STEPS_PER_FRAME` (const)
 
 ```ts
 const MAX_STEPS_PER_FRAME = 5;
+```
+
+### `MIN_LEAD` (const)
+
+```ts
+const MIN_LEAD = 1;
+```
+
+### `ONLINE_PROBLEMS` (const)
+
+```ts
+const ONLINE_PROBLEMS: readonly OnlineProblem[];
+```
+
+### `OnlineProblem` (type)
+
+```ts
+type OnlineProblem = 'different-version' | 'room-full' | 'no-room' | 'server-full' | 'bad-room' | 'no-server' | 'lost';
+```
+
+### `parseClientMessage` (function)
+
+```ts
+function parseClientMessage(raw: unknown): ClientMessage | undefined;
 ```
 
 ### `parseContent` (function)
@@ -713,6 +811,18 @@ function parseProject(text: string): Parsed<Project>;
 
 ```ts
 function parseReplay(text: string): Replay;
+```
+
+### `parseRoomOptions` (function)
+
+```ts
+function parseRoomOptions(raw: unknown): RoomOptions | undefined;
+```
+
+### `parseServerMessage` (function)
+
+```ts
+function parseServerMessage(raw: unknown): ServerMessage | undefined;
 ```
 
 ### `Phase` (type)
@@ -839,6 +949,24 @@ const PROJECT_FILE = "automata.toml";
 const ProjectSchema: z.ZodType<Project, Project>;
 ```
 
+### `PROTOCOL_VERSION` (const)
+
+```ts
+const PROTOCOL_VERSION: 1;
+```
+
+### `RECONNECT_DELAYS_MS` (const)
+
+```ts
+const RECONNECT_DELAYS_MS: readonly number[];
+```
+
+### `RECONNECT_GRACE_SECONDS` (const)
+
+```ts
+const RECONNECT_GRACE_SECONDS = 30;
+```
+
 ### `Recorder` (interface)
 
 ```ts
@@ -846,6 +974,18 @@ interface Recorder {
     step(commands: readonly Command[]): StepResult;
     replay(): Replay;
 }
+```
+
+### `Refusal` (type)
+
+```ts
+type Refusal = (typeof REFUSALS)[number];
+```
+
+### `REFUSALS` (const)
+
+```ts
+const REFUSALS: readonly ["too-far-ahead", "out-of-order", "too-many", "not-started", "not-valid"];
 ```
 
 ### `RejectedCommand` (interface)
@@ -963,6 +1103,36 @@ interface Rng {
 type RngState = [number, number, number, number];
 ```
 
+### `ROOM_NAME` (const)
+
+```ts
+const ROOM_NAME = "game";
+```
+
+### `RoomOptions` (interface)
+
+```ts
+interface RoomOptions {
+    readonly protocol: 1;
+    readonly framework: string;
+    readonly schemaHash: string;
+    readonly contentHash: string;
+    readonly tickHz: number;
+    readonly level: string;
+    readonly seed: number;
+    readonly seats: number;
+}
+```
+
+### `roomOptionsOf` (function)
+
+```ts
+function roomOptionsOf(sim: Sim, room: {
+    readonly level: string;
+    readonly seats: number;
+}): RoomOptions;
+```
+
 ### `Scene` (interface)
 
 ```ts
@@ -970,6 +1140,40 @@ interface Scene {
     apply(delta: RenderDelta): void;
     views(alpha: number): View[];
 }
+```
+
+### `ServerMessage` (type)
+
+```ts
+type ServerMessage = {
+    readonly t: 'seat';
+    readonly seat: number;
+    readonly code: string;
+    readonly nextSeq: number;
+} | {
+    readonly t: 'waiting';
+    readonly missing: number;
+} | {
+    readonly t: 'start';
+} | {
+    readonly t: 'tick';
+    readonly tick: number;
+    readonly commands: readonly WireCommand[];
+    readonly hash?: string;
+} | {
+    readonly t: 'refused';
+    readonly seq: number;
+    readonly reason: Refusal;
+} | {
+    readonly t: 'sync';
+    readonly tick: number;
+} | {
+    readonly t: 'away';
+    readonly seat: number;
+} | {
+    readonly t: 'back';
+    readonly seat: number;
+};
 ```
 
 ### `ShapeKind` (const)
@@ -1151,6 +1355,12 @@ function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: re
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
 ```
 
+### `START_LEAD` (const)
+
+```ts
+const START_LEAD = 2;
+```
+
 ### `startGame` (function)
 
 ```ts
@@ -1166,6 +1376,12 @@ interface StepResult {
     readonly render: RenderDelta;
     readonly rejected: readonly RejectedCommand[];
 }
+```
+
+### `SYNC_BEHIND` (const)
+
+```ts
+const SYNC_BEHIND = 600;
 ```
 
 ### `SystemDef` (interface)
@@ -1428,6 +1644,20 @@ interface CharacterInput extends Omit<Character, 'upright'> {
 const CharacterSchema: z.ZodType<Character, CharacterInput>;
 ```
 
+### `ClientMessage` (type)
+
+```ts
+type ClientMessage = {
+    readonly t: 'cmd';
+    readonly seq: number;
+    readonly tick: number;
+    readonly type: string;
+    readonly payload: unknown;
+} | {
+    readonly t: 'sync';
+};
+```
+
 ### `Collider` (const)
 
 ```ts
@@ -1609,6 +1839,12 @@ function createSim(opts: SimOptions): Promise<Sim>;
 type Def = ComponentDef | CommandDef | EventDef | ResourceDef | SystemDef;
 ```
 
+### `DEFAULT_MAX_ROOMS` (const)
+
+```ts
+const DEFAULT_MAX_ROOMS = 8;
+```
+
 ### `defineCommand` (function)
 
 ```ts
@@ -1781,6 +2017,12 @@ interface GameSimOptions {
 const groundOf: (level: Level) => number;
 ```
 
+### `HASH_EVERY` (const)
+
+```ts
+const HASH_EVERY = 60;
+```
+
 ### `hypot` (function)
 
 ```ts
@@ -1803,6 +2045,12 @@ function isHeld(player: EntityRef, action: string): boolean;
 
 ```ts
 function jsonSchemaFor(type: ContentType): object;
+```
+
+### `LEAD_DECAY_TICKS` (const)
+
+```ts
+const LEAD_DECAY_TICKS = 300;
 ```
 
 ### `Level` (interface)
@@ -1892,10 +2140,76 @@ const Look: ComponentDef<typeof lookFields>;
 const MAX_ACTIONS = 16;
 ```
 
+### `MAX_AHEAD` (const)
+
+```ts
+const MAX_AHEAD = 120;
+```
+
+### `MAX_CATCH_UP` (const)
+
+```ts
+const MAX_CATCH_UP = 4;
+```
+
+### `MAX_CLIENT_LEAD` (const)
+
+```ts
+const MAX_CLIENT_LEAD = 30;
+```
+
+### `MAX_CONFIRM_PER_ADVANCE` (const)
+
+```ts
+const MAX_CONFIRM_PER_ADVANCE = 240;
+```
+
+### `MAX_LEAD_TICKS` (const)
+
+```ts
+const MAX_LEAD_TICKS = 60;
+```
+
+### `MAX_MESSAGE_BYTES` (const)
+
+```ts
+const MAX_MESSAGE_BYTES = 16384;
+```
+
 ### `MAX_PLAYERS` (const)
 
 ```ts
 const MAX_PLAYERS = 4;
+```
+
+### `MAX_QUEUED_COMMANDS` (const)
+
+```ts
+const MAX_QUEUED_COMMANDS = 32;
+```
+
+### `MIN_LEAD` (const)
+
+```ts
+const MIN_LEAD = 1;
+```
+
+### `ONLINE_PROBLEMS` (const)
+
+```ts
+const ONLINE_PROBLEMS: readonly OnlineProblem[];
+```
+
+### `OnlineProblem` (type)
+
+```ts
+type OnlineProblem = 'different-version' | 'room-full' | 'no-room' | 'server-full' | 'bad-room' | 'no-server' | 'lost';
+```
+
+### `parseClientMessage` (function)
+
+```ts
+function parseClientMessage(raw: unknown): ClientMessage | undefined;
 ```
 
 ### `parseContent` (function)
@@ -1926,6 +2240,18 @@ function parseProject(text: string): Parsed<Project>;
 
 ```ts
 function parseReplay(text: string): Replay;
+```
+
+### `parseRoomOptions` (function)
+
+```ts
+function parseRoomOptions(raw: unknown): RoomOptions | undefined;
+```
+
+### `parseServerMessage` (function)
+
+```ts
+function parseServerMessage(raw: unknown): ServerMessage | undefined;
 ```
 
 ### `Phase` (type)
@@ -2052,6 +2378,24 @@ const PROJECT_FILE = "automata.toml";
 const ProjectSchema: z.ZodType<Project, Project>;
 ```
 
+### `PROTOCOL_VERSION` (const)
+
+```ts
+const PROTOCOL_VERSION: 1;
+```
+
+### `RECONNECT_DELAYS_MS` (const)
+
+```ts
+const RECONNECT_DELAYS_MS: readonly number[];
+```
+
+### `RECONNECT_GRACE_SECONDS` (const)
+
+```ts
+const RECONNECT_GRACE_SECONDS = 30;
+```
+
 ### `Recorder` (interface)
 
 ```ts
@@ -2059,6 +2403,18 @@ interface Recorder {
     step(commands: readonly Command[]): StepResult;
     replay(): Replay;
 }
+```
+
+### `Refusal` (type)
+
+```ts
+type Refusal = (typeof REFUSALS)[number];
+```
+
+### `REFUSALS` (const)
+
+```ts
+const REFUSALS: readonly ["too-far-ahead", "out-of-order", "too-many", "not-started", "not-valid"];
 ```
 
 ### `RejectedCommand` (interface)
@@ -2162,6 +2518,70 @@ interface Rng {
 
 ```ts
 type RngState = [number, number, number, number];
+```
+
+### `ROOM_NAME` (const)
+
+```ts
+const ROOM_NAME = "game";
+```
+
+### `RoomOptions` (interface)
+
+```ts
+interface RoomOptions {
+    readonly protocol: 1;
+    readonly framework: string;
+    readonly schemaHash: string;
+    readonly contentHash: string;
+    readonly tickHz: number;
+    readonly level: string;
+    readonly seed: number;
+    readonly seats: number;
+}
+```
+
+### `roomOptionsOf` (function)
+
+```ts
+function roomOptionsOf(sim: Sim, room: {
+    readonly level: string;
+    readonly seats: number;
+}): RoomOptions;
+```
+
+### `ServerMessage` (type)
+
+```ts
+type ServerMessage = {
+    readonly t: 'seat';
+    readonly seat: number;
+    readonly code: string;
+    readonly nextSeq: number;
+} | {
+    readonly t: 'waiting';
+    readonly missing: number;
+} | {
+    readonly t: 'start';
+} | {
+    readonly t: 'tick';
+    readonly tick: number;
+    readonly commands: readonly WireCommand[];
+    readonly hash?: string;
+} | {
+    readonly t: 'refused';
+    readonly seq: number;
+    readonly reason: Refusal;
+} | {
+    readonly t: 'sync';
+    readonly tick: number;
+} | {
+    readonly t: 'away';
+    readonly seat: number;
+} | {
+    readonly t: 'back';
+    readonly seat: number;
+};
 ```
 
 ### `ShapeKind` (const)
@@ -2343,6 +2763,12 @@ function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: re
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
 ```
 
+### `START_LEAD` (const)
+
+```ts
+const START_LEAD = 2;
+```
+
 ### `StepResult` (interface)
 
 ```ts
@@ -2352,6 +2778,12 @@ interface StepResult {
     readonly render: RenderDelta;
     readonly rejected: readonly RejectedCommand[];
 }
+```
+
+### `SYNC_BEHIND` (const)
+
+```ts
+const SYNC_BEHIND = 600;
 ```
 
 ### `SystemDef` (interface)

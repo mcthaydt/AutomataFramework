@@ -1,0 +1,33 @@
+// The net feature's entry: the wire between players and a room, the room's own rules, and the client that predicts
+// and rolls back. Nothing here reads a clock or sets a timer: time reaches it only as "advance once", from whoever
+// owns the loop, so the same messages in give the same state out on every machine.
+export {
+  type ClientMessage,
+  DEFAULT_MAX_ROOMS,
+  HASH_EVERY,
+  LEAD_DECAY_TICKS,
+  MAX_AHEAD,
+  MAX_CATCH_UP,
+  MAX_CLIENT_LEAD,
+  MAX_CONFIRM_PER_ADVANCE,
+  MAX_LEAD_TICKS,
+  MAX_MESSAGE_BYTES,
+  MAX_QUEUED_COMMANDS,
+  MIN_LEAD,
+  ONLINE_PROBLEMS,
+  type OnlineProblem,
+  PROTOCOL_VERSION,
+  parseClientMessage,
+  parseRoomOptions,
+  parseServerMessage,
+  RECONNECT_DELAYS_MS,
+  RECONNECT_GRACE_SECONDS,
+  REFUSALS,
+  type Refusal,
+  ROOM_NAME,
+  type RoomOptions,
+  roomOptionsOf,
+  type ServerMessage,
+  START_LEAD,
+  SYNC_BEHIND,
+} from './protocol.ts'
