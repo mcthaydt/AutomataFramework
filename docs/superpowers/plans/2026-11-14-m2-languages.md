@@ -139,9 +139,10 @@ Source: AutomataFrameworkFailed at `ed8592e8`. Read, do not copy whole files.
 
 Each has its test in the task named.
 
-1. **A device that asks for a language in a spelling of its own:** `pt-BR`, `zh-Hant-TW`, `ES-mx`, `ko_KR`, an
-   empty string, `*`, a tag 300 characters long. Expected: the first three find `pt`, `zh` and `es`; the rest find
-   nothing and the next in line is tried; nothing throws (Task 5).
+1. **A device that asks for a language in a spelling of its own:** `pt-BR`, `zh-Hant-TW`, `ES-mx`, `ko_KR`,
+   `ko_KR.UTF-8`, an empty string, `*`, a tag 300 characters long. Expected: the first five find `pt`, `zh`, `es`,
+   `ko` and `ko` (audit M1: a desktop or store host may write `_`); the rest find nothing and the next in line is
+   tried; nothing throws (Task 5).
 2. **A saved choice the game no longer has** (the game dropped Korean; another build wrote `"language": "fr"`; the
    section is `null` or a number). Expected: the game picks as if nothing were saved, the stored value is left as
    it is until the player chooses, and `choice()` says `'auto'` (Task 7).
@@ -226,11 +227,13 @@ export function markRead(content: GameContent, marks: ReadMarks, language: Exclu
 export function unreadWords(content: GameContent, marks: ReadMarks): readonly { readonly language: Language; readonly key: string }[]
 
 // ---- level (headless) ----
-/** The content the sim is given and hashes: everything but the words (and, with plan S, the audio kinds). */
+/** The content the sim is given and hashes: everything but the words (and, with plan S, the audio kinds), both
+ *  their maps and their entries in `project.content` (audit C1). The very same object when the game lists none. */
 export function simContent(content: GameContent): GameContent
 
 // ---- locale (headless): src/features/locale/locale.ts ----
-/** A text by key, in one language, with its values filled in. Never throws; an unknown key gives the key. */
+/** A text by key, in one language, with its values filled in. Never throws; an unknown key gives the key.
+ *  Declared in `src/lib/message.ts` (audit I3: `input`, below `locale`, takes one) and re-exported here. */
 export type Words = (key: string, values?: Values) => string
 export const LANGUAGE_NAMES: Readonly<Record<Language, string>>   // English, Español, 한국어, 日本語, 中文, Português
 export const LANGUAGE_TAGS: Readonly<Record<Language, string>>    // en, es, ko, ja, zh-Hans, pt-BR: for a page's lang
@@ -317,7 +320,8 @@ it its own way.
 ## What the other plans rely on (change only with a note to the coordinator)
 
 - **Plan S** (audio). `simContent` is the one in its Task 1. Whichever plan is built second adds its kinds to the
-  list in `src/features/level/sim-content.ts` and keeps the other's tests. Its "Tap to start the sound" becomes the
+  list in `src/features/level/sim-content.ts` and keeps the other's tests, and both kinds' `project.content` entries
+  leave the hash too (audit C1; plan S's branch keeps the list as it stands). Its "Tap to start the sound" becomes the
   key `automata.sound.start` in the six library files, added by whichever is second; `startGame` then passes
   `soundNotice: locale.words('automata.sound.start')`.
 - **Plan T** (story). `wordsOf` and `Words` live in `locale` (its audit's M7). If plan T is on `main` when Task 6 is
@@ -330,7 +334,8 @@ it its own way.
   of `loadGame`.
 - **Plan U** (screens). The language list is `locale.languages` shown with `LANGUAGE_NAMES`, each name in its own
   language whatever the game is showing, plus one more choice for `'auto'`; a pick calls `locale.set`, and an answer
-  that is not `ok` is shown with plan V's refusal words. Every screen draws its words again on `locale.onChange`.
+  that is not `ok` is shown in words plan U adds to the library as `automata.saves.refused.<refusal>` (audit M3:
+  `StoreResult.detail` is for a developer, and no player words for a refusal exist on `main`). Every screen draws its words again on `locale.onChange`.
   Its own words go in `src/features/locale/library/` as `automata.<screen>.<word>`, in all six files, and
   `tests/features/locale/library.test.ts` holds them to that. A save's label is
   `fitLabel(levelName(locale.words, level))`. It calls `followLanguage(locale)` once.
@@ -355,7 +360,9 @@ with `font-synthesis: none`; `knip.json` and `public/licences.txt` (and its test
 `followLanguage`. Its journey: the device says Korean and the game opens in Korean; the language is changed in the
 game's own way and kept across a real reload, at phone, tablet and desktop sizes in three browsers. No golden
 moves: the words are not in the hash. The build's size before and after is measured and reported, because Chinese
-and Japanese fonts are large.
+and Japanese fonts are large: both what a Korean page downloads (Fontsource splits each font by `unicode-range`) and
+`dist/`'s size, with one weight of each font imported, and the Site's "about 1.2 MB" sentence checked against it
+(audit M9). Examples' own controls gain `controls.<action>` words in six languages (audit I1).
 
 ---
 
@@ -381,10 +388,17 @@ there only when a game lists a messages file, so a game with none hashes as it d
 test('changing a word moves no hash', ...)
   // ko.json's keeper.hello changed; two createGameSim: contentHash equal, hash() equal at tick 0 and after 60 idle ticks
 test('taking a language away, or every language, moves no hash', ...)
+  // audit C1: automata.toml without ko.json's [[content]] block gives the same contentHash; "every language" on the
+  // M1 fixture with six messages files added (the full game's keeper conversation needs English, so loadGame refuses it)
+test('the list of words files is not hashed either', ...)
+  // simContent(full).project.content has no 'messages' entry and keeps every other entry in its order
 test('changing a level still moves the content hash', ...)          // the crate's x changed: contentHash differs
 test('the sim is given no words, and the game keeps them', ...)
   // simContent(content).messages is undefined; content.messages is untouched and still frozen
 test('a game with no words is given the very same content', ...)    // the M1 fixture: simContent(content) === content
+test('adding six words files to a game that had none moves no hash', ...)
+  // audit C1, plan D's change to Examples: the M1 fixture with six messages files listed ends sixty idle ticks on
+  // push-crate.json's idleHash60
 test('a replay recorded before a word changed still plays', ...)
   // record 60 ticks on the full game, change es.json, verifyReplay on a new sim: ok, not 'content-changed'
 // tests/features/level/sim-content.parity.test.ts
@@ -394,7 +408,9 @@ test('the M1 fixture still ends sixty idle ticks on the recorded hash', ...)   /
 - [ ] **Step 2: Push; `check` fails** with "simContent is not exported" (or, with plan S merged, the first test
   fails on unequal hashes).
 - [ ] **Step 3: Implement.** `simContent` returns `content` itself when it has none of the left-out maps, else a
-  frozen copy without them. In `createGameSim`, only `createSim` is given `simContent(content)`; `spawnLevel`,
+  frozen copy without them and with `project` copied without the `project.content` entries of those kinds (audit C1:
+  the list names every file by path, so keeping it would move every hash when a language is added or dropped). If
+  plan S's `simContent` is on `main`, widen it so the list entries of its kinds go too, keep its tests, and say so. In `createGameSim`, only `createSim` is given `simContent(content)`; `spawnLevel`,
   `joinPlugin` and `touchKinds` keep the content they have today. Correct `createGameSim`'s doc comment, which says
   all the content goes into the sim. Search `src/` for every other `createSim(` and `content:` handed to a sim and
   report any that does not go through `createGameSim`.
@@ -458,6 +474,8 @@ The sentences (tests quote them; `<...>` is filled in):
 | English asks for a value the text lacks | that file, `messages.<key>` | `English has {<count>} in this text and this one does not. Put {<count>} where the number or name belongs.` |
 | The text asks for a value English lacks | that file, `messages.<key>` | `This text has {<count>}, which English does not. Take it out, or fix its spelling.` |
 | A level's name is over 40 characters | that file, `messages.<key>` | `A level's name is at most 40 characters, so it fits on a save. This one has <52>.` |
+| A button's words are over 12 characters (audit I1) | that file, `messages.<key>` | `A button's words are at most 12 characters, so they fit on the button. This one has <15>.` |
+| A level's name for a level the game does not have (audit M6) | that file, `messages.<key>` | `This game has no level called "<level-9>". Take this line out, or fix the level's name in the key.` |
 
 The missing file's path is English's own path with the file name changed. An English text longer than 60
 characters is cut in the sentence to 60 and "...". Order: the missing files in `LANGUAGES` order, then each listed
@@ -478,7 +496,9 @@ test('a thousand missing words are a thousand sentences, sorted', ...)
 - [ ] **Step 2: Push; `check` fails** on the missing export.
 - [ ] **Step 3: Implement** `translationProblems`. Keys are looked up with `Object.hasOwn`. Add
   `"level.level-1.name"` to the full game's six files (`Level 1`, `Nivel 1`, `레벨 1`, `レベル1`, `第 1 关`,
-  `Fase 1`), each in the place `writeContent` puts it; the parity test's byte check holds them.
+  `Fase 1`), and the fixture controls' words (audit I1): `controls.left`, `controls.right`, `controls.jump` as
+  `Left`/`Right`/`Jump`, `Izquierda`/`Derecha`/`Saltar`, `왼쪽`/`오른쪽`/`점프`, `左`/`右`/`ジャンプ`, `左`/`右`/`跳`,
+  `Esquerda`/`Direita`/`Pular`, each in the place `writeContent` puts it; the parity test's byte check holds them.
 - [ ] **Step 4: Push; every job passes.**
 - [ ] **Step 5: Commit** (`feat(content): a check that says which words are not translated`).
 
@@ -501,7 +521,8 @@ The mark is kept by what was read, not by a flag, so it cannot go stale.
 
 ```ts
 test('with no marks, every translated word waits for a read, and English never does', ...)
-  // the full game: 5 languages x 6 keys = 30, es first, keys sorted; no entry has language 'en'
+  // the full game: 5 languages x 9 keys = 45 (audit I1 adds three controls.* keys in Task 3), es first, keys sorted;
+  // no entry has language 'en'
 test('marking a language reads all of it, and only it', ...)
 test('a word changed after its read waits again; so does a word whose English changed', ...)
 test('a mark for a word the game no longer has is dropped when the marks are written', ...)
@@ -542,7 +563,8 @@ test('the headless entry may reach locale', ...)                 // locale is no
 // pick.test.ts
 test('the same tag, whatever its case', ...)                     // 'KO' -> 'ko'
 test('a longer tag finds its language', ...)                     // pt-BR, es-419, ES-mx, zh-Hant-TW, zh-CN, ja-JP
-test('a tag that is no language of ours finds nothing', ...)     // fr, '', '*', 'k', 'korean', ko_KR, 300 x 'a', 'en-'.repeat(100)
+test('a tag written with _ or ending in .UTF-8 is read as one with -', ...)   // ko_KR, ko_KR.UTF-8, pt_BR -> ko, ko, pt (audit M1)
+test('a tag that is no language of ours finds nothing', ...)     // fr, '', '*', 'k', 'korean', 300 x 'a', 'en-'.repeat(100)
 test('a language the game does not have finds nothing', ...)     // 'ko' with shipped ['en', 'es']
 test('saved first, then the host, then the device in its order, then English', ...)
   // saved 'ja' wins over host 'ko'; saved 'fr' falls to host 'ko'; host undefined falls to device ['fr-CA', 'pt-BR', 'es'] -> 'pt';
@@ -552,8 +574,8 @@ test('each language is named in its own words, and has a tag for a page', ...)
 ```
 
 - [ ] **Step 2: Push; `check` fails** ("locale is not a feature" and the missing exports).
-- [ ] **Step 3: Implement.** `LAYERS` gains `'locale'` after `'host'`. `matchLanguage` lower-cases the tag and
-  takes what is before the first `-`; a tag over 35 characters or with a character outside `a-z`, `0-9` and `-`
+- [ ] **Step 3: Implement.** `LAYERS` gains `'locale'` after `'host'`. `matchLanguage` drops what follows a `.`, reads `_` as `-`
+  (audit M1), lower-cases the tag and takes what is before the first `-`; a tag over 35 characters or with a character outside `a-z`, `0-9` and `-`
   finds nothing. `pickLanguage` tries saved, host, then each device tag, and ends on `'en'`.
 - [ ] **Step 4: Push; every job passes.**
 - [ ] **Step 5: Commit** (`feat(locale): the layer, and which language a player gets`).
@@ -653,6 +675,8 @@ test('a saved language this game does not have is as good as none, and is left s
   // stored "fr", stored "ko" with a game of en and es, stored null, stored 7: choice() 'auto'; the store's text is unchanged
 test('a language the game does not have cannot be picked', ...)       // set('ko') on en+es: RangeError, in words; nothing changes
 test('a listener that throws does not stop the choice being kept or the others being told', ...)
+  // audit M2, as SettingsHandle.set does: every listener is told, the store holds the choice, then set rejects
+  // with the first listener's error
 test('say fills a message as words does', ...)
 // labels.test.ts
 test('a level's name in the player's language; the id when the game names nothing', ...)
@@ -683,7 +707,10 @@ test('an engine with no Intl.Segmenter cuts between code points', ...)
 **Interfaces:**
 - Consumes: `Message`, `Words`, `Locale`, `frameworkWords`.
 - Produces: `onlineMessage` (net), `onlineWords` (locale), `followLanguage` (web), `GameOptions.locale`,
-  `createTouch(mount, controls, win?, label?)`.
+  `createTouch(mount, controls, options?: { win?, words? })` and `Touch.relabel(words: Words)` (audit I1 and I3:
+  the overlay's label is `automata.touch.label` and each button's words are `controls.<action>` when `words` has
+  that key, else the control's `label`; `relabel` says them all again). `input` is below `locale`, so the
+  `Words` type moves to `src/lib/message.ts` beside `Message`, and `locale` re-exports it.
 
 A feature below `locale` cannot ask it for words, so it must not hold a sentence. The keys and values:
 
@@ -698,6 +725,7 @@ A feature below `locale` cannot ask it for words, so it must not hold a sentence
 | `no-start`, one start / more | `automata.join.no-start.one` / `.many` | `.many`: `count` |
 | `taken`, by the keyboard / a gamepad | `automata.join.taken.keyboard` / `.gamepad` | |
 | the touch overlay's `aria-label` | `automata.touch.label` | |
+| a touch button's words (audit I1) | the game's `controls.<action>`, else the control's own `label` | |
 
 - [ ] **Step 1: Write the failing tests.**
 
@@ -712,6 +740,8 @@ test('with a locale, a refused join is said in the player's language, as it is w
   // locale at 'es': 'Este juego es para un jugador.'; after set('ja') the next answer is Japanese
 // touch
 test('the overlay is labelled with the words it is given, and "Touch controls" with none', ...)
+test('each button says controls.<action> when the words have it, and its own label when not', ...)   // audit I1
+test('relabel says every word again, the button's aria-label too, and keeps what is held', ...)       // a held Jump stays held
 // tests/features/web/lang.browser.test.ts
 test('the page says which language it is in, and keeps saying so', ...)
   // followLanguage(locale, element): lang 'ko'; after set('zh') 'zh-Hans'; after set('pt') 'pt-BR'; after stop(), no more changes
@@ -723,8 +753,9 @@ test('with no element it is the page's own <html>', ...)                  // and
   go (they are in `library/en.json`). `locale/online.ts` is
   `onlineWords(status, words = frameworkWords('en'))`: the message said by `words`, or `''`. `players.ts` takes
   `words: Words` in its options and builds each `message` with it when the answer is made; `startGame` and
-  `startOnlineGame` pass `options.locale?.words ?? frameworkWords('en')`, give `createTouch` the label, and on
-  `locale.onChange` set the overlay's label again (stopped by `stop`). `followLanguage` is exported by
+  `startOnlineGame` pass `options.locale?.words ?? frameworkWords('en')`, give `createTouch` the words, and on
+  `locale.onChange` call `touch.relabel(locale.words)` (stopped by `stop`). A button's words are found with
+  `Object.hasOwn` on the key, so a game that names no `controls.*` shows its labels as today. `followLanguage` is exported by
   `src/index.ts` only. `tests/fixtures/online/page/main.ts` and the README's online example import `onlineWords`
   from the same entry as before and need no change; if either fails, stop and report.
 - [ ] **Step 4: Push; every job passes,** the `online` job too.
@@ -735,6 +766,7 @@ test('with no element it is the page's own <html>', ...)                  // and
 **Files:**
 - Create: `tests/fixtures/locale/page.ts`, `tests/features/game/language.browser.test.ts`,
   `tests/features/web/language-kept.browser.test.ts`
+- Modify: `tests/journeys/online.journey.test.ts` and `tests/fixtures/online/page/` (audit J2: `?lang=`)
 - Modify: `.github/workflows/ci.yml` only if a picture's name must be added to the `screens` job (say so in the
   commit), `tests/workflows/ci.test.ts`
 
@@ -744,9 +776,11 @@ test('with no element it is the page's own <html>', ...)                  // and
   or `layout.browser.test.ts`'s sizes.
 
 `tests/fixtures/locale/page.ts` is a page like `tests/fixtures/saves/page.ts`: it loads the full game, opens the
-settings on the real `webHost()`, makes a locale, calls `followLanguage`, starts the game for two players with the
-locale, and shows three things as text a test can read: the keeper's greeting (`keeper.hello`), the level's name,
-and the answer to an `addPlayer` that must be refused. It has one real `<button>` per language, named with
+settings on the real `webHost()`, makes a locale, calls `followLanguage`, starts the game with the locale and the
+fixture controls (the full game is a one-player game, so a second player's join is refused with
+`automata.join.one-player-game`; audit M4), with an injected `frames` so a test counts ticks, not frames (audit M5),
+and shows three things as text a test can read: the keeper's greeting (`keeper.hello`), the level's name, and the
+answer to an `addPlayer` that must be refused. It has one real `<button>` per language, named with
 `LANGUAGE_NAMES`, each at least 48 px tall, and posts the same three messages as the saves page.
 
 - [ ] **Step 1: Write the failing tests.**
@@ -756,17 +790,22 @@ and the answer to an `addPlayer` that must be refused. It has one real `<button>
 test('a first-time player whose device says Korean is greeted in Korean', ...)
   // webHost({ navigator: { language: 'ko-KR', languages: ['ko-KR', 'en-US'] } }): the greeting is ko.json's, <html lang="ko">
 test('a player taps 日本語 and everything on the page is Japanese', ...)
-  // a real tap; the greeting, the level's name, the refused join and the touch overlay's label are Japanese; lang is 'ja';
+  // a real tap; the greeting, the level's name, the refused join, the touch overlay's label and the three touch
+  // buttons' words (audit J1: 左, 右, ジャンプ) are Japanese; lang is 'ja';
   // the canvas is still there and the sim's tick went on counting: the game was not restarted
 test('every language's button can be read and pressed at every size', ...)
-  // six buttons, none cut off or covered, each 48 px or taller; each name is drawn (its box is wider than 20 px)
+  // six buttons, none cut off or covered, each 48 px or taller; each name is drawn (audit J3: on a canvas in the
+  // page's font, the name and as many U+0378 make pictures whose pixels differ; empty boxes would match)
 test('changing the language moves no hash', ...)
-  // two games, the same held keys for 120 frames; one changes language at frame 60: sim.hash() equal
+  // two games, the same held keys for 120 ticks (injected frames); one changes language at tick 60: sim.hash() equal
 test('a picture of the page in each language', ...)       // six pictures at 390x844, saved as the other journeys save theirs
 // language-kept.browser.test.ts
 test('a language picked on one page is the language of the next', ...)
   // pick Português, wait for the write, open a real second page on the same storage: Portuguese before any tap, lang 'pt-BR'
 test('with storage refused the pick still shows, and the next page is the device's language again', ...)
+// tests/journeys/online.journey.test.ts (audit J2): the fixture page takes ?lang=es and says its status with
+// onlineWords(status, frameworkWords(lang)); the second page's waiting sentence is Spanish and holds the room's code
+test('a player whose page is in Spanish is told in Spanish who the room waits for', ...)
 ```
 
 - [ ] **Step 2: Push; the `engines` jobs fail** because the page fixture does not exist.
@@ -815,7 +854,8 @@ test('an agent misspells a value in one language and is told which', ...)
   commit); `git diff main -- schemas` is empty; no file under `src/` is over 600 lines; nothing in `sim`,
   `physics`, `commands`, `net` or `level` imports `locale`.
 - [ ] **Step 2:** `docs/superpowers/progress.md`: plan L's execution at 100%, a log line with the test count and
-  how many of the framework's words wait for a native read.
+  how many of the framework's words wait for a native read, and (audit M8) a "Before Release 1" line in plan L's
+  row: every framework and demo word has a read mark, so `unreadWords` is empty.
 - [ ] **Step 3:** Report to the coordinator: the merge commit to move pins to; which of plans S, T and U must now
   add their keys to the library; that plan K's Step L and plan D's step for L can start; anything the journeys'
   pictures showed.
@@ -887,11 +927,11 @@ plan's author, not by a native speaker: every one of them waits for a read.
 }
 "es": {
   "automata.join.full": "Ya están todos. En este juego caben {count} jugadores.",
-  "automata.join.no-shared": "Las teclas de este juego no se pueden compartir. Únete con un mando.",
+  "automata.join.no-shared": "Las teclas de este juego no se pueden compartir. Únete con un control.",
   "automata.join.no-start.many": "En este nivel caben {count} jugadores.",
   "automata.join.no-start.one": "En este nivel cabe un jugador.",
   "automata.join.one-player-game": "Este juego es para un jugador.",
-  "automata.join.taken.gamepad": "Ese mando ya tiene un jugador.",
+  "automata.join.taken.gamepad": "Ese control ya tiene un jugador.",
   "automata.join.taken.keyboard": "El teclado ya está compartido.",
   "automata.online.away.many": "Los jugadores {players} perdieron la conexión. El juego sigue.",
   "automata.online.away.one": "El jugador {players} perdió la conexión. El juego sigue.",
@@ -899,9 +939,9 @@ plan's author, not by a native speaker: every one of them waits for a read.
   "automata.online.ended.different-version": "Este juego es de una versión distinta a la de la sala. Recarga la página para tener la más nueva y vuelve a unirte.",
   "automata.online.ended.lost": "Se perdió la conexión y no se pudo recuperar. Crea una sala o únete a una para volver a jugar.",
   "automata.online.ended.no-room": "Ninguna sala tiene ese código. Revisa el código y prueba otra vez.",
-  "automata.online.ended.no-server": "No se pudo llegar al servidor del juego. Revisa tu internet y prueba otra vez.",
+  "automata.online.ended.no-server": "No se pudo conectar con el servidor del juego. Revisa tu internet y prueba otra vez.",
   "automata.online.ended.room-full": "Esa sala está llena. Crea una sala nueva o pide otro código.",
-  "automata.online.ended.server-full": "El servidor no tiene sitio para otra sala ahora mismo. Prueba de nuevo en un minuto.",
+  "automata.online.ended.server-full": "El servidor no tiene espacio para otra sala ahora mismo. Prueba de nuevo en un minuto.",
   "automata.online.reconnecting": "Se perdió la conexión. Estamos intentando que vuelvas a entrar.",
   "automata.online.waiting.many": "Faltan {count} jugadores. Comparte este código para que tus amigos se unan: {code}",
   "automata.online.waiting.one": "Falta 1 jugador. Comparte este código para que un amigo se una: {code}",
