@@ -40,16 +40,20 @@ const IMPURE: readonly { readonly pattern: RegExp; readonly what: string }[] = [
   { pattern: /\bfetch\(/, what: 'fetch(' },
 ]
 
-/** Which file may import which package: a prefix of the importing file's path, or its exact path. */
-const CONFINED: readonly { readonly package: RegExp; readonly only: string; readonly why: string }[] = [
-  { package: /^koota(\/|$)/, only: 'src/features/sim/', why: 'the ECS belongs to the sim' },
+/** Which files may import which package: each is a prefix of the importing file's path (ending in `/`) or its exact path. */
+const CONFINED: readonly {
+  readonly package: RegExp
+  readonly only: readonly string[]
+  readonly why: string
+}[] = [
+  { package: /^koota(\/|$)/, only: ['src/features/sim/'], why: 'the ECS belongs to the sim' },
   {
     package: /^@dimforge\//,
-    only: 'src/features/physics/rapier.ts',
-    why: 'Rapier stays behind the physics adapter',
+    only: ['src/features/physics/rapier.ts', 'src/features/physics/rapier-wasm.ts'],
+    why: 'Rapier stays behind the physics adapter and its loader',
   },
-  { package: /^pixi\.js(\/|$)/, only: 'src/features/render/', why: 'PixiJS is only for rendering' },
-  { package: /^smol-toml$/, only: 'src/features/content/', why: 'TOML is read only by content' },
+  { package: /^pixi\.js(\/|$)/, only: ['src/features/render/'], why: 'PixiJS is only for rendering' },
+  { package: /^smol-toml$/, only: ['src/features/content/'], why: 'TOML is read only by content' },
 ]
 
 interface Source {
@@ -225,8 +229,11 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
       }
       for (const rule of CONFINED) {
         if (!rule.package.test(spec)) continue
-        const allowed = rule.only.endsWith('/') ? file.startsWith(rule.only) : file === rule.only
-        if (!allowed) add(file, 'package-confined', `${spec} is only for ${rule.only}: ${rule.why}.`)
+        const allowed = rule.only.some((place) =>
+          place.endsWith('/') ? file.startsWith(place) : file === place,
+        )
+        if (!allowed)
+          add(file, 'package-confined', `${spec} is only for ${rule.only.join(' and ')}: ${rule.why}.`)
       }
     }
   }

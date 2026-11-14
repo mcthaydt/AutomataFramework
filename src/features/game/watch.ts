@@ -111,6 +111,9 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
     const loop = createLoop({
       tickHz: sim.tickHz,
       step() {
+        // The loop may call `step` several times in one frame without looking at what the earlier ones did, so the one
+        // that ends the last round must be the last: nothing past the recording's end, and nothing after `stop()`.
+        if (finished || stopped) return
         if (resting !== undefined) {
           if (resting > 0) {
             resting--
