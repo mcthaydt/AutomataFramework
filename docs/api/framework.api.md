@@ -358,6 +358,12 @@ function definePlugin(spec: {
 function defineResource<Z extends z.ZodType>(id: string, schema: Z, init: () => z.input<Z>): ResourceDef<Z>;
 ```
 
+### `defineSave` (function)
+
+```ts
+function defineSave<S>(def: SaveDef<S>): SaveDef<S>;
+```
+
 ### `defineSystem` (function)
 
 ```ts
@@ -976,6 +982,37 @@ interface Rng {
 
 ```ts
 type RngState = [number, number, number, number];
+```
+
+### `SaveDef` (interface)
+
+```ts
+interface SaveDef<S> {
+    readonly game: string;
+    readonly version: number;
+    readonly schema: z.ZodType<S>;
+    readonly slots: number;
+    readonly upgrades?: Readonly<Record<number, (data: unknown) => unknown>>;
+}
+```
+
+### `SaveProblem` (type)
+
+```ts
+type SaveProblem = {
+    readonly kind: 'refused';
+    readonly refusal: StoreRefusal;
+    readonly detail: string;
+} | {
+    readonly kind: 'damaged';
+    readonly detail: string;
+} | {
+    readonly kind: 'newer';
+    readonly version: number;
+} | {
+    readonly kind: 'too-old';
+    readonly version: number;
+};
 ```
 
 ### `SaveStore` (interface)
@@ -1697,6 +1734,12 @@ function definePlugin(spec: {
 function defineResource<Z extends z.ZodType>(id: string, schema: Z, init: () => z.input<Z>): ResourceDef<Z>;
 ```
 
+### `defineSave` (function)
+
+```ts
+function defineSave<S>(def: SaveDef<S>): SaveDef<S>;
+```
+
 ### `defineSystem` (function)
 
 ```ts
@@ -2222,6 +2265,37 @@ interface Rng {
 
 ```ts
 type RngState = [number, number, number, number];
+```
+
+### `SaveDef` (interface)
+
+```ts
+interface SaveDef<S> {
+    readonly game: string;
+    readonly version: number;
+    readonly schema: z.ZodType<S>;
+    readonly slots: number;
+    readonly upgrades?: Readonly<Record<number, (data: unknown) => unknown>>;
+}
+```
+
+### `SaveProblem` (type)
+
+```ts
+type SaveProblem = {
+    readonly kind: 'refused';
+    readonly refusal: StoreRefusal;
+    readonly detail: string;
+} | {
+    readonly kind: 'damaged';
+    readonly detail: string;
+} | {
+    readonly kind: 'newer';
+    readonly version: number;
+} | {
+    readonly kind: 'too-old';
+    readonly version: number;
+};
 ```
 
 ### `SaveStore` (interface)

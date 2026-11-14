@@ -64,8 +64,14 @@ test('older data is upgraded one version at a time', () => {
     slots: 1,
     schema: z.object({ n: z.number() }),
     upgrades: {
-      1: (data) => (calls.push(1), { n: (data as { n: number }).n + 1 }),
-      2: (data) => (calls.push(2), { n: (data as { n: number }).n * 10 }),
+      1: (data) => {
+        calls.push(1)
+        return { n: (data as { n: number }).n + 1 }
+      },
+      2: (data) => {
+        calls.push(2)
+        return { n: (data as { n: number }).n * 10 }
+      },
     },
   })
   expect(upgrade(three, envelope(1, { n: 1 }))).toEqual({ ok: true, data: { n: 20 } })
