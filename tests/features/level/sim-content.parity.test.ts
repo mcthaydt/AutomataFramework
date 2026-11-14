@@ -5,6 +5,7 @@ import { createRecorder, verifyReplay } from '#src/features/commands/commands.ts
 import { type GameContent, loadGame } from '#src/features/content/content.ts'
 import { createGameSim, simContent } from '#src/features/level/level.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
+import { loadSoundingGame } from '../../fixtures/audio/sounding-game.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { expectRecorded } from '../../fixtures/golden.ts'
@@ -85,6 +86,18 @@ test('changing a cue list or a track moves no hash', async () => {
   expect(faster.contentHash).toBe(before.contentHash)
   expect(noLanding.hash()).toBe(before.hash())
   expect(faster.hash()).toBe(before.hash())
+})
+
+// The project file lists every content file by path, and that list is part of the content the sim hashes: so a sound,
+// a track or a cue list being listed or not must leave the list the sim sees alone, not only the maps.
+test('listing sound, music and cue files moves no hash and keeps every other file listed', async () => {
+  const quiet = await loadFixtureGame()
+  const loud = await loadSoundingGame()
+  expect(loud.project.content.length).toBe(quiet.project.content.length + 4)
+  expect(simContent(loud).project.content).toEqual(quiet.project.content)
+  const before = await simOf(quiet)
+  const after = await simOf(loud)
+  expect(after.contentHash).toBe(before.contentHash)
 })
 
 test('changing a level still moves the content hash', async () => {
