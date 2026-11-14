@@ -777,7 +777,7 @@ test.each([[390, 844], [844, 390], [820, 1180], [1180, 820], [1280, 720]])('at %
 - Consumes: everything above.
 - Produces: the package other repos install.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `public-surface.test.ts`: the headless list gains `'memoryStore'`, `'defineSave'`, `'createSaves'`,
     `'latestSlot'`, `'openSettings'`, `'testHost'`, `'isOpenableLink'`, `'z'`; a new test,
     `'the browser entry adds the web host, and headless does not have it'`, asserts `#src/headless.ts` has no
@@ -794,8 +794,8 @@ test.each([[390, 844], [844, 390], [820, 1180], [1180, 820], [1280, 720]])('at %
   - `readme.test.ts`: the README names every `StoreRefusal` (`unavailable`, `full`, `failed`) and both stored key
     patterns (`automata.<game>.save.<slot>`, `automata.<game>.settings`), and its saves example uses only names the
     headless entry exports (`z`, `defineSave`, `createSaves`, `openSettings`, `latestSlot`).
-- [ ] **Step 2: Push; `check` and `package` fail** on the new assertions.
-- [ ] **Step 3: Write the README** and run `pnpm api-report --update`. Two new sections after "Watch a recorded
+- [x] **Step 2: Push; `check` and `package` fail** on the new assertions.
+- [x] **Step 3: Write the README** and run `pnpm api-report --update`. Two new sections after "Watch a recorded
   play", and one line changed in "Without a page" (it now lists saves and the host port too):
 
   **"## Saves"**: a save definition (`z` and `defineSave` imported from the framework, with a game id, a version, a
@@ -812,9 +812,9 @@ test.each([[390, 844], [844, 390], [820, 1180], [1180, 820], [1280, 720]])('at %
   `openLink` (only `https:`), `canQuit` and `quit`. `webHost()` for a page; `testHost()` for Node and for tests, with
   a short example that hides it and reads what it opened.
 
-- [ ] **Step 4: Push; all jobs pass**, `package` among them. Read the diff of `docs/api/framework.api.md`: it must
+- [x] **Step 4: Push; all jobs pass**, `package` among them. Read the diff of `docs/api/framework.api.md`: it must
   add only the names in "What the other plans rely on" (`z` among them) and move `webHost`'s argument. Anything else is a stop.
-- [ ] **Step 5: Commit** (`feat: saves and the host port on the public surface`), update the tracker to 100% for
+- [x] **Step 5: Commit** (`feat: saves and the host port on the public surface`), update the tracker to 100% for
   this stage, and send the coordinator the summary: the eight commits, the test count, every deviation, and the
   contract section's link for plans L, U, I, S and D.
 
