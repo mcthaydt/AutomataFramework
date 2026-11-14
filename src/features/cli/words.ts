@@ -25,8 +25,6 @@ import { CliError, Files, type Ports } from './ports.ts'
 const PARAGLIDE = '@inlang/paraglide-js'
 const MESSAGE_FORMAT = '@inlang/plugin-message-format'
 const SCHEMA = 'https://inlang.com/schema/inlang-message-format'
-/** A word's generated file: `messages/<function name>.js`, with no folder between. */
-const WORD_FILE = /^messages\/[^/]+\.js$/
 
 /** The part of Paraglide's `CompilerOptions` used here. */
 interface CompileOptions {
@@ -91,8 +89,7 @@ async function filesUnder(folder: string, prefix = ''): Promise<string[]> {
 async function compileIn(folder: string, languages: readonly Language[]): Promise<string> {
   const project = join(folder, 'project.inlang')
   await mkdir(project)
-  // Resolved from this package, so a game needs no inlang dependency of its own. (They are development dependencies
-  // while no command runs this file; the command that does moves them to `dependencies`: tests/package.test.ts.)
+  // Resolved from this package, so a game needs no inlang dependency of its own.
   const plugin = createRequire(import.meta.url).resolve(MESSAGE_FORMAT)
   await writeFile(
     join(project, 'settings.json'),
@@ -188,10 +185,10 @@ export function compileWords(options: {
       yield* files.write(join(target, file), bytes)
       written.push(file)
     }
-    // Only a word's own code is taken away: a `.js` file right under `messages/`, which is where Paraglide writes one for
-    // each word. Anything else of the game's, beside them or in a folder under `messages/`, is never touched.
+    // Only the per-word files under `messages/` are taken away: the folder is the generated code's own, but a stray file
+    // of the game's beside them is never touched.
     for (const file of yield* files.list(target))
-      if (WORD_FILE.test(file) && !built.has(file)) yield* files.remove(join(target, file))
+      if (file.startsWith('messages/') && !built.has(file)) yield* files.remove(join(target, file))
     return written.sort()
   })
 }

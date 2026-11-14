@@ -21,13 +21,6 @@
     "automata.online.reconnecting": "接続が切れました。もう一度つないでいます。",
     "automata.online.waiting.many": "あと{count}人を待っています。友だちが入れるように、このコードを教えてあげてください: {code}",
     "automata.online.waiting.one": "あと1人を待っています。友だちが入れるように、このコードを教えてあげてください: {code}",
-    "automata.rebind.no-shared": "このゲームではキーボードを2人で使えません。",
-    "automata.rebind.other-half": "そのキーはもう1人の人のものです。別のキーを選んでください。",
-    "automata.rebind.reserved.button": "{input}ボタンはゲームのメニュー用です。別のボタンを選んでください。",
-    "automata.rebind.reserved.key": "{input}キーはゲームのメニュー用です。別のキーを選んでください。",
-    "automata.rebind.unknown-action": "このゲームには「{action}」という操作はありません。",
-    "automata.rebind.unknown-input": "それはゲームパッドのボタンではありません。別のボタンを選んでください。",
-    "automata.sound.start": "タップして音を出す",
     "automata.touch.label": "タッチ操作"
   }
 }

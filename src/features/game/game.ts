@@ -46,8 +46,7 @@ export interface GameOptions extends GameSimOptions {
   readonly audio?: GameAudio
   /**
    * With `audio`, the button that says the sound is waiting for a tap. A string is its words; `false` shows none, for
-   * a game whose own screen says it. Default: the framework's button, "Tap to start the sound", in `locale`'s
-   * language when there is one.
+   * a game whose own screen says it. Default: the framework's button, "Tap to start the sound".
    */
   readonly soundNotice?: string | false
   /**
@@ -59,8 +58,8 @@ export interface GameOptions extends GameSimOptions {
   readonly readPicture?: ReadPicture
   /**
    * The player's language. The touch buttons say `controls.<action>` and `automata.touch.label` in it, a refused
-   * `addPlayer` or change of key explains itself in it, the sound's button asks for a tap in it, and all of them change
-   * when the player picks another. Default: English, and each control's own label.
+   * `addPlayer` explains itself in it, and all of them change when the player picks another. Default: English, and each
+   * control's own label.
    */
   readonly locale?: Locale
 }
@@ -199,11 +198,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         ? soundNotice({
             mount,
             audio,
-            ...(typeof options.soundNotice === 'string'
-              ? { words: options.soundNotice }
-              : locale === undefined
-                ? {}
-                : { locale }),
+            ...(typeof options.soundNotice === 'string' ? { words: options.soundNotice } : {}),
           })
         : undefined
     sync()

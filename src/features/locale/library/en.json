@@ -21,13 +21,6 @@
     "automata.online.reconnecting": "Connection lost. Trying to get you back in.",
     "automata.online.waiting.many": "Waiting for {count} more players. Share this code so friends can join: {code}",
     "automata.online.waiting.one": "Waiting for 1 more player. Share this code so a friend can join: {code}",
-    "automata.rebind.no-shared": "This game's keys cannot be shared.",
-    "automata.rebind.other-half": "That key is the other person's. Pick another key.",
-    "automata.rebind.reserved.button": "The {input} button is kept for the game's menus. Pick another button.",
-    "automata.rebind.reserved.key": "{input} is kept for the game's menus. Pick another key.",
-    "automata.rebind.unknown-action": "This game has no action called \"{action}\".",
-    "automata.rebind.unknown-input": "That is not a button on a gamepad. Pick another button.",
-    "automata.sound.start": "Tap to start the sound",
     "automata.touch.label": "Touch controls"
   }
 }
