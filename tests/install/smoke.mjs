@@ -11,6 +11,7 @@ import {
   CONTENT_TYPES,
   createAudio,
   createGameSim,
+  createLocale,
   createSaves,
   defineSave,
   formatDiagnostic,
@@ -18,6 +19,7 @@ import {
   openSettings,
   testHost,
   testSpeaker,
+  translationProblems,
   z,
 } from '@automataframework/framework/headless'
 import { createRoomServer, runRoomServer } from '@automataframework/framework/server'
@@ -145,6 +147,25 @@ for (const type of kinds) {
 console.log(
   `The installed package loaded the full game with ${kinds.length} kinds of file and has every schema.`,
 )
+
+// The player's language, from the packed package alone: a device that says Japanese is greeted in Japanese, from the
+// full game's own words, and every word of the full game is written in every language.
+const languageHost = testHost({ deviceLanguages: ['ja-JP'] })
+const locale = createLocale({
+  content: full.value,
+  host: languageHost,
+  settings: await openSettings({ game: 'smoke-language', store: languageHost.store }),
+})
+if (locale.language() !== 'ja' || locale.words('keeper.hello') !== 'こんにちは！') {
+  console.error('The installed package did not greet a Japanese device in Japanese.')
+  process.exit(1)
+}
+const untranslated = translationProblems(full.value)
+if (untranslated.length > 0) {
+  for (const problem of untranslated) console.error(formatDiagnostic(problem))
+  process.exit(1)
+}
+console.log('The installed package spoke Japanese and found every word translated.')
 
 // The playground has pins, ropes and touched characters, which switch on joints and the touch plugin in the sim.
 const playground = await loadGame((path) => readFile(here(`playground/${path}`), 'utf8'))

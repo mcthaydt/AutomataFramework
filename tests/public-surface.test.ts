@@ -113,6 +113,31 @@ test('headless exports what a game sim and an editor need', async () => {
     'MAX_SOUNDS',
     'LOG_MAX',
     'simContent',
+    // The player's language (plan L).
+    'createLocale',
+    'fill',
+    'fitLabel',
+    'levelName',
+    'LANGUAGE_NAMES',
+    'LANGUAGE_TAGS',
+    'matchLanguage',
+    'pickLanguage',
+    'LANGUAGE_SETTINGS_DEFAULT',
+    'LanguageSettingsSchema',
+    'frameworkWords',
+    'languagesOf',
+    'typed',
+    'wordsOf',
+    'placeholdersOf',
+    'languageName',
+    'translationProblems',
+    'READ_MARKS_FILE',
+    'parseReadMarks',
+    'writeReadMarks',
+    'readMark',
+    'markRead',
+    'unreadWords',
+    'onlineMessage',
   ])
     expect(api, name).toHaveProperty(name)
 })
@@ -131,6 +156,10 @@ test('the browser entry adds the web host, and headless does not have it', async
   const entry = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
   expect(entry).toContain("export * from './features/web/web.ts'")
   expect(entry).toContain("export * from './headless.ts'")
+  // The page's `<html lang>` follows the locale: it needs a page, so it is the browser entry's only.
+  expect(api).not.toHaveProperty('followLanguage')
+  const web = readFileSync(new URL('../src/features/web/web.ts', import.meta.url), 'utf8')
+  expect(web).toContain('followLanguage')
 })
 
 // A game draws its pictures through the page entry, which needs a page, so the headless entry has none of it.

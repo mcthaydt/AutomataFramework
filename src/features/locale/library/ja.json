@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "id": "ja",
+  "messages": {
+    "automata.join.full": "全員そろいました。このゲームは{count}人まで遊べます。",
+    "automata.join.no-shared": "このゲームではキーボードを2人で使えません。ゲームパッドで入ってください。",
+    "automata.join.no-start.many": "このレベルは{count}人まで遊べます。",
+    "automata.join.no-start.one": "このレベルは1人だけ遊べます。",
+    "automata.join.one-player-game": "このゲームは1人用です。",
+    "automata.join.taken.gamepad": "そのゲームパッドにはもうプレイヤーがいます。",
+    "automata.join.taken.keyboard": "キーボードはもう2人で使っています。",
+    "automata.online.away.many": "プレイヤー{players}の接続が切れました。ゲームは続きます。",
+    "automata.online.away.one": "プレイヤー{players}の接続が切れました。ゲームは続きます。",
+    "automata.online.ended.bad-room": "その部屋を作れませんでした。レベルと人数をたしかめてください。",
+    "automata.online.ended.different-version": "このゲームは部屋とバージョンがちがいます。ページを読みこみ直して最新版にしてから、もう一度入ってください。",
+    "automata.online.ended.lost": "接続が切れて、元にもどせませんでした。もう一度遊ぶには、部屋を作るか部屋に入ってください。",
+    "automata.online.ended.no-room": "そのコードの部屋はありません。コードをたしかめて、もう一度ためしてください。",
+    "automata.online.ended.no-server": "ゲームサーバーにつながりませんでした。インターネットをたしかめて、もう一度ためしてください。",
+    "automata.online.ended.room-full": "その部屋はいっぱいです。新しい部屋を作るか、別のコードをもらってください。",
+    "automata.online.ended.server-full": "いまサーバーに新しい部屋を作る空きがありません。1分後にもう一度ためしてください。",
+    "automata.online.reconnecting": "接続が切れました。もう一度つないでいます。",
+    "automata.online.waiting.many": "あと{count}人を待っています。友だちが入れるように、このコードを教えてあげてください: {code}",
+    "automata.online.waiting.one": "あと1人を待っています。友だちが入れるように、このコードを教えてあげてください: {code}",
+    "automata.touch.label": "タッチ操作"
+  }
+}

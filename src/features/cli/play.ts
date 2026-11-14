@@ -20,6 +20,8 @@ export function runPlay(options: {
   return Effect.gen(function* () {
     const { folder } = options
     const game = yield* readGame(folder)
+    // A game that is not installed has no Vite to start: say so before "Starting", not after it.
+    if (game.codeError !== undefined) return yield* Effect.fail(new CliError(game.codeError))
     const out = yield* Out
     // What is wrong with the files, first: the page shows it too, but a person is looking at this terminal.
     const files = yield* filesStep(game, false)
@@ -37,8 +39,7 @@ export function runPlay(options: {
     if (code === 'missing')
       return yield* Effect.fail(
         new CliError(
-          game.codeError ??
-            `This game's tools are not installed yet. Run npm install in ${folder}, then try again.`,
+          `This game's tools are not installed yet. Run npm install in ${folder}, then try again.`,
         ),
       )
     return code

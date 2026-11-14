@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "id": "es",
+  "messages": {
+    "automata.join.full": "Ya están todos. En este juego caben {count} jugadores.",
+    "automata.join.no-shared": "Las teclas de este juego no se pueden compartir. Únete con un control.",
+    "automata.join.no-start.many": "En este nivel caben {count} jugadores.",
+    "automata.join.no-start.one": "En este nivel cabe un jugador.",
+    "automata.join.one-player-game": "Este juego es para un jugador.",
+    "automata.join.taken.gamepad": "Ese control ya tiene un jugador.",
+    "automata.join.taken.keyboard": "El teclado ya está compartido.",
+    "automata.online.away.many": "Los jugadores {players} perdieron la conexión. El juego sigue.",
+    "automata.online.away.one": "El jugador {players} perdió la conexión. El juego sigue.",
+    "automata.online.ended.bad-room": "No se pudo crear esa sala. Revisa el nivel y el número de jugadores.",
+    "automata.online.ended.different-version": "Este juego es de una versión distinta a la de la sala. Recarga la página para tener la más nueva y vuelve a unirte.",
+    "automata.online.ended.lost": "Se perdió la conexión y no se pudo recuperar. Crea una sala o únete a una para volver a jugar.",
+    "automata.online.ended.no-room": "Ninguna sala tiene ese código. Revisa el código y prueba otra vez.",
+    "automata.online.ended.no-server": "No se pudo conectar con el servidor del juego. Revisa tu internet y prueba otra vez.",
+    "automata.online.ended.room-full": "Esa sala está llena. Crea una sala nueva o pide otro código.",
+    "automata.online.ended.server-full": "El servidor no tiene espacio para otra sala ahora mismo. Prueba de nuevo en un minuto.",
+    "automata.online.reconnecting": "Se perdió la conexión. Estamos intentando que vuelvas a entrar.",
+    "automata.online.waiting.many": "Faltan {count} jugadores. Comparte este código para que tus amigos se unan: {code}",
+    "automata.online.waiting.one": "Falta 1 jugador. Comparte este código para que un amigo se una: {code}",
+    "automata.touch.label": "Controles táctiles"
+  }
+}

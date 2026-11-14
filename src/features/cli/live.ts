@@ -6,16 +6,19 @@ import { type ChildProcess, type SpawnOptions, type StdioOptions, spawn } from '
 import type { Dirent } from 'node:fs'
 import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { createInterface } from 'node:readline'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Worker } from 'node:worker_threads'
 import { Effect, Layer } from 'effect'
 import type * as Headless from '../../headless.ts'
 import type { Diagnostic } from '../content/content.ts'
 import type { PluginDef } from '../sim/sim.ts'
+import { commandAnswer } from './command-answer.ts'
 import {
   CliError,
   Code,
   type CodeService,
+  type CommandAnswer,
   Files,
   type FilesService,
   type GameCode,
@@ -265,6 +268,9 @@ const outLive: OutService = {
   error: (text) => Effect.sync(() => void process.stderr.write(`${text}\n`)),
 }
 
+/** What is typed or piped into this process, a line at a time (for `automata mcp`). */
+export const stdinLines = (): AsyncIterable<string> => createInterface({ input: process.stdin })
+
 // --- Play sessions ---
 
 /** The Worker's file: the built one beside this code, or the source one when the code itself runs from source. */
@@ -273,7 +279,10 @@ const sessionWorkerFile = (): URL =>
 
 /** A session's Worker, spoken to by numbered messages. A Worker that stops answers every message waiting with a sentence. */
 function startWorker(folder: string): SessionWorker {
-  const worker = new Worker(sessionWorkerFile(), { workerData: { folder } })
+  // `stdout: true`: a Worker's output would otherwise go straight to this process's stdout, past the console that
+  // `automata mcp` points at stderr, and a game's rules that print would break the protocol. It goes to stderr instead.
+  const worker = new Worker(sessionWorkerFile(), { workerData: { folder }, stdout: true })
+  worker.stdout.on('data', (chunk: Buffer) => void process.stderr.write(chunk))
   const waiting = new Map<number, (reply: SessionReply) => void>()
   let next = 0
   let over: string | undefined
@@ -302,7 +311,43 @@ function startWorker(folder: string): SessionWorker {
   }
 }
 
-const runnerLive: RunnerService = { worker: (folder) => Effect.sync(() => startWorker(folder)) }
+/** The command's own file: the built `cli.js` beside this code, or the source `cli.ts` when the code itself runs from source. */
+const cliFile = (): URL =>
+  new URL(import.meta.url.endsWith('.ts') ? '../../cli.ts' : './cli.js', import.meta.url)
+
+/**
+ * `automata <words> --json` as a child process (audit C1): the game's rules load in a process of its own, which ends when
+ * the command does, so the next command reads the files as they are then. Its input is closed, so it never waits.
+ */
+function runCommand(args: readonly string[], cwd: string): Effect.Effect<CommandAnswer, CliError> {
+  return Effect.flatMap(
+    Effect.async<{ code: number; stdout: string; stderr: string }, CliError>((resume) => {
+      const child = spawn(process.execPath, [fileURLToPath(cliFile()), ...args, '--json'], {
+        cwd,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
+      let stdout = ''
+      let stderr = ''
+      child.stdout.on('data', (chunk: Buffer) => {
+        stdout += chunk.toString('utf8')
+      })
+      child.stderr.on('data', (chunk: Buffer) => {
+        stderr += chunk.toString('utf8')
+      })
+      child.on('error', (error) =>
+        resume(Effect.fail(new CliError(`automata could not be started: ${firstLine(error)}`))),
+      )
+      child.on('close', (code) => resume(Effect.succeed({ code: code ?? 2, stdout, stderr })))
+      return Effect.sync(() => void child.kill())
+    }),
+    (ended) => commandAnswer(ended.code, ended.stdout, ended.stderr),
+  )
+}
+
+const runnerLive: RunnerService = {
+  command: runCommand,
+  worker: (folder) => Effect.sync(() => startWorker(folder)),
+}
 
 /** What a command run from a terminal reaches the world through. */
 export const liveLayer: Layer.Layer<Ports> = Layer.mergeAll(

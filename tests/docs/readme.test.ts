@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
 import { COMMAND_NAMES } from '#src/features/cli/args.ts'
 import { helpFor } from '#src/features/cli/help.ts'
+import { PROTOCOL_VERSIONS } from '#src/features/cli/mcp.ts'
+import { mcpTools } from '#src/features/cli/mcp-tools.ts'
+import { createSessions } from '#src/features/cli/session.ts'
 import { CONTENT_TYPES } from '#src/features/content/content-types.ts'
 import { TOUCH_PROPERTIES } from '#src/features/input/touch.ts'
 import { FRAMEWORK_VERSION } from '#src/features/sim/sim.ts'
@@ -96,6 +99,42 @@ test('the README has a host section that names every member of the port and both
     'testHost()',
   ])
     expect(host, word).toContain(word)
+})
+
+// A game finds out how to speak in the player's language from here, and copies an example that uses only what headless exports.
+test('the README has a Languages section: the files, the values, the pick, the two checks and the native read', () => {
+  const languages = section('## Languages')
+  for (const word of [
+    'content/messages/',
+    '{name}',
+    'createLocale',
+    'locale.words',
+    'locale.set',
+    'startGame({ ..., locale })',
+    'followLanguage',
+    'onlineWords(status, locale.words)',
+    'translationProblems',
+    'unreadWords',
+    'automata.translations.toml',
+    'native speaker',
+    'moves no hash',
+  ])
+    expect(languages, word).toContain(word)
+  for (const language of ['en', 'es', 'ko', 'ja', 'zh', 'pt'])
+    expect(languages, language).toContain(`${language}.json`)
+  const imported = /import \{([^}]+)\} from '@automataframework\/framework\/headless'/.exec(languages)?.[1]
+  expect(imported).toBeDefined()
+  for (const name of (imported ?? '').split(',').map((n) => n.trim()))
+    expect(framework, name).toHaveProperty(name)
+  // Everything else it names exists: the checks, the marks, and the page's own follower in the browser entry's file.
+  for (const name of ['translationProblems', 'unreadWords', 'parseReadMarks', 'markRead', 'writeReadMarks'])
+    expect(framework, name).toHaveProperty(name)
+  expect(framework).not.toHaveProperty('followLanguage')
+  expect(readme.indexOf('## Saves')).toBeLessThan(readme.indexOf('## Languages'))
+  expect(readme.indexOf('## Languages')).toBeLessThan(readme.indexOf('## The host'))
+  // Its messages file is exactly what `writeContent` writes, so an agent that copies it makes the bytes the check wants.
+  const block = /```json\n([\s\S]*?)```/.exec(languages)?.[1]
+  expect(framework.writeContent('messages', JSON.parse(block ?? '') as never)).toBe(block)
 })
 
 // A game finds out how to host a room and put a page in it from here, and is told that nothing is deployed.
@@ -214,4 +253,15 @@ test('the README has an Art section whose figure reads, paints, and whose names 
   expect(() => framework.paintFigure(parsed.value as framework.FigureFile)).not.toThrow()
   for (const name of ['artFiles', 'artProblems', 'setClip', 'setFacing', 'paintFigure'])
     expect(framework, name).toHaveProperty(name)
+})
+
+test('the README names every tool automata mcp has, the protocol versions it speaks, and the .mcp.json a game has', () => {
+  const start = readme.indexOf('### automata mcp')
+  expect(start).toBeGreaterThan(-1)
+  const mcp = readme.slice(start, readme.indexOf('\n## ', start))
+  const rows = [...mcp.matchAll(/^\| `([a-z_]+)` \|/gm)].map((m) => m[1])
+  expect(rows).toEqual(mcpTools(createSessions()).map((tool) => tool.name))
+  for (const version of PROTOCOL_VERSIONS) expect(mcp, version).toContain(`\`${version}\``)
+  const config = readFileSync(new URL('../../template/.mcp.json', import.meta.url), 'utf8')
+  expect(JSON.parse(/```json\n([\s\S]*?)```/.exec(mcp)?.[1] ?? '')).toEqual(JSON.parse(config))
 })

@@ -63,7 +63,14 @@ export {
   type LevelView,
 } from './level.ts'
 export { type GameContent, loadGame } from './load.ts'
-export { LANGUAGES, type Language, type MessagesFile, MessagesSchema } from './messages.ts'
+export {
+  LANGUAGES,
+  type Language,
+  languageName,
+  type MessagesFile,
+  MessagesSchema,
+  placeholdersOf,
+} from './messages.ts'
 export {
   type DrumPart,
   MAX_STEPS,
@@ -86,6 +93,15 @@ export {
   type Sheet,
 } from './sheet.ts'
 export {
+  markRead,
+  parseReadMarks,
+  READ_MARKS_FILE,
+  type ReadMarks,
+  readMark,
+  unreadWords,
+  writeReadMarks,
+} from './read-marks.ts'
+export {
   type NoiseVoice,
   type SoundFile,
   SoundSchema,
@@ -94,6 +110,7 @@ export {
   type Wave,
 } from './sound.ts'
 export { type TileKind, type TilePicture, type TilesetFile, TilesetSchema, type TileWhen } from './tileset.ts'
+export { translationProblems } from './translations.ts'
 export {
   type SharedKeys,
   type TuningControl,

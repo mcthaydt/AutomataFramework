@@ -2,10 +2,14 @@
   "format": 1,
   "id": "en",
   "messages": {
+    "controls.jump": "Jump",
+    "controls.left": "Left",
+    "controls.right": "Right",
     "hero.ask": "Any tips?",
     "hero.bye": "See you.",
     "keeper.bye": "Take care.",
     "keeper.hello": "Hello there! 👋",
-    "keeper.tip": "Push the crate onto the ledge."
+    "keeper.tip": "Push the crate onto the ledge.",
+    "level.level-1.name": "Level 1"
   }
 }

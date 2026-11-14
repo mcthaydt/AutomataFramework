@@ -13,6 +13,7 @@ import {
 import { createGameSim, Thing } from '#src/features/level/level.ts'
 import { Transform } from '#src/features/physics/physics.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
+import { Score } from '../../template/src/features/hero/score.ts'
 import { gamePlugins } from '../../template/src/headless.ts'
 import { loadTemplateGame } from './game.ts'
 import { TEMPLATE_TICKS, templatePlay } from './hero-play.ts'
@@ -64,4 +65,10 @@ test('in the recorded play the hero pushes the crate to the right and ends left 
   const hero = sim.query(Player, Transform)[0]
   expect(crate?.get(Transform).x).toBeGreaterThan(6.5 + 1)
   expect(hero?.get(Transform).x).toBeLessThan(crate?.get(Transform).x ?? 0)
+})
+
+test('in the recorded play the hero takes the spark on the way, and it is counted', async () => {
+  const { sim } = await record()
+  expect(sim.resource(Score)).toEqual({ sparks: 1 })
+  expect(sim.query(Thing).some((e) => e.get(Thing).id === 'spark-1')).toBe(false)
 })

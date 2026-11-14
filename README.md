@@ -52,7 +52,7 @@ fetch an unrelated package of that name from npm.
 | `automata check` | Says whether the game is sound, step by step, and what to fix if it is not. |
 | `automata play` | Plays the game in your browser, and shows your changes as you make them. |
 | `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
-| `automata mcp` | Lets an agent use these commands as tools (an MCP server). Not built yet. |
+| `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
 ## Install
 
@@ -257,6 +257,60 @@ characters, or data your schema refuses or JSON cannot keep; a host's "no" is an
 and a save from an older version is brought up to date when it is loaded. Settings are gentler on purpose: a setting
 that cannot be read starts again from its first values.
 
+## Languages
+
+A game's words are content, not code. There is one file for each language, `content/messages/en.json`, `es.json`,
+`ko.json`, `ja.json`, `zh.json` and `pt.json` (each listed in `automata.toml` as `type = "messages"`), and one line for
+each word. English is the one that says what a word is for; the others carry the same keys. A word can ask for a value
+with `{name}`, and the game gives it one.
+
+```json
+{
+  "format": 1,
+  "id": "en",
+  "messages": {
+    "controls.jump": "Jump",
+    "keeper.hello": "Hello there! 👋",
+    "level.level-1.name": "Level 1",
+    "room.waiting": "Waiting for {count} more"
+  }
+}
+```
+
+The player's language is the one they picked, else the host's, else the device's, else English, and only a language
+the game has words in. `createLocale` gives a game the words in it, and keeps a pick with the settings:
+
+```ts
+import { createLocale, levelName } from '@automataframework/framework/headless'
+
+const locale = createLocale({ content: loaded.value, host, settings }) // `settings` is `await openSettings(...)`
+locale.words('keeper.hello') // 'こんにちは！' on a Japanese device
+locale.words('room.waiting', { count: 2 }) // a value goes where `{count}` is; a list is joined the way the language does
+levelName(locale.words, 'level-1') // the level's own name, or its id if no words give one
+await locale.set('ko') // the words change at once, every `locale.onChange` listener hears it, and the pick is kept
+```
+
+A word a language lacks is said in English, and one English lacks is shown as its key, so a missing word never stops
+a game. Give `startGame` the locale (`startGame({ ..., locale })`) and the touch buttons say `controls.<action>`, a
+refused `addPlayer` explains itself in the player's language, and all of it changes when the player picks another.
+In a page, `followLanguage(locale)` keeps `<html lang>` right, so a screen reader speaks the words properly. The
+framework's own sentences (a room's status, why a player cannot join) are in all six languages, and
+`onlineWords(status, locale.words)` says the room's status in the player's. Changing a word, or the language,
+moves no hash and no replay: the sim never sees words.
+
+Two checks are for a person or an agent to run, and neither is part of `loadGame`, because a game with a word missing
+in Korean still loads and plays:
+
+- `translationProblems(content)` says, in one sentence for each, where a word is missing, what English says, which
+  value is missing or misspelt (`{cuont}` for `{count}`), and what is too long for a button or a save. A sentence reads
+  `content/messages/ko.json: messages: This file has no "keeper.hello". English says "Hello there!". Write it in Korean.`
+- `unreadWords(content, marks)` lists the words no native speaker has read yet. The marks are in
+  `automata.translations.toml` (`parseReadMarks`, `markRead`, `writeReadMarks`); a mark is of the exact words that
+  were read, so changing a word makes it unread again.
+
+Every translation the framework ships (the six languages' library, and the demo game's) waits for a native speaker's
+read before Release 1: machine-written words are a first draft, and the marks say which are still that.
+
 ## The host
 
 A game asks its host about where it runs, never the page: `visible()` and `onVisibility` (is the game on screen),
@@ -318,6 +372,8 @@ is full) and an empty string while everyone is playing; a game puts it on its ow
 `OnlineError` and leaves nothing on the page. A game with `players = 4` in `automata.toml` has no waiting: the room
 starts with whoever is first, and the others join and leave while it is played, as many as its level has start points
 for. Hiding the page lets go of the keys, so the hero does not run on for everyone else.
+
+Pass `locale.words` as a second argument, `onlineWords(status, locale.words)`, for the player's language.
 
 ## Sound
 
@@ -562,8 +618,44 @@ recording). The first two exit with 0, the others with 1.
 
 ### automata mcp
 
-`automata mcp` is meant to let an agent use these commands as tools, over the Model Context Protocol. It is not built
-yet, and says so when run.
+`automata mcp` lets an agent use these commands as tools, over the [Model Context Protocol](https://modelcontextprotocol.io).
+An agent's own program starts it and talks to it on standard input and output, one JSON message per line; it prints
+nothing a person reads. A game made by `automata create` is already set up for it: `.mcp.json` starts it in the game's
+folder.
+
+```json
+{
+  "mcpServers": {
+    "automata": { "command": "node", "args": ["node_modules/@automataframework/framework/dist/cli.js", "mcp"] }
+  }
+}
+```
+
+It speaks the protocol versions `2025-11-25`, `2025-06-18`, `2025-03-26` and `2024-11-05`, and answers `initialize`,
+`ping`, `tools/list`, `tools/call`, `resources/list` and `resources/read`. These are its tools. A result with `isError`
+holds the sentence the command would have printed, so an agent reads what a person would.
+
+| Tool | Input | The same as |
+|---|---|---|
+| `create` | `folder` | `automata create <folder> --json` |
+| `check` | `folder`, `only?`, `fix?` | `automata check <folder> --json` |
+| `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
+| `content_types` | none | the table of content kinds above |
+| `schema` | `type` | reading `schemas/<type>.schema.json` |
+| `skill` | `name?` | reading `skills/<name>/SKILL.md` |
+| `play_start` | `folder`, `level?`, `players?`, `seed?` | starts a game and answers a `session` and its `state` |
+| `play_step` | `session`, `ticks`, `hold?` | plays `ticks` ticks (1 to 3600, a minute of play) with these actions held, like `{"1": ["right"]}`, and answers the `state` and the `events` raised |
+| `play_state` | `session` | the `state` again, with no tick played |
+| `play_save` | `session`, `file` | writes the play so far to `replays/<file>.json`, which `automata replay` plays |
+| `play_stop` | `session` | ends the game |
+
+Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
+and `automata://skills/<name>`.
+
+The server never loads a game's rules itself. `create`, `check` and `replay` each run the command in a process of their
+own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
+keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
+goes to standard error, never into the messages.
 
 ## Without a page
 

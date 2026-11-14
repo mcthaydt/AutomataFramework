@@ -58,6 +58,15 @@ test('headless may reach the host port but not the web host', () => {
   expect(one({ 'src/headless.ts': "export * from './features/host/host.ts'" })).toEqual([])
 })
 
+test('locale sits right above host and may import it; host may not import locale', () => {
+  expect(one({ 'src/features/locale/locale.ts': "import '../host/host.ts'" })).toEqual([])
+  expect(one({ 'src/features/host/host.ts': "import '../locale/locale.ts'" })).toEqual(['imports-go-down'])
+  expect(one({ 'src/features/locale/locale.ts': "import '../web/web.ts'" })).toEqual(['imports-go-down'])
+})
+
+test('the headless entry may reach locale', () =>
+  expect(one({ 'src/headless.ts': "export * from './features/locale/locale.ts'" })).toEqual([]))
+
 // The rules also have to stay quiet on honest code.
 test('a clean map has no violations', () =>
   expect(

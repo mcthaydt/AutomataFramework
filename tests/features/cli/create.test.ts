@@ -28,7 +28,14 @@ test('it writes every template file, the three under their real names', async ()
   const memory = await made(['my-game'])
   const files = written(memory, 'my-game')
   expect(files).toEqual(
-    expect.arrayContaining(['package.json', 'biome.json', '.gitignore', 'automata.toml', 'src/headless.ts']),
+    expect.arrayContaining([
+      'package.json',
+      'biome.json',
+      '.gitignore',
+      '.mcp.json',
+      'automata.toml',
+      'src/headless.ts',
+    ]),
   )
   expect(files.filter((file) => file.endsWith('.template.json') || file === 'gitignore')).toEqual([])
 })
@@ -134,6 +141,11 @@ test('a folder with something in it is refused, and an empty one is used', async
   expect(taken.files.size).toBe(before)
   // The memory layer has no empty folders, so "empty" is "has no files": another name in the same place is the same.
   expect(await main(['create', 'your-game'], taken.layer)).toBe(0)
+})
+
+test('a folder with a space in its path is quoted in the cd line, so it can be pasted', async () => {
+  const memory = await made(['my games/first-one'])
+  expect(memory.out).toContain('  cd "my games/first-one"')
 })
 
 test('a path before the name says where, and a name beside is fine', async () => {

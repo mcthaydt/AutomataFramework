@@ -15,6 +15,7 @@ import {
   type PadLike,
 } from '../input/input.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
+import type { Locale } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
@@ -55,6 +56,12 @@ export interface GameOptions extends GameSimOptions {
    * needs none.
    */
   readonly readPicture?: ReadPicture
+  /**
+   * The player's language. The touch buttons say `controls.<action>` and `automata.touch.label` in it, a refused
+   * `addPlayer` explains itself in it, and all of them change when the player picks another. Default: English, and each
+   * control's own label.
+   */
+  readonly locale?: Locale
 }
 
 export interface Game {
@@ -87,7 +94,7 @@ export interface Game {
  * the controls are wrong; if the level cannot be loaded or drawn, nothing is left behind.
  */
 export async function startGame(options: GameOptions): Promise<Game> {
-  const { mount, controls, host, frames = pageFrames } = options
+  const { mount, controls, host, locale, frames = pageFrames } = options
   // First, so a mistake in the controls costs nothing: no sim, no canvas.
   checkControls(controls)
   const sim = await createGameSim(options)
@@ -120,10 +127,14 @@ export async function startGame(options: GameOptions): Promise<Game> {
       controls,
       frames,
       sequence,
+      ...(locale === undefined ? {} : { words: locale.words }),
       ...(options.settings === undefined ? {} : { settings: options.settings }),
       ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
     })
+    // A new language says the touch buttons again. Stopped with the game.
+    const unfollow = locale?.onChange(() => input.relabel(locale.words))
     cleanup = () => {
+      unfollow?.()
       input.destroy()
       renderer.destroy()
       sim.dispose()
@@ -144,6 +155,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
       input,
       sequence,
       canShare: Object.values(input.controls()).every((control) => control.shared !== undefined),
+      ...(locale === undefined ? {} : { words: locale.words }),
     })
     const { audio } = options
     const loop = createLoop({

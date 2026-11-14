@@ -1,25 +1,21 @@
 // The `automata` command's entry: the words are read (`args.ts`), the command's row in the table runs as an Effect over
 // the ports (`ports.ts`), and the answer is the exit status: 0 everything is fine, 1 the game has something to fix, 2 the
 // command could not do its work. Nothing here prints a stack trace: a person gets a sentence.
-import { Cause, Effect, type Layer } from 'effect'
+import { Cause, Effect, Layer } from 'effect'
 import { FRAMEWORK_VERSION } from '../sim/sim.ts'
 import { type CommandInput, type CommandName, parseArgs } from './args.ts'
 import { runCheck } from './check.ts'
 import { createGame, nameOf } from './create.ts'
 import { helpFor } from './help.ts'
-import { liveLayer } from './live.ts'
+import { liveLayer, stdinLines } from './live.ts'
+import { serveMcp } from './mcp.ts'
 import { runPlay } from './play.ts'
 import { CliError, Out, type OutService, type Ports } from './ports.ts'
 import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
+import { printToStderr } from './stderr.ts'
 
 type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
-
-/** A command whose task has not landed yet says so. */
-const notBuilt =
-  (name: CommandName): Command =>
-  () =>
-    Effect.fail(new CliError(`automata ${name} is not built yet.`))
 
 /** `automata check`: the steps' report, as words or as JSON, and the exit status the report gives. */
 const check: Command = (input) =>
@@ -57,6 +53,10 @@ const replay: Command = (input) =>
     return replayExitCode(results)
   })
 
+/** A folder as a person can paste it after `cd`: in quotes when it has a space or a quote in it. */
+const shellWord = (word: string): string =>
+  /^[\w@%+=:,./\\-]+$/.test(word) ? word : `"${word.replaceAll('"', '\\"')}"`
+
 /** `automata create <name>`: a new game, and what to type next. */
 const create: Command = (input) =>
   Effect.gen(function* () {
@@ -76,7 +76,7 @@ const create: Command = (input) =>
       `Made ${nameOf(input.folder)}.`,
       '',
       'Next:',
-      `  cd ${made.folder}`,
+      `  cd ${shellWord(made.folder)}`,
       '  npm install',
       '  npm run dev',
       '',
@@ -100,13 +100,22 @@ const play: Command = (input) =>
     })
   })
 
+/** `automata mcp`: answers an agent's messages, one JSON line each way, until its input ends. */
+const mcp: Command = () =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const layer = Layer.succeedContext(yield* Effect.context<Ports>())
+    yield* Effect.promise(() => serveMcp(stdinLines(), (line) => Effect.runSync(out.line(line)), layer))
+    return 0
+  })
+
 /** One row per command, so a new command (M4's `ship` and `build`) is one row and one help text. */
 const COMMANDS: Readonly<Record<CommandName, Command>> = {
   create,
   check,
   play,
   replay,
-  mcp: notBuilt('mcp'),
+  mcp,
 }
 
 const run = (args: readonly string[]): Effect.Effect<number, CliError, Ports> =>
@@ -124,6 +133,14 @@ const run = (args: readonly string[]): Effect.Effect<number, CliError, Ports> =>
     if ('version' in parsed) {
       yield* out.line(FRAMEWORK_VERSION)
       return 0
+    }
+    // A word after the folder would be dropped, and the command would quietly work on another folder: a name with a
+    // space typed without quotes is the usual way to get here.
+    if (parsed.rest.length > 0) {
+      yield* out.error(
+        `automata ${parsed.command} takes one folder, but more words came after "${parsed.folder}": ${parsed.rest.join(' ')}. A folder with a space in its name goes in quotes, like "my games/first one".`,
+      )
+      return 2
     }
     return yield* COMMANDS[parsed.command](parsed)
   })
@@ -148,5 +165,11 @@ export async function main(args: readonly string[], layer: Layer.Layer<Ports> = 
     Effect.catchAllCause((cause) => refuse(unplanned(cause))),
     Effect.provide(layer),
   )
-  return Effect.runPromise(program)
+  // `--json` promises one JSON value on stdout and nothing else, so what the game's rules print goes to stderr.
+  const restore = args.includes('--json') ? printToStderr() : undefined
+  try {
+    return await Effect.runPromise(program)
+  } finally {
+    restore?.()
+  }
 }

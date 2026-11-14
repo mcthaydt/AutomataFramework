@@ -1,5 +1,5 @@
 import { Effect } from 'effect'
-import { expect, test } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import { runCheck } from '#src/features/cli/check.ts'
 import { main } from '#src/features/cli/cli.ts'
 import { CliError, type GameCode } from '#src/features/cli/ports.ts'
@@ -10,6 +10,8 @@ import {
   codeWith,
   failingHero,
   fasterHero,
+  nobodysPlay,
+  noisyHero,
   RECORDED_CODE,
   recordedPlay,
 } from '../../fixtures/cli/recording.ts'
@@ -180,6 +182,46 @@ test('--json prints each result as data', async () => {
       finalHash: hashOf(text),
     },
   ])
+})
+
+test('--json is the only thing on stdout: what the rules print goes to stderr, and console is put back after', async () => {
+  const memory = await replays(undefined, { code: codeWith([noisyHero]) })
+  const before = console.log
+  const said: string[] = []
+  const spy = vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => {
+    said.push(String(chunk))
+    return true
+  })
+  try {
+    // What matters is where the words went, not the verdict: stdout is one JSON value, the rules' line is on stderr.
+    await play(memory, '--json')
+    expect(said.join('')).toContain('the rules said hello\n')
+    expect(JSON.parse(memory.out.join(''))).toMatchObject([{ file: FILE }])
+    expect(console.log).toBe(before)
+  } finally {
+    spy.mockRestore()
+  }
+})
+
+test("a recording that started with nobody is played with nobody, and one that does not say is player 1's (audit M16)", async () => {
+  const nobody = await nobodysPlay()
+  const empty = await replays({ [FILE]: nobody })
+  expect(await play(empty)).toBe(0)
+  expect(empty.out).toEqual([`${FILE}: Played 120 ticks and ended on ${hashOf(nobody)}, as recorded.`])
+
+  const recorded = JSON.parse(await recordedPlay()) as { meta: Record<string, string> }
+  const unsaid = { ...recorded, meta: { level: 'level-1' } }
+  const one = await replays({ [FILE]: JSON.stringify(unsaid) })
+  expect(await play(one)).toBe(0)
+  expect(one.out[0]).toContain('as recorded.')
+})
+
+test('a recording in a folder under replays/ is named by its path, and found from it', async () => {
+  const text = await recordedPlay()
+  const nested = 'replays/runs/first.json'
+  const memory = await replays({ [nested]: text })
+  expect(await main(['replay', `game/${nested}`], memory.layer)).toBe(0)
+  expect(memory.out).toEqual([`${nested}: Played 300 ticks and ended on ${hashOf(text)}, as recorded.`])
 })
 
 test('--state adds where everything is after the last tick', async () => {

@@ -25,6 +25,7 @@ import {
   type GameContent,
   type Host,
   type LevelJoint,
+  type Locale,
   loadGame,
   type MessagesFile,
   openSettings,
@@ -34,6 +35,7 @@ import {
   type Touch,
   testHost,
   testSpeaker,
+  typed,
   z,
 } from '@automataframework/framework/headless'
 
@@ -102,3 +104,11 @@ export const art: [typeof artFiles, typeof artProblems, typeof loadArt, typeof n
   needsPictures,
   ArtError,
 ]
+
+// The player's language: `typed` is a game's own typed `words`, over its messages file, and a `Locale` is what the
+// game's screens take; both resolve from the tarball alone.
+export const say: (key: 'greeting', values?: Record<string, string>) => string = typed(
+  { messages: { greeting: 'Hello' } },
+  (key) => key,
+)
+export const language: Locale | undefined = undefined

@@ -3,6 +3,7 @@
 // write it again with writeContent, and commit the result.
 import automata from './automata.toml?raw'
 import backdropsValley from './content/backdrops/valley.json?raw'
+import marks from './automata.translations.toml?raw'
 import behavioursCritter from './content/behaviours/critter.json?raw'
 import charactersCrate from './content/characters/crate.json?raw'
 import charactersCritter from './content/characters/critter.json?raw'
@@ -63,6 +64,9 @@ export const fullGameFiles: Record<string, string> = {
   'content/messages/zh.json': messagesZh,
   'content/messages/pt.json': messagesPt,
 }
+
+/** The full game's marks file: not content, so `loadGame` never asks for it and it is not in `fullGameFiles`. */
+export const fullGameMarks: string = marks
 
 /** A `read` over the full game, as `loadGame` takes it. An override replaces a file; `undefined` makes it missing. */
 export function readFullGame(

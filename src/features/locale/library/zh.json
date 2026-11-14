@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "id": "zh",
+  "messages": {
+    "automata.join.full": "人都到齐了。这个游戏最多 {count} 人玩。",
+    "automata.join.no-shared": "这个游戏的键盘不能共用。请用手柄加入。",
+    "automata.join.no-start.many": "这一关最多 {count} 人玩。",
+    "automata.join.no-start.one": "这一关只能一个人玩。",
+    "automata.join.one-player-game": "这个游戏只能一个人玩。",
+    "automata.join.taken.gamepad": "那个手柄已经有玩家了。",
+    "automata.join.taken.keyboard": "键盘已经在共用了。",
+    "automata.online.away.many": "玩家 {players} 掉线了。游戏继续。",
+    "automata.online.away.one": "玩家 {players} 掉线了。游戏继续。",
+    "automata.online.ended.bad-room": "那个房间没能建成。请检查关卡和玩家人数。",
+    "automata.online.ended.different-version": "这个游戏和房间的版本不一样。请刷新页面获取最新版本，然后再加入。",
+    "automata.online.ended.lost": "连接断了，没能恢复。想再玩，请新建或加入一个房间。",
+    "automata.online.ended.no-room": "没有房间用这个代码。请检查代码再试一次。",
+    "automata.online.ended.no-server": "连不上游戏服务器。请检查网络再试一次。",
+    "automata.online.ended.room-full": "那个房间满了。请新建一个房间，或者要一个别的代码。",
+    "automata.online.ended.server-full": "服务器现在没有位置再开一个房间。请一分钟后再试。",
+    "automata.online.reconnecting": "连接断了。正在帮你重新进入。",
+    "automata.online.waiting.many": "还差 {count} 位玩家。把这个代码告诉朋友们，让他们加入：{code}",
+    "automata.online.waiting.one": "还差 1 位玩家。把这个代码告诉朋友，让他加入：{code}",
+    "automata.touch.label": "触屏按键"
+  }
+}

@@ -38,6 +38,18 @@ test('a command with --help prints its own help', async () => {
   expect(memory.out[0]).toContain('--only <step>  Run one step.')
 })
 
+test('automata mcp --help says what an agent’s program does with it', async () => {
+  const memory = memoryLayer({})
+  expect(await main(['mcp', '--help'], memory.layer)).toBe(0)
+  expect(memory.out).toEqual([
+    `automata mcp
+
+Lets an agent use automata's commands as tools, over the Model Context Protocol. An agent's own program starts
+this; it waits for messages and prints nothing a person reads. A game made by automata create is already set up
+for it, in .mcp.json.`,
+  ])
+})
+
 test('automata --version prints the framework version', async () => {
   const memory = memoryLayer({})
   expect(await main(['--version'], memory.layer)).toBe(0)
@@ -65,4 +77,13 @@ test('an error nobody planned for is reported, not thrown', async () => {
   expect(memory.err).toHaveLength(1)
   expect(memory.err[0]).toMatch(/^Something went wrong inside automata\. Please report this:\n/)
   expect(memory.err[0]).toContain('the pipe broke')
+})
+
+test('words after the folder are refused, not dropped: a name with a space needs quotes', async () => {
+  const memory = memoryLayer({})
+  expect(await main(['check', 'my', 'game'], memory.layer)).toBe(2)
+  expect(memory.err).toEqual([
+    'automata check takes one folder, but more words came after "my": game. A folder with a space in its name goes in quotes, like "my games/first one".',
+  ])
+  expect(memory.out).toEqual([])
 })
