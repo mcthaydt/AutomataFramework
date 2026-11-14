@@ -221,4 +221,3 @@ test('a character with no clips cannot play one', async () =>
   expect(await gameProblems(inGame(withClip('talk')))).toEqual([
     `${file}: actors[0].clip: The character "keeper" has no clips, so it cannot play "talk". Give it clips, or remove "clip".`,
   ]))
-

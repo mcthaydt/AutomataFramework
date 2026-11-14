@@ -8,6 +8,7 @@ export { Mind } from './mind.ts'
 export { levelPlugin } from './plugin.ts'
 export { simContent } from './sim-content.ts'
 export { LevelError, spawnLevel } from './spawn-level.ts'
+export { Sprite, setClip, setFacing, spritesPlugin } from './sprite.ts'
 export { startConversation, startCutscene, storyPlugin, usesStory } from './story.ts'
 export { type SceneView, sceneOf, storyOfReplay, storyProgress, type TalkView, talkOf } from './story-read.ts'
 export {
@@ -30,7 +31,6 @@ export {
   skipCommand,
   TALK_REACH,
 } from './story-state.ts'
-export { Sprite, setClip, setFacing, spritesPlugin } from './sprite.ts'
 export { choosePlace, nextPlace, openAt, type TalkPlace } from './talk.ts'
 export { levelSize, type TileBox, type TileRun, tileBoxes, tileRuns } from './tile-runs.ts'
 export { type ActorPlace, actorsAt, cameraAt, linesAt, type SceneCamera } from './timeline.ts'

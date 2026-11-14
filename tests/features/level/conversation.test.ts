@@ -349,11 +349,11 @@ test('walking up to the keeper opens the conversation, once, and not again after
     [opened + 10]: [nextCommand(opened + 10, 1, 0)],
   })
   const heard = run(sim, opened + 20, answers)
-  expect(Object.values(heard).flat().map((e) => e.type)).toEqual([
-    'conversation.chosen',
-    'conversation.said',
-    'conversation.ended',
-  ])
+  expect(
+    Object.values(heard)
+      .flat()
+      .map((e) => e.type),
+  ).toEqual(['conversation.chosen', 'conversation.said', 'conversation.ended'])
   expect(sim.resource(Story).ended).toEqual({ keeper: 'tip' })
   // Heard once: the hero may stand there, walk away and come back, and the keeper stays quiet.
   const left = at({ [opened + 20]: [controlsCommand(opened + 20, 1, 1, ['left'])] })
