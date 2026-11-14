@@ -339,7 +339,8 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
         expect(await flags.count()).toBe(6)
         expect(await page.locator('.automata-flag[aria-pressed="true"]').count(), 'none is chosen').toBe(0)
         expect(((await page.locator('.automata-picker').textContent()) ?? '').trim(), 'no letters').toBe('')
-        await go.click()
+        // Go says it is disabled, so Playwright is told to press it anyway: a person's finger would.
+        await go.click({ force: true })
         expect(await go.isVisible(), 'Go does nothing before a flag is chosen').toBe(true)
         expect(await tickOf(page)).toBe(-1)
 
