@@ -5,8 +5,14 @@
 import { type Frames, pageFrames } from '../../lib/frames.ts'
 import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
-import type { PadLike } from '../input/gamepad.ts'
-import { type Claim, type Controls, checkControls, createInput, type Input } from '../input/input.ts'
+import {
+  type Claim,
+  type Controls,
+  checkControls,
+  createInput,
+  type Input,
+  type PadLike,
+} from '../input/input.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import { createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'

@@ -111,18 +111,19 @@ test('two people share the keyboard', async () => {
   game = g
   expect(g.addPlayer('keyboard')).toEqual({ ok: true, player: 2 })
   run(frames, 5)
+  // The second person's key first: that hero runs away from the first, so the two never push each other.
   const before = [heroOf(g, 1).x, heroOf(g, 2).x]
-  key('keydown', 'KeyD')
-  run(frames, 60)
-  expect(heroOf(g, 1).x).toBeGreaterThan((before[0] ?? 0) + 1)
-  expect(heroOf(g, 2).x).toBeCloseTo(before[1] ?? 0, 1)
-  key('keyup', 'KeyD')
-  run(frames, 5)
-  const middle = heroOf(g, 1).x
   key('keydown', 'ArrowRight')
-  run(frames, 60)
+  run(frames, 30)
   expect(heroOf(g, 2).x).toBeGreaterThan((before[1] ?? 0) + 1)
-  expect(heroOf(g, 1).x).toBeCloseTo(middle, 1)
+  expect(heroOf(g, 1).x).toBeCloseTo(before[0] ?? 0, 1)
+  key('keyup', 'ArrowRight')
+  run(frames, 5)
+  const middle = heroOf(g, 2).x
+  key('keydown', 'KeyD')
+  run(frames, 20)
+  expect(heroOf(g, 1).x).toBeGreaterThan((before[0] ?? 0) + 1)
+  expect(heroOf(g, 2).x).toBeCloseTo(middle, 1)
 })
 
 test('four can play, and a fifth is told the game is full', async () => {
