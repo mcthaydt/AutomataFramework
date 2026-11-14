@@ -29,6 +29,7 @@ function pretend(initial: Record<number, Pretend>, options?: { joints?: boolean 
   const jointSid = new Map<number, number>()
   const liveBodies = new Set<number>()
   const liveColliders = new Set<number>()
+  const parent = new Map<number, number | undefined>()
   const liveJoints = new Map<number, { a: number; b: number }>()
   const ref = (sid: number): EntityRef | undefined => {
     const p = things.get(sid)
@@ -81,19 +82,20 @@ function pretend(initial: Record<number, Pretend>, options?: { joints?: boolean 
       log.push(`createCollider ${e.sid}`)
       const handle = nextBody--
       liveColliders.add(handle)
-      void body
+      parent.set(handle, body)
       return handle
     },
     removeBody: (_: unknown, handle: number) => {
       log.push(`removeBody ${bodySid.get(handle)}`)
       liveBodies.delete(handle)
+      for (const [collider, owner] of parent) if (owner === handle) liveColliders.delete(collider)
     },
     removeCollider: () => {},
     updateBody: () => {},
     colliderMatches: () => true,
     updateLoneCollider: () => {},
     isSensor: () => false,
-    colliderParent: () => undefined,
+    colliderParent: (_: unknown, collider: number) => parent.get(collider),
     createJoint: (_: unknown, spec: { ax: number; a: number; b: number }, bodyA: number, bodyB: number) => {
       log.push(`createJoint ${spec.ax}`)
       const handle = nextJoint--
