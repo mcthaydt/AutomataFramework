@@ -94,7 +94,6 @@ async function expectPlayed(g: Game): Promise<void> {
     again.dispose()
   }
 }
-}
 
 test.each([
   [390, 844],
