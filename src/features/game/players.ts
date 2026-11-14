@@ -1,13 +1,15 @@
 // Who is playing a running game, and how people come and go. A new player is a `join` command in the next step, and a
 // leaving one a `leave` command, so a replay records both; this file only decides whether the answer is yes, and keeps
 // the input told who is in. The sim decides everything else.
+import type { Words } from '../../lib/message.ts'
 import { MAX_PLAYERS, type Sequence } from '../commands/commands.ts'
 import type { GameContent } from '../content/content.ts'
 import type { Claim, Input } from '../input/input.ts'
 import { joinCommand, leaveCommand, playersIn } from '../level/level.ts'
+import { frameworkWords } from '../locale/locale.ts'
 import type { Command, Sim } from '../sim/sim.ts'
 
-/** The answer to `addPlayer`: the new player's number, or why not, in words for the person. */
+/** The answer to `addPlayer`: the new player's number, or why not, in the player's words (`GameOptions.locale`). */
 export type JoinAnswer =
   | { readonly ok: true; readonly player: number }
   | {
@@ -37,8 +39,11 @@ export function createPlayers(options: {
   readonly sequence: Sequence
   /** Whether the controls have keys for two people on one keyboard. */
   readonly canShare: boolean
+  /** The words a refusal is said in, read when the answer is made. Default: English. */
+  readonly words?: Words
 }): Players {
   const { sim, content, input, sequence } = options
+  const words = options.words ?? frameworkWords('en')
   const most = Math.min(content.project.players ?? 1, MAX_PLAYERS)
   const starts = content.levels[options.level]?.starts.map((start) => start.player) ?? []
   // Asked for, and not yet in the sim: joins that will be sent next step, and leaves.
@@ -59,7 +64,8 @@ export function createPlayers(options: {
   return {
     players: () => playersIn(sim),
     addPlayer(claim) {
-      if (most < 2) return { ok: false, reason: 'one-player-game', message: 'This game is for one player.' }
+      if (most < 2)
+        return { ok: false, reason: 'one-player-game', message: words('automata.join.one-player-game') }
       const inside = new Set(eventually())
       // A number is free once its hero is gone, not just once a `leave` for it is queued: a `join` for a number whose
       // hero is still there in the same step is ignored, and the person would be told yes and never arrive.
@@ -71,14 +77,17 @@ export function createPlayers(options: {
         return {
           ok: false,
           reason: 'full',
-          message: `Everyone is in. This game has room for ${most} players.`,
+          message: words('automata.join.full', { count: most }),
         }
       const player = free.find((n) => starts.includes(n))
       if (player === undefined)
         return {
           ok: false,
           reason: 'no-start',
-          message: `This level has room for ${starts.length === 1 ? 'one player' : `${starts.length} players`}.`,
+          message:
+            starts.length === 1
+              ? words('automata.join.no-start.one')
+              : words('automata.join.no-start.many', { count: starts.length }),
         }
       // Taken by a joiner whose `join` is still queued, or by anyone the input says holds it, whoever gave it to them
       // (`addPlayer`, or `game.input.claim` for a game started with several players).
@@ -93,14 +102,13 @@ export function createPlayers(options: {
         return {
           ok: false,
           reason: 'taken',
-          message:
-            claim === 'keyboard' ? 'The keyboard is already shared.' : 'That gamepad already has a player.',
+          message: words(`automata.join.taken.${claim === 'keyboard' ? 'keyboard' : 'gamepad'}`),
         }
       if (claim === 'keyboard' && !options.canShare)
         return {
           ok: false,
           reason: 'no-shared',
-          message: "This game's keys cannot be shared. Join with a gamepad.",
+          message: words('automata.join.no-shared'),
         }
       claimed.set(player, claim)
       input.claim(player, claim)

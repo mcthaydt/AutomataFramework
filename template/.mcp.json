@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "automata": {
+      "command": "node",
+      "args": ["node_modules/@automataframework/framework/dist/cli.js", "mcp"]
+    }
+  }
+}

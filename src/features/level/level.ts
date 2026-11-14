@@ -30,8 +30,9 @@ export {
   skipCommand,
   TALK_REACH,
 } from './story-state.ts'
+export { Sprite, setClip, setFacing, spritesPlugin } from './sprite.ts'
 export { choosePlace, nextPlace, openAt, type TalkPlace } from './talk.ts'
-export { levelSize, type TileRun, tileRuns } from './tile-runs.ts'
+export { levelSize, type TileBox, type TileRun, tileBoxes, tileRuns } from './tile-runs.ts'
 export { type ActorPlace, actorsAt, cameraAt, linesAt, type SceneCamera } from './timeline.ts'
 export { type Touch, touchEvent, touchPlugin } from './touch.ts'
-export { touchKinds, usesJoints } from './uses.ts'
+export { touchKinds, usesJoints, usesSprites } from './uses.ts'

@@ -15,7 +15,7 @@ test('the workflow as a whole can only read the repository', () => {
 test('only the screens job may write, and only after the engines made the pictures', () => {
   expect(jobs.match(/contents: write/g)).toHaveLength(1)
   expect(screens).toMatch(/^ {6}contents: write$/m)
-  expect(screens).toMatch(/needs: \[engines, online\]/)
+  expect(screens).toMatch(/needs: \[engines, online, create-play\]/)
   expect(screens).toContain('if: always() &&')
 })
 
@@ -34,6 +34,12 @@ test('the package job copies the full game, so the packed install loads every ki
   expect(pack).toContain('cp -r tests/fixtures/full-game "$smoke/full-game"')
 })
 
+test("the package job copies the art golden and the plain hash, so the packed install checks the full game's pictures", () => {
+  const pack = jobs.slice(jobs.indexOf('\n  package:'))
+  expect(pack).toContain('tests/golden/art.json')
+  expect(pack).toContain('tests/fixtures/xxhash64-reference.ts')
+})
+
 test('the package job copies the playground and its golden, so the packed install loads ropes and touch', () => {
   const pack = jobs.slice(jobs.indexOf('\n  package:'))
   expect(pack).toContain('cp -r tests/fixtures/playground "$smoke/playground"')
@@ -44,4 +50,10 @@ test('the package job copies the story game and its golden, so the packed instal
   const pack = jobs.slice(jobs.indexOf('\n  package:'))
   expect(pack).toContain('cp -r tests/fixtures/story "$smoke/story"')
   expect(pack).toContain('tests/golden/story.json')
+})
+
+test('the package job also typechecks the consumer with TypeScript 6 and NodeNext, and checks what the tarball holds', () => {
+  const pack = jobs.slice(jobs.indexOf('\n  package:'))
+  expect(pack).toContain('node "$GITHUB_WORKSPACE/node_modules/typescript-6/bin/tsc" -p tsconfig.ts6.json')
+  expect(pack).toContain('node tests/install/tarball.mjs "$RUNNER_TEMP"/pack/*.tgz')
 })

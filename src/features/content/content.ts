@@ -1,6 +1,14 @@
 // The content feature: every kind of content file, read into values with plain problems and written one way.
 // Nothing here touches a file; callers hand in text and take text back.
 
+export { type ArtFile, artFiles, artProblems, paintedPath } from './art.ts'
+export {
+  type BackdropFile,
+  type BackdropLayer,
+  type BackdropProp,
+  BackdropSchema,
+  type LayerKind,
+} from './backdrop.ts'
 export {
   type Act,
   type BehaviourFile,
@@ -8,7 +16,7 @@ export {
   BehaviourSchema,
   type Sense,
 } from './behaviour.ts'
-export { type Character, type CharacterInput, CharacterSchema } from './character.ts'
+export { type Character, type CharacterInput, CharacterSchema, type Clip } from './character.ts'
 export { CONTENT_TYPES, type ContentType, type ContentValue } from './content-types.ts'
 export {
   type Choice as ConversationChoice,
@@ -34,6 +42,15 @@ export {
 } from './cutscene.ts'
 export { type Diagnostic, formatDiagnostic } from './diagnostics.ts'
 export { type Dust, type FeelFile, FeelSchema, type Freeze, type Shake } from './feel.ts'
+export {
+  type FigureFile,
+  type FigureMove,
+  type FigurePaint,
+  type FigurePart,
+  type FigurePose,
+  FigureSchema,
+  type FigureVariant,
+} from './figure.ts'
 export { Id } from './ids.ts'
 export { jsonSchemaFor } from './json-schema.ts'
 export {
@@ -43,9 +60,17 @@ export {
   LevelSchema,
   type LevelStart,
   type LevelThing,
+  type LevelView,
 } from './level.ts'
 export { type GameContent, loadGame } from './load.ts'
-export { LANGUAGES, type Language, type MessagesFile, MessagesSchema } from './messages.ts'
+export {
+  LANGUAGES,
+  type Language,
+  languageName,
+  type MessagesFile,
+  MessagesSchema,
+  placeholdersOf,
+} from './messages.ts'
 export {
   type DrumPart,
   MAX_STEPS,
@@ -54,8 +79,28 @@ export {
   MusicSchema,
   type TonePart,
 } from './music.ts'
+export { paintBackdrop } from './paint-backdrop.ts'
+export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'
 export { type ContentRef, PROJECT_FILE, type Project, ProjectSchema, parseProject } from './project.ts'
+export {
+  markRead,
+  parseReadMarks,
+  READ_MARKS_FILE,
+  type ReadMarks,
+  readMark,
+  unreadWords,
+  writeReadMarks,
+} from './read-marks.ts'
+export {
+  type Atlas,
+  atlasOf,
+  backdropSheet,
+  type Frame,
+  figureSheet,
+  SHEET_COLUMNS,
+  type Sheet,
+} from './sheet.ts'
 export {
   type NoiseVoice,
   type SoundFile,
@@ -65,6 +110,7 @@ export {
   type Wave,
 } from './sound.ts'
 export { type TileKind, type TilePicture, type TilesetFile, TilesetSchema, type TileWhen } from './tileset.ts'
+export { translationProblems } from './translations.ts'
 export {
   type SharedKeys,
   type TuningControl,

@@ -1,5 +1,12 @@
 import { expect, test } from 'vitest'
-import { LANGUAGES, loadGame, parseContent, writeContent } from '#src/features/content/content.ts'
+import {
+  LANGUAGES,
+  languageName,
+  loadGame,
+  parseContent,
+  placeholdersOf,
+  writeContent,
+} from '#src/features/content/content.ts'
 import { expectRoundTrip, gameProblems, problemsOf, readFiles } from '../../fixtures/content/kind.ts'
 import { english, keeperTalk, storyGame } from '../../fixtures/content/story.ts'
 
@@ -158,3 +165,37 @@ test('a conversation line named like something every object has is reported when
   ])
   expect((await loadGame(readFiles(files))).ok).toBe(false)
 })
+
+test('the names in a text, each once, in order', () =>
+  expect(placeholdersOf('Waiting for {count} more. Code: {code}. {count}!')).toEqual(['count', 'code']))
+
+test('what is not a name is not one', () => {
+  for (const text of [
+    '{}',
+    '{ count }',
+    '{Count}',
+    '{1st}',
+    '{count',
+    'count}',
+    '{a-b}',
+    `{${'a'.repeat(33)}}`,
+  ])
+    expect(placeholdersOf(text), text).toEqual([])
+  expect(placeholdersOf(`{${'a'.repeat(32)}}`)).toEqual(['a'.repeat(32)])
+})
+
+test('a text of 2000 braces is read without trouble', () => {
+  expect(placeholdersOf('{'.repeat(2000))).toEqual([])
+  expect(placeholdersOf(`${'{'.repeat(2000)}x`)).toEqual([])
+  expect(placeholdersOf(`${'{'.repeat(2000)}x}`)).toEqual(['x'])
+})
+
+test('each language has an English name', () =>
+  expect(LANGUAGES.map(languageName)).toEqual([
+    'English',
+    'Spanish',
+    'Korean',
+    'Japanese',
+    'Chinese',
+    'Portuguese',
+  ]))

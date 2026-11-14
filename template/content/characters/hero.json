@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "hero",
+  "body": "dynamic",
+  "size": {
+    "w": 0.8,
+    "h": 1
+  },
+  "color": "#e4572e",
+  "upright": true
+}

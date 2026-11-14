@@ -2,11 +2,16 @@
 // stepping it 60 ticks with no game code, then loading the full game (every kind of content file, as `full-game/`) and
 // reading every kind's schema, then loading the playground (ropes, a seesaw, a spark and a door) and stepping it. CI copies this file, the fixture games and the golden beside it. It exits non-zero unless
 // the hash is the one the sim, in every engine, ends on.
-import { readFile } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import {
+  artFiles,
+  artProblems,
   CONTENT_TYPES,
   createAudio,
   createGameSim,
+  createLocale,
   createSaves,
   defineSave,
   formatDiagnostic,
@@ -14,9 +19,11 @@ import {
   openSettings,
   testHost,
   testSpeaker,
+  translationProblems,
   z,
 } from '@automataframework/framework/headless'
 import { createRoomServer, runRoomServer } from '@automataframework/framework/server'
+import { xxhash64Reference } from './xxhash64-reference.ts'
 
 // The server entry loads under plain Node (it carries its own Rapier), and exports what a game's server file calls.
 if (typeof createRoomServer !== 'function' || typeof runRoomServer !== 'function') {
@@ -73,6 +80,30 @@ if (!full.ok) {
   for (const problem of full.diagnostics) console.error(formatDiagnostic(problem))
   process.exit(1)
 }
+// Art, from the packed package alone: the full game's figures and backdrop are painted, and each file is the very bytes
+// recorded in art.json (hashed with a plain BigInt xxhash64 of the tests' own, so the package is not checked by itself).
+// Written into a folder, they are what `automata art` would leave, so the check finds nothing wrong with them.
+const painted = artFiles(full.value)
+const recordedArt = JSON.parse(await readFile(here('art.json'), 'utf8'))
+for (const file of painted) {
+  const got = xxhash64Reference(file.bytes).toString(16).padStart(16, '0')
+  if (got !== recordedArt[file.path]) {
+    console.error(
+      `The installed package painted ${file.path} as ${got}, but the golden says ${recordedArt[file.path]}.`,
+    )
+    process.exit(1)
+  }
+  await mkdir(new URL('.', here(`art/${file.path}`)), { recursive: true })
+  await writeFile(here(`art/${file.path}`), file.bytes)
+}
+const stale = await artProblems(full.value, (path) => readFile(here(`art/${path}`)))
+if (painted.length === 0 || stale.length > 0) {
+  for (const problem of stale) console.error(formatDiagnostic(problem))
+  console.error('The installed package did not paint the full game as a game keeps it.')
+  process.exit(1)
+}
+console.log(`The installed package painted ${painted.length} files, each as recorded.`)
+
 // Rapier's code is inside the package, so its licence has to be there to read and ship.
 const rapierLicence = await readFile(
   new URL(import.meta.resolve('@automataframework/framework/rapier.LICENSE')),
@@ -119,6 +150,25 @@ console.log(
   `The installed package loaded the full game with ${kinds.length} kinds of file and has every schema.`,
 )
 
+// The player's language, from the packed package alone: a device that says Japanese is greeted in Japanese, from the
+// full game's own words, and every word of the full game is written in every language.
+const languageHost = testHost({ deviceLanguages: ['ja-JP'] })
+const locale = createLocale({
+  content: full.value,
+  host: languageHost,
+  settings: await openSettings({ game: 'smoke-language', store: languageHost.store }),
+})
+if (locale.language() !== 'ja' || locale.words('keeper.hello') !== 'こんにちは！') {
+  console.error('The installed package did not greet a Japanese device in Japanese.')
+  process.exit(1)
+}
+const untranslated = translationProblems(full.value)
+if (untranslated.length > 0) {
+  for (const problem of untranslated) console.error(formatDiagnostic(problem))
+  process.exit(1)
+}
+console.log('The installed package spoke Japanese and found every word translated.')
+
 // The playground has pins, ropes and touched characters, which switch on joints and the touch plugin in the sim.
 const playground = await loadGame((path) => readFile(here(`playground/${path}`), 'utf8'))
 if (!playground.ok) {
@@ -157,3 +207,26 @@ if (toldHash !== storied.idleHash60) {
   process.exit(1)
 }
 console.log(`The installed package ran the story game 60 ticks and ended on ${toldHash}, as recorded.`)
+
+// The `automata` command is the package's bin: npm links it into node_modules/.bin, and it prints the installed version.
+const windows = process.platform === 'win32'
+const installed = JSON.parse(
+  await readFile(here('node_modules/@automataframework/framework/package.json'), 'utf8'),
+)
+const bin = fileURLToPath(here(`node_modules/.bin/automata${windows ? '.cmd' : ''}`))
+const said = execFileSync(bin, ['--version'], { encoding: 'utf8', shell: windows }).trim()
+if (said !== installed.version) {
+  console.error(`automata --version said "${said}", but the installed package is ${installed.version}.`)
+  process.exit(1)
+}
+console.log(`The installed package has the automata command, version ${said}.`)
+
+// A game's own TypeScript is loaded as it is, with nothing to build: the command runs a game's rules this way, so Node
+// has to take the types out itself. If this fails, the command cannot work in a game, and nothing built on it should.
+await mkdir(here('probe'), { recursive: true })
+await writeFile(here('probe/rules.ts'), 'export const answer: number = 42\n')
+if ((await import('./probe/rules.ts')).answer !== 42) {
+  console.error("Node did not load a game's TypeScript file as it is.")
+  process.exit(1)
+}
+console.log("Node loads a game's TypeScript as it is.")

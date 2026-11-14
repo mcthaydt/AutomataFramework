@@ -393,3 +393,24 @@ test('each tick predicted for the first time is a step of its own, with its own 
   // The same events as the flat list, in the same order.
   expect(steps.flatMap((s) => s.events)).toEqual(events)
 })
+
+test('a page whose frames are longer than its lead still counts the guesses the room put right', async () => {
+  // The online journey's flake (job 132443000203): a page drawing a frame only every few ticks confirms more ticks in
+  // one go than it had guessed ahead, so the old count, "was the guess still ahead once everything was confirmed",
+  // never saw a guess that was put right. Here player one's page advances every third tick, with the lead it starts
+  // with (2), while player two's keys change every other tick, so some of them land on ticks player one had guessed.
+  const r = await room([ONE, ONE])
+  const [one, two] = r.players as [Player1, Player1]
+  r.wire.pump() // the room's `seat` and `start` arrive
+  for (let i = 0; i < 120; i++) {
+    r.wire.pump()
+    r.engine.step()
+    const change = i >= 20 && i < 32 && i % 2 === 0
+    two.session.advance(change ? [{ type: 'controls', payload: { held: i % 4 === 0 ? ['left'] : [] } }] : [])
+    if (i % 3 === 2) one.session.advance([])
+  }
+  expect(one.session.stats().lead).toBe(START_LEAD)
+  expect(one.session.stats().rollbacks).toBeGreaterThan(0)
+  r.drain()
+  expect(one.confirmed.hash()).toBe(r.engineSim.hash())
+})

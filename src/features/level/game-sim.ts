@@ -7,10 +7,11 @@ import { joinPlugin } from './join.ts'
 import { levelPlugin } from './plugin.ts'
 import { simContent } from './sim-content.ts'
 import { spawnLevel } from './spawn-level.ts'
+import { spritesPlugin } from './sprite.ts'
 import { storyPlugin, usesStory } from './story.ts'
 import { Story, type StoryProgress } from './story-state.ts'
 import { touchPlugin } from './touch.ts'
-import { touchKinds, usesJoints } from './uses.ts'
+import { touchKinds, usesJoints, usesSprites } from './uses.ts'
 
 /** What `createGameSim` takes. Only the content is required. */
 export interface GameSimOptions {
@@ -34,9 +35,10 @@ export interface GameSimOptions {
 
 /**
  * The sim a game runs: physics, commands, the level plugin and the game's own plugins, with the level spawned, at
- * tick 0. The content goes into the sim, but not its sound, music and cue files (`simContent`), so it is part of
- * `contentHash` and a replay knows if it changed, except for what a game sounds like. If the level cannot be
- * spawned, the sim is disposed and the `LevelError` is thrown.
+ * tick 0. The content goes into the sim, so it is part of `contentHash` and a replay knows if it changed, but not the
+ * game's words or its sound, music and cue files (see `simContent`), so a replay does not notice what a game says or
+ * sounds like. The level is spawned from the whole content. If the level cannot be spawned, the sim is disposed and the
+ * `LevelError` is thrown.
  */
 export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const { content } = options
@@ -51,6 +53,8 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
       levelPlugin,
       // Only a game for two or more players can have people join and leave (see join.ts).
       ...(players >= 2 ? [joinPlugin({ level: options.level ?? content.project.start, max: players })] : []),
+      // Only a game with a figure or a camera has sprites, so every other game keeps the sim it had.
+      ...(usesSprites(content) ? [spritesPlugin] : []),
       // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
       ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
       // Only a game with a character that has a behaviour gets the rules' system, for the same reason.

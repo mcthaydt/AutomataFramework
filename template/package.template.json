@@ -1,0 +1,26 @@
+{
+  "name": "my-game",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.21.0"
+  },
+  "scripts": {
+    "dev": "automata play",
+    "check": "automata check",
+    "fix": "automata check --fix",
+    "accept": "automata replay --accept",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@automataframework/framework": "0.0.0-template"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "24.19.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
+  }
+}

@@ -4,6 +4,7 @@
 import { type Host, isOpenableLink, type LinkAnswer } from '../host/host.ts'
 import { webStore } from './storage.ts'
 
+export { followLanguage } from './lang.ts'
 export { NOTICE_PROPERTIES, soundNotice } from './notice.ts'
 export { type SpeakerSeams, webSpeaker } from './speaker.ts'
 export { playVoice } from './voices.ts'

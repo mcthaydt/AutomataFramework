@@ -230,9 +230,15 @@ export function createSession(setup: SessionSetup): Session {
     }
   }
 
-  /** Takes the room's ticks that are waiting. Returns whether `predicted` no longer matches. */
-  function confirmWaiting(): boolean {
+  /**
+   * Takes the room's ticks that are waiting. Says whether `predicted` no longer matches (`wrong`), and whether that is
+   * because a tick it had already guessed holds other commands in the room (`putRight`): a rollback. The second is
+   * asked of each tick as it is confirmed, because a page slower than its lead confirms past its own guess in one
+   * batch, and by the end of the batch nothing is left ahead to show that the guess was wrong.
+   */
+  function confirmWaiting(): { wrong: boolean; putRight: boolean } {
     let wrong = false
+    let putRight = false
     let taken = 0
     while (!syncing && taken < MAX_CONFIRM_PER_ADVANCE && inbox.length > 0) {
       const m = inbox[0] as TickMessage
@@ -274,14 +280,17 @@ export function createSession(setup: SessionSetup): Session {
         lead--
         calm = 0
       }
-      if (predicted.tick <= m.tick || !sameCommands(m.commands, predictedAt.get(m.tick) ?? [])) wrong = true
+      const guessed = predictedAt.get(m.tick)
+      const same = sameCommands(m.commands, guessed ?? [])
+      if (guessed !== undefined && !same) putRight = true
+      if (predicted.tick <= m.tick || !same) wrong = true
       predictedAt.delete(m.tick)
     }
     // A command so old that its tick is far behind the room is given up.
     for (let i = pending.length - 1; i >= 0; i--) {
       if ((pending[i] as Pending).tick + 2 * MAX_LEAD_TICKS < confirmed.tick) pending.splice(i, 1)
     }
-    return wrong
+    return { wrong, putRight }
   }
 
   return {
@@ -308,13 +317,14 @@ export function createSession(setup: SessionSetup): Session {
       if (!started || seat === undefined) return out
 
       if (!syncing && inbox.length > SYNC_BEHIND) requestSync()
-      if (confirmWaiting()) {
+      const confirming = confirmWaiting()
+      if (confirming.wrong) {
         // Put `predicted` back on the confirmed state and step it up to where it was, on what is still unconfirmed.
         const was = predicted.tick
         predicted.restore(confirmed.snapshot())
         predictedAt.clear()
         for (const p of pending) p.stepped = false
-        if (was > confirmed.tick) counts.rollbacks++
+        if (confirming.putRight) counts.rollbacks++
         for (let t = confirmed.tick; t < was; t++) stepPredicted(t, false, out)
       }
 

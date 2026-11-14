@@ -1,0 +1,175 @@
+// The `automata` command's entry: the words are read (`args.ts`), the command's row in the table runs as an Effect over
+// the ports (`ports.ts`), and the answer is the exit status: 0 everything is fine, 1 the game has something to fix, 2 the
+// command could not do its work. Nothing here prints a stack trace: a person gets a sentence.
+import { Cause, Effect, Layer } from 'effect'
+import { FRAMEWORK_VERSION } from '../sim/sim.ts'
+import { type CommandInput, type CommandName, parseArgs } from './args.ts'
+import { runCheck } from './check.ts'
+import { createGame, nameOf } from './create.ts'
+import { helpFor } from './help.ts'
+import { liveLayer, stdinLines } from './live.ts'
+import { serveMcp } from './mcp.ts'
+import { runPlay } from './play.ts'
+import { CliError, Out, type OutService, type Ports } from './ports.ts'
+import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
+import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
+import { printToStderr } from './stderr.ts'
+
+type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
+
+/** `automata check`: the steps' report, as words or as JSON, and the exit status the report gives. */
+const check: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const { only, fix, json } = input.flags
+    const step = STEP_NAMES.find((name) => name === only)
+    if (only !== undefined && step === undefined)
+      return yield* Effect.fail(
+        new CliError(`There is no step called "${String(only)}". The steps are: ${STEP_NAMES.join(', ')}.`),
+      )
+    const report = yield* runCheck({
+      folder: input.folder ?? '.',
+      ...(step === undefined ? {} : { only: step }),
+      fix: fix === true,
+    })
+    yield* out.line(json === true ? JSON.stringify(report, null, 2) : formatReport(report))
+    return exitCodeOf(report)
+  })
+
+/** `automata replay`: each recording played to its hash (or recorded again), as words or as JSON. */
+const replay: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const { folder, file } = replayTarget(input.folder ?? '.')
+    const results = yield* runReplays({
+      folder,
+      ...(file === undefined ? {} : { file }),
+      accept: input.flags.accept === true,
+      state: input.flags.state === true,
+    })
+    if (input.flags.json === true) yield* out.line(JSON.stringify(results, null, 2))
+    else if (results.length === 0) yield* out.line(NO_RECORDINGS)
+    else for (const result of results) yield* out.line(describeResult(result))
+    return replayExitCode(results)
+  })
+
+/** A folder as a person can paste it after `cd`: in quotes when it has a space or a quote in it. */
+const shellWord = (word: string): string =>
+  /^[\w@%+=:,./\\-]+$/.test(word) ? word : `"${word.replaceAll('"', '\\"')}"`
+
+/** `automata create <name>`: a new game, and what to type next. */
+const create: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    if (input.folder === undefined)
+      return yield* Effect.fail(new CliError('Give the new game a name: automata create my-game'))
+    const { framework } = input.flags
+    const made = yield* createGame({
+      folder: input.folder,
+      ...(typeof framework === 'string' ? { framework } : {}),
+    })
+    if (input.flags.json === true) {
+      yield* out.line(JSON.stringify(made, null, 2))
+      return 0
+    }
+    for (const line of [
+      `Made ${nameOf(input.folder)}.`,
+      '',
+      'Next:',
+      `  cd ${shellWord(made.folder)}`,
+      '  npm install',
+      '  npm run dev',
+      '',
+      'npm run check says whether the game is sound. AGENTS.md tells an agent where everything is.',
+    ])
+      yield* out.line(line)
+    return 0
+  })
+
+/** `automata play`: the game in a browser, until Ctrl+C. */
+const play: Command = (input) =>
+  Effect.gen(function* () {
+    const { port } = input.flags
+    const number = typeof port === 'string' ? Number(port) : undefined
+    if (number !== undefined && !(Number.isInteger(number) && number > 0 && number < 65536))
+      return yield* Effect.fail(new CliError('--port needs a number, like --port 4000.'))
+    return yield* runPlay({
+      folder: input.folder ?? '.',
+      open: input.flags['no-open'] !== true,
+      ...(number === undefined ? {} : { port: number }),
+    })
+  })
+
+/** `automata mcp`: answers an agent's messages, one JSON line each way, until its input ends. */
+const mcp: Command = () =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const layer = Layer.succeedContext(yield* Effect.context<Ports>())
+    yield* Effect.promise(() => serveMcp(stdinLines(), (line) => Effect.runSync(out.line(line)), layer))
+    return 0
+  })
+
+/** One row per command, so a new command (M4's `ship` and `build`) is one row and one help text. */
+const COMMANDS: Readonly<Record<CommandName, Command>> = {
+  create,
+  check,
+  play,
+  replay,
+  mcp,
+}
+
+const run = (args: readonly string[]): Effect.Effect<number, CliError, Ports> =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const parsed = parseArgs(args)
+    if ('problem' in parsed) {
+      yield* out.error(parsed.problem)
+      return 2
+    }
+    if ('help' in parsed) {
+      yield* out.line(helpFor(parsed.help))
+      return 0
+    }
+    if ('version' in parsed) {
+      yield* out.line(FRAMEWORK_VERSION)
+      return 0
+    }
+    // A word after the folder would be dropped, and the command would quietly work on another folder: a name with a
+    // space typed without quotes is the usual way to get here.
+    if (parsed.rest.length > 0) {
+      yield* out.error(
+        `automata ${parsed.command} takes one folder, but more words came after "${parsed.folder}": ${parsed.rest.join(' ')}. A folder with a space in its name goes in quotes, like "my games/first one".`,
+      )
+      return 2
+    }
+    return yield* COMMANDS[parsed.command](parsed)
+  })
+
+/** Says a sentence on stderr and gives the exit status for a command that could not do its work. */
+const refuse = (sentence: string): Effect.Effect<number, never, OutService> =>
+  Effect.flatMap(Out, (out) => Effect.as(out.error(sentence), 2))
+
+/** What a person reads when something nobody planned for went wrong: a sentence, then the error's own words. */
+const unplanned = (cause: Cause.Cause<unknown>): string => {
+  const reason = Cause.squash(cause)
+  return `Something went wrong inside automata. Please report this:\n${reason instanceof Error ? reason.message : String(reason)}`
+}
+
+/**
+ * Runs `automata <args>` and gives the exit status. `layer` is what the command reaches the world through: the live one
+ * by default, a memory one in a test. An error the command planned for is printed as its sentence and is exit 2.
+ */
+export async function main(args: readonly string[], layer: Layer.Layer<Ports> = liveLayer): Promise<number> {
+  const program = run(args).pipe(
+    Effect.catchAll((error) => refuse(error.message)),
+    Effect.catchAllCause((cause) => refuse(unplanned(cause))),
+    Effect.provide(layer),
+  )
+  // `--json` promises one JSON value on stdout and nothing else, so what the game's rules print goes to stderr.
+  const restore = args.includes('--json') ? printToStderr() : undefined
+  try {
+    return await Effect.runPromise(program)
+  } finally {
+    restore?.()
+  }
+}

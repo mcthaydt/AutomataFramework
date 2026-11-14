@@ -40,6 +40,8 @@ export interface StoryBox {
   press(): void
   /** How many CSS pixels the touch buttons take from the bottom: the box sits above them. */
   setInset(px: number): void
+  /** The words on the two buttons, when the player picks another language. */
+  setWords(words: BoxWords): void
   /** While held (the game is paused) the box stays and its buttons do nothing. */
   setHeld(on: boolean): void
   destroy(): void
@@ -306,6 +308,10 @@ export function createBox(
     press() {
       const b = focused()
       if (b !== undefined) pressButton(b)
+    },
+    setWords(now) {
+      next.textContent = now.next
+      skip.textContent = now.skip
     },
     setInset(px) {
       inset = px

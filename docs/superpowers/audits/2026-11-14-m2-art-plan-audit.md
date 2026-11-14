@@ -62,6 +62,8 @@ size, its `Math.sin` and `Math.cos`, its `@napi-rs/canvas`). Nothing was run.
 
 ## The open format question
 
+*Answered (the Owner, 2026-11-14):* (a), the new small formats. Stage 4 may start; no task waits.
+
 Audited as if the Owner answers (a), the new small formats. What changes under the others:
 
 - **(b), port the old painter.** Most of the plan. The old painter is about 14,600 lines of TypeScript under
@@ -154,6 +156,9 @@ The audit recommends (b): it removes three moving parts at once (a CI job that c
 a change to the Editors' rule) and keeps pictures out of git's history; its cost is that a game's build gains a
 paint step and a picture cannot be seen on GitHub without one. Either way this plan's tasks stand as written: (a) or
 (b) changes plan D, plan K's template and the Editors, not the framework. So it holds nothing here.
+
+*Answered (the Owner, 2026-11-14):* (a). An editor's save writes the pictures too, because people may need to share
+them. Pictures stay committed, plan D's CI job stays, and the plan's "What the other plans rely on" says so.
 
 **I8. The painter's rule guards less than the plan says.** "The same bytes everywhere" is enforced by a new
 `painter-math` rule that bans some `Math` calls. But the `content` feature is not one of `rules.ts`'s pure features

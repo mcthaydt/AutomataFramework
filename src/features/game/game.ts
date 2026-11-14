@@ -16,10 +16,12 @@ import {
   type PadLike,
 } from '../input/input.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf, usesStory } from '../level/level.ts'
-import { createRenderer } from '../render/render.ts'
+import type { Locale } from '../locale/locale.ts'
+import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { type BoxWords, createStoryView, type Words } from '../story/story.ts'
 import { soundNotice } from '../web/web.ts'
+import { levelArt } from './art.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
 
@@ -53,6 +55,19 @@ export interface GameOptions extends GameSimOptions {
    * a game whose own screen says it. Default: the framework's button, "Tap to start the sound".
    */
   readonly soundNotice?: string | false
+  /**
+   * Fetches a picture of the game by its path, like `content/figures/hero.png`. Needed when the game has pictures (a
+   * figure, a tileset or a backdrop): they are loaded and checked before anything is put on the page, and a picture that
+   * is missing, old or the wrong size stops the game with one sentence that says what to run. A game with no pictures
+   * needs none.
+   */
+  readonly readPicture?: ReadPicture
+  /**
+   * The player's language. The touch buttons say `controls.<action>` and `automata.touch.label` in it, a refused
+   * `addPlayer` explains itself in it, and all of them change when the player picks another. Default: English, and each
+   * control's own label.
+   */
+  readonly locale?: Locale
 }
 
 export interface Game {
@@ -68,6 +83,12 @@ export interface Game {
   /** Holds the game still until `resume`. The game is also still while the host says it is not on screen. */
   pause(): void
   resume(): void
+  /**
+   * Every hero as its box on the canvas, in CSS pixels from the mount's top left corner, lowest player first. New after
+   * each draw, so read it after one. Empty in a game whose heroes have no figure and whose levels have no view: the
+   * renderer tells a hero from a crate by the sprite, which such a game does not have.
+   */
+  heroes(): readonly HeroBox[]
   /** The play so far, from tick 0. Not available after `stop`, which disposes the sim. */
   replay(): Replay
   /** Stops the loop, removes the canvas and the controls, and disposes the sim. Safe to call twice. */
@@ -79,7 +100,7 @@ export interface Game {
  * the controls are wrong; if the level cannot be loaded or drawn, nothing is left behind.
  */
 export async function startGame(options: GameOptions): Promise<Game> {
-  const { mount, controls, host, frames = pageFrames } = options
+  const { mount, controls, host, locale, frames = pageFrames } = options
   // First, so a mistake in the controls costs nothing: no sim, no canvas.
   checkControls(controls)
   const sim = await createGameSim(options)
@@ -88,7 +109,24 @@ export async function startGame(options: GameOptions): Promise<Game> {
   try {
     const level = options.content.levels[options.level ?? options.content.project.start]
     if (level === undefined) throw new Error('The level this game opens is missing.')
-    const renderer = await createRenderer({ mount, world: levelSize(level), sky: skyOf(level) })
+    // The pictures first: a game that cannot be drawn leaves nothing on the page.
+    const art = await levelArt(
+      'startGame',
+      options.content,
+      options.level ?? options.content.project.start,
+      options.readPicture,
+    )
+    cleanup = () => {
+      art?.destroy()
+      sim.dispose()
+    }
+    const renderer = await createRenderer({
+      mount,
+      world: levelSize(level),
+      sky: skyOf(level),
+      art,
+      view: level.view,
+    })
     cleanup = () => {
       renderer.destroy()
       sim.dispose()
@@ -100,10 +138,14 @@ export async function startGame(options: GameOptions): Promise<Game> {
       controls,
       frames,
       sequence,
+      ...(locale === undefined ? {} : { words: locale.words }),
       ...(options.settings === undefined ? {} : { settings: options.settings }),
       ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
     })
+    // A new language says the touch buttons again. Stopped with the game.
+    const unfollow = locale?.onChange(() => input.relabel(locale.words))
     cleanup = () => {
+      unfollow?.()
       input.destroy()
       renderer.destroy()
       sim.dispose()
@@ -112,11 +154,24 @@ export async function startGame(options: GameOptions): Promise<Game> {
     renderer.setInset(input.inset())
     input.onInset((px) => renderer.setInset(px))
     input.setPlayers(options.players ?? [1])
-    // A game that continues a story records where it started, so its replay can be played from there (`storyOfReplay`).
-    const recorder = createRecorder(
-      sim,
-      options.story === undefined ? {} : { meta: { story: canonicalJson(options.story) } },
-    )
+    const levelId = options.level ?? options.content.project.start
+    // The level and the players are written into the recording, so `automata replay` can set the same game up. A game
+    // that continues a story also records where it started, so its replay can be played from there (`storyOfReplay`).
+    const recorder = createRecorder(sim, {
+      meta: {
+        level: levelId,
+        players: (options.players ?? [1]).join(','),
+        ...(options.story === undefined ? {} : { story: canonicalJson(options.story) }),
+      },
+    })
+    // The words on the box's two buttons: the game's own, else the player's language.
+    const boxWords = (): BoxWords | undefined =>
+      options.boxWords ??
+      (locale === undefined
+        ? undefined
+        : { next: locale.words('automata.story.next'), skip: locale.words('automata.story.skip') })
+    const words = options.words ?? locale?.words
+    const firstBoxWords = boxWords()
     // A game with a story gets its box; a game without one has nothing of the kind in its page.
     const story = usesStory(options.content)
       ? createStoryView({
@@ -129,13 +184,20 @@ export async function startGame(options: GameOptions): Promise<Game> {
           keysOf: (player) =>
             Object.keys(input.controls()).flatMap((action) => input.inputsFor(player, action)),
           inset: input.inset,
-          ...(options.words === undefined ? {} : { words: options.words }),
-          ...(options.boxWords === undefined ? {} : { boxWords: options.boxWords }),
+          ...(words === undefined ? {} : { words }),
+          ...(firstBoxWords === undefined ? {} : { boxWords: firstBoxWords }),
         })
       : undefined
     if (story !== undefined) {
       const was = cleanup
+      // A new language says the box again, in its own words.
+      const follow = locale?.onChange(() => {
+        const now = boxWords()
+        if (now !== undefined) story.setBoxWords(now)
+        story.update()
+      })
       cleanup = () => {
+        follow?.()
         story.destroy()
         was()
       }
@@ -144,10 +206,11 @@ export async function startGame(options: GameOptions): Promise<Game> {
     const people = createPlayers({
       sim,
       content: options.content,
-      level: options.level ?? options.content.project.start,
+      level: levelId,
       input,
       sequence,
       canShare: Object.values(input.controls()).every((control) => control.shared !== undefined),
+      ...(locale === undefined ? {} : { words: locale.words }),
     })
     const { audio } = options
     const loop = createLoop({
@@ -211,6 +274,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         unsilence = undefined
         sync()
       },
+      heroes: () => renderer.heroes(),
       replay: () => recorder.replay(),
       stop() {
         if (stopped) return

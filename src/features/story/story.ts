@@ -20,7 +20,7 @@ import { type BoxState, createBox, type StoryBox } from './box.ts'
 import { type BoxWords, type Words, wordsOf } from './words.ts'
 
 export { STORY_PROPERTIES } from './box.ts'
-export { type BoxWords, type Words, wordsOf } from './words.ts'
+export type { BoxWords } from './words.ts'
 
 /** What the page holds of the story. */
 export interface StoryView {
@@ -32,6 +32,8 @@ export interface StoryView {
   hold(on: boolean): void
   /** The touch buttons now take `px` from the bottom of the mount: the box sits above them. */
   setInset(px: number): void
+  /** The words on the box's two buttons, when the player picks another language. Call `update()` after it. */
+  setBoxWords(words: BoxWords): void
   destroy(): void
 }
 
@@ -207,6 +209,7 @@ export function createStoryView(options: StoryViewOptions): StoryView {
       box.setHeld(on)
     },
     setInset: (px) => box.setInset(px),
+    setBoxWords: (now) => box.setWords(now),
     destroy() {
       unlisten?.()
       box.destroy()

@@ -4,6 +4,7 @@
 // the controls, `pads.ts` reads the pads, and the bindings are `bindings.ts`.
 
 import { type Frames, pageFrames } from '../../lib/frames.ts'
+import type { Words } from '../../lib/message.ts'
 import {
   controlsCommand,
   createSequence,
@@ -63,6 +64,8 @@ export interface InputOptions {
   readonly frames?: Frames
   /** Default: a new one. Share one with whoever else makes this game's commands, so no seq is used twice. */
   readonly sequence?: Sequence
+  /** The touch buttons' words (a `Locale`'s `words`): `controls.<action>` and `automata.touch.label`. Default: each control's own label. */
+  readonly words?: Words
 }
 
 export interface Input {
@@ -72,6 +75,8 @@ export interface Input {
   inset(): number
   /** Calls `listener` with the new room whenever the buttons show, hide or change size. Stops on `destroy`. */
   onInset(listener: (px: number) => void): void
+  /** Says the touch buttons' words again in other words (a new language). What is held stays held. */
+  relabel(words: Words): void
   /** Who is in the game, from the sim. Starts as [1]. A player who arrives is holding nothing. */
   setPlayers(players: readonly number[]): void
   /** Gives a joining player their device. Kept until the player leaves. */
@@ -133,7 +138,7 @@ export function createInput(options: InputOptions): Input {
   let controls = applied.controls
   const bindingListeners = new Set<(settings: InputSettings) => void>()
   const keyboard = createKeyboard(() => boundKeys(controls))
-  const touch = createTouch(mount, controls)
+  const touch = createTouch(mount, controls, options.words === undefined ? {} : { words: options.words })
   const pads = createPads(options.gamepads)
 
   let players: readonly number[] = [1]
@@ -250,6 +255,7 @@ export function createInput(options: InputOptions): Input {
     },
     inset: touch.inset,
     onInset: touch.onInset,
+    relabel: touch.relabel,
     setPlayers(next) {
       for (const player of next)
         if (!Number.isInteger(player) || player < 1 || player > MAX_PLAYERS)

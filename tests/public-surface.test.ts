@@ -47,6 +47,23 @@ test('headless exports what a game sim and an editor need', async () => {
     'ConversationSchema',
     'CutsceneSchema',
     'MessagesSchema',
+    'FigureSchema',
+    'BackdropSchema',
+    'encodePng',
+    'paintFigure',
+    'paintBackdrop',
+    'figureSheet',
+    'backdropSheet',
+    'atlasOf',
+    'artFiles',
+    'artProblems',
+    'paintedPath',
+    'Sprite',
+    'spritesPlugin',
+    'usesSprites',
+    'setClip',
+    'setFacing',
+    'tileBoxes',
     'PROJECT_FILE',
     'spawnLevel',
     'createGameSim',
@@ -126,6 +143,31 @@ test('headless exports what a game sim and an editor need', async () => {
     'MAX_SOUNDS',
     'LOG_MAX',
     'simContent',
+    // The player's language (plan L).
+    'createLocale',
+    'fill',
+    'fitLabel',
+    'levelName',
+    'LANGUAGE_NAMES',
+    'LANGUAGE_TAGS',
+    'matchLanguage',
+    'pickLanguage',
+    'LANGUAGE_SETTINGS_DEFAULT',
+    'LanguageSettingsSchema',
+    'frameworkWords',
+    'languagesOf',
+    'typed',
+    'wordsOf',
+    'placeholdersOf',
+    'languageName',
+    'translationProblems',
+    'READ_MARKS_FILE',
+    'parseReadMarks',
+    'writeReadMarks',
+    'readMark',
+    'markRead',
+    'unreadWords',
+    'onlineMessage',
   ])
     expect(api, name).toHaveProperty(name)
 })
@@ -146,6 +188,22 @@ test('the browser entry adds the web host, and headless does not have it', async
   expect(entry).toContain("export * from './features/web/web.ts'")
   expect(entry).toContain("export * from './features/story/story.ts'")
   expect(entry).toContain("export * from './headless.ts'")
+  // The page's `<html lang>` follows the locale: it needs a page, so it is the browser entry's only.
+  expect(api).not.toHaveProperty('followLanguage')
+  const web = readFileSync(new URL('../src/features/web/web.ts', import.meta.url), 'utf8')
+  expect(web).toContain('followLanguage')
+})
+
+// A game draws its pictures through the page entry, which needs a page, so the headless entry has none of it.
+test('the page entry loads and checks pictures, and headless does not have that', async () => {
+  const api = await import('#src/headless.ts')
+  for (const name of ['loadArt', 'needsPictures', 'ArtError', 'createRenderer'])
+    expect(api, name).not.toHaveProperty(name)
+  const render = readFileSync(new URL('../src/features/render/render.ts', import.meta.url), 'utf8')
+  for (const name of ['loadArt', 'needsPictures', 'ArtError', 'type ReadPicture', 'type Shot'])
+    expect(render, name).toContain(name)
+  const entry = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
+  expect(entry).toContain("export * from './features/render/render.ts'")
 })
 
 test('the committed JSON Schemas are what the code produces', () => {
@@ -157,11 +215,10 @@ test('the committed JSON Schemas are what the code produces', () => {
   }
 })
 
-test('there is a committed JSON Schema for every kind, and no stray one', () => {
+// The replay file has a schema of its own, beside the content kinds'; `scripts/write-schemas.ts --check` holds it.
+test('there is a committed JSON Schema for every kind and for the replay file, and no stray one', () => {
   const committed = readdirSync(new URL('../schemas/', import.meta.url)).sort()
   expect(committed).toEqual(
-    Object.keys(CONTENT_TYPES)
-      .map((type) => `${type}.schema.json`)
-      .sort(),
+    [...Object.keys(CONTENT_TYPES), 'replay'].map((type) => `${type}.schema.json`).sort(),
   )
 })

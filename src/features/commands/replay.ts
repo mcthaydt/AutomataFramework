@@ -1,6 +1,8 @@
 // The replay file: a play recorded as JSON, small enough for a person or an agent to read, diff and edit.
 // It holds the seed, the tick rate and the commands, plus the hashes seen while it was recorded; it holds no snapshot,
-// so it can be played against content that has changed since, and `verifyReplay` says so when it has.
+// so it can be played against content that has changed since, and `verifyReplay` says so when it has. Format 2 also
+// holds the hash of the sim's schema (the shape of its rules), so a replay can say the rules changed. Format 1 is still
+// read and written as it was.
 
 import { canonicalJson } from '../../lib/canonical.ts'
 import { z } from '../../lib/zod.ts'
@@ -11,14 +13,20 @@ export interface ReplayCheck {
   readonly hash: string
 }
 
+/** The format a recorder writes now. */
+export const REPLAY_FORMAT = 2
+
 export interface Replay {
-  readonly format: 1
+  /** 1 is the first format, with no `schemaHash`; 2 records it. */
+  readonly format: 1 | 2
   /** The framework version that recorded it, for information. */
   readonly framework: string
   readonly tickHz: number
   readonly seed: number
   /** 16 hex digits: the hash of the content the run used. */
   readonly contentHash: string
+  /** Format 2 only, 16 hex digits: the hash of the sim's schema, the shape of the rules the run used. */
+  readonly schemaHash?: string
   /** How many ticks the run lasted. */
   readonly ticks: number
   /** In ascending tick order. */
@@ -44,11 +52,12 @@ const commandSchema = z.strictObject({
 
 /** The strict shape of a replay file. A key it does not know is an error, so a typo is not silently dropped. */
 export const ReplaySchema: z.ZodType<Replay> = z.strictObject({
-  format: z.literal(1),
+  format: z.literal([1, 2]),
   framework: z.string(),
   tickHz: Int.min(1).max(1000),
   seed: z.number().int(),
   contentHash: Hash,
+  schemaHash: Hash.optional(),
   ticks: Int,
   commands: z.array(commandSchema),
   checks: z.array(z.strictObject({ tick: Int, hash: Hash })),
@@ -79,6 +88,11 @@ export function parseReplay(text: string): Replay {
     throw new ReplayFormatError(`This is not a replay: ${where}: ${first?.message ?? 'it does not match'}.`)
   }
   const replay = parsed.data
+  if ((replay.format === 2) !== (replay.schemaHash !== undefined)) {
+    throw new ReplayFormatError(
+      'This is not a replay: schemaHash: a format 2 replay has one and a format 1 replay has none.',
+    )
+  }
   for (let i = 1; i < replay.commands.length; i++) {
     if ((replay.commands[i]?.tick ?? 0) < (replay.commands[i - 1]?.tick ?? 0)) {
       throw new ReplayFormatError(`This is not a replay: commands.${i}: commands must be in order of tick.`)
@@ -90,7 +104,35 @@ export function parseReplay(text: string): Replay {
       `This is not a replay: commands: a command is for tick ${last.tick}, after the run ended.`,
     )
   }
+  checkChecks(replay)
   return replay
+}
+
+/**
+ * The hashes taken on the way must be for ticks the run had, once each and in order, so a check is for "that tick" and
+ * not "the nth one". The last tick is `finalHash`, never also a check; tick 0 is before anything happened.
+ */
+function checkChecks(replay: Replay): void {
+  let before = 0
+  for (let i = 0; i < replay.checks.length; i++) {
+    const tick = (replay.checks[i] as ReplayCheck).tick
+    if (tick === 0) {
+      throw new ReplayFormatError(
+        `This is not a replay: checks.${i}: a check is for tick 0, before anything was played. The first can be tick 1.`,
+      )
+    }
+    if (tick >= replay.ticks) {
+      throw new ReplayFormatError(
+        `This is not a replay: checks.${i}: a check is for tick ${tick}, but the run ended at tick ${replay.ticks}. The last tick has finalHash.`,
+      )
+    }
+    if (tick <= before) {
+      throw new ReplayFormatError(
+        `This is not a replay: checks.${i}: checks must be in order of tick, each tick once.`,
+      )
+    }
+    before = tick
+  }
 }
 
 /**
@@ -104,6 +146,7 @@ export function writeReplay(replay: Replay): string {
     tickHz: replay.tickHz,
     seed: replay.seed,
     contentHash: replay.contentHash,
+    ...(replay.schemaHash === undefined ? {} : { schemaHash: replay.schemaHash }),
     ticks: replay.ticks,
     commands: replay.commands.map((c) => ({
       tick: c.tick,

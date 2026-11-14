@@ -5,6 +5,10 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "types": ["node"],
+    "paths": {
+      "@automataframework/framework": ["./src/index.ts"],
+      "@automataframework/framework/headless": ["./src/headless.ts"]
+    },
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -16,6 +20,6 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src", "tests", "scripts", "*.ts"],
+  "include": ["src", "tests", "scripts", "*.ts", "template/src", "template/tests", "template/vite.config.ts"],
   "exclude": ["tests/install"]
 }

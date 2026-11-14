@@ -9,6 +9,8 @@
       "!schemas",
       "!docs/api",
       "!tests/fixtures/full-game/content",
+      "!template/content",
+      "!template/replays",
       "!tests/fixtures/story/content"
     ]
   },

@@ -58,13 +58,24 @@ test('headless may reach the host port but not the web host', () => {
   expect(one({ 'src/headless.ts': "export * from './features/host/host.ts'" })).toEqual([])
 })
 
-test('story sits above host and below web', () => {
+test('story sits above locale and below web, and may import locale', () => {
+  expect(one({ 'src/features/story/story.ts': "import '../locale/locale.ts'" })).toEqual([])
+  expect(one({ 'src/features/locale/locale.ts': "import '../story/story.ts'" })).toEqual(['imports-go-down'])
   expect(one({ 'src/features/story/story.ts': "import '../web/web.ts'" })).toEqual(['imports-go-down'])
   expect(one({ 'src/features/web/web.ts': "import '../story/story.ts'" })).toEqual([])
   expect(one({ 'src/headless.ts': "export * from './features/story/story.ts'" })).toEqual([
     'headless-is-headless',
   ])
 })
+
+test('locale sits right above host and may import it; host may not import locale', () => {
+  expect(one({ 'src/features/locale/locale.ts': "import '../host/host.ts'" })).toEqual([])
+  expect(one({ 'src/features/host/host.ts': "import '../locale/locale.ts'" })).toEqual(['imports-go-down'])
+  expect(one({ 'src/features/locale/locale.ts': "import '../web/web.ts'" })).toEqual(['imports-go-down'])
+})
+
+test('the headless entry may reach locale', () =>
+  expect(one({ 'src/headless.ts': "export * from './features/locale/locale.ts'" })).toEqual([]))
 
 // The rules also have to stay quiet on honest code.
 test('a clean map has no violations', () =>
@@ -185,6 +196,79 @@ test('headless and the page entry never reach src/server.ts, through any chain',
   expect(one({ ...node, 'src/index.ts': "export * from './server.ts'" })).toEqual(['server-is-node-only'])
 })
 
+// Plan K: the `automata` command. `cli` is the last layer, Node only, reached only through `src/cli.ts` (the package's
+// bin), and it may use only what the headless entry re-exports.
+const HEADLESS_COMMANDS = {
+  'src/headless.ts': "export * from './features/commands/commands.ts'",
+  'src/features/commands/commands.ts': '',
+}
+const CLI_ENTRY_FILES = { 'src/features/cli/cli.ts': '', 'src/cli.ts': "import './features/cli/cli.ts'" }
+
+test('cli is the last layer and may import the headless features through their entries', () => {
+  expect(
+    one({
+      ...HEADLESS_COMMANDS,
+      ...CLI_ENTRY_FILES,
+      'src/features/cli/check.ts': "import '../commands/commands.ts'",
+    }),
+  ).toEqual([])
+  expect(
+    one({
+      ...HEADLESS_COMMANDS,
+      ...CLI_ENTRY_FILES,
+      'src/features/commands/commands.ts': "import '../cli/cli.ts'",
+    }),
+  ).toEqual(['cli-is-node-only'])
+})
+
+test('only src/cli.ts may import the cli feature', () => {
+  expect(one({ 'src/features/cli/cli.ts': '', 'src/index.ts': "import './features/cli/cli.ts'" })).toEqual([
+    'cli-is-node-only',
+  ])
+  expect(
+    one({ 'src/features/cli/cli.ts': '', 'src/features/game/game.ts': "import '../cli/cli.ts'" }),
+  ).toEqual(['cli-is-node-only'])
+})
+
+test('neither page entry reaches src/cli.ts, through any chain', () => {
+  expect(one({ ...CLI_ENTRY_FILES, 'src/headless.ts': "export * from './cli.ts'" })).toEqual([
+    'cli-is-node-only',
+  ])
+  expect(one({ ...CLI_ENTRY_FILES, 'src/index.ts': "export * from './cli.ts'" })).toEqual([
+    'cli-is-node-only',
+  ])
+})
+
+test('the cli feature reaches nothing that needs a page, and not the server', () => {
+  const base = {
+    ...HEADLESS_COMMANDS,
+    ...CLI_ENTRY_FILES,
+    'src/features/render/render.ts': '',
+    'src/features/saves/saves.ts': '',
+    'src/features/server/server.ts': '',
+  }
+  expect(one({ ...base, 'src/features/cli/play.ts': "import '../render/render.ts'" })).toEqual([
+    'cli-has-no-page',
+  ])
+  expect(one({ ...base, 'src/features/cli/play.ts': "import '../server/server.ts'" })).toEqual([
+    'server-is-node-only',
+  ])
+  // A feature the headless entry does not re-export is out, so one that joins later is covered the day it lands.
+  expect(one({ ...base, 'src/features/cli/play.ts': "import '../saves/saves.ts'" })).toEqual([
+    'cli-has-no-page',
+  ])
+})
+
+test('Effect may be imported under src/features/cli/ and in server/process.ts, and nowhere else', () => {
+  expect(
+    one({
+      ...CLI_ENTRY_FILES,
+      'src/features/cli/check.ts': "import { Effect } from 'effect'",
+    }),
+  ).toEqual([])
+  expect(one({ 'src/features/net/net.ts': "import { Effect } from 'effect'" })).toEqual(['package-confined'])
+})
+
 test('audio may import nothing above it', () =>
   expect(one({ 'src/features/audio/audio.ts': "import '../saves/saves.ts'" })).toEqual(['imports-go-down']))
 
@@ -193,3 +277,46 @@ test('the sim side may not import audio', () =>
 
 test('audio keeps no clock of its own: its speaker has the only one', () =>
   expect(one({ 'src/features/audio/audio.ts': 'setTimeout(() => {}, 1)' })).toEqual(['sim-is-pure']))
+
+// The painter's files give the same bytes in every engine (audit I8): a `Math` function an engine may round its own way,
+// or a clock or I/O, would make a picture differ between machines.
+const painterFile = (text: string, name = 'paint-figure'): SourceFiles => ({
+  'src/features/content/content.ts': '',
+  [`src/features/content/${name}.ts`]: text,
+})
+
+test.each(['sin', 'cos', 'tan', 'atan', 'atan2', 'pow', 'exp', 'log', 'hypot', 'random'])(
+  'the painter may not call Math.%s',
+  (name) => {
+    const rules = checkArchitecture(painterFile(`const x = Math.${name}(1, 2)`))
+    expect(rules.map((v) => v.rule)).toContain('painter-math')
+    expect(rules.find((v) => v.rule === 'painter-math')?.detail).toContain(`Math.${name}`)
+  },
+)
+
+test('the painter may use the Math functions that are exact', () => {
+  const text = 'const x = Math.floor(1.5) + Math.round(2.5) + Math.abs(-1) + Math.min(1, 2) + Math.max(1, 2)'
+  expect(one(painterFile(text))).toEqual([])
+})
+
+test.each([
+  ['a clock', 'const t = Date.now()'],
+  ['a date', 'const t = new Date()'],
+  ['a timer', 'setTimeout(() => {}, 1)'],
+  ['the network', "fetch('/a')"],
+])('the painter has %s nowhere: it is held to the pure features list too', (_what, text) =>
+  expect(one(painterFile(text))).toEqual(['sim-is-pure']),
+)
+
+test('the painter imports nothing from Node', () =>
+  expect(one(painterFile("import { deflateSync } from 'node:zlib'"))).toEqual(['sim-is-pure']))
+
+test.each(['pixels', 'sheet', 'art'])('%s is a painter file too', (name) =>
+  expect(one(painterFile('const x = Math.sin(1)', name))).toEqual(['painter-math']),
+)
+
+test('the PNG writer is held to the painter rule', () =>
+  expect(one({ 'src/lib/png.ts': 'const x = Math.pow(2, 3)' })).toEqual(['painter-math']))
+
+test('another file of content may use any Math function', () =>
+  expect(one(painterFile('const x = Math.hypot(3, 4)', 'level'))).toEqual([]))

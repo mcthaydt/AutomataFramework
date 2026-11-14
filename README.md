@@ -7,6 +7,53 @@ Node, Chromium, WebKit and Firefox, so an agent can change a game and prove that
 This package is `@automataframework/framework`. It is the 2D runtime: the simulation, physics (Rapier), commands and
 replays, level and character content, rendering (PixiJS), keyboard and touch input, and the web host.
 
+## Start here
+
+You need [Node](https://nodejs.org) 24.21.0 or later. Then:
+
+```sh
+npx @automataframework/framework create my-game
+cd my-game
+npm install
+npm run check
+npm run dev
+```
+
+`create` makes a small game: one level, a hero, a crate to push. `npm run check` says whether the game is sound, in
+plain words. `npm run dev` plays it in your browser: hold the arrow keys to move and press Space to jump, or touch
+the screen on a phone. If a command says `automata: not found`, the `npm install` step was missed: run it, then try
+again.
+
+Not on npm yet: the first release is Release 1. Until then, make a game with
+`--framework github:mcthaydt/AutomataFramework#<commit>`, which tells `create` which framework the new game installs.
+
+### Change a number
+
+Open `content/levels/level-1.json` and change `x` of `crate-1`, the crate. Run `npm run check`. It says the game's
+content has changed since the play in `replays/` was recorded, so it did not compare the play with the recording, and
+it names the command to run. If the new level is what you meant, run `npm run accept` to record the play again; the next
+`npm run check` ends with `Everything passed.` If you break a file, such as writing `"far"` where a number goes, `check`
+names the file and the place in it, and exits with 1.
+
+### Working with an agent
+
+A new game has an `AGENTS.md` (and a `CLAUDE.md` that points to it) that tells a coding agent where things are and
+which rules the game keeps. The package also ships `skills/` for any agent that reads skills: `automata` (start here),
+`automata-content` (a content file of each kind), `automata-rules` (a change to how the game plays) and `automata-api`
+(what the framework exports). An agent changes the game's files and runs `npx --no automata check` to
+see whether the game is still sound; it writes `npx --no automata`, with `--no`, because without it the command can
+fetch an unrelated package of that name from npm.
+
+### The commands
+
+| Command | What it does |
+|---|---|
+| `automata create <name>` | Makes a new game in a new folder called `<name>`. |
+| `automata check` | Says whether the game is sound, step by step, and what to fix if it is not. |
+| `automata play` | Plays the game in your browser, and shows your changes as you make them. |
+| `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
+| `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
+
 ## Install
 
 ```sh
@@ -133,9 +180,18 @@ named by `game.input.dropped()`; the game still starts.
 
 ## Replays
 
-`game.replay()` returns everything the player did, as JSON. `verifyReplay(sim, replay)` plays it on a fresh game and says
-whether it ends where it was recorded, and if not whether the game's content changed or the play diverged.
-`playReplay` only plays and returns the hashes, so two machines can compare them with each other.
+`game.replay()` returns everything the player did, as JSON, with the level and the players it started with in `meta`.
+`verifyReplay(sim, replay)` plays it on a fresh game and says whether it ends where it was recorded, and if not why:
+`content-changed` (the game's content is not the content it was recorded on; `rulesChanged` says whether the rules
+changed too), `code-changed` (the rules changed shape: a plugin, a component, a command or an event was added or taken
+out, or the framework's own version changed them), `diverged` (the play ends somewhere else, with the first tick that
+differs) or `wrong-setup` (another seed or tick rate). The content is checked before the rules, because content can
+switch a plugin on. `playReplay` only plays and returns the hashes, so two machines can compare them with each other.
+
+A replay file's `format` is 2: it carries `schemaHash` beside `contentHash`, the hash of the shape of the rules. A
+format 1 file (no `schemaHash`) is still read and played, and can never be `code-changed`. Its `checks` are for ticks
+the run had, in order, each tick once, and never the last tick (that one is `finalHash`); a file that breaks that is
+refused with a sentence that says where. `schemas/replay.schema.json` is its JSON Schema.
 
 ### Watch a recorded play
 
@@ -201,6 +257,60 @@ characters, or data your schema refuses or JSON cannot keep; a host's "no" is an
 and a save from an older version is brought up to date when it is loaded. Settings are gentler on purpose: a setting
 that cannot be read starts again from its first values.
 
+## Languages
+
+A game's words are content, not code. There is one file for each language, `content/messages/en.json`, `es.json`,
+`ko.json`, `ja.json`, `zh.json` and `pt.json` (each listed in `automata.toml` as `type = "messages"`), and one line for
+each word. English is the one that says what a word is for; the others carry the same keys. A word can ask for a value
+with `{name}`, and the game gives it one.
+
+```json
+{
+  "format": 1,
+  "id": "en",
+  "messages": {
+    "controls.jump": "Jump",
+    "keeper.hello": "Hello there! 👋",
+    "level.level-1.name": "Level 1",
+    "room.waiting": "Waiting for {count} more"
+  }
+}
+```
+
+The player's language is the one they picked, else the host's, else the device's, else English, and only a language
+the game has words in. `createLocale` gives a game the words in it, and keeps a pick with the settings:
+
+```ts
+import { createLocale, levelName } from '@automataframework/framework/headless'
+
+const locale = createLocale({ content: loaded.value, host, settings }) // `settings` is `await openSettings(...)`
+locale.words('keeper.hello') // 'こんにちは！' on a Japanese device
+locale.words('room.waiting', { count: 2 }) // a value goes where `{count}` is; a list is joined the way the language does
+levelName(locale.words, 'level-1') // the level's own name, or its id if no words give one
+await locale.set('ko') // the words change at once, every `locale.onChange` listener hears it, and the pick is kept
+```
+
+A word a language lacks is said in English, and one English lacks is shown as its key, so a missing word never stops
+a game. Give `startGame` the locale (`startGame({ ..., locale })`) and the touch buttons say `controls.<action>`, a
+refused `addPlayer` explains itself in the player's language, and all of it changes when the player picks another.
+In a page, `followLanguage(locale)` keeps `<html lang>` right, so a screen reader speaks the words properly. The
+framework's own sentences (a room's status, why a player cannot join) are in all six languages, and
+`onlineWords(status, locale.words)` says the room's status in the player's. Changing a word, or the language,
+moves no hash and no replay: the sim never sees words.
+
+Two checks are for a person or an agent to run, and neither is part of `loadGame`, because a game with a word missing
+in Korean still loads and plays:
+
+- `translationProblems(content)` says, in one sentence for each, where a word is missing, what English says, which
+  value is missing or misspelt (`{cuont}` for `{count}`), and what is too long for a button or a save. A sentence reads
+  `content/messages/ko.json: messages: This file has no "keeper.hello". English says "Hello there!". Write it in Korean.`
+- `unreadWords(content, marks)` lists the words no native speaker has read yet. The marks are in
+  `automata.translations.toml` (`parseReadMarks`, `markRead`, `writeReadMarks`); a mark is of the exact words that
+  were read, so changing a word makes it unread again.
+
+Every translation the framework ships (the six languages' library, and the demo game's) waits for a native speaker's
+read before Release 1: machine-written words are a first draft, and the marks say which are still that.
+
 ## The host
 
 A game asks its host about where it runs, never the page: `visible()` and `onVisibility` (is the game on screen),
@@ -263,6 +373,8 @@ is full) and an empty string while everyone is playing; a game puts it on its ow
 starts with whoever is first, and the others join and leave while it is played, as many as its level has start points
 for. Hiding the page lets go of the keys, so the hero does not run on for everyone else.
 
+Pass `locale.words` as a second argument, `onlineWords(status, locale.words)`, for the player's language.
+
 ## Sound
 
 A game ships no audio files. A sound is a few numbers in `content/sounds/`, a track is rows of notes in
@@ -312,6 +424,239 @@ for, in order, with the tick. Too many of one sound at once (`MAX_SAME`, 4) or i
 `skipped: 'busy'` and not played, counted in ticks so every device agrees; the log keeps the newest `LOG_MAX` (1024).
 Sound never changes the game: the sim does not see it, and changing a sound file moves no replay.
 
+## Art
+
+A game's art is made from a few lines of JSON, and the pictures are kept beside the file that makes them. A **figure** is
+a character or a prop drawn from blocks and rounds in a small frame, one picture for each **pose** (idle, jump). A
+**backdrop** is what is behind a level: strips that repeat sideways (`flat`, `hills`, `mountains` or `clouds`), each with
+a height in tiles and a `drift` from 0 (it stays still on the screen, like far mountains) to 1 (it moves with the level),
+and figures that stand on them. Both are listed in `automata.toml` like any other file (`type = "figure"`,
+`type = "backdrop"`), and this is a whole small figure, `content/figures/hero.json`:
+
+```json
+{
+  "format": 1,
+  "id": "hero",
+  "tile": 16,
+  "frame": {
+    "w": 24,
+    "h": 24
+  },
+  "outline": "#111314",
+  "paints": [
+    {
+      "id": "body",
+      "color": "#f37f94"
+    },
+    {
+      "id": "trim",
+      "color": "#fdd4bd"
+    },
+    {
+      "id": "ink",
+      "color": "#111314"
+    }
+  ],
+  "parts": [
+    {
+      "id": "foot",
+      "shape": "block",
+      "x": 12,
+      "y": 22,
+      "w": 6,
+      "h": 4,
+      "paint": "ink"
+    },
+    {
+      "id": "body",
+      "shape": "block",
+      "x": 12,
+      "y": 18,
+      "w": 10,
+      "h": 4,
+      "paint": "body"
+    },
+    {
+      "id": "head",
+      "shape": "round",
+      "x": 12,
+      "y": 13,
+      "w": 12,
+      "h": 10,
+      "paint": "trim"
+    },
+    {
+      "id": "eye",
+      "shape": "block",
+      "x": 15,
+      "y": 12,
+      "w": 2,
+      "h": 4,
+      "paint": "ink"
+    }
+  ],
+  "poses": [
+    {
+      "id": "idle",
+      "moves": []
+    },
+    {
+      "id": "jump",
+      "moves": [
+        {
+          "part": "foot",
+          "dy": -3
+        },
+        {
+          "part": "head",
+          "dy": -1
+        },
+        {
+          "part": "eye",
+          "dy": -1
+        }
+      ]
+    }
+  ]
+}
+```
+
+A character says which figure it is with `"figure": "hero"`, and the clips it plays with
+`"clips": [{ "id": "idle", "poses": ["idle"], "fps": 1, "loop": true }]`. A clip is a list of poses and how fast they
+change. The framework plays `idle`, `run`, `jump`, `fall` and `land` by itself from how the character moves, and falls
+back to the nearest clip it has when a character lacks one. A game that wants another (`wave`, `hurt`) names it in the
+character's `clips` and asks for it from its own code with `setClip(entity, 'wave')`; `setClip(entity, undefined)` goes
+back to the character's own motion, and `setFacing(entity, 'left')` turns it round.
+
+**Where the pictures are kept.** `content/figures/hero.json` is painted into `content/figures/hero.png`, with
+`hero.atlas.json` beside it that says where each pose is in the picture. A picture is committed with the file that made
+it. `artFiles(content)` gives every picture and atlas the game's files paint, as bytes and the path each goes to, and
+`artProblems(content, read)` says which of those files are missing or older than their figure or backdrop, in words
+that name the command to run. `automata art` writes the files and `automata check` runs the check, so an agent, CI and
+an editor all make and judge the same bytes. A level's tileset can use a figure's picture: write the figure's picture
+as the tileset's `image`, and `"columns": 8` when the figure has more than eight poses (the picture is eight poses
+wide). Solid tiles that sit directly under one another join into one box when the level has a tileset, so a hero slides
+down a wall without catching on a seam.
+
+**The level.** A level says which backdrop is behind it with `"backdrop": "valley"`. Add a `view` to switch the camera
+on: `"view": { "w": 16, "h": 9 }` is how many tiles the screen shows, and the camera follows every hero and pulls back to
+hold two who are apart, as far as `"most": { "w": 24, "h": 12 }` (the whole level when it is left out). A level with no
+`view` is always shown whole, as before.
+
+**On the page.** A game with pictures is given a way to fetch them, and checks them before anything is drawn:
+
+```ts
+const game = await startGame({
+  content: loaded.value,
+  mount,
+  host: webHost(),
+  controls,
+  readPicture: (path) => fetch(`/game/${path}`).then((response) => response.blob()),
+})
+```
+
+A picture that is missing, older than its file or the wrong size stops the game with one sentence that says what to run
+(an `ArtError`), and nothing is left on the page. `game.heroes()` gives each hero's box on the canvas, in CSS pixels, so a
+tutorial can point at one. A game with no figure, no tileset and no backdrop needs no `readPicture`.
+
+## The automata command
+
+`automata` is the package's command. A game's own scripts call it, so a person types `npm run check` and an agent types
+`npx --no automata check`. Run any command with `--help` to see this page's words about it. Each works on the game in
+the folder you are in, or in the folder you name.
+
+**Exit codes**, for every command: `0` everything is fine, `1` the game has something to fix, `2` the command could not
+do its work (a folder that is not a game, a tool that is not installed). Add `--json` to read the answer as JSON.
+
+### automata create
+
+`automata create <name>` makes a new game in a new folder called `<name>` (small letters, numbers and dashes, like
+`my-game`): one level, a hero, a crate to push, and everything a game needs to be checked and played.
+
+- `--framework <spec>`: which framework the game installs. Leave it out for the one that made the game.
+- `--json`: print what was made as JSON.
+
+### automata check
+
+`automata check [folder]` runs these steps in order, and each says what to fix:
+
+| Step | What it looks at |
+|---|---|
+| `files` | every content file reads, is listed, and is written the standard way |
+| `rules` | the game's rules can be replayed: no clock, no dice of their own, no files |
+| `lint` | the code's style (Biome) |
+| `types` | the code's types (TypeScript) |
+| `replays` | every recording in `replays/` still ends where it did |
+| `tests` | the game's own tests (Vitest) |
+
+- `--fix`: rewrite content files the standard way, and fix the code's style where that is safe.
+- `--only <step>`: run one step.
+- `--json`: print the answer as JSON: `ok`, and a `steps` list, each with its `step`, its `state` (`passed`, `failed`,
+  `could-not-run` or `skipped`), its `problems` (each a `file`, a `path` and a `message`) and its `notes`.
+
+### automata play
+
+`automata play [folder]` plays the game in your browser. It stays running and shows your changes as you make them.
+Press Ctrl+C to stop.
+
+- `--no-open`: do not open the browser: just print the address.
+- `--port <n>`: use this port.
+
+### automata replay
+
+`automata replay [folder or file]` plays the game's recordings, with nobody at the controls, and checks each ends where
+it was recorded. A recording is a file in `replays/`: the keys that were held, tick by tick. A result is one of: `ok`
+(it ends where it did), `content-changed` (the game's content is not what it was recorded on, so the hashes were not
+compared), `code-changed` (the rules changed shape since), `diverged` (it ends somewhere else, and the first tick
+that differs is named), `wrong-setup` (it cannot be played on this game) or `not-a-replay` (the file is not a
+recording). The first two exit with 0, the others with 1.
+
+- `--accept`: record again: keep the keys, write the hashes the game gives now.
+- `--state`: also print where everything is after the last tick.
+- `--json`: print the answer as JSON: a list with each recording's `file`, `verdict` and `message`, and its `ticks` and
+  `finalHash` when it was played.
+
+### automata mcp
+
+`automata mcp` lets an agent use these commands as tools, over the [Model Context Protocol](https://modelcontextprotocol.io).
+An agent's own program starts it and talks to it on standard input and output, one JSON message per line; it prints
+nothing a person reads. A game made by `automata create` is already set up for it: `.mcp.json` starts it in the game's
+folder.
+
+```json
+{
+  "mcpServers": {
+    "automata": { "command": "node", "args": ["node_modules/@automataframework/framework/dist/cli.js", "mcp"] }
+  }
+}
+```
+
+It speaks the protocol versions `2025-11-25`, `2025-06-18`, `2025-03-26` and `2024-11-05`, and answers `initialize`,
+`ping`, `tools/list`, `tools/call`, `resources/list` and `resources/read`. These are its tools. A result with `isError`
+holds the sentence the command would have printed, so an agent reads what a person would.
+
+| Tool | Input | The same as |
+|---|---|---|
+| `create` | `folder` | `automata create <folder> --json` |
+| `check` | `folder`, `only?`, `fix?` | `automata check <folder> --json` |
+| `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
+| `content_types` | none | the table of content kinds above |
+| `schema` | `type` | reading `schemas/<type>.schema.json` |
+| `skill` | `name?` | reading `skills/<name>/SKILL.md` |
+| `play_start` | `folder`, `level?`, `players?`, `seed?` | starts a game and answers a `session` and its `state` |
+| `play_step` | `session`, `ticks`, `hold?` | plays `ticks` ticks (1 to 3600, a minute of play) with these actions held, like `{"1": ["right"]}`, and answers the `state` and the `events` raised |
+| `play_state` | `session` | the `state` again, with no tick played |
+| `play_save` | `session`, `file` | writes the play so far to `replays/<file>.json`, which `automata replay` plays |
+| `play_stop` | `session` | ends the game |
+
+Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
+and `automata://skills/<name>`.
+
+The server never loads a game's rules itself. `create`, `check` and `replay` each run the command in a process of their
+own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
+keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
+goes to standard error, never into the messages.
+
 ## Without a page
 
 `@automataframework/framework/headless` has everything that needs no page (the simulation, physics, commands, content,
@@ -332,6 +677,8 @@ Each kind has a JSON Schema, shipped in the package so an agent can read the for
 | `level` | a map of tiles, the things standing on it and where each player starts | `content/levels/` | `schemas/level.schema.json` |
 | `character` | a body, its size and colour, and the kind, behaviour and tuning it uses | `content/characters/` | `schemas/character.schema.json` |
 | `tileset` | the letters a level's map may use, and which of them are solid | `content/tilesets/` | `schemas/tileset.schema.json` |
+| `backdrop` | what is behind a level: layers that repeat sideways, and the figures that stand on them | `content/backdrops/` | `schemas/backdrop.schema.json` |
+| `figure` | a character or a prop drawn from blocks in poses, painted into a picture | `content/figures/` | `schemas/figure.schema.json` |
 | `behaviour` | rules for what a character does: flee, follow, wander, jump | `content/behaviours/` | `schemas/behaviour.schema.json` |
 | `tuning` | numbers that decide how something plays, each with its range, and the controls | `content/tunings/` | `schemas/tuning.schema.json` |
 | `feel` | a burst of dust, a shake or a freeze for a moment in the game | `content/feels/` | `schemas/feel.schema.json` |

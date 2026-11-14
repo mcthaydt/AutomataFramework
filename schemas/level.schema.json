@@ -19,6 +19,12 @@
       "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
       "description": "The tileset whose letters the rows use, by the id in its file, like \"meadow\". Left out means # is solid and . is empty."
     },
+    "backdrop": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "The backdrop behind the level, by the id in its file, like \"valley\". Left out means only the sky."
+    },
     "sky": {
       "type": "string",
       "pattern": "^#[0-9a-fA-F]{6}$",
@@ -28,6 +34,52 @@
       "type": "string",
       "pattern": "^#[0-9a-fA-F]{6}$",
       "description": "The colour of the solid tiles, as # and six digits, like #3b4a5a. Left out means that slate."
+    },
+    "view": {
+      "type": "object",
+      "properties": {
+        "w": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 256,
+          "description": "How wide a part of the level the screen shows while the players are close together, in tiles."
+        },
+        "h": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 256,
+          "description": "How tall a part of the level the screen shows while the players are close together, in tiles."
+        },
+        "most": {
+          "type": "object",
+          "properties": {
+            "w": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 256,
+              "description": "The widest the camera pulls back to as the players spread, in tiles."
+            },
+            "h": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 256,
+              "description": "The tallest the camera pulls back to as the players spread, in tiles."
+            }
+          },
+          "required": [
+            "w",
+            "h"
+          ],
+          "additionalProperties": false,
+          "description": "The most of the level the camera pulls back to as the players spread. Left out means the whole level."
+        }
+      },
+      "required": [
+        "w",
+        "h"
+      ],
+      "additionalProperties": false,
+      "description": "How much of the level the screen shows, which switches the camera on: it follows the players and pulls back as they spread. Left out means the whole level is always in view."
     },
     "tiles": {
       "minItems": 1,

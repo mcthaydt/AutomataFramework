@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "id": "spark",
+  "body": "fixed",
+  "size": {
+    "w": 0.6,
+    "h": 0.6
+  },
+  "color": "#f5d547",
+  "upright": false,
+  "kind": "spark",
+  "touch": "take"
+}

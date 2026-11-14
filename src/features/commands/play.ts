@@ -38,6 +38,15 @@ export type Verdict =
       readonly reason: 'content-changed'
       readonly expected: string
       readonly actual: string
+      /** The rules changed too (a format 2 replay knows both hashes). False for a format 1 replay, which knows only the content's. */
+      readonly rulesChanged: boolean
+    }
+  /** Format 2 only: the sim's schema is not the one the replay was recorded with, so the rules changed shape. */
+  | {
+      readonly ok: false
+      readonly reason: 'code-changed'
+      readonly expected: string
+      readonly actual: string
     }
   | {
       readonly ok: false
@@ -49,9 +58,12 @@ export type Verdict =
 
 /**
  * Plays the replay on `sim` (a fresh one, at tick 0) and says whether it ends where it was recorded: the setup is
- * checked first, then the content, then each check hash in order, then the final hash, and the first thing that differs
- * is the answer. The content hash covers the whole of the game's content, project name included, so renaming the game
- * counts as changed content.
+ * checked first, then the content, then the rules (a format 2 replay's schema hash), then each check hash in order, then
+ * the final hash, and the first thing that differs is the answer. The content comes before the rules because content can
+ * switch a plugin on (a figure, a joint), which moves the schema hash too, and "the content changed" is then the true
+ * and the useful answer. The content hash covers the whole of the game's content, project name included, so renaming the
+ * game counts as changed content. The schema hash covers the shape of the rules, not their arithmetic: a rule that
+ * computes something else in the same shape is `diverged`.
  */
 export function verifyReplay(sim: Sim, replay: Replay): Verdict {
   if (sim.tick !== 0)
@@ -70,15 +82,27 @@ export function verifyReplay(sim: Sim, replay: Replay): Verdict {
       detail: `the sim runs at ${sim.tickHz} Hz, the replay at ${replay.tickHz} Hz`,
     }
   }
+  const schemaHash = replay.schemaHash === undefined ? undefined : sim.describeSnapshot().header.schemaHash
+  const rulesChanged = replay.schemaHash !== undefined && schemaHash !== replay.schemaHash
   if (sim.contentHash !== replay.contentHash) {
-    return { ok: false, reason: 'content-changed', expected: replay.contentHash, actual: sim.contentHash }
+    return {
+      ok: false,
+      reason: 'content-changed',
+      expected: replay.contentHash,
+      actual: sim.contentHash,
+      rulesChanged,
+    }
+  }
+  if (rulesChanged) {
+    return { ok: false, reason: 'code-changed', expected: replay.schemaHash ?? '', actual: schemaHash ?? '' }
   }
   const played = playReplay(sim, replay)
-  for (let i = 0; i < replay.checks.length; i++) {
-    const want = replay.checks[i] as ReplayCheck
-    const got = played.checks[i]
-    if (got?.hash !== want.hash) {
-      return { ok: false, reason: 'diverged', tick: want.tick, expected: want.hash, actual: got?.hash ?? '' }
+  // Each check is compared with the hash played at its own tick, never with "the one in the same place in the list".
+  const playedAt = new Map(played.checks.map((check) => [check.tick, check.hash]))
+  for (const want of replay.checks) {
+    const got = playedAt.get(want.tick)
+    if (got !== want.hash) {
+      return { ok: false, reason: 'diverged', tick: want.tick, expected: want.hash, actual: got ?? '' }
     }
   }
   if (played.finalHash !== replay.finalHash) {

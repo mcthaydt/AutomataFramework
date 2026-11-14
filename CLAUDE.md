@@ -140,20 +140,27 @@ implementations or incomplete integrations. Do your best work."
 src/index.ts                  the public surface
 src/headless.ts               the entry for Node and editors: everything that needs no page
 src/server.ts                 the Node-only entry: the room server (`@automataframework/framework/server`)
+src/cli.ts                    the package's `bin`, `automata`: Node only, calls the `cli` feature
 src/lib/                      shared helpers, no feature logic; `zod.ts` is the one way into Zod (it turns its eval probe off first)
 src/features/<feature>/       <feature>.ts entry, <part>.ts one job per file, library/ JSON data
 scripts/                      thin CLI wrappers
+template/                     the game `automata create` writes: a real game folder; `template/replays/level-1.json` is a golden
+skills/                       the skills an agent reads to work on a game (shipped in the package)
 tests/architecture.test.ts    imports go down, no cycles, no tests in src
 tests/features/<feature>/     mirrors src/features
 tests/lib/                    tests of src/lib
 tests/fixtures/               shared test helpers and the example game's files
-tests/install/                installs the packed package in a clean folder and uses it
+tests/install/                installs the packed package in a clean folder and uses it; `create-smoke.mjs` runs the README's commands
 tests/journeys/               real browsers play one room against a server CI starts (own Vitest project, the `online` job)
+tests/create/                 a new game, made from the packed package, played in real browsers (own Vitest project, the `create-play` job)
 tests/workflows/, tests/docs/ checks that read a workflow or the README
+tests/template/               checks of the template: its files, its words, its recorded play, its page in real browsers
 tests/golden/                 recorded hashes and replays
 docs/superpowers/             specs/, plans/, audits/, progress.md
 ```
 
 The networking is two features: `net` (pure: the wire, the room's rules and the client that predicts, just above
 `commands`) and `server` (Node only, above `level`: the Colyseus room and the process; only `src/server.ts` may import it).
+The `automata` command is the last feature, `cli` (Node only, on Effect, using only what `src/headless.ts` re-exports; only
+`src/cli.ts` may import it).
 Features import only from features below them. No top-level `components/`, `services/` or `utils/`.

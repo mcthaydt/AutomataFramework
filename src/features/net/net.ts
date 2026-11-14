@@ -46,4 +46,4 @@ export {
   type SessionState,
   type SessionStats,
 } from './session.ts'
-export { type OnlineStatus, onlineWords } from './words.ts'
+export { type OnlineStatus, onlineMessage } from './words.ts'

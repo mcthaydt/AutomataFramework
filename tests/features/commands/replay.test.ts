@@ -54,7 +54,7 @@ test('writeReplay then parseReplay gives the same replay', async () => {
   const { replay } = await record()
   const text = writeReplay(replay)
   expect(text.endsWith('\n')).toBe(true)
-  expect(text.startsWith('{\n  "format": 1,\n  "framework": ')).toBe(true)
+  expect(text.startsWith('{\n  "format": 2,\n  "framework": ')).toBe(true)
   expect(parseReplay(text)).toEqual(replay)
   expect(writeReplay(parseReplay(text))).toBe(text)
 })
