@@ -35,9 +35,14 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan S (audio): 2. Plan | Written, in review; eleven tasks (9% each, 1% for the last green run); stage at 100%, plan S at 10%. A headless `audio` feature (cues, the cue log, sounds, one track, two volumes) over a `Speaker` port, the page's speaker and the "Tap to start the sound" button in `web`, and the three audio kinds taken out of what the sim hashes. No Owner question; three calls marked for the audit | `plans/2026-11-14-m2-audio.md` |
 | Plan S (audio): 3. Plan audit | Written, in review; stage at 100%, plan S at 20%: no critical, five important (`sounding.json` on a game of its own; plan A's order no longer applies, the stop rule rewritten; the online game's audio and plan N's `advance` giving steps one by one; the fixture hero's landing at the top of a jump; the three rules the cue log's determinism rests on), ten minor; all applied to the plan. No Owner question | `audits/2026-11-14-m2-audio-plan-audit.md` |
 | Plan T (story): 2. Plan | Written, in review; fourteen tasks; stage at 100%, plan T at 10%. Behaviour rules, conversations and cutscenes run in the sim (in `level`, switched on by content, so no recorded hash moves), stepped by three commands; a new page feature, `story`, shows the speech box and the cutscene's camera. Task 11 (the camera, and an actor's clip and face) waits for plan A to be built; no Owner question | `plans/2026-11-14-m2-story.md` |
+| Plan T (story): 3. Plan audit | Written, in review; stage at 100%, plan T at 20%: no critical, five important (the press that closes the box jumped; a continued game's start was not in its replay, and `watchReplay` dropped it; a fast Enter skipped the cutscene after the lines; four choices could not fit a sideways phone; the box's keys fought the game's), eleven minor, five journeys added; all applied to the plan or handed on. One Owner question open (when the keeper talks: every visit, until finished once, or a Talk button), which holds only Task 6's opening rule | `audits/2026-11-14-m2-story-plan-audit.md` |
 
 ### Log
 
+- 2026-11-14, plan T (story): the plan audit is written. The sim's part in `level` holds and no golden moves. Fixed in
+  the plan: a player let go takes this tick's controls with no press; `meta.story` records where a continued game
+  started; a skip counts only after `SKIP_AFTER` ticks; the box's buttons always fit; the box hears its own keys and
+  leaves a sharing player's alone. Q1 (when the keeper talks) is with the Owner.
 - 2026-11-14, plan S (audio): the plan audit. Task 1 is sound and has no order to keep: plan A's `sprites.json` is no
   longer on the full game, and no golden on `main` or a branch is from a game with audio files. Audio cannot reach
   the sim or move a golden. Fixed in the plan: the sounding run and its golden play a game of their own; the fixture
