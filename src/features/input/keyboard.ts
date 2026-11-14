@@ -1,11 +1,12 @@
-// The keyboard, read from the window: which actions are held right now. It never sends anything itself; `input.ts`
-// asks it once per tick.
-import type { Controls } from './controls.ts'
+// The keyboard, read from the window: which of the bound keys are down right now. It never sends anything itself;
+// `input.ts` asks it once per tick and reads the keys against the seats' controls.
 
-/** What the game holds with the keyboard. */
+/** What is down on the keyboard. */
 export interface Keyboard {
-  /** The actions with at least one of their keys down. */
-  held(): Set<string>
+  /** The codes of the bound keys that are down. */
+  down(): ReadonlySet<string>
+  /** Lets go of everything. A key still held stays up until it is pressed again: its repeats are not presses. */
+  clear(): void
   destroy(): void
 }
 
@@ -17,20 +18,17 @@ function isTyping(target: EventTarget | null): boolean {
   )
 }
 
-export function createKeyboard(controls: Controls, win: Window = window): Keyboard {
-  // Key code -> the action it is bound to.
-  const actionOf = new Map<string, string>()
-  for (const [action, control] of Object.entries(controls))
-    for (const code of control.keys) actionOf.set(code, action)
+/** `codes` gives every key any slot binds right now, asked on each event, so a key bound a moment ago is heard. */
+export function createKeyboard(codes: () => ReadonlySet<string>, win: Window = window): Keyboard {
   const down = new Set<string>()
 
   const onKeyDown = (e: KeyboardEvent): void => {
-    const action = actionOf.get(e.code)
     // A shortcut (Ctrl+R, Cmd+Left) is the browser's, and a key with no action is left alone.
-    if (action === undefined || e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return
-    // Stops Space and the arrows scrolling the page the game sits in. Key repeat is stopped too, but changes nothing.
+    if (!codes().has(e.code) || e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return
+    // Stops Space and the arrows scrolling the page the game sits in, repeats included.
     e.preventDefault()
-    down.add(e.code)
+    // A repeat is the same press going on: after `clear` it must not bring the key back down.
+    if (!e.repeat) down.add(e.code)
   }
   // Always let go, wherever the event went, or a key released over a text field would stay held.
   const onKeyUp = (e: KeyboardEvent): void => {
@@ -43,14 +41,8 @@ export function createKeyboard(controls: Controls, win: Window = window): Keyboa
   win.addEventListener('keyup', onKeyUp)
   win.addEventListener('blur', onBlur)
   return {
-    held() {
-      const held = new Set<string>()
-      for (const code of down) {
-        const action = actionOf.get(code)
-        if (action !== undefined) held.add(action)
-      }
-      return held
-    },
+    down: () => new Set(down),
+    clear: () => down.clear(),
     destroy() {
       win.removeEventListener('keydown', onKeyDown)
       win.removeEventListener('keyup', onKeyUp)
