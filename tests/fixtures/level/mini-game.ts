@@ -15,7 +15,7 @@ import { fixtureFiles } from '../game/read.ts'
 const STARTS = [2.5, 4.5, 6.5, 8.5]
 
 /** The full game's critter and its behaviour: run from a hero within 3 tiles, else wander. */
-export const critterFile = {
+export const critterFile: Record<string, unknown> = {
   format: 1,
   id: 'critter',
   body: 'dynamic',
@@ -25,7 +25,7 @@ export const critterFile = {
   kind: 'critter',
   behaviour: 'critter',
 }
-export const critterBehaviour = {
+export const critterBehaviour: Record<string, unknown> = {
   format: 1,
   id: 'critter',
   rules: [
@@ -39,7 +39,7 @@ export const critterBehaviour = {
 }
 
 /** The full game's keeper: fixed, with a name and a conversation to open. */
-export const keeperFile = {
+export const keeperFile: Record<string, unknown> = {
   format: 1,
   id: 'keeper',
   body: 'fixed',
@@ -52,7 +52,7 @@ export const keeperFile = {
 }
 
 /** The keeper's talk: a greeting with two choices; the first leads to a tip that ends, the second to a goodbye. */
-export const keeperTalk = {
+export const keeperTalk: Record<string, unknown> = {
   format: 1,
   id: 'keeper',
   start: 'hello',

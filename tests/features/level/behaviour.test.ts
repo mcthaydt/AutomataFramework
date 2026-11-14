@@ -18,7 +18,7 @@ afterEach(() => {
 
 /** A critter at (x, y) in the mini game, with the full game's behaviour. */
 const critterAt = (id: string, x: number, y = 7.7) => ({ id, character: 'critter', x, y })
-const withCritters = (things: MiniGame['things'], more: MiniGame = {}): MiniGame => ({
+const withCritters = (things: NonNullable<MiniGame['things']>, more: MiniGame = {}): MiniGame => ({
   things,
   characters: [critterFile],
   behaviours: [critterBehaviour],
