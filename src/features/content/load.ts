@@ -7,6 +7,7 @@ import { type Parsed, parseContent } from './parse.ts'
 import type { ContentRef } from './project.ts'
 import { PROJECT_FILE, type Project, parseProject } from './project.ts'
 import { noSuch } from './shared.ts'
+import type { TilesetFile } from './tileset.ts'
 import type { Listed } from './type-info.ts'
 
 /**
@@ -19,6 +20,7 @@ export interface GameContent {
   readonly project: Project
   readonly levels: Readonly<Record<string, Level>>
   readonly characters: Readonly<Record<string, Character>>
+  readonly tilesets?: Readonly<Record<string, TilesetFile>>
 }
 
 /** What a file's id has to be: its name without `.json`. */

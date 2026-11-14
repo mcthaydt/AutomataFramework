@@ -10,5 +10,6 @@ export { type Level, LevelSchema, type LevelStart, type LevelThing } from './lev
 export { type GameContent, loadGame } from './load.ts'
 export { type Parsed, parseContent } from './parse.ts'
 export { type ContentRef, PROJECT_FILE, type Project, ProjectSchema, parseProject } from './project.ts'
+export { type TileKind, type TilePicture, type TilesetFile, TilesetSchema, type TileWhen } from './tileset.ts'
 export type { ContentTypeInfo, EditorName, Listed, Report } from './type-info.ts'
 export { writeContent } from './write.ts'

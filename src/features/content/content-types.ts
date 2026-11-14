@@ -1,6 +1,7 @@
 import type { z } from 'zod'
 import { type Character, type CharacterInput, characterInfo } from './character.ts'
 import { type Level, levelInfo } from './level.ts'
+import { type TilesetFile, tilesetInfo } from './tileset.ts'
 import type { ContentTypeInfo } from './type-info.ts'
 
 /**
@@ -10,9 +11,11 @@ import type { ContentTypeInfo } from './type-info.ts'
 export const CONTENT_TYPES: {
   readonly level: ContentTypeInfo<Level, Level>
   readonly character: ContentTypeInfo<Character, CharacterInput>
+  readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>
 } = {
   level: levelInfo,
   character: characterInfo,
+  tileset: tilesetInfo,
 }
 
 /** The name of a kind: what a `[[content]]` block's `type` says. */
