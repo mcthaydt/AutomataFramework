@@ -48,8 +48,8 @@ export interface Connection {
   reconnect(): Promise<Link>
 }
 
-/** A close code that is not Colyseus's consented one, so the room treats it as a lost connection. */
-const GOING_AWAY = 1001
+/** Colyseus's own code for a connection that ended and may try again: the room keeps the seat for its grace. */
+const MAY_TRY_RECONNECT = 4010
 
 async function loadSdk(server: string): Promise<SdkClient> {
   const { Client } = await import('@colyseus/sdk')
@@ -120,7 +120,7 @@ function linkOf(room: SdkRoom): Link {
       room.leave(true).catch(() => undefined)
     },
     drop() {
-      room.connection.close(GOING_AWAY, 'dropped')
+      room.connection.close(MAY_TRY_RECONNECT, 'dropped')
     },
   }
 }

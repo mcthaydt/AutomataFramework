@@ -1,7 +1,7 @@
 // Proof 2 of M2's networking: real sockets. A room server on port 0 and headless players that join it with the real
 // Colyseus SDK end on one hash with a lag and a late command forced, a dropped connection gets back into its seat, and
 // every way a join can be refused is told in the problem a person reads.
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { verifyReplay } from '#src/features/commands/commands.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import { OnlineError } from '#src/features/net/net.ts'
@@ -15,6 +15,9 @@ import {
   until,
 } from '../../fixtures/online/headless-player.ts'
 import { onlineScript } from '../../fixtures/online/script.ts'
+
+// Real sockets and real timers: a ten-second play is ten real seconds.
+vi.setConfig({ testTimeout: 60_000 })
 
 const servers: RoomServer[] = []
 const players: HeadlessPlayer[] = []
