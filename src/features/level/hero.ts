@@ -14,7 +14,8 @@ export function characterParts(character: Character, at: { x: number; y: number 
     body(character.body === 'dynamic' ? BodyKind.dynamic : BodyKind.fixed, {
       fixedRotation: character.upright,
     }),
-    collider.cuboid(character.size.w / 2, character.size.h / 2),
+    // A touched character lets things through: the game is told, and nothing is pushed.
+    collider.cuboid(character.size.w / 2, character.size.h / 2, { sensor: character.touch !== undefined }),
     [Look, { w: character.size.w, h: character.size.h, color: colourNumber(character.color) }],
   ]
 }

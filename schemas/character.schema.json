@@ -71,6 +71,14 @@
       "maxLength": 64,
       "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
       "description": "The tuning file whose numbers decide how it moves, by id, like \"hero\"."
+    },
+    "touch": {
+      "type": "string",
+      "enum": [
+        "sense",
+        "take"
+      ],
+      "description": "\"sense\": things pass through it and the game is told when one touches it, like a door. \"take\": the same, and it is taken away when a hero touches it, like a spark."
     }
   },
   "required": [

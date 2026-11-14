@@ -43,3 +43,25 @@ export const Collider: ComponentDef<typeof colliderFields> = defineComponent(
   colliderFields,
   { render: false },
 )
+
+const jointFields = {
+  kind: 'u32',
+  a: 'u32',
+  b: 'u32',
+  ax: 'f32',
+  ay: 'f32',
+  bx: 'f32',
+  by: 'f32',
+  limited: 'bool',
+  min: 'f32',
+  max: 'f32',
+} as const
+/**
+ * One joint between two entities, each of which needs a `Transform` and a `Body`. `kind` is a `JointKind`; `a` and
+ * `b` are the entities' StableIds. `ax, ay` is where the joint holds `a`, in metres from a's centre and in a's own
+ * turn, and `bx, by` is the same on `b`. A `pin` turns `a` about the shared point; when `limited`, `min` and `max`
+ * are how far `a` may turn against `b`, in radians. A `rope` keeps the two points no further apart than `max`
+ * metres. Rendered: the renderer reads it to draw ropes and pins. Only a sim made with `physics({ joints: true })`
+ * has it.
+ */
+export const Joint: ComponentDef<typeof jointFields> = defineComponent('physics.joint', jointFields)

@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "plank",
+  "body": "dynamic",
+  "size": {
+    "w": 4,
+    "h": 0.25
+  },
+  "color": "#8a5a2b",
+  "upright": false
+}
