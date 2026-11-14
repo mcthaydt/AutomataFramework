@@ -125,7 +125,7 @@ describe('a game with words in English and Spanish only', () => {
     expect(store.entries()[KEY]).toBeUndefined()
   })
 
-  test("it offers the languages it has, in order", async () => {
+  test('it offers the languages it has, in order', async () => {
     const { locale } = await open(await small())
     expect(locale.languages).toEqual(['en', 'es'])
   })
