@@ -157,6 +157,11 @@
         "additionalProperties": false
       },
       "description": "What is said, and when."
+    },
+    "opens": {
+      "description": "True if it plays when its level opens. Left out, it plays only when a conversation or the game asks.",
+      "type": "boolean",
+      "const": true
     }
   },
   "required": [

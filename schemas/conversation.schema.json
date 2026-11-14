@@ -82,6 +82,12 @@
             "type": "string",
             "maxLength": 64,
             "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          },
+          "cutscene": {
+            "description": "The cutscene that plays when the conversation ends here, by id, like \"glade-tip\".",
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
           }
         },
         "required": [

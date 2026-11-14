@@ -71,6 +71,18 @@
       "maxLength": 64,
       "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
       "description": "The tuning file whose numbers decide how it moves, by id, like \"hero\"."
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 96,
+      "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$",
+      "description": "The name shown when it speaks, as a message key, like \"keeper.name\"."
+    },
+    "conversation": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "The conversation a hero opens by walking up to it, by id, like \"keeper\"."
     }
   },
   "required": [
