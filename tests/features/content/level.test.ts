@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { formatDiagnostic, parseContent } from '#src/features/content/content.ts'
+import { formatDiagnostic, parseContent, writeContent } from '#src/features/content/content.ts'
 import { exampleLevel } from '../../fixtures/content/example-level.ts'
 
 const FILE = 'content/levels/a.json'
@@ -19,6 +19,40 @@ test('the example level parses', () => {
   const parsed = parseContent('level', JSON.stringify(exampleLevel()), FILE)
   expect(parsed.ok).toBe(true)
   if (parsed.ok) expect(parsed.value).toEqual(exampleLevel())
+})
+
+test('a level may set its sky and its ground', () => {
+  const level = { ...exampleLevel(), sky: '#fdd4bd', ground: '#111314' }
+  const parsed = parseContent('level', JSON.stringify(level), FILE)
+  expect(parsed.ok && parsed.value).toEqual(level)
+})
+
+test("a level that sets neither has neither, so its sky and ground are the framework's own", () => {
+  const parsed = parseContent('level', JSON.stringify(exampleLevel()), FILE)
+  expect(parsed.ok && 'sky' in parsed.value).toBe(false)
+  expect(parsed.ok && 'ground' in parsed.value).toBe(false)
+})
+
+test('a sky or a ground that is not a colour', () => {
+  expect(problems(withLevel((l) => (l.sky = 'blue')))).toEqual([
+    'content/levels/a.json: sky: Write a colour as # and six digits, like #9fd3f0.',
+  ])
+  expect(problems(withLevel((l) => (l.ground = '#123')))).toEqual([
+    'content/levels/a.json: ground: Write a colour as # and six digits, like #3b4a5a.',
+  ])
+})
+
+test('sky and ground are written right after the id', () => {
+  const written = writeContent('level', { ...exampleLevel(), sky: '#fdd4bd', ground: '#111314' } as never)
+  expect(Object.keys(JSON.parse(written))).toEqual([
+    'format',
+    'id',
+    'sky',
+    'ground',
+    'tiles',
+    'things',
+    'starts',
+  ])
 })
 
 test('text that is not JSON', () =>

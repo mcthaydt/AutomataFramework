@@ -287,6 +287,7 @@ function createRenderer(options: {
         w: number;
         h: number;
     };
+    sky?: number;
 }): Promise<Renderer>;
 ```
 
@@ -534,6 +535,12 @@ interface GameSimOptions {
 }
 ```
 
+### `groundOf` (const)
+
+```ts
+const groundOf: (level: Level) => number;
+```
+
 ### `Host` (interface)
 
 ```ts
@@ -585,6 +592,8 @@ function jsonSchemaFor(type: ContentType): object;
 interface Level {
     readonly format: 1;
     readonly id: string;
+    readonly sky?: string | undefined;
+    readonly ground?: string | undefined;
     readonly tiles: readonly string[];
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
@@ -1072,6 +1081,12 @@ function sin(x: number): number;
 
 ```ts
 const SKY_COLOR = 10474480;
+```
+
+### `skyOf` (const)
+
+```ts
+const skyOf: (level: Level) => number;
 ```
 
 ### `SNAPSHOT_VERSION` (const)
@@ -1723,6 +1738,12 @@ interface GameSimOptions {
 }
 ```
 
+### `groundOf` (const)
+
+```ts
+const groundOf: (level: Level) => number;
+```
+
 ### `hypot` (function)
 
 ```ts
@@ -1753,6 +1774,8 @@ function jsonSchemaFor(type: ContentType): object;
 interface Level {
     readonly format: 1;
     readonly id: string;
+    readonly sky?: string | undefined;
+    readonly ground?: string | undefined;
     readonly tiles: readonly string[];
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
@@ -2213,6 +2236,12 @@ function sin(x: number): number;
 
 ```ts
 const SKY_COLOR = 10474480;
+```
+
+### `skyOf` (const)
+
+```ts
+const skyOf: (level: Level) => number;
 ```
 
 ### `SNAPSHOT_VERSION` (const)

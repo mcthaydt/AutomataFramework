@@ -40,6 +40,9 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
 
 ### Log
 
+- 2026-11-14: a level file may set `sky` and `ground` (`#rrggbb`, both optional, default the old light blue and slate), in
+  pull request 25. Asked for by the Owner's choice of palette No. 276 for the example games' art, whose sky and ground
+  were framework constants no content file could change. A level that sets neither is unchanged, goldens included.
 - 2026-11-14: The touch buttons read their look from seven `--automata-touch-*` CSS properties (today's look is the
   default), and carry the classes `automata-touch` and `automata-touch-button` and `data-action`, so the demo game's
   Blueprint look (Examples cycle 2) needs no more than CSS. No change to the public API and none to the progress

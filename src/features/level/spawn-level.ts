@@ -2,7 +2,8 @@ import { MAX_PLAYERS, Player } from '../commands/commands.ts'
 import type { Character, GameContent } from '../content/content.ts'
 import { BodyKind, body, collider, transform } from '../physics/physics.ts'
 import type { Sim, SpawnPart } from '../sim/sim.ts'
-import { Look, Thing, TILE_COLOR } from './components.ts'
+import { colourNumber, groundOf } from './colours.ts'
+import { Look, Thing } from './components.ts'
 import { tileRuns } from './tile-runs.ts'
 
 /** The level cannot be spawned as asked: an unknown level, or a player the level has no start point for. */
@@ -22,10 +23,7 @@ function characterParts(character: Character, at: { x: number; y: number }): Spa
       fixedRotation: character.upright,
     }),
     collider.cuboid(character.size.w / 2, character.size.h / 2),
-    [
-      Look,
-      { w: character.size.w, h: character.size.h, color: Number.parseInt(character.color.slice(1), 16) },
-    ],
+    [Look, { w: character.size.w, h: character.size.h, color: colourNumber(character.color) }],
   ]
 }
 
@@ -60,12 +58,13 @@ export function spawnLevel(
     return found
   }
 
+  const ground = groundOf(level)
   for (const run of tileRuns(level.tiles))
     sim.spawn([
       transform({ x: run.col + run.length / 2, y: run.row + 0.5 }),
       body(BodyKind.fixed),
       collider.cuboid(run.length / 2, 0.5),
-      [Look, { w: run.length, h: 1, color: TILE_COLOR }],
+      [Look, { w: run.length, h: 1, color: ground }],
     ])
   for (const thing of level.things)
     sim.spawn([

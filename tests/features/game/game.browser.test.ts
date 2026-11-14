@@ -10,6 +10,8 @@ import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
+import { pixel } from '../../fixtures/game/pixels.ts'
+import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const FRAME = 1000 / 60
 
@@ -81,6 +83,28 @@ test('the game starts: a canvas in the mount and the sim at tick 0', async () =>
   const { game: g } = await start()
   expect(mount.querySelector('canvas')).not.toBeNull()
   expect(g.sim.tick).toBe(0)
+})
+
+// The level's own colour reaches the screen: the sky behind it, and the bars beside it, are what its file says.
+test('a level that sets its sky is drawn on that sky', async () => {
+  const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] as string) as Record<string, unknown>
+  const frames = manualFrames()
+  game = await startGame({
+    content: await loadFixtureGame({
+      'content/levels/level-1.json': JSON.stringify({ ...level, sky: '#fdd4bd' }),
+    }),
+    plugins: [heroPlugin],
+    mount,
+    controls: fixtureControls,
+    host: fakeHost(),
+    frames,
+  })
+  const canvas = mount.querySelector('canvas')
+  if (canvas === null) throw new Error('no canvas')
+  // A WebGL canvas is cleared once the page has shown it, so a frame is drawn and read back in the same task.
+  frames.at(0)
+  run(frames, 2)
+  expect(pixel(canvas, 2, 2)).toEqual([0xfd, 0xd4, 0xbd])
 })
 
 test('holding Right for 120 frames moves the hero right', async () => {

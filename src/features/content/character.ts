@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { colour } from './colour.ts'
 import { Id } from './ids.ts'
 
 /** A character file once read: what one kind of thing is. M1 draws it as a coloured box. */
@@ -36,10 +37,7 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z.strictObj
       h: side('How tall the character is, in tiles.'),
     })
     .describe('The size of the character, in tiles.'),
-  color: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, 'Write a colour as # and six digits, like #e4572e.')
-    .describe('The colour it is drawn in, as # and six digits, like #e4572e.'),
+  color: colour('The colour it is drawn in', '#e4572e'),
   upright: z
     .boolean()
     .default(false)

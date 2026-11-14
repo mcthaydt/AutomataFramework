@@ -31,10 +31,12 @@ export interface Renderer {
 export async function createRenderer(options: {
   mount: HTMLElement
   world: { w: number; h: number }
+  /** The colour behind the level, 0xrrggbb. Left out, it is the framework's own light blue. */
+  sky?: number
 }): Promise<Renderer> {
-  const { mount, world } = options
+  const { mount, world, sky } = options
   const scene = createScene()
-  const stage = await createStage(world)
+  const stage = await createStage(world, sky)
   mount.append(stage.canvas)
   // `stage.resize` puts the last picture back, so a turned phone is never left blank, even when the game is paused.
   const refit = (): void => stage.resize(mount.clientWidth, mount.clientHeight)
