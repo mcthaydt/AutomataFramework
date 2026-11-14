@@ -111,8 +111,11 @@ export class PhysicsWorld<World> implements PluginState {
   /** Contacts sync-in ended this tick by removing or rebuilding a collider; emitted with this tick's events. */
   private ending: Contact[] = []
   private disposed = false
+  private readonly rapier: PhysicsAdapter<World>
 
-  constructor(private readonly rapier: PhysicsAdapter<World>) {
+  // Not a parameter property: the room server runs this file under plain Node, which strips types and nothing else.
+  constructor(rapier: PhysicsAdapter<World>) {
+    this.rapier = rapier
     this.world = rapier.createWorld()
   }
 

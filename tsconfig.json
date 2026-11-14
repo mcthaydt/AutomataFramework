@@ -12,6 +12,7 @@
     "isolatedModules": true,
     "declaration": true,
     "isolatedDeclarations": true,
+    "erasableSyntaxOnly": true,
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
     "noEmit": true
