@@ -133,9 +133,18 @@ named by `game.input.dropped()`; the game still starts.
 
 ## Replays
 
-`game.replay()` returns everything the player did, as JSON. `verifyReplay(sim, replay)` plays it on a fresh game and says
-whether it ends where it was recorded, and if not whether the game's content changed or the play diverged.
-`playReplay` only plays and returns the hashes, so two machines can compare them with each other.
+`game.replay()` returns everything the player did, as JSON, with the level and the players it started with in `meta`.
+`verifyReplay(sim, replay)` plays it on a fresh game and says whether it ends where it was recorded, and if not why:
+`content-changed` (the game's content is not the content it was recorded on; `rulesChanged` says whether the rules
+changed too), `code-changed` (the rules changed shape: a plugin, a component, a command or an event was added or taken
+out, or the framework's own version changed them), `diverged` (the play ends somewhere else, with the first tick that
+differs) or `wrong-setup` (another seed or tick rate). The content is checked before the rules, because content can
+switch a plugin on. `playReplay` only plays and returns the hashes, so two machines can compare them with each other.
+
+A replay file's `format` is 2: it carries `schemaHash` beside `contentHash`, the hash of the shape of the rules. A
+format 1 file (no `schemaHash`) is still read and played, and can never be `code-changed`. Its `checks` are for ticks
+the run had, in order, each tick once, and never the last tick (that one is `finalHash`); a file that breaks that is
+refused with a sentence that says where. `schemas/replay.schema.json` is its JSON Schema.
 
 ### Watch a recorded play
 

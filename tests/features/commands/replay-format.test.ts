@@ -124,12 +124,19 @@ test('checks out of order, repeated, at tick 0, or at the last tick or after are
   const hash = replay.finalHash
   const refused = (checks: { tick: number; hash: string }[]) => () =>
     parseReplay(JSON.stringify({ ...asObject(replay), checks }))
-  expect(refused([{ tick: 60, hash }, { tick: 120, hash }, { tick: 120, hash }])).toThrow(
-    'This is not a replay: checks.2: checks must be in order of tick, each tick once.',
-  )
-  expect(refused([{ tick: 120, hash }, { tick: 60, hash }])).toThrow(
-    'This is not a replay: checks.1: checks must be in order of tick, each tick once.',
-  )
+  expect(
+    refused([
+      { tick: 60, hash },
+      { tick: 120, hash },
+      { tick: 120, hash },
+    ]),
+  ).toThrow('This is not a replay: checks.2: checks must be in order of tick, each tick once.')
+  expect(
+    refused([
+      { tick: 120, hash },
+      { tick: 60, hash },
+    ]),
+  ).toThrow('This is not a replay: checks.1: checks must be in order of tick, each tick once.')
   expect(refused([{ tick: 0, hash }])).toThrow('This is not a replay: checks.0: a check is for tick 0')
   expect(refused([{ tick: PUSH_TICKS, hash }])).toThrow(
     `This is not a replay: checks.0: a check is for tick ${PUSH_TICKS}, but the run ended at tick ${PUSH_TICKS}. The last tick has finalHash.`,
