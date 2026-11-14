@@ -53,8 +53,12 @@ The spec leaves these to the builder, or is silent. They are settled here so the
 1. **`pickLanguage` keeps its name** and answers a language with where it came from, or no language and the flag to
    open on (Task 4).
 2. **A `Locale` can be "not asked yet".** `language()` is `undefined` until the player has a language. `startGame` and
-   `startOnlineGame` take a `locale` (now required) and throw before anything is on the page when it has no language.
-   This is a breaking change to the public surface; plan D and the Editors' pin take it.
+   `startOnlineGame` take a `locale` (now required) and throw before anything is on the page when the player has not
+   been asked (`!locale.asked()`). The guard is `asked()`, not `language() === undefined`: a watching locale has a
+   language the player never chose, and a page that kept it after a take-over would start without the picker (plan
+   audit I1). This is a breaking change to the public surface. Of the other repos only Examples calls `startGame`
+   (`src/features/play/play.ts`), so plan D takes it; the Editors import only headless reading and writing, and their
+   pin is reached only by the new `source` load rule (plan audit M3).
 3. **The chosen flag follows focus.** Tapping, tabbing to, or arrowing to a flag chooses it; Enter, Space and the
    pad's confirm press Go. With no flag suggested, nothing is focused on a flag, so nothing is chosen.
 4. **Two English fallbacks plan L's audit fixes left** (PR 88, merged while this plan was written) go too, though the
@@ -69,9 +73,12 @@ The spec leaves these to the builder, or is silent. They are settled here so the
    `Intl`. `Intl` is not asked on other systems: there it answers `en-US` for a machine that said nothing, which
    would bring the English default back.
 8. **A game with one language still shows the picker** on a first visit: the spec says every first visit.
-9. **The first-language counts** (Ethnologue, 28th edition, 2025; millions): Chinese (Mandarin) 990, Spanish 484,
-   English 390, Portuguese 250, Russian 145, Japanese 124, Korean 81, German 76, French 74. The order is the spec's;
-   the plan audit checks the counts against the edition before they are written into a code comment.
+9. **The first-language counts** were written from memory (Ethnologue, 28th edition, 2025; millions): Chinese
+   (Mandarin) 990, Spanish 484, English 390, Portuguese 250, Russian 145, Japanese 124, Korean 81, German 76, French
+   74. The plan audit could not check them against the edition (the audit's machine is refused both Ethnologue and
+   Wikipedia), so **no count is written into the code**: `LANGUAGES`'s comment says the order is by first-language
+   speakers as Ethnologue (28th edition, 2025) ranks them, and gives no numbers. The order is the spec's and does not
+   hang on the exact counts (plan audit I4).
 
 ## Review Focus
 
@@ -102,7 +109,7 @@ src/features/locale/words.ts            the chain through the source; frameworkW
 src/features/locale/create.ts           Locale: language() may be undefined, asked(), suggested(), listed(), wordsIn()
 src/features/locale/picker.ts           NEW the picker's rules, no page
 src/features/locale/library/*.json      + automata.picker.title, automata.picker.go
-src/features/locale/library/flags/      NEW zh.svg es.svg en.svg pt.svg ja.svg ko.svg
+src/features/web/library/flags/         NEW zh.svg es.svg en.svg pt.svg ja.svg ko.svg (not locale/: plan audit I2)
 src/features/input/pad-menu.ts          NEW gamepad menu presses with no running game
 src/features/web/flags.ts               NEW languageFlag, languageRow
 src/features/web/picker.ts              NEW languagePicker (the screen)
@@ -184,6 +191,8 @@ in Node and the three browsers.
 **Files:**
 - Modify: `src/features/content/project.ts`, `load.ts`, `type-info.ts`, `messages.ts`, `conversation.ts`,
   `cutscene.ts`, `translations.ts`, `content.ts` (exports), `src/features/level/sim-content.ts`
+- Modify: `docs/api/framework.api.md`, from the `package` job's log (`Project.source`, the renamed exports; no
+  schema file holds `automata.toml`, so none moves)
 - Modify: `template/automata.toml`, `tests/fixtures/full-game/automata.toml`, `tests/fixtures/locale/content.ts`,
   `tests/fixtures/content/kind.ts`
 - Test: `tests/features/content/project.test.ts`, `load.test.ts`, `messages.test.ts`, `conversation.test.ts`,
@@ -604,6 +613,10 @@ test('a game does not start before the player has a language', async () => {
 })
 ```
 
+And, beside it, the same refusal for a watching locale that has a language (`createLocale({ …, watching: true })`
+on a Japanese device, so `language()` is `'ja'` and `asked()` is false): a page that keeps the watch's locale after a
+take-over cannot start the game without the picker. The same two tests for `startOnlineGame`.
+
 `notice.browser.test.ts`: with a Korean locale and a game that has a cue, the button `startGame` shows reads
 `눌러서 소리를 켜세요`; there is no test left for "no locale given". `bindings.test.ts`: a refusal has `reason`, `key`
 and `values` and no own property `message`; the test that held the English in `bindings.ts` to the library's is
@@ -616,8 +629,8 @@ language of the `words` it was made with (`es`).
 
 - [ ] **Step 3: Implement**
 
-`startGame` and `startOnlineGame`: right after `checkControls`, throw the sentence above when
-`locale.language() === undefined`. Every `locale === undefined ? {} : …` goes. `soundNotice` is always given
+`startGame` and `startOnlineGame`: right after `checkControls`, throw the sentence above when `!locale.asked()`
+(call 2). Every `locale === undefined ? {} : …` goes. `soundNotice` is always given
 `locale`, and the game's own string as `words` when `soundNotice` is one; inside it, `frameworkWords('en')` goes.
 `bindings.ts`: `refused` no longer takes or returns an English sentence, and `Input.rebind` says every refusal with
 its words (`words(answer.key, answer.values)`). `touch.ts`: `OVERLAY_WORDS` and
@@ -642,12 +655,18 @@ makes the locale).
 **Golden impact:** none.
 
 **Files:**
-- Create: `src/features/locale/library/flags/{zh,es,en,pt,ja,ko}.svg`, `src/features/web/library/{globe,check}.svg`,
+- Create: `src/features/web/library/flags/{zh,es,en,pt,ja,ko}.svg`, `src/features/web/library/{globe,check}.svg`,
   `src/features/web/ambient.d.ts`, `src/features/web/flags.ts`, `src/features/web/picker.ts`,
   `src/features/input/pad-menu.ts`
 - Modify: `src/features/web/web.ts`, `src/features/input/input.ts` (exports), `knip.json` only if CI names it
 - Modify: `tests/fixtures/locale/page.ts` (the picker, a flags row for settings, `?source=`, `?watch`)
-- Test: `tests/features/locale/flags.test.ts`, `tests/features/input/pad-menu.browser.test.ts`,
+- **Where the flags live (a deviation from the spec, plan audit I2).** The spec puts them in
+  `src/features/locale/library/flags/`. They are in `src/features/web/library/flags/` instead: the architecture rule
+  `through-the-entry` fails any import into another feature's folder but its entry, so `web/flags.ts` could not
+  import `../locale/library/flags/zh.svg?raw`; and `locale` is a headless feature the command runs in Node, where a
+  `?raw` import of a drawing has no meaning. A drawing is the screen's, and the screen is `web`'s. The picker's rules,
+  its two words and the order stay in `locale`, as the spec says.
+- Test: `tests/features/web/flags.test.ts`, `tests/features/input/pad-menu.browser.test.ts`,
   `tests/features/web/picker.browser.test.ts`, `tests/features/csp/picker-no-eval.browser.test.ts`,
   `tests/features/game/language.browser.test.ts`
 
@@ -832,7 +851,7 @@ New tests:
 
 - [ ] **Step 3: Implement**
 
-After `createLocale`: when `locale.language() === undefined`, set the state to `'picking'` and
+After `createLocale`: when `!locale.asked()`, set the state to `'picking'` and
 `await languagePicker({ mount: root, locale, frames }).done`. Then `followLanguage`, then `startGame`, as today.
 `page.stop()` destroys a picker that is showing. The loading mark is an element with no text and a CSS spinner (it
 honors `prefers-reduced-motion`: no spin, a still ring). `style.css` dresses the picker with the page's own colors
@@ -1081,8 +1100,9 @@ Live: the non-empty values of `LC_ALL`, `LC_MESSAGES` and `LANG`, in that order;
 - [ ] **Step 4: `create.ts`, `args.ts`, `cli.ts`, `help.ts`, `mcp-tools.ts`**
 
 The source is settled before anything is written: `--source`, else the first device tag `matchLanguage` finds among
-`LANGUAGES`, else the sentence. `automata.toml`'s `source = "en"` line is replaced (a template without exactly one
-such line is a `CliError` that names the template). The marks file is kept when the template's marks were made
+`LANGUAGES`, else the sentence. `automata.toml`'s one `source` line is replaced, found by
+`/^source = "[a-z]+"$/m` and not by naming English, which Task 10's rule would fail (plan audit M1); a template
+without exactly one such line is a `CliError` that names the template. The marks file is kept when the template's marks were made
 against the new source, else it is `writeReadMarks(emptyReadMarks(source))`. `create`'s flags gain the value
 `source`; help gains
 `  --source <language>  The language you write the game's words in: zh, es, en, pt, ja or ko. Left out, your computer's own language is used when it is one of them.`
@@ -1169,8 +1189,9 @@ test('the list of languages, the format 1 marks and a comment may name English',
 
 - [ ] **Step 2: Push; it fails. Step 3: add the rule**
 
-In `checkArchitecture`, for every file but `src/features/content/messages.ts` and
-`src/features/content/read-marks.ts`, on the text with comments taken out, a match of
+In `checkArchitecture`, for every file in `src/`, on the text with comments taken out and with two declarations
+taken out too (the `LANGUAGES` line in `src/features/content/messages.ts`, `export const LANGUAGES = [ … ] as const`,
+and the `FORMAT_1_SOURCE` line in `src/features/content/read-marks.ts`), a match of
 
 ```ts
 const ENGLISH_BY_NAME = /(['"`])en\1|\.en\b(?!\.json)|\ben-GB\b/
@@ -1179,7 +1200,10 @@ const ENGLISH_BY_NAME = /(['"`])en\1|\.en\b(?!\.json)|\ben-GB\b/
 adds the violation `no-default-language` with the detail
 `English is named here as a language of its own. Use the game's source or the player's language.`
 `tests/architecture.test.ts` then holds all of `src/`. If it names a line this plan missed, fix that line; do not
-widen the list of files.
+widen the two exceptions. They are lines, not files: `messages.ts` held three English fallbacks before this plan
+(`englishLacks` and its neighbours), and a whole-file exception would let the next one back in unseen (plan audit I3).
+`rules.test.ts` also expects `if (file.id === 'en') return` in `src/features/content/messages.ts` and
+`const english = files.en` in `src/features/content/read-marks.ts` to break the rule.
 
 - [ ] **Step 4: The docs** (developer text, in English; the six are listed `zh, es, en, pt, ja, ko` everywhere)
 
@@ -1207,7 +1231,10 @@ widen the list of files.
 - [ ] **Step 5: `progress.md`, Cycle 5**
 
 Stage 4 at 100% for plan W, the commit and test counts, and under "Before Release 1": the framework's library now has
-29 words in each language, so 145 wait for a native speaker's read. Add the handoffs below as the tracker's notes.
+29 words in each language, so 145 wait for a native speaker's read (the log's "135" line is history; the line under
+"Before Release 1" is what changes). Correct the plan L log line that says `automata words` moves the inlang packages
+back to `dependencies`: plan W's `automata words` does not compile, so they stay development dependencies until the
+step named under "Plan K" below (plan audit I5). Add the handoffs below as the tracker's notes.
 
 - [ ] **Step 6: Push; every job green, on the last commit. Commit** `docs: no default language, and the rule that holds it`
 
@@ -1220,17 +1247,24 @@ Stage 4 at 100% for plan W, the commit and test counts, and under "Before Releas
   into the flow between the warnings and the splash. Settings' language part is `languageRow` over `locale.listed()`
   with `locale.set`. `padMenu` gives a screen gamepad presses while no game runs. `automata.saves.refused.*` (plan L's audit, M3) joins the
   library in all six.
-- **Plan D (Examples).** `source = "en"` in the demo's `automata.toml`; marks to format 2; the page shows the picker
-  on a first visit, and in watch mode makes its locale with `watching: true` and shows the picker when a player takes
-  over; `--automata-picker-chosen` is Peach Red; the picker's title needs the demo's Korean, Japanese and Chinese
+- **Plan D (Examples).** `source = "en"` in the demo's `automata.toml`, written in the same change as its first
+  messages file (a `source` with no words file is a load problem, and the demo has none today); marks to format 2;
+  the page shows the picker on a first visit, and in watch mode makes its locale with `watching: true` and, when a
+  player takes over, shows the picker whenever `!locale.asked()` (never by testing `language()`, which a watching
+  locale has); `--automata-picker-chosen` is Peach Red; the picker's title needs the demo's Korean, Japanese and Chinese
   fonts; the `ci-screens` pictures add the picker at the five sizes; `startGame` now needs `locale`; the pin moves to
   the commit that lands this plan. Neither golden moves.
-- **Editors.** The pin moves with this plan; a game with words and no `source` shows the load sentence. The nine
-  flags and the editors' own picker are M3.
+- **Editors.** No call the Editors make changes shape: they use `loadGame`, `parseProject`, `parseContent`,
+  `writeContent` and the level helpers, none of which this plan breaks. When their pin moves, a game with words and no
+  `source` shows the load sentence; their fixture game lists no words, so no test there moves. The nine flags and the
+  editors' own picker are M3.
 - **Plan K.** `compileWords` takes the `source` as its base language. This plan does not put it on the command
   line (the spec leaves that to plan K), so the two inlang packages stay development dependencies and
   `bindParaglide` still has no command that makes its `runtime.js`. When plan K wires it, it is
   `automata words --compile <outdir>`, and that pull request moves the two packages to `dependencies`
-  (`tests/package.test.ts` says so).
+  (`tests/package.test.ts` says so). No plan K step names this today (Part 2's left steps are S, T and U), so the
+  tracker's Cycle 4 notes gain one line giving it a home: plan K Step U wires `automata words --compile`, since plan U
+  is the first to show a game's words through Paraglide on a page. The coordinator may move it; it is not left
+  unowned (plan audit I5).
 - **The other repos' `CLAUDE.md` pages** list the languages in the old order; each is corrected with that repo's next
   pull request.
