@@ -590,7 +590,7 @@ export function webStore(storage: () => Storage): SaveStore
   `QuotaExceededError` (or Firefox's `NS_ERROR_DOM_QUOTA_REACHED`) is `full`; anything else is `failed`. `detail` is
   the error's own message. `check` sets and then removes the key `automata.check`.
 
-- [ ] **Step 1: Write the failing tests.** `storage.browser.test.ts`, against the real `localStorage` of each browser
+- [x] **Step 1: Write the failing tests.** `storage.browser.test.ts`, against the real `localStorage` of each browser
   unless a test says otherwise (each test clears the keys it used). Test files can run at the same time in one
   browser and share its `localStorage`, so this file's keys start `automata.web-storage-test.` and no test here reads
   a key another file writes (Audit F6):
@@ -615,11 +615,11 @@ test('any other error answers failed with the error\'s words', ...)
   (`{ 'src/headless.ts': "export * from './features/web/web.ts'" }` gives `['headless-is-headless']`; the same with
   `host/host.ts` gives `[]`).
 
-- [ ] **Step 2: Push; the `engines` jobs fail** because `storage.ts` does not exist, and `check` fails on the two
+- [x] **Step 2: Push; the `engines` jobs fail** because `storage.ts` does not exist, and `check` fails on the two
   rules.
-- [ ] **Step 3: Implement** the move, the rules and `webStore`.
-- [ ] **Step 4: Push; all jobs pass**, the moved web host tests among them.
-- [ ] **Step 5: Commit** (`feat(web): the web host is its own feature and saves in the browser`).
+- [x] **Step 3: Implement** the move, the rules and `webStore`.
+- [x] **Step 4: Push; all jobs pass**, the moved web host tests among them.
+- [x] **Step 5: Commit** (`feat(web): the web host is its own feature and saves in the browser`).
 
 ### Task 6: The host port grows, and a host for tests
 
@@ -647,7 +647,7 @@ test('any other error answers failed with the error\'s words', ...)
   `navigator.languages`, or `[navigator.language]` when that list is empty, `canQuit` is `false` and `quit()` answers
   `false`. `store` is `webStore(storage)`.
 
-- [ ] **Step 1: Write the failing tests.** `link.test.ts`:
+- [x] **Step 1: Write the failing tests.** `link.test.ts`:
 
 ```ts
 test('an https address can be opened', ...)          // 'https://example.com/a?b=c'
@@ -681,12 +681,12 @@ test('its saves are the browser\'s storage', ...)                               
 test('with no seams it reads the real page', ...)                               // webHost(): visible() is a boolean, deviceLanguages() is an array
 ```
 
-- [ ] **Step 2: Push; `check` fails** because `link.ts` and `test.ts` do not exist, and typecheck fails on the
+- [x] **Step 2: Push; `check` fails** because `link.ts` and `test.ts` do not exist, and typecheck fails on the
   tests' new calls.
-- [ ] **Step 3: Implement.** Replace the three test files' hand-made hosts with `testHost()` in the same push; they
+- [x] **Step 3: Implement.** Replace the three test files' hand-made hosts with `testHost()` in the same push; they
   no longer typecheck otherwise.
-- [ ] **Step 4: Push; all jobs pass.**
-- [ ] **Step 5: Commit** (`feat(host): the port carries saves, language, links and quit; a host for tests`).
+- [x] **Step 4: Push; all jobs pass.**
+- [x] **Step 5: Commit** (`feat(host): the port carries saves, language, links and quit; a host for tests`).
 
 ### Task 7: End to end: a save outlives its page
 

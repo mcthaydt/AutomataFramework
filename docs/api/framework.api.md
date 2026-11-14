@@ -561,10 +561,22 @@ const groundOf: (level: Level) => number;
 
 ```ts
 interface Host {
-    readonly target: 'web';
+    readonly target: HostTarget;
     visible(): boolean;
     onVisibility(listener: (visible: boolean) => void): () => void;
+    readonly store: SaveStore;
+    language(): string | undefined;
+    deviceLanguages(): readonly string[];
+    openLink(url: string): Promise<LinkAnswer>;
+    readonly canQuit: boolean;
+    quit(): Promise<boolean>;
 }
+```
+
+### `HostTarget` (type)
+
+```ts
+type HostTarget = 'web' | 'test';
 ```
 
 ### `hypot` (function)
@@ -594,6 +606,12 @@ interface Input {
 
 ```ts
 function isHeld(player: EntityRef, action: string): boolean;
+```
+
+### `isOpenableLink` (function)
+
+```ts
+function isOpenableLink(url: string): boolean;
 ```
 
 ### `jsonSchemaFor` (function)
@@ -669,6 +687,12 @@ interface LevelThing {
     readonly x: number;
     readonly y: number;
 }
+```
+
+### `LinkAnswer` (type)
+
+```ts
+type LinkAnswer = 'opened' | 'blocked' | 'refused';
 ```
 
 ### `loadGame` (function)
@@ -1393,6 +1417,37 @@ interface SystemSpec {
 function tan(x: number): number;
 ```
 
+### `TestHost` (interface)
+
+```ts
+interface TestHost extends Host {
+    readonly target: 'test';
+    show(): void;
+    hide(): void;
+    readonly opened: readonly string[];
+    readonly quits: number;
+}
+```
+
+### `testHost` (function)
+
+```ts
+function testHost(options?: TestHostOptions): TestHost;
+```
+
+### `TestHostOptions` (interface)
+
+```ts
+interface TestHostOptions {
+    readonly visible?: boolean;
+    readonly store?: SaveStore;
+    readonly language?: string;
+    readonly deviceLanguages?: readonly string[];
+    readonly canQuit?: boolean;
+    readonly blockLinks?: boolean;
+}
+```
+
 ### `Thing` (const)
 
 ```ts
@@ -1526,7 +1581,20 @@ class WatchSetupError extends Error {
 ### `webHost` (function)
 
 ```ts
-function webHost(doc?: Document): Host;
+function webHost(seams?: Partial<WebSeams>): Host;
+```
+
+### `WebSeams` (interface)
+
+```ts
+interface WebSeams {
+    readonly document: Pick<Document, 'visibilityState' | 'addEventListener' | 'removeEventListener'>;
+    readonly navigator: Pick<Navigator, 'language' | 'languages'>;
+    readonly open: (url: string, target: string) => {
+        opener: unknown;
+    } | null;
+    readonly storage: () => Storage;
+}
 ```
 
 ### `writeContent` (function)
@@ -1539,6 +1607,12 @@ function writeContent<T extends ContentType>(type: T, value: z.input<(typeof CON
 
 ```ts
 function writeReplay(replay: Replay): string;
+```
+
+### `z` (unresolved)
+
+```ts
+from 'zod'
 ```
 
 ## `./headless`
@@ -1991,6 +2065,28 @@ interface GameSimOptions {
 const groundOf: (level: Level) => number;
 ```
 
+### `Host` (interface)
+
+```ts
+interface Host {
+    readonly target: HostTarget;
+    visible(): boolean;
+    onVisibility(listener: (visible: boolean) => void): () => void;
+    readonly store: SaveStore;
+    language(): string | undefined;
+    deviceLanguages(): readonly string[];
+    openLink(url: string): Promise<LinkAnswer>;
+    readonly canQuit: boolean;
+    quit(): Promise<boolean>;
+}
+```
+
+### `HostTarget` (type)
+
+```ts
+type HostTarget = 'web' | 'test';
+```
+
 ### `hypot` (function)
 
 ```ts
@@ -2007,6 +2103,12 @@ const Id: z.ZodString;
 
 ```ts
 function isHeld(player: EntityRef, action: string): boolean;
+```
+
+### `isOpenableLink` (function)
+
+```ts
+function isOpenableLink(url: string): boolean;
 ```
 
 ### `jsonSchemaFor` (function)
@@ -2082,6 +2184,12 @@ interface LevelThing {
     readonly x: number;
     readonly y: number;
 }
+```
+
+### `LinkAnswer` (type)
+
+```ts
+type LinkAnswer = 'opened' | 'blocked' | 'refused';
 ```
 
 ### `loadGame` (function)
@@ -2773,6 +2881,37 @@ interface SystemSpec {
 function tan(x: number): number;
 ```
 
+### `TestHost` (interface)
+
+```ts
+interface TestHost extends Host {
+    readonly target: 'test';
+    show(): void;
+    hide(): void;
+    readonly opened: readonly string[];
+    readonly quits: number;
+}
+```
+
+### `testHost` (function)
+
+```ts
+function testHost(options?: TestHostOptions): TestHost;
+```
+
+### `TestHostOptions` (interface)
+
+```ts
+interface TestHostOptions {
+    readonly visible?: boolean;
+    readonly store?: SaveStore;
+    readonly language?: string;
+    readonly deviceLanguages?: readonly string[];
+    readonly canQuit?: boolean;
+    readonly blockLinks?: boolean;
+}
+```
+
 ### `Thing` (const)
 
 ```ts
@@ -2862,4 +3001,10 @@ function writeContent<T extends ContentType>(type: T, value: z.input<(typeof CON
 
 ```ts
 function writeReplay(replay: Replay): string;
+```
+
+### `z` (unresolved)
+
+```ts
+from 'zod'
 ```

@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { Player, verifyReplay } from '#src/features/commands/commands.ts'
 import { type Game, startGame } from '#src/features/game/game.ts'
-import type { Host } from '#src/features/host/host.ts'
+import { type Host, type TestHost, testHost } from '#src/features/host/host.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import { Transform } from '#src/features/physics/physics.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
@@ -17,26 +17,6 @@ const FRAME = 1000 / 60
 
 let mount: HTMLDivElement
 let game: Game | undefined
-
-/** A host the test can hide and show. */
-function fakeHost(): Host & { hide(): void; show(): void } {
-  let visible = true
-  const listeners = new Set<(visible: boolean) => void>()
-  const set = (next: boolean): void => {
-    visible = next
-    for (const l of listeners) l(next)
-  }
-  return {
-    target: 'web',
-    visible: () => visible,
-    onVisibility(listener) {
-      listeners.add(listener)
-      return () => listeners.delete(listener)
-    },
-    hide: () => set(false),
-    show: () => set(true),
-  }
-}
 
 beforeEach(() => {
   mount = document.createElement('div')
@@ -53,9 +33,9 @@ afterEach(() => {
 
 async function start(
   extra: { host?: Host; frames?: ReturnType<typeof manualFrames>; controls?: typeof fixtureControls } = {},
-): Promise<{ game: Game; frames: ReturnType<typeof manualFrames>; host: ReturnType<typeof fakeHost> }> {
+): Promise<{ game: Game; frames: ReturnType<typeof manualFrames>; host: TestHost }> {
   const frames = extra.frames ?? manualFrames()
-  const host = fakeHost()
+  const host = testHost()
   game = await startGame({
     content: await loadFixtureGame(),
     plugins: [heroPlugin],
@@ -96,7 +76,7 @@ test('a level that sets its sky is drawn on that sky', async () => {
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,
-    host: fakeHost(),
+    host: testHost(),
     frames,
   })
   const canvas = mount.querySelector('canvas')
@@ -153,7 +133,7 @@ test('a hidden page pauses the game and coming back does not fast-forward', asyn
 })
 
 test('a game that starts on a hidden page waits to be seen', async () => {
-  const host = fakeHost()
+  const host = testHost()
   host.hide()
   const { game: g, frames } = await start({ host })
   expect(frames.pending).toBe(false)

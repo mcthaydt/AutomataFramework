@@ -5,7 +5,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page } from 'vitest/browser'
 import { type Game, startGame } from '#src/features/game/game.ts'
-import type { Host } from '#src/features/host/host.ts'
+import { testHost } from '#src/features/host/host.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
@@ -15,7 +15,7 @@ import { drawnRows } from '../../fixtures/game/pixels.ts'
 const FRAME = 1000 / 60
 
 /** A host that is always on screen: these tests drive the frames by hand. */
-const visibleHost: Host = { target: 'web', visible: () => true, onVisibility: () => () => {} }
+const visibleHost = testHost()
 
 /** The screens: [name, width, height]. The names are the picture files a person looks at on the `ci-screens` branch. */
 const SCREENS = [
