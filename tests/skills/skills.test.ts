@@ -146,6 +146,14 @@ test('the answering-an-event section names things the framework has and the temp
   expect(hero).toContain('countSparks')
 })
 
+test('automata sends a change to a word to content/messages/, in every language, and not to the page', () => {
+  const automata = text('automata')
+  const changes = automata.slice(automata.indexOf('## Where a change goes'), automata.indexOf('## Verify'))
+  expect(changes).toMatch(/word[^\n]*`content\/messages\/`/)
+  expect(changes).not.toMatch(/words on it: `src\/features\/page\/`/)
+  expect(automata).not.toContain('words on the screen | `src/features/page/`')
+})
+
 test('no skill says npx automata without --no', () => {
   for (const skill of all) expect(skill.text, skill.name).not.toMatch(/npx\s+(?!--no\s+automata\b)/)
 })

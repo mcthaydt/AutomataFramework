@@ -14,6 +14,8 @@
     "key.arrow-up": "上矢印",
     "key.space": "スペース",
     "level.level-1.name": "レベル1",
-    "page.cannot-start": "このブラウザではゲームを始められませんでした。別のブラウザで試してください。"
+    "page.cannot-start": "このブラウザではゲームを始められませんでした。別のブラウザで試してください。",
+    "page.paint-again": "ゲームのフォルダーで npm run art を実行して絵を描き直してから、このページを読み込み直してください。",
+    "page.problem-title": "このゲームには問題があり、始められません。"
   }
 }

@@ -16,7 +16,8 @@ files. Read this page, then the skill for the kind of change you are making.
 | Levels, characters and the rest of the content (JSON, one thing in each file) | `content/` |
 | The list of the game's rules | `src/headless.ts` |
 | One feature's rules: a plugin and its systems | `src/features/<name>/` |
-| The page: loading, controls, words on the screen | `src/features/page/` |
+| Every word a player reads, one file for each language | `content/messages/` |
+| The page: loading, controls, and how it looks | `src/features/page/` |
 | Tests of the rules | `tests/features/<name>/` |
 | A recorded play, replayed on every check | `replays/` |
 | How to run, change and check the game, for a person | `README.md` |
@@ -38,7 +39,9 @@ files. Read this page, then the skill for the kind of change you are making.
 - A figure or a backdrop (how something is drawn): content. Edit the JSON, then run `npx --no automata art` to paint its
   pictures, and commit them with it. `check` fails for a picture that is missing or older than its file.
 - A new thing a character can do: a rule, in `src/features/<name>/`. Skill `automata-rules`.
-- How the game looks on the page, or the words on it: `src/features/page/` and `src/style.css`.
+- A word a player reads: content, in `content/messages/`, one file for each language. Change it in every language's
+  file, under the same key; `check` names any language that is missing it.
+- How the game looks on the page: `src/features/page/` and `src/style.css`.
 - A new kind of file: see `automata-content` for the kinds there are. A kind that is not there is not built yet.
 
 ## Verify in this order

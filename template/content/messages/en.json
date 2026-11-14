@@ -14,6 +14,8 @@
     "key.arrow-up": "Up arrow",
     "key.space": "Space",
     "level.level-1.name": "Level 1",
-    "page.cannot-start": "This game could not start in this browser. Try another browser."
+    "page.cannot-start": "This game could not start in this browser. Try another browser.",
+    "page.paint-again": "Run npm run art in the game's folder to paint the pictures, then load this page again.",
+    "page.problem-title": "This game has a problem and cannot start."
   }
 }

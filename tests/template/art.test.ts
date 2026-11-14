@@ -39,3 +39,9 @@ test('the agent notes say to run automata art after a figure, and to commit the 
   expect(tree['AGENTS.md']).toMatch(/automata art.*after you change a figure, and commit the\s+pictures/s)
   expect(JSON.parse(tree['package.template.json'] ?? '{}').scripts.art).toBe('automata art')
 })
+
+test('the agent notes say the words are in content/messages/, and not on the page', () => {
+  const agents = tree['AGENTS.md'] ?? ''
+  expect(agents).toMatch(/word[^\n]*\| `content\/messages\/` \|/)
+  expect(agents).not.toMatch(/words on screen \| `src\/features\/page\/`/)
+})
