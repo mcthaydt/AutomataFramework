@@ -14,7 +14,6 @@ import { readFullGame } from '../../fixtures/full-game/read.ts'
 import { coopFiles } from '../../fixtures/game/co-op.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
-import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const input = { seats: () => [], claim: () => undefined, setPlayers: () => undefined } as unknown as Input
 let sim: Sim | undefined
@@ -45,11 +44,16 @@ const refused = (answer: JoinAnswer): string => {
   return answer.message
 }
 
-/** The coop fixture with the level's start points for the given players only. */
-const withStarts = (players: readonly number[]): Record<string, string> => {
-  const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] ?? '') as Record<string, unknown>
-  const starts = players.map((player, i) => ({ player, x: 2.5 + i * 2, y: 7.5 }))
-  return { ...coopFiles, 'content/levels/level-1.json': JSON.stringify({ ...level, starts }) }
+/**
+ * The coop fixture with a level that has start points for the given players only. Built by hand: `loadGame` itself
+ * refuses a game for four whose level has fewer start points.
+ */
+async function withStarts(players: readonly number[]): Promise<GameContent> {
+  const content = await loadFixtureGame(coopFiles)
+  const level = content.levels['level-1']
+  if (level === undefined) throw new Error('no level-1')
+  const starts = level.starts.filter((start) => players.includes(start.player))
+  return { ...content, levels: { ...content.levels, 'level-1': { ...level, starts } } }
 }
 
 async function fullLocale(deviceLanguages: readonly string[] = []): Promise<Locale> {
@@ -89,10 +93,10 @@ test('a taken device, and a keyboard that cannot be shared', async () => {
 })
 
 test('a level with room for fewer people than the game says', async () => {
-  const one = await playersOf(await loadFixtureGame(withStarts([1])))
+  const one = await playersOf(await withStarts([1]))
   expect(refused(one.addPlayer('pad-0'))).toBe('This level has room for one player.')
   sim?.dispose()
-  const two = await playersOf(await loadFixtureGame(withStarts([1, 2])))
+  const two = await playersOf(await withStarts([1, 2]))
   expect(two.addPlayer('pad-0').ok).toBe(true)
   expect(refused(two.addPlayer('pad-1'))).toBe('This level has room for 2 players.')
 })

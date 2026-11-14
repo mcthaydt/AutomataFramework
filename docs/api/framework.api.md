@@ -918,6 +918,12 @@ function fitWorld(box: {
 }): Fit;
 ```
 
+### `followLanguage` (function)
+
+```ts
+function followLanguage(locale: Locale, element?: HTMLElement): () => void;
+```
+
 ### `formatDiagnostic` (function)
 
 ```ts
@@ -1024,6 +1030,7 @@ interface GameOptions extends GameSimOptions {
     readonly gamepads?: () => readonly (PadLike | null)[];
     readonly audio?: GameAudio;
     readonly soundNotice?: string | false;
+    readonly locale?: Locale;
 }
 ```
 
@@ -1102,6 +1109,7 @@ interface Input {
     poll(tick: number): Command[];
     inset(): number;
     onInset(listener: (px: number) => void): void;
+    relabel(words: Words): void;
     setPlayers(players: readonly number[]): void;
     claim(player: number, claim: ClaimType): void;
     seats(): readonly Seat[];
@@ -1141,6 +1149,7 @@ interface InputOptions {
     readonly gamepads?: () => readonly (PadLike | null)[];
     readonly frames?: Frames;
     readonly sequence?: Sequence;
+    readonly words?: Words;
 }
 ```
 
@@ -1777,6 +1786,12 @@ interface OnlineGame {
 }
 ```
 
+### `onlineMessage` (function)
+
+```ts
+function onlineMessage(status: OnlineStatus): Message | undefined;
+```
+
 ### `OnlineOptions` (interface)
 
 ```ts
@@ -1819,7 +1834,7 @@ type OnlineStatus = {
 ### `onlineWords` (function)
 
 ```ts
-function onlineWords(status: OnlineStatus): string;
+function onlineWords(status: OnlineStatus, words?: Words): string;
 ```
 
 ### `openSettings` (function)
@@ -4985,6 +5000,12 @@ class OnlineError extends Error {
 }
 ```
 
+### `onlineMessage` (function)
+
+```ts
+function onlineMessage(status: OnlineStatus): Message | undefined;
+```
+
 ### `OnlineProblem` (type)
 
 ```ts
@@ -5012,7 +5033,7 @@ type OnlineStatus = {
 ### `onlineWords` (function)
 
 ```ts
-function onlineWords(status: OnlineStatus): string;
+function onlineWords(status: OnlineStatus, words?: Words): string;
 ```
 
 ### `openSettings` (function)
