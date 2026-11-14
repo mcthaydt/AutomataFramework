@@ -1,0 +1,16 @@
+{
+  "format": 1,
+  "id": "jump",
+  "volume": 0.8,
+  "voices": [
+    {
+      "kind": "tone",
+      "wave": "square",
+      "from": 220,
+      "to": 660,
+      "at": 0,
+      "length": 0.15,
+      "volume": 1
+    }
+  ]
+}

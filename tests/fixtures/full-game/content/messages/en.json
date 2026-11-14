@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "en",
+  "messages": {
+    "hero.ask": "Any tips?",
+    "hero.bye": "See you.",
+    "keeper.bye": "Take care.",
+    "keeper.hello": "Hello there! 👋",
+    "keeper.tip": "Push the crate onto the ledge."
+  }
+}
