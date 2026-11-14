@@ -472,6 +472,16 @@ interface ConversationNode {
 const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
 ```
 
+### `coopSeats` (function)
+
+```ts
+function coopSeats(project: {
+    readonly players?: number | undefined;
+}, starts: readonly {
+    readonly player: number;
+}[]): number | undefined;
+```
+
 ### `cos` (function)
 
 ```ts
@@ -525,6 +535,10 @@ function createRoomEngine(setup: {
     readonly sim: Sim;
     readonly level: string;
     readonly seats: number;
+    readonly seatCommands?: {
+        readonly join: string;
+        readonly leave: string;
+    };
 }): RoomEngine;
 ```
 
@@ -2171,6 +2185,9 @@ type ServerMessage = {
 } | {
     readonly t: 'back';
     readonly seat: number;
+} | {
+    readonly t: 'gone';
+    readonly seat: number;
 };
 ```
 
@@ -3315,6 +3332,16 @@ interface ConversationNode {
 const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
 ```
 
+### `coopSeats` (function)
+
+```ts
+function coopSeats(project: {
+    readonly players?: number | undefined;
+}, starts: readonly {
+    readonly player: number;
+}[]): number | undefined;
+```
+
 ### `cos` (function)
 
 ```ts
@@ -3349,6 +3376,10 @@ function createRoomEngine(setup: {
     readonly sim: Sim;
     readonly level: string;
     readonly seats: number;
+    readonly seatCommands?: {
+        readonly join: string;
+        readonly leave: string;
+    };
 }): RoomEngine;
 ```
 
@@ -4722,6 +4753,9 @@ type ServerMessage = {
     readonly seat: number;
 } | {
     readonly t: 'back';
+    readonly seat: number;
+} | {
+    readonly t: 'gone';
     readonly seat: number;
 };
 ```

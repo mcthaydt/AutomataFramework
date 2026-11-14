@@ -146,6 +146,10 @@ async function seatOf(spec: Spec, query: string, server = roomServer): Promise<S
       window.matchMedia = (media: string) => (media.includes('pointer: coarse') ? coarse(media) : real(media))
     })
   const page = await context.newPage()
+  // What the page says to its console is the first thing to read when a journey stops: it goes to the CI log.
+  const name = `${spec.engine}-${spec.width}`
+  page.on('console', (message) => console.log(`[${name}] ${message.type()}: ${message.text()}`))
+  page.on('pageerror', (error) => console.log(`[${name}] page error: ${error.message}`))
   await page.goto(`${pageUrl}?server=${encodeURIComponent(server)}${query}`)
   const button = (action: string) => page.locator(`[data-action='${action}']`)
   const finger = { pointerType: 'touch', pointerId: 7, isPrimary: true, bubbles: true } as const
