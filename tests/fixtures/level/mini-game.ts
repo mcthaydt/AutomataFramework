@@ -89,6 +89,8 @@ export interface MiniGame {
   /** Where each player starts, from the left (the first is player 1), instead of the default places. */
   readonly starts?: readonly number[]
   readonly things?: readonly { id: string; character: string; x: number; y: number }[]
+  /** Levels beyond `level-1`, each a value `writeContent` accepts. */
+  readonly levels?: readonly object[]
   readonly characters?: readonly object[]
   readonly behaviours?: readonly object[]
   readonly conversations?: readonly object[]
@@ -124,6 +126,7 @@ export function miniFiles(game: MiniGame = {}): Record<string, string | undefine
   return gameFiles(
     base,
     [
+      ...listed('level', 'levels', game.levels),
       ...listed('character', 'characters', game.characters),
       ...listed('behaviour', 'behaviours', game.behaviours),
       ...listed('conversation', 'conversations', game.conversations),
