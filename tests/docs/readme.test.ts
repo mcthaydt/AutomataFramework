@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
+import { TOUCH_PROPERTIES } from '#src/features/input/touch.ts'
 import * as framework from '#src/headless.ts'
 
 const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8')
@@ -10,4 +11,10 @@ test('the README prints a problem with its place, using what the package exports
   expect(readme).toContain('formatDiagnostic')
   expect(readme).not.toContain('d.message')
   expect(typeof framework.formatDiagnostic).toBe('function')
+})
+
+// A game can only set what it can find: every property the buttons read is named in the README.
+test('the README names every property a game can set on the touch buttons', () => {
+  expect(TOUCH_PROPERTIES).toHaveLength(7)
+  for (const property of TOUCH_PROPERTIES) expect(readme).toContain(property)
 })

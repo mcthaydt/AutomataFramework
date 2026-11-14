@@ -40,6 +40,10 @@ Releases (the Owner, 2026-11-13; the spec's Releases section): nothing is publis
 
 ### Log
 
+- 2026-11-14: The touch buttons read their look from seven `--automata-touch-*` CSS properties (today's look is the
+  default), and carry the classes `automata-touch` and `automata-touch-button` and `data-action`, so the demo game's
+  Blueprint look (Examples cycle 2) needs no more than CSS. No change to the public API and none to the progress
+  figure.
 - 2026-11-14: The spec gains a Visual direction section (the Owner): Blueprint as the editors' and the site's skin,
   dark by default, canvas first with floating tools, a drawing-notes layer over the game's real art, Phosphor
   regular icons as an approved dependency, and the Examples demo game's screens in the same look. No change to the

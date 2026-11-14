@@ -129,6 +129,69 @@ test('touch buttons appear on first touch and say what they do', () => {
   expect(getComputedStyle(button('Jump')).touchAction).toBe('none')
 })
 
+test('with nothing set, the buttons look as they always have', () => {
+  make()
+  firstTouch()
+  const style = getComputedStyle(button('Jump'))
+  expect(style.backgroundColor).toBe('rgba(20, 20, 30, 0.55)')
+  expect(style.color).toBe('rgb(255, 255, 255)')
+  expect(style.borderTopLeftRadius).toBe('16px')
+  expect(style.borderTopWidth).toBe('2px')
+  expect(style.fontWeight).toBe('700')
+  expect(style.fontSize).toBe('18px')
+})
+
+test("a game sets the buttons' look with seven properties on the mount", () => {
+  mount.style.setProperty('--automata-touch-background', 'rgb(10, 31, 60)')
+  mount.style.setProperty('--automata-touch-color', 'rgb(255, 212, 71)')
+  mount.style.setProperty('--automata-touch-border', '1px solid rgb(234, 242, 250)')
+  mount.style.setProperty('--automata-touch-radius', '2px')
+  mount.style.setProperty('--automata-touch-font', '600 15px/1.1 monospace')
+  make()
+  firstTouch()
+  const style = getComputedStyle(button('Jump'))
+  expect(style.backgroundColor).toBe('rgb(10, 31, 60)')
+  expect(style.color).toBe('rgb(255, 212, 71)')
+  expect(style.borderTopWidth).toBe('1px')
+  expect(style.borderTopColor).toBe('rgb(234, 242, 250)')
+  expect(style.borderTopLeftRadius).toBe('2px')
+  expect(style.fontWeight).toBe('600')
+  expect(style.fontSize).toBe('15px')
+})
+
+test('a held button takes the pressed colours and gives them back', () => {
+  mount.style.setProperty('--automata-touch-background', 'rgb(10, 31, 60)')
+  mount.style.setProperty('--automata-touch-color', 'rgb(234, 242, 250)')
+  mount.style.setProperty('--automata-touch-pressed-background', 'rgb(255, 212, 71)')
+  mount.style.setProperty('--automata-touch-pressed-color', 'rgb(10, 31, 60)')
+  make()
+  firstTouch()
+  pointer(button('Jump'), 'pointerdown', 1)
+  expect(getComputedStyle(button('Jump')).backgroundColor).toBe('rgb(255, 212, 71)')
+  expect(getComputedStyle(button('Jump')).color).toBe('rgb(10, 31, 60)')
+  pointer(button('Jump'), 'pointerup', 1)
+  expect(getComputedStyle(button('Jump')).backgroundColor).toBe('rgb(10, 31, 60)')
+  expect(getComputedStyle(button('Jump')).color).toBe('rgb(234, 242, 250)')
+})
+
+test('each button says which action it is, for a stylesheet', () => {
+  make()
+  firstTouch()
+  expect(mount.querySelector('.automata-touch')).not.toBeNull()
+  const buttons = [...mount.querySelectorAll<HTMLButtonElement>('.automata-touch .automata-touch-button')]
+  expect(buttons.map((b) => b.dataset.action)).toEqual(['left', 'right', 'jump'])
+})
+
+test('a themed button is still big enough for a thumb', () => {
+  mount.style.setProperty('--automata-touch-font', '600 10px/1 monospace')
+  make()
+  firstTouch()
+  for (const b of mount.querySelectorAll('button')) {
+    expect(b.offsetWidth, b.textContent ?? '').toBeGreaterThanOrEqual(64)
+    expect(b.offsetHeight, b.textContent ?? '').toBeGreaterThanOrEqual(64)
+  }
+})
+
 test('a mouse pointer does not bring the touch buttons up', () => {
   make()
   pointer(mount, 'pointerdown', 1, 'mouse')

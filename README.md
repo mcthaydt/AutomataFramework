@@ -57,6 +57,34 @@ const game = await startGame({
 `loadGame` never throws: a file that is missing or wrong comes back as a plain message that names the file and the
 place. On a phone, the touch buttons show up the first time a finger touches the screen.
 
+### Make the touch buttons your own
+
+The touch buttons look the same in every game until a game says otherwise. To change how they look, set these CSS
+custom properties on the `mount` element you gave `startGame` (or any element above it). Anything you leave out keeps its
+default. The buttons' size, spacing and touch behaviour are not on the list, so a thumb can always find them.
+
+| Property | Default |
+|---|---|
+| `--automata-touch-background` | `rgba(20,20,30,0.55)` |
+| `--automata-touch-color` | `#fff` |
+| `--automata-touch-border` | `2px solid rgba(255,255,255,0.85)` |
+| `--automata-touch-radius` | `16px` |
+| `--automata-touch-font` | `700 18px/1.1 system-ui,sans-serif` |
+| `--automata-touch-pressed-background` | `rgba(255,255,255,0.55)` |
+| `--automata-touch-pressed-color` | `#111` |
+
+The row of buttons has the class `automata-touch`, each button the class `automata-touch-button`, and each button
+`data-action` set to its action's name, so a stylesheet can pick out one:
+
+```css
+#game {
+  /* the element used as `mount` */
+  --automata-touch-background: navy;
+  --automata-touch-radius: 2px;
+}
+#game .automata-touch-button[data-action='jump'] { text-transform: uppercase; }
+```
+
 What a hero does with the controls (run, jump) is the game's own code, a plugin built with `definePlugin` and
 `defineSystem`; pass it to `startGame` as `plugins: [...]`.
 
