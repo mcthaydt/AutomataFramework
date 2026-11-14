@@ -40,10 +40,10 @@ const quieterJump = (): Record<string, string> =>
     sound.volume = 0.2
   })
 
-test('simContent drops sounds, music and cues and keeps every other map', async () => {
+test('simContent drops sounds, music, cues and words and keeps every other map', async () => {
   const full = await loadFull()
   const kept = Object.keys(full)
-    .filter((key) => !['sounds', 'music', 'cues'].includes(key))
+    .filter((key) => !['sounds', 'music', 'cues', 'messages'].includes(key))
     .sort()
   expect(Object.keys(simContent(full)).sort()).toEqual(kept)
   expect(simContent(full).levels).toBe(full.levels)
