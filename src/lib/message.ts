@@ -12,3 +12,6 @@ export interface Message {
   readonly key: string
   readonly values?: Values
 }
+
+/** Says a sentence in a language: the key and what goes into it in, the text out. A key nobody wrote comes back as itself. */
+export type Words = (key: string, values?: Values) => string

@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "id": "ko",
+  "messages": {
+    "automata.join.full": "모두 들어왔어요. 이 게임은 {count}명까지 할 수 있어요.",
+    "automata.join.no-shared": "이 게임은 키보드를 같이 쓸 수 없어요. 게임패드로 들어오세요.",
+    "automata.join.no-start.many": "이 레벨은 {count}명까지 할 수 있어요.",
+    "automata.join.no-start.one": "이 레벨은 한 명만 할 수 있어요.",
+    "automata.join.one-player-game": "이 게임은 한 명이 하는 게임이에요.",
+    "automata.join.taken.gamepad": "그 게임패드에는 이미 플레이어가 있어요.",
+    "automata.join.taken.keyboard": "키보드는 이미 같이 쓰고 있어요.",
+    "automata.online.away.many": "플레이어 {players}의 연결이 끊겼어요. 게임은 계속됩니다.",
+    "automata.online.away.one": "플레이어 {players}의 연결이 끊겼어요. 게임은 계속됩니다.",
+    "automata.online.ended.bad-room": "그 방을 만들 수 없었어요. 레벨과 플레이어 수를 확인해 주세요.",
+    "automata.online.ended.different-version": "이 게임은 방과 버전이 달라요. 페이지를 새로 고쳐 최신 버전을 받은 다음 다시 들어오세요.",
+    "automata.online.ended.lost": "연결이 끊겨서 되돌릴 수 없었어요. 다시 하려면 방을 만들거나 방에 들어오세요.",
+    "automata.online.ended.no-room": "그 코드의 방이 없어요. 코드를 확인하고 다시 해 보세요.",
+    "automata.online.ended.no-server": "게임 서버에 연결할 수 없었어요. 인터넷을 확인하고 다시 해 보세요.",
+    "automata.online.ended.room-full": "그 방은 꽉 찼어요. 새 방을 만들거나 다른 코드를 받아 보세요.",
+    "automata.online.ended.server-full": "지금은 서버에 새 방을 만들 자리가 없어요. 1분 뒤에 다시 해 보세요.",
+    "automata.online.reconnecting": "연결이 끊겼어요. 다시 들어가는 중이에요.",
+    "automata.online.waiting.many": "플레이어 {count}명을 기다리고 있어요. 친구들이 들어올 수 있게 이 코드를 알려 주세요: {code}",
+    "automata.online.waiting.one": "플레이어 1명을 기다리고 있어요. 친구가 들어올 수 있게 이 코드를 알려 주세요: {code}",
+    "automata.touch.label": "터치 조작"
+  }
+}
