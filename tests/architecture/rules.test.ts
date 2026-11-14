@@ -48,6 +48,9 @@ test('headless reaches nothing that needs a page', () =>
     'headless-is-headless',
   ]))
 
+test('saves may import nothing above it', () =>
+  expect(one({ 'src/features/saves/saves.ts': "import '../host/host.ts'" })).toEqual(['imports-go-down']))
+
 // The rules also have to stay quiet on honest code.
 test('a clean map has no violations', () =>
   expect(
