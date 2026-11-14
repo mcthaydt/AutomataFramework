@@ -16,6 +16,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | Plan V (saves and the host port): 2. Plan | Done, 100% (merged, PR 32) | `plans/2026-11-14-m2-saves-host.md` |
 | Plan V: 3. Plan audit | Written, in review; stage at 100%, plan V at 20%. Ten findings, all applied to the plan | `audits/2026-11-14-m2-saves-host-plan-audit.md` |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
+| Plan N, networking: 2. Plan | Written, in review (12 tasks; Task 11 waits for plan I's `join` and `leave`; stages 3 to 7 not started) | `plans/2026-11-14-m2-networking.md` |
 
 ### Log
 
@@ -23,6 +24,10 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
   `screens` in the layers (they read it); both entries export `z`, so a game that may import only the framework can
   write a save's schema; `input` and `audio` export their settings' schemas and plan U makes the sections. The
   contract's `Host.saves` is now `Host.store`.
+- 2026-11-14, plan N (networking): the plan is written. Two new features, `net` (the wire, the room's rules, the
+  client's two sims with rollback) and `server` (the Colyseus room, the process on Effect), a third package entry
+  `/server`, and three proofs: a scripted two-player run in four engines with a golden, two headless players over
+  real sockets, and two real browsers against a server CI starts. Nothing is deployed.
 - 2026-11-14: the M2 spec, with the Owner's answers: the demo has same-screen co-op for 2 to 4 players, and online
   play is built and proven in CI, not deployed; the showcase is one short real game of three levels plus a "What's
   inside" page. M2 is cut into small plans that can run side by side.
