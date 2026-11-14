@@ -13,6 +13,7 @@ Overall: **5%** (stage 1, the spec, is written and in review; M2 is eleven plans
 | 1. Spec | Written, in review | `specs/2026-11-14-m2-design.md` |
 | 2 to 7, per plan | Not started (plans C, I, V and N can start at once) | |
 | Plan C (content): 2. Plan | Written, in review: twelve tasks, twelve new kinds of file and the widened character and level | `plans/2026-11-14-m2-content.md` |
+| Plan C (content): 3. Plan audit | Done, 100%: two critical faults (the content hash, the tileset test) and six important ones fixed in the plan; one Owner question open (the figure and backdrop formats), which holds those two halves of Tasks 3 and 4; plan C at 0% built | `audits/2026-11-14-m2-content-plan-audit.md` |
 | Plan V (saves and the host port): 2. Plan | Done, 100% (merged, PR 32) | `plans/2026-11-14-m2-saves-host.md` |
 | Plan V: 3. Plan audit | Written, in review; stage at 100%, plan V at 20%. Ten findings, all applied to the plan | `audits/2026-11-14-m2-saves-host-plan-audit.md` |
 | Plan I (input), stage 2: plan | Written, in review; **0%** of the plan built (ten tasks, 10% each) | `plans/2026-11-14-m2-input.md` |
