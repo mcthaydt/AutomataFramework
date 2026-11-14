@@ -42,6 +42,26 @@ export const failingHero: PluginDef = variant('same', (tick) => {
   if (tick === 20) throw new Error('boom')
 })
 
+/** Runs as `failingHero` does (it never jumps), and prints a line on its first tick, as a rule being debugged might. */
+export const noisyHero: PluginDef = variant('same', (tick) => {
+  if (tick === 1) console.log('the rules said hello')
+})
+
+/**
+ * A play of the fixture game that started with nobody, as a co-op room's does (heroes join by command): its `meta` says
+ * `players: ''`, and nothing is held.
+ */
+export async function nobodysPlay(): Promise<string> {
+  const sim = await createGameSim({ content: await loadFixtureGame(), plugins: [heroPlugin], players: [] })
+  try {
+    const recorder = createRecorder(sim, { meta: { level: 'level-1', players: '' } })
+    for (let t = 0; t < 120; t++) recorder.step([])
+    return writeReplay(recorder.replay())
+  } finally {
+    sim.dispose()
+  }
+}
+
 /** The play of the push-crate run, as a replay file's text, with the level and the players in its `meta`. */
 export async function recordedPlay(): Promise<string> {
   const sim = await createGameSim({ content: await loadFixtureGame(), plugins: [heroPlugin] })

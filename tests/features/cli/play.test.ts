@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { main } from '#src/features/cli/cli.ts'
+import { CliError } from '#src/features/cli/ports.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { memoryLayer } from '../../fixtures/cli/memory.ts'
 
@@ -41,6 +42,15 @@ test('vite not installed: the npm install sentence, exit 2', async () => {
   expect(memory.err).toEqual([
     "This game's tools are not installed yet. Run npm install in game, then try again.",
   ])
+})
+
+test('a game that is not installed is told so before anything starts', async () => {
+  const advice = "This game's tools are not installed yet. Run npm install in game, then try again."
+  const memory = memoryLayer(under('game', game()), { code: new CliError(advice) })
+  expect(await main(['play', 'game'], memory.layer)).toBe(2)
+  expect(memory.out).toEqual([])
+  expect(memory.err).toEqual([advice])
+  expect(memory.ran).toEqual([])
 })
 
 test('a broken content file is printed first, and the game still starts', async () => {
