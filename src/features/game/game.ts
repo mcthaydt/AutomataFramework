@@ -1,13 +1,15 @@
 // The game feature's entry: `startGame` puts a loaded game on a page. It is only wiring: each tick it asks the input
 // what the player holds, steps the sim through the recorder (so the play can be replayed), and gives the renderer what
 // changed. The sim decides everything; this file decides when.
+
+import { type Frames, pageFrames } from '../../lib/frames.ts'
 import { createRecorder, type Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
 import { type Controls, checkControls, createInput } from '../input/input.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import { createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
-import { createLoop, type Frames } from './loop.ts'
+import { createLoop } from './loop.ts'
 
 export { type Frames, MAX_STEPS_PER_FRAME } from './loop.ts'
 export { type Watch, type WatchOptions, WatchSetupError, watchReplay } from './watch.ts'
@@ -32,11 +34,6 @@ export interface Game {
   stop(): void
 }
 
-const pageFrames: Frames = {
-  request: (callback) => requestAnimationFrame(callback),
-  cancel: (id) => cancelAnimationFrame(id),
-}
-
 /**
  * Starts a game for local player 1 and returns once it is on screen. Throws, before anything is put on the page, if
  * the controls are wrong; if the level cannot be loaded or drawn, nothing is left behind.
@@ -56,7 +53,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
       renderer.destroy()
       sim.dispose()
     }
-    const input = createInput({ mount, controls, player: 1 })
+    const input = createInput({ mount, controls })
     cleanup = () => {
       input.destroy()
       renderer.destroy()

@@ -114,6 +114,12 @@ const CharacterSchema: z.ZodType<Character, CharacterInput>;
 function checkControls(controls: Controls): void;
 ```
 
+### `Claim` (type)
+
+```ts
+type Claim = 'keyboard' | 'pad-0' | 'pad-1' | 'pad-2' | 'pad-3';
+```
+
 ### `Collider` (const)
 
 ```ts
@@ -303,11 +309,7 @@ function createGameSim(options: GameSimOptions): Promise<Sim>;
 ### `createInput` (function)
 
 ```ts
-function createInput(options: {
-    mount: HTMLElement;
-    controls: Controls;
-    player?: number;
-}): Input;
+function createInput(options: InputOptions): Input;
 ```
 
 ### `createRecorder` (function)
@@ -417,6 +419,12 @@ function defineSystem(spec: SystemSpec): SystemDef;
 
 ```ts
 function deriveSeed(rootSeed: number, name: string): number;
+```
+
+### `Device` (type)
+
+```ts
+type Device = 'keyboard' | 'keyboard-1' | 'keyboard-2' | 'touch' | 'pad-0' | 'pad-1' | 'pad-2' | 'pad-3';
 ```
 
 ### `Diagnostic` (interface)
@@ -617,6 +625,12 @@ interface Input {
     poll(tick: number): Command[];
     inset(): number;
     onInset(listener: (px: number) => void): void;
+    setPlayers(players: readonly number[]): void;
+    claim(player: number, claim: ClaimType): void;
+    seats(): readonly Seat[];
+    onSeats(listener: (seats: readonly Seat[]) => void): () => void;
+    pads(): readonly ListedPad[];
+    silence(): () => void;
     destroy(): void;
 }
 ```
@@ -625,6 +639,19 @@ interface Input {
 
 ```ts
 const INPUT_SETTINGS_DEFAULT: InputSettings;
+```
+
+### `InputOptions` (interface)
+
+```ts
+interface InputOptions {
+    readonly mount: HTMLElement;
+    readonly controls: Controls;
+    readonly settings?: unknown;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+    readonly frames?: Frames;
+    readonly sequence?: Sequence;
+}
 ```
 
 ### `InputSettings` (interface)
@@ -1127,6 +1154,16 @@ type RngState = [number, number, number, number];
 interface Scene {
     apply(delta: RenderDelta): void;
     views(alpha: number): View[];
+}
+```
+
+### `Seat` (interface)
+
+```ts
+interface Seat {
+    readonly player: number;
+    readonly devices: readonly Device[];
+    readonly connected: boolean;
 }
 ```
 

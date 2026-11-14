@@ -4,11 +4,17 @@ import { controlsCommand } from '#src/features/commands/commands.ts'
 import { createInput, type Input } from '#src/features/input/input.ts'
 import { SKY_COLOR } from '#src/features/level/level.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
+import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
+import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
 
 let mount: HTMLDivElement
 let input: Input | undefined
+let fake: FakeGamepads
+let frames: ManualFrames
 
 beforeEach(() => {
+  fake = fakeGamepads()
+  frames = manualFrames()
   mount = document.createElement('div')
   mount.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:844px;overflow:hidden'
   document.body.append(mount)
@@ -22,8 +28,8 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-const make = (player?: number): Input => {
-  input = createInput({ mount, controls: fixtureControls, ...(player === undefined ? {} : { player }) })
+const make = (): Input => {
+  input = createInput({ mount, controls: fixtureControls, gamepads: fake.getGamepads, frames })
   return input
 }
 /** Sends a key event to the window the way a browser does, and says whether the page's default was stopped. */
@@ -293,19 +299,208 @@ test('destroy removes the buttons and the listeners', () => {
   expect(() => i.destroy()).not.toThrow()
 })
 
-test('player 2 input sends commands from source 2', () => {
-  const i = make(2)
-  key('keydown', 'ArrowLeft')
-  expect(i.poll(0)).toEqual([controlsCommand(0, 2, 0, ['left'])])
-})
-
 test('a player who cannot exist, or controls that are wrong, stop it at the start', () => {
-  expect(() => createInput({ mount, controls: fixtureControls, player: 5 })).toThrow(
-    'Player 5 does not exist. Players are numbered 1 to 4.',
-  )
+  expect(() => make().setPlayers([5])).toThrow('Player 5 does not exist. Players are numbered 1 to 4.')
   expect(() =>
     createInput({ mount, controls: { 'Jump!': { label: 'Jump', keys: [], side: 'right' } } }),
   ).toThrow('"Jump!" cannot be an action name')
+})
+
+test('with two players on a shared keyboard, each key moves its own player', () => {
+  const i = make()
+  i.setPlayers([1, 2])
+  i.claim(2, 'keyboard')
+  key('keydown', 'KeyD')
+  key('keydown', 'ArrowUp')
+  expect(i.poll(0)).toEqual([controlsCommand(0, 1, 0, ['right']), controlsCommand(0, 2, 0, ['jump'])])
+})
+
+test('a gamepad plays for the one player with no setup', () => {
+  const i = make()
+  fake.connect(0)
+  fake.press('south')
+  expect(i.poll(0)).toEqual([controlsCommand(0, 1, 0, ['jump'])])
+})
+
+test('a stick held right and the right arrow are one "right"', () => {
+  const i = make()
+  fake.connect(0)
+  fake.stick(1, 0)
+  key('keydown', 'ArrowRight')
+  expect(i.poll(0)).toEqual([controlsCommand(0, 1, 0, ['right'])])
+  key('keyup', 'ArrowRight')
+  expect(i.poll(1)).toEqual([]) // the stick still holds it
+})
+
+test("player 2's pad moves only player 2, and each player counts their own commands", () => {
+  const i = make()
+  fake.connect(0)
+  fake.connect(1)
+  i.setPlayers([1, 2])
+  i.claim(2, 'pad-1')
+  fake.press('dpad-right', 1)
+  expect(i.poll(0)).toEqual([controlsCommand(0, 2, 0, ['right'])])
+  key('keydown', 'ArrowLeft')
+  expect(i.poll(1)).toEqual([controlsCommand(1, 1, 0, ['left'])])
+  fake.release('dpad-right', 1)
+  expect(i.poll(2)).toEqual([controlsCommand(2, 2, 1, [])])
+})
+
+test('a pad the browser could not map does nothing and is listed as not usable', () => {
+  const i = make()
+  fake.connect(0, { mapping: '', id: 'Odd Pad' })
+  fake.press('south')
+  expect(i.poll(0)).toEqual([])
+  expect(i.pads()).toEqual([{ index: 0, id: 'Odd Pad', usable: false }])
+})
+
+/** Runs `body` with `navigator.getGamepads` replaced, and puts the browser's own back after. */
+function withGetGamepads(value: unknown, body: () => void): void {
+  Object.defineProperty(navigator, 'getGamepads', { value, configurable: true })
+  try {
+    body()
+  } finally {
+    Reflect.deleteProperty(navigator, 'getGamepads')
+  }
+}
+
+test('a browser with no getGamepads has no pads and does not throw', () => {
+  withGetGamepads(undefined, () => {
+    const i = createInput({ mount, controls: fixtureControls, frames })
+    input = i
+    key('keydown', 'ArrowRight')
+    expect(i.poll(0)).toEqual([controlsCommand(0, 1, 0, ['right'])])
+    expect(i.pads()).toEqual([])
+  })
+})
+
+test('a getGamepads that throws is no pads, and the keyboard still plays', () => {
+  withGetGamepads(
+    () => {
+      throw new DOMException('Gamepads are not allowed here.', 'SecurityError')
+    },
+    () => {
+      const i = createInput({ mount, controls: fixtureControls, frames })
+      input = i
+      key('keydown', 'ArrowRight')
+      expect(i.poll(0)).toEqual([controlsCommand(0, 1, 0, ['right'])])
+      expect(i.pads()).toEqual([])
+      frames.advance(16)
+    },
+  )
+})
+
+test('a held bound key still does not scroll the page', () => {
+  make()
+  expect(key('keydown', 'Space', { repeat: true })).toBe(true)
+})
+
+test("unplugging player 2's pad lets go for them and marks the seat", () => {
+  const i = make()
+  fake.connect(0)
+  fake.connect(1)
+  i.setPlayers([1, 2])
+  i.claim(2, 'pad-1')
+  fake.press('dpad-right', 1)
+  expect(i.poll(0)).toEqual([controlsCommand(0, 2, 0, ['right'])])
+  fake.unplug(1)
+  expect(i.poll(1)).toEqual([controlsCommand(1, 2, 1, [])])
+  expect(i.seats()[1]?.connected).toBe(false)
+})
+
+test('a pad plugged in after one was lost goes to the player who lost theirs', () => {
+  const i = make()
+  fake.connect(0)
+  fake.connect(1)
+  i.setPlayers([1, 2])
+  i.claim(2, 'pad-1')
+  frames.advance(16)
+  fake.unplug(1)
+  frames.advance(16)
+  expect(i.seats()[1]?.connected).toBe(false)
+  fake.connect(3)
+  frames.advance(16)
+  expect(i.seats()[1]).toEqual({ player: 2, devices: ['pad-3'], connected: true })
+})
+
+test('the press that claims a pad does not act until it is let go', () => {
+  const i = make()
+  fake.connect(1)
+  fake.press('south', 1)
+  i.setPlayers([1, 2])
+  i.claim(2, 'pad-1')
+  expect(i.poll(0)).toEqual([])
+  fake.release('south', 1)
+  expect(i.poll(1)).toEqual([])
+  fake.press('south', 1)
+  expect(i.poll(2)).toEqual([controlsCommand(2, 2, 0, ['jump'])])
+})
+
+test('silence lets go for everyone, and keys still down afterwards wait for a fresh press', () => {
+  const i = make()
+  key('keydown', 'ArrowRight')
+  expect(i.poll(0)).toEqual([controlsCommand(0, 1, 0, ['right'])])
+  const release = i.silence()
+  expect(i.poll(1)).toEqual([controlsCommand(1, 1, 1, [])])
+  release()
+  expect(i.poll(2)).toEqual([])
+  key('keydown', 'ArrowRight', { repeat: true })
+  expect(i.poll(3)).toEqual([])
+  key('keyup', 'ArrowRight')
+  key('keydown', 'ArrowRight')
+  expect(i.poll(4)).toEqual([controlsCommand(4, 1, 2, ['right'])])
+})
+
+test('nested silences each need their own release', () => {
+  const i = make()
+  const first = i.silence()
+  const second = i.silence()
+  first()
+  first()
+  key('keydown', 'ArrowRight')
+  expect(i.poll(0)).toEqual([])
+  second()
+  key('keyup', 'ArrowRight')
+  key('keydown', 'ArrowRight')
+  expect(i.poll(1)).toEqual([controlsCommand(1, 1, 0, ['right'])])
+})
+
+test('a player who leaves and comes back starts holding nothing', () => {
+  const i = make()
+  i.setPlayers([1, 2])
+  i.claim(2, 'keyboard')
+  key('keydown', 'ArrowUp')
+  expect(i.poll(0)).toHaveLength(1)
+  key('keyup', 'ArrowUp')
+  i.setPlayers([1])
+  i.setPlayers([1, 2])
+  i.claim(2, 'keyboard')
+  expect(i.poll(1)).toEqual([])
+})
+
+test('onSeats is told when a player, a claim or a pad changes', () => {
+  const i = make()
+  const told = vi.fn()
+  i.onSeats(told)
+  i.setPlayers([1, 2])
+  expect(told).toHaveBeenCalledTimes(1)
+  i.claim(2, 'keyboard')
+  expect(told).toHaveBeenCalledTimes(2)
+  fake.connect(0)
+  frames.advance(16)
+  expect(told).toHaveBeenCalledTimes(3)
+  frames.advance(16)
+  expect(told).toHaveBeenCalledTimes(3)
+})
+
+test('touch belongs to the first player only', () => {
+  const i = make()
+  fake.connect(0)
+  i.setPlayers([2, 3])
+  i.claim(3, 'pad-0')
+  firstTouch()
+  pointer(button('Jump'), 'pointerdown', 1)
+  expect(i.poll(0)).toEqual([controlsCommand(0, 2, 0, ['jump'])])
 })
 
 /** The WCAG relative luminance of an [r, g, b] colour, each 0 to 255. */
