@@ -36,10 +36,12 @@ test('a start, a next and a choice that lead to no node', () => {
     }),
     start: 'hullo',
   })
+  // With no real start, nothing leads to the first node either, so it is named too.
   expect(found).toEqual([
     `${file}: start: There is no node called "hullo". This conversation has: bye, hello, tip.`,
     `${file}: nodes[0].choices[1].next: There is no node called "bey". This conversation has: bye, hello, tip.`,
     `${file}: nodes[1].next: There is no node called "by". This conversation has: bye, hello, tip.`,
+    `${file}: nodes[0]: Nothing leads to this node. Remove it, or point a "next" or a choice at it.`,
     `${file}: nodes[2]: Nothing leads to this node. Remove it, or point a "next" or a choice at it.`,
   ])
 })

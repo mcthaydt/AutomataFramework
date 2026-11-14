@@ -84,14 +84,14 @@ test('parts of different lengths', () =>
   ]))
 
 test('a track of more than 4096 steps', () => {
-  const row = Array.from({ length: 256 }, () => '-').join(' ')
-  const rows = Array.from({ length: 20 }, () => row)
+  const row = Array.from({ length: 128 }, () => '-').join(' ')
+  const rows = Array.from({ length: 33 }, () => row)
   expect(
     said({
       ...meadow(),
-      parts: [{ id: 'bass', kind: 'tone', wave: 'sine', volume: 1, notes: rows.slice(0, 20) }],
+      parts: [{ id: 'bass', kind: 'tone', wave: 'sine', volume: 1, notes: rows }],
     }),
-  ).toEqual([`${file}: parts[0].notes: A track can have at most 4096 steps. This one has 5120.`])
+  ).toEqual([`${file}: parts[0].notes: A track can have at most 4096 steps. This one has 4224.`])
 })
 
 test('a tempo, a beat or a volume out of range', () => {
