@@ -6,6 +6,7 @@ import { testSpeaker } from '#src/features/audio/audio.ts'
 import { Player } from '#src/features/commands/commands.ts'
 import { loadGame, writeContent } from '#src/features/content/content.ts'
 import { type Flow, startFlow } from '#src/features/flow/flow.ts'
+import { RETRY_MS } from '#src/features/flow/loading.ts'
 import { testHost } from '#src/features/host/host.ts'
 import { createLocale, frameworkWords } from '#src/features/locale/locale.ts'
 import { Transform } from '#src/features/physics/physics.ts'
@@ -435,7 +436,13 @@ test("a bad content file shows the check's sentences and no canvas", async () =>
 
 test('a game that is missing its first file shows the problem screen too', async () => {
   await open({ read: flowRead({ replace: { 'automata.toml': undefined } }) })
-  await shown('problem')
+  // The file is asked for once more a second later, which is a second of the page's frames.
+  await expect
+    .poll(() => {
+      run(RETRY_MS / 2)
+      return mount.dataset.state
+    })
+    .toBe('problem')
 })
 
 test("a game's own screen in screens.menu is shown in place of the framework's", async () => {
