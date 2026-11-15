@@ -6,7 +6,6 @@ import { frameworkWords } from '#src/features/locale/locale.ts'
 import { SPLASH_MS } from '#src/features/screens/screens.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
 import { ticks, walkByThumb } from '../../fixtures/flow/page.ts'
-import { focusOn, keyboard } from '../../fixtures/ui/keys.ts'
 
 const es = frameworkWords('es')
 const drive = createDrive()
@@ -98,8 +97,8 @@ test('the same player comes back: no flags, Continue is first and opens the leve
   await expect.poll(() => swap().getAttribute('aria-checked')).toBe('true')
   // The music is turned right down, and kept.
   const music = es('automata.settings.music')
-  await focusOn(slider(music))
-  await keyboard('{Home}')
+  slider(music).focus()
+  await userEvent.keyboard('{Home}')
   await expect.poll(() => slider(music).getAttribute('aria-valuenow')).toBe('0')
   drive.leave()
   // A fresh page on the same store: the splash, then the menu with Continue first.

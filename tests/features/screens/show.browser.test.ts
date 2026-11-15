@@ -1,12 +1,11 @@
 // `show` puts any screen over a mount: a box that fills it, the screen's language in `lang`, the kit's keys, and the
 // screen made again, with the focus where it was, when the language changes.
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { page } from 'vitest/browser'
+import { page, userEvent } from 'vitest/browser'
 import { show } from '#src/features/screens/show.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
 import { testLocale } from '../../fixtures/screens/locale.ts'
-import { keyboard } from '../../fixtures/ui/keys.ts'
 import { Sheet } from '../../fixtures/ui/sheet.ts'
 
 const FRAME = 1000 / 60
@@ -145,6 +144,6 @@ test('the screen tells its sounds: a press, a move and a back, named ui.*', asyn
   }
   expect(sounds).toEqual(['ui.press', 'ui.move', 'ui.back'])
   expect(backs).toBe(1)
-  await keyboard('{Escape}')
+  await userEvent.keyboard('{Escape}')
   expect(backs).toBe(2)
 })

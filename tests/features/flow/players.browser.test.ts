@@ -1,10 +1,10 @@
 // Adding a player on the flow's page: from the main menu and from pause, with a gamepad's button or Enter, kept from level
 // to level, taken out again from pause, and not offered where there is no room.
 import { afterEach, beforeEach, expect, test } from 'vitest'
+import { userEvent } from 'vitest/browser'
 import { frameworkWords } from '#src/features/locale/locale.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
 import { padPress } from '../../fixtures/flow/page.ts'
-import { keyboard } from '../../fixtures/ui/keys.ts'
 
 const es = frameworkWords('es')
 const drive = createDrive()
@@ -49,7 +49,7 @@ test('Enter shares the keyboard when the game lets it, and the second player is 
   await drive.press(es('automata.menu.add-player'))
   await expect.poll(() => drive.mount.querySelector('[data-screen="players"]')).not.toBeNull()
   expect(onScreen()).toContain(es('automata.players.keyboard'))
-  await keyboard('{Enter}')
+  await userEvent.keyboard('{Enter}')
   await expect.poll(onScreen).toContain(said(2))
   // The keyboard is shared now, so the sentence about sharing it is gone.
   expect(onScreen()).not.toContain(es('automata.players.keyboard'))

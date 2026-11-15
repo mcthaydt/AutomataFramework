@@ -8,7 +8,6 @@ import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
 import { testLocale } from '../../fixtures/screens/locale.ts'
-import { keyboard } from '../../fixtures/ui/keys.ts'
 
 const FRAME = 1000 / 60
 
@@ -87,7 +86,7 @@ test("OK by a tap, by Enter and by the pad's bottom button each call onOk once",
   open()
   await userEvent.click(okButton())
   expect(oks).toBe(1)
-  await keyboard('{Enter}')
+  await userEvent.keyboard('{Enter}')
   expect(oks).toBe(2)
   fake.press('south')
   frames.advance(FRAME)

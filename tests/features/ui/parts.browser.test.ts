@@ -2,7 +2,6 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { SCREENS } from '../../fixtures/game/screens.ts'
-import { focusOn, keyboard } from '../../fixtures/ui/keys.ts'
 import { Sheet } from '../../fixtures/ui/sheet.ts'
 
 let target: HTMLDivElement
@@ -90,31 +89,31 @@ test('a slider is dragged by a finger and says when it is let go', async () => {
 })
 
 test('a slider is stepped by left and right keys, one step each, and says when each is let go', async () => {
-  await focusOn(slider())
-  await keyboard('{ArrowRight}')
+  slider().focus()
+  await userEvent.keyboard('{ArrowRight}')
   expect(log).toEqual(['change:0.55', 'release:0.55'])
-  await keyboard('{ArrowLeft}')
-  await keyboard('{ArrowLeft}')
+  await userEvent.keyboard('{ArrowLeft}')
+  await userEvent.keyboard('{ArrowLeft}')
   expect(log.filter((entry) => entry.startsWith('change'))).toEqual([
     'change:0.55',
     'change:0.5',
     'change:0.45',
   ])
-  await keyboard('{End}')
+  await userEvent.keyboard('{End}')
   expect(log.at(-2)).toBe('change:1')
-  await keyboard('{Home}')
+  await userEvent.keyboard('{Home}')
   expect(log.at(-2)).toBe('change:0')
   // Up and down are not the slider's: they walk the screen.
   const before = log.length
-  await keyboard('{ArrowUp}')
+  await userEvent.keyboard('{ArrowUp}')
   expect(log).toHaveLength(before)
 })
 
 test('a slider says its value for a screen reader', async () => {
   expect(slider().getAttribute('aria-valuenow')).toBe('50')
   expect(slider().getAttribute('aria-label')).toBe('Volume')
-  await focusOn(slider())
-  await keyboard('{ArrowRight}')
+  slider().focus()
+  await userEvent.keyboard('{ArrowRight}')
   await expect.poll(() => slider().getAttribute('aria-valuetext')).toBe('55%')
 })
 
@@ -127,8 +126,9 @@ test('a switch is turned by a tap and by Space, and says whether it is on', asyn
   await expect.poll(() => toggle.getAttribute('aria-checked')).toBe('true')
   // One Space, sent once the page is the one the browser sends keys to and the switch is the one that holds them: a key
   // sent before that goes nowhere, and sending it again would hide a switch that really ignores Space.
-  await focusOn(toggle)
-  await keyboard(' ')
+  toggle.focus()
+  await expect.poll(() => [document.hasFocus(), document.activeElement === toggle]).toEqual([true, true])
+  await userEvent.keyboard(' ')
   // A button presses on the release of Space, which a browser may deliver a moment after the keys were sent.
   await expect.poll(() => log).toEqual(['shake:true', 'shake:false'])
 })
@@ -153,7 +153,7 @@ test('a dialog that loses something opens with "no" focused and closes on Escape
   expect(dialog.getAttribute('aria-labelledby')).toBeTruthy()
   expect(dialog.textContent).toContain('It cannot come back.')
   expect((document.activeElement as HTMLElement).textContent?.trim()).toBe('Keep')
-  await keyboard('{Escape}')
+  await userEvent.keyboard('{Escape}')
   expect(log).toEqual(['no'])
   expect(target.querySelector('[role="alertdialog"]')).toBeNull()
 })

@@ -1,13 +1,12 @@
 // The add-a-player screen alone: it fits, Done is the one button to press, a gamepad's button joins, and Enter shares the
 // keyboard only where it can be shared.
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { page } from 'vitest/browser'
+import { page, userEvent } from 'vitest/browser'
 import type { Claim } from '#src/features/input/input.ts'
 import { frameworkWords } from '#src/features/locale/locale.ts'
 import { playersScreen } from '#src/features/screens/players.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import { testLocale } from '../../fixtures/screens/locale.ts'
-import { keyboard } from '../../fixtures/ui/keys.ts'
 
 const es = frameworkWords('es')
 
@@ -86,14 +85,14 @@ test('a button on a gamepad that nobody has joins that gamepad', () => {
 
 test('Enter shares the keyboard where it can be shared, and says nothing where it cannot', async () => {
   open(true)
-  await keyboard('{Enter}')
+  await userEvent.keyboard('{Enter}')
   expect(told).toEqual(['join keyboard'])
   screen?.destroy()
   screen = undefined
   told = []
   open(false)
   expect(mount.textContent).not.toContain(es('automata.players.keyboard'))
-  await keyboard('{Enter}')
+  await userEvent.keyboard('{Enter}')
   // Enter pressed the button with the focus, as it does on any screen: nobody joined.
   expect(told.filter((one) => one.startsWith('join'))).toEqual([])
 })
@@ -101,7 +100,7 @@ test('Enter shares the keyboard where it can be shared, and says nothing where i
 test('a refused try is said in words, Escape goes back, and a screen taken off stops listening', async () => {
   open(true, es('automata.join.taken.gamepad'))
   expect(mount.querySelector('[role="alert"]')?.textContent).toBe(es('automata.join.taken.gamepad'))
-  await keyboard('{Escape}')
+  await userEvent.keyboard('{Escape}')
   expect(told).toEqual(['done'])
   screen?.destroy()
   expect(invited.stopped).toBe(true)
