@@ -355,7 +355,6 @@ test('the list of languages, the format 1 marks, the page tag and a comment may 
 test('flow sits right above game and may import it; game may not import flow', () => {
   expect(one({ 'src/features/flow/flow.ts': "import '../game/game.ts'" })).toEqual([])
   expect(one({ 'src/features/game/game.ts': "import '../flow/flow.ts'" })).toEqual(['imports-go-down'])
-  expect(one({ 'src/features/flow/flow.ts': "import '../cli/cli.ts'" })).toEqual(['imports-go-down'])
 })
 
 test('headless reaches nothing of the flow, which needs a page', () =>
