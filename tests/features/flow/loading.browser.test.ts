@@ -141,7 +141,8 @@ test('one file fails twice: the problem screen, with its button; never an empty 
     .toBe('problem')
   expect(drive.mount.childElementCount).toBeGreaterThan(0)
   expect(drive.mount.querySelector('[role="alert"]')).not.toBeNull()
-  expect(drive.buttons()).toContain(es('automata.problem.reload'))
+  // The file failed before there was a language to speak in, so the button is a picture with a name.
+  expect(drive.buttons()).toContain('Load the page again')
 })
 
 test('every file fails: the problem screen', async () => {

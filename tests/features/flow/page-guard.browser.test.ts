@@ -107,7 +107,9 @@ test('a page that is longer than the game (the mount is 300 px high in an articl
   expect(getComputedStyle(document.documentElement).overflowY).not.toBe('hidden')
   expect(small.style.getPropertyValue('touch-action')).toBe('none')
   expect(small.style.getPropertyValue('user-select')).toBe('none')
-  expect(small.style.getPropertyValue('-webkit-touch-callout')).toBe('none')
+  // Only a browser that knows the property keeps it (the iPhone's does; a desktop's does not).
+  if (CSS.supports('-webkit-touch-callout', 'none'))
+    expect(small.style.getPropertyValue('-webkit-touch-callout')).toBe('none')
   window.scrollTo(0, 100)
   expect(window.scrollY).toBeGreaterThan(0)
   window.scrollTo(0, 0)

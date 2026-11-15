@@ -23,12 +23,24 @@ const CLOCK_MS = 50
 const MASTER = 0.5
 /** How long a cut takes to fade, in seconds. */
 const FADE = 0.3
+/** Where the limiter's curve starts to bend: what is quieter than this goes through as it was. */
+const LIMIT_FROM = 0.7
+/** How many points the limiter's curve has over -1 to 1: an odd number, so zero is a point of its own. */
+const LIMIT_POINTS = 2049
 /**
- * The limiter every bus ends in: nothing above -3 dB gets through, with no knee, so a sound that is quiet is left as it
- * was. A limiter and not a softer compressor, because Web Audio adds make-up gain worked out from the curve (about +6 dB
- * on everything quiet at -12 dB and ratio 8), which would change the mix of every game that already plays.
+ * The curve of the limiter every bus ends in. Quiet sound goes through unchanged, and sound past `LIMIT_FROM` bends
+ * toward a ceiling it never reaches, so sixteen voices at once cannot go past full scale. It is a curve and not a
+ * compressor because the browsers' compressors add make-up gain worked out from their own curve, and no two agree on how
+ * much (one made a single quiet voice 8 dB louder), which would change the mix of every game that already plays.
  */
-const LIMIT = { threshold: -3, knee: 0, ratio: 20, attack: 0.003, release: 0.25 } as const
+export function limitCurve(): Float32Array<ArrayBuffer> {
+  const room = 1 - LIMIT_FROM
+  return Float32Array.from({ length: LIMIT_POINTS }, (_, at) => {
+    const x = (at / (LIMIT_POINTS - 1)) * 2 - 1
+    const beyond = Math.abs(x) - LIMIT_FROM
+    return beyond <= 0 ? x : Math.sign(x) * (LIMIT_FROM + room * Math.tanh(beyond / room))
+  })
+}
 
 /** The two nodes of a bus: the player's volume, and the gain a cut fades out and replaces. */
 interface BusNodes {
@@ -95,12 +107,9 @@ export function webSpeaker(
     master.gain.value = MASTER
     master.connect(made.destination)
     // Sixteen voices at once add up past full scale: every bus goes through one limiter before the master gain.
-    const limiter = made.createDynamicsCompressor()
-    limiter.threshold.value = LIMIT.threshold
-    limiter.knee.value = LIMIT.knee
-    limiter.ratio.value = LIMIT.ratio
-    limiter.attack.value = LIMIT.attack
-    limiter.release.value = LIMIT.release
+    const limiter = made.createWaveShaper()
+    limiter.curve = limitCurve()
+    limiter.oversample = 'none'
     limiter.connect(master)
     for (const bus of ['sound', 'music'] as const) {
       const gain = made.createGain()

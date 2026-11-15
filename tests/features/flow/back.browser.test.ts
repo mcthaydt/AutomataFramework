@@ -56,8 +56,9 @@ test('Back on pause is the menu, and Play again gets a new entry', async () => {
   await drive.shown('playing')
   back()
   await drive.shown('paused')
-  // One entry for the first Play, one when it was paused, and one for Continue; never two held at once.
-  expect(push.mock.calls.length).toBe(3)
+  // Each Back uses up the entry it came by, so there is a new one for the first Play, the pause it led to, Continue, and
+  // the pause after that.
+  expect(push.mock.calls.length).toBe(4)
 })
 
 test('Back with Settings open on pause closes Settings and stays paused', async () => {

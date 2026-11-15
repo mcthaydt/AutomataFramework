@@ -115,13 +115,15 @@ export async function startFlow<S extends Progress = Progress>(given: FlowOption
     words,
   })
 
+  const raise = (event: string): void => void (host.visible() && audio?.raise(event)) // none to a hidden page
+
   const base = (): ScreenBase => ({
     mount,
     // A screen is only made once the game's files have loaded and there is a locale.
     locale: locale as Locale,
     frames,
     ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
-    onSound: (event) => audio?.raise(event),
+    onSound: raise,
   })
 
   const facts = (): FlowFacts => {
@@ -257,9 +259,8 @@ export async function startFlow<S extends Progress = Progress>(given: FlowOption
     if (!stopped && epoch === mine) dispatch({ type: 'play', level })
   }
 
-  /** The level just ended: its score and the best, kept (see `recordScore`). */
   const finishOfLevel = (): Promise<Finish> =>
-    recordScore(sections?.records, play.game()?.score(), (locale as Locale).words('automata.done.not-kept'))
+    recordScore(sections?.records, play.game()?.score(), words('automata.done.not-kept'))
 
   /**
    * Puts the step `next` on the page. The loading bar stays until the step has put something of its own there, so the
@@ -357,11 +358,11 @@ export async function startFlow<S extends Progress = Progress>(given: FlowOption
       }
       case 'menu': {
         play.stop()
-        dropScreen()
         places.forget()
-        await places.refresh()
+        await places.refresh() // what was on show stays until then, so the mount is never bare
         if (!current()) return
-        audio?.raise('screen.menu')
+        dropScreen()
+        raise('screen.menu')
         const members = party?.members() ?? []
         const items = menuItems({
           saved: newest(places.slots()) !== undefined,
@@ -393,7 +394,7 @@ export async function startFlow<S extends Progress = Progress>(given: FlowOption
       case 'paused': {
         play.hold()
         dropScreen()
-        if (before.over === undefined) audio?.raise('screen.pause')
+        if (before.over === undefined) raise('screen.pause')
         play.showPause()
         return
       }
@@ -408,7 +409,7 @@ export async function startFlow<S extends Progress = Progress>(given: FlowOption
         // The same sentence says it whichever of the two writes was refused.
         notKept ??= finish.notKept
         if (!current()) return
-        audio?.raise('screen.done')
+        raise('screen.done')
         shown = makers.done({
           ...base(),
           level: levelName(words, finished),
@@ -426,7 +427,7 @@ export async function startFlow<S extends Progress = Progress>(given: FlowOption
         dropScreen()
         const finish = await finishOfLevel()
         if (!current()) return
-        audio?.raise('screen.lost')
+        raise('screen.lost')
         shown = makers.lost({
           ...base(),
           ...(finish.score === undefined ? {} : { score: finish.score }),

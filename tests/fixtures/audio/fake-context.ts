@@ -12,13 +12,10 @@ export interface FakeGain {
   connect(to: unknown): void
 }
 
-/** What the speaker sets on a `DynamicsCompressorNode`, as the plain numbers it was given. */
-export interface FakeCompressor {
-  readonly threshold: { value: number }
-  readonly knee: { value: number }
-  readonly ratio: { value: number }
-  readonly attack: { value: number }
-  readonly release: { value: number }
+/** What the speaker sets on a `WaveShaperNode`. */
+export interface FakeShaper {
+  curve: Float32Array | null
+  oversample: string
   connect(to: unknown): void
 }
 
@@ -32,8 +29,8 @@ export interface FakeContext {
   readonly closed: boolean
   /** Every gain made, in order: the master, then the sound bus's gain and its inner gain, then the music bus's two. */
   readonly gains: readonly FakeGain[]
-  /** Every compressor made. */
-  readonly compressors: readonly FakeCompressor[]
+  /** Every wave shaper made. */
+  readonly shapers: readonly FakeShaper[]
   /** What each node was connected to, in the order it was told. */
   readonly connections: ReadonlyMap<unknown, readonly unknown[]>
 }
@@ -46,7 +43,7 @@ export function fakeContext(): FakeContext {
   let closed = false
   const listeners = new Set<() => void>()
   const gains: FakeGain[] = []
-  const compressors: FakeCompressor[] = []
+  const shapers: FakeShaper[] = []
   const connections = new Map<unknown, unknown[]>()
   const connectFrom =
     (node: () => unknown) =>
@@ -83,18 +80,14 @@ export function fakeContext(): FakeContext {
       gains.push(gain)
       return gain
     },
-    createDynamicsCompressor: (): FakeCompressor => {
-      const param = (): { value: number } => ({ value: Number.NaN })
-      const compressor: FakeCompressor = {
-        threshold: param(),
-        knee: param(),
-        ratio: param(),
-        attack: param(),
-        release: param(),
-        connect: (to: unknown) => connectFrom(() => compressor)(to),
+    createWaveShaper: (): FakeShaper => {
+      const shaper: FakeShaper = {
+        curve: null,
+        oversample: 'none',
+        connect: (to: unknown) => connectFrom(() => shaper)(to),
       }
-      compressors.push(compressor)
-      return compressor
+      shapers.push(shaper)
+      return shaper
     },
   }
   return {
@@ -113,7 +106,7 @@ export function fakeContext(): FakeContext {
       return closed
     },
     gains,
-    compressors,
+    shapers,
     connections,
   }
 }

@@ -3,7 +3,7 @@
 // here calls the flow: a journey does only what a person could.
 import { expect } from 'vitest'
 import { type PadInput, Player } from '#src/features/commands/commands.ts'
-import { Body, Transform } from '#src/features/physics/physics.ts'
+import { Transform } from '#src/features/physics/physics.ts'
 import type { Drive } from './drive.ts'
 
 /** One tick of the game, in ms. */
@@ -111,30 +111,20 @@ export const thumbHands = (drive: Drive): Hands => ({
 })
 
 /**
- * Plays `level-pit` to its door as a person would: runs right, jumps at the edge, flies over the gap and lets go of the
- * run while still in the air so the hero comes straight down on the far floor, then walks to the door. Reads where the
- * hero is, as a person looks at the screen.
+ * Plays `level-pit` to its door as a person would: runs right, jumps near the edge of the gap with the run still held, flies
+ * over it, lands on the far floor and keeps running to the door. Reads where the hero is, as a person looks at the screen.
  */
 export function crossThePit(drive: Drive, hands: Hands): void {
-  const hero = (): { x: number; vy: number } => {
-    const found = drive.flow()?.game()?.sim.query(Player)[0]
-    return { x: found?.get(Transform).x ?? Number.NaN, vy: found?.get(Body).vy ?? Number.NaN }
-  }
+  const heroX = (): number => drive.flow()?.game()?.sim.query(Player)[0]?.get(Transform).x ?? Number.NaN
   const step = (): void => drive.frames.advance(TICK)
-  const playing = (): boolean => drive.step() === 'playing'
   // The level has been on the page for a frame: a press that was there from the start does not begin it.
   step()
   const right = hands.down('Right')
-  for (let tick = 0; tick < WALK_LIMIT && playing() && hero().x < 4.4; tick++) step()
+  // The floor ends at 6: a jump from 5.9 still has the floor under it and clears the four tiles of gap.
+  for (let tick = 0; tick < WALK_LIMIT && drive.step() === 'playing' && heroX() < 5.9; tick++) step()
   const jump = hands.down('Jump')
   step()
   jump()
-  for (let tick = 0; tick < WALK_LIMIT && playing() && hero().x < 12.5; tick++) step()
-  right()
-  // Down on the far floor: nothing is falling any more.
-  for (let tick = 0; tick < WALK_LIMIT && playing() && !(tick > 10 && Math.abs(hero().vy) < 0.01); tick++)
-    step()
-  const again = hands.down('Right')
   untilOver(drive)
-  again()
+  right()
 }

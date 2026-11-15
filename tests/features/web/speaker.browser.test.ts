@@ -1,6 +1,7 @@
 import { expect, test, vi } from 'vitest'
 import type { SpeakerState } from '#src/features/audio/audio.ts'
 import { testHost } from '#src/features/host/host.ts'
+import { limitCurve } from '#src/features/web/speaker.ts'
 import { webSpeaker } from '#src/features/web/web.ts'
 import { fakeContext } from '../../fixtures/audio/fake-context.ts'
 
@@ -166,18 +167,27 @@ test('every bus reaches the destination through one limiter, then the master gai
   tap()
   // The master, then each bus's own gain and the inner gain a cut replaces.
   const [master, soundBus, , musicBus] = fake.gains
-  expect(fake.compressors).toHaveLength(1)
-  const [limiter] = fake.compressors
+  expect(fake.shapers).toHaveLength(1)
+  const [limiter] = fake.shapers
   expect(fake.connections.get(soundBus)).toEqual([limiter])
   expect(fake.connections.get(musicBus)).toEqual([limiter])
   expect(fake.connections.get(limiter)).toEqual([master])
   expect(fake.connections.get(master)).toEqual([fake.context.destination])
-  // A limiter: nothing above -3 dB, no knee, a ratio of 20, and quick to let go.
-  expect(limiter).toMatchObject({
-    threshold: { value: -3 },
-    knee: { value: 0 },
-    ratio: { value: 20 },
-    attack: { value: 0.003 },
-    release: { value: 0.25 },
-  })
+})
+
+test('the limiter leaves quiet sound as it was, never goes past 1, and treats both halves of a wave alike', () => {
+  const curve = limitCurve()
+  const middle = (curve.length - 1) / 2
+  // At point `at` the input is `at / middle - 1`.
+  const input = (at: number): number => at / middle - 1
+  expect(curve[middle]).toBe(0)
+  for (let at = 0; at < curve.length; at++) {
+    const x = input(at)
+    const y = curve[at] as number
+    if (Math.abs(x) <= 0.7) expect(y).toBeCloseTo(x, 6)
+    expect(Math.abs(y)).toBeLessThan(1)
+    expect(y).toBeCloseTo(-(curve[curve.length - 1 - at] as number), 6)
+    // Louder in is never quieter out.
+    if (at > 0) expect(y).toBeGreaterThanOrEqual(curve[at - 1] as number)
+  }
 })
