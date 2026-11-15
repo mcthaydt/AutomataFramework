@@ -1,6 +1,6 @@
 # Scenes, slice 1 (the framework's side): plan audit
 
-Stage 3 of the Scenes cycle. Audited: [`plans/2026-11-15-scenes-1-ground-and-materials.md`](../plans/2026-11-15-scenes-1-ground-and-materials.md)
+Stage 3 of Cycle 12 (Scenes). Audited: [`plans/2026-11-15-scenes-1-ground-and-materials.md`](../plans/2026-11-15-scenes-1-ground-and-materials.md)
 as written in PR 113 (`af1b7d3`), against the spec
 ([`2026-11-15-2d-environment-builder-design.md`](https://github.com/mcthaydt/AutomataFrameworkEditors/blob/main/docs/superpowers/specs/2026-11-15-2d-environment-builder-design.md),
 Editors PR 31), the builder's plan of the same name (Editors PR 37, audited beside this one), the code on `main`
@@ -39,8 +39,8 @@ nothing in this plan changes. They are recorded in both trackers.
 
 **I1. The tracker's cycle number is taken three times over.** The plan writes "Cycle 8". Live tuning (PR 107), plan F
 (PR 111) and the sound formats (PR 112) each add a "Cycle 8" section, and "Cycle 7" is already used twice on open
-branches (plan U and rigged figures). Each merge would leave the next one's tracker ambiguous. *Fix:* the section is
-unnumbered, "The Scenes cycle", as the Editors tracker names its Story cycle, and the plan's tracker line and
+branches (plan U and rigged figures). Each merge would leave the next one's tracker ambiguous. *Fix:* the section takes
+the number the merge session gives cycles in merge order, Cycle 12 (2026-11-15), and the plan's tracker line and
 `progress.md` say so.
 
 **I2. Plan H's build is not as separate as the plan says.** "Before starting" says Tasks 1 to 11 and 13 to 16 touch

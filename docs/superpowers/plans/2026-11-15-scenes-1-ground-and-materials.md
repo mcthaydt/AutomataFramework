@@ -64,8 +64,8 @@ never copied whole (principle 7). Each task names the file it reads.
 - **Stop rules.** Stop and report at once on: a golden that moved; the third fix for the same failure; a need for a
   dependency or a workflow change not named here; an `engines` job over 25 minutes; Rapier lacking a call Task 10
   names.
-- **Tracker:** after each task, update `docs/superpowers/progress.md` ("The Scenes cycle", unnumbered: "Cycle 8" is
-  taken by three other plans, I1). Tasks 1 to 16 are 5.5% each;
+- **Tracker:** after each task, update `docs/superpowers/progress.md` (Cycle 12, the number the merge session gave
+  this cycle; "Cycle 8" is taken by other plans, I1). Tasks 1 to 16 are 5.5% each;
   the last 12% is the final green run with every check passing.
 
 ## Before starting
