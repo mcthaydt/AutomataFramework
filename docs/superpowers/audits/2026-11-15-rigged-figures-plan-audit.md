@@ -65,7 +65,7 @@ No. 276, and Examples' CI fails any other colour (plan D audit, Q1, answer A). N
 "never one flat fill". By `lightness` the four make exactly one ramp, black, pink, green and cream, so every part of
 every demo figure would be shaded through those four. The plan does not say; plan D's Part 9 would find it out when
 it drafts the art. This is the Owner's (Q1). **Settled (the Owner, 2026-11-15):** "We can just use the duel 256
-palette from lopsec for the games, use current the palette for UI",  Lospec has no 128-colour DUEL, so it is the 256.
+palette from lopsec for the games, use current the palette for UI." Lospec has no 128-colour DUEL, so it is the 256.
 The games' art moves from No. 276 to Lospec's DUEL, whose 32 rows of 8 the library's ramps already are: Lospec's
 `.hex` (in the project's files) matches the old builder's `duel-ramps.ts` colour for colour. **Fixed:** Task 1
 exports `DUEL_COLOURS` (the 256) for a game's CI, and the plan D handoff says Examples' art check holds the pictures
