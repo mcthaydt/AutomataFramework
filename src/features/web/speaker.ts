@@ -23,6 +23,12 @@ const CLOCK_MS = 50
 const MASTER = 0.5
 /** How long a cut takes to fade, in seconds. */
 const FADE = 0.3
+/**
+ * The limiter every bus ends in: nothing above -3 dB gets through, with no knee, so a sound that is quiet is left as it
+ * was. A limiter and not a softer compressor, because Web Audio adds make-up gain worked out from the curve (about +6 dB
+ * on everything quiet at -12 dB and ratio 8), which would change the mix of every game that already plays.
+ */
+const LIMIT = { threshold: -3, knee: 0, ratio: 20, attack: 0.003, release: 0.25 } as const
 
 /** The two nodes of a bus: the player's volume, and the gain a cut fades out and replaces. */
 interface BusNodes {
@@ -88,10 +94,18 @@ export function webSpeaker(
     const master = made.createGain()
     master.gain.value = MASTER
     master.connect(made.destination)
+    // Sixteen voices at once add up past full scale: every bus goes through one limiter before the master gain.
+    const limiter = made.createDynamicsCompressor()
+    limiter.threshold.value = LIMIT.threshold
+    limiter.knee.value = LIMIT.knee
+    limiter.ratio.value = LIMIT.ratio
+    limiter.attack.value = LIMIT.attack
+    limiter.release.value = LIMIT.release
+    limiter.connect(master)
     for (const bus of ['sound', 'music'] as const) {
       const gain = made.createGain()
       gain.gain.value = volumes[bus] * volumes[bus]
-      gain.connect(master)
+      gain.connect(limiter)
       const inner = made.createGain()
       inner.connect(gain)
       buses[bus] = { gain, inner }

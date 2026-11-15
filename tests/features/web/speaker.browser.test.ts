@@ -160,3 +160,24 @@ test('close removes the listeners and closes the context; twice is fine', () => 
   tap()
   expect(made).toHaveBeenCalledTimes(1)
 })
+
+test('every bus reaches the destination through one limiter, then the master gain', () => {
+  const { fake, tap } = setup()
+  tap()
+  // The master, then each bus's own gain and the inner gain a cut replaces.
+  const [master, soundBus, , musicBus] = fake.gains
+  expect(fake.compressors).toHaveLength(1)
+  const [limiter] = fake.compressors
+  expect(fake.connections.get(soundBus)).toEqual([limiter])
+  expect(fake.connections.get(musicBus)).toEqual([limiter])
+  expect(fake.connections.get(limiter)).toEqual([master])
+  expect(fake.connections.get(master)).toEqual([fake.context.destination])
+  // A limiter: nothing above -3 dB, no knee, a ratio of 20, and quick to let go.
+  expect(limiter).toMatchObject({
+    threshold: { value: -3 },
+    knee: { value: 0 },
+    ratio: { value: 20 },
+    attack: { value: 0.003 },
+    release: { value: 0.25 },
+  })
+})
