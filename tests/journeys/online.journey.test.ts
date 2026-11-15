@@ -231,13 +231,18 @@ for (const [first, second] of PAIRS) {
     await expect.poll(() => one.data('seat'), POLL).toBe('1')
     await expect.poll(() => two.data('seat'), POLL).toBe('2')
 
-    // 3 and 4. One runs right, the other left; each sees the other move.
-    await one.hold('right')
+    // 3 and 4. Each runs towards the other, and each sees the other move. The friend's page has only just started its
+    // game, and its first frames are slow (in CI, WebKit's first two took 677 and 787 ms), so the friend's first keys
+    // reach the room late: here 1.8 s late on purpose (the page's `slowLine`), whatever the browser. So the friend
+    // runs first, and alone: nothing is in their way, however late they start. Only once the first player sees them
+    // move does the first player run, and they reach the crate long before the friend does (a race to the crate,
+    // which a late friend lost: 4e9948f).
+    await two.page.evaluate(() => (window as unknown as { slowLine(ms: number): void }).slowLine(1800))
     await two.hold('left')
     await expect.poll(async () => num(await one.data('p2-x')), POLL).toBeLessThan(12.5)
+    await one.hold('right')
     await expect.poll(async () => num(await two.data('p1-x')), POLL).toBeGreaterThan(3.5)
-    // From here the friend's line is slow: their keys reach the room a quarter of a second late (the page's
-    // `slowLine`). It starts only now, so who reaches the crate first above is the same race it always was.
+    // From here the friend's line is slow by a quarter of a second.
     await two.page.evaluate(() => (window as unknown as { slowLine(ms: number): void }).slowLine(250))
     await one.release('right')
     await two.release('left')

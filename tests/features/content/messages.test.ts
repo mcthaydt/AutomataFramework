@@ -13,8 +13,9 @@ import { english, keeperTalk, storyGame } from '../../fixtures/content/story.ts'
 const file = 'content/messages/en.json'
 const said = (value: unknown): string[] => problemsOf('messages', value, file)
 
-test('the six languages a game ships in', () =>
-  expect(LANGUAGES).toEqual(['en', 'es', 'ko', 'ja', 'zh', 'pt']))
+test('the languages are listed by how many people speak each as a first language', () => {
+  expect(LANGUAGES).toEqual(['zh', 'es', 'en', 'pt', 'ja', 'ko'])
+})
 
 test('a messages file reads, and writes back to the same bytes twice', () =>
   expectRoundTrip('messages', english()))
@@ -58,7 +59,7 @@ test('Korean, Japanese, Chinese and an emoji come back unchanged', () => {
 
 test('a language that is not one of the six', () =>
   expect(said({ ...english(), id: 'fr' })).toEqual([
-    `${file}: id: This must be one of: en, es, ko, ja, zh, pt.`,
+    `${file}: id: This must be one of: zh, es, en, pt, ja, ko.`,
   ]))
 
 test('a key that is not lower-case words, and a text that is empty', () => {
@@ -101,6 +102,7 @@ const withLanguages = (...extra: { id: string; messages: Record<string, string> 
       })),
     ],
     {},
+    'en',
   )
 
 test('a language that has a message English does not', async () =>
@@ -115,21 +117,26 @@ test('a language that has a message English does not', async () =>
 test('a message missing from another language is not a problem: a game is playable while it is translated', async () =>
   expect(await gameProblems(withLanguages({ id: 'es', messages: { 'keeper.hello': 'Hola' } }))).toEqual([]))
 
-test('messages with no English file say so, once', async () => {
-  const files = storyGame(
-    [
-      {
-        type: 'messages',
-        path: 'content/messages/es.json',
-        text: writeContent('messages', { format: 1, id: 'es', messages: { 'keeper.hello': 'Hola' } }),
-      },
-    ],
-    {},
-  )
-  expect(await gameProblems(files)).toEqual([
-    'automata.toml: content: A game with words needs them in English first. List a messages file called en.json.',
-  ])
-})
+const spanishOnly = [
+  {
+    type: 'messages' as const,
+    path: 'content/messages/es.json',
+    text: writeContent('messages', { format: 1, id: 'es', messages: { 'keeper.hello': 'Hola' } }),
+  },
+]
+
+test('a game that says it is written in English and lists no English file says so, once', async () =>
+  expect(await gameProblems(storyGame(spanishOnly, {}, 'en'))).toEqual([
+    'automata.toml: source: This game\'s words are written in English (source = "en"), but no en.json is listed. List content/messages/en.json, or change source.',
+  ]))
+
+test('a game with words and no source says what to write', async () =>
+  expect(await gameProblems(storyGame(spanishOnly))).toEqual([
+    'automata.toml: source: Write the language your team writes the game\'s words in, like source = "es".',
+  ]))
+
+test('a game written in Spanish needs no English file at all', async () =>
+  expect(await gameProblems(storyGame(spanishOnly, {}, 'es'))).toEqual([]))
 
 test('an English file that does not read is not checked against, and does not make every key look wrong', async () => {
   const files = withLanguages({ id: 'es', messages: { 'keeper.hello': 'Hola' } })
@@ -159,6 +166,7 @@ test('a conversation line named like something every object has is reported when
       },
     ],
     {},
+    'en',
   )
   expect(await gameProblems(files)).toEqual([
     'content/conversations/keeper.json: nodes[0].lines[0]: English has no message called "constructor". Add it to the English file or fix the spelling.',
@@ -192,10 +200,10 @@ test('a text of 2000 braces is read without trouble', () => {
 
 test('each language has an English name', () =>
   expect(LANGUAGES.map(languageName)).toEqual([
-    'English',
-    'Spanish',
-    'Korean',
-    'Japanese',
     'Chinese',
+    'Spanish',
+    'English',
     'Portuguese',
+    'Japanese',
+    'Korean',
   ]))

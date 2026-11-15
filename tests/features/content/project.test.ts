@@ -93,3 +93,21 @@ test('players = 1, 0, 5, 2.5 or "two" is refused, in words', () => {
       value,
     ).toEqual([message])
 })
+
+test('a project with no source line has no source key at all', () => {
+  const parsed = parseProject(FIXTURE)
+  expect(parsed.ok && Object.hasOwn(parsed.value, 'source')).toBe(false)
+})
+
+test('source = "ko" is kept', () => {
+  const parsed = parseProject(FIXTURE.replace('hero = "hero"\n', 'hero = "hero"\nsource = "ko"\n'))
+  expect(parsed.ok && parsed.value.source).toBe('ko')
+})
+
+test('a source that is not one of the six is refused, in words', () => {
+  const message = 'automata.toml: source: Write one of zh, es, en, pt, ja or ko, like source = "es".'
+  for (const value of ['"fr"', '"EN"', '1', '""']) {
+    const file = FIXTURE.replace('hero = "hero"\n', `hero = "hero"\nsource = ${value}\n`)
+    expect(problems(file), value).toEqual([message])
+  }
+})

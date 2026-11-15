@@ -4,7 +4,7 @@
 // process-runner.ts (a service with a live layer and a memory one); the code is new.
 import { type ChildProcess, type SpawnOptions, type StdioOptions, spawn } from 'node:child_process'
 import type { Dirent } from 'node:fs'
-import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
+import { access, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { createInterface } from 'node:readline'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -19,6 +19,8 @@ import {
   Code,
   type CodeService,
   type CommandAnswer,
+  Device,
+  type DeviceService,
   Files,
   type FilesService,
   type GameCode,
@@ -106,6 +108,11 @@ const filesLive: FilesService = {
       const found: string[] = []
       await walk(dir, '', found)
       return found.sort()
+    }),
+  remove: (path) =>
+    Effect.tryPromise({
+      try: () => rm(path, { force: true }),
+      catch: (error) => new CliError(`Could not remove ${path}: ${firstLine(error)}`),
     }),
 }
 
@@ -268,6 +275,23 @@ const outLive: OutService = {
   error: (text) => Effect.sync(() => void process.stderr.write(`${text}\n`)),
 }
 
+// --- Device ---
+
+/**
+ * The languages this machine says its person uses: the locale variables a system sets, in the order a system reads them
+ * (`LC_ALL` wins over `LC_MESSAGES`, which wins over `LANG`). Windows sets none, so it is asked, here and nowhere else:
+ * `Intl` answers for the process's own locale, which in a page or a test is not the person's, so no other code asks it.
+ */
+const deviceLive: DeviceService = {
+  languages: () =>
+    Effect.sync(() => {
+      const set = ['LC_ALL', 'LC_MESSAGES', 'LANG']
+        .map((name) => process.env[name])
+        .filter((value): value is string => value !== undefined && value !== '')
+      return set.length === 0 && WINDOWS ? [Intl.DateTimeFormat().resolvedOptions().locale] : set
+    }),
+}
+
 /** What is typed or piped into this process, a line at a time (for `automata mcp`). */
 export const stdinLines = (): AsyncIterable<string> => createInterface({ input: process.stdin })
 
@@ -356,4 +380,5 @@ export const liveLayer: Layer.Layer<Ports> = Layer.mergeAll(
   Layer.succeed(Code, codeLive),
   Layer.succeed(Out, outLive),
   Layer.succeed(Runner, runnerLive),
+  Layer.succeed(Device, deviceLive),
 )

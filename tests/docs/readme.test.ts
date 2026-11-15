@@ -5,6 +5,7 @@ import { helpFor } from '#src/features/cli/help.ts'
 import { PROTOCOL_VERSIONS } from '#src/features/cli/mcp.ts'
 import { mcpTools } from '#src/features/cli/mcp-tools.ts'
 import { createSessions } from '#src/features/cli/session.ts'
+import { LANGUAGES } from '#src/features/content/content.ts'
 import { CONTENT_TYPES } from '#src/features/content/content-types.ts'
 import { TOUCH_PROPERTIES } from '#src/features/input/touch.ts'
 import { FRAMEWORK_VERSION } from '#src/features/sim/sim.ts'
@@ -112,6 +113,8 @@ test('the README has a Languages section: the files, the values, the pick, the t
     'locale.words',
     'locale.set',
     'startGame({ ..., locale })',
+    'languagePicker',
+    'locale.asked()',
     'followLanguage',
     'onlineWords(status, locale.words)',
     'translationProblems',
@@ -136,6 +139,34 @@ test('the README has a Languages section: the files, the values, the pick, the t
   // Its messages file is exactly what `writeContent` writes, so an agent that copies it makes the bytes the check wants.
   const block = /```json\n([\s\S]*?)```/.exec(languages)?.[1]
   expect(framework.writeContent('messages', JSON.parse(block ?? '') as never)).toBe(block)
+})
+
+// A first-time developer copies the first example and gets a running page: the language is asked, then the game starts.
+test("the README's first example makes a locale and shows the picker before it starts the game", () => {
+  const start = readme.indexOf('import {\n  createLocale,')
+  expect(start).toBeGreaterThan(-1)
+  const example = readme.slice(start, readme.indexOf('```', start))
+  const order = ['createLocale({', 'languagePicker({', 'startGame({'].map((word) => example.indexOf(word))
+  for (const at of order) expect(at).toBeGreaterThan(-1)
+  expect(order).toEqual([...order].sort((a, b) => a - b))
+  expect(framework).toHaveProperty('createLocale')
+  expect(framework).toHaveProperty('openSettings')
+})
+
+// No sentence of the README makes English the default: the game's own language is the one `source` names.
+test('the README never says English comes first or that the room says its status in plain English', () => {
+  expect(readme).not.toMatch(/English \(`en\.json`\) comes first/)
+  expect(readme).not.toContain('plain English')
+  expect(readme).toContain('`source` in `automata.toml` names the one the team writes in')
+})
+
+// The online example needs a locale and the words, or it throws and does not type-check.
+test("the README's online example passes a locale and says the room in the player's words", () => {
+  const online = section('## Play online')
+  const call = online.slice(online.indexOf('await startOnlineGame({'))
+  expect(call).toContain('\n  locale,')
+  expect(online).not.toContain('onlineWords(status)')
+  expect(call).toContain('onlineWords(status, locale.words)')
 })
 
 // A game finds out how to host a room and put a page in it from here, and is told that nothing is deployed.
@@ -216,6 +247,13 @@ test('"Start here" is the first section, and its commands are the ones the creat
   expect(START_HERE[0]).toContain(PACKAGE_NAME)
   expect(START_HERE[1]).toBe(`cd ${GAME_FOLDER}`)
   expect(section('## Start here')).toContain('24.21.0')
+})
+
+test('"Start here" says what --source is and names the six codes', () => {
+  const start = section('## Start here')
+  expect(START_HERE[0]).toContain('--source en')
+  expect(start).toContain('--source')
+  for (const code of LANGUAGES) expect(start).toContain(code)
 })
 
 test('nothing in the README says npx automata without --no', () => {

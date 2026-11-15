@@ -13,9 +13,10 @@ import {
   writeContent,
 } from '#src/features/content/content.ts'
 import { chooseCommand, createGameSim, startConversation } from '#src/features/level/level.ts'
+import { gameFiles, readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fullGamePictures } from '../../fixtures/full-game/pictures.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
-import { readFixture } from '../../fixtures/game/read.ts'
+import { fixtureFiles, readFixture } from '../../fixtures/game/read.ts'
 import { callOn, storyEventsOf } from '../../fixtures/level/story-helpers.ts'
 import { storyFiles } from '../../fixtures/story/read.ts'
 
@@ -203,7 +204,7 @@ test('an agent adds a word in English and is told, file by file, where else to w
   if (!loaded.ok) return
   const told = translationProblems(loaded.value).map(formatDiagnostic)
   expect(told).toHaveLength(5)
-  for (const [i, language] of ['es', 'ko', 'ja', 'zh', 'pt'].entries()) {
+  for (const [i, language] of ['zh', 'es', 'pt', 'ja', 'ko'].entries()) {
     expect(told[i]).toContain(`content/messages/${language}.json`)
     expect(told[i]).toContain('"keeper.joke"')
     expect(told[i]).toContain('Why did the crate cross the ledge?')
@@ -222,10 +223,33 @@ test('an agent adds a word in English and is told, file by file, where else to w
   expect(translationProblems(written.value)).toEqual([])
 
   // 3. Five new words wait for a native speaker's read, one in each language; reading Spanish leaves four.
-  const waiting = unreadWords(written.value, {}).filter((word) => word.key === 'keeper.joke')
-  expect(waiting.map((word) => word.language)).toEqual(['es', 'ko', 'ja', 'zh', 'pt'])
-  const marks = markRead(written.value, {}, 'es', ['keeper.joke'])
+  const waiting = unreadWords(written.value, undefined).filter((word) => word.key === 'keeper.joke')
+  expect(waiting.map((word) => word.language)).toEqual(['zh', 'es', 'pt', 'ja', 'ko'])
+  const marks = markRead(written.value, undefined, 'es', ['keeper.joke'])
   expect(unreadWords(written.value, marks).filter((word) => word.key === 'keeper.joke')).toHaveLength(4)
+})
+
+test('an agent writes a game in Korean from text alone, and is told what Spanish and the rest lack', async () => {
+  const messages = (id: string, words: Record<string, string>): string =>
+    writeContent('messages', { format: 1, id, messages: words } as never)
+  const ko = { 'keeper.hello': '안녕하세요!', 'keeper.bye': '안녕히 가세요.' }
+  const files = gameFiles(fixtureFiles, [
+    { type: 'messages', path: 'content/messages/ko.json', text: messages('ko', ko) },
+    { type: 'messages', path: 'content/messages/es.json', text: messages('es', { 'keeper.bye': 'Adiós.' }) },
+  ])
+  const toml = withSource(files['automata.toml'] ?? '', 'ko')
+  const loaded = await loadGame(readFiles({ ...files, 'automata.toml': toml }))
+  expect(loaded.ok).toBe(true)
+  if (!loaded.ok) return
+  const missing = (name: string, code: string): string =>
+    `automata.toml: content: This game has no words in ${name}. Add content/messages/${code}.json with every word Korean has, and list it here.`
+  expect(translationProblems(loaded.value).map(formatDiagnostic)).toEqual([
+    missing('Chinese', 'zh'),
+    missing('English', 'en'),
+    missing('Portuguese', 'pt'),
+    missing('Japanese', 'ja'),
+    'content/messages/es.json: messages: This file has no "keeper.hello". The Korean file says "안녕하세요!". Write it in Spanish.',
+  ])
 })
 
 test('an agent misspells a value in one language and is told which', async () => {

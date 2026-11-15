@@ -3,6 +3,7 @@ import { expect } from 'vitest'
 import {
   type ContentType,
   formatDiagnostic,
+  type Language,
   loadGame,
   parseContent,
   writeContent,
@@ -75,4 +76,15 @@ export function changed(
   const value = JSON.parse(text ?? '') as Record<string, unknown>
   change(value)
   return writeContent(type, value as never)
+}
+
+/**
+ * A project file with `source = "<code>"` on the line after `hero = …`, in place of any `source` line it has. A game
+ * that lists words names the language its team writes them in; a test that adds a messages file names it here.
+ */
+export function withSource(toml: string, source: Language): string {
+  const line = `source = "${source}"`
+  return /^source = .*$/m.test(toml)
+    ? toml.replace(/^source = .*$/m, line)
+    : toml.replace(/^(hero = .*)$/m, `$1\n${line}`)
 }

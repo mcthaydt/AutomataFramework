@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { fixDts } from '../../scripts/fix-dts.ts'
+import { fixDts } from '../../scripts/fix-dts.mjs'
 
 test("from './x.ts' becomes './x.js', in all three forms", () => {
   expect(fixDts("export * from './features/sim/sim.ts'")).toBe("export * from './features/sim/sim.js'")

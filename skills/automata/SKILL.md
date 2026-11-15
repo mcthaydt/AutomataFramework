@@ -16,7 +16,8 @@ files. Read this page, then the skill for the kind of change you are making.
 | Levels, characters and the rest of the content (JSON, one thing in each file) | `content/` |
 | The list of the game's rules | `src/headless.ts` |
 | One feature's rules: a plugin and its systems | `src/features/<name>/` |
-| The page: loading, controls, words on the screen | `src/features/page/` |
+| Every word a player reads, one file for each language | `content/messages/` |
+| The page: loading, controls, and how it looks | `src/features/page/` |
 | Tests of the rules | `tests/features/<name>/` |
 | A recorded play, replayed on every check | `replays/` |
 | How to run, change and check the game, for a person | `README.md` |
@@ -35,8 +36,14 @@ files. Read this page, then the skill for the kind of change you are making.
 ## Where a change goes
 
 - A number, a level, a character's size or colour: content. Edit the JSON, then run `automata check --fix`.
+- A figure or a backdrop (how something is drawn): content. Edit the JSON, then run `npx --no automata art` to paint its
+  pictures, and commit them with it. `check` fails for a picture that is missing or older than its file.
 - A new thing a character can do: a rule, in `src/features/<name>/`. Skill `automata-rules`.
-- How the game looks on the page, or the words on it: `src/features/page/` and `src/style.css`.
+- A word a player reads: content, in `content/messages/`, one file for each language, in the fixed order `zh, es, en, pt, ja, ko`. The game's own
+  language is `source` in `automata.toml`; write the word there first, then in every other file, under the same key; `check` names any language that is missing it. `npx --no automata words` lists the
+  translations no native speaker has read, beside the game's own text. Mark a language read (`--read <language>`) only
+  once a native speaker has read it.
+- How the game looks on the page: `src/features/page/` and `src/style.css`.
 - A new kind of file: see `automata-content` for the kinds there are. A kind that is not there is not built yet.
 
 ## Verify in this order
@@ -48,7 +55,7 @@ npx --no automata replay
 ```
 
 1. After any content change, `check --only files` says what is wrong with a file, in plain words, with its place.
-2. Before you say you are done, `check` runs every step: the files, the rules, lint, types, the replays and the tests. A
+2. Before you say you are done, `check` runs every step: the files, the pictures, the rules, lint, types, the replays and the tests. A
    step that fails does not stop the next, so one run says everything that is wrong.
 3. If you meant to change how the game plays, `replay` will say the recording no longer ends where it did. Run
    `npx --no automata replay --accept` to record the new play, and say in your message why it moved.
@@ -56,8 +63,8 @@ npx --no automata replay
 Exit codes, for every command: 0 everything is fine, 1 the game has something to fix, 2 the command could not do its
 work (a folder that is not a game, a tool that is not installed). Add `--json` to read the answer as JSON.
 
-If your program speaks the Model Context Protocol, `automata mcp` offers the same commands as tools (`create`, `check` and
-`replay`), and five more that run the game a few ticks at a time and say where everything is (`play_start`, `play_step`,
+If your program speaks the Model Context Protocol, `automata mcp` offers the same commands as tools (`create`, `check`, `replay` and
+`art`), and five more that run the game a few ticks at a time and say where everything is (`play_start`, `play_step`,
 `play_state`, `play_save` and `play_stop`). The game's `.mcp.json` starts it.
 
 Always write `npx --no automata`, with `--no`. Without it, the command can fetch an unrelated package of that name from npm.

@@ -4,10 +4,13 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { createAudio, type GameAudio, type TestSpeaker, testSpeaker } from '#src/features/audio/audio.ts'
 import { type Game, startGame } from '#src/features/game/game.ts'
 import { testHost } from '#src/features/host/host.ts'
+import { createLocale, type Locale } from '#src/features/locale/locale.ts'
+import { memoryStore, openSettings } from '#src/features/saves/saves.ts'
 import { loadSoundingGame } from '../../fixtures/audio/sounding-game.ts'
 import { soundingHeroPlugin } from '../../fixtures/audio/sounding-hero.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 
 const FRAME = 1000 / 60
 
@@ -43,11 +46,17 @@ async function newAudio(): Promise<{ audio: GameAudio; speaker: TestSpeaker }> {
 
 /** Starts the sounding game on the manual frames, with the audio and the notice setting a test gives. */
 async function start(
-  extra: { audio?: GameAudio; soundNotice?: string | false; frames?: ReturnType<typeof manualFrames> } = {},
+  extra: {
+    audio?: GameAudio
+    soundNotice?: string | false
+    frames?: ReturnType<typeof manualFrames>
+    locale?: Locale
+  } = {},
 ): Promise<{ game: Game; frames: ReturnType<typeof manualFrames> }> {
   const frames = extra.frames ?? manualFrames()
   game = await startGame({
     content: await loadSoundingGame(),
+    locale: await chosenLocale(await loadSoundingGame(), 'en'),
     plugins: [soundingHeroPlugin],
     mount,
     controls: fixtureControls,
@@ -55,6 +64,7 @@ async function start(
     frames,
     ...(extra.audio === undefined ? {} : { audio: extra.audio }),
     ...(extra.soundNotice === undefined ? {} : { soundNotice: extra.soundNotice }),
+    ...(extra.locale === undefined ? {} : { locale: extra.locale }),
   })
   return { game, frames }
 }
@@ -126,6 +136,18 @@ test('soundNotice: false shows no button; a string is shown as given', async () 
   const spoken = await newAudio()
   await start({ audio: spoken.audio, soundNotice: 'Toca para oír el sonido' })
   expect(notice()?.textContent).toBe('Toca para oír el sonido')
+})
+
+// Plan L's implementation audit, I1: a game given a locale asks for the first tap in the player's language.
+test("with a locale, the button is in the player's language and changes with it", async () => {
+  const { audio } = await newAudio()
+  const host = testHost({ language: 'ko' })
+  const settings = await openSettings({ game: 'sound-words', store: memoryStore() })
+  const locale = createLocale({ content: await loadSoundingGame(), host, settings })
+  await start({ audio, locale })
+  expect(notice()?.textContent).toBe('눌러서 소리를 켜세요')
+  await locale.set('pt')
+  expect(notice()?.textContent).toBe('Toque para ligar o som')
 })
 
 test('stopping the game removes the button and leaves the music wanted', async () => {

@@ -20,7 +20,7 @@ test('every content file is exactly what writeContent writes', () => {
   const project = parseProject(tree['automata.toml'] ?? '')
   expect(project.ok).toBe(true)
   if (!project.ok) return
-  expect(project.value.content.length).toBe(4)
+  expect(project.value.content.length).toBe(12)
   for (const ref of project.value.content) {
     const parsed = parseContent(ref.type, tree[ref.path] ?? '', ref.path)
     expect(parsed.ok, ref.path).toBe(true)
@@ -62,4 +62,21 @@ test('the three files with another name are there, and the real names are not', 
   for (const name of ['package.template.json', 'biome.template.json', 'gitignore'])
     expect(tree[name], name).toBeDefined()
   for (const name of ['package.json', 'biome.json', '.gitignore']) expect(tree[name], name).toBeUndefined()
+})
+
+test("the template's page says no language of its own: no lang on the page, no English in its code", () => {
+  expect(tree['index.html']).toBeDefined()
+  expect(tree['index.html']).not.toMatch(/<html[^>]*\blang=/)
+  // A developer who meets a page with no `lang` is told why, where they look.
+  expect(tree['index.html']).toContain('No `lang` on purpose')
+  const inCode = Object.entries(tree).filter(
+    ([path, text]) => path.startsWith('src/') && /(['"])en\1/.test(text),
+  )
+  expect(inCode.map(([path]) => path)).toEqual([])
+  // Its one English: the language its own words are written in, named once in the project file.
+  expect((tree['automata.toml'] ?? '').match(/^source = "en"$/gm)).toHaveLength(1)
+  // The game's own linter is told why the page has no lang, or `npm run check` would fail on a new game.
+  expect(JSON.parse(tree['biome.template.json'] ?? '{}').overrides).toEqual([
+    { includes: ['index.html'], linter: { rules: { a11y: { useHtmlLang: 'off' } } } },
+  ])
 })

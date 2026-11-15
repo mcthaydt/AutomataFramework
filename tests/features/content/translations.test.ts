@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 import {
   formatDiagnostic,
   type GameContent,
+  type Language,
   loadGame,
   translationProblems,
 } from '#src/features/content/content.ts'
@@ -12,12 +13,13 @@ import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { type Words, wordsGame } from '../../fixtures/locale/content.ts'
 
 const said = (content: GameContent): string[] => translationProblems(content).map(formatDiagnostic)
-const sayWords = async (words: Words): Promise<string[]> => said(await wordsGame(words))
+const sayWords = async (words: Words, source: Language = 'en'): Promise<string[]> =>
+  said(await wordsGame(words, source))
 
 const en = { 'keeper.hello': 'Hello there!' }
 const korean = '가'
-const missingFile = (name: string, file: string): string =>
-  `automata.toml: content: This game has no words in ${name}. Add content/messages/${file}.json with every word English has, and list it here.`
+const missingFile = (name: string, file: string, source = 'English'): string =>
+  `automata.toml: content: This game has no words in ${name}. Add content/messages/${file}.json with every word ${source} has, and list it here.`
 
 test('a game with no words has nothing to translate', async () =>
   expect(translationProblems(await loadFixtureGame())).toEqual([]))
@@ -30,12 +32,48 @@ test('the full game is translated in full', async () => {
 
 test('English alone: five sentences, one for each language it lacks, in order', async () =>
   expect(await sayWords({ en })).toEqual([
-    missingFile('Spanish', 'es'),
-    missingFile('Korean', 'ko'),
-    missingFile('Japanese', 'ja'),
     missingFile('Chinese', 'zh'),
+    missingFile('Spanish', 'es'),
     missingFile('Portuguese', 'pt'),
+    missingFile('Japanese', 'ja'),
+    missingFile('Korean', 'ko'),
   ]))
+
+describe('a game written in Korean', () => {
+  const hello = 'keeper.hello'
+  const bye = 'keeper.bye'
+  const ko = { [hello]: '안녕하세요!', [bye]: '잘 가요.' }
+
+  test('Korean alone: English is named like any other language, and Korean is never checked against itself', async () => {
+    const problems = await sayWords({ ko }, 'ko')
+    expect(problems).toContain(
+      'automata.toml: content: This game has no words in English. Add content/messages/en.json with every word Korean has, and list it here.',
+    )
+    expect(problems).toHaveLength(5)
+    expect(problems.some((line) => line.startsWith('content/messages/ko.json'))).toBe(false)
+  })
+
+  test('a word the source has and a language lacks is told in the source', async () => {
+    const problems = await sayWords({ ko, es: { [bye]: 'Adiós.' } }, 'ko')
+    expect(problems).toContain(
+      'content/messages/es.json: messages: This file has no "keeper.hello". The Korean file says "안녕하세요!". Write it in Spanish.',
+    )
+  })
+
+  test('the values are held against the source', async () => {
+    const wait = (text: string): Record<string, string> => ({ 'room.wait': text })
+    const problems = await sayWords(
+      { ko: wait('{count}명을 기다리는 중'), es: wait('Esperando'), en: wait('Waiting for {cuont}') },
+      'ko',
+    )
+    expect(problems).toContain(
+      'content/messages/es.json: messages.room.wait: Korean has {count} in this text and this one does not. Put {count} where the number or name belongs.',
+    )
+    expect(problems).toContain(
+      'content/messages/en.json: messages.room.wait: This text has {cuont}, which Korean does not. Take it out, or fix its spelling.',
+    )
+  })
+})
 
 describe('one language is missing words', () => {
   // English has a second word so that Korean can have a file with one word of its own and still lack the other.
@@ -43,14 +81,14 @@ describe('one language is missing words', () => {
   const others = { es: base, ja: base, zh: base, pt: base }
   test('a file lacks an English key', async () =>
     expect(await sayWords({ en: base, ko: { 'keeper.bye': 'x' }, ...others })).toEqual([
-      'content/messages/ko.json: messages: This file has no "keeper.hello". English says "Hello there!". Write it in Korean.',
+      'content/messages/ko.json: messages: This file has no "keeper.hello". The English file says "Hello there!". Write it in Korean.',
     ]))
 
   test('an English text longer than 60 characters is cut in the sentence', async () => {
     const long = 'a'.repeat(70)
     const words = { en: { ...base, 'keeper.hello': long }, ko: { 'keeper.bye': 'x' }, ...others }
     expect(await sayWords(words)).toContain(
-      `content/messages/ko.json: messages: This file has no "keeper.hello". English says "${'a'.repeat(60)}...". Write it in Korean.`,
+      `content/messages/ko.json: messages: This file has no "keeper.hello". The English file says "${'a'.repeat(60)}...". Write it in Korean.`,
     )
   })
 
@@ -104,7 +142,7 @@ describe('lengths and level names', () => {
 
   test('a level name over 40 characters', async () =>
     expect(await sayWords(all('level.level-1.name', korean.repeat(52)))).toEqual(
-      ['en', 'es', 'ko', 'ja', 'zh', 'pt'].map(
+      ['zh', 'es', 'en', 'pt', 'ja', 'ko'].map(
         (id) =>
           `content/messages/${id}.json: messages.level.level-1.name: A level's name is at most 40 characters, so it fits on a save. This one has 52.`,
       ),
@@ -117,7 +155,7 @@ describe('lengths and level names', () => {
     const problems = await sayWords(all('controls.jump', 'x'.repeat(13)))
     expect(problems).toHaveLength(6)
     expect(problems[0]).toBe(
-      "content/messages/en.json: messages.controls.jump: A button's words are at most 12 characters, so they fit on the button. This one has 13.",
+      "content/messages/zh.json: messages.controls.jump: A button's words are at most 12 characters, so they fit on the button. This one has 13.",
     )
     expect(await sayWords(all('controls.jump', 'x'.repeat(12)))).toEqual([])
   })
@@ -126,7 +164,7 @@ describe('lengths and level names', () => {
     const problems = await sayWords(all('level.level-9.name', 'Nine'))
     expect(problems).toHaveLength(6)
     expect(problems[0]).toBe(
-      'content/messages/en.json: messages.level.level-9.name: This game has no level called "level-9". Take this line out, or fix the level\'s name in the key.',
+      'content/messages/zh.json: messages.level.level-9.name: This game has no level called "level-9". Take this line out, or fix the level\'s name in the key.',
     )
   })
 })
@@ -138,7 +176,7 @@ test('a key named "constructor" or "toString" is a key like any other', async ()
   expect(
     await sayWords({ en: words, es: words, ko: { 'keeper.bye': 'x' }, ja: words, zh: words, pt: words }),
   ).toEqual([
-    'content/messages/ko.json: messages: This file has no "constructor". English says "Hello". Write it in Korean.',
+    'content/messages/ko.json: messages: This file has no "constructor". The English file says "Hello". Write it in Korean.',
   ])
 })
 
@@ -146,7 +184,7 @@ test('a thousand missing words are a thousand sentences, sorted', async () => {
   const many = Object.fromEntries(
     Array.from({ length: 1000 }, (_, i) => [`word.${String(i).padStart(4, '0')}`, 'x']),
   )
-  const problems = translationProblems(await wordsGame({ en: many, ko: { 'word.0000': 'x' } }))
+  const problems = translationProblems(await wordsGame({ en: many, ko: { 'word.0000': 'x' } }, 'en'))
   const korean = problems.filter((d) => d.file === 'content/messages/ko.json')
   expect(korean).toHaveLength(999)
   expect(korean.map((d) => d.message)).toEqual([...korean.map((d) => d.message)].sort())

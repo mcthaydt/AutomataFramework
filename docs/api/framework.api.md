@@ -46,24 +46,6 @@ interface ActorKey {
 }
 ```
 
-### `ActorPlace` (interface)
-
-```ts
-interface ActorPlace {
-    readonly who: string;
-    readonly x: number;
-    readonly y: number;
-    readonly face?: 'left' | 'right';
-    readonly clip?: string;
-}
-```
-
-### `actorsAt` (function)
-
-```ts
-function actorsAt(file: CutsceneFile, t: number): readonly ActorPlace[];
-```
-
 ### `Advance` (interface)
 
 ```ts
@@ -223,12 +205,6 @@ interface BehaviourFile {
 }
 ```
 
-### `behaviourPlugin` (const)
-
-```ts
-const behaviourPlugin: PluginDef;
-```
-
 ### `BehaviourRule` (interface)
 
 ```ts
@@ -259,6 +235,12 @@ interface BindingOverride {
 
 ```ts
 type BindingSlot = 'keys' | 'shared-1' | 'shared-2' | 'pad';
+```
+
+### `bindParaglide` (function)
+
+```ts
+function bindParaglide(runtime: ParaglideRuntime, locale: Locale): void;
 ```
 
 ### `Body` (const)
@@ -292,15 +274,6 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
-### `BoxWords` (interface)
-
-```ts
-interface BoxWords {
-    readonly next: string;
-    readonly skip: string;
-}
-```
-
 ### `Bus` (type)
 
 ```ts
@@ -311,12 +284,6 @@ type Bus = 'sound' | 'music';
 
 ```ts
 const BYTES_CHANNEL = "b";
-```
-
-### `cameraAt` (function)
-
-```ts
-function cameraAt(file: CutsceneFile, t: number): SceneCamera;
 ```
 
 ### `CameraKey` (interface)
@@ -371,8 +338,6 @@ interface Character {
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
     readonly touch?: 'sense' | 'take' | undefined;
-    readonly name?: string | undefined;
-    readonly conversation?: string | undefined;
 }
 ```
 
@@ -394,24 +359,6 @@ const CharacterSchema: z.ZodType<Character, CharacterInput>;
 
 ```ts
 function checkControls(controls: Controls): void;
-```
-
-### `ChooseCommand` (const)
-
-```ts
-const ChooseCommand: CommandDef<typeof choicePayload>;
-```
-
-### `chooseCommand` (function)
-
-```ts
-function chooseCommand(tick: number, player: number, seq: number, choice: number): Command;
-```
-
-### `choosePlace` (function)
-
-```ts
-function choosePlace(file: ConversationFile, place: TalkPlace, choice: number): TalkPlace | undefined;
 ```
 
 ### `Claim` (type)
@@ -644,18 +591,6 @@ interface ConversationChoice {
 }
 ```
 
-### `ConversationChosen` (const)
-
-```ts
-const ConversationChosen: EventDef<typeof chosenSchema>;
-```
-
-### `ConversationEnded` (const)
-
-```ts
-const ConversationEnded: EventDef<typeof endedSchema>;
-```
-
 ### `ConversationFile` (interface)
 
 ```ts
@@ -676,26 +611,13 @@ interface ConversationNode {
     readonly lines: readonly string[];
     readonly choices?: readonly Choice[] | undefined;
     readonly next?: string | undefined;
-    readonly cutscene?: string | undefined;
 }
-```
-
-### `ConversationSaid` (const)
-
-```ts
-const ConversationSaid: EventDef<typeof saidSchema>;
 ```
 
 ### `ConversationSchema` (const)
 
 ```ts
 const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
-```
-
-### `ConversationStarted` (const)
-
-```ts
-const ConversationStarted: EventDef<typeof startedSchema>;
 ```
 
 ### `coopSeats` (function)
@@ -736,14 +658,34 @@ function createGameSim(options: GameSimOptions): Promise<Sim>;
 function createInput(options: InputOptions): Input;
 ```
 
+### `createLevelPicture` (function)
+
+```ts
+function createLevelPicture(options: {
+    mount: HTMLElement;
+    content: GameContent;
+    level: Level;
+    art?: Art | undefined;
+    density?: Density | undefined;
+    keep?: boolean;
+}): Promise<LevelPicture>;
+```
+
 ### `createLocale` (function)
 
 ```ts
 function createLocale(options: {
     readonly content: GameContent;
-    readonly host: Host;
+    readonly host: Pick<Host, 'language' | 'deviceLanguages'>;
     readonly settings: Settings;
+    readonly watching?: boolean;
 }): Locale;
+```
+
+### `createPicker` (function)
+
+```ts
+function createPicker(locale: Locale): Picker;
 ```
 
 ### `createRecorder` (function)
@@ -832,12 +774,6 @@ function createSession(setup: SessionSetup): Session;
 function createSim(opts: SimOptions): Promise<Sim>;
 ```
 
-### `createStoryView` (function)
-
-```ts
-function createStoryView(options: StoryViewOptions): StoryView;
-```
-
 ### `Cue` (type)
 
 ```ts
@@ -873,12 +809,6 @@ interface CuesFile {
 const CuesSchema: z.ZodType<CuesFile, CuesFile>;
 ```
 
-### `CutsceneEnded` (const)
-
-```ts
-const CutsceneEnded: EventDef<typeof sceneEndedSchema>;
-```
-
 ### `CutsceneFile` (interface)
 
 ```ts
@@ -890,7 +820,6 @@ interface CutsceneFile {
     readonly camera: readonly CameraKey[];
     readonly actors: readonly ActorKey[];
     readonly lines: readonly CutsceneLine[];
-    readonly opens?: true | undefined;
 }
 ```
 
@@ -909,12 +838,6 @@ interface CutsceneLine {
 
 ```ts
 const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
-```
-
-### `CutsceneStarted` (const)
-
-```ts
-const CutsceneStarted: EventDef<typeof sceneStartedSchema>;
 ```
 
 ### `Def` (type)
@@ -1055,6 +978,12 @@ type Ease = 'cut' | 'linear' | 'smooth';
 
 ```ts
 type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
+```
+
+### `emptyReadMarks` (function)
+
+```ts
+function emptyReadMarks(source: Language): ReadMarks;
 ```
 
 ### `encodePng` (function)
@@ -1243,6 +1172,18 @@ interface Fit {
 }
 ```
 
+### `fitInRoom` (function)
+
+```ts
+function fitInRoom(box: {
+    w: number;
+    h: number;
+}, room: Room, world: {
+    w: number;
+    h: number;
+}): Fit;
+```
+
 ### `fitLabel` (function)
 
 ```ts
@@ -1386,12 +1327,10 @@ interface GameOptions extends GameSimOptions {
     readonly frames?: Frames;
     readonly settings?: unknown;
     readonly gamepads?: () => readonly (PadLike | null)[];
-    readonly words?: Words;
-    readonly boxWords?: BoxWords;
     readonly audio?: GameAudio;
     readonly soundNotice?: string | false;
     readonly readPicture?: ReadPicture;
-    readonly locale?: Locale;
+    readonly locale: Locale;
 }
 ```
 
@@ -1408,7 +1347,6 @@ interface GameSimOptions {
         readonly x: number;
         readonly y: number;
     };
-    readonly story?: StoryProgress;
 }
 ```
 
@@ -1510,7 +1448,7 @@ interface Input {
     controls(): Controls;
     settings(): InputSettings;
     dropped(): readonly string[];
-    rebind(action: string, slot: BindingSlot, input: string): Rebound;
+    rebind(action: string, slot: BindingSlot, input: string): SaidRebound;
     resetBindings(): void;
     onBindings(listener: (settings: InputSettings) => void): () => void;
     capture(slot: BindingSlot): Capture;
@@ -1534,7 +1472,7 @@ interface InputOptions {
     readonly gamepads?: () => readonly (PadLike | null)[];
     readonly frames?: Frames;
     readonly sequence?: Sequence;
-    readonly words?: Words;
+    readonly words: Words;
 }
 ```
 
@@ -1692,16 +1630,63 @@ const LANGUAGE_SETTINGS_DEFAULT: LanguageSettings;
 const LANGUAGE_TAGS: Readonly<Record<Language, string>>;
 ```
 
+### `languageFlag` (function)
+
+```ts
+function languageFlag(language: Language): SVGSVGElement;
+```
+
 ### `languageName` (function)
 
 ```ts
 function languageName(language: Language): string;
 ```
 
+### `LanguagePick` (type)
+
+```ts
+type LanguagePick = {
+    readonly language: Language;
+    readonly from: 'saved' | 'host';
+} | {
+    readonly language: undefined;
+    readonly suggested: Language | undefined;
+};
+```
+
+### `languagePicker` (function)
+
+```ts
+function languagePicker(options: {
+    readonly mount: HTMLElement;
+    readonly locale: Locale;
+    readonly frames?: Frames;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+}): {
+    readonly done: Promise<Language>;
+    destroy(): void;
+};
+```
+
+### `languageRow` (function)
+
+```ts
+function languageRow(options: {
+    readonly mount: HTMLElement;
+    readonly languages: readonly Language[];
+    readonly chosen: Language | undefined;
+    readonly onChoose: (language: Language) => void;
+}): {
+    choose(language: Language | undefined): void;
+    focus(language: Language): void;
+    destroy(): void;
+};
+```
+
 ### `LANGUAGES` (const)
 
 ```ts
-const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+const LANGUAGES: readonly ["zh", "es", "en", "pt", "ja", "ko"];
 ```
 
 ### `LanguageSettings` (interface)
@@ -1811,6 +1796,19 @@ type LevelJoint = {
 function levelName(words: Words, levelId: string): string;
 ```
 
+### `LevelPicture` (interface)
+
+```ts
+interface LevelPicture {
+    readonly canvas: HTMLCanvasElement;
+    show(level: Level): void;
+    setRoom(room: Room): void;
+    setView(view: Fit | undefined): void;
+    fit(): Fit;
+    destroy(): void;
+}
+```
+
 ### `levelPlugin` (const)
 
 ```ts
@@ -1875,10 +1873,13 @@ interface LevelView {
 }
 ```
 
-### `linesAt` (function)
+### `levelViews` (function)
 
 ```ts
-function linesAt(file: CutsceneFile, t: number): readonly CutsceneLine[];
+function levelViews(content: GameContent, level: Level): {
+    views: View[];
+    links: RopeLine[];
+};
 ```
 
 ### `Link` (interface)
@@ -1909,6 +1910,7 @@ interface Listed {
     has(type: ContentType, id: string): boolean;
     ids(type: ContentType): readonly string[];
     readonly hero: string;
+    readonly source: Language | undefined;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
 }
 ```
@@ -1957,12 +1959,15 @@ type LoadResult<S> = {
 
 ```ts
 interface Locale {
-    language(): Language;
-    choice(): Language | 'auto';
+    language(): Language | undefined;
+    asked(): boolean;
+    suggested(): Language | undefined;
     readonly languages: readonly Language[];
+    listed(): readonly Language[];
     readonly words: Words;
+    wordsIn(language: Language): Words;
     say(message: Message): string;
-    set(choice: Language | 'auto'): Promise<StoreResult<void>>;
+    set(language: Language): Promise<StoreResult<void>>;
     onChange(listener: (language: Language) => void): () => void;
 }
 ```
@@ -1988,7 +1993,7 @@ const Look: ComponentDef<typeof lookFields>;
 ### `markRead` (function)
 
 ```ts
-function markRead(content: GameContent, marks: ReadMarks, language: Translated, keys?: readonly string[]): ReadMarks;
+function markRead(content: GameContent, marks: ReadMarks | undefined, language: Language, keys?: readonly string[]): ReadMarks;
 ```
 
 ### `matchLanguage` (function)
@@ -2127,12 +2132,6 @@ const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 const MIN_LEAD = 1;
 ```
 
-### `Mind` (const)
-
-```ts
-const Mind: ComponentDef<typeof mindFields>;
-```
-
 ### `MusicCue` (interface)
 
 ```ts
@@ -2173,24 +2172,6 @@ const MusicSchema: z.ZodType<MusicFile, MusicFile>;
 
 ```ts
 function needsPictures(content: GameContent, level?: string): boolean;
-```
-
-### `NextCommand` (const)
-
-```ts
-const NextCommand: CommandDef<typeof noPayload>;
-```
-
-### `nextCommand` (function)
-
-```ts
-function nextCommand(tick: number, player: number, seq: number): Command;
-```
-
-### `nextPlace` (function)
-
-```ts
-function nextPlace(file: ConversationFile, place: TalkPlace): TalkPlace | 'pick' | 'end';
 ```
 
 ### `NoiseVoice` (interface)
@@ -2287,13 +2268,7 @@ type OnlineStatus = {
 ### `onlineWords` (function)
 
 ```ts
-function onlineWords(status: OnlineStatus, words?: Words): string;
-```
-
-### `openAt` (function)
-
-```ts
-function openAt(file: ConversationFile): TalkPlace;
+function onlineWords(status: OnlineStatus, words: Words): string;
 ```
 
 ### `openSettings` (function)
@@ -2339,6 +2314,18 @@ interface PadLike {
 }
 ```
 
+### `padMenu` (function)
+
+```ts
+function padMenu(options?: {
+    readonly frames?: Frames;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+}): {
+    on(listener: (press: MenuPress) => void): () => void;
+    destroy(): void;
+};
+```
+
 ### `pageDensity` (const)
 
 ```ts
@@ -2361,6 +2348,17 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 
 ```ts
 function paintFigure(figure: FigureFile): IndexedPicture;
+```
+
+### `ParaglideRuntime` (interface)
+
+```ts
+interface ParaglideRuntime {
+    readonly locales: readonly string[];
+    readonly baseLocale: string;
+    overwriteGetLocale(fn: () => string): void;
+    overwriteSetLocale(fn: (locale: string) => void): void;
+}
 ```
 
 ### `parseClientMessage` (function)
@@ -2447,6 +2445,29 @@ interface PhysicsOptions {
 }
 ```
 
+### `Picker` (interface)
+
+```ts
+interface Picker {
+    readonly flags: readonly Language[];
+    chosen(): Language | undefined;
+    choose(language: Language): void;
+    move(step: -1 | 1): void;
+    words(): {
+        readonly title: string;
+        readonly go: string;
+    } | undefined;
+    go(): Promise<StoreResult<void> | undefined>;
+    onChange(listener: () => void): () => void;
+}
+```
+
+### `PICKER_PROPERTIES` (const)
+
+```ts
+const PICKER_PROPERTIES: readonly string[];
+```
+
 ### `pickLanguage` (function)
 
 ```ts
@@ -2455,7 +2476,7 @@ function pickLanguage(options: {
     readonly host?: string | undefined;
     readonly device: readonly string[];
     readonly shipped: readonly Language[];
-}): Language;
+}): LanguagePick;
 ```
 
 ### `placeholdersOf` (function)
@@ -2493,6 +2514,12 @@ const Player: ComponentDef<typeof playerFields>;
 
 ```ts
 function playersIn(sim: Sim): number[];
+```
+
+### `playersOrder` (function)
+
+```ts
+function playersOrder(own: Language | undefined, shipped: readonly Language[]): readonly Language[];
 ```
 
 ### `playReplay` (function)
@@ -2566,6 +2593,7 @@ interface Project {
     readonly start: string;
     readonly hero: string;
     readonly players?: number | undefined;
+    readonly source?: Language | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -2597,13 +2625,16 @@ const READ_MARKS_FILE = "automata.translations.toml";
 ### `readMark` (function)
 
 ```ts
-function readMark(english: string, translated: string): string;
+function readMark(sourceText: string, translated: string): string;
 ```
 
-### `ReadMarks` (type)
+### `ReadMarks` (interface)
 
 ```ts
-type ReadMarks = Readonly<Partial<Record<Translated, Readonly<Record<string, string>>>>>;
+interface ReadMarks {
+    readonly source: Language;
+    readonly read: Readonly<Partial<Record<Language, Readonly<Record<string, string>>>>>;
+}
 ```
 
 ### `ReadPicture` (type)
@@ -2618,6 +2649,17 @@ type ReadPicture = (path: string) => Promise<Blob>;
 function rebind(current: Controls, action: string, slot: BindingSlot, input: string): Rebound;
 ```
 
+### `RebindRefusal` (interface)
+
+```ts
+interface RebindRefusal {
+    readonly ok: false;
+    readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half';
+    readonly key: string;
+    readonly values?: Values;
+}
+```
+
 ### `Rebound` (type)
 
 ```ts
@@ -2625,11 +2667,7 @@ type Rebound = {
     readonly ok: true;
     readonly controls: Controls;
     readonly swapped?: string;
-} | {
-    readonly ok: false;
-    readonly reason: 'unknown-action' | 'unknown-input' | 'reserved' | 'no-shared' | 'other-half';
-    readonly message: string;
-};
+} | RebindRefusal;
 ```
 
 ### `RECONNECT_DELAYS_MS` (const)
@@ -2805,6 +2843,17 @@ interface Rng {
 type RngState = [number, number, number, number];
 ```
 
+### `Room` (interface)
+
+```ts
+interface Room {
+    readonly top: number;
+    readonly right: number;
+    readonly bottom: number;
+    readonly left: number;
+}
+```
+
 ### `ROOM_NAME` (const)
 
 ```ts
@@ -2883,6 +2932,16 @@ interface RopeLine {
 }
 ```
 
+### `SaidRebound` (type)
+
+```ts
+type SaidRebound = Extract<Rebound, {
+    ok: true;
+}> | (RebindRefusal & {
+    readonly message: string;
+});
+```
+
 ### `SaveDef` (interface)
 
 ```ts
@@ -2958,37 +3017,6 @@ interface Scene {
     apply(delta: RenderDelta): void;
     views(alpha: number): View[];
     links(alpha: number): RopeLine[];
-}
-```
-
-### `SceneCamera` (interface)
-
-```ts
-interface SceneCamera {
-    readonly x: number;
-    readonly y: number;
-    readonly zoom: number;
-}
-```
-
-### `sceneOf` (function)
-
-```ts
-function sceneOf(sim: Sim, content: GameContent): SceneView | undefined;
-```
-
-### `SceneView` (interface)
-
-```ts
-interface SceneView {
-    readonly cutscene: string;
-    readonly t: number;
-    readonly length: number;
-    readonly camera: SceneCamera;
-    readonly lines: readonly {
-        readonly speaker: string | undefined;
-        readonly line: string;
-    }[];
 }
 ```
 
@@ -3353,24 +3381,6 @@ interface SimOptions {
 function sin(x: number): number;
 ```
 
-### `SKIP_AFTER` (const)
-
-```ts
-const SKIP_AFTER = 30;
-```
-
-### `SkipCommand` (const)
-
-```ts
-const SkipCommand: CommandDef<typeof noPayload>;
-```
-
-### `skipCommand` (function)
-
-```ts
-function skipCommand(tick: number, player: number, seq: number): Command;
-```
-
 ### `SKY_COLOR` (const)
 
 ```ts
@@ -3485,6 +3495,7 @@ function soundNotice(options: {
     readonly mount: HTMLElement;
     readonly audio: Pick<GameAudio, 'state' | 'onState' | 'silent'>;
     readonly words?: string;
+    readonly locale: Pick<Locale, 'words' | 'onChange'>;
 }): () => void;
 ```
 
@@ -3577,18 +3588,6 @@ const spritesPlugin: PluginDef;
 const START_LEAD = 2;
 ```
 
-### `startConversation` (function)
-
-```ts
-function startConversation(ctx: SimContext, id: string, player: number, thing?: number): boolean;
-```
-
-### `startCutscene` (function)
-
-```ts
-function startCutscene(ctx: SimContext, id: string): boolean;
-```
-
 ### `startGame` (function)
 
 ```ts
@@ -3640,97 +3639,6 @@ type StoreResult<T> = {
 };
 ```
 
-### `Story` (const)
-
-```ts
-const Story: ResourceDef<z.ZodType<StoryState, StoryState>>;
-```
-
-### `STORY_PROPERTIES` (const)
-
-```ts
-const STORY_PROPERTIES: readonly string[];
-```
-
-### `storyOfReplay` (function)
-
-```ts
-function storyOfReplay(replay: Replay): StoryProgress | undefined;
-```
-
-### `storyPlugin` (const)
-
-```ts
-const storyPlugin: PluginDef;
-```
-
-### `StoryProgress` (interface)
-
-```ts
-interface StoryProgress {
-    readonly ended: Readonly<Record<string, string>>;
-    readonly seen: readonly string[];
-}
-```
-
-### `storyProgress` (function)
-
-```ts
-function storyProgress(sim: Sim, content: GameContent): StoryProgress;
-```
-
-### `StoryProgressSchema` (const)
-
-```ts
-const StoryProgressSchema: z.ZodType<StoryProgress, StoryProgress>;
-```
-
-### `StoryState` (interface)
-
-```ts
-interface StoryState {
-    level: string;
-    talk: StoryTalk | null;
-    scene: StoryScene | null;
-    hands: Record<string, string>;
-    met: string[];
-    ended: Record<string, string>;
-    seen: string[];
-}
-```
-
-### `StoryView` (interface)
-
-```ts
-interface StoryView {
-    commands(tick: number): Command[];
-    update(): void;
-    hold(on: boolean): void;
-    setInset(px: number): void;
-    setBoxWords(words: BoxWords): void;
-    destroy(): void;
-}
-```
-
-### `StoryViewOptions` (interface)
-
-```ts
-interface StoryViewOptions {
-    readonly mount: HTMLElement;
-    readonly sim: Sim;
-    readonly content: GameContent;
-    readonly sequence: Sequence;
-    readonly words?: Words;
-    readonly boxWords?: BoxWords;
-    readonly onMenu?: Input['onMenu'];
-    readonly seats?: () => readonly Seat[];
-    readonly keysOf?: (player: number) => readonly string[];
-    readonly inset?: () => number;
-    readonly look?: (camera: SceneCamera | undefined) => void;
-    readonly watching?: boolean;
-}
-```
-
 ### `SYNC_BEHIND` (const)
 
 ```ts
@@ -3759,39 +3667,6 @@ interface SystemSpec {
     before?: readonly string[];
     after?: readonly string[];
     run: (ctx: SimContext) => void;
-}
-```
-
-### `TALK_REACH` (const)
-
-```ts
-const TALK_REACH = 1.5;
-```
-
-### `talkOf` (function)
-
-```ts
-function talkOf(sim: Sim, content: GameContent): TalkView | undefined;
-```
-
-### `TalkPlace` (interface)
-
-```ts
-interface TalkPlace {
-    readonly node: string;
-    readonly line: number;
-}
-```
-
-### `TalkView` (interface)
-
-```ts
-interface TalkView {
-    readonly conversation: string;
-    readonly player: number;
-    readonly speaker: string | undefined;
-    readonly line: string;
-    readonly choices: readonly string[];
 }
 ```
 
@@ -4094,16 +3969,10 @@ function typed<M extends Readonly<Record<string, string>>>(_file: {
 ### `unreadWords` (function)
 
 ```ts
-function unreadWords(content: GameContent, marks: ReadMarks): readonly {
+function unreadWords(content: GameContent, marks: ReadMarks | undefined): readonly {
     readonly language: Language;
     readonly key: string;
 }[];
-```
-
-### `usesBehaviours` (function)
-
-```ts
-function usesBehaviours(content: GameContent): boolean;
 ```
 
 ### `usesJoints` (function)
@@ -4116,12 +3985,6 @@ function usesJoints(content: GameContent): boolean;
 
 ```ts
 function usesSprites(content: GameContent): boolean;
-```
-
-### `usesStory` (function)
-
-```ts
-function usesStory(content: GameContent): boolean;
 ```
 
 ### `Value` (type)
@@ -4224,8 +4087,6 @@ interface WatchOptions extends GameSimOptions {
     readonly frames?: Frames;
     readonly rounds?: number;
     readonly restTicks?: number;
-    readonly words?: Words;
-    readonly boxWords?: BoxWords;
     readonly readPicture?: ReadPicture;
 }
 ```
@@ -4356,24 +4217,6 @@ interface ActorKey {
     readonly clip?: string | undefined;
     readonly face?: 'left' | 'right' | undefined;
 }
-```
-
-### `ActorPlace` (interface)
-
-```ts
-interface ActorPlace {
-    readonly who: string;
-    readonly x: number;
-    readonly y: number;
-    readonly face?: 'left' | 'right';
-    readonly clip?: string;
-}
-```
-
-### `actorsAt` (function)
-
-```ts
-function actorsAt(file: CutsceneFile, t: number): readonly ActorPlace[];
 ```
 
 ### `Advance` (interface)
@@ -4507,12 +4350,6 @@ interface BehaviourFile {
 }
 ```
 
-### `behaviourPlugin` (const)
-
-```ts
-const behaviourPlugin: PluginDef;
-```
-
 ### `BehaviourRule` (interface)
 
 ```ts
@@ -4527,6 +4364,12 @@ interface BehaviourRule {
 
 ```ts
 const BehaviourSchema: z.ZodType<BehaviourFile, BehaviourFile>;
+```
+
+### `bindParaglide` (function)
+
+```ts
+function bindParaglide(runtime: ParaglideRuntime, locale: Locale): void;
 ```
 
 ### `Body` (const)
@@ -4572,12 +4415,6 @@ type Bus = 'sound' | 'music';
 const BYTES_CHANNEL = "b";
 ```
 
-### `cameraAt` (function)
-
-```ts
-function cameraAt(file: CutsceneFile, t: number): SceneCamera;
-```
-
 ### `CameraKey` (interface)
 
 ```ts
@@ -4609,8 +4446,6 @@ interface Character {
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
     readonly touch?: 'sense' | 'take' | undefined;
-    readonly name?: string | undefined;
-    readonly conversation?: string | undefined;
 }
 ```
 
@@ -4626,24 +4461,6 @@ interface CharacterInput extends Omit<Character, 'upright'> {
 
 ```ts
 const CharacterSchema: z.ZodType<Character, CharacterInput>;
-```
-
-### `ChooseCommand` (const)
-
-```ts
-const ChooseCommand: CommandDef<typeof choicePayload>;
-```
-
-### `chooseCommand` (function)
-
-```ts
-function chooseCommand(tick: number, player: number, seq: number, choice: number): Command;
-```
-
-### `choosePlace` (function)
-
-```ts
-function choosePlace(file: ConversationFile, place: TalkPlace, choice: number): TalkPlace | undefined;
 ```
 
 ### `ClientMessage` (type)
@@ -4838,18 +4655,6 @@ interface ConversationChoice {
 }
 ```
 
-### `ConversationChosen` (const)
-
-```ts
-const ConversationChosen: EventDef<typeof chosenSchema>;
-```
-
-### `ConversationEnded` (const)
-
-```ts
-const ConversationEnded: EventDef<typeof endedSchema>;
-```
-
 ### `ConversationFile` (interface)
 
 ```ts
@@ -4870,26 +4675,13 @@ interface ConversationNode {
     readonly lines: readonly string[];
     readonly choices?: readonly Choice[] | undefined;
     readonly next?: string | undefined;
-    readonly cutscene?: string | undefined;
 }
-```
-
-### `ConversationSaid` (const)
-
-```ts
-const ConversationSaid: EventDef<typeof saidSchema>;
 ```
 
 ### `ConversationSchema` (const)
 
 ```ts
 const ConversationSchema: z.ZodType<ConversationFile, ConversationFile>;
-```
-
-### `ConversationStarted` (const)
-
-```ts
-const ConversationStarted: EventDef<typeof startedSchema>;
 ```
 
 ### `coopSeats` (function)
@@ -4929,9 +4721,16 @@ function createGameSim(options: GameSimOptions): Promise<Sim>;
 ```ts
 function createLocale(options: {
     readonly content: GameContent;
-    readonly host: Host;
+    readonly host: Pick<Host, 'language' | 'deviceLanguages'>;
     readonly settings: Settings;
+    readonly watching?: boolean;
 }): Locale;
+```
+
+### `createPicker` (function)
+
+```ts
+function createPicker(locale: Locale): Picker;
 ```
 
 ### `createRecorder` (function)
@@ -5026,12 +4825,6 @@ interface CuesFile {
 const CuesSchema: z.ZodType<CuesFile, CuesFile>;
 ```
 
-### `CutsceneEnded` (const)
-
-```ts
-const CutsceneEnded: EventDef<typeof sceneEndedSchema>;
-```
-
 ### `CutsceneFile` (interface)
 
 ```ts
@@ -5043,7 +4836,6 @@ interface CutsceneFile {
     readonly camera: readonly CameraKey[];
     readonly actors: readonly ActorKey[];
     readonly lines: readonly CutsceneLine[];
-    readonly opens?: true | undefined;
 }
 ```
 
@@ -5062,12 +4854,6 @@ interface CutsceneLine {
 
 ```ts
 const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
-```
-
-### `CutsceneStarted` (const)
-
-```ts
-const CutsceneStarted: EventDef<typeof sceneStartedSchema>;
 ```
 
 ### `Def` (type)
@@ -5187,6 +4973,12 @@ type Ease = 'cut' | 'linear' | 'smooth';
 
 ```ts
 type EditorName = 'world' | 'characters' | 'feel' | 'sound' | 'story';
+```
+
+### `emptyReadMarks` (function)
+
+```ts
+function emptyReadMarks(source: Language): ReadMarks;
 ```
 
 ### `encodePng` (function)
@@ -5467,7 +5259,6 @@ interface GameSimOptions {
         readonly x: number;
         readonly y: number;
     };
-    readonly story?: StoryProgress;
 }
 ```
 
@@ -5666,10 +5457,22 @@ const LANGUAGE_TAGS: Readonly<Record<Language, string>>;
 function languageName(language: Language): string;
 ```
 
+### `LanguagePick` (type)
+
+```ts
+type LanguagePick = {
+    readonly language: Language;
+    readonly from: 'saved' | 'host';
+} | {
+    readonly language: undefined;
+    readonly suggested: Language | undefined;
+};
+```
+
 ### `LANGUAGES` (const)
 
 ```ts
-const LANGUAGES: readonly ["en", "es", "ko", "ja", "zh", "pt"];
+const LANGUAGES: readonly ["zh", "es", "en", "pt", "ja", "ko"];
 ```
 
 ### `LanguageSettings` (interface)
@@ -5843,12 +5646,6 @@ interface LevelView {
 }
 ```
 
-### `linesAt` (function)
-
-```ts
-function linesAt(file: CutsceneFile, t: number): readonly CutsceneLine[];
-```
-
 ### `Link` (interface)
 
 ```ts
@@ -5877,6 +5674,7 @@ interface Listed {
     has(type: ContentType, id: string): boolean;
     ids(type: ContentType): readonly string[];
     readonly hero: string;
+    readonly source: Language | undefined;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
 }
 ```
@@ -5905,12 +5703,15 @@ type LoadResult<S> = {
 
 ```ts
 interface Locale {
-    language(): Language;
-    choice(): Language | 'auto';
+    language(): Language | undefined;
+    asked(): boolean;
+    suggested(): Language | undefined;
     readonly languages: readonly Language[];
+    listed(): readonly Language[];
     readonly words: Words;
+    wordsIn(language: Language): Words;
     say(message: Message): string;
-    set(choice: Language | 'auto'): Promise<StoreResult<void>>;
+    set(language: Language): Promise<StoreResult<void>>;
     onChange(listener: (language: Language) => void): () => void;
 }
 ```
@@ -5936,7 +5737,7 @@ const Look: ComponentDef<typeof lookFields>;
 ### `markRead` (function)
 
 ```ts
-function markRead(content: GameContent, marks: ReadMarks, language: Translated, keys?: readonly string[]): ReadMarks;
+function markRead(content: GameContent, marks: ReadMarks | undefined, language: Language, keys?: readonly string[]): ReadMarks;
 ```
 
 ### `matchLanguage` (function)
@@ -6063,12 +5864,6 @@ const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 const MIN_LEAD = 1;
 ```
 
-### `Mind` (const)
-
-```ts
-const Mind: ComponentDef<typeof mindFields>;
-```
-
 ### `MusicCue` (interface)
 
 ```ts
@@ -6103,24 +5898,6 @@ type MusicPart = TonePart | DrumPart;
 
 ```ts
 const MusicSchema: z.ZodType<MusicFile, MusicFile>;
-```
-
-### `NextCommand` (const)
-
-```ts
-const NextCommand: CommandDef<typeof noPayload>;
-```
-
-### `nextCommand` (function)
-
-```ts
-function nextCommand(tick: number, player: number, seq: number): Command;
-```
-
-### `nextPlace` (function)
-
-```ts
-function nextPlace(file: ConversationFile, place: TalkPlace): TalkPlace | 'pick' | 'end';
 ```
 
 ### `NoiseVoice` (interface)
@@ -6183,13 +5960,7 @@ type OnlineStatus = {
 ### `onlineWords` (function)
 
 ```ts
-function onlineWords(status: OnlineStatus, words?: Words): string;
-```
-
-### `openAt` (function)
-
-```ts
-function openAt(file: ConversationFile): TalkPlace;
+function onlineWords(status: OnlineStatus, words: Words): string;
 ```
 
 ### `openSettings` (function)
@@ -6235,6 +6006,17 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 
 ```ts
 function paintFigure(figure: FigureFile): IndexedPicture;
+```
+
+### `ParaglideRuntime` (interface)
+
+```ts
+interface ParaglideRuntime {
+    readonly locales: readonly string[];
+    readonly baseLocale: string;
+    overwriteGetLocale(fn: () => string): void;
+    overwriteSetLocale(fn: (locale: string) => void): void;
+}
 ```
 
 ### `parseClientMessage` (function)
@@ -6321,6 +6103,23 @@ interface PhysicsOptions {
 }
 ```
 
+### `Picker` (interface)
+
+```ts
+interface Picker {
+    readonly flags: readonly Language[];
+    chosen(): Language | undefined;
+    choose(language: Language): void;
+    move(step: -1 | 1): void;
+    words(): {
+        readonly title: string;
+        readonly go: string;
+    } | undefined;
+    go(): Promise<StoreResult<void> | undefined>;
+    onChange(listener: () => void): () => void;
+}
+```
+
 ### `pickLanguage` (function)
 
 ```ts
@@ -6329,7 +6128,7 @@ function pickLanguage(options: {
     readonly host?: string | undefined;
     readonly device: readonly string[];
     readonly shipped: readonly Language[];
-}): Language;
+}): LanguagePick;
 ```
 
 ### `placeholdersOf` (function)
@@ -6367,6 +6166,12 @@ const Player: ComponentDef<typeof playerFields>;
 
 ```ts
 function playersIn(sim: Sim): number[];
+```
+
+### `playersOrder` (function)
+
+```ts
+function playersOrder(own: Language | undefined, shipped: readonly Language[]): readonly Language[];
 ```
 
 ### `playReplay` (function)
@@ -6434,6 +6239,7 @@ interface Project {
     readonly start: string;
     readonly hero: string;
     readonly players?: number | undefined;
+    readonly source?: Language | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -6465,13 +6271,16 @@ const READ_MARKS_FILE = "automata.translations.toml";
 ### `readMark` (function)
 
 ```ts
-function readMark(english: string, translated: string): string;
+function readMark(sourceText: string, translated: string): string;
 ```
 
-### `ReadMarks` (type)
+### `ReadMarks` (interface)
 
 ```ts
-type ReadMarks = Readonly<Partial<Record<Translated, Readonly<Record<string, string>>>>>;
+interface ReadMarks {
+    readonly source: Language;
+    readonly read: Readonly<Partial<Record<Language, Readonly<Record<string, string>>>>>;
+}
 ```
 
 ### `RECONNECT_DELAYS_MS` (const)
@@ -6759,37 +6568,6 @@ interface SaveStore {
     get(key: string): Promise<StoreResult<string | null>>;
     set(key: string, value: string): Promise<StoreResult<void>>;
     remove(key: string): Promise<StoreResult<void>>;
-}
-```
-
-### `SceneCamera` (interface)
-
-```ts
-interface SceneCamera {
-    readonly x: number;
-    readonly y: number;
-    readonly zoom: number;
-}
-```
-
-### `sceneOf` (function)
-
-```ts
-function sceneOf(sim: Sim, content: GameContent): SceneView | undefined;
-```
-
-### `SceneView` (interface)
-
-```ts
-interface SceneView {
-    readonly cutscene: string;
-    readonly t: number;
-    readonly length: number;
-    readonly camera: SceneCamera;
-    readonly lines: readonly {
-        readonly speaker: string | undefined;
-        readonly line: string;
-    }[];
 }
 ```
 
@@ -7127,24 +6905,6 @@ interface SimOptions {
 function sin(x: number): number;
 ```
 
-### `SKIP_AFTER` (const)
-
-```ts
-const SKIP_AFTER = 30;
-```
-
-### `SkipCommand` (const)
-
-```ts
-const SkipCommand: CommandDef<typeof noPayload>;
-```
-
-### `skipCommand` (function)
-
-```ts
-function skipCommand(tick: number, player: number, seq: number): Command;
-```
-
 ### `SKY_COLOR` (const)
 
 ```ts
@@ -7331,18 +7091,6 @@ const spritesPlugin: PluginDef;
 const START_LEAD = 2;
 ```
 
-### `startConversation` (function)
-
-```ts
-function startConversation(ctx: SimContext, id: string, player: number, thing?: number): boolean;
-```
-
-### `startCutscene` (function)
-
-```ts
-function startCutscene(ctx: SimContext, id: string): boolean;
-```
-
 ### `StepResult` (interface)
 
 ```ts
@@ -7382,59 +7130,6 @@ type StoreResult<T> = {
 };
 ```
 
-### `Story` (const)
-
-```ts
-const Story: ResourceDef<z.ZodType<StoryState, StoryState>>;
-```
-
-### `storyOfReplay` (function)
-
-```ts
-function storyOfReplay(replay: Replay): StoryProgress | undefined;
-```
-
-### `storyPlugin` (const)
-
-```ts
-const storyPlugin: PluginDef;
-```
-
-### `StoryProgress` (interface)
-
-```ts
-interface StoryProgress {
-    readonly ended: Readonly<Record<string, string>>;
-    readonly seen: readonly string[];
-}
-```
-
-### `storyProgress` (function)
-
-```ts
-function storyProgress(sim: Sim, content: GameContent): StoryProgress;
-```
-
-### `StoryProgressSchema` (const)
-
-```ts
-const StoryProgressSchema: z.ZodType<StoryProgress, StoryProgress>;
-```
-
-### `StoryState` (interface)
-
-```ts
-interface StoryState {
-    level: string;
-    talk: StoryTalk | null;
-    scene: StoryScene | null;
-    hands: Record<string, string>;
-    met: string[];
-    ended: Record<string, string>;
-    seen: string[];
-}
-```
-
 ### `SYNC_BEHIND` (const)
 
 ```ts
@@ -7463,39 +7158,6 @@ interface SystemSpec {
     before?: readonly string[];
     after?: readonly string[];
     run: (ctx: SimContext) => void;
-}
-```
-
-### `TALK_REACH` (const)
-
-```ts
-const TALK_REACH = 1.5;
-```
-
-### `talkOf` (function)
-
-```ts
-function talkOf(sim: Sim, content: GameContent): TalkView | undefined;
-```
-
-### `TalkPlace` (interface)
-
-```ts
-interface TalkPlace {
-    readonly node: string;
-    readonly line: number;
-}
-```
-
-### `TalkView` (interface)
-
-```ts
-interface TalkView {
-    readonly conversation: string;
-    readonly player: number;
-    readonly speaker: string | undefined;
-    readonly line: string;
-    readonly choices: readonly string[];
 }
 ```
 
@@ -7798,16 +7460,10 @@ function typed<M extends Readonly<Record<string, string>>>(_file: {
 ### `unreadWords` (function)
 
 ```ts
-function unreadWords(content: GameContent, marks: ReadMarks): readonly {
+function unreadWords(content: GameContent, marks: ReadMarks | undefined): readonly {
     readonly language: Language;
     readonly key: string;
 }[];
-```
-
-### `usesBehaviours` (function)
-
-```ts
-function usesBehaviours(content: GameContent): boolean;
 ```
 
 ### `usesJoints` (function)
@@ -7820,12 +7476,6 @@ function usesJoints(content: GameContent): boolean;
 
 ```ts
 function usesSprites(content: GameContent): boolean;
-```
-
-### `usesStory` (function)
-
-```ts
-function usesStory(content: GameContent): boolean;
 ```
 
 ### `Value` (type)

@@ -10,12 +10,14 @@ import {
   verifyReplay,
   writeReplay,
 } from '#src/features/commands/commands.ts'
+import { LANGUAGES, loadGame } from '#src/features/content/content.ts'
 import { createGameSim, Thing } from '#src/features/level/level.ts'
 import { Transform } from '#src/features/physics/physics.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
 import { Score } from '../../template/src/features/hero/score.ts'
 import { gamePlugins } from '../../template/src/headless.ts'
-import { loadTemplateGame } from './game.ts'
+import { withSource } from '../fixtures/content/kind.ts'
+import { loadTemplateGame, readFiles, templateFiles } from './game.ts'
 import { TEMPLATE_TICKS, templatePlay } from './hero-play.ts'
 
 const recordings = import.meta.glob('../../template/replays/level-1.json', {
@@ -72,3 +74,16 @@ test('in the recorded play the hero takes the spark on the way, and it is counte
   expect(sim.resource(Score)).toEqual({ sparks: 1 })
   expect(sim.query(Thing).some((e) => e.get(Thing).id === 'spark-1')).toBe(false)
 })
+
+// The team's language is not what happens in the game: the same recording ends on the same hash whichever of the six
+// the game says it is written in (the framework's golden does not move).
+for (const source of LANGUAGES)
+  test(`the recorded play ends on the same hash when the game is written in ${source}`, async () => {
+    if (recorded === undefined) throw new Error('REPLAY NOT RECORDED: see the first test of this file.')
+    const toml = withSource(templateFiles['automata.toml'] ?? '', source)
+    const loaded = await loadGame(readFiles({ 'automata.toml': toml }))
+    if (!loaded.ok) throw new Error(loaded.diagnostics.map((d) => d.message).join('\n'))
+    const sim = await createGameSim({ content: loaded.value, plugins: gamePlugins })
+    made.push(sim)
+    expect(verifyReplay(sim, parseReplay(recorded))).toEqual({ ok: true })
+  })

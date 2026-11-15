@@ -19,6 +19,7 @@ import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import { snapshot } from '../../fixtures/game/snapshot.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 
 const FRAME = 1000 / 60
 const host = testHost()
@@ -82,6 +83,7 @@ async function begin(
   const frames = manualFrames()
   game = await startGame({
     content: await full(overrides),
+    locale: await chosenLocale(await full(overrides), 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,
@@ -155,19 +157,28 @@ for (const [name, w, h] of SCREENS) {
   })
 }
 
-test('holding right runs: the pose changes, the hero moves, and the camera goes with it', async () => {
+test('holding the Right button runs: the pose changes, the hero moves, and the camera goes with it', async () => {
   const { game: g, frames } = await begin(390, 844)
+  // A finger on the screen brings up the buttons, and a thumb holds Right, as a player on a phone does.
   window.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }))
   run(frames, 30)
+  await new Promise<void>((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())))
   const before = heroBox(g).x
   const poses = new Set<string>()
   const clips = new Set<string>()
-  key('keydown', 'ArrowRight')
+  const right = mount.querySelector('[data-action="right"]')
+  if (right === null) throw new Error('no Right button')
+  const thumb = (type: 'pointerdown' | 'pointerup'): boolean =>
+    right.dispatchEvent(
+      new PointerEvent(type, { pointerId: 2, pointerType: 'touch', bubbles: true, cancelable: true }),
+    )
+  thumb('pointerdown')
   for (let i = 0; i < 60; i++) {
     run(frames, 1)
     poses.add(spriteOf(g).pose)
     clips.add(spriteOf(g).clip)
   }
+  thumb('pointerup')
   const box = heroBox(g)
   expect(clips.has('run')).toBe(true)
   expect(poses.size).toBeGreaterThan(1)
@@ -296,6 +307,7 @@ test('a missing picture stops the game with one sentence and leaves the page cle
   const before = mount.children.length
   const stopped = startGame({
     content: await full(),
+    locale: await chosenLocale(await full(), 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,
@@ -315,8 +327,10 @@ test('a missing picture stops the game with one sentence and leaves the page cle
 })
 
 test('a game with pictures and no readPicture says what to pass', async () => {
+  const content = await full()
   const options = {
-    content: await full(),
+    content,
+    locale: await chosenLocale(content, 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,
@@ -346,6 +360,7 @@ test('the M1 game, with no pictures, starts with no readPicture as it always did
   const frames = manualFrames()
   game = await startGame({
     content: await loadFixtureGame(),
+    locale: await chosenLocale(await loadFixtureGame(), 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,

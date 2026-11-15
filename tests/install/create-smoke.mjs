@@ -101,6 +101,12 @@ const made = must(
 )
 said('the new game', made, 'Made my-game.')
 said('the new game', made, 'npm run check says whether the game is sound.')
+// The pictures its figures make were painted by create, so the new game has them and nothing is missing at the start.
+const heroPicture = join(game, 'content', 'figures', 'hero.png')
+if (!existsSync(heroPicture) || readFileSync(heroPicture).subarray(1, 4).toString() !== 'PNG')
+  fail('create did not paint content/figures/hero.png.')
+if (!existsSync(join(game, 'content', 'figures', 'crate.atlas.json')))
+  fail('create did not paint content/figures/crate.atlas.json.')
 step('create makes a game')
 
 // 2. The README's next commands, as written (but `npm run dev`, which has its own step below).
@@ -112,7 +118,97 @@ for (const line of rest.filter((command) => command !== 'npm run dev' && !comman
   if (line === 'npm run check') said('npm run check', output, 'Everything passed.')
 }
 said('check', checkOf('check'), 'Everything passed.')
-step('npm install and npm run check pass in the new game')
+said(
+  'the pictures',
+  must('automata art --check', 'npx', ['--no', 'automata', 'art', '--check'], game),
+  'Every picture is painted and up to date.',
+)
+// The new game has its words in six languages, and says that no native speaker has read the translations yet; the
+// command it names lists them, each beside the game's own text.
+said(
+  'the words',
+  checkOf('the words', 0, '--only', 'files'),
+  'wait for a native speaker. See them with automata words.',
+)
+said(
+  'automata words',
+  must('automata words', 'npx', ['--no', 'automata', 'words'], game),
+  'Checked against English (en).',
+)
+// The game was made with --source en: its words are listed against English, and marking a language read is kept.
+const wordsOf = () =>
+  JSON.parse(must('automata words --json', 'npx', ['--no', 'automata', 'words', '--json'], game))
+if (wordsOf().source !== 'en') fail('automata words --json: the new game is not written in English.')
+if (!wordsOf().unread.some((word) => word.language === 'pt'))
+  fail('automata words --json: no Portuguese word waits in the new game.')
+must('automata words --read pt', 'npx', ['--no', 'automata', 'words', '--read', 'pt'], game)
+if (wordsOf().unread.some((word) => word.language === 'pt'))
+  fail('automata words --read pt: Portuguese words still wait.')
+const marks = readFileSync(join(game, 'automata.translations.toml'), 'utf8')
+if (!marks.startsWith('format = 2\nsource = "en"\n\n[read.pt]\n'))
+  fail('automata words --read pt: the marks file is not as expected.', marks)
+said('check after marking', checkOf('check after marking'), 'Everything passed.')
+step('npm install and npm run check pass in the new game, and a language can be marked read')
+
+// A game written in Korean has Korean as its source and marks that have read nothing yet.
+const korean = join(work, 'ko-game')
+must(
+  'create --source ko',
+  'npx',
+  [
+    '--yes',
+    '--package',
+    tarball,
+    'automata',
+    'create',
+    'ko-game',
+    '--source',
+    'ko',
+    '--framework',
+    `file:${slashes(tarball)}`,
+  ],
+  work,
+)
+if (!readFileSync(join(korean, 'automata.toml'), 'utf8').includes('source = "ko"'))
+  fail('create --source ko: automata.toml does not say source = "ko".')
+const koreanMarks = readFileSync(join(korean, 'automata.translations.toml'), 'utf8')
+if (!koreanMarks.startsWith('format = 2\nsource = "ko"\n'))
+  fail('create --source ko: the marks file is not made against Korean.')
+said(
+  'a Korean game',
+  must(
+    'check ko-game',
+    'npx',
+    ['--yes', '--package', tarball, 'automata', 'check', 'ko-game', '--only', 'files'],
+    work,
+  ),
+  'Everything passed.',
+)
+step('--source writes the language the game is written in')
+
+// Without --source the machine's own language is used (not on Windows, where the language comes from Intl).
+if (process.platform !== 'win32') {
+  must(
+    'create from the machine language',
+    'npx',
+    [
+      '--yes',
+      '--package',
+      tarball,
+      'automata',
+      'create',
+      'ja-game',
+      '--framework',
+      `file:${slashes(tarball)}`,
+    ],
+    work,
+    0,
+    { ...NO_COLOUR, LC_ALL: 'ja_JP.UTF-8' },
+  )
+  if (!readFileSync(join(work, 'ja-game', 'automata.toml'), 'utf8').includes('source = "ja"'))
+    fail("create: the machine's own language (ja) was not used.")
+  step("a game is written in the machine's own language when --source is left out")
+}
 
 // 3. Change a number with the framework's own writer: the check says the content changed, and does not fail.
 const levelPath = join(game, 'content', 'levels', 'level-1.json')
@@ -295,7 +391,7 @@ if (hello.result?.serverInfo?.name !== 'automata')
   fail('automata mcp did not say its name.', JSON.stringify(hello))
 mcp.send({ method: 'notifications/initialized' })
 const listed = (await mcp.request('tools/list')).result.tools.map((one) => one.name)
-if (listed.length !== 11 || !listed.includes('play_step') || !listed.includes('check'))
+if (listed.length !== 13 || !listed.includes('play_step') || !listed.includes('check'))
   fail(`automata mcp lists ${listed.join(', ')}.`)
 const sound = await mcp.tool('check', { folder: '.' })
 if (sound.isError || JSON.parse(sound.text).ok !== true)
@@ -451,6 +547,8 @@ if (process.platform === 'linux') {
         'automata',
         'create',
         third,
+        '--source',
+        'en',
         '--framework',
         `github:mcthaydt/AutomataFramework#${sha}`,
       ],

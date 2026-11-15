@@ -139,18 +139,22 @@ test('an unknown key', () =>
   ]))
 
 const inGame = (talk: unknown, withEnglish = true) =>
-  storyGame([
-    ...(withEnglish
-      ? [
-          {
-            type: 'messages' as const,
-            path: 'content/messages/en.json',
-            text: writeContent('messages', english()),
-          },
-        ]
-      : []),
-    { type: 'conversation', path: file, text: writeContent('conversation', talk as never) },
-  ])
+  storyGame(
+    [
+      ...(withEnglish
+        ? [
+            {
+              type: 'messages' as const,
+              path: 'content/messages/en.json',
+              text: writeContent('messages', english()),
+            },
+          ]
+        : []),
+      { type: 'conversation', path: file, text: writeContent('conversation', talk as never) },
+    ],
+    {},
+    withEnglish ? 'en' : undefined,
+  )
 
 test('a conversation whose speaker and words are all in the game loads', async () =>
   expect(await gameProblems(inGame(keeperTalk()))).toEqual([]))
@@ -182,7 +186,7 @@ test('a game with a conversation and no English file at all reports every line',
   const found = await gameProblems(inGame(keeperTalk(), false))
   expect(found).toHaveLength(5)
   expect(found[0]).toBe(
-    `${file}: nodes[0].lines[0]: English has no message called "keeper.hello". Add it to the English file or fix the spelling.`,
+    `${file}: nodes[0].lines[0]: This game has no words yet, so it has no message called "keeper.hello". Add a messages file or fix the spelling.`,
   )
 })
 

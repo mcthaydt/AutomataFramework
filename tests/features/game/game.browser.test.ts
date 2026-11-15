@@ -5,13 +5,16 @@ import { Player, verifyReplay } from '#src/features/commands/commands.ts'
 import { type Game, startGame } from '#src/features/game/game.ts'
 import { type Host, type TestHost, testHost } from '#src/features/host/host.ts'
 import { createGameSim } from '#src/features/level/level.ts'
+import { createLocale } from '#src/features/locale/locale.ts'
 import { Transform } from '#src/features/physics/physics.ts'
+import { openSettings } from '#src/features/saves/saves.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { pixel } from '../../fixtures/game/pixels.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 
 const FRAME = 1000 / 60
 
@@ -38,6 +41,7 @@ async function start(
   const host = testHost()
   game = await startGame({
     content: await loadFixtureGame(),
+    locale: await chosenLocale(await loadFixtureGame(), 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: extra.controls ?? fixtureControls,
@@ -69,10 +73,12 @@ test('the game starts: a canvas in the mount and the sim at tick 0', async () =>
 test('a level that sets its sky is drawn on that sky', async () => {
   const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] as string) as Record<string, unknown>
   const frames = manualFrames()
+  const content = await loadFixtureGame({
+    'content/levels/level-1.json': JSON.stringify({ ...level, sky: '#fdd4bd' }),
+  })
   game = await startGame({
-    content: await loadFixtureGame({
-      'content/levels/level-1.json': JSON.stringify({ ...level, sky: '#fdd4bd' }),
-    }),
+    content,
+    locale: await chosenLocale(content, 'ko'),
     plugins: [heroPlugin],
     mount,
     controls: fixtureControls,
@@ -192,4 +198,38 @@ test('bad controls stop the game from starting, with the plain message', async (
   const bad = { 'Jump!': { label: 'Jump', keys: ['Space'], side: 'right' as const } }
   await expect(start({ controls: bad })).rejects.toThrow('"Jump!" cannot be an action name')
   expect(mount.children).toHaveLength(0)
+})
+
+// No language is the default for anyone, so a game does not start for a player who has not chosen one: the picker
+// comes first. Nothing is put on the page, and the sentence says what to do.
+test('a game does not start before the player has a language', async () => {
+  const content = await loadFixtureGame()
+  const host = testHost({ deviceLanguages: ['fr-FR'] })
+  const locale = createLocale({
+    content,
+    host,
+    settings: await openSettings({ game: 'no-language', store: host.store }),
+  })
+  await expect(
+    startGame({ content, locale, plugins: [heroPlugin], mount, controls: fixtureControls, host }),
+  ).rejects.toThrow(
+    'No language is chosen yet. Show the language picker first (languagePicker), then start the game.',
+  )
+  expect(mount.childElementCount).toBe(0)
+})
+
+test('a locale that only watches has a language and was not asked, so it cannot start the game either', async () => {
+  const content = await loadFixtureGame()
+  const host = testHost({ deviceLanguages: ['ja-JP'] })
+  const locale = createLocale({
+    content,
+    host,
+    settings: await openSettings({ game: 'watching', store: host.store }),
+    watching: true,
+  })
+  expect([locale.language(), locale.asked()]).toEqual(['ja', false])
+  await expect(
+    startGame({ content, locale, plugins: [heroPlugin], mount, controls: fixtureControls, host }),
+  ).rejects.toThrow('No language is chosen yet.')
+  expect(mount.childElementCount).toBe(0)
 })

@@ -1,7 +1,7 @@
 import { z } from '../../lib/zod.ts'
 import type { CutsceneFile } from './cutscene.ts'
 import { Id } from './ids.ts'
-import { englishLacks, englishMissing } from './messages.ts'
+import { sourceLacks, sourceMissing } from './messages.ts'
 import { MessageKey, noSuch, unique } from './shared.ts'
 import type { ContentTypeInfo, Listed, Report } from './type-info.ts'
 
@@ -154,16 +154,16 @@ function otherLevels(
   return found
 }
 
-/** Speakers must be characters, every line and choice must be in English, and a node's cutscene must be playable. */
+/** Speakers must be characters, every line and choice must be in the game's own language, and a node's cutscene must be playable. */
 function checkNames(file: ConversationFile, game: Listed, report: Report): void {
   file.nodes.forEach((n, i) => {
     if (n.speaker !== undefined && !game.has('character', n.speaker))
       report(`nodes[${i}].speaker`, noSuch('character', n.speaker, game.ids('character')))
     n.lines.forEach((key, j) => {
-      if (englishLacks(game, key)) report(`nodes[${i}].lines[${j}]`, englishMissing(key))
+      if (sourceLacks(game, key)) report(`nodes[${i}].lines[${j}]`, sourceMissing(game, key))
     })
     n.choices?.forEach((c, j) => {
-      if (englishLacks(game, c.line)) report(`nodes[${i}].choices[${j}].line`, englishMissing(c.line))
+      if (sourceLacks(game, c.line)) report(`nodes[${i}].choices[${j}].line`, sourceMissing(game, c.line))
     })
     if (n.cutscene === undefined) return
     if (!game.has('cutscene', n.cutscene)) {

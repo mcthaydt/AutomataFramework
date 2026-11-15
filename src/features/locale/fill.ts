@@ -3,14 +3,11 @@ import type { Value, Values } from '../../lib/message.ts'
 import { type Language, placeholdersOf } from '../content/content.ts'
 import { LANGUAGE_TAGS } from './names.ts'
 
-/** The tag a list is joined by: English is joined as the level's own errors say it, "1, 2 and 4", not "1, 2, and 4". */
-const listTag = (language: Language): string => (language === 'en' ? 'en-GB' : LANGUAGE_TAGS[language])
-
-/** "1, 2 and 4" in the language; with commas where an engine has no `Intl.ListFormat`. */
+/** "1, 2, and 4" in the language (US English joins with the serial comma); with commas where an engine has no `Intl.ListFormat`. */
 function list(items: readonly (string | number)[], language: Language): string {
   const texts = items.map(String)
   if (typeof Intl.ListFormat === 'function')
-    return new Intl.ListFormat(listTag(language), { style: 'long', type: 'conjunction' }).format(texts)
+    return new Intl.ListFormat(LANGUAGE_TAGS[language], { style: 'long', type: 'conjunction' }).format(texts)
   return texts.join(', ')
 }
 

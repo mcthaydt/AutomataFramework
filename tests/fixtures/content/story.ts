@@ -1,7 +1,7 @@
 // The example story files and a game to put them in: the fixture game, with a keeper to talk to and English words.
-import { type MessagesFile, writeContent } from '#src/features/content/content.ts'
+import { type Language, type MessagesFile, writeContent } from '#src/features/content/content.ts'
 import { fixtureFiles } from '../game/read.ts'
-import { changed, gameFiles } from './kind.ts'
+import { changed, gameFiles, withSource } from './kind.ts'
 
 /** A file as an author writes it: the two keys every file has, and the rest as a test wants to change it. */
 export type Written = { format: 1; id: string } & Record<string, unknown>
@@ -69,13 +69,15 @@ export const KEEPER_PATH = 'content/characters/keeper.json'
 
 /**
  * The fixture game with a keeper (a character, standing in level 1), and whatever else a test lists. `replace` has the
- * last word on any path, and `undefined` makes a listed file missing.
+ * last word on any path, and `undefined` makes a listed file missing. A test that lists messages names `source`, the
+ * language the game's words are written in; with none the project has no `source` line.
  */
 export function storyGame(
   extra: Parameters<typeof gameFiles>[1] = [],
   replace: Parameters<typeof gameFiles>[2] = {},
+  source?: Language,
 ): Record<string, string | undefined> {
-  return gameFiles(
+  const files = gameFiles(
     fixtureFiles,
     [{ type: 'character', path: KEEPER_PATH, text: keeperCharacter() }, ...extra],
     {
@@ -94,4 +96,7 @@ export function storyGame(
       ...replace,
     },
   )
+  return source === undefined
+    ? files
+    : { ...files, 'automata.toml': withSource(files['automata.toml'] ?? '', source) }
 }

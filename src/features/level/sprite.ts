@@ -79,13 +79,17 @@ export const spritesPlugin: PluginDef = definePlugin({
 /**
  * Plays `clip` on a character until it is let go with `undefined`, whatever its motion asks for. A game does this in
  * its own system, for a clip the motion can never ask for ("push", "talk"). A character without that clip plays the
- * nearest it has.
+ * nearest it has. Only a game with sprites (`usesSprites`: a character with a figure, or a level with a view) has
+ * them to set; in any other the sim has no sprite component and this throws.
  */
 export function setClip(entity: EntityRef, clip: string | undefined): void {
   entity.set(Sprite, { by: clip ?? '' })
 }
 
-/** Turns a character to face `face`. It turns by itself when it moves sideways, so this is for one standing still. */
+/**
+ * Turns a character to face `face`. It turns by itself when it moves sideways, so this is for one standing still. As
+ * for `setClip`, only in a game with sprites.
+ */
 export function setFacing(entity: EntityRef, face: 'left' | 'right'): void {
   entity.set(Sprite, { face: face === 'right' ? 1 : -1 })
 }

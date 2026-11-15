@@ -7,7 +7,7 @@ import { SKY_COLOR } from '../level/level.ts'
 import type { Art, BackdropArt } from './art.ts'
 import { layerShift, placeCamera, type Shot } from './camera.ts'
 import { type Density, pageDensity, sane } from './density.ts'
-import { type Fit, fitWorld } from './fit.ts'
+import { type Fit, fitInRoom, type Room } from './fit.ts'
 import type { RopeLine, View } from './scene.ts'
 
 // Pixi types the loader's config as optional; a Pixi without it would leave the probe on, so say so.
@@ -40,8 +40,23 @@ export interface Stage {
    */
   setInset(px: number): void
   /**
-   * Where the level is on the canvas for this shot: the whole level fitted (`fitWorld`) when there is no shot, and the
-   * camera's placement, with the offset rounded to whole device pixels, when there is one.
+   * Keeps this room free of the world on each side (a negative or missing number is none) and draws the last views
+   * again. The sky and the backdrop still fill the canvas. Unlike `setInset` it is taken as given: nothing limits it, so
+   * a room as big as the box leaves no level at all. Whichever of the two is called last is the one that holds.
+   */
+  setRoom(room: Room): void
+  /**
+   * Draws the world exactly here, in place of the fit in the room: `scale` pixels a tile, its top-left corner at `left`,
+   * `top` (CSS pixels, rounded to whole device pixels; either may be negative). `undefined` goes back to the fit in the
+   * room. A scale that is not above zero, or not a number, is taken as `undefined`. The sky and the backdrop still fill
+   * the canvas, the backdrop standing on the level's bottom edge as it does for a fitted level. Draws the last views
+   * again. It is for a level drawn without a shot: a draw with a shot is placed by its camera whatever the view.
+   */
+  setView(view: Fit | undefined): void
+  /**
+   * Where the level is on the canvas for this shot: the view while one is set, and otherwise the whole level fitted in
+   * the room (`fitInRoom`), when there is no shot; and the camera's placement, with the offset rounded to whole device
+   * pixels, when there is one.
    */
   fit(shot?: Shot): Fit
   /**
@@ -100,6 +115,7 @@ export async function createStage(
   sky: number = SKY_COLOR,
   art?: Art,
   density: Density = pageDensity,
+  keep = false,
 ): Promise<Stage> {
   const app = new Application()
   await app.init({
@@ -112,6 +128,8 @@ export async function createStage(
     autoStart: false,
     sharedTicker: false,
     preference: 'webgl',
+    // A read of the canvas after the page has shown it (a test, a copy onto another canvas) needs the buffer kept.
+    preserveDrawingBuffer: keep,
   })
   const canvas = app.canvas
   // The canvas is as big as its mount; its drawing buffer is set to match by `resize`.
@@ -149,8 +167,12 @@ export async function createStage(
   )
   const drawn = new Map<number, Drawn>()
   let box = { w: 0, h: 0 }
-  // Room kept clear at the bottom of the box (the touch buttons). The sky still fills the whole canvas.
+  // Room kept clear of the world: either a strip at the bottom (the touch buttons, `inset`, never more than half the
+  // height) or, once `setRoom` is called, a room on every side as given. The sky still fills the whole canvas.
   let inset = 0
+  let given: Room | undefined
+  // Where the world goes when it is set by hand (`setView`), in place of the fit in the room.
+  let view: Fit | undefined
   let destroyed = false
   // A sharper or softer screen: the canvas gets the pixels it now needs and the last picture is drawn again.
   const stopWatching = density.onChange(() => {
@@ -168,14 +190,17 @@ export async function createStage(
       }
     | undefined
 
-  /** The room the level has: the canvas without the strip kept free at the bottom. */
-  const room = (): { w: number; h: number } => ({ w: box.w, h: box.h - Math.min(inset, box.h / 2) })
+  /** The room kept on each side now. */
+  const kept = (): Room => given ?? { top: 0, right: 0, bottom: Math.min(inset, box.h / 2), left: 0 }
+  /** The room a camera has: the canvas without the strip kept free at the bottom. */
+  const room = (): { w: number; h: number } => ({ w: box.w, h: box.h - kept().bottom })
   const snap = (v: number): number => Math.round(v * app.renderer.resolution) / app.renderer.resolution
+  /** A view with its offset in whole device pixels. */
+  const placed = (at: Fit): Fit => ({ scale: at.scale, left: snap(at.left), top: snap(at.top) })
   const fitFor = (shot: Shot | undefined): Fit => {
-    if (shot === undefined) return fitWorld(room(), world)
-    const placed = placeCamera(room(), world, shot)
+    if (shot === undefined) return view === undefined ? fitInRoom(box, kept(), world) : placed(view)
     // Whole device pixels, so pixels move as one while the camera eases and do not shimmer.
-    return { scale: placed.scale, left: snap(placed.left), top: snap(placed.top) }
+    return placed(placeCamera(room(), world, shot))
   }
 
   const paintBackdrop = (backdrop: BackdropArt, fit: Fit, camera: boolean): void => {
@@ -219,10 +244,10 @@ export async function createStage(
 
   const paint = (views: readonly View[], links: readonly RopeLine[], shot: Shot | undefined): void => {
     const fit = fitFor(shot)
-    cover
-      .clear()
-      .rect(0, room().h, box.w, box.h - room().h)
-      .fill(sky)
+    // The strip is covered with sky, over everything, so a camera's view cannot show the level through the buttons. A room
+    // given on four sides is for a level drawn still, where nothing reaches into it and the backdrop must show there.
+    cover.clear()
+    if (given === undefined && view === undefined) cover.rect(0, room().h, box.w, box.h - room().h).fill(sky)
     if (art?.backdrop !== undefined) paintBackdrop(art.backdrop, fit, shot !== undefined)
     root.scale.set(fit.scale)
     root.position.set(fit.left, fit.top)
@@ -309,6 +334,25 @@ export async function createStage(
       if (destroyed) return
       // Not above zero, or not a number, is no room at all.
       inset = px > 0 ? px : 0
+      given = undefined
+      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
+    },
+    setRoom(next) {
+      if (destroyed) return
+      const side = (px: number): number => (px > 0 ? px : 0)
+      given = {
+        top: side(next.top),
+        right: side(next.right),
+        bottom: side(next.bottom),
+        left: side(next.left),
+      }
+      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
+    },
+    setView(next) {
+      if (destroyed) return
+      const usable =
+        next !== undefined && next.scale > 0 && Number.isFinite(next.left + next.top + next.scale)
+      view = usable ? next : undefined
       if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
     },
     fit: fitFor,

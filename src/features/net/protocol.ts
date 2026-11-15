@@ -49,7 +49,10 @@ const Seat: z.ZodType<number> = z.number().int().min(1).max(MAX_PLAYERS)
 export const REFUSALS = ['too-far-ahead', 'out-of-order', 'too-many', 'not-started', 'not-valid'] as const
 export type Refusal = (typeof REFUSALS)[number]
 
-/** What a person is told when a room cannot be joined or is lost for good; `onlineWords` says each in English. */
+/**
+ * What a person is told when a room cannot be joined or is lost for good; `onlineWords` says each in the player's
+ * language.
+ */
 export type OnlineProblem =
   | 'different-version'
   | 'room-full'

@@ -2,18 +2,18 @@
 // rules are real; the input is a stand-in that holds nothing.
 import { afterEach, expect, test } from 'vitest'
 import { createSequence } from '#src/features/commands/commands.ts'
-import { type GameContent, loadGame } from '#src/features/content/content.ts'
+import { type GameContent, type Language, loadGame } from '#src/features/content/content.ts'
 import { createPlayers, type JoinAnswer, type Players } from '#src/features/game/players.ts'
-import { testHost } from '#src/features/host/host.ts'
 import type { Input } from '#src/features/input/input.ts'
 import { createGameSim } from '#src/features/level/level.ts'
-import { createLocale, type Locale } from '#src/features/locale/locale.ts'
-import { openSettings } from '#src/features/saves/saves.ts'
+import { frameworkWords, type Locale } from '#src/features/locale/locale.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
+import type { Words } from '#src/lib/message.ts'
 import { readFullGame } from '../../fixtures/full-game/read.ts'
 import { coopFiles } from '../../fixtures/game/co-op.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
+import { chosenLocale } from '../../fixtures/locale/chosen.ts'
 
 const input = { seats: () => [], claim: () => undefined, setPlayers: () => undefined } as unknown as Input
 let sim: Sim | undefined
@@ -22,9 +22,10 @@ afterEach(() => {
   sim = undefined
 })
 
+/** Players made over `content`. The words default to English because most tests here read one English sentence. */
 async function playersOf(
   content: GameContent,
-  extra: { readonly canShare?: boolean; readonly locale?: Locale } = {},
+  extra: { readonly canShare?: boolean; readonly words?: Words } = {},
 ): Promise<Players> {
   sim = await createGameSim({ content, plugins: [heroPlugin] })
   return createPlayers({
@@ -34,7 +35,7 @@ async function playersOf(
     input,
     sequence: createSequence(),
     canShare: extra.canShare ?? true,
-    ...(extra.locale === undefined ? {} : { words: extra.locale.words }),
+    words: extra.words ?? frameworkWords('en'),
   })
 }
 
@@ -56,15 +57,13 @@ async function withStarts(players: readonly number[]): Promise<GameContent> {
   return { ...content, levels: { ...content.levels, 'level-1': { ...level, starts } } }
 }
 
-async function fullLocale(deviceLanguages: readonly string[] = []): Promise<Locale> {
+async function fullLocale(language: Language): Promise<Locale> {
   const loaded = await loadGame(readFullGame())
   if (!loaded.ok) throw new Error('the full game did not load')
-  const host = testHost({ deviceLanguages })
-  const settings = await openSettings({ game: 'full-game', store: host.store })
-  return createLocale({ content: loaded.value, host, settings })
+  return chosenLocale(loaded.value, language)
 }
 
-test('with no locale every refusal is said in English', async () => {
+test('every refusal is said in the words the players were made with', async () => {
   const one = await playersOf(await loadFixtureGame())
   expect(one.addPlayer('keyboard')).toEqual({
     ok: false,
@@ -102,18 +101,18 @@ test('a level with room for fewer people than the game says', async () => {
 })
 
 test("with a locale, a refused join is said in the player's language, as it is when asked", async () => {
-  const locale = await fullLocale(['es-MX'])
-  const players = await playersOf(await loadFixtureGame(), { locale })
+  const locale = await fullLocale('es')
+  const players = await playersOf(await loadFixtureGame(), { words: locale.words })
   expect(refused(players.addPlayer('keyboard'))).toBe('Este juego es para un jugador.')
   await locale.set('ja')
   expect(refused(players.addPlayer('keyboard'))).toBe('このゲームは1人用です。')
 })
 
 test('every kind of refusal has words in every language, never its key', async () => {
-  const locale = await fullLocale()
+  const locale = await fullLocale('en')
   for (const language of locale.languages) {
     await locale.set(language)
-    const four = await playersOf(await loadFixtureGame(coopFiles), { locale, canShare: false })
+    const four = await playersOf(await loadFixtureGame(coopFiles), { words: locale.words, canShare: false })
     const said = [refused(four.addPlayer('keyboard'))]
     four.addPlayer('pad-0')
     said.push(refused(four.addPlayer('pad-0')))

@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "id": "crate",
+  "tile": 16,
+  "frame": {
+    "w": 16,
+    "h": 16
+  },
+  "outline": "#111314",
+  "paints": [
+    {
+      "id": "wood",
+      "color": "#c9a227"
+    },
+    {
+      "id": "band",
+      "color": "#8a6d12"
+    }
+  ],
+  "parts": [
+    {
+      "id": "box",
+      "shape": "block",
+      "x": 8,
+      "y": 8,
+      "w": 14,
+      "h": 14,
+      "paint": "wood"
+    },
+    {
+      "id": "band-across",
+      "shape": "block",
+      "x": 8,
+      "y": 8,
+      "w": 14,
+      "h": 3,
+      "paint": "band"
+    },
+    {
+      "id": "band-down",
+      "shape": "block",
+      "x": 8,
+      "y": 8,
+      "w": 3,
+      "h": 14,
+      "paint": "band"
+    }
+  ],
+  "poses": [
+    {
+      "id": "idle",
+      "moves": []
+    }
+  ]
+}

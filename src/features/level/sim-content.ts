@@ -29,6 +29,7 @@ export function simContent(content: GameContent): GameContent {
   const listed = content.project.content.some((entry) => LEFT_OUT.has(entry.type))
   if (
     !listed &&
+    content.project.source === undefined &&
     content.messages === undefined &&
     content.sounds === undefined &&
     content.music === undefined &&
@@ -37,6 +38,8 @@ export function simContent(content: GameContent): GameContent {
     content.backdrops === undefined
   )
     return content
+  // The team's language is not what happens in the game, so `source` goes with the words.
+  const { source: _source, ...project } = content.project
   const {
     messages: _words,
     sounds: _sounds,
@@ -49,8 +52,8 @@ export function simContent(content: GameContent): GameContent {
   return deepFreeze({
     ...kept,
     project: {
-      ...content.project,
-      content: content.project.content.filter((entry) => !LEFT_OUT.has(entry.type)),
+      ...project,
+      content: project.content.filter((entry) => !LEFT_OUT.has(entry.type)),
     },
   })
 }

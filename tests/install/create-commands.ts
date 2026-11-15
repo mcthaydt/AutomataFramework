@@ -4,7 +4,7 @@
 
 /** The five commands of "Start here", in order. */
 export const START_HERE: readonly string[] = [
-  'npx @automataframework/framework create my-game',
+  'npx @automataframework/framework create my-game --source en',
   'cd my-game',
   'npm install',
   'npm run check',

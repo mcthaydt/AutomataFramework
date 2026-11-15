@@ -19,7 +19,12 @@ The game opens in your browser. Hold the left or right arrow key to move, and pr
    `.` is air. Make a wall longer, or add a gap.
 2. Open `content/characters/crate.json` and change its `color`.
 3. Open `src/features/hero/move.ts` and change `RUN` or `JUMP`. A bigger `JUMP` is a higher jump.
-4. Run `npm run dev` again.
+4. Open the file of your game's language in `content/messages/` (`source` in `automata.toml` names it) and change a
+   word. The game says it in six languages: write the same key in the other five files too, and `npm run check` names
+   any that is missing.
+5. Open `content/figures/crate.json` and change a paint's `color`, then run `npm run art` to paint its picture again. Commit
+   the picture with the file.
+6. Run `npm run dev` again.
 
 ## Give it a name
 
@@ -41,6 +46,8 @@ recording in `replays/` no longer matches; run `npm run accept` to record the ne
 |---|---|
 | The game's name, first level and files | `automata.toml` |
 | Levels and characters | `content/` |
+| What things look like, painted by `npm run art` | `content/figures/` |
+| The words, one file for each language | `content/messages/` |
 | The rules (how things move) | `src/features/` |
 | The page that shows the game | `src/features/page/` |
 | A recorded play, checked on every run | `replays/` |

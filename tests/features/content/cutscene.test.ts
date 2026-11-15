@@ -98,6 +98,7 @@ const inGame = (scene: unknown, replace: Record<string, string | undefined> = {}
       { type: 'cutscene', path: file, text: writeContent('cutscene', scene as never) },
     ],
     replace,
+    'en',
   )
 
 test('a cutscene whose level, actors and words are all in the game loads', async () =>
@@ -197,10 +198,14 @@ test('two cutscenes that both open one level: the one with the later id is told'
 const withClip = (clip: string, who = 'keeper') =>
   edit((v) => Object.assign((v.actors as Json[])[0] as Json, { who, clip }))
 const inArt = (scene: unknown) =>
-  artGame([
-    { type: 'messages', path: 'content/messages/en.json', text: writeContent('messages', english()) },
-    { type: 'cutscene', path: file, text: writeContent('cutscene', scene as never) },
-  ])
+  artGame(
+    [
+      { type: 'messages', path: 'content/messages/en.json', text: writeContent('messages', english()) },
+      { type: 'cutscene', path: file, text: writeContent('cutscene', scene as never) },
+    ],
+    {},
+    'en',
+  )
 
 test('an actor whose character has the clip loads', async () =>
   expect(await gameProblems(inArt(withClip('talk')))).toEqual([]))

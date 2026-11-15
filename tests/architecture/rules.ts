@@ -97,6 +97,11 @@ const CONFINED: readonly {
     only: ['src/features/server/process.ts', 'src/features/cli/'],
     why: "Effect is only for the server's process and the command",
   },
+  {
+    package: /^@inlang\//,
+    only: ['src/features/cli/words.ts'],
+    why: 'Paraglide is named by the words compiler alone, which loads it only when words are compiled',
+  },
 ]
 
 /** The one Node-only feature: only `src/server.ts` (the package's Node entry) may import it. */
@@ -105,6 +110,22 @@ const SERVER_ENTRY = 'src/server.ts'
 /** The other Node-only feature: the `automata` command. Only `src/cli.ts` (the package's `bin`) may import it. */
 const CLI_FEATURE = 'cli'
 const CLI_ENTRY = 'src/cli.ts'
+
+/**
+ * English named as a language of its own: a quoted `en`, a property `.en`, or a full tag, `en-GB` or `en-US`. No
+ * default language: a game's words, a player's language and a fallback come from the game's `source` or the player,
+ * never from English.
+ */
+const ENGLISH_BY_NAME = /(['"`])en\1|\.en\b(?!\.json)|\ben-(GB|US)\b/
+/**
+ * The three lines that may name English: the list of languages, the format 1 marks (written before `source`) and the
+ * tag a page's `lang` takes for it.
+ */
+const ENGLISH_ALLOWED: Readonly<Record<string, RegExp>> = {
+  'src/features/content/messages.ts': /^export const LANGUAGES = \[[^\]]*\] as const$/m,
+  'src/features/content/read-marks.ts': /^const FORMAT_1_SOURCE: Language = 'en'$/m,
+  'src/features/locale/names.ts': /^ {2}en: 'en-US',$/m,
+}
 
 interface Source {
   readonly file: string
@@ -260,6 +281,16 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
       }
     }
 
+    if (file.startsWith('src/')) {
+      const allowed = ENGLISH_ALLOWED[file]
+      const text = allowed === undefined ? source.text : source.text.replace(allowed, '')
+      if (ENGLISH_BY_NAME.test(text))
+        add(
+          file,
+          'no-default-language',
+          "English is named here as a language of its own. Use the game's source or the player's language.",
+        )
+    }
     const painter = PAINTER_FILES.test(file)
     if (painter) {
       for (const call of source.text.matchAll(PAINTER_MATH))

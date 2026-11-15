@@ -1,5 +1,5 @@
-// The four things every command reaches through, so a command is a plain Effect program and a test runs it on files in
-// memory: the files, the game's own tools, the game's own code, and the output. The live versions are in `live.ts`.
+// The things every command reaches through, so a command is a plain Effect program and a test runs it on files in
+// memory: the files, the game's own tools, the game's own code, the output, the runner and the device. The live versions are in `live.ts`.
 // Ported from AutomataFrameworkFailed@ed8592e8: packages/tools/src/shared/node/files.ts and process-runner.ts (their
 // shape: services with a live layer and a memory one); nothing else came over.
 import { Context, type Effect } from 'effect'
@@ -29,6 +29,8 @@ export interface FilesService {
   readonly write: (path: string, data: string | Uint8Array) => Effect.Effect<void, CliError>
   /** Every file under `dir`, `/`-joined from `dir`, sorted; `[]` when there is none. */
   readonly list: (dir: string) => Effect.Effect<readonly string[]>
+  /** Takes the file away (its folder stays); nothing happens when there is no such file. */
+  readonly remove: (path: string) => Effect.Effect<void, CliError>
 }
 export const Files: Context.Tag<FilesService, FilesService> =
   Context.GenericTag<FilesService>('automata/Files')
@@ -135,5 +137,13 @@ export interface RunnerService {
 export const Runner: Context.Tag<RunnerService, RunnerService> =
   Context.GenericTag<RunnerService>('automata/Runner')
 
+/** The machine the command runs on, as far as `create` needs to know its person. */
+export interface DeviceService {
+  /** The languages this machine says its person uses, best first, as the system writes them (`ko_KR.UTF-8`). May be empty. */
+  readonly languages: () => Effect.Effect<readonly string[]>
+}
+export const Device: Context.Tag<DeviceService, DeviceService> =
+  Context.GenericTag<DeviceService>('automata/Device')
+
 /** What a command may ask for. */
-export type Ports = FilesService | ToolsService | CodeService | OutService | RunnerService
+export type Ports = FilesService | ToolsService | CodeService | OutService | RunnerService | DeviceService

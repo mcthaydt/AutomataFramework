@@ -1,13 +1,13 @@
 import { z } from '../../lib/zod.ts'
 import { LANGUAGES, type Language } from '../content/content.ts'
 
-/** The player's choice of language: one of the six, or `null` for "follow my device". The `language` section of the settings. */
+/** The player's choice of language: one of the six, or `null` for "not chosen yet". The `language` section of the settings. */
 export interface LanguageSettings {
   readonly format: 1
   readonly language: Language | null
 }
 
-/** What a new player starts with: no choice made, so the host's language, then the device's, then English. */
+/** What a new player starts with: no choice made, so the player is asked (the host's own language counts as an answer). */
 export const LANGUAGE_SETTINGS_DEFAULT: LanguageSettings = Object.freeze({ format: 1, language: null })
 
 /**

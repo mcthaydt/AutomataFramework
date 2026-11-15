@@ -882,16 +882,16 @@ method applies to it again before it starts, because it adds a build step to eve
   `compileWords(options: { folder: string; outdir: string }): Effect.Effect<readonly string[], CliError, Ports>`
   (the files written).
 
-- [ ] **Step 1: Write the failing tests:** a fake runtime bound to a locale reads `locale.language()` and its
+- [x] **Step 1: Write the failing tests:** a fake runtime bound to a locale reads `locale.language()` and its
   `setLocale` calls `locale.set`; `compileWords` on the full game writes `messages.js` and `runtime.js` under the
   outdir, with English as the base, and a second run with nothing changed writes nothing; an outdir inside
   `content/` is refused in words.
-- [ ] **Step 2: Push; `check` fails.**
-- [ ] **Step 3: Implement,** porting the old repo's `compile-messages.ts` and `sync-folder.ts` (`ed8592e8`): the
+- [x] **Step 2: Push; `check` fails.**
+- [x] **Step 3: Implement,** porting the old repo's `compile-messages.ts` and `sync-folder.ts` (`ed8592e8`): the
   inlang project is made in a temporary folder for each compile from the game's messages files, the strategy is
   `['baseLocale']` only, and what differs is copied into the outdir.
-- [ ] **Step 4: Push; every job passes;** the `package` job's install still works in an empty folder.
-- [ ] **Step 5: Commit** (`feat(cli): a game's words as typed functions`).
+- [x] **Step 4: Push; every job passes;** the `package` job's install still works in an empty folder.
+- [x] **Step 5: Commit** (`feat(cli): a game's words as typed functions`).
 
 ---
 

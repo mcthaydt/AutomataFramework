@@ -6,6 +6,8 @@ name = "My Game"
 start = "level-1"
 # The character the player controls.
 hero = "hero"
+# The language your team writes the game's words in. Every other language is checked against it.
+source = "en"
 
 # Each [[content]] block lists one file of the game. A file that is not listed here is not part of the game.
 
@@ -24,7 +26,44 @@ path = "content/characters/hero.json"
 type = "character"
 path = "content/characters/crate.json"
 
+# The hero's picture, made of blocks and rounds. `automata art` paints it into `content/figures/hero.png`, and you commit that
+# picture with this file.
+[[content]]
+type = "figure"
+path = "content/figures/hero.json"
+
+# The crate's picture.
+[[content]]
+type = "figure"
+path = "content/figures/crate.json"
+
 # The spark: something for the hero to take. It is taken when the hero touches it, and the game keeps count.
 [[content]]
 type = "character"
 path = "content/characters/spark.json"
+
+# The game's words, one file for each language. The file of the game's own language (source, above) says what every
+# word is for; the others carry the same keys. `automata check` names a word a language is missing.
+[[content]]
+type = "messages"
+path = "content/messages/en.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/es.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/ko.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/ja.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/zh.json"
+
+[[content]]
+type = "messages"
+path = "content/messages/pt.json"

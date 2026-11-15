@@ -1,5 +1,6 @@
 // The camera in a real browser: it follows the heroes, pulls back to hold two, lets go of one who leaves, goes straight
-// back after a restore, and keeps the level above the touch buttons. Heroes are boxes here: the camera does not care.
+// back after a restore but glides on through a rollback, and keeps the level above the touch buttons. Heroes are boxes
+// here: the camera does not care.
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { Sprite } from '#src/features/level/level.ts'
 import { createRenderer, type Renderer } from '#src/features/render/render.ts'
@@ -139,6 +140,24 @@ test('a restore puts the camera straight back on the start, with no glide', asyn
   camera.apply(step([hero(1, 1, 3.25)]))
   camera.draw(1)
   expect(Math.abs((camera.heroes()[0]?.x ?? 0) - (atStart + 8))).toBeLessThanOrEqual(1)
+})
+
+test("an online game's rollback, a resync that moves the hero a little, keeps the glide", async () => {
+  // A rollback hands the renderer a resync too (the online session's first delta after one). It puts the heroes back by a
+  // step or two, so the camera keeps easing: only a resync that moves the camera's aim more than a tile goes straight.
+  const camera = await start([hero(1, 1, 20)])
+  camera.apply(step([hero(1, 1, 24)]))
+  camera.draw(1)
+  const behind = (): number => {
+    const box = camera.heroes()[0]
+    return (box?.x ?? 0) + (box?.w ?? 0) / 2 - CANVAS.w / 2
+  }
+  // The camera has gone 15% of the 4 tiles: the hero is right of the middle.
+  expect(behind()).toBeGreaterThan(64)
+  camera.apply(first([hero(1, 1, 24.1)]))
+  camera.draw(1)
+  // Still gliding: had it gone straight to the hero, the hero would be in the middle.
+  expect(behind()).toBeGreaterThan(64)
 })
 
 test('the level is still fitted above the touch buttons', async () => {

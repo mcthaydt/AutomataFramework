@@ -3,9 +3,9 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Effect } from 'effect'
-import { afterEach, beforeEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { liveLayer, quoteForWindows } from '#src/features/cli/live.ts'
-import { type CliError, Code, Files, type FilesService } from '#src/features/cli/ports.ts'
+import { type CliError, Code, Device, Files, type FilesService } from '#src/features/cli/ports.ts'
 
 let folder: string
 beforeEach(async () => {
@@ -31,6 +31,13 @@ test('the live Files reads, writes and lists under a folder with a space in its 
   )
   expect(await files((f) => f.list(folder))).toEqual(['content/b.json', 'content/levels/a.json'])
   expect(await files((f) => f.list(join(folder, 'nothing here')))).toEqual([])
+})
+
+test('the live Files removes a file, and a file that is not there is no mistake', async () => {
+  await files((f) => f.write(join(folder, 'content', 'gone.json'), '{}\n'))
+  await files((f) => f.remove(join(folder, 'content', 'gone.json')))
+  expect(await files((f) => f.readText(join(folder, 'content', 'gone.json')))).toBeUndefined()
+  await files((f) => f.remove(join(folder, 'content', 'gone.json')))
 })
 
 test('a file that is not there reads as undefined, not as an error', async () => {
@@ -113,4 +120,32 @@ test('on Windows a word with a space or a quote is quoted, and a plain one is no
   expect(quoteForWindows('say "hi"')).toBe('"say \\"hi\\""')
   expect(quoteForWindows('biome')).toBe('biome')
   expect(quoteForWindows('--write')).toBe('--write')
+})
+
+// The languages the machine says its person uses: the environment's own words, best first.
+const deviceLanguages = (): Promise<readonly string[]> =>
+  Effect.runPromise(Effect.flatMap(Device, (device) => device.languages()).pipe(Effect.provide(liveLayer)))
+
+test('the live Device answers the language the environment names', async () => {
+  vi.stubEnv('LC_ALL', 'ko_KR.UTF-8')
+  vi.stubEnv('LC_MESSAGES', '')
+  vi.stubEnv('LANG', 'en_US.UTF-8')
+  expect(await deviceLanguages()).toEqual(['ko_KR.UTF-8', 'en_US.UTF-8'])
+  vi.unstubAllEnvs()
+})
+
+test('the live Device keeps the environment variables in the order the system reads them', async () => {
+  vi.stubEnv('LC_ALL', '')
+  vi.stubEnv('LC_MESSAGES', 'es_MX.UTF-8')
+  vi.stubEnv('LANG', 'ja_JP.UTF-8')
+  expect(await deviceLanguages()).toEqual(['es_MX.UTF-8', 'ja_JP.UTF-8'])
+  vi.unstubAllEnvs()
+})
+
+test.skipIf(process.platform === 'win32')('with none set the live Device says nothing', async () => {
+  vi.stubEnv('LC_ALL', '')
+  vi.stubEnv('LC_MESSAGES', '')
+  vi.stubEnv('LANG', '')
+  expect(await deviceLanguages()).toEqual([])
+  vi.unstubAllEnvs()
 })

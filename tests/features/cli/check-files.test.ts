@@ -4,8 +4,18 @@ import { runCheck } from '#src/features/cli/check.ts'
 import { main } from '#src/features/cli/cli.ts'
 import { CliError } from '#src/features/cli/ports.ts'
 import type { CheckReport } from '#src/features/cli/report.ts'
+import {
+  type Language,
+  loadGame,
+  markRead,
+  READ_MARKS_FILE,
+  writeContent,
+  writeReadMarks,
+} from '#src/features/content/content.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, type MemoryOptions, memoryLayer } from '../../fixtures/cli/memory.ts'
+import { wordsGame } from '../../fixtures/cli/words.ts'
+import { readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const LEVEL = 'content/levels/level-1.json'
@@ -128,14 +138,22 @@ test('--only wat names the steps', async () => {
   const memory = memoryLayer(under('game', smallGame()))
   expect(await main(['check', 'game', '--only', 'wat'], memory.layer)).toBe(2)
   expect(memory.err).toEqual([
-    'There is no step called "wat". The steps are: files, rules, lint, types, replays, tests.',
+    'There is no step called "wat". The steps are: files, art, rules, lint, types, replays, tests.',
   ])
 })
 
 test('without --only every step has its place in the report, in order', async () => {
   const memory = memoryLayer(under('game', smallGame()))
   const report = await Effect.runPromise(runCheck({ folder: 'game' }).pipe(Effect.provide(memory.layer)))
-  expect(report.steps.map((s) => s.step)).toEqual(['files', 'rules', 'lint', 'types', 'replays', 'tests'])
+  expect(report.steps.map((s) => s.step)).toEqual([
+    'files',
+    'art',
+    'rules',
+    'lint',
+    'types',
+    'replays',
+    'tests',
+  ])
   expect(report.steps[0]?.state).toBe('passed')
 })
 
@@ -156,4 +174,88 @@ test('a failed step is exit 1, and the report says what to fix', async () => {
   expect(await main(['check', 'game', '--only', 'files'], memory.layer)).toBe(1)
   expect(memory.out[0]).toContain('1 step needs fixing: files. Fix the first and run automata check again.')
   expect(memory.out[0]).toContain(`${LEVEL}: This file is not valid JSON.`)
+})
+
+// The words: a game with messages is checked in every language, and what no native speaker has read is a note.
+const messages = (id: Language, words: Record<string, string>): string =>
+  writeContent('messages', { format: 1, id, messages: words })
+/** The fixture game with English and Spanish words (Spanish short of "hello" when `lacking`), and the files listing them. */
+function withWords(lacking: boolean): Record<string, string> {
+  const toml = (fixtureFiles['automata.toml'] as string).trimEnd()
+  const listed = ['en', 'es'].map(
+    (id) => `\n[[content]]\ntype = "messages"\npath = "content/messages/${id}.json"\n`,
+  )
+  return {
+    'automata.toml': withSource(`${toml}\n${listed.join('')}`, 'en'),
+    'content/messages/en.json': messages('en', { 'controls.jump': 'Jump', 'keeper.hello': 'Hello there!' }),
+    'content/messages/es.json': messages(
+      'es',
+      lacking ? { 'controls.jump': 'Saltar' } : { 'controls.jump': 'Saltar', 'keeper.hello': '¡Hola!' },
+    ),
+  }
+}
+test('a word a language lacks is a problem that names the file, the key and what English says', async () => {
+  const { report } = await filesStep(withWords(true))
+  const [step] = report.steps
+  expect(step?.state).toBe('failed')
+  expect(step?.problems.map((p) => p.message)).toContain(
+    'This file has no "keeper.hello". The English file says "Hello there!". Write it in Spanish.',
+  )
+  expect(step?.problems.some((p) => p.file === 'content/messages/es.json')).toBe(true)
+})
+
+test('words nobody has read yet are one note for each language, and never a failure', async () => {
+  const { report } = await filesStep(withWords(false))
+  const [step] = report.steps
+  expect(step?.notes).toEqual(['2 words in Spanish wait for a native speaker. See them with automata words.'])
+  expect(step?.problems.filter((p) => p.file === 'content/messages/es.json')).toEqual([])
+})
+
+test('the notes are in the order of the languages, and one word is said in the singular', async () => {
+  const korean = await filesStep(wordsGame('ko', ['ko', 'es', 'pt']))
+  expect(korean.report.steps[0]?.notes).toEqual([
+    '3 words in Spanish wait for a native speaker. See them with automata words.',
+    '3 words in Portuguese wait for a native speaker. See them with automata words.',
+  ])
+  const english = wordsGame('en', ['en', 'es'])
+  const loaded = await loadGame(readFiles(english))
+  if (!loaded.ok) throw new Error('the words game does not load')
+  const marks = writeReadMarks(markRead(loaded.value, undefined, 'es', ['keeper.bye', 'keeper.hello']))
+  const one = await filesStep({ ...english, [READ_MARKS_FILE]: marks })
+  expect(one.report.steps[0]?.notes).toEqual([
+    '1 word in Spanish waits for a native speaker. See them with automata words.',
+  ])
+})
+
+test('marks made against another language say why every word waits again', async () => {
+  const english = wordsGame('en', ['en', 'es', 'pt'])
+  const loaded = await loadGame(readFiles(english))
+  if (!loaded.ok) throw new Error('the words game does not load')
+  const marks = writeReadMarks(markRead(loaded.value, undefined, 'es'))
+  const { report } = await filesStep({ ...wordsGame('ko', ['ko', 'es', 'pt']), [READ_MARKS_FILE]: marks })
+  expect(report.steps[0]?.notes).toEqual([
+    'The read marks were made against English, and this game is now written in Korean, so every word waits again. See them with automata words.',
+    '3 words in Spanish wait for a native speaker. See them with automata words.',
+    '3 words in Portuguese wait for a native speaker. See them with automata words.',
+  ])
+})
+
+test('a read mark takes a word off the note, and a marks file that does not read is a problem', async () => {
+  const content = await loadGame(async (path) => {
+    const text = withWords(false)[path] ?? fixtureFiles[path]
+    if (text === undefined) throw new Error(`${path}: no such file`)
+    return text
+  })
+  if (!content.ok) throw new Error('the fixture words do not load')
+  const marks = markRead(content.value, undefined, 'es')
+  const read = await filesStep({ ...withWords(false), [READ_MARKS_FILE]: writeReadMarks(marks) })
+  expect(read.report.steps[0]?.notes).toEqual([])
+  const broken = await filesStep({ ...withWords(false), [READ_MARKS_FILE]: 'format = 2' })
+  expect(broken.report.steps[0]?.state).toBe('failed')
+  expect(broken.report.steps[0]?.problems.map((p) => p.file)).toContain(READ_MARKS_FILE)
+})
+
+test('a game with no words says nothing about them', async () => {
+  const { report } = await filesStep()
+  expect(report.steps[0]).toEqual({ step: 'files', state: 'passed', problems: [], notes: [] })
 })

@@ -1,8 +1,8 @@
-// The tools `automata mcp` offers an agent. `create`, `check` and `replay` are the commands themselves, run as a child
-// process through `Runner.command` with `--json` (audit C1: this long-lived server never loads a game's code, so every
-// answer comes from the files as they are now); `content_types`, `schema` and `skill` read what the package ships; the
-// `play_` tools run a game a few ticks at a time (`session.ts`). Every description is one sentence that says when to use
-// the tool, and every answer is one text block.
+// The tools `automata mcp` offers an agent. `create`, `check`, `replay`, `art` and `words` are the commands themselves,
+// run as a child process through `Runner.command` with `--json` (audit C1: this long-lived server never loads a game's
+// code, so every answer comes from the files as they are now); `content_types`, `schema` and `skill` read what the
+// package ships; the `play_` tools run a game a few ticks at a time (`session.ts`). Every description is one sentence
+// that says when to use the tool, and every answer is one text block.
 import { basename, join } from 'node:path'
 import { Effect } from 'effect'
 import { z } from '../../lib/zod.ts'
@@ -60,8 +60,15 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
       'Make a new game in a new folder: use it to start a game, and it answers the files it wrote.',
       z.object({
         folder: z.string().describe('The new folder, named in small letters, numbers and dashes.'),
+        source: z
+          .string()
+          .optional()
+          .describe(
+            "The language you write the game's words in: zh, es, en, pt, ja or ko. Left out, the computer's own language is used when it is one of them.",
+          ),
       }),
-      (input) => command(['create', input.folder]),
+      (input) =>
+        command(['create', input.folder, ...(input.source === undefined ? [] : ['--source', input.source])]),
     ),
     tool(
       'check',
@@ -101,6 +108,39 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
           ...(input.accept === true ? ['--accept'] : []),
           ...(input.state === true ? ['--state'] : []),
         ]),
+    ),
+    tool(
+      'art',
+      "Paint a game's pictures from its figure and backdrop files: use it after you change one, and commit what it writes.",
+      z.object({
+        folder,
+        check: z
+          .boolean()
+          .optional()
+          .describe('Paint nothing; only say which pictures are missing or older than their file.'),
+      }),
+      (input) => command(['art', input.folder, ...(input.check === true ? ['--check'] : [])]),
+    ),
+    tool(
+      'words',
+      "List a game's translated words that no native speaker has read, beside the game's own text, or mark them read: use it after you add or change a word.",
+      z.object({
+        folder,
+        read: z.string().optional().describe('A language to mark as read: zh, es, en, pt, ja or ko.'),
+        keys: z
+          .array(z.string())
+          .optional()
+          .describe('Only these words; leave it out for every listed word of that language.'),
+      }),
+      (input) => {
+        if (input.keys !== undefined && input.read === undefined)
+          return Effect.fail(new CliError('keys needs read: name the language whose words these are.'))
+        return command([
+          'words',
+          input.folder,
+          ...(input.read === undefined ? [] : ['--read', input.read, ...(input.keys ?? [])]),
+        ])
+      },
     ),
     tool(
       'content_types',

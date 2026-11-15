@@ -22,6 +22,7 @@ import type { Sim } from '../sim/sim.ts'
 import { type BoxWords, createStoryView } from '../story/story.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
+import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
 
@@ -52,7 +53,8 @@ export interface GameOptions extends GameSimOptions {
   readonly audio?: GameAudio
   /**
    * With `audio`, the button that says the sound is waiting for a tap. A string is its words; `false` shows none, for
-   * a game whose own screen says it. Default: the framework's button, "Tap to start the sound".
+   * a game whose own screen says it. Default: the framework's button, "Tap to start the sound", in `locale`'s
+   * language.
    */
   readonly soundNotice?: string | false
   /**
@@ -63,11 +65,12 @@ export interface GameOptions extends GameSimOptions {
    */
   readonly readPicture?: ReadPicture
   /**
-   * The player's language. The touch buttons say `controls.<action>` and `automata.touch.label` in it, a refused
-   * `addPlayer` explains itself in it, and all of them change when the player picks another. Default: English, and each
-   * control's own label.
+   * The player's language, which the game cannot start without: `startGame` throws if the player has not chosen one
+   * (`locale.asked()` is false), so show the language picker first. The touch buttons say `controls.<action>` and
+   * `automata.touch.label` in it, a refused `addPlayer` or change of key explains itself in it, the sound's button asks
+   * for a tap in it, and all of them change when the player picks another.
    */
-  readonly locale?: Locale
+  readonly locale: Locale
 }
 
 export interface Game {
@@ -103,6 +106,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
   const { mount, controls, host, locale, frames = pageFrames } = options
   // First, so a mistake in the controls costs nothing: no sim, no canvas.
   checkControls(controls)
+  requireLanguage(locale)
   const sim = await createGameSim(options)
   // What to undo if a later step fails; it grows as things are made.
   let cleanup = (): void => sim.dispose()
@@ -138,12 +142,12 @@ export async function startGame(options: GameOptions): Promise<Game> {
       controls,
       frames,
       sequence,
-      ...(locale === undefined ? {} : { words: locale.words }),
+      words: locale.words,
       ...(options.settings === undefined ? {} : { settings: options.settings }),
       ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
     })
     // A new language says the touch buttons again. Stopped with the game.
-    const unfollow = locale?.onChange(() => input.relabel(locale.words))
+    const unfollow = locale.onChange(() => input.relabel(locale.words))
     cleanup = () => {
       unfollow?.()
       input.destroy()
@@ -211,7 +215,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
       input,
       sequence,
       canShare: Object.values(input.controls()).every((control) => control.shared !== undefined),
-      ...(locale === undefined ? {} : { words: locale.words }),
+      words: locale.words,
     })
     const { audio } = options
     const loop = createLoop({
@@ -251,6 +255,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         ? soundNotice({
             mount,
             audio,
+            locale,
             ...(typeof options.soundNotice === 'string' ? { words: options.soundNotice } : {}),
           })
         : undefined

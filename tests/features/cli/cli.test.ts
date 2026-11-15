@@ -2,8 +2,11 @@ import { Effect, Layer } from 'effect'
 import { expect, test } from 'vitest'
 import { main } from '#src/features/cli/cli.ts'
 import { Out } from '#src/features/cli/ports.ts'
+import { describeWords, runWords } from '#src/features/cli/unread.ts'
 import { FRAMEWORK_VERSION } from '#src/features/sim/sim.ts'
+import { under } from '../../fixtures/cli/game.ts'
 import { memoryLayer } from '../../fixtures/cli/memory.ts'
+import { wordsGame } from '../../fixtures/cli/words.ts'
 
 // The words the help prints, as a person reads them. Written out here, so a change to the help is a change to a test.
 const ROOT_HELP = `automata: make a game, check it, play it.
@@ -12,6 +15,8 @@ const ROOT_HELP = `automata: make a game, check it, play it.
   automata check           Say whether this game is sound, and what to fix if it is not.
   automata play            Play this game in your browser.
   automata replay          Play this game's recordings and check they end where they did.
+  automata art             Paint this game's pictures from its figure and backdrop files.
+  automata words           List the translated words nobody has read, and mark them read.
   automata mcp             Let an agent use these commands (an MCP server).
 
 Run a command with --help to see its options. Each works on the game in this folder, or in the folder you name.`
@@ -86,4 +91,56 @@ test('words after the folder are refused, not dropped: a name with a space needs
     'automata check takes one folder, but more words came after "my": game. A folder with a space in its name goes in quotes, like "my games/first one".',
   ])
   expect(memory.out).toEqual([])
+})
+
+// `automata words`, end to end on a game written in Korean with Spanish and Portuguese words.
+const koreanGame = () => memoryLayer(under('game', wordsGame('ko', ['ko', 'es', 'pt'])))
+const reportOfKoreanGame = () =>
+  Effect.runPromise(runWords({ folder: 'game' }).pipe(Effect.provide(koreanGame().layer)))
+
+test('automata words prints the words nobody has read and exits 0', async () => {
+  const memory = koreanGame()
+  const report = await reportOfKoreanGame()
+  expect(await main(['words', 'game'], memory.layer)).toBe(0)
+  expect(memory.out).toEqual(describeWords(report))
+  expect(memory.out.slice(0, 3)).toEqual([
+    'Checked against Korean (ko).',
+    '',
+    'Spanish (es): 3 words wait for a native speaker.',
+  ])
+  expect(memory.err).toEqual([])
+})
+
+test('automata words --json prints the report and nothing else', async () => {
+  const memory = koreanGame()
+  const report = await reportOfKoreanGame()
+  expect(await main(['words', 'game', '--json'], memory.layer)).toBe(0)
+  expect(JSON.parse(memory.out.join(''))).toEqual(report)
+  expect(memory.err).toEqual([])
+})
+
+test('automata words --read marks a language read, says so, and exits 0', async () => {
+  const memory = koreanGame()
+  expect(await main(['words', 'game', '--read', 'pt'], memory.layer)).toBe(0)
+  expect(memory.out[0]).toBe('Marked 3 words in Portuguese as read.')
+  expect(memory.out.join('\n')).not.toContain('Portuguese (pt)')
+  expect(memory.files.has('game/automata.translations.toml')).toBe(true)
+})
+
+test('automata words --read with the game’s own language says why not, exits 2 and writes nothing', async () => {
+  const memory = koreanGame()
+  expect(await main(['words', 'game', '--read', 'ko'], memory.layer)).toBe(2)
+  expect(memory.err).toEqual([
+    'This game is written in Korean, so Korean is not read against anything. Mark one of: es, pt.',
+  ])
+  expect(memory.files.has('game/automata.translations.toml')).toBe(false)
+})
+
+test('automata words --help prints its help', async () => {
+  const memory = memoryLayer({})
+  expect(await main(['words', '--help'], memory.layer)).toBe(0)
+  expect(memory.out[0]).toMatch(/^automata words \[folder\]\n/)
+  expect(memory.out[0]).toContain(
+    '  --read <language>            Mark every listed word of that language as read.',
+  )
 })
