@@ -7,6 +7,7 @@ import {
   formatDiagnostic,
   type GameContent,
   MissingPhotoError,
+  paintedFiles,
   paintedPath,
   photosUsed,
   sceneSheet,
@@ -29,6 +30,8 @@ test('a scene at content/scenes/meadow.json is painted beside itself', async () 
   expect(paintedPath(game, 'scene', 'meadow')).toBe('content/scenes/meadow.png')
   expect(paintedPath(game, 'scene', 'nowhere')).toBeUndefined()
   const files = await sceneGamePictures()
+  // The rule for where a painted file goes is written once: the list of paths agrees with what the painter wrote.
+  expect([...paintedFiles(game)].sort()).toEqual(Object.keys(files).sort())
   expect(Object.keys(files)).toEqual([
     'content/scenes/meadow.png',
     'content/scenes/meadow.atlas.json',

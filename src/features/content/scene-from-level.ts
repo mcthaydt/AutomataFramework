@@ -1,7 +1,7 @@
 // A scene from an old level: the ground a level wrote in its own rows, moved into a scene file, and the level pointing at
 // it. Nothing about how the level plays changes: the same rows, the same colours, and the same boxes (one a row for a
-// level the old way, joined ones for a tileset or a hero the framework moves), so a recorded play of it still plays and
-// hashes as it did.
+// level the old way, joined ones for a tileset or a hero the framework moves), so a recorded play of it still plays as it
+// did, though its hashes are not compared once the content has changed.
 import type { Level } from './level.ts'
 import type { GameContent } from './load.ts'
 import type { SceneFile, SceneLetter, SceneMaterial } from './scene.ts'

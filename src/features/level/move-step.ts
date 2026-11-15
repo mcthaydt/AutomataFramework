@@ -275,9 +275,12 @@ export function stepMoves(
 
   // 9b. A slope. On the ground, and not on the tick of a jump, the walk's speed runs along the slope and not along the
   // floor: `tx, ty` is the slope's direction, pointing right. A hero that holds nothing is given the lift that cancels
-  // one tick of gravity (Rapier moves a body in four steps of a quarter tick, so the speed that comes back to where the
-  // body began is `5/8` of the tick's pull, as a dash's `hover` is taken): it is neither pulled down the slope nor
-  // pressed into it, and so, whatever the slope's angle and friction, it stands where it is.
+  // one tick of gravity, so it is neither pulled down the slope nor pressed into it, and so, whatever the slope's angle
+  // and friction, it stands where it is. That lift is `5/8` of `hover`, not all of it as a dash takes: Rapier moves a
+  // body in four steps of a quarter tick, and the speed whose four steps come back to where the body began is `5/8` of
+  // the tick's pull. A dash is in the air and asks for a speed that gravity brings to nothing by the tick's end, so
+  // it holds its height and may rise a little; a hero on the ground must not rise at all, or it would leave the slope.
+  // The slope parity test pins the second.
   const { slope } = input
   if (below && !jumped && slope !== undefined && Math.abs(slope.nx) > FLAT) {
     if (dir === 0 && s.run === 0) {

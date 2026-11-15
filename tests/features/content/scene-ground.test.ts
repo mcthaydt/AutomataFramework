@@ -155,3 +155,33 @@ test('a half-down run asks for the two tiles under its first pair, top row first
     { col: 1, row: 2 },
   ])
 })
+
+test('a half slope whose foot is half way down a tile asks for the tiles its triangle runs on over', () => {
+  // The run starts on `h` at the foot (line at 1.5), so row 1's top half is under the line along its whole length.
+  const air = grid('.lh.', 'h...', '####')
+  const [run] = slopeRuns(air)
+  expect(run).toEqual({ col: 0, row: 1, w: 3, rise: 1.5, leftY: 1.5 })
+  expect(run && gapsUnder(air, run)).toEqual([
+    { col: 1, row: 1 },
+    { col: 2, row: 1 },
+  ])
+  const filled = grid('.lh.', 'h###', '####')
+  expect(gapsUnder(filled, slopeRuns(filled)[0] as never)).toEqual([])
+})
+
+test('a half-down run that ends on a high tile asks for the tiles before its foot, not the foot', () => {
+  const air = grid('HL..', '..H.', '####')
+  const [run] = slopeRuns(air)
+  expect(run).toEqual({ col: 0, row: 1, w: 3, rise: -1.5, leftY: 0 })
+  expect(run && gapsUnder(air, run)).toEqual([
+    { col: 0, row: 1 },
+    { col: 1, row: 1 },
+  ])
+})
+
+test('a half slope that ends on a tile edge, or is one tile, asks for nothing more', () => {
+  const edge = grid('....', '.lh.', '####')
+  expect(gapsUnder(edge, slopeRuns(edge)[0] as never)).toEqual([])
+  const lone = grid('....', '.h..', '####')
+  expect(gapsUnder(lone, slopeRuns(lone)[0] as never)).toEqual([])
+})

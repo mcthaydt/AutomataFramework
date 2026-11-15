@@ -1761,6 +1761,17 @@ interface GroundPage {
 }
 ```
 
+### `GroundPageArt` (interface)
+
+```ts
+interface GroundPageArt {
+    readonly col: number;
+    readonly w: number;
+    readonly h: number;
+    readonly texture: Texture;
+}
+```
+
 ### `groundPages` (function)
 
 ```ts
@@ -3266,6 +3277,12 @@ const pageDensity: Density;
 
 ```ts
 function paintBackdrop(backdrop: BackdropFile): IndexedPicture;
+```
+
+### `paintedFiles` (function)
+
+```ts
+function paintedFiles(content: GameContent): string[];
 ```
 
 ### `paintedPath` (function)
@@ -5313,6 +5330,16 @@ interface TilesMaterial {
     readonly kind: 'tiles';
     readonly tileset: string;
     readonly tile: string;
+}
+```
+
+### `TileSprite` (interface)
+
+```ts
+interface TileSprite {
+    readonly col: number;
+    readonly row: number;
+    readonly texture: Texture;
 }
 ```
 
@@ -8186,6 +8213,12 @@ type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
 
 ```ts
 function paintBackdrop(backdrop: BackdropFile): IndexedPicture;
+```
+
+### `paintedFiles` (function)
+
+```ts
+function paintedFiles(content: GameContent): string[];
 ```
 
 ### `paintedPath` (function)

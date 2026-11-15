@@ -52,7 +52,7 @@ export interface TileSprite {
 }
 
 /** One page of a scene's painted ground: a strip of the level `w` by `h` tiles, its left edge at column `col`. */
-interface GroundPageArt {
+export interface GroundPageArt {
   readonly col: number
   readonly w: number
   readonly h: number

@@ -135,10 +135,31 @@ test('a slope cannot be a tileset tile', () => {
   ])
 })
 
+test('a ledge cannot be a tileset tile either', () => {
+  expect(
+    said(edit((s) => Object.assign(list(ground(s), 'letters')[4] as Json, { material: 'stone' }))),
+  ).toEqual([
+    `${file}: ground.letters[4].shape: A ledge needs a photo or a flat material: a tileset's tile is a whole square.`,
+  ])
+})
+
 test('a slope with air under it says which tile to fill', () => {
   const air = edit((s) => rows(s).splice(7, 1, (rows(s)[7] ?? '').replace('/G', '/.')))
   expect(said(air)).toEqual([
     `${file}: ground.rows[7]: The slope that starts at column 2 needs solid ground under it. The tile at column 4, row 7 is not solid: fill it, or shorten the slope.`,
+  ])
+})
+
+test('a half slope whose foot is half way down a tile says which tile it runs on over', () => {
+  // A run of three half tiles ends on a high tile at (12, 7), so row 7's top half is under the line at columns 10 and 11.
+  const air = edit((s) => {
+    const row = [...(rows(s)[7] ?? '')]
+    row[10] = '.'
+    row[13] = 'h'
+    rows(s).splice(7, 1, row.join(''))
+  })
+  expect(said(air)).toEqual([
+    `${file}: ground.rows[7]: The slope that starts at column 10 needs solid ground under it. The tile at column 10, row 7 is not solid: fill it, or shorten the slope.`,
   ])
 })
 
@@ -197,7 +218,7 @@ test('every key a scene needs says what to write when it is missing', () => {
     `${file}: ground.rows: This is missing. Write one string a row, top row first, like ["....", "GGGG"].`,
   ])
   expect(missing((s) => delete (list(ground(s), 'letters')[0] as Json).shape)).toEqual([
-    `${file}: ground.letters[0].shape: This is missing. Write "solid", "slope-up", "slope-down", "ledge" or "back".`,
+    `${file}: ground.letters[0].shape: This is missing. Write "solid", "slope-up", "slope-down", "half-up-low", "half-up-high", "half-down-high", "half-down-low", "ledge" or "back".`,
   ])
 })
 

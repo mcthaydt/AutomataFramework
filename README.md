@@ -800,8 +800,9 @@ not. A material, the thing a letter is made of, is one of three kinds:
 `meadow.atlas.json`), the same bytes in every browser and in Node, and `automata check` says when one is missing or older
 than its file. A scene may be 256 tiles wide and tall, with a picture of about four million pixels at most.
 
-A game that already has levels written with `tiles` moves each onto a scene with one command, and the level plays and hashes
-as it did, so its recordings still end where they did:
+A game that already has levels written with `tiles` moves each onto a scene with one command, and the level plays as it
+did, tick for tick. Its content is not the same bytes, though, so `automata replay` says the content changed and does not
+compare the hashes; run `automata replay --accept` once to record each play again:
 
 ```sh
 npx --no automata scene from-level level-1
@@ -916,8 +917,9 @@ text, or the problems; the command and the editors both use it.
 `automata scene from-level <level> [folder]` moves a level's ground onto a scene file, which holds the ground's rows and
 colours in a file a person can paint in the builder. It writes `content/scenes/<name>.json` (beside the scenes the game
 already lists), changes the level's file so that it names the scene, lists the scene in `automata.toml`, and paints the
-scene's picture. The level plays and hashes as it did: the same rows, the same colours and the same boxes, so a recorded
-play of it still ends where it did. Everything is made and read back as a game before the first file is written; it
+scene's picture. The level plays as it did: the same rows, the same colours and the same boxes, so the same world tick for tick.
+The game's content is not the same bytes, so `automata replay` says the content changed and does not compare the hashes;
+run `automata replay --accept` to record each play again. Everything is made and read back as a game before the first file is written; it
 writes nothing, and exits `1`, when the game does not load, the level is not there, the level already has a scene, or a
 file is already at the scene's path (`There is already a file at content/scenes/scene-1.json. Pick another name with
 --as.`).

@@ -69,6 +69,7 @@ test('headless exports what a game sim and an editor need', async () => {
     'artFiles',
     'artProblems',
     'paintedPath',
+    'paintedFiles',
     'Sprite',
     'spritesPlugin',
     'usesSprites',

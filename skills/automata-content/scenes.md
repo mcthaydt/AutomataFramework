@@ -384,6 +384,12 @@ and `scene`, or neither, is refused with a sentence that says which to keep. Its
 }
 ```
 
+`automata scene from-level` may write `"oneBoxPerRow": true` in a scene's `ground`. It is a fact about the old level, not a
+setting to choose: a level written the old way, with no tileset and a hero the framework does not move, made one box a row,
+and keeping that is what keeps its recorded play as it was. A scene you write by hand leaves it out, and its boxes are joined,
+which is what a hero the framework moves wants (a hero catches on the seam between two boxes). If a game later gives its
+hero `moves`, take `oneBoxPerRow` out of the scenes `from-level` made for it, or the hero will meet those seams.
+
 ## How big a scene can be
 
 Up to 256 tiles wide and 256 tall, and a `tile` of 4 to 64 pixels. The ground's picture is cut into pages 2048 pixels wide and
@@ -394,7 +400,9 @@ scene has at most 64 paints, 32 materials and 93 letters.
 ## The commands
 
 - `npx --no automata scene from-level level-1` moves an old level's rows onto a scene, `scene-1`, and points the level at it. The
-  level plays and hashes as it did. `--as meadow` names the scene.
+  level plays as it did, tick for tick, but the game's content is now different bytes, so `automata replay` says the
+  content changed and does not compare hashes: run `npx --no automata replay --accept` to record each play again.
+  `--as meadow` names the scene.
 - `npx --no automata check` says what is wrong with a scene file. `--only art` is the picture only.
 - `npx --no automata art` paints the pictures; `--check` says which are missing or older than their file.
 - `npx --no automata add --type scene --path content/scenes/meadow.json` lists a scene you have written.

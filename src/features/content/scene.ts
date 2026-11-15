@@ -292,6 +292,13 @@ function checkScene(scene: Partial<SceneFile>, ctx: z.core.$RefinementCtx): void
         ['ground', 'letters', i, 'shape'],
         "A slope needs a photo or a flat material: a tileset's tile is a whole square.",
       )
+    // A ledge holds only its top quarter, but a tileset's tile is drawn as a whole square, so a hero would stand on
+    // the top of a square it can walk through the bottom of.
+    else if (material?.kind === 'tiles' && entry.shape === 'ledge')
+      add(
+        ['ground', 'letters', i, 'shape'],
+        "A ledge needs a photo or a flat material: a tileset's tile is a whole square.",
+      )
   })
 
   const { size, tile } = scene
@@ -428,7 +435,8 @@ export const sceneInfo: ContentTypeInfo<SceneFile, SceneFile> = {
     'ground.letters': 'List what each letter stands for. Write [] for none.',
     'ground.letters.letter': 'Write the letter the rows use, like "G".',
     'ground.letters.material': 'Write which material the tile is made of, like "earth".',
-    'ground.letters.shape': 'Write "solid", "slope-up", "slope-down", "ledge" or "back".',
+    'ground.letters.shape':
+      'Write "solid", "slope-up", "slope-down", "half-up-low", "half-up-high", "half-down-high", "half-down-low", "ledge" or "back".',
     'ground.rows': 'Write one string a row, top row first, like ["....", "GGGG"].',
   },
   check(scene, game, report) {
