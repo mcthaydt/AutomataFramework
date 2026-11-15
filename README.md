@@ -835,6 +835,17 @@ Each schema is at `@automataframework/framework/schemas/<kind>.schema.json`. Thr
 - `writeContent(type, value)` is the only writer, so two writers of the same value make the same bytes.
 - A game's words live in `messages` files, one per language, and `source` in `automata.toml` names the one the team writes in.
 
+Besides `format`, `name`, `start`, `hero`, `players`, `source` and the `[[content]]` blocks, `automata.toml` has four
+optional lines that say what the default game flow shows. None of them says what happens in the game, so none changes a
+hash or a recording:
+
+| Line | What it says | Left out |
+|---|---|---|
+| `levels = ["level-1", "level-2"]` | the order the levels are played in (each a listed level, `start` among them) | the game is its `start` level alone |
+| `done = "door.touched"` | the event that ends a level | a level ends only when the game's code says so |
+| `warnings = ["warning.flashing"]` | what players are told before they play: keys in the game's own words (up to eight) | nothing is said |
+| `splash = "logo"` | the figure shown first, by its id | the splash is the game's name |
+
 A file is listed in `automata.toml` with its kind and its path. This lists a sound called `door`:
 
 ```toml

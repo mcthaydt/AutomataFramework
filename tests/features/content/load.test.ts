@@ -10,6 +10,7 @@ import {
 import { withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { fixtureFiles, readFixture } from '../../fixtures/game/read.ts'
+import { readFiles as readTemplate, templateFiles } from '../../template/game.ts'
 
 /** What a person reads when the game does not load: one sentence per problem, none when it loads. */
 async function problems(overrides: Record<string, string | undefined> = {}): Promise<string[]> {
@@ -276,3 +277,75 @@ test('a source with no words at all does not load', async () => {
 
 test('a game written in Korean loads with no English file', async () =>
   expect(await problems(withWords(['ko', 'es'], 'ko'))).toEqual([]))
+
+// The flow's four fields (plan U, Task 1) are checked against the rest of the game. The template has words (written in
+// English), two figures and one level; a second level is added where the order has two.
+
+const level2 = writeContent('level', {
+  ...(JSON.parse(templateFiles['content/levels/level-1.json'] ?? '') as Record<string, unknown>),
+  id: 'level-2',
+} as never)
+
+const twoLevels: Record<string, string> = {
+  'automata.toml': `${templateFiles['automata.toml']}\n[[content]]\ntype = "level"\npath = "content/levels/level-2.json"\n`,
+  'content/levels/level-2.json': level2,
+}
+
+/** The project file of `files` (the template's, or `twoLevels`) with these lines after `hero`. */
+const withLines = (files: Record<string, string>, ...lines: string[]): Record<string, string> => ({
+  ...files,
+  'automata.toml': (files['automata.toml'] ?? '').replace(
+    'hero = "hero"\n',
+    `hero = "hero"\n${lines.join('\n')}\n`,
+  ),
+})
+
+async function flowProblems(files: Record<string, string>): Promise<string[]> {
+  const loaded = await loadGame(readTemplate(files))
+  return loaded.ok ? [] : loaded.diagnostics.map(formatDiagnostic)
+}
+
+test('levels, done, warnings and splash that fit the game load', async () => {
+  const files = withLines(
+    twoLevels,
+    'levels = ["level-1", "level-2"]',
+    'done = "door.touched"',
+    'warnings = ["page.cannot-start"]',
+    'splash = "hero"',
+  )
+  expect(await flowProblems(files)).toEqual([])
+})
+
+test('a level in the order that is not listed says which levels there are', async () =>
+  expect(await flowProblems(withLines(twoLevels, 'levels = ["level-1", "level-9"]'))).toEqual([
+    'automata.toml: levels[1]: No level has the id "level-9". The levels are: level-1, level-2.',
+  ]))
+
+test('a start level that is not in the order says where to add it', async () =>
+  expect(await flowProblems(withLines(twoLevels, 'levels = ["level-2"]'))).toEqual([
+    'automata.toml: start: "level-1" is not in levels. Add it there, or take the levels line out.',
+  ]))
+
+test('a warning the source language has no words for says which file to add it to', async () =>
+  expect(await flowProblems(withLines(templateFiles, 'warnings = ["warning.flashing"]'))).toEqual([
+    'automata.toml: warnings[0]: The game\'s words have no "warning.flashing". Add it to content/messages/en.json.',
+  ]))
+
+test('a game with no words cannot have warnings, and is told what to do', async () => {
+  const loaded = await loadGame(
+    readFixture({
+      'automata.toml': (fixtureFiles['automata.toml'] ?? '').replace(
+        'hero = "hero"\n',
+        'hero = "hero"\nwarnings = ["warning.flashing"]\n',
+      ),
+    }),
+  )
+  expect(loaded.ok ? [] : loaded.diagnostics.map(formatDiagnostic)).toEqual([
+    'automata.toml: warnings: This game lists no words, so a warning has nothing to say. List a messages file, or take the warnings line out.',
+  ])
+})
+
+test('a splash that is not a listed figure says which figures there are', async () =>
+  expect(await flowProblems(withLines(templateFiles, 'splash = "logo"'))).toEqual([
+    'automata.toml: splash: No figure has the id "logo". The figures are: crate, hero.',
+  ]))

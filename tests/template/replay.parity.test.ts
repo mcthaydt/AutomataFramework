@@ -87,3 +87,18 @@ for (const source of LANGUAGES)
     made.push(sim)
     expect(verifyReplay(sim, parseReplay(recorded))).toEqual({ ok: true })
   })
+
+// The flow's four fields tell a screen what to show; none says what happens. Written into the template's project they
+// leave the golden's hash as it is (plan U, Task 1).
+test('the recorded play ends on the same hash when the project names levels, a done event and a splash', async () => {
+  if (recorded === undefined) throw new Error('REPLAY NOT RECORDED: see the first test of this file.')
+  const toml = (templateFiles['automata.toml'] ?? '').replace(
+    'hero = "hero"\n',
+    'hero = "hero"\nlevels = ["level-1"]\ndone = "spark.taken"\nsplash = "hero"\n',
+  )
+  const loaded = await loadGame(readFiles({ 'automata.toml': toml }))
+  if (!loaded.ok) throw new Error(loaded.diagnostics.map((d) => d.message).join('\n'))
+  const sim = await createGameSim({ content: loaded.value, plugins: gamePlugins })
+  made.push(sim)
+  expect(verifyReplay(sim, parseReplay(recorded))).toEqual({ ok: true })
+})
