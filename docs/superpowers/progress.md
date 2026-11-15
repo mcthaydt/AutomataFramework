@@ -2,6 +2,17 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 7: the feel runtime (dust, shake and freeze on screen)
+
+Spec: [`specs/2026-11-15-feel-runtime-design.md`](specs/2026-11-15-feel-runtime-design.md)
+
+Overall: **10%** (the spec is written and in review; stages 2 to 7 follow, after plan H)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Written, in review, 100%. The Owner answered (2026-11-15): freeze is a real pause offline and a held picture online (A); a "Screen shake" switch in the game's settings, on by default and off first when the device asks for reduced motion (A). Also covers the Feel editor's "Show me" (Editors PR 30, F4): `showFeel` plays one feel file once in a running game, presentation only. No golden moves; no new dependency | `specs/2026-11-15-feel-runtime-design.md` |
+| 2 to 7 (plan F) | Not started; plan F lands after plan H, before plan D's Part 6 | |
+
 ## Cycle 6: the built-in hero (walk, jump and more, from content)
 
 Spec: [`specs/2026-11-14-content-hero-controls-design.md`](specs/2026-11-14-content-hero-controls-design.md)
