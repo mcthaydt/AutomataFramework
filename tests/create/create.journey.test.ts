@@ -39,6 +39,7 @@ const SIZES: readonly Size[] = [
 
 /** What a page's own `window` offers an agent or a test, as far as this journey reads it. */
 interface PageGame {
+  feel(): { readonly specks: readonly unknown[] }
   readonly sim: {
     readonly tick: number
     describeSnapshot(): {
@@ -46,7 +47,7 @@ interface PageGame {
     }
   }
 }
-type PageWindow = { automataGame?: PageGame }
+type PageWindow = { automataGame?: PageGame; __dust?: number }
 
 let work = ''
 let gameFolder = ''
@@ -282,6 +283,24 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
           await expect.poll(() => hint.count(), POLL).toBe(0)
         }
         await page.screenshot({ path: `${shots}${name}-${size.width}x${size.height}.png` })
+
+        // The new game's own feel file is heard: a landing kicks up dust (the most specks any frame drew is kept, since
+        // the dust lasts a third of a second).
+        if (!size.touch) {
+          await page.evaluate(() => {
+            const w = window as unknown as PageWindow
+            w.__dust = 0
+            const note = (): void => {
+              w.__dust = Math.max(w.__dust ?? 0, w.automataGame?.feel().specks.length ?? 0)
+              requestAnimationFrame(note)
+            }
+            note()
+          })
+          await page.keyboard.press('Space')
+          await expect
+            .poll(() => page.evaluate(() => (window as unknown as PageWindow).__dust ?? 0), POLL)
+            .toBeGreaterThan(0)
+        }
 
         // A broken level file is put in words, in the page; put back, the game plays again.
         if (size.width === 1280) {

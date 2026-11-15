@@ -92,6 +92,21 @@ test('the page starts the game, and holding right moves the hero', async () => {
   expect(heroX(shown)).toBeGreaterThan(before + 1)
 })
 
+test("the template's hero kicks up dust at its feet when it lands", async () => {
+  await page.viewport(1280, 720)
+  const { frames, shown } = await open({ language: 'en' })
+  run(frames, 30)
+  // Jump, and watch every frame on the way down: the landing's dust is drawn at least once.
+  key('keydown', 'Space')
+  let most = 0
+  for (let i = 0; i < 90; i++) {
+    run(frames, 1)
+    if (i === 3) key('keyup', 'Space')
+    most = Math.max(most, shown.game?.feel().specks.length ?? 0)
+  }
+  expect(most).toBeGreaterThan(0)
+})
+
 test('a broken level is shown in words, in the page', async () => {
   const level = JSON.parse(templateFiles['content/levels/level-1.json'] ?? '') as { things: { x: unknown }[] }
   ;(level.things[0] as { x: unknown }).x = 'far'
