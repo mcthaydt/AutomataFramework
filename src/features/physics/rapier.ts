@@ -52,7 +52,7 @@ function colliderDesc(entity: EntityRef): RAPIER.ColliderDesc {
         `entity ${entity.sid}: physics.collider is a slope ${c.hx * 2} by ${c.hy * 2} that Rapier cannot shape`,
       )
   }
-  // A ledge is told about every contact it makes, so `passes` can say whether it holds what touches it.
+  // A ledge is told about every contact it makes, so `holds` can say whether it holds what touches it.
   if (c.shape === ShapeKind.ledge) desc.setActiveHooks(RAPIER.ActiveHooks.FILTER_CONTACT_PAIRS)
   return desc
     .setSensor(c.sensor)
@@ -82,11 +82,12 @@ function reachBelow(collider: RAPIER.Collider): number | undefined {
 }
 
 /**
- * Whether `ledge` holds `other` this step: only when `other` is not moving up and its lowest point is at or above the
+ * Whether `ledge` holds `other` now: only when `other` is not moving up and its lowest point is at or above the
  * ledge's top (less `LEDGE_SLOP`). A thing rising through it, or standing below it, passes. The lowest point is read
  * upright, so a turned box is judged by its upright one; a hero never turns, and slice 1 accepts that for the rest.
+ * Reads the world, so never inside a step: during one Rapier has the world borrowed, and `ledgeFacts` is read before.
  */
-function passes(world: World, ledge: RAPIER.Collider, other: RAPIER.Collider): boolean {
+function holds(world: World, ledge: RAPIER.Collider, other: RAPIER.Collider): boolean {
   const parent = world.colliders.raw.coParent(other.handle)
   const reach = reachBelow(other)
   // Something this cannot judge (no body, a shape it does not measure) is held as any ground holds it.
@@ -94,6 +95,37 @@ function passes(world: World, ledge: RAPIER.Collider, other: RAPIER.Collider): b
   if (world.getRigidBody(parent).linvel().y < 0) return false
   const top = ledge.translation().y - (ledge.halfExtents() as RAPIER.Vector).y
   return other.translation().y + reach <= top + LEDGE_SLOP
+}
+
+/**
+ * What the contact hook knows of a step, read before it starts (Rapier has the world borrowed while it runs, so the hook
+ * can read nothing from it): each ledge's top, and for everything else that can move, the height of its lowest point,
+ * which is infinite for a thing moving up (no ledge holds it) and minus infinite for one this cannot judge (every ledge
+ * holds it). Positions are those the step begins with. Empty when the world has no ledge.
+ */
+interface LedgeFacts {
+  readonly tops: Map<number, number>
+  readonly lows: Map<number, number>
+}
+
+function ledgeFacts(world: World): LedgeFacts {
+  const tops = new Map<number, number>()
+  const lows = new Map<number, number>()
+  world.forEachCollider((collider) => {
+    if (isLedge(collider))
+      tops.set(collider.handle, collider.translation().y - (collider.halfExtents() as RAPIER.Vector).y)
+  })
+  if (tops.size === 0) return { tops, lows }
+  world.forEachCollider((collider) => {
+    if (isLedge(collider)) return
+    const parent = world.colliders.raw.coParent(collider.handle)
+    if (parent === undefined || world.getRigidBody(parent).isFixed()) return
+    const reach = reachBelow(collider)
+    if (reach === undefined) lows.set(collider.handle, Number.NEGATIVE_INFINITY)
+    else if (world.getRigidBody(parent).linvel().y < 0) lows.set(collider.handle, Number.POSITIVE_INFINITY)
+    else lows.set(collider.handle, collider.translation().y + reach)
+  })
+  return { tops, lows }
 }
 
 export async function createRapier(setup: {
@@ -113,17 +145,18 @@ export async function createRapier(setup: {
   // case this misses is `fixedRotation` edited after the last sync-in and before the snapshot; that edit is then lost
   // for the restored sim until it is edited again.
   const rotationLocked = new Map<number, boolean>()
-  // The world being stepped, for the contact hook: Rapier hands it two collider handles and nothing else. The flag a
-  // ledge carries is in the world and its snapshot, so no handle is kept here and a restored world needs nothing.
-  let stepping: World | undefined
+  // What the contact hook knows of the step under way: Rapier hands it two collider handles and nothing else, and has the
+  // world borrowed while it runs, so the facts are read before the step. The flag a ledge carries is in the world and its
+  // snapshot, so no handle outlives a step and a restored world needs nothing.
+  let facts: LedgeFacts = { tops: new Map(), lows: new Map() }
   const hooks: RAPIER.PhysicsHooks = {
     filterContactPair(first, second) {
-      if (stepping === undefined) return RAPIER.SolverFlags.COMPUTE_IMPULSE
-      const a = stepping.getCollider(first)
-      const b = stepping.getCollider(second)
-      const [ledge, other] = isLedge(a) ? [a, b] : [b, a]
-      if (!isLedge(ledge) || isLedge(other)) return RAPIER.SolverFlags.COMPUTE_IMPULSE
-      return passes(stepping, ledge, other) ? RAPIER.SolverFlags.COMPUTE_IMPULSE : RAPIER.SolverFlags.EMPTY
+      const [ledge, other] = facts.tops.has(first) ? [first, second] : [second, first]
+      const top = facts.tops.get(ledge)
+      const low = facts.lows.get(other)
+      // Not a ledge against something that moves: held as any ground holds.
+      if (top === undefined || low === undefined) return RAPIER.SolverFlags.COMPUTE_IMPULSE
+      return low <= top + LEDGE_SLOP ? RAPIER.SolverFlags.COMPUTE_IMPULSE : RAPIER.SolverFlags.EMPTY
     },
     filterIntersectionPair: () => true,
   }
@@ -143,12 +176,8 @@ export async function createRapier(setup: {
     restoreWorld: (bytes) => RAPIER.World.restoreSnapshot(bytes),
     takeSnapshot: (world) => world.takeSnapshot(),
     step(world, onCollision) {
-      stepping = world
-      try {
-        world.step(queue, hooks)
-      } finally {
-        stepping = undefined
-      }
+      facts = ledgeFacts(world)
+      world.step(queue, hooks)
       queue.drainCollisionEvents(onCollision)
     },
     free(world) {
@@ -361,7 +390,7 @@ export async function createRapier(setup: {
         const theirs = world.getCollider(other)
         if (theirs.isSensor()) continue
         // A ledge that lets this body pass makes no contact it stands on or leans on.
-        if (isLedge(theirs) && !passes(world, theirs, mine)) continue
+        if (isLedge(theirs) && !holds(world, theirs, mine)) continue
         const parent = world.colliders.raw.coParent(other)
         // A wall is something that does not move, so a kinematic platform's side is not one: only a fixed body, or a
         // collider with no body at all, is. A body that moves (dynamic or kinematic) is still ground under a foot.

@@ -61,16 +61,16 @@ export function sceneFromLevel(
     seed: 0,
     tile: TILE,
     size: { w: rows[0]?.length ?? 0, h: rows.length },
-    sky: old.sky,
-    backdrop: old.backdrop,
+    ...(old.sky === undefined ? {} : { sky: old.sky }),
+    ...(old.backdrop === undefined ? {} : { backdrop: old.backdrop }),
     // A scene needs a paint, and a tileset's material draws none of its own: the colour is the ground's anyway.
     paints: [{ id: 'ground', color }],
     materials,
     ground: {
-      color: old.ground,
+      ...(old.ground === undefined ? {} : { color: old.ground }),
       // A level with no tileset spawned one box a row, unless the hero is one the framework moves, which joined its
       // boxes; keeping what it did is what keeps its recorded play as it was.
-      oneBoxPerRow: old.tileset === undefined && !heroMoves ? true : undefined,
+      ...(old.tileset === undefined && !heroMoves ? { oneBoxPerRow: true as const } : {}),
       letters,
       rows,
     },
@@ -79,10 +79,10 @@ export function sceneFromLevel(
     format: 1,
     id: old.id,
     scene: sceneId,
-    view: old.view,
+    ...(old.view === undefined ? {} : { view: old.view }),
     things: old.things,
     starts: old.starts,
-    joints: old.joints,
+    ...(old.joints === undefined ? {} : { joints: old.joints }),
   }
   return { scene, level }
 }

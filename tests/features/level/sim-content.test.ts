@@ -256,7 +256,7 @@ test('a scene the sim is given is cut down to its size and ground, and a photo i
   expect(given.photos).toBeUndefined()
   expect(Object.keys(given.scenes?.meadow ?? {}).sort()).toEqual(['format', 'ground', 'id', 'size'])
   const ground = given.scenes?.meadow?.ground
-  expect(Object.keys(ground ?? {}).sort()).toEqual(['letters', 'rows'])
+  expect(Object.keys(ground ?? {}).sort()).toEqual(['color', 'letters', 'rows'])
   expect(Object.keys(ground?.letters[0] ?? {}).sort()).toEqual(['letter', 'shape'])
   expect(given.project.content.some((entry) => entry.type === 'photo')).toBe(false)
   expect(given.project.content.some((entry) => entry.type === 'scene')).toBe(true)
@@ -290,7 +290,7 @@ test("a scene's paint, material, seed, sky and tile move no hash, and a row or a
   expect(
     await same((scene) => {
       const row = scene.ground.rows[0] as string
-      scene.ground.rows[0] = `#${row.slice(1)}`
+      scene.ground.rows[0] = `G${row.slice(1)}`
     }),
   ).not.toBe(base)
   expect(
