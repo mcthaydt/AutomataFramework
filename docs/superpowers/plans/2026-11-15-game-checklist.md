@@ -9,8 +9,8 @@ its own code, keeps meeting it because `automata check` and a browser in its own
 
 **Architecture:** Three places carry the checklist. The flow gains what a finished game has and ours lacks: losing and
 Try again, Start again, How to play, a goal line, a score and its best, a sound switch, Delete all my saves, a loading
-bar that says when it is slow, Back, and page-wide touch and scroll defaults. The template becomes one `startFlow` call
-under a strict content security policy, with a level that can be lost and won (this is plan K's Step U). `automata
+bar that says when it is slow, Back, and page-wide touch and scroll defaults. The template becomes one `startFlow` call,
+with a level that can be lost and won (this is plan K's Step U). `automata
 check` gains a `page` part, a `words` rule, an "ends" rule and `--ship`. Everything the flow shows still comes from
 files (`automata.toml`, the messages), and nothing new reaches a sim unless a game asks for it, so only the template's
 own recording moves.
@@ -49,8 +49,12 @@ every part).
   `tests/golden/fall.json`), recorded from CI the way `tests/fixtures/golden.ts` says, in a commit that says "new".
 - **Only the boxes about the game itself** (the Owner, 2026-11-15). Nothing here is about sending a game to a host:
   no store page, no age rating, no questions asked at sending, no appeal. No file, word or check names a host.
-  "No ads" is left out too (the Owner, 2026-11-15): it is one host's rule. No check, sentence or test here is about
-  ads; the policy and the `page` part stay for what they hold under "It's safe" and "nothing pops up".
+- **Cut by the Owner as one host's rules (2026-11-15), and not in this plan:** "no ads"; never asking for money;
+  no tracking and the lockdown on outside sites (so no content security policy and no `[network] allow`); a check
+  that fails a game still the starter; and the device and gamepad checks (the Android run, the no-WebGPU test, the
+  made game played by gamepad). The framework's own standing rules are not cut: every screen still works by touch,
+  gamepad and keys, and the existing `create-play` job still plays a new game in three engines at five sizes. A later
+  export target for that host will hold a game to the whole list (Handoffs).
 - **Mobile first** (the Owner, 2026-11-14): every new screen and line is designed and tested at 390 by 844 first.
   Input priority is touch, then gamepad, then keyboard and mouse.
 - **Touch targets:** every control at least 44 CSS pixels both ways, every primary action at least 48, at every size in
@@ -148,10 +152,8 @@ audit should weigh each.
     lists). After 10 seconds with no file arriving, the slow line, in the device's language when it is one of the six
     and never otherwise. A read that fails is tried once more after one second. The problem screen's button keeps its
     words, "Load the page again": "Try again" is what the lost screen says, and one button name means one thing.
-14. **The policy is a line in the game's `index.html` that `automata check` holds to `pagePolicy(project)`**, a pure
-    function. `automata create` writes it and `automata check --fix` rewrites it. No build plugin: nothing runs at
-    build time that an agent cannot read in a file. The project file names no room server today, so there is no
-    `<room>` of its own: an online game lists its room server in `[network] allow`, the one list.
+14. **(Cut.)** The page's content security policy and `[network] allow` were this call. The Owner cut them
+    (2026-11-15); the text is in this file's history (commit bfc4e414) for the later export-target plan.
 15. **`--ship` is a flag of `automata check`** (the spec's call) and adds one step, `ship`, after `tests`. Plain
     `check` says the same findings as notes.
 16. **The saves-version check reads `gameSave`**, an optional export of a game's `src/headless.ts` (a `SaveDef`).
@@ -182,21 +184,16 @@ The inputs the spec implies and no happy-path test would meet. Each names its te
 5. **The network at its worst while loading:** a file that arrives after the slow line showed, one that fails once and
    then arrives, one that fails twice, and all files failing. The bar never goes backwards, the slow line goes when a
    file arrives, and the end is the game or the problem screen, never a blank. Task 11 (`loading.browser.test.ts`).
-6. **The real policy in a real browser, in development:** the template under its `<meta>` served by `automata play`
-   (Vite's own socket and styles) and from the built folder, in three engines, raises no `securitypolicyviolation`.
-   Task 14's test. If one is raised that the game does not need (Vite's socket in one engine), stop and report it with
-   the violation's text; do not loosen the policy to pass.
 
 ## File Structure
 
 ```
-src/features/content/project.ts          + lost, score, [network] allow; scoreRef
-src/features/content/policy.ts           NEW: pagePolicy(project), POLICY_META, readPolicy(html)
+src/features/content/project.ts          + lost, score; scoreRef
 src/features/content/load.ts             the new fields' cross-file checks
 src/features/level/fall.ts               NEW: fallPlugin, fellEvent, levelBottom
 src/features/level/uses.ts               + usesFalls
 src/features/level/game-sim.ts           joins fallPlugin when the game asks
-src/features/level/sim-content.ts        lost, score and network leave what the sim is given
+src/features/level/sim-content.ts        lost and score leave what the sim is given
 src/features/sim/create-sim.ts           + Sim.read(resourceId)
 src/features/audio/settings.ts           + muted
 src/features/web/speaker.ts              a compressor before the master gain
@@ -225,8 +222,8 @@ src/features/cli/
   check-words.ts                         NEW: the words rule
   check-ends.ts                          NEW: done, lost and score can happen
   check-ship.ts                          NEW: the ship step and its list
-  check.ts args.ts report.ts help.ts mcp-tools.ts replay.ts create.ts   --ship, the new step, meta.save, the policy
-template/                                the page, the level, the door, the words, the feels and sounds, the policy,
+  check.ts args.ts report.ts help.ts mcp-tools.ts replay.ts             --ship, the new step, meta.save
+template/                                the page, the level, the door, the words, the feels and sounds,
                                          tests/play/, vitest.play.config.ts, the second CI job; the recording
 skills/, template/AGENTS.md, README.md   the maker's boxes; the new fields, screens and checks
 tests/                                   mirrors the above; tests/fixtures/flow/ gains a level that can be lost
@@ -236,7 +233,7 @@ tests/                                   mirrors the above; tests/fixtures/flow/
 
 ## Part B1: what needs no page (pull request 1)
 
-### Task 1: The project file says what loses a level, what the score is, and who the game may talk to
+### Task 1: The project file says what loses a level and what the score is
 
 **Files:**
 - Modify: `src/features/content/project.ts`, `src/features/content/load.ts`, `src/features/level/sim-content.ts`,
@@ -253,41 +250,34 @@ export interface Project {
   readonly lost?: string | undefined
   /** The number the game counts: a resource and one of its fields, like `hero.score.sparks`. */
   readonly score?: string | undefined
-  /** Other addresses the game may talk to. Left out, only its own. */
-  readonly network?: { readonly allow: readonly string[] } | undefined
 }
 /** `score` as its two halves: the last dot splits them. `undefined` when the project names none. */
 export function scoreRef(project: Project): { readonly resource: string; readonly field: string } | undefined
 ```
 
   `lost` is checked as `done` is (the same custom check, at most 96 characters, `WORDS_PATTERN`). `score` is at most 96
-  characters, `WORDS_PATTERN`, with at least one dot. `network.allow` is 1 to 16 entries, none twice, each an `https:`
-  or `wss:` origin with no path, query or userinfo (`https://api.example.com`, `wss://rooms.example.com:2567`).
-  `sim-content.ts`'s `FLOW_FIELDS` becomes `['levels', 'done', 'warnings', 'splash', 'lost', 'score', 'network']`, and
-  the three new keys leave the project the sim is given.
+  characters, `WORDS_PATTERN`, with at least one dot. `sim-content.ts`'s `FLOW_FIELDS` becomes
+  `['levels', 'done', 'warnings', 'splash', 'lost', 'score']`, and the two new keys leave the project the sim is given.
 
 - [ ] **Step 1: Write the failing tests.**
 
 ```ts
-test('lost, score and [network] allow are read', …)            // lost: 'hero.fell', score: 'hero.score.sparks'
-test('a project that writes none of them has none of the keys', …)   // Object.hasOwn false for all three
+test('lost and score are read', …)                             // lost: 'hero.fell', score: 'hero.score.sparks'
+test('a project that writes none of them has none of the keys', …)   // Object.hasOwn false for both
 test.each([
   ['lost = "Hero Fell!"', 'Write the event that loses a level, like lost = "hero.fell".'],
   ['score = "sparks"', 'Write a resource and one of its numbers, like score = "hero.score.sparks".'],
-  ['[network]\nallow = ["http://a.example"]', 'Write an address that starts with https:// or wss:// and has no path, like "https://api.example.com".'],
-  ['[network]\nallow = ["https://a.example/x"]', /* the same sentence */],
-  ['[network]\nallow = ["https://a.example", "https://a.example"]', 'This address is already in the list.'],
 ])('%s is refused with its sentence', …)
 test('lost and done may not name the same event', …)   // 'A level cannot be won and lost by the same event. Change lost or done.'
 test('scoreRef splits at the last dot', …)             // { resource: 'hero.score', field: 'sparks' }
 // sim-content.test.ts
-test('lost, score and network never reach the sim: the content hash is the same with and without them', …)
+test('lost and score never reach the sim: the content hash is the same with and without them', …)
 ```
 
 - [ ] **Step 2: Push; red.**
-- [ ] **Step 3: Add the three fields, their hints, `scoreRef` and the `FLOW_FIELDS` entries.**
+- [ ] **Step 3: Add the two fields, their hints, `scoreRef` and the `FLOW_FIELDS` entries.**
 - [ ] **Step 4: Push; green, and every golden unchanged.**
-- [ ] **Step 5: Commit** `feat(content): the project file names what loses a level, the score and who the game may talk to`.
+- [ ] **Step 5: Commit** `feat(content): the project file names what loses a level and the score`.
 
 ### Task 2: A hero that falls out of the level says so
 
@@ -541,7 +531,6 @@ test('two heroes fall in one tick: one lost screen, attempt unchanged until Try 
 test('a hero that falls through the door in the tick it touches it: Well done, not You lost', …)  // Review Focus 1
 test('screen.lost is raised once on the audio', …)
 test('pause, Start again, No: still paused; Start again, yes: playing afresh, attempt up by one', …)
-test('by gamepad alone: fall, press the bottom button, play again', …)
 test('by keys alone: fall, Enter, play again', …)
 // restart.browser.test.ts
 test('Try again pressed twice in one frame starts one game', …)                                  // Review Focus 2
@@ -873,17 +862,17 @@ test('a press on a screen that is fading out does nothing', …)
 ### Task 13: The fixture game's whole visit, lost and won, and what every screen owes
 
 **Files:**
-- Modify: `tests/features/flow/journey-touch.browser.test.ts`, `journey-pad.browser.test.ts`,
+- Modify: `tests/features/flow/journey-touch.browser.test.ts`,
   `journey-keys.browser.test.ts`, `journey-sizes.browser.test.ts`, `tests/features/flow/grandma.test.ts`
 - Create: `tests/features/flow/names.browser.test.ts`, `tests/features/ui/contrast.test.ts`,
-  `tests/features/flow/away.browser.test.ts`, `tests/features/render/no-webgpu.browser.test.ts`
+  `tests/features/flow/away.browser.test.ts`
 
 - [ ] **Step 1: Write the failing tests.**
 
 ```ts
-// the three journeys each gain one visit
+// the touch and keys journeys each gain one visit (the gamepad's stays as plan U left it; each new screen's own
+// test still walks it by gamepad, as every screen's does)
 test('touch: read the goal, tap to start, fall, Try again, reach the door, Next level, pause, How to play, Back, Sound off, Start again, yes, the last door, Main menu', …)
-test('gamepad alone: the same visit', …)
 test('keys alone: the same visit, and Back (the browser\'s) pauses', …)
 // journey-sizes: the lost screen, How to play, the start card and the loading bar join the screens opened at each size
 // names.browser.test.ts
@@ -894,8 +883,6 @@ test('the kit\'s words on its surfaces, and on its primary button, are 4.5 to 1 
 test('hide the page mid-jump and show it: paused; Keep playing; the level can still be finished; no sound played while hidden', …)
 test('no sound is asked of the speaker before the first press of the visit', …)
 test('with both volumes at 0 a level is lost, tried again and won', …)
-// no-webgpu.browser.test.ts
-test('with navigator.gpu deleted, a game starts and draws its first picture', …)
 ```
 
   `grandma.test.ts`: the list of words owed (Task 5) is empty; the lost and how screens each name exactly one
@@ -903,7 +890,7 @@ test('with navigator.gpu deleted, a game starts and draws its first picture', �
 - [ ] **Step 2: Push; red where a screen falls short.** Fix the screen, not the test. A size that cannot fit without
   shrinking a control below its floor is a stop: report it.
 - [ ] **Step 3: Push; green in three engines.** The pictures reach `ci-screens`.
-- [ ] **Step 4: Commit** `test(flow): a visit lost and won by thumb, gamepad and keys; names, contrast, a hidden page`.
+- [ ] **Step 4: Commit** `test(flow): a visit lost and won by thumb and by keys; names, contrast, a hidden page`.
 - [ ] **Step 5: Open pull request 2. Report the pictures to the coordinator** for the Owner's screenshot review (the
   five sizes; say plainly the fixture's art is boxes). Tracker to 52% of stage 4.
 
@@ -911,37 +898,17 @@ test('with navigator.gpu deleted, a game starts and draws its first picture', �
 
 ## Part A: the template on the flow (pull request 3; plan K's Step U)
 
-### Task 14: The policy, and the template's page as one `startFlow` call
+### Task 14: The template's page as one `startFlow` call
 
 **Files:**
-- Create: `src/features/content/policy.ts`, `tests/features/content/policy.test.ts`,
-  `tests/template/policy.browser.test.ts`
-- Modify: `template/index.html`, `template/src/features/page/page.ts`, `template/src/main.ts`,
-  `template/src/style.css`, `template/content/messages/*.json`, `src/features/cli/create.ts`, `src/headless.ts`,
+- Modify: `template/src/features/page/page.ts`, `template/src/main.ts`,
+  `template/src/style.css`, `template/content/messages/*.json`,
   `tests/template/page.browser.test.ts`, `tests/template/words.test.ts`, `tests/template/messages.test.ts`,
-  `tests/template/files.test.ts`, `tests/features/cli/create.test.ts`
+  `tests/template/files.test.ts`
 
 **Interfaces:**
-- Consumes: `Project.network` (Task 1); `startFlow` and everything Part B gave it.
-- Produces:
-
-```ts
-/** The content security policy a game's page carries: the spec's text, with `network.allow` after 'self' in connect-src. */
-export function pagePolicy(project: Pick<Project, 'network'>): string
-/** The `<meta http-equiv="Content-Security-Policy" content="…">` line for it. */
-export function policyMeta(project: Pick<Project, 'network'>): string
-/** The policy a page's HTML carries in such a meta, or undefined when it has none. */
-export function readPolicy(html: string): string | undefined
-```
-
-  `pagePolicy({})` is exactly:
-
-  `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'`
-
-  (`worker-src 'self'` is the spec's "It's safe" row written out.) `template/index.html` carries `policyMeta({})` as
-  the first element of `<head>` after the charset.
-
-  `template/src/features/page/page.ts` becomes:
+- Consumes: `startFlow` and everything Part B gave it.
+- Produces: `template/src/features/page/page.ts` becomes:
 
 ```ts
 export function startPage(root: HTMLElement, options: PageOptions = {}): Promise<Flow>
@@ -958,24 +925,15 @@ export function startPage(root: HTMLElement, options: PageOptions = {}): Promise
 - [ ] **Step 1: Write the failing tests.**
 
 ```ts
-// policy.test.ts
-test('pagePolicy with no network is the exact text', …)
-test('allowed addresses follow \'self\' in connect-src, in the file\'s order, and appear nowhere else', …)
-test('readPolicy finds the meta whatever the order of its attributes, and undefined when there is none', …)
 // tests/template
-test('index.html carries exactly policyMeta of its own project', …)
 test('page.ts imports only the framework and the game\'s own files, calls startFlow once, and is under 60 lines', …)
 test('no message key starts with page.', …)
 // page.browser.test.ts, rewritten on the flow: a first visit walks picker, splash, menu, Play; a problem in a file is
 //   the framework's problem screen; ?watch plays the recording and a tap takes over; stop() empties the mount
-// policy.browser.test.ts: the template's built page served with its meta, in three engines             // Review Focus 6
-test('a whole visit (picker, menu, play, pause, settings, lose, win) raises no securitypolicyviolation', …)
-test('a script from another origin, an inline script, a frame and a fetch to another origin are each refused', …)
 ```
 
-- [ ] **Step 2: Push; red. Step 3: build. Step 4: push; green in three engines.** A violation the game itself causes
-  is a bug in the framework to fix here. One it does not need is a stop (Review Focus 6).
-- [ ] **Step 5: Commit** `feat(template): the page is one startFlow call under a strict policy`.
+- [ ] **Step 2: Push; red. Step 3: build. Step 4: push; green in three engines.**
+- [ ] **Step 5: Commit** `feat(template): the page is one startFlow call`.
 
 ### Task 15: A level that can be won and lost, for two players, and its recording
 
@@ -1090,7 +1048,6 @@ test('the recorded play of the template still plays, in this engine', …)      
 test('the game opens: a first visit reaches the menu, and nothing is outside the screen', …)
 test('Play: the hero reaches the door and the game says Well done', …)
 test('walk into the gap: You lost; Try again plays again without the page loading again', …)
-test('the whole visit asked nothing of any other address', …)     // page.on('request'): every URL is this origin, data: or blob:
 ```
 
   It reads the game only as a player and an agent can: `data-state`, `data-attempt`, what is on the screen, and
@@ -1129,59 +1086,45 @@ test('the whole visit asked nothing of any other address', …)     // page.on('
 
 All four are text and data: none starts a browser. Each sentence below is exact; a test holds each.
 
-### Task 18: The `page` part of the `rules` step, and the policy held in place
+### Task 18: The `page` part of the `rules` step
 
 **Files:**
 - Create: `src/features/cli/check-page.ts`, `tests/features/cli/check-page.test.ts`
-- Modify: `src/features/cli/check-rules.ts`, `src/features/cli/check-files.ts`, `src/features/cli/create.ts`,
-  `tests/features/cli/check-rules.test.ts`, `tests/features/cli/check-files.test.ts`
+- Modify: `src/features/cli/check-rules.ts`, `tests/features/cli/check-rules.test.ts`
 
 **Interfaces:**
-- Consumes: `pagePolicy`, `policyMeta`, `readPolicy` (Task 14); `Project.network` (Task 1).
 - Produces:
 
 ```ts
 /**
  * What a game's page may not do. `files` is every `.ts`, `.js`, `.svelte`, `.html` and `.css` under `src/` plus
- * `index.html`, by path; `allow` is `[network] allow`. Text, not a syntax tree, as `ruleProblems` is. Sorted by file,
- * then place.
+ * `index.html`, by path. Text, not a syntax tree, as `ruleProblems` is. Sorted by file, then place.
  */
-export function pageProblems(files: Readonly<Record<string, string>>, allow: readonly string[]): Diagnostic[]
+export function pageProblems(files: Readonly<Record<string, string>>): Diagnostic[]
 ```
 
   `rulesStep` reads those files and reports `ruleProblems` then `pageProblems`. Comments are skipped
-  (`withoutComments`). The names, and the sentence each gets (`{name}` is what was found):
+  (`withoutComments`). Three groups are held: nothing pops up, no password or personal details, nothing in the
+  background. (Money, tracking and outside addresses were cut by the Owner and have no row.) The names, and the
+  sentence each gets (`{name}` is what was found):
 
 | Found | Sentence |
 |---|---|
 | `alert(`, `confirm(`, `prompt(` | `{name} stops the game with a box the player did not ask for. Show a screen of your own instead.` |
-| `window.open`, `open(` on `window` or bare | `A game does not open windows. To offer a link, use host.openLink from a button the player presses.` |
+| `window.open`, `open(` on `window` or bare | `A game does not open windows by itself. To offer a link, use host.openLink from a button the player presses.` |
 | `Notification`, `PushManager` | `A game sends no notifications.` |
 | `document.write` | `document.write can wipe the page. Add elements with document.createElement.` |
-| `navigator.sendBeacon` | `A game does not send what players do anywhere. Take this out.` |
-| `PaymentRequest` | `A game never asks for money. Take this out.` |
 | `navigator.serviceWorker`, `new SharedWorker` | `A game runs nothing in the background. Take this out.` |
 | `navigator.geolocation`, `getUserMedia`, `getDisplayMedia`, `navigator.clipboard.read` | `A game does not ask for the player's place, camera, microphone or clipboard. Take this out.` |
-| `location.href =`, `location.assign(`, `location.replace(` with anything but a reload | `A game never sends the player to another page. Use host.openLink from a button the player presses.` |
 | `<input` or `createElement('input')` with `type` `password`, `email` or `tel`, or an `autocomplete` of `name`, `email`, `tel`, `street-address`, `postal-code`, `cc-number` or one starting `address-` | `A game never asks for a password or personal details. Take this field out.` |
-| `http://…`, `https://…`, `ws://…`, `wss://…` or `//host` in code or markup, when its origin is not in `allow` and is not `http://www.w3.org/` (a namespace) | `This game talks only to itself. To let it reach {origin}, add it to [network] allow in automata.toml and say why in a comment there.` |
-| `eval(`, `new Function(` | `The page's policy refuses code made from text. Write the function out.` |
-
-  The `files` step gains: `index.html` with no policy meta is a problem (`This page has no content security policy.
-  Run automata check --fix to put it back.`); one whose policy is not `pagePolicy(project)` is a problem (`The page's
-  content security policy does not match automata.toml. Run automata check --fix.`); `--fix` rewrites the meta, or
-  adds it after the charset. `automata create` writes it from the new game's own project file.
 
 - [ ] **Step 1: Write the failing tests:** one per row (found, at its line, with its sentence); then:
 
 ```ts
 test('the template as create writes it has no page problem', …)
 test('a name in a comment or as part of a longer name is not found', …)       // myalert(, // alert(
-test('an address in [network] allow is not a problem; the same host on another port is', …)
-test('location.reload() is not a problem', …)
+test('an address of another site in the code is not a problem', …)             // cut by the Owner: no row for it
 test('a game with no index.html says so once, at index.html', …)
-test('--fix puts a missing policy back, and rewrites one that does not match; a second run changes nothing', …)
-test('adding an address to [network] allow, then --fix: the policy has it in connect-src', …)
 ```
 
 - [ ] **Step 2: Push; red. Step 3: build. Step 4: push; green.**
@@ -1199,7 +1142,7 @@ test('adding an address to [network] allow, then --fix: the policy has it in con
 
 ```ts
 /** A finding that is a note every day and a problem under `--ship`. */
-export interface ShipFinding extends Diagnostic { readonly rule: 'words' | 'starter' | 'size' | 'small-words' | 'save' }
+export interface ShipFinding extends Diagnostic { readonly rule: 'words' | 'screens' | 'size' | 'small-words' | 'save' }
 export interface StepReport { /* …plus: */ readonly ship?: readonly ShipFinding[] }
 /** Messages that are not finished, in every language the game has. */
 export function unfinishedWords(content: GameContent): ShipFinding[]
@@ -1269,15 +1212,12 @@ export const BY_HAND: readonly string[]
 
 | Rule | When | Sentence |
 |---|---|---|
-| `starter` | `name` is "My Game", or `package.json`'s name is `my-game` | `This game is still called "{name}". Give it its own name in automata.toml and package.json.` |
-| `starter` | a level, figure or messages file is byte for byte the template's | `{file} is still the starter's. Make it your own, or take it out.` |
-| `starter` | `FlowOptions.screens` names a screen whose file is not there (an import under `src/` that does not resolve) | `{file} names a screen that is not there. Add the file, or take the screen out.` |
+| `screens` | `FlowOptions.screens` names a screen whose file is not there (an import under `src/` that does not resolve) | `{file} names a screen that is not there. Add the file, or take the screen out.` |
 | `size` | a picture under `content/` is over 512 KB | `{file} is {n} KB. A picture over 512 KB makes the game slow to open. Make it smaller.` |
 | `small-words` | a `font-size` under 14px in a `.css` or `.svelte` file under `src/` | `{file} has words {n} pixels tall. Under 14 a phone cannot read them.` |
 | `save` | `gameSave`'s schema hash differs from the newest recording's `meta.save` and its version does not | `The saved game's shape changed and its version did not, so players would lose their saves. Raise version in defineSave and add the step that upgrades the old one.` |
 
-  After the steps, the report prints `[network] allow` back (`This game may talk to: …`, or `This game talks only to
-  itself.`), then `BY_HAND` under "Try these yourself":
+  After the steps, the report prints `BY_HAND` under "Try these yourself":
 
 ```
 In five seconds, is it clear what to do?
@@ -1289,7 +1229,7 @@ Are there any stand-in pictures, half-made menus, or spots that do something whe
 Do the pictures and words look cared for, the same style on every screen?
 Is color ever the only clue? Is sound ever the only clue?
 Can luck make a level impossible? Does anything appear right on top of the player?
-Play it for ten minutes on a real iPhone, and on a real Android phone.
+Play it for ten minutes on a real phone.
 Play it with one hand, on bad Wi-Fi, after locking and unlocking the phone, and after many restarts.
 Hand it to someone and say nothing. Is it still fun after 30 seconds?
 ```
@@ -1301,9 +1241,7 @@ Hand it to someone and say nothing. Is it still fun after 30 seconds?
 - [ ] **Step 1: Write the failing tests.**
 
 ```ts
-test('check on a new game passes, with notes that it is still the starter', …)
-test('check --ship on a new game fails, naming the name and each starter file', …)
-test('rename it, redraw the level and the figures, change the words: --ship passes and prints the list', …)
+test('check --ship on a new game passes and prints the list', …)     // an unchanged starter is not a problem (the Owner)
 test('a TODO in a message is a note in check and a problem in --ship', …)
 test.each(/* every row above */)('%s', …)
 test('--ship --only files is refused with its sentence', …)
@@ -1328,28 +1266,24 @@ test('replay --accept writes meta.save for a game that exports gameSave, and not
 - Modify: `tests/create/create.journey.test.ts`, `.github/workflows/ci.yml` (`create-play` gets a 60 minute limit),
   `tests/workflows/ci.test.ts`
 
-The made game is served two ways: by its own `automata play`, and from its built folder (`npm run build`, then a
-plain static server over `dist/` under a sub-path, as a host serves it). Every case below runs against the built
-folder; the first three also run against `automata play`.
+The made game is served by its own `automata play`, as the journey serves it today.
 
 - [ ] **Step 1: Write the failing tests.**
 
 ```ts
-test.each(ENGINES × SIZES)('%s at %s: a first visit to the door, and every button and the canvas are inside the viewport and the safe area', …)
-test('Chromium with an Android phone\'s user agent and a mobile viewport: play to the door by touch', …)
-test('lose and try again by touch, by keys and by gamepad', …)
+test('lose and try again by touch and by keys', …)
+test('at each of the five sizes every button and the canvas are inside the viewport and the safe area', …)
 test('50 restarts: no reload, one canvas, the entity count of the first start', …)
 test('hide and show the page mid-level in three engines, and play on', …)
 test('reload on every screen (picker, splash, menu, playing, paused, settings, lost, done): the visit goes on from the saved settings and games', …)
 test('the address bar slides (the viewport\'s height changes by 80 px): everything still fits', …)
 test('the network slowed to 50 kb/s: the bar, then the slow line, then the game', …)
 test('one content file fails once: the game starts; fails always: the problem screen with its button', …)
-test('every request of a whole visit is to the game\'s own origin', …)
 test('no sound before the first tap; the level is won with the sound off', …)
 test('storage full of garbage under the game\'s keys: the game opens and plays', …)
 test('a swipe on the game at phone size does not move the page', …)
 test('the game\'s own play test passes: npm run build && npm run play-test', …)     // Chromium and WebKit are installed in this job
-test('automata check --ship on the untouched game fails with "still the starter"', …)
+test('automata check --ship on the untouched game passes and prints the list to try by hand', …)
 ```
 
 - [ ] **Step 2: Push; red. Step 3: fix what the journeys find, in the framework or the template, never in the test.**
@@ -1369,9 +1303,9 @@ test('automata check --ship on the untouched game fails with "still the starter"
 - [ ] **Step 1: Write the failing tests.** `readme.test.ts`: "Screens and the flow" names `lost`, `score`, the goal
   message, How to play, Back and `back: false`, each with one example; a new section, "The checklist every game
   meets", lists the Must-have groups in the spec's words with, for each box, where it is held (a default, a check, or
-  "yours": the `BY_HAND` line); "The automata command" documents `--ship`, the `page` part and `[network] allow`; a
+  "yours": the `BY_HAND` line); "The automata command" documents `--ship` and the `page` part; a
   new game's README says what its `play` job does and how to change the two numbers. `public-surface.test.ts`: the
-  browser entry has `lostScreen`, `howScreen`, `howRows`; the headless entry has `pagePolicy`, `scoreRef`,
+  browser entry has `lostScreen`, `howScreen`, `howRows`; the headless entry has `scoreRef`,
   `fellEvent`, `usesFalls`, and none of the screens.
 - [ ] **Step 2: Push; red. Step 3: write them** (developer text, in English, on purpose).
 - [ ] **Step 4: Push; every check green.**
@@ -1385,20 +1319,24 @@ test('automata check --ship on the untouched game fails with "still the starter"
 
 - **Plan D (Examples).** When its framework pin moves past pull request 2, the demo gets Try again, Start again, How
   to play, the sound switch, Delete all my saves, Back and the loading bar with no change. It names its own `lost`
-  (its co-op rule may raise its own event), `score` and `level.<id>.goal` in six languages, carries
-  `policyMeta(project)` in its page and gains a `play` job like the template's. Its recordings move only if it names
+  (its co-op rule may raise its own event), `score` and `level.<id>.goal` in six languages, and gains a `play` job like the template's. Its recordings move only if it names
   `lost = "hero.fell"`: that is a golden move there, named and shown.
 - **The Site.** It frames the demo and owns its own history: when the demo moves to this flow it passes
-  `back: false`, or Back in the Site would pause the framed game first. The framed game's policy is the game's own;
-  the Site's header must allow the frame as it does today.
+  `back: false`, or Back in the Site would pause the framed game first.
 - **Editors.** Nothing they call changes shape. `automata.toml`'s three new fields load when their pin moves. Their
   Play stays `startGame`, which does not wait for a press unless asked.
 - **Plan F (the feel runtime).** The start card and the score are in the HUD, over the mount: a shake must not move
   them. The template's `take` and `fall` feels are drawn once plan F draws feels; their buzz works now.
-- **Plan N (online).** An online game lists its room server in `[network] allow`; `startOnlineGame` keeps its own
-  page, and nothing here puts `lost` into a room.
+- **Plan N (online).** `startOnlineGame` keeps its own page, and nothing here puts `lost` into a room.
 - **Plan W's `automata words --compile`.** Step U was to wire it. Nothing in the checklist needs it, so this plan does
   not: it has no owner again, and the coordinator should give it one.
+- **A Ruken export target, later** (the Owner, 2026-11-15: "We'll eventually add Rukin as an export target. And when
+  we do, we should use all of the things that we said we need to have."). That target's plan holds a game to the
+  whole checklist, with what was cut here: no ads; never asking for money; no tracking and the lockdown on outside
+  sites (the content security policy, `[network] allow` and the address rules of the `page` part, written out in
+  this file's history at commit bfc4e414); a `--ship` that fails an unchanged starter; and the device and gamepad
+  checks (iPhone, Android, computer, WebGL without WebGPU, a game played by gamepad alone). `CLAUDE.md` still lists
+  Ruken as left out; that line changes with that plan, not this one.
 - **Release 4.** A publish step runs `automata check --ship`. `--ship` is ready for it; nothing here calls it.
 - **Before Release 1:** every word of Task 5 and the template's goal line wait for a native speaker's read in five
   languages.
@@ -1407,18 +1345,18 @@ test('automata check --ship on the untouched game fails with "still the starter"
 
 ## Self-review
 
-- **Spec coverage, Must have.** *It works:* iPhone, Android, computer (Task 21's sizes, engines and the Android run;
-  the built folder); WebGL without WebGPU (Task 13); gamepad (Tasks 6, 7, 13, 21); Play again always works, no reload
-  (Tasks 3, 6; 50 restarts in Tasks 6 and 21); never stuck (Start again and Menu on pause, Task 6; a level that cannot
-  end, Task 19); switching apps (Tasks 13, 21); reloading (Task 21); no scrolling (Tasks 10, 21); fits the screen
-  (Tasks 13, 21); no sound until a tap, playable with the sound off (Tasks 13, 21); slow or failed loading says so
-  (Tasks 11, 21). *There's a game here:* clear in five seconds (the goal line, the hint and the waiting start, Task 7;
-  the template's goal, Task 15); win or lose (Tasks 1 to 3, 6, 15; the note, Task 19); works it out alone (Task 7);
-  enough to do (the best score, Task 8; the maker's, Task 20). *Its own thing:* still the starter, and the art (Task
-  20). *Finished:* stand-in pictures and starter figures, test words, half-made menus (Tasks 19, 20); hidden spots and
-  sloppy pictures (the list, Task 20). *Honest:* nothing pops up to cut in (the policy, Task 14; the `page` part, Task 18); "no ads" is left out, as the Owner said;
-  the store-page boxes are left out, as the Owner said. *Safe:* passwords and details, money, tracking, other sites,
-  background work (Tasks 14, 18; every request same-origin, Tasks 16, 21).
+- **Spec coverage, Must have.** *It works:* Play again always works, with no reload (Tasks 3, 6; 50 restarts in Tasks
+  6 and 21); never stuck (Start again and Menu on pause, Task 6; a level that cannot end, Task 19); switching apps
+  (Tasks 13, 21); reloading (Task 21); no scrolling (Tasks 10, 21); fits the screen (Tasks 13, 21); no sound until a
+  tap, playable with the sound off (Tasks 13, 21); slow or failed loading says so (Tasks 11, 21). The device and
+  gamepad boxes are cut (the Owner); what the framework already proves for them stays as it is. *There's a game
+  here:* clear in five seconds (the goal line, the hint and the waiting start, Task 7; the template's goal, Task 15);
+  win or lose (Tasks 1 to 3, 6, 15; the note, Task 19); works it out alone (Task 7); enough to do (the best score,
+  Task 8; the maker's, Task 20). *Its own thing:* the art is the maker's (the list, Task 20); "still the starter" is
+  cut. *Finished:* test words, half-made menus (Tasks 19, 20); stand-in pictures, hidden spots and sloppy pictures
+  (the list, Task 20). *Honest:* nothing pops up to cut in (the `page` part, Task 18); "no ads" and the store-page
+  boxes are left out. *Safe:* passwords and details, and background work (Task 18); money, tracking and other sites
+  are cut.
 - **Spec coverage, Good to have.** Score and best (Tasks 1, 4, 8); double tap and long press (Task 10); address bar
   (Task 21); Back (Task 10); no slow-down over restarts (Tasks 6, 21); small files and tiny words (Task 20); mute
   (Tasks 4, 9); loud sounds and the music's seam (Task 12); loading progress and retry (Task 11); How to play, game
@@ -1426,12 +1364,12 @@ test('automata check --ship on the untouched game fails with "still the starter"
   (Task 20); time to react (Task 7); buttons have names, words readable (Task 13); something happens on score, hit
   and loss (Task 15's feels and sounds); screens change smoothly (Task 12). Everything the spec marks "done" gains
   the test the spec asks for in Tasks 13 and 21.
-- **Spec coverage, the rest.** The policy and `[network] allow`: Tasks 1, 14, 18. `--ship`: Task 20. Part A as plan
+- **Spec coverage, the rest.** `--ship`: Task 20. Part A as plan
   K's Step U, with the one move of the recording shown to the Owner: Tasks 14 to 17. Q1's answer: Task 16, run in
   Task 21. New words in six languages: Task 5. Skills and `AGENTS.md` name the maker's boxes: Task 20.
-- **Calls a reader should check.** The spec was brought into line with six of them after this plan was written
+- **Calls a reader should check.** The spec was brought into line with five of them after this plan was written
   (its commit 879c3d4e), so the two agree: the best score is a settings section (call 8); mute is a flag (call 9); the
-  goal is a message key by convention (call 5); the policy has no `<room>` and has `worker-src 'self'` (call 14); the
+  goal is a message key by convention (call 5); the
   problem screen's button keeps "Load the page again" (call 13); `hero.fell` is a plugin of its own, joined only when
   named (call 2), which is what keeps every other recording still. The rest are this plan's alone: `done` wins over
   `lost` (1), Start again asks (4), a level waits for the first press (6), what Delete erases (10), Back's rules (11),
@@ -1440,15 +1378,14 @@ test('automata check --ship on the untouched game fails with "still the starter"
 - **Not covered, on purpose:** the demo (handoff); the editors; a publish step; anything about sending a game to a
   host; `automata words --compile` (handoff, with no owner).
 - **End to end.** Every pull request has real-browser tests: pull request 1 the fall's parity in four engines; 2 every
-  new screen at five sizes and whole visits by thumb, gamepad and keys; 3 the template's page under its real policy
-  and the create journey on the flow; 4 `check --ship` through the packed package in `create-smoke`; 5 the made game
+  new screen at five sizes and whole visits by thumb and by keys; 3 the template's page and the create journey on the flow; 4 `check --ship` through the packed package in `create-smoke`; 5 the made game
   in three engines, and the game's own play test in two.
 - **Type consistency.** `FlowState.attempt`, `'lost'`, `'again'`, `'level-lost'` and `Over`'s `'how'` are Task 3's and
   are what Tasks 6, 7 and 10 read. `levelEnd` (Task 6) replaces `endsLevel`'s one use. `Records`, `withScore` and
   `heardVolumes` are Task 4's, used in Tasks 8 and 9. `scoreRef` (Task 1) is read by `Game.score()` (Task 8) and
-  `endProblems` (Task 19). `pagePolicy`, `policyMeta` and `readPolicy` are Task 14's, used in Task 18.
+  `endProblems` (Task 19).
   `ShipFinding` and `StepReport.ship` are Task 19's, used in Task 20. `PauseItem` and `MenuItem` each gain names in
   Tasks 6 and 7 and nowhere else.
-- **Review Focus.** Each of the six lines names a test in a task that owns the code (Tasks 3, 6, 8, 9, 10, 11, 14).
+- **Review Focus.** Each of the five lines names a test in a task that owns the code (Tasks 3, 6, 8, 9, 10, 11).
 - **Proportion.** The code blocks are signatures, tables of exact words and test names; no function body is written
   out.
