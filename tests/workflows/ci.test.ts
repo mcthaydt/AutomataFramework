@@ -29,6 +29,12 @@ test('the pictures go only to the ci-screens branch, one writer at a time', () =
   expect(screens).toMatch(/group: ci-screens\n {6}cancel-in-progress: false/)
 })
 
+test('ci-screens keeps only the newest pictures: main and the open pull requests', () => {
+  expect(screens).not.toContain('$COMMIT')
+  expect(screens).toContain('gh pr list --repo "$GITHUB_REPOSITORY" --state open')
+  expect(screens).toMatch(/^ {6}pull-requests: read$/m)
+})
+
 test('the package job copies the full game, so the packed install loads every kind of file', () => {
   const pack = jobs.slice(jobs.indexOf('\n  package:'))
   expect(pack).toContain('cp -r tests/fixtures/full-game "$smoke/full-game"')
