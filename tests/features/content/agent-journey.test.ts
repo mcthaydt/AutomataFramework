@@ -223,3 +223,47 @@ test('an agent misspells a value in one language and is told which', async () =>
   expect(told.join(' ')).toContain('{count}')
   expect(told.join(' ')).toContain('{cuont}')
 })
+
+test('an agent writes a scene by hand from the skill page, is told a slope has air under it, fixes it, and paints it', async () => {
+  // 1. It copies the smallest scene from the skill page, names it, and lists it in a game that has no scene yet.
+  const page = readFileSync(new URL('../../../skills/automata-content/scenes.md', import.meta.url), 'utf8')
+  const smallest = JSON.parse(/```json scene\n([\s\S]*?)```/.exec(page)?.[1] ?? '') as {
+    id: string
+    ground: { letters: object[]; rows: string[] }
+  }
+  smallest.id = 'yard'
+  const files: Record<string, string | undefined> = { ...fixtureFiles }
+  // `writeContent` refuses a scene that does not hold together, so a hand edit that does not is written as plain JSON.
+  const write = (): void => {
+    files['content/scenes/yard.json'] = `${JSON.stringify(smallest, null, 2)}\n`
+  }
+  write()
+  files['automata.toml'] += '\n[[content]]\ntype = "scene"\npath = "content/scenes/yard.json"\n'
+  const read = async (path: string): Promise<string> => files[path] ?? Promise.reject(new Error(path))
+  expect((await loadGame(read)).ok).toBe(true)
+
+  // 2. It adds a slope two tiles long, and leaves air under its upper tile.
+  smallest.ground.letters.push({ letter: '/', material: 'earth', shape: 'slope-up' })
+  smallest.ground.rows = ['........', '..../...', '.../....', 'GGGGGGGG']
+  write()
+  const slipped = await loadGame(read)
+  expect(slipped.ok ? [] : slipped.diagnostics.map(formatDiagnostic)).toEqual([
+    'content/scenes/yard.json: ground.rows[2]: The slope that starts at column 3 needs solid ground under it. The tile at column 4, row 2 is not solid: fill it, or shorten the slope.',
+  ])
+
+  // 3. It fills the tile, and the game loads.
+  smallest.ground.rows = ['........', '..../...', '.../G...', 'GGGGGGGG']
+  write()
+  const fixed = await loadGame(read)
+  if (!fixed.ok) throw new Error(fixed.diagnostics.map(formatDiagnostic).join('\n'))
+
+  // 4. The picture has not been painted, and the check says so; the painter's bytes, written, settle it.
+  const none = async (): Promise<Uint8Array | undefined> => undefined
+  expect((await artProblems(fixed.value, none)).map(formatDiagnostic)).toEqual([
+    'content/scenes/yard.png: This picture has not been painted. Run "automata art".',
+    'content/scenes/yard.atlas.json: This atlas has not been painted. Run "automata art".',
+  ])
+  const painted = Object.fromEntries(artFiles(fixed.value).map((file) => [file.path, file.bytes]))
+  expect(Object.keys(painted)).toEqual(['content/scenes/yard.png', 'content/scenes/yard.atlas.json'])
+  expect(await artProblems(fixed.value, async (path) => painted[path])).toEqual([])
+})

@@ -28,6 +28,8 @@ says which one is wrong.
 Each kind has a JSON Schema in the package, `schemas/<kind>.schema.json`, that lists every field and what it means. Read
 it for what the file may hold. The smallest whole file of each kind is below, to copy.
 
+A scene (the ground of a place, in rows of letters, made of photos, tiles or paints) has a page of its own, `skills/automata-content/scenes.md` in the package: every shape, every material, the photo library and the commands. Read it before you draft one.
+
 ## level
 
 A level: the walls, the things in it and where each player starts. Put the files in `content/levels/`; the kind's rules are in `schemas/level.schema.json`.

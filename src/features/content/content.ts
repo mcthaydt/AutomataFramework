@@ -100,6 +100,7 @@ export { MissingPhotoError, paintScene } from './paint-scene.ts'
 export { type Parsed, parseContent } from './parse.ts'
 export { MAX_PHOTO_SIDE, type PhotoFile, PhotoSchema, photoPictureProblem } from './photo.ts'
 export { PHOTO_LIBRARY, type PhotoPixels, type PhotoRecord, type Photos } from './photo-library.ts'
+export { type MaterialTile, materialTile } from './photo-tile.ts'
 export {
   type ContentRef,
   levelOrder,

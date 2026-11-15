@@ -234,6 +234,36 @@ test('the page entry has the flow, the kit and the screens, and headless has onl
   expect(ui).toContain('UI_PROPERTIES')
 })
 
+// Scenes (slice 1): what an agent or an editor reads and writes a scene file, and its pictures, with.
+test('the headless entry has every name a scene file is read, written, painted and played with', async () => {
+  const api = await import('#src/headless.ts')
+  for (const name of [
+    'SceneSchema',
+    'PhotoSchema',
+    'paintScene',
+    'sceneSheet',
+    'materialTile',
+    'sceneFromLevel',
+    'listContent',
+    'groundColliders',
+    'slopeRuns',
+    'gapsUnder',
+    'covers',
+    'surfaceAt',
+    'GROUND_SHAPES',
+    'PHOTO_LIBRARY',
+    'photosUsed',
+    'worldSize',
+    'decodePng',
+    'atlasText',
+  ])
+    expect(api, name).toHaveProperty(name)
+  // The ground's pages and tiles need the page's renderer, so they are the browser entry's.
+  for (const name of ['groundPages', 'placedTiles']) expect(api, name).not.toHaveProperty(name)
+  const render = readFileSync(new URL('../src/features/render/render.ts', import.meta.url), 'utf8')
+  for (const name of ['groundPages', 'placedTiles']) expect(render, name).toContain(name)
+})
+
 test('the committed JSON Schemas are what the code produces', () => {
   for (const type of Object.keys(CONTENT_TYPES) as ContentType[]) {
     const committed = JSON.parse(

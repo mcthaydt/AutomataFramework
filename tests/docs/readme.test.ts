@@ -270,6 +270,40 @@ test('the README names every command and every flag its help has, and no other',
   expect(readme).toContain('--help')
 })
 
+test("the README has a Scenes section whose scene file is a whole one, and whose names are the package's", () => {
+  const start = readme.indexOf('## Scenes')
+  expect(start).toBeGreaterThan(-1)
+  const scenes = readme.slice(start, readme.indexOf('\n## ', start + 1))
+  const file = /```json scene\n([\s\S]*?)```/.exec(scenes)?.[1] ?? ''
+  const parsed = framework.parseContent('scene', file, 'content/scenes/meadow.json')
+  expect(parsed.ok ? [] : parsed.diagnostics.map(framework.formatDiagnostic)).toEqual([])
+  for (const shape of framework.GROUND_SHAPES) expect(scenes, shape).toContain(`\`${shape}\``)
+  for (const word of [
+    'scene file',
+    'automata scene from-level',
+    'photos/',
+    'scenes.md',
+    'groundPages',
+    'placedTiles',
+  ])
+    expect(scenes, word).toContain(word)
+  for (const name of [
+    'SceneSchema',
+    'PhotoSchema',
+    'paintScene',
+    'sceneFromLevel',
+    'materialTile',
+    'PHOTO_LIBRARY',
+  ])
+    expect(framework, name).toHaveProperty(name)
+})
+
+test('the README names automata scene from-level and its two flags', () => {
+  const ref = section('## The automata command')
+  expect(ref).toContain('automata scene from-level <level> [folder]')
+  for (const flag of ['--as', '--json']) expect(ref, flag).toContain(`- \`${flag}`)
+})
+
 test('the README gives the exit codes, and every verdict of a replay', () => {
   const ref = section('## The automata command')
   for (const word of ['`0`', '`1`', '`2`']) expect(ref, word).toContain(word)
