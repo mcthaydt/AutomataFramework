@@ -2,6 +2,22 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 13: level links and the world map (values on things, doors between levels, level pictures)
+
+Spec: [`specs/2026-11-15-level-links-and-world-map-design.md`](specs/2026-11-15-level-links-and-world-map-design.md).
+From the LDtk report (picks 3, 4, 8 and 10). The Owner (2026-11-15): values and links on things, shown in the level,
+"draw it and spec it"; the world map, the same; levels join through a door; level pictures and a public list of format
+changes, both; "Expand the demo to support what we add".
+
+Overall: **8%** (stage 1 written, in review; stages 2 to 7 follow)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Written, in review (2026-11-15), 100%. Values declared by the character (`number`, `switch`, `choice`, `words`, `thing`, `path`, `leads-to`) with their limits, given on the placed thing; `one-per-level`; built-in switches (plate and button), gates that open, a `walk-path` act; doors into other levels in the flow, every player at once; the `world` file holds only where levels sit, what leads to what is the doors; `automata picture` (with `--what-it-is` and `--world`) and `automata world`; `docs/formats/changes.md` held to the schemas by a test; the demo gains a second level, a plate, a gate, a door, a critter and a button. No dependency; existing goldens stay, two new; the demo's `level-1` recording moves for the Owner to see. Eight calls listed for the Owner | `specs/2026-11-15-level-links-and-world-map-design.md` |
+| 2 to 7 | Not started | |
+
+Nothing was run: this stage wrote a document.
+
 ## Cycle 12: the game checklist in every game (plan Q)
 
 Spec: [`specs/2026-11-15-game-checklist-design.md`](specs/2026-11-15-game-checklist-design.md). The Owner (2026-11-15):
