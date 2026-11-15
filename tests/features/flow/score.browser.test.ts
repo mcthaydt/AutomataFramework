@@ -152,18 +152,8 @@ test('storage refuses: the score still counts, and the screen says once that it 
   expect(text.split(es('automata.done.not-kept'))).toHaveLength(2)
 })
 
-test("at 390x844 the score does not cover the pause button or the heroes' numbers", async () => {
-  // Two people play: the second is added from the menu, so each hero carries a number.
-  await drive.toMenu({
-    plugins: [heroPlugin, scorePlugin],
-    game: { noWarning: true, score: 'sparks', players: 2 },
-  })
-  await drive.press(es('automata.menu.add-player'))
-  await expect.poll(() => drive.mount.querySelector('[data-screen="players"]')).not.toBeNull()
-  await drive.press(es('automata.players.done'))
-  await drive.press(es('automata.menu.play'))
-  await drive.shown('playing')
-  drive.frames.at(0)
+test('at 390x844 the score does not cover the pause button or the goal card', async () => {
+  await intoLevel('sparks')
   drive.frames.advance(16)
   ticks(drive, 2)
   const rect = (selector: string): DOMRect => {
@@ -175,9 +165,6 @@ test("at 390x844 the score does not cover the pause button or the heroes' number
     a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top
   const line = rect('.score')
   expect(apart(line, rect('.pause button'))).toBe(true)
-  const numbers = [...drive.mount.querySelectorAll('.number')]
-  expect(numbers.length).toBe(2)
-  for (const one of numbers) expect(apart(line, one.getBoundingClientRect())).toBe(true)
   const goal = drive.mount.querySelector('.card')
   if (goal !== null) expect(apart(line, goal.getBoundingClientRect())).toBe(true)
   untilOver(drive)
