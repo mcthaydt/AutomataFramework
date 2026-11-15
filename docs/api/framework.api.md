@@ -1312,6 +1312,10 @@ interface Game {
     removePlayer(player: number): boolean;
     pause(): void;
     resume(): void;
+    paused(): boolean;
+    onStep(listener: (step: GameStep) => void): () => void;
+    broken(): unknown;
+    onBroken(listener: (error: unknown) => void): () => void;
     heroes(): readonly HeroBox[];
     setVibration(on: boolean): void;
     replay(): Replay;
@@ -1395,6 +1399,15 @@ interface GameSimOptions {
         readonly x: number;
         readonly y: number;
     };
+}
+```
+
+### `GameStep` (interface)
+
+```ts
+interface GameStep {
+    readonly tick: number;
+    readonly events: readonly SimEvent[];
 }
 ```
 
@@ -2575,7 +2588,7 @@ function padMenu(options?: {
     readonly frames?: Frames;
     readonly gamepads?: () => readonly (PadLike | null)[];
 }): {
-    on(listener: (press: MenuPress) => void): () => void;
+    on(listener: (press: MenuPress, pad: number) => void): () => void;
     destroy(): void;
 };
 ```
