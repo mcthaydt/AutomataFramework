@@ -36,6 +36,8 @@ export function simContent(content: GameContent): GameContent {
   const listed = content.project.content.some((entry) => LEFT_OUT.has(entry.type))
   if (
     !listed &&
+    // A folder the project lists leaves with its kind; one listed for a kind the sim keeps stays (and is hashed).
+    content.project.folders === undefined &&
     content.project.source === undefined &&
     // Audit M7: a game that writes only one of the flow's fields is not "the very same object" either.
     !FLOW_FIELDS.some((field) => Object.hasOwn(content.project, field)) &&
@@ -55,8 +57,10 @@ export function simContent(content: GameContent): GameContent {
     done: _done,
     warnings: _warnings,
     splash: _splash,
+    folders,
     ...project
   } = content.project
+  const keptFolders = (folders ?? []).filter((entry) => !LEFT_OUT.has(entry.type))
   const {
     messages: _words,
     sounds: _sounds,
@@ -72,6 +76,8 @@ export function simContent(content: GameContent): GameContent {
     project: {
       ...project,
       content: project.content.filter((entry) => !LEFT_OUT.has(entry.type)),
+      // No folder left, no key: a game whose folders are all left out hashes as the same game with none.
+      ...(keptFolders.length > 0 ? { folders: keptFolders } : {}),
     },
   })
 }

@@ -10,6 +10,7 @@ import {
   type Diagnostic,
   type GameContent,
   languageName,
+  type ListFolder,
   loadGame,
   markRead,
   type Parsed,
@@ -91,6 +92,14 @@ function readerOver(files: FilesService, folder: string): Effect.Effect<(path: s
   })
 }
 
+/** A `list` for `loadGame` over the files port: the names of the files directly in a folder of the game. */
+function listerOver(files: FilesService, folder: string): Effect.Effect<ListFolder> {
+  return Effect.map(Effect.runtime<never>(), (runtime) => async (dir: string) => {
+    const names = await Runtime.runPromise(runtime)(files.list(join(folder, dir)))
+    return names.filter((name) => !name.includes('/'))
+  })
+}
+
 /**
  * Reads the game in `folder`. A folder with no `automata.toml` is not a game and is the one failure. A game that is not
  * installed, or whose rules do not load, is still read: its files can be checked, and the report says what is missing.
@@ -105,7 +114,8 @@ export function readGame(folder: string): Effect.Effect<GameFolder, CliError, Co
     const code = loadedCode._tag === 'Right' ? loadedCode.right : undefined
     const content = code?.framework ?? OWN_CONTENT
     const read = yield* readerOver(files, folder)
-    const loaded = yield* Effect.promise(() => content.loadGame(read))
+    const list = yield* listerOver(files, folder)
+    const loaded = yield* Effect.promise(() => content.loadGame(read, list))
     const recordings = (yield* files.list(join(folder, 'replays')))
       .filter((name) => name.endsWith('.json'))
       .map((name) => `replays/${name}`)

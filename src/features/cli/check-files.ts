@@ -2,7 +2,13 @@
 // `writeContent` makes), so that a person, an editor and an agent editing the same file make the same change.
 import { join } from 'node:path'
 import { Effect } from 'effect'
-import { type Diagnostic, type GameContent, type Language, parseProject } from '../content/content.ts'
+import {
+  type Diagnostic,
+  type FolderRef,
+  type GameContent,
+  type Language,
+  parseProject,
+} from '../content/content.ts'
 import { paintedPaths } from './art.ts'
 import type { GameFolder } from './game-folder.ts'
 import { type CliError, Files, type FilesService } from './ports.ts'
@@ -10,6 +16,11 @@ import type { StepReport } from './report.ts'
 
 const NOT_INSTALLED_NOTE =
   "This game is not installed, so its files were checked with automata's own copy of the framework."
+
+/** True for a file directly inside one of the folders the project lists (it may be one that did not load). */
+function inListedFolder(path: string, folders: readonly FolderRef[]): boolean {
+  return folders.some((entry) => path.slice(0, path.lastIndexOf('/')) === entry.folder)
+}
 
 /**
  * The files step. `fix` rewrites a file that reads but is not in the standard form; it never touches a file that does
@@ -24,8 +35,13 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
     const text = yield* files.readText(join(game.folder, 'automata.toml'))
     const project = text === undefined ? undefined : parseProject(text)
     const listed = new Set<string>()
+    // The files the game lists by path and the ones in its folders: the loaded game has both, and a game that did not
+    // load is read as far as its project file goes (the folders' files are then left for the load problems to name).
+    const byPath = project?.ok === true ? project.value.content : []
+    const refs = game.loaded.ok ? game.loaded.value.project.content : byPath
+    const folders = project?.ok === true ? (project.value.folders ?? []) : []
     if (project?.ok === true) {
-      for (const ref of project.value.content) {
+      for (const ref of refs) {
         listed.add(ref.path)
         const before = yield* files.readText(join(game.folder, ref.path))
         if (before === undefined) continue
@@ -56,7 +72,12 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
     const painted = paintedPaths(game)
     for (const name of yield* files.list(join(game.folder, 'content'))) {
       const path = `content/${name}`
-      if (name.endsWith('.json') && !listed.has(path) && !painted.has(path))
+      if (
+        name.endsWith('.json') &&
+        !listed.has(path) &&
+        !painted.has(path) &&
+        !inListedFolder(path, folders)
+      )
         problems.push({
           file: path,
           path: '',

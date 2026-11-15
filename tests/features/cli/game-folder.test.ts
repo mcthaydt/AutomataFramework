@@ -6,6 +6,7 @@ import { CliError, type GameCode } from '#src/features/cli/ports.ts'
 import * as framework from '#src/headless.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, memoryLayer } from '../../fixtures/cli/memory.ts'
+import { soundText, withFolderBlocks } from '../../fixtures/content/folders.ts'
 
 const read = (memory: Memory, folder = 'game') =>
   Effect.runPromise(readGame(folder).pipe(Effect.provide(memory.layer)))
@@ -82,4 +83,18 @@ test('a game whose files do not read still comes back, with the problems', async
 test('a game at the root of the files is read from "."', async () => {
   const game = await read(memoryLayer(smallGame()), '.')
   expect(game.loaded.ok).toBe(true)
+})
+
+test('a game that lists a folder is read with the files in it, and only the ones directly in it', async () => {
+  const memory = memoryLayer(
+    under('game', {
+      ...smallGame(),
+      'automata.toml': withFolderBlocks([{ type: 'sound', folder: 'content/sounds' }]),
+      'content/sounds/jump.json': soundText('jump'),
+      'content/sounds/deeper/lost.json': soundText('lost'),
+    }),
+  )
+  const game = await read(memory)
+  expect(game.loaded.ok).toBe(true)
+  expect(game.loaded.ok && Object.keys(game.loaded.value.sounds ?? {})).toEqual(['jump'])
 })

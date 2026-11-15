@@ -10,6 +10,7 @@ import { artGame } from '../../fixtures/content/art.ts'
 import { readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
+import { listOver, soundText, withFolderBlocks } from '../../fixtures/content/folders.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 import golden from '../../golden/push-crate.json' with { type: 'json' }
 
@@ -230,4 +231,39 @@ test('each of the four alone is taken out, and a game that writes only one still
 test('a game with none of them is handed back as the very same object', async () => {
   const plain = await loadFixtureGame()
   expect(simContent(plain)).toBe(plain)
+})
+
+test('a folder of a left-out kind leaves with its files, and the game hashes as the same game with none', async () => {
+  const files = {
+    ...fixtureFiles,
+    'automata.toml': withFolderBlocks([{ type: 'sound', folder: 'content/sounds' }]),
+    'content/sounds/jump.json': soundText('jump'),
+  }
+  const loaded = await loadGame(readFiles(files), listOver(files))
+  expect(loaded.ok).toBe(true)
+  if (!loaded.ok) return
+  expect(loaded.value.sounds).toBeDefined()
+  const given = simContent(loaded.value)
+  expect('folders' in given.project).toBe(false)
+  expect(given.sounds).toBeUndefined()
+  expect(given.project.content.map((ref) => ref.path)).toEqual(
+    (await loadFixtureGame()).project.content.map((ref) => ref.path),
+  )
+  const sim = await simOf(given)
+  const plain = await simOf(await loadFixtureGame())
+  expect(sim.contentHash).toBe(plain.contentHash)
+})
+
+test('a folder listed for a kind the sim keeps stays in what the sim is given', async () => {
+  const files = {
+    ...fixtureFiles,
+    'automata.toml': withFolderBlocks([{ type: 'sound', folder: 'content/sounds' }]).replace(
+      'type = "sound"',
+      'type = "tuning"',
+    ),
+  }
+  const loaded = await loadGame(readFiles(files), listOver(files))
+  expect(loaded.ok).toBe(true)
+  if (!loaded.ok) return
+  expect(simContent(loaded.value).project.folders).toEqual([{ type: 'tuning', folder: 'content/sounds' }])
 })

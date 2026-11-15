@@ -9,6 +9,7 @@ import type { CutsceneFile } from './cutscene.ts'
 import type { Diagnostic } from './diagnostics.ts'
 import type { FeelFile } from './feel.ts'
 import type { FigureFile } from './figure.ts'
+import { folderFiles, type ListFolder } from './folders.ts'
 import type { Level } from './level.ts'
 import { languageName, type MessagesFile } from './messages.ts'
 import type { MusicFile } from './music.ts'
@@ -70,7 +71,11 @@ const withArticle = (noun: string): string => `${/^[aeiou]/i.test(noun) ? 'an' :
  * sound listed as music should not give a page of "this is missing" and "this is not something a music has". It also
  * says which kind that is, so what refers to the file is not told it is missing as well.
  */
-function wrongKind(ref: ContentRef, text: string): { problem: Diagnostic; readsAs: ContentType } | undefined {
+function wrongKind(
+  ref: ContentRef,
+  text: string,
+  inFolder: boolean,
+): { problem: Diagnostic; readsAs: ContentType } | undefined {
   const reads = (Object.keys(CONTENT_TYPES) as ContentType[]).filter(
     (type) => type !== ref.type && parseContent(type, text, ref.path).ok,
   )
@@ -81,7 +86,9 @@ function wrongKind(ref: ContentRef, text: string): { problem: Diagnostic; readsA
     problem: {
       file: ref.path,
       path: '',
-      message: `This file is listed as ${withArticle(CONTENT_TYPES[ref.type].noun)}, but it reads as ${withArticle(CONTENT_TYPES[only].noun)}. Change its type in ${PROJECT_FILE}.`,
+      message: inFolder
+        ? `This file is in the folder for ${CONTENT_TYPES[ref.type].plural}, but it reads as ${withArticle(CONTENT_TYPES[only].noun)}. Move it to that kind's folder.`
+        : `This file is listed as ${withArticle(CONTENT_TYPES[ref.type].noun)}, but it reads as ${withArticle(CONTENT_TYPES[only].noun)}. Change its type in ${PROJECT_FILE}.`,
     },
   }
 }
@@ -93,7 +100,10 @@ interface Slot {
   value?: unknown
 }
 
-async function load(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>> {
+async function load(
+  read: (path: string) => Promise<string>,
+  listFolder: ListFolder | undefined,
+): Promise<Parsed<GameContent>> {
   const projectText = await readText(read, PROJECT_FILE)
   if (projectText === undefined)
     return fail([
@@ -105,7 +115,40 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
     ])
   const parsedProject = parseProject(projectText)
   if (!parsedProject.ok) return fail([...parsedProject.diagnostics])
-  const project = parsedProject.value
+  const parsed = parsedProject.value
+  if (parsed.folders !== undefined && listFolder === undefined)
+    return fail([
+      {
+        file: PROJECT_FILE,
+        path: 'content',
+        message: 'This game lists folders, so whoever loads it must be able to list them.',
+      },
+    ])
+
+  // Every file the game has: the ones the project lists by path, then each folder's. A file listed by path and found in
+  // a folder of its own kind counts once; one found in a folder of another kind is a problem, said once.
+  const earlyProblems: Diagnostic[] = []
+  const inFolder = new Set<string>()
+  const refs: ContentRef[] = [...parsed.content]
+  const byPath = new Map(parsed.content.map((ref) => [ref.path, ref.type]))
+  const found =
+    parsed.folders === undefined || listFolder === undefined
+      ? []
+      : await folderFiles(parsed.folders, listFolder)
+  for (const file of found) {
+    const earlier = byPath.get(file.path)
+    if (earlier === undefined) {
+      refs.push(file)
+      inFolder.add(file.path)
+    } else if (earlier !== file.type)
+      earlyProblems.push({
+        file: file.path,
+        path: '',
+        message: `This file is listed as ${withArticle(CONTENT_TYPES[earlier].noun)}, but it is in the folder for ${CONTENT_TYPES[file.type].plural}.`,
+      })
+  }
+  // The project the rest of the game sees lists every one of those files, so everything that reads `content` keeps working.
+  const project: Project = { ...parsed, content: refs }
 
   // Files listed as the wrong kind, with the kind each reads as: they count under both, so one slip in `type` is the
   // only problem reported, not also every reference to the file.
@@ -114,11 +157,11 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
   // look wrong as well.
   const named = (type: ContentType): string[] =>
     [
-      ...project.content.filter((r) => r.type === type),
+      ...refs.filter((r) => r.type === type),
       ...readsAs.filter((a) => a.kind === type).map((a) => a.ref),
     ].map((r) => fileId(r.path))
 
-  const texts = await Promise.all(project.content.map((r) => readText(read, r.path)))
+  const texts = await Promise.all(refs.map((r) => readText(read, r.path)))
   const values = new Map<string, unknown>()
   const firstPath = new Map<string, string>()
 
@@ -147,7 +190,7 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
   }
 
   // First every file is read on its own; the checks across files come after, when every value is known.
-  const slots: Slot[] = project.content.map((ref, i) => {
+  const slots: Slot[] = refs.map((ref, i) => {
     const slot: Slot = { ref, problems: [] }
     const text = texts[i]
     if (text === undefined) {
@@ -160,7 +203,7 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
     }
     const parsed = parseContent(ref.type, text, ref.path)
     if (!parsed.ok) {
-      const wrong = wrongKind(ref, text)
+      const wrong = wrongKind(ref, text, inFolder.has(ref.path))
       if (wrong !== undefined) readsAs.push({ ref, kind: wrong.readsAs })
       slot.problems.push(...(wrong === undefined ? parsed.diagnostics : [wrong.problem]))
     } else if (claim(slot, (parsed.value as { id: string }).id)) {
@@ -170,7 +213,7 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
     return slot
   })
 
-  const projectProblems: Diagnostic[] = []
+  const projectProblems: Diagnostic[] = [...earlyProblems]
   const unknown = (path: string, what: string, id: string): void => {
     projectProblems.push({
       file: PROJECT_FILE,
@@ -184,7 +227,7 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
   // A game with words names the language its team writes them in, and lists that language's file: every other
   // language is checked against it. A game with no words has no language to name.
   const words = named('messages')
-  const firstFile = project.content.find((entry) => entry.type === 'messages')
+  const firstFile = refs.find((entry) => entry.type === 'messages')
   const where = firstFile?.path ?? 'content/messages/x.json'
   const folder = where.slice(0, where.lastIndexOf('/') + 1)
   if (words.length > 0 && project.source === undefined)
@@ -238,7 +281,7 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
   const sourceFile =
     source === undefined
       ? undefined
-      : project.content.find((r) => r.type === 'messages' && fileId(r.path) === source)
+      : refs.find((r) => r.type === 'messages' && fileId(r.path) === source)
   const sourceWords =
     source === undefined ? undefined : (values.get(`messages:${source}`) as MessagesFile | undefined)
   if (sourceFile !== undefined && sourceWords !== undefined)
@@ -305,14 +348,19 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
 }
 
 /**
- * Reads a game: the project file, then every file it lists, through `read` (a fetch, the file system, GitHub).
+ * Reads a game: the project file, then every file it lists, through `read` (a fetch, the file system, GitHub). A project
+ * that lists a folder needs `list`, which gives the names of the files directly in a folder of the game (`listFromManifest`
+ * makes one for a page); a folder `list` rejects for counts as empty.
  * Every problem in every file comes back at once: the project file's own first, then, in the order the project
  * lists the files, each file's reading problems, or else its id problem, or else its checks against the other
  * files. Never throws.
  */
-export async function loadGame(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>> {
+export async function loadGame(
+  read: (path: string) => Promise<string>,
+  list?: ListFolder,
+): Promise<Parsed<GameContent>> {
   try {
-    return await load(read)
+    return await load(read, list)
   } catch {
     return fail([
       {

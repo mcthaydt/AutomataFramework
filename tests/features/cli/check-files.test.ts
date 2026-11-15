@@ -15,6 +15,7 @@ import {
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, type MemoryOptions, memoryLayer } from '../../fixtures/cli/memory.ts'
 import { wordsGame } from '../../fixtures/cli/words.ts'
+import { soundText, withFolderBlocks } from '../../fixtures/content/folders.ts'
 import { readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
@@ -258,4 +259,37 @@ test('a read mark takes a word off the note, and a marks file that does not read
 test('a game with no words says nothing about them', async () => {
   const { report } = await filesStep()
   expect(report.steps[0]).toEqual({ step: 'files', state: 'passed', problems: [], notes: [] })
+})
+
+const SOUNDS = [{ type: 'sound', folder: 'content/sounds' }] as const
+
+test('a file in a listed folder is part of the game, and one in a folder that is not listed is not', async () => {
+  const { report } = await filesStep({
+    'automata.toml': withFolderBlocks(SOUNDS),
+    'content/sounds/jump.json': soundText('jump'),
+    'content/music/tune.json': soundText('tune'),
+  })
+  expect(report.steps[0]?.problems).toEqual([
+    {
+      file: 'content/music/tune.json',
+      path: '',
+      message:
+        'This file is not listed in automata.toml, so the game does not use it. List it, or delete it.',
+    },
+  ])
+})
+
+test('a folder file not in the standard form is named, and --fix rewrites it', async () => {
+  const odd = JSON.stringify(JSON.parse(soundText('jump')))
+  const changes = { 'automata.toml': withFolderBlocks(SOUNDS), 'content/sounds/jump.json': odd }
+  const without = await filesStep(changes)
+  expect(without.report.steps[0]?.problems).toEqual([
+    {
+      file: 'content/sounds/jump.json',
+      path: '',
+      message: 'This file is not in the standard form. Run automata check --fix.',
+    },
+  ])
+  const fixed = await filesStep(changes, { fix: true })
+  expect(fixed.memory.files.get('game/content/sounds/jump.json')).toBe(soundText('jump'))
 })
