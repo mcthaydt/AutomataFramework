@@ -136,8 +136,7 @@ jobs:
   # main's protection asks for stay as they were.
   engines:
     needs: browsers
-    # Not on a run a newer push cancelled: that run's result no longer counts, and a red check would only confuse.
-    if: ${{ !cancelled() }}
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       actions: read
