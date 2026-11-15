@@ -119,14 +119,15 @@ function holds(world: World, ledge: RAPIER.Collider, other: RAPIER.Collider): bo
  * What the contact hook knows of a step, read before it starts (Rapier has the world borrowed while it runs, so the hook
  * can read nothing from it): each ledge's top, and for everything else that can move, the height of its lowest point,
  * which is infinite for a thing moving up (no ledge holds it) and minus infinite for one this cannot judge (every ledge
- * holds it). Positions are those the step begins with. Empty when the world has no ledge.
+ * holds it). Positions are those the step begins with, the lowest point of something that falls being where it was a tick
+ * ago. Empty when the world has no ledge.
  */
 interface LedgeFacts {
   readonly tops: Map<number, number>
   readonly lows: Map<number, number>
 }
 
-function ledgeFacts(world: World): LedgeFacts {
+function ledgeFacts(world: World, dt: number): LedgeFacts {
   const tops = new Map<number, number>()
   const lows = new Map<number, number>()
   world.forEachCollider((collider) => {
@@ -139,10 +140,13 @@ function ledgeFacts(world: World): LedgeFacts {
     const parent = world.colliders.raw.coParent(collider.handle)
     if (parent === undefined || world.getRigidBody(parent).isFixed()) return
     const reach = reachBelow(collider)
+    const fall = world.getRigidBody(parent).linvel().y
     if (reach === undefined) lows.set(collider.handle, Number.NEGATIVE_INFINITY)
-    else if (world.getRigidBody(parent).linvel().y < -LEDGE_RISE)
-      lows.set(collider.handle, Number.POSITIVE_INFINITY)
-    else lows.set(collider.handle, collider.translation().y + reach)
+    else if (fall < -LEDGE_RISE) lows.set(collider.handle, Number.POSITIVE_INFINITY)
+    // Rapier finds a contact only once the two overlap, so a thing falling faster than a tick's `LEDGE_SLOP` is first
+    // felt when it is already a tick's fall inside. It is judged by where its lowest point was a tick ago, so that the
+    // tick that finds the contact is one the ledge holds, however fast it falls.
+    else lows.set(collider.handle, collider.translation().y + reach - Math.max(0, fall) * dt)
   })
   return { tops, lows }
 }
@@ -195,7 +199,7 @@ export async function createRapier(setup: {
     restoreWorld: (bytes) => RAPIER.World.restoreSnapshot(bytes),
     takeSnapshot: (world) => world.takeSnapshot(),
     step(world, onCollision) {
-      facts = ledgeFacts(world)
+      facts = ledgeFacts(world, setup.dt)
       world.step(queue, hooks)
       queue.drainCollisionEvents(onCollision)
     },
