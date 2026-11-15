@@ -11,6 +11,7 @@ import { SPLASH_MS } from '#src/features/screens/screens.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
 import { focusedName, ticks } from '../../fixtures/flow/page.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
+import { keepDrawing } from '../../fixtures/ui/drawing.ts'
 
 const es = frameworkWords('es')
 const drive = createDrive()
@@ -121,26 +122,55 @@ test('a game that cannot be read shows its problem whole at every size', async (
   }
 })
 
+/**
+ * What every kit frame on the page says it measured, and how big its box really is: "narrow/tall in 390x844". A frame
+ * that says one thing in a box of another has not heard its box change; a failure prints this, so it names which.
+ */
+const framesSay = (): string[] =>
+  [...drive.mount.querySelectorAll<HTMLElement>('[data-height]')].map(
+    (one) => `${one.dataset.width}/${one.dataset.height} in ${one.clientWidth}x${one.clientHeight}`,
+  )
+
+/**
+ * The phone is turned to `w` by `h`: the page is that size, and then every frame has measured it (a screen with no
+ * frame, like the menu, has nothing to wait for). A frame hears its box change from the browser only when the page
+ * draws a frame, and a page in the test browser that has just been resized, with nothing animating, can wait a long
+ * time for its next one (the turning journey failed in Chromium alone, with the box turned and the frame still
+ * saying "tall"). So the page is kept drawing while it waits, and the wait is as long as the flow's own.
+ */
+async function turnTo(w: number, h: number): Promise<void> {
+  await page.viewport(w, h)
+  await expect.poll(() => [window.innerWidth, window.innerHeight], { timeout: 10_000 }).toEqual([w, h])
+  const want = `${w < 600 ? 'narrow' : 'wide'}/${h < 480 ? 'short' : 'tall'}`
+  // What the poll answers is what a failure prints: the frames, each with the box it says it measured and its real one,
+  // and how many frames the page drew meanwhile, which settles the cause if this is ever seen again.
+  const drawing = keepDrawing()
+  const measured = (): string => {
+    const says = framesSay()
+    if (says.every((one) => one.startsWith(`${want} in `))) return 'measured'
+    return `want ${want}, ${drawing.count()} frames drawn, ${document.visibilityState}: ${says.join(' | ')}`
+  }
+  try {
+    await expect.poll(measured, { timeout: 10_000 }).toBe('measured')
+  } finally {
+    drawing.stop()
+  }
+}
+const turnSideways = (): Promise<void> => turnTo(844, 390)
+const turnUpright = (): Promise<void> => turnTo(390, 844)
+
 test('turning the phone on the menu, in Settings and on pause keeps the focus and the state', async () => {
   await page.viewport(390, 844)
   const host = testHost()
   await twoGames(host)
   await drive.toMenu({ host, game: { noWarning: true } })
-  const turn = async (): Promise<void> => {
-    await page.viewport(844, 390)
-    await expect.poll(() => window.innerHeight).toBe(390)
-    // A screen drawn in the kit's frame says "tall" until it has measured its new box; the menu has no frame.
-    const heights = (): string[] =>
-      [...drive.mount.querySelectorAll<HTMLElement>('[data-height]')].map((one) => one.dataset.height ?? '')
-    await expect.poll(heights).not.toContain('tall')
-  }
   // The menu: the same button is in focus on its side.
   await drive.wait(es('automata.menu.continue'))
   const first = focusedName()
-  await turn()
+  await turnSideways()
   expect(focusedName()).toBe(first)
   expect(drive.step()).toBe('menu')
-  await page.viewport(390, 844)
+  await turnUpright()
   // Settings: Swap sides is left on, and it is still the control in focus.
   await drive.press(es('automata.menu.settings'))
   await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
@@ -151,11 +181,11 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
   await userEvent.click(swap())
   await expect.poll(() => swap().getAttribute('aria-checked')).toBe('true')
   swap().focus()
-  await turn()
+  await turnSideways()
   expect(swap().getAttribute('aria-checked')).toBe('true')
   expect(document.activeElement).toBe(swap())
   await drive.press(es('automata.back'))
-  await page.viewport(390, 844)
+  await turnUpright()
   // Pause: still paused, with the same button in focus.
   await drive.wait(es('automata.menu.continue'))
   await drive.press(es('automata.menu.continue'))
@@ -166,7 +196,7 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
   await drive.shown('paused')
   await drive.wait(es('automata.pause.resume'))
   const paused = focusedName()
-  await turn()
+  await turnSideways()
   expect(drive.step()).toBe('paused')
   expect(focusedName()).toBe(paused)
 })
@@ -175,22 +205,14 @@ test('turning the phone on the warnings, the saved games, the players and the do
   await page.viewport(390, 844)
   const host = testHost({ deviceLanguages: ['es-MX'] })
   await twoGames(host)
-  const turn = async (): Promise<void> => {
-    await page.viewport(844, 390)
-    await expect.poll(() => window.innerHeight).toBe(390)
-    const heights = (): string[] =>
-      [...drive.mount.querySelectorAll<HTMLElement>('[data-height]')].map((one) => one.dataset.height ?? '')
-    await expect.poll(heights).not.toContain('tall')
-    await page.viewport(390, 844)
-    await expect.poll(() => window.innerHeight).toBe(844)
-  }
   await drive.open({ host, game: { players: 2 } })
   await drive.shown('warnings')
   await drive.wait('OK')
   const warning = focusedName()
-  await turn()
+  await turnSideways()
   expect(drive.step()).toBe('warnings')
   expect(focusedName()).toBe(warning)
+  await turnUpright()
   await drive.press('OK')
   await drive.shown('picking')
   await expect.poll(() => drive.mount.querySelector('.automata-picker-go')).not.toBeNull()
@@ -208,9 +230,10 @@ test('turning the phone on the warnings, the saved games, the players and the do
     await drive.press(button)
     await expect.poll(() => drive.mount.querySelector(`[data-screen="${screen}"]`)).not.toBeNull()
     const focused = focusedName()
-    await turn()
+    await turnSideways()
     expect(drive.mount.querySelector(`[data-screen="${screen}"]`)).not.toBeNull()
     expect(focusedName()).toBe(focused)
+    await turnUpright()
     await drive.press(screen === 'saves' ? es('automata.back') : es('automata.players.done'))
     await drive.wait(es('automata.menu.continue'))
   }
@@ -220,7 +243,7 @@ test('turning the phone on the warnings, the saved games, the players and the do
   await drive.shown('done')
   await drive.wait(es('automata.done.menu'))
   const done = focusedName()
-  await turn()
+  await turnSideways()
   expect(drive.step()).toBe('done')
   expect(focusedName()).toBe(done)
 })

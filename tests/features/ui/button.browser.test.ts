@@ -54,9 +54,10 @@ test('a tap, Enter and Space each press it once; a disabled one is never pressed
   expect(onpress).toHaveBeenCalledTimes(1)
   button.focus()
   await userEvent.keyboard('{Enter}')
-  expect(onpress).toHaveBeenCalledTimes(2)
+  // A button presses on a key's release, which a browser may deliver a moment after the keys were sent.
+  await expect.poll(() => onpress.mock.calls.length).toBe(2)
   await userEvent.keyboard(' ')
-  expect(onpress).toHaveBeenCalledTimes(3)
+  await expect.poll(() => onpress.mock.calls.length).toBe(3)
 
   drop()
   const never = vi.fn()
