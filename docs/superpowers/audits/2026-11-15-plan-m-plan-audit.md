@@ -103,8 +103,8 @@ song gives about one loop for each eight bars of a lane. Tested (64 bars that ne
 - **M4.** A motif voice with no `mode` had none to inherit (a sound has no song). Fixed: `major`.
 - **M5.** `SoundSchema`'s end check reads `v.length`, which a motif voice lacks (it passes today only as `NaN`).
   Fixed: the check skips a motif by its `kind`.
-- **M6.** The tracker: plan F's branch (PR 111) also calls itself "Cycle 8", as plan M does. Not fixed here: the
-  second of the two to merge renumbers, and the merge session is told.
+- **M6.** The tracker: plan F (PR 111) also called itself "Cycle 8", as plan M did. Fixed when this merged main:
+  plan M is Cycle 10 (rigged figures took 8, the feel runtime 9).
 
 ## Left as written
 

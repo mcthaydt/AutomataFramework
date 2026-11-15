@@ -19,6 +19,12 @@ const LEFT_OUT: ReadonlySet<ContentType> = new Set<ContentType>([
 ])
 
 /**
+ * The fields of the project file that tell the flow what to show (plan U): the order of the levels, what ends one, the
+ * warnings and the splash. None of them says what happens in the game, so none is given to the sim.
+ */
+const FLOW_FIELDS = ['levels', 'done', 'warnings', 'splash'] as const
+
+/**
  * The content the sim is given, and so hashes: everything but the words, the sounds and the art. Both their maps
  * and their files' entries in `project.content` leave, because that list names every file by path and is hashed:
  * keeping it would move every hash when a language or a sound is added or dropped (the spec's "sound never moves a
@@ -30,6 +36,8 @@ export function simContent(content: GameContent): GameContent {
   if (
     !listed &&
     content.project.source === undefined &&
+    // Audit M7: a game that writes only one of the flow's fields is not "the very same object" either.
+    !FLOW_FIELDS.some((field) => Object.hasOwn(content.project, field)) &&
     content.messages === undefined &&
     content.sounds === undefined &&
     content.music === undefined &&
@@ -38,8 +46,15 @@ export function simContent(content: GameContent): GameContent {
     content.backdrops === undefined
   )
     return content
-  // The team's language is not what happens in the game, so `source` goes with the words.
-  const { source: _source, ...project } = content.project
+  // The team's language is not what happens in the game, so `source` goes with the words, and the flow's fields with it.
+  const {
+    source: _source,
+    levels: _levels,
+    done: _done,
+    warnings: _warnings,
+    splash: _splash,
+    ...project
+  } = content.project
   const {
     messages: _words,
     sounds: _sounds,

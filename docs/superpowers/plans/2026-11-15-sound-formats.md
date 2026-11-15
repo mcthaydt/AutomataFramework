@@ -51,7 +51,7 @@ agent and the editor share) and 2 (these are the files the touch-first Sound edi
 - **Commits:** author and committer `McThayDT <107786093+mcthaydt@users.noreply.github.com>`; set the config before
   every commit; no AI attribution anywhere; never force-push.
 - **An Owner question is never defaulted.** Send it to the coordinator with options and a recommendation, and wait.
-- **Tracker:** after each task, update `docs/superpowers/progress.md` (Cycle 8, "sound formats"). Tasks 1 to 18 are 5% each; the last
+- **Tracker:** after each task, update `docs/superpowers/progress.md` (Cycle 10, "sound formats"). Tasks 1 to 18 are 5% each; the last
   10% is the final green run with every check passing.
 
 ## Before starting

@@ -2,7 +2,7 @@
 // different translations of one game can share a room, and a word changed in a file moves no hash.
 import { afterEach, expect, test } from 'vitest'
 import { createRecorder, verifyReplay } from '#src/features/commands/commands.ts'
-import { loadGame } from '#src/features/content/content.ts'
+import { type GameContent, loadGame } from '#src/features/content/content.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import { simContent } from '#src/features/level/sim-content.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
@@ -172,4 +172,46 @@ test('the sim is given no figures or backdrops, and a colour changed in one move
   const after = await simOf(await load(paint('#afd472')))
   expect(after.contentHash).toBe(before.contentHash)
   expect(after.hash()).toBe(before.hash())
+})
+
+// The flow's four fields (plan U, Task 1) tell the flow what to show. None of them says what happens in the game, so
+// none may reach the sim, or a hash would move for a line a player never feels.
+
+/** `content` with these fields written into its project. */
+const withProject = (content: GameContent, fields: Record<string, unknown>): GameContent => ({
+  ...content,
+  project: { ...content.project, ...fields } as GameContent['project'],
+})
+
+test("the flow's four fields are not given to the sim", async () => {
+  // All four written, each asked about alone (audit I2: one `arrayContaining` passes when any one key is missing).
+  const given = simContent(
+    withProject(await loadFixtureGame(), {
+      levels: ['level-1'],
+      done: 'door.touched',
+      warnings: ['warning.flashing'],
+      splash: 'hero',
+    }),
+  )
+  for (const key of ['levels', 'done', 'warnings', 'splash']) expect(given.project).not.toHaveProperty(key)
+})
+
+test('each of the four alone is taken out, and a game that writes only one still hashes as it did', async () => {
+  const plain = await loadFixtureGame()
+  for (const fields of [
+    { levels: ['level-1'] },
+    { done: 'x.y' },
+    { warnings: ['a.b'] },
+    { splash: 'hero' },
+  ]) {
+    // Audit M7: the early "same object" return must not be taken while one of the four is in the project.
+    const given = simContent(withProject(plain, fields))
+    expect(given, JSON.stringify(fields)).toEqual(plain)
+    expect(given).not.toBe(plain)
+  }
+})
+
+test('a game with none of them is handed back as the very same object', async () => {
+  const plain = await loadFixtureGame()
+  expect(simContent(plain)).toBe(plain)
 })
