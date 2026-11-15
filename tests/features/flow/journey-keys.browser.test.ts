@@ -38,13 +38,21 @@ async function enter(label: string): Promise<void> {
   }
   window.removeEventListener('focusin', onFocus)
   window.removeEventListener('keydown', onKey, { capture: true })
-  const screens = [...drive.mount.querySelectorAll<HTMLElement>('[data-screen]')].map((one) => one.dataset.screen)
+  const found = drive.mount.querySelectorAll<HTMLElement>('[data-screen]')
+  const screens = [...found].map((one) => one.dataset.screen)
   const boxes = [...drive.mount.querySelectorAll('button')].map((one) => {
-    const box = one.getBoundingClientRect()
+    const { x, y, width, height } = one.getBoundingClientRect()
     const says = one.textContent?.trim() || one.getAttribute('aria-label')
-    return `${says}@${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)}x${Math.round(box.height)}`
+    return `${says}@${[x, y, width, height].map(Math.round).join(',')}`
   })
-  const went = `${seen.join(' > ')} | focus ${moved.join(' > ')} | keys ${arrows.join(' ')} | screens ${screens} | ${boxes}`
+  const trail = [
+    seen.join(' > '),
+    `focus ${moved.join(' > ')}`,
+    `keys ${arrows.join(' ')}`,
+    `screens ${screens.join(',')}`,
+    boxes.join(' '),
+  ]
+  const went = trail.join(' | ')
   expect(focusedName(), `Arrow keys could not reach "${label}": ${went}`).toBe(label)
   await userEvent.keyboard('{Enter}')
 }
