@@ -1,5 +1,13 @@
 import { expect, test } from 'vitest'
-import { CONTENT_TYPES, formatDiagnostic, PROJECT_FILE, parseProject } from '#src/features/content/content.ts'
+import {
+  CONTENT_TYPES,
+  formatDiagnostic,
+  levelOrder,
+  nextLevel,
+  PROJECT_FILE,
+  type Project,
+  parseProject,
+} from '#src/features/content/content.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const FIXTURE = fixtureFiles[PROJECT_FILE] ?? ''
@@ -110,4 +118,92 @@ test('a source that is not one of the six is refused, in words', () => {
     const file = FIXTURE.replace('hero = "hero"\n', `hero = "hero"\nsource = ${value}\n`)
     expect(problems(file), value).toEqual([message])
   }
+})
+
+// The flow's four fields (plan U, Task 1): the order of the levels, what ends one, the warnings and the splash.
+
+/** The fixture project with these lines written after `hero`, before the first `[[content]]` block. */
+const withLines = (...lines: string[]): string =>
+  FIXTURE.replace('hero = "hero"\n', `hero = "hero"\n${lines.join('\n')}\n`)
+
+/** The project read from `text`, or a failure naming what was wrong. */
+function projectOf(text: string): Project {
+  const parsed = parseProject(text)
+  if (!parsed.ok) throw new Error(parsed.diagnostics.map(formatDiagnostic).join('\n'))
+  return parsed.value
+}
+
+test('levels, done, warnings and splash are kept when written', () => {
+  const project = projectOf(
+    withLines(
+      'levels = ["level-1", "level-2"]',
+      'done = "door.touched"',
+      'warnings = ["warning.flashing", "warning.loud"]',
+      'splash = "logo"',
+    ),
+  )
+  expect(project.levels).toEqual(['level-1', 'level-2'])
+  expect(project.done).toBe('door.touched')
+  expect(project.warnings).toEqual(['warning.flashing', 'warning.loud'])
+  expect(project.splash).toBe('logo')
+})
+
+test('a project that writes none of the four has none of the four keys at all', () => {
+  const project = projectOf(FIXTURE)
+  for (const key of ['levels', 'done', 'warnings', 'splash']) expect(key in project, key).toBe(false)
+})
+
+test('levels: one to 64 ids, none twice, each a plain id', () => {
+  expect(problems(withLines('levels = ["level-1", "level-2", "level-1"]'))).toEqual([
+    'automata.toml: levels[2]: This level is already in the list.',
+  ])
+  expect(problems(withLines('levels = []'))).toEqual(['automata.toml: levels: This needs at least 1 item.'])
+  const many = Array.from({ length: 65 }, (_, i) => `"level-${i + 1}"`).join(', ')
+  expect(problems(withLines(`levels = [${many}]`))).toEqual([
+    'automata.toml: levels: This has more than 64 items, which is the most allowed.',
+  ])
+  expect(problems(withLines('levels = ["Level One"]'))).toEqual([
+    'automata.toml: levels[0]: Use lower-case words joined by dashes, like "level-1".',
+  ])
+})
+
+test('done: the name of an event, in the same words a cue uses', () => {
+  const sentence = 'automata.toml: done: Write the event that ends a level, like done = "door.touched".'
+  for (const value of ['""', '"Door Touched"', '"door."', '"1door"', '3'])
+    expect(problems(withLines(`done = ${value}`)), value).toEqual([sentence])
+})
+
+test('warnings: one to eight keys, none twice, each a message key', () => {
+  expect(problems(withLines('warnings = ["warning.a", "warning.b", "warning.a"]'))).toEqual([
+    'automata.toml: warnings[2]: This warning is already in the list.',
+  ])
+  expect(problems(withLines('warnings = []'))).toEqual([
+    'automata.toml: warnings: This needs at least 1 item.',
+  ])
+  const nine = Array.from({ length: 9 }, (_, i) => `"warning.w${i}"`).join(', ')
+  expect(problems(withLines(`warnings = [${nine}]`))).toEqual([
+    'automata.toml: warnings: This has more than 8 items, which is the most allowed.',
+  ])
+  expect(problems(withLines('warnings = ["Flashing lights"]'))).toEqual([
+    'automata.toml: warnings[0]: Use lower-case words joined by dots or dashes, like "keeper.hello".',
+  ])
+})
+
+test('splash: the id of a figure, a plain id', () =>
+  expect(problems(withLines('splash = "My Logo"'))).toEqual([
+    'automata.toml: splash: Use lower-case words joined by dashes, like "level-1".',
+  ]))
+
+test('levelOrder is the levels line, or the start level alone', () => {
+  expect(levelOrder(projectOf(FIXTURE))).toEqual(['level-1'])
+  expect(levelOrder(projectOf(withLines('levels = ["level-2", "level-1"]')))).toEqual(['level-2', 'level-1'])
+})
+
+test('nextLevel is the level after, and nothing after the last or for an unknown level', () => {
+  const project = projectOf(withLines('levels = ["level-1", "level-2", "level-3"]'))
+  expect(nextLevel(project, 'level-1')).toBe('level-2')
+  expect(nextLevel(project, 'level-2')).toBe('level-3')
+  expect(nextLevel(project, 'level-3')).toBeUndefined()
+  expect(nextLevel(project, 'level-9')).toBeUndefined()
+  expect(nextLevel(projectOf(FIXTURE), 'level-1')).toBeUndefined()
 })

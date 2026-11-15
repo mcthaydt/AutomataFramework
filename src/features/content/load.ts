@@ -15,7 +15,7 @@ import type { MusicFile } from './music.ts'
 import { type Parsed, parseContent } from './parse.ts'
 import type { ContentRef } from './project.ts'
 import { PROJECT_FILE, type Project, parseProject } from './project.ts'
-import { noSuch } from './shared.ts'
+import { list, noSuch } from './shared.ts'
 import type { SoundFile } from './sound.ts'
 import type { TilesetFile } from './tileset.ts'
 import type { TuningFile } from './tuning.ts'
@@ -204,6 +204,57 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
       file: PROJECT_FILE,
       path: 'source',
       message: `This game lists no words, so it has no language to name. Take the source line out, or list a messages file like ${folder}${project.source}.json.`,
+    })
+
+  // The flow's fields (plan U) name things in the rest of the game: each must be there.
+  const levelIds = named('level')
+  project.levels?.forEach((id, i) => {
+    if (!levelIds.includes(id))
+      projectProblems.push({
+        file: PROJECT_FILE,
+        path: `levels[${i}]`,
+        message: `No level has the id "${id}". The levels are: ${list(levelIds)}.`,
+      })
+  })
+  // A start level that does not exist is already reported above, so it is not reported again as "not in levels".
+  if (
+    project.levels !== undefined &&
+    levelIds.includes(project.start) &&
+    !project.levels.includes(project.start)
+  )
+    projectProblems.push({
+      file: PROJECT_FILE,
+      path: 'start',
+      message: `"${project.start}" is not in levels. Add it there, or take the levels line out.`,
+    })
+  if (project.warnings !== undefined && words.length === 0)
+    projectProblems.push({
+      file: PROJECT_FILE,
+      path: 'warnings',
+      message:
+        'This game lists no words, so a warning has nothing to say. List a messages file, or take the warnings line out.',
+    })
+  const { source } = project
+  const sourceFile =
+    source === undefined
+      ? undefined
+      : project.content.find((r) => r.type === 'messages' && fileId(r.path) === source)
+  const sourceWords =
+    source === undefined ? undefined : (values.get(`messages:${source}`) as MessagesFile | undefined)
+  if (sourceFile !== undefined && sourceWords !== undefined)
+    project.warnings?.forEach((key, i) => {
+      if (!Object.hasOwn(sourceWords.messages, key))
+        projectProblems.push({
+          file: PROJECT_FILE,
+          path: `warnings[${i}]`,
+          message: `The game's words have no "${key}". Add it to ${sourceFile.path}.`,
+        })
+    })
+  if (project.splash !== undefined && !named('figure').includes(project.splash))
+    projectProblems.push({
+      file: PROJECT_FILE,
+      path: 'splash',
+      message: `No figure has the id "${project.splash}". The figures are: ${list(named('figure'))}.`,
     })
 
   const game: Listed = {
