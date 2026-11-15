@@ -159,10 +159,6 @@ const PLAN_Q_WORDS: readonly string[] = [
  * second test below, so the list cannot go stale.
  */
 const OWED: string[] = [
-  'automata.lost.title',
-  'automata.lost.again',
-  'automata.pause.again',
-  'automata.pause.again-ask',
   'automata.menu.how',
   'automata.how.walk',
   'automata.how.jump',
@@ -174,8 +170,6 @@ const OWED: string[] = [
   'automata.how.tap-left',
   'automata.how.tap-right',
   'automata.how.dash-button',
-  'automata.hud.score',
-  'automata.hud.best',
   'automata.loading.slow',
   'automata.settings.delete',
   'automata.settings.delete-ask',

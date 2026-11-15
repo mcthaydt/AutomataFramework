@@ -2,7 +2,7 @@
 // the flow's rules: the mark that turns, and the recording that plays.
 import type { Frames } from '../../lib/frames.ts'
 import type { Replay } from '../commands/commands.ts'
-import type { GameContent } from '../content/content.ts'
+import type { GameContent, Project } from '../content/content.ts'
 import { type Watch, watchReplay } from '../game/game.ts'
 import type { Host } from '../host/host.ts'
 import { type PadLike, padMenu } from '../input/input.ts'
@@ -66,20 +66,32 @@ export async function startWatching(options: {
 }
 
 /**
- * Whether one step's events end the level: the project's `done` event happened, and when it is a touch (a door), it was
- * a hero that touched it and not a crate pushed into it.
+ * Whether `name` was raised in these events. When it is a touch (a door), it counts only when a hero made it and not a
+ * crate pushed into it.
  */
-export function endsLevel(
-  done: string | undefined,
+function raised(
+  name: string | undefined,
   events: readonly { readonly type: string; readonly payload: unknown }[],
 ): boolean {
-  if (done === undefined) return false
+  if (name === undefined) return false
   return events.some((event) => {
-    if (event.type !== done) return false
+    if (event.type !== name) return false
     const { payload } = event
     if (typeof payload !== 'object' || payload === null || !('player' in payload)) return true
     return Number(payload.player) > 0
   })
+}
+
+/**
+ * What one step's events mean for the level: it was won (the project's `done` happened), lost (its `lost` happened), or
+ * neither. Both in one step is a win: a player who falls through the door has won.
+ */
+export function levelEnd(
+  project: Pick<Project, 'done' | 'lost'>,
+  events: readonly { readonly type: string; readonly payload: unknown }[],
+): 'done' | 'lost' | undefined {
+  if (raised(project.done, events)) return 'done'
+  return raised(project.lost, events) ? 'lost' : undefined
 }
 
 /**

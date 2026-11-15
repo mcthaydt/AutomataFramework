@@ -1,5 +1,5 @@
 // The pause screen: a scrim over the game as it stood, "Paused" and a few buttons, "Keep playing" first. Leaving for the
-// main menu asks first, because the level is started again from its beginning.
+// main menu asks first, because the level is started again from its beginning, and so does "Start again".
 import type { Component } from 'svelte'
 import type { Words } from '../../lib/message.ts'
 import type { IconName } from '../ui/ui.ts'
@@ -8,7 +8,7 @@ import type { Screen, ScreenBase } from './screens.ts'
 import { show } from './show.ts'
 
 /** One button of the pause screen. */
-export type PauseItem = 'resume' | 'add-player' | 'settings' | 'leave'
+export type PauseItem = 'resume' | 'again' | 'add-player' | 'settings' | 'leave'
 
 /** One button as the screen draws it. */
 export type PauseButton = {
@@ -37,6 +37,7 @@ const Part: Component<PauseProps> = PausePart as never
 /** The words of each button, written out so the check that every word is used can find them. */
 const LABELS: Record<PauseItem, (words: Words) => string> = {
   resume: (words) => words('automata.pause.resume'),
+  again: (words) => words('automata.pause.again'),
   'add-player': (words) => words('automata.menu.add-player'),
   settings: (words) => words('automata.menu.settings'),
   leave: (words) => words('automata.pause.leave'),
@@ -50,7 +51,8 @@ const ICONS: Partial<Record<PauseItem, IconName>> = {
 
 /**
  * The pause screen. Escape, the pad's right button and its start button each keep playing (`onPick('resume')`); "Main
- * menu" asks "Go to the main menu?" first, and `onPick('leave')` comes only after a yes.
+ * menu" asks "Go to the main menu?" first, and `onPick('leave')` comes only after a yes; "Start again" asks "Start this
+ * level again?" and `onPick('again')` comes only after a yes.
  */
 export function pauseScreen(
   options: ScreenBase & {
@@ -63,9 +65,10 @@ export function pauseScreen(
   },
 ): Screen {
   const { items, removable, onPick, onRemove } = options
-  let asking = false
-  const ask = (on: boolean): void => {
-    asking = on
+  // The question on show, if any: both end the level being played, so both ask first.
+  let asking: 'leave' | 'again' | undefined
+  const ask = (question: 'leave' | 'again' | undefined): void => {
+    asking = question
     screen.update()
   }
   const screen = show(
@@ -76,7 +79,7 @@ export function pauseScreen(
       // On the question, Escape says no (the dialog hears it itself); otherwise it keeps playing.
       onBack: () => onPick('resume'),
       onPause: () => {
-        if (!asking) onPick('resume')
+        if (asking === undefined) onPick('resume')
       },
     },
     (words) => {
@@ -87,7 +90,7 @@ export function pauseScreen(
           id: item,
           label: LABELS[item](words),
           ...(icon === undefined ? {} : { icon }),
-          onpress: item === 'leave' ? () => ask(true) : () => onPick(item),
+          onpress: item === 'leave' || item === 'again' ? () => ask(item) : () => onPick(item),
         })
         // Taking a player out sits with the other things that change who plays.
         if (item === 'settings') {
@@ -103,17 +106,17 @@ export function pauseScreen(
       return {
         title: words('automata.pause.title'),
         buttons,
-        ...(asking
-          ? {
+        ...(asking === undefined
+          ? {}
+          : {
               asking: {
-                title: words('automata.pause.leave-ask'),
-                yes: words('automata.pause.leave-yes'),
+                title: words(asking === 'leave' ? 'automata.pause.leave-ask' : 'automata.pause.again-ask'),
+                yes: words(asking === 'leave' ? 'automata.pause.leave-yes' : 'automata.pause.again'),
                 no: words('automata.pause.resume'),
-                onyes: () => onPick('leave'),
-                onno: () => ask(false),
+                onyes: () => onPick(asking === 'leave' ? 'leave' : 'again'),
+                onno: () => ask(undefined),
               },
-            }
-          : {}),
+            }),
       }
     },
   )

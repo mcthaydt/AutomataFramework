@@ -4,6 +4,7 @@ import type { Frames } from '../../lib/frames.ts'
 import type { PadLike } from '../input/input.ts'
 import type { Locale } from '../locale/locale.ts'
 import { doneScreen } from './done.ts'
+import { lostScreen } from './lost.ts'
 import { menuScreen } from './menu.ts'
 import { pauseScreen } from './pause.ts'
 import { playersScreen } from './players.ts'
@@ -15,6 +16,7 @@ import { warningsScreen } from './warnings.ts'
 
 export { doneScreen } from './done.ts'
 export { hud } from './hud.ts'
+export { lostScreen } from './lost.ts'
 export { type MenuItem, menuItems, menuScreen } from './menu.ts'
 export { type PauseItem, pauseScreen } from './pause.ts'
 export { playersScreen } from './players.ts'
@@ -37,6 +39,7 @@ export interface ScreenMakers {
   readonly menu: typeof menuScreen
   readonly pause: typeof pauseScreen
   readonly done: typeof doneScreen
+  readonly lost: typeof lostScreen
   readonly problem: typeof problemScreen
   readonly settings: typeof settingsScreen
   readonly saves: typeof savesScreen
@@ -50,6 +53,7 @@ export const defaultScreens: ScreenMakers = {
   menu: menuScreen,
   pause: pauseScreen,
   done: doneScreen,
+  lost: lostScreen,
   problem: problemScreen,
   settings: settingsScreen,
   saves: savesScreen,

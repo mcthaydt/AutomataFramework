@@ -45,7 +45,7 @@ afterEach(() => {
   mount.remove()
 })
 
-const ITEMS: readonly PauseItem[] = ['resume', 'add-player', 'settings', 'leave']
+const ITEMS: readonly PauseItem[] = ['resume', 'again', 'add-player', 'settings', 'leave']
 
 function open(removable: readonly number[] = []): void {
   screen = pauseScreen({
@@ -145,4 +145,34 @@ test('a yes on the question leaves, and the pad start does not keep playing whil
   expect(picked).toEqual([])
   await userEvent.click(named(words('automata.pause.leave-yes')))
   expect(picked).toEqual(['leave'])
+})
+
+test('"Start again" asks first, and only a yes picks it; "Keep playing" on the question goes back', async () => {
+  await page.viewport(390, 844)
+  open()
+  await userEvent.click(named(words('automata.pause.again')))
+  const dialog = mount.querySelector('[role="alertdialog"]') as HTMLElement
+  expect(dialog.textContent).toContain(words('automata.pause.again-ask'))
+  expect(picked).toEqual([])
+  await userEvent.click(document.activeElement as HTMLElement)
+  expect(mount.querySelector('[role="alertdialog"]')).toBeNull()
+  expect(picked).toEqual([])
+  await userEvent.click(named(words('automata.pause.again')))
+  const yes = [...(mount.querySelector('[role="alertdialog"]')?.querySelectorAll('button') ?? [])].find(
+    (button) => button.textContent?.trim() === words('automata.pause.again'),
+  ) as HTMLElement
+  await userEvent.click(yes)
+  expect(picked).toEqual(['again'])
+})
+
+test('the pause buttons run Keep playing, Start again, Add a player, Settings, Main menu, top to bottom', async () => {
+  await page.viewport(390, 844)
+  open()
+  expect(buttons().map((button) => button.textContent?.trim())).toEqual([
+    words('automata.pause.resume'),
+    words('automata.pause.again'),
+    words('automata.menu.add-player'),
+    words('automata.menu.settings'),
+    words('automata.pause.leave'),
+  ])
 })

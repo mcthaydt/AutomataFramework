@@ -7,14 +7,8 @@ import type { GameContent } from '../content/content.ts'
 import { type Game, startGame } from '../game/game.ts'
 import type { Host } from '../host/host.ts'
 import type { Locale } from '../locale/locale.ts'
-import {
-  hud,
-  type PauseItem,
-  type Screen,
-  type ScreenBase,
-  type ScreenMakers,
-} from '../screens/screens.ts'
-import { endsLevel } from './loading.ts'
+import { hud, type PauseItem, type Screen, type ScreenBase, type ScreenMakers } from '../screens/screens.ts'
+import { levelEnd } from './loading.ts'
 import type { Party } from './party.ts'
 import type { Places } from './places.ts'
 import type { Progress } from './progress.ts'
@@ -110,7 +104,7 @@ export function createPlay(deps: PlayDeps): Play {
   function showPause(): void {
     const party = deps.party()
     const members = party?.members() ?? []
-    const items: PauseItem[] = ['resume']
+    const items: PauseItem[] = ['resume', 'again']
     if (members.length < (party?.room ?? 1)) items.push('add-player')
     items.push('settings', 'leave')
     deps.dropScreen()
@@ -121,6 +115,7 @@ export function createPlay(deps: PlayDeps): Play {
         removable: members.filter((member) => member.player !== 1).map((member) => member.player),
         onPick: (item) => {
           if (item === 'resume') deps.dispatch({ type: 'resume' })
+          else if (item === 'again') deps.dispatch({ type: 'again' })
           else if (item === 'add-player') deps.dispatch({ type: 'open', over: 'players' })
           else if (item === 'settings') deps.dispatch({ type: 'open', over: 'settings' })
           else if (item === 'leave') deps.dispatch({ type: 'leave' })
@@ -175,11 +170,12 @@ export function createPlay(deps: PlayDeps): Play {
       for (const { player, claim } of deps.party()?.members() ?? []) {
         if (claim !== undefined) started.input.claim(player, claim)
       }
-      const done = loaded.project.done
       const off: (() => void)[] = [
         started.input.onBindings((changed) => void sections?.controls.set(changed)),
         started.onStep((step) => {
-          if (endsLevel(done, step.events)) deps.dispatch({ type: 'level-done' })
+          const ended = levelEnd(loaded.project, step.events)
+          if (ended === 'done') deps.dispatch({ type: 'level-done' })
+          else if (ended === 'lost') deps.dispatch({ type: 'level-lost' })
         }),
         // The player is told in words, not in the rule's own message; the loop has thrown that one to the console.
         started.onBroken((error) => deps.fail(error, [])),

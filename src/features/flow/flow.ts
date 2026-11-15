@@ -183,6 +183,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     if (next === before) return
     state = next
     mount.dataset.state = next.step
+    mount.dataset.attempt = String(next.attempt)
     if (next.over === undefined) mount.removeAttribute('data-over')
     else mount.dataset.over = next.over
     epoch++
@@ -322,7 +323,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
         return
       }
       case 'playing': {
-        if (before.step === 'paused' && play.game() !== undefined) {
+        // Keep playing goes on; Start again counts one more attempt and makes the level afresh.
+        if (before.step === 'paused' && play.game() !== undefined && next.attempt === before.attempt) {
           dropScreen()
           play.resume()
           return
@@ -352,6 +354,17 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
           next: after !== undefined,
           ...(notKept === undefined ? {} : { notKept }),
           onNext: () => dispatch({ type: 'next' }),
+          onMenu: () => dispatch({ type: 'leave' }),
+        })
+        return
+      }
+      case 'lost': {
+        play.hold()
+        dropScreen()
+        audio?.raise('screen.lost')
+        shown = makers.lost({
+          ...base(),
+          onAgain: () => dispatch({ type: 'again' }),
           onMenu: () => dispatch({ type: 'leave' }),
         })
         return
@@ -398,6 +411,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       madeSpeaker?.close()
       mount.replaceChildren()
       mount.removeAttribute('data-state')
+      mount.removeAttribute('data-attempt')
       mount.removeAttribute('data-over')
       if (mountPosition !== undefined) mount.style.position = mountPosition
     },
