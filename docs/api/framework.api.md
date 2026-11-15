@@ -657,6 +657,12 @@ function createAudio(options: {
 }): GameAudio;
 ```
 
+### `createFeel` (function)
+
+```ts
+function createFeel(options: FeelOptions): Feel;
+```
+
 ### `createGameSim` (function)
 
 ```ts
@@ -1038,6 +1044,25 @@ interface EventDef<Z extends z.ZodType = z.ZodType> {
 function exp(x: number): number;
 ```
 
+### `Feel` (interface)
+
+```ts
+interface Feel {
+    begin(): void;
+    hear(step: {
+        readonly tick: number;
+        readonly events: readonly SimEvent[];
+    }): void;
+    play(feel: FeelFile, at?: number): void;
+    hold(seconds: number): number;
+    frame(seconds: number, place: (sid: number) => FeelPlace | undefined): FeelFrame;
+    setSettings(settings: FeelSettings): void;
+    readonly holding: boolean;
+    readonly idle: boolean;
+    readonly moving: boolean;
+}
+```
+
 ### `FeelFile` (interface)
 
 ```ts
@@ -1052,10 +1077,85 @@ interface FeelFile {
 }
 ```
 
+### `FeelFrame` (interface)
+
+```ts
+interface FeelFrame {
+    readonly specks: readonly FeelSpeck[];
+    readonly shake: {
+        readonly x: number;
+        readonly y: number;
+    };
+    readonly freeze: number;
+}
+```
+
+### `FeelOptions` (interface)
+
+```ts
+interface FeelOptions {
+    readonly content: Pick<GameContent, 'feels'>;
+    readonly tickHz: number;
+    readonly settings: FeelSettings;
+    readonly seed?: number;
+    readonly freezes?: 'game' | 'picture';
+}
+```
+
+### `FeelPlace` (interface)
+
+```ts
+interface FeelPlace {
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+}
+```
+
 ### `FeelSchema` (const)
 
 ```ts
 const FeelSchema: z.ZodType<FeelFile, FeelFile>;
+```
+
+### `FeelSettings` (interface)
+
+```ts
+interface FeelSettings {
+    readonly format: 1;
+    readonly shake: boolean;
+}
+```
+
+### `feelSettingsFirst` (function)
+
+```ts
+function feelSettingsFirst(reducedMotion: boolean): FeelSettings;
+```
+
+### `feelSettingsOf` (function)
+
+```ts
+function feelSettingsOf(saved: unknown, reducedMotion: boolean): FeelSettings;
+```
+
+### `FeelSettingsSchema` (const)
+
+```ts
+const FeelSettingsSchema: z.ZodType<FeelSettings, FeelSettings>;
+```
+
+### `FeelSpeck` (interface)
+
+```ts
+interface FeelSpeck {
+    readonly x: number;
+    readonly y: number;
+    readonly size: number;
+    readonly color: number;
+    readonly alpha: number;
+}
 ```
 
 ### `Felt` (interface)
@@ -1208,6 +1308,12 @@ interface FigureVariant {
 function fill(text: string, values: Values | undefined, language: Language): string;
 ```
 
+### `firstHeroSid` (function)
+
+```ts
+function firstHeroSid(sim: Sim): number | undefined;
+```
+
 ### `Fit` (interface)
 
 ```ts
@@ -1314,6 +1420,9 @@ interface Game {
     resume(): void;
     heroes(): readonly HeroBox[];
     setVibration(on: boolean): void;
+    setShake(on: boolean): void;
+    feel(): FeelFrame;
+    showFeel(feel: FeelFile, at?: number): void;
     replay(): Replay;
     stop(): void;
 }
@@ -1378,6 +1487,7 @@ interface GameOptions extends GameSimOptions {
     readonly soundNotice?: string | false;
     readonly readPicture?: ReadPicture;
     readonly touchSettings?: unknown;
+    readonly feelSettings?: unknown;
     readonly locale: Locale;
 }
 ```
@@ -1469,6 +1579,7 @@ interface Host {
     openLink(url: string): Promise<LinkAnswer>;
     readonly canQuit: boolean;
     quit(): Promise<boolean>;
+    reducedMotion(): boolean;
     readonly canBuzz: boolean;
     buzz(strength: number, ms: number): boolean;
 }
@@ -2137,6 +2248,12 @@ const MAX_CLIENT_LEAD = 30;
 const MAX_CONFIRM_PER_ADVANCE = 240;
 ```
 
+### `MAX_FREEZE_TICKS` (const)
+
+```ts
+const MAX_FREEZE_TICKS = 30;
+```
+
 ### `MAX_LEAD_TICKS` (const)
 
 ```ts
@@ -2171,6 +2288,12 @@ const MAX_SAME = 4;
 
 ```ts
 const MAX_SOUNDS = 16;
+```
+
+### `MAX_SPECKS` (const)
+
+```ts
+const MAX_SPECKS = 256;
 ```
 
 ### `MAX_STEPS` (const)
@@ -2470,6 +2593,8 @@ interface OnlineGame {
     status(): OnlineStatus;
     stats(): SessionStats;
     setVibration(on: boolean): void;
+    setShake(on: boolean): void;
+    feel(): FeelFrame;
     leave(): void;
 }
 ```
@@ -3005,7 +3130,8 @@ interface RenderDelta {
 interface Renderer {
     readonly canvas: HTMLCanvasElement;
     apply(delta: RenderDelta): void;
-    draw(alpha: number): void;
+    draw(alpha: number, feel?: FeelFrame): void;
+    place(sid: number): FeelPlace | undefined;
     setInset(px: number): void;
     setThumbRoom(px: number): void;
     look(at: {
@@ -3996,6 +4122,7 @@ interface TestHostOptions {
     readonly deviceLanguages?: readonly string[];
     readonly canQuit?: boolean;
     readonly blockLinks?: boolean;
+    readonly reducedMotion?: boolean;
     readonly canBuzz?: boolean;
 }
 ```
@@ -4412,6 +4539,7 @@ interface Watch {
     readonly sim: Sim;
     readonly rounds: number;
     heroes(): readonly HeroBox[];
+    feel(): FeelFrame;
     stop(): void;
 }
 ```
@@ -4427,6 +4555,7 @@ interface WatchOptions extends GameSimOptions {
     readonly rounds?: number;
     readonly restTicks?: number;
     readonly readPicture?: ReadPicture;
+    readonly feelSettings?: unknown;
 }
 ```
 
@@ -4468,6 +4597,9 @@ interface WebSeams {
         opener: unknown;
     } | null;
     readonly storage: () => Storage;
+    readonly matchMedia?: ((query: string) => {
+        readonly matches: boolean;
+    }) | undefined;
 }
 ```
 
@@ -5062,6 +5194,12 @@ function createAudio(options: {
 }): GameAudio;
 ```
 
+### `createFeel` (function)
+
+```ts
+function createFeel(options: FeelOptions): Feel;
+```
+
 ### `createGameSim` (function)
 
 ```ts
@@ -5374,6 +5512,25 @@ interface EventDef<Z extends z.ZodType = z.ZodType> {
 function exp(x: number): number;
 ```
 
+### `Feel` (interface)
+
+```ts
+interface Feel {
+    begin(): void;
+    hear(step: {
+        readonly tick: number;
+        readonly events: readonly SimEvent[];
+    }): void;
+    play(feel: FeelFile, at?: number): void;
+    hold(seconds: number): number;
+    frame(seconds: number, place: (sid: number) => FeelPlace | undefined): FeelFrame;
+    setSettings(settings: FeelSettings): void;
+    readonly holding: boolean;
+    readonly idle: boolean;
+    readonly moving: boolean;
+}
+```
+
 ### `FeelFile` (interface)
 
 ```ts
@@ -5388,10 +5545,85 @@ interface FeelFile {
 }
 ```
 
+### `FeelFrame` (interface)
+
+```ts
+interface FeelFrame {
+    readonly specks: readonly FeelSpeck[];
+    readonly shake: {
+        readonly x: number;
+        readonly y: number;
+    };
+    readonly freeze: number;
+}
+```
+
+### `FeelOptions` (interface)
+
+```ts
+interface FeelOptions {
+    readonly content: Pick<GameContent, 'feels'>;
+    readonly tickHz: number;
+    readonly settings: FeelSettings;
+    readonly seed?: number;
+    readonly freezes?: 'game' | 'picture';
+}
+```
+
+### `FeelPlace` (interface)
+
+```ts
+interface FeelPlace {
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+}
+```
+
 ### `FeelSchema` (const)
 
 ```ts
 const FeelSchema: z.ZodType<FeelFile, FeelFile>;
+```
+
+### `FeelSettings` (interface)
+
+```ts
+interface FeelSettings {
+    readonly format: 1;
+    readonly shake: boolean;
+}
+```
+
+### `feelSettingsFirst` (function)
+
+```ts
+function feelSettingsFirst(reducedMotion: boolean): FeelSettings;
+```
+
+### `feelSettingsOf` (function)
+
+```ts
+function feelSettingsOf(saved: unknown, reducedMotion: boolean): FeelSettings;
+```
+
+### `FeelSettingsSchema` (const)
+
+```ts
+const FeelSettingsSchema: z.ZodType<FeelSettings, FeelSettings>;
+```
+
+### `FeelSpeck` (interface)
+
+```ts
+interface FeelSpeck {
+    readonly x: number;
+    readonly y: number;
+    readonly size: number;
+    readonly color: number;
+    readonly alpha: number;
+}
 ```
 
 ### `Felt` (interface)
@@ -5542,6 +5774,12 @@ interface FigureVariant {
 
 ```ts
 function fill(text: string, values: Values | undefined, language: Language): string;
+```
+
+### `firstHeroSid` (function)
+
+```ts
+function firstHeroSid(sim: Sim): number | undefined;
 ```
 
 ### `fitLabel` (function)
@@ -5702,6 +5940,7 @@ interface Host {
     openLink(url: string): Promise<LinkAnswer>;
     readonly canQuit: boolean;
     quit(): Promise<boolean>;
+    reducedMotion(): boolean;
     readonly canBuzz: boolean;
     buzz(strength: number, ms: number): boolean;
 }
@@ -6208,6 +6447,12 @@ const MAX_CLIENT_LEAD = 30;
 const MAX_CONFIRM_PER_ADVANCE = 240;
 ```
 
+### `MAX_FREEZE_TICKS` (const)
+
+```ts
+const MAX_FREEZE_TICKS = 30;
+```
+
 ### `MAX_LEAD_TICKS` (const)
 
 ```ts
@@ -6242,6 +6487,12 @@ const MAX_SAME = 4;
 
 ```ts
 const MAX_SOUNDS = 16;
+```
+
+### `MAX_SPECKS` (const)
+
+```ts
+const MAX_SPECKS = 256;
 ```
 
 ### `MAX_STEPS` (const)
@@ -7812,6 +8063,7 @@ interface TestHostOptions {
     readonly deviceLanguages?: readonly string[];
     readonly canQuit?: boolean;
     readonly blockLinks?: boolean;
+    readonly reducedMotion?: boolean;
     readonly canBuzz?: boolean;
 }
 ```
