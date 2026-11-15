@@ -108,6 +108,7 @@ export {
   type Project,
   ProjectSchema,
   parseProject,
+  scoreRef,
 } from './project.ts'
 export { type ListedFile, listContent } from './project-write.ts'
 export {

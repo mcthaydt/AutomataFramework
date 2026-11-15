@@ -42,10 +42,11 @@ function simScene(scene: SceneFile): SceneFile {
 }
 
 /**
- * The fields of the project file that tell the flow what to show (plan U): the order of the levels, what ends one, the
- * warnings and the splash. None of them says what happens in the game, so none is given to the sim.
+ * The fields of the project file that tell the flow what to show (plan U and plan Q): the order of the levels, what ends
+ * one, the warnings, the splash, what loses a level and the number counted. None of them says what happens in the
+ * game, so none is given to the sim.
  */
-const FLOW_FIELDS = ['levels', 'done', 'warnings', 'splash'] as const
+const FLOW_FIELDS = ['levels', 'done', 'warnings', 'splash', 'lost', 'score'] as const
 
 /**
  * The content the sim is given, and so hashes: everything but the words, the sounds, the art and the feel. Both their maps
@@ -79,6 +80,8 @@ export function simContent(content: GameContent): GameContent {
     done: _done,
     warnings: _warnings,
     splash: _splash,
+    lost: _lost,
+    score: _score,
     ...project
   } = content.project
   const {
