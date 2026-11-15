@@ -710,6 +710,107 @@ the reader above throws when the answer is not `ok`: otherwise a missing picture
 figure, no tileset and no backdrop needs no `readPicture`. `startOnlineGame` and `watchReplay` take the same
 `readPicture`, and an online game draws its pictures and follows its heroes with the camera as a game on one screen does.
 
+## Scenes
+
+A **scene file** is the ground of a place: a map of letters, what each letter is made of, and the colours it is painted in.
+(It is not the browser entry's `Scene`, which is the drawn picture of a level at one moment.) A level names its scene and
+only places what plays on it, so the ground can be painted in the editors, or drafted by an agent, apart from the things on
+it. Scene files live in `content/scenes/`, each listed in `automata.toml` as `type = "scene"`.
+
+The smallest scene file is eight tiles wide and four tall, with one kind of ground and a lip of grass along its top:
+
+```json scene
+{
+  "format": 1,
+  "id": "meadow",
+  "seed": 7,
+  "tile": 16,
+  "size": {
+    "w": 8,
+    "h": 4
+  },
+  "paints": [
+    {
+      "id": "soil",
+      "color": "#6b4a33"
+    },
+    {
+      "id": "grass",
+      "color": "#5fa04a"
+    }
+  ],
+  "materials": [
+    {
+      "id": "earth",
+      "kind": "flat",
+      "paint": "soil",
+      "top": {
+        "material": "turf",
+        "deep": 4
+      }
+    },
+    {
+      "id": "turf",
+      "kind": "flat",
+      "paint": "grass"
+    }
+  ],
+  "ground": {
+    "letters": [
+      {
+        "letter": "G",
+        "material": "earth",
+        "shape": "solid"
+      }
+    ],
+    "rows": [
+      "........",
+      "........",
+      "........",
+      "GGGGGGGG"
+    ]
+  }
+}
+```
+
+Its `ground.rows` are one string a row, top row first, one letter a tile; `.` is air. A letter's `shape` is one of nine:
+
+| Shape | What it is |
+|---|---|
+| `solid` | a whole square you stand on |
+| `slope-up`, `slope-down` | a slope across the square, rising or falling to the right |
+| `half-up-low`, `half-up-high` | the two halves of a gentle rise |
+| `half-down-high`, `half-down-low` | the two halves of a gentle fall |
+| `ledge` | the top quarter of a square: land on it from above, jump up through it from below |
+| `back` | seen and never solid, like a wall to look at |
+
+A slope stands on ground: every tile under a slope's line must be solid, and the check names the tile to fill when one is
+not. A material, the thing a letter is made of, is one of three kinds:
+
+- `flat`: one of the scene's paints, all over, with an optional `top` and `edge`.
+- `photo`: a photo turned into the scene's paints, either with a `ladder` of paints from dark to light or by keeping
+  `match` of its own colours. The photo is one of the library's 38, shipped in the package's `photos/` folder (all CC0), or
+  one of the game's own, a `photo` file listed in `automata.toml`.
+- `tiles`: one kind of tile of a tileset, drawn from its picture. It cannot be a slope.
+
+`automata art` paints a scene's picture and atlas beside its file (`content/scenes/meadow.json` makes `meadow.png` and
+`meadow.atlas.json`), the same bytes in every browser and in Node, and `automata check` says when one is missing or older
+than its file. A scene may be 256 tiles wide and tall, with a picture of about four million pixels at most.
+
+A game that already has levels written with `tiles` moves each onto a scene with one command, and the level plays and hashes
+as it did, so its recordings still end where they did:
+
+```sh
+npx --no automata scene from-level level-1
+```
+
+From code, the headless entry has `SceneSchema` and `PhotoSchema` for the files, `paintScene` and `sceneSheet` for the
+picture, `sceneFromLevel` for the move above, `materialTile` for a swatch of a photo material, `PHOTO_LIBRARY` for the
+library's records, `photosUsed` for the photos a game's scenes need, `groundColliders`, `slopeRuns`, `covers` and
+`surfaceAt` for the shapes, and `worldSize` for how big a level is. The browser entry's `createLevelPicture(...)` draws a level
+with a scene, and `groundPages` and `placedTiles` say where its pieces go. The whole format, every photo and every knob are in
+`skills/automata-content/scenes.md`, which the package ships for an agent to read.
+
 ## The automata command
 
 `automata` is the package's command. A game's own scripts call it, so a person types `npm run check` and an agent types

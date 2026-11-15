@@ -7,7 +7,15 @@ import { afterEach, expect, test } from 'vitest'
 import { COMMAND_NAMES } from '#src/features/cli/args.ts'
 import { helpFor } from '#src/features/cli/help.ts'
 import { controlsCommand } from '#src/features/commands/commands.ts'
-import { CONTENT_TYPES, type ContentType, parseContent, writeContent } from '#src/features/content/content.ts'
+import {
+  CONTENT_TYPES,
+  type ContentType,
+  formatDiagnostic,
+  GROUND_SHAPES,
+  PHOTO_LIBRARY,
+  parseContent,
+  writeContent,
+} from '#src/features/content/content.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
 import * as framework from '#src/headless.ts'
@@ -175,5 +183,41 @@ test('no skill names a colour, a competitor, a price, or a plan of this project'
     expect(skill.text, skill.name).not.toMatch(
       /\$\d|\b(price|prices|pricing|paid|milestone)\b|\bplan [A-Z]\b/i,
     )
+  }
+})
+
+// The scenes page is written for an agent that drafts a scene for a person to finish: every file it shows is a whole file, in
+// the form writeContent writes, and every id and shape it names is one the package has.
+const scenes = readFileSync(join(SKILLS, 'automata-content', 'scenes.md'), 'utf8')
+
+test('SKILL.md points at the scenes page, and the page says which "scene" it means', () => {
+  expect(text('automata-content')).toContain('skills/automata-content/scenes.md')
+  expect(scenes).toContain('scene file')
+  expect(scenes).toContain("browser entry's `Scene`")
+})
+
+test('every json block on the scenes page is a whole file of the kind its fence names, and is what writeContent writes', () => {
+  const blocks = [...scenes.matchAll(/```json (\w+)\n([\s\S]*?)```/g)]
+  expect(blocks.map((m) => m[1])).toEqual(['scene', 'scene', 'scene', 'scene', 'level'])
+  for (const [, kind = '', body = ''] of blocks) {
+    const id = (JSON.parse(body) as { id: string }).id
+    const path = `content/${CONTENT_TYPES[kind as ContentType].plural}/${id}.json`
+    const parsed = parseContent(kind as ContentType, body, path)
+    expect(parsed.ok ? [] : parsed.diagnostics.map(formatDiagnostic), id).toEqual([])
+    if (parsed.ok) expect(writeContent(kind as ContentType, parsed.value as never), id).toBe(body)
+  }
+})
+
+test('the scenes page names all nine shapes and all 38 library photos, and no other', () => {
+  for (const shape of GROUND_SHAPES) expect(scenes, shape).toContain(`| \`${shape}\` |`)
+  const ids = [...scenes.matchAll(/^\| `([A-Za-z]+)` \| [^|]+ \| [\d.]+ by [\d.]+ \|$/gm)].map((m) => m[1])
+  expect(ids.sort()).toEqual(Object.keys(PHOTO_LIBRARY).sort())
+})
+
+test('every automata command the scenes page names exists, with flags its help has', () => {
+  for (const m of scenes.matchAll(/automata ([a-z]+)([^`\n]*)`/g)) {
+    expect(COMMAND_NAMES as readonly string[], m[0]).toContain(m[1])
+    const help = helpFor(m[1] as (typeof COMMAND_NAMES)[number])
+    for (const flag of (m[2] ?? '').matchAll(/ (--[a-z-]+)/g)) expect(help, m[0]).toContain(flag[1] ?? '')
   }
 })
