@@ -64,5 +64,7 @@ test('the same recording without the key does not verify', async () => {
   const text = await tunedPlay({ level: 'level-1', players: '1' })
   const { code, out } = await run(text)
   expect(code).toBe(1)
-  expect(out.join('\n')).not.toContain('as recorded')
+  // The tune it holds is a command this sim does not know, so the game is said to have changed.
+  expect(out).toHaveLength(1)
+  expect(out[0]).toContain("The game's rules have changed since this was recorded")
 })
