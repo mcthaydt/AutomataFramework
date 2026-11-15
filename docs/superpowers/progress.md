@@ -2,6 +2,40 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 8: rigged figures (people, animals and free shapes)
+
+Spec: [`specs/2026-11-15-rigged-figures-design.md`](specs/2026-11-15-rigged-figures-design.md). It widens M2 plan A's
+`figure` format so the editors' 2D figure builder (its spec is in AutomataFrameworkEditors) can be as powerful as the
+old 3D builder (the Owner, 2026-11-15). The Owner answered Q1 to Q5 on 2026-11-15.
+
+Overall: **8%** (stage 1 counts 4 points, stage 2 is 4, stage 3 is 4, stage 4 is 60, stage 5 is 10, stage 6 is 12,
+stage 7 is 6; the cycle is one plan, plan R, built in six parts, each its own pull request)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Written; in review | [`specs/2026-11-15-rigged-figures-design.md`](specs/2026-11-15-rigged-figures-design.md) |
+| 2. Plan (plan R) | Written, in review, 100%. Twenty tasks in six parts, each part its own branch and pull request that leaves `main` green (each task is 4.5% of stage 4; the last 10% is the parts' final green runs): 1, a person from the side (the `palette` kind and the library's 32 ramps; the format 2 file with eighteen sliders, each with its sentence; the skeleton and the two-bends rule; shapes filled in a ramp's shades; a standing person, its sheet and a contact sheet on `ci-screens`); 2, pieces (the `piece` kind, a game's own over the library's, painting them, the library's 41 for a person); 3, motion (poses as bends inside each joint's limits; poses placed by hands, feet, head and hips; the `gait` kind with a walk and a run; the `stand` kind with an idle); 4, views (front and back painted; a `Side` component switched on only by a figure that paints them, `setSide`, a cutscene key's `view`); 5, animals (their file, fourteen sliders and skeleton; painting, 12 pieces, walk, trot and stands); 6, new files and the way in (`listContent`, `automata add` and the agent's `add` tool, six starters and the figure tools on the public surface, the README and skills, and a new game given a rigged figure and played in three browsers at five sizes). No existing golden moves (free figures stay format 1 and keep their painter untouched); two new ones, `figures.json` and `sides.json`. No dependency is added. Readings of the spec the plan records for the audit: face styles are a list in code, not library files; a behaviour sets no view (no act sets facing today); a sheet never spills into a second picture (a rigged sheet is up to 32 pictures across); `stand` left out is `easy` and `gait` left out is no walk; six starter figures are added for the builder's New figure. No Owner question is open | [`plans/2026-11-15-rigged-figures.md`](plans/2026-11-15-rigged-figures.md) |
+| 3. Plan audit | Not started | |
+| 4. Execution | Not started | |
+| 5. Implementation audit | Not started | |
+| 6. Fixes | Not started | |
+| 7. Owner review | Not started | |
+
+## Cycle 7: the default game flow (plan U)
+
+Spec: [`specs/2026-11-14-m2-design.md`](specs/2026-11-14-m2-design.md) ("UI, screens and layouts (plan U)"), with the
+order of the flow from [`specs/2026-11-14-no-default-language-design.md`](specs/2026-11-14-no-default-language-design.md)
+and the touch settings from [`specs/2026-11-14-content-hero-controls-design.md`](specs/2026-11-14-content-hero-controls-design.md)
+
+Overall: **20%** (the plan is written and its audit's fixes are in it, both in review; the Owner answered the three questions; stages 4 to 7 follow)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Merged (M2's spec, PR 30; the flow's order is the Owner's, 2026-11-14: warnings if needed, the language picker, the splash, the main menu, the game with pause, back to the main menu) | `specs/2026-11-14-m2-design.md` |
+| 2. Plan (plan U) | Written, in review, 100%; plan U at 0% built. Eighteen tasks (5% each, 10% for the last green run) in three parts. Part A needs nothing and can start at once (Tasks 1 to 4): the project file's `levels`, `done`, `warnings` and `splash`, kept out of the sim so no hash moves; what a `Game` tells a screen (`onStep`, `paused`, `broken`); the flow's steps as one pure function; progress and the party. Part B (Tasks 5 to 13) is the screens and `startFlow`, and waits for the Owner's three answers and for plan H to be merged. Part C (Tasks 14 to 18) is settings, saved games, adding a player, the journeys at five sizes in three browsers, and the docs. Three new page features: `ui`, `screens`, `flow`. No golden moves. **The Owner answered all three questions with the recommended option (a), relayed by the coordinator on 2026-11-15:** Q1, yes to `svelte` 5.57.1 and, for development, `@sveltejs/vite-plugin-svelte` 7.3.1 and `svelte-check` 4.7.6; Q2, the framework's and the game's warnings on one screen with OK, in the device's language when the game has it, else right after the flags; Q3, the game's own logo or name for two seconds, any press skips | `plans/2026-11-15-game-flow.md` |
+| 3. Plan audit | Written, in review, 100%. Sound and ready for stage 4: no critical, eight important (the `flow` folder had no entry until Task 13, so pull request A could not pass `feature-has-entry`; the test that the four new fields stay out of the sim could not fail; Task 2 edits `game.ts` and `render.ts`, which plan H's open build rewrites, so it moves to pull request B; nothing told TypeScript what a `.svelte` import is; the packed-install check never read the new `screens.ts`; `svelte-check` on TypeScript 7 is unproven, so its first push prints what it runs on; a crate pushed into the door would have ended the level; Escape on the mount is not heard after a tap on the canvas), eleven minor. All fixed in the plan; the held lines are lifted. Part A is now Tasks 1, 3 and 4 and can start at once; Task 2 and Part B wait for plan H on `main`. No golden moves, no Owner question open | `audits/2026-11-15-plan-u-plan-audit.md` |
+| 4 to 7 (plan U) | Not started | |
+
 ## Cycle 6: the built-in hero (walk, jump and more, from content)
 
 Spec: [`specs/2026-11-14-content-hero-controls-design.md`](specs/2026-11-14-content-hero-controls-design.md)

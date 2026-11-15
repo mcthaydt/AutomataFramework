@@ -115,7 +115,14 @@ export interface LevelPicture {
   show(level: Level): void
   /** Draws again with this room. */
   setRoom(room: Room): void
-  /** Where the level is on the canvas now: `fitInRoom` of the mount's size. */
+  /**
+   * Draws the level exactly here, in place of the fit in the room: `scale` pixels a tile, its top-left corner at
+   * `left`, `top` (CSS pixels, either may be negative, so a part of the level can be shown). `undefined`, or a scale
+   * that is not above zero, goes back to the fit in the room. The sky and the backdrop still fill the canvas, and the
+   * level stays drawn in this view when the mount changes size or `show` draws a changed level.
+   */
+  setView(view: Fit | undefined): void
+  /** Where the level is on the canvas now: the view while one is set, otherwise `fitInRoom` of the mount's size. */
   fit(): Fit
   /**
    * Removes the canvas and frees Pixi and the art. Safe to call twice. The picture owns the `Art` it was given, as
@@ -157,6 +164,7 @@ export async function createLevelPicture(options: {
       draw()
     },
     setRoom: (room) => stage.setRoom(room),
+    setView: (view) => stage.setView(view),
     fit: () => stage.fit(),
     destroy() {
       if (destroyed) return
