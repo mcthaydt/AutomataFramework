@@ -130,12 +130,11 @@ audit should weigh each.
 7. **`score` names one number of one resource:** `score = "hero.score.sparks"` is the field `sparks` of the resource
    `hero.score` (the last dot splits them). It is read after each step and shown in the HUD's top center, on Well done
    and on Try again. A score is one level's: each level is its own sim.
-8. **The best score is kept with the settings, not in a saved game** (the spec says "the flow's progress save gains
-   `best`"). A game that names its own save has no place for it, and a best score belongs to the player on this
-   device, not to one of three saved games. It is a settings section, `records`: `{ best?: number }`. "Delete all my
-   saves" clears it.
-9. **The sound switch is a flag, `muted`, in the sound settings** (the spec says "the same setting as volume 0"). With
-   a flag the two sliders keep where the player put them. It is on the pause screen and in Settings.
+8. **The best score is kept with the settings, not in a saved game.** A game that names its own save has no place
+   for it, and a best score belongs to the player on this device, not to one of three saved games. It is a settings
+   section, `records`: `{ best?: number }`. "Delete all my saves" clears it.
+9. **The sound switch is a flag, `muted`, in the sound settings.** With a flag the two sliders keep where the player
+   put them. It is on the pause screen and in Settings.
 10. **"Delete all my saves" erases every saved game and the best score.** It leaves the language, the keys and the
     volumes: those are not what a player calls a save. It asks first, and "No" has the focus.
 11. **Back** is one history entry, added the first time a level starts. Back while playing pauses and puts the entry
@@ -1430,12 +1429,14 @@ test('automata check --ship on the untouched game fails with "still the starter"
 - **Spec coverage, the rest.** The policy and `[network] allow`: Tasks 1, 14, 18. `--ship`: Task 20. Part A as plan
   K's Step U, with the one move of the recording shown to the Owner: Tasks 14 to 17. Q1's answer: Task 16, run in
   Task 21. New words in six languages: Task 5. Skills and `AGENTS.md` name the maker's boxes: Task 20.
-- **Where this plan departs from the spec's letter,** for the audit to weigh: the best score is a settings section,
-  not a field of the progress save (call 8); mute is a flag, not volume 0 (call 9); the goal is a message key by
-  convention, not a field (call 5); there is no `<room>` in the policy because the project file names no room server
-  (call 14); the problem screen's button keeps "Load the page again" (call 13); `hero.fell` is a plugin of its own,
-  joined only when named, and not an event of plan H's hero in every game (call 2), which is what keeps every other
-  recording still. Reduced motion for shake and freeze is plan F's and is not a task here.
+- **Calls a reader should check.** The spec was brought into line with six of them after this plan was written
+  (its commit 879c3d4e), so the two agree: the best score is a settings section (call 8); mute is a flag (call 9); the
+  goal is a message key by convention (call 5); the policy has no `<room>` and has `worker-src 'self'` (call 14); the
+  problem screen's button keeps "Load the page again" (call 13); `hero.fell` is a plugin of its own, joined only when
+  named (call 2), which is what keeps every other recording still. The rest are this plan's alone: `done` wins over
+  `lost` (1), Start again asks (4), a level waits for the first press (6), what Delete erases (10), Back's rules (11),
+  the saves-version check through `gameSave` (16), two players in the template (17). Reduced motion for shake and
+  freeze is plan F's and is not a task here.
 - **Not covered, on purpose:** the demo (handoff); the editors; a publish step; anything about sending a game to a
   host; `automata words --compile` (handoff, with no owner).
 - **End to end.** Every pull request has real-browser tests: pull request 1 the fall's parity in four engines; 2 every
