@@ -34,26 +34,40 @@ export interface Felt {
   readonly below: boolean
   readonly left: boolean
   readonly right: boolean
+  /**
+   * The normal of the ground the body stands on: of the contact that is the most upright when it stands on more than
+   * one. (0, -1) on flat ground, and also in the air, where there is none.
+   */
+  readonly gx: number
+  readonly gy: number
 }
 
 /**
  * Ground is anything solid under the body, a crate included. A wall is something that does not move, so a hero pushes
- * a crate and never leans on one.
+ * a crate and never leans on one. A contact steep enough to be ground is never a wall: a slope of 45 degrees is stood
+ * on and not leaned on, though its normal leans as far sideways as it does up.
  */
 export function felt(contacts: readonly FeltContact[]): Felt {
   let left = false
   let right = false
   for (const c of contacts) {
-    if (c.dist > TOUCH_SLOP || c.moves) continue
+    if (c.dist > TOUCH_SLOP || c.moves || c.ny <= -STEEP) continue
     if (c.nx >= STEEP) left = true
     if (c.nx <= -STEEP) right = true
   }
   let below = false
+  let gx = 0
+  let gy = -1
   for (const c of contacts) {
     if (c.dist > TOUCH_SLOP || c.ny > -STEEP) continue
     // Only a corner of the body on the seam of a wall it leans on is not ground: the seam is inside the wall.
     if ((c.corner === -1 && left) || (c.corner === 1 && right)) continue
+    // The most upright ground wins (the smallest `ny`, y pointing down), and the first of two alike.
+    if (!below || c.ny < gy) {
+      gx = c.nx
+      gy = c.ny
+    }
     below = true
   }
-  return { below, left, right }
+  return { below, left, right, gx, gy }
 }

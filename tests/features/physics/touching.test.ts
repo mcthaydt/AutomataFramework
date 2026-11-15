@@ -15,7 +15,7 @@ const slope = (degrees: number) => {
   const a = (degrees * Math.PI) / 180
   return contact(Math.sin(a), -Math.cos(a))
 }
-const none = { below: false, left: false, right: false }
+const none = { below: false, left: false, right: false, gx: 0, gy: -1 }
 
 describe('felt', () => {
   test('no contacts is nothing', () => expect(felt([])).toEqual(none))
@@ -46,7 +46,7 @@ describe('felt', () => {
   })
 
   test('a corner in a floor and a wall is both', () =>
-    expect(felt([contact(0, -1), contact(-1, 0)])).toEqual({ below: true, left: false, right: true }))
+    expect(felt([contact(0, -1), contact(-1, 0)])).toEqual({ ...none, below: true, right: true }))
 
   test('a corner on the seam of the wall it leans on is not ground, but a corner on a plain ledge is', () => {
     // A hero on the left of a wall's right face is at the wall's right: the wall pushes it right, so it is `left`.
@@ -55,6 +55,21 @@ describe('felt', () => {
     expect(felt([contact(0, -1, 0, false, -1)])).toEqual({ ...none, below: true })
     // The other corner is another thing: a floor under the far side is still ground beside a wall.
     expect(felt([contact(1, 0), contact(0, -1, 0, false, 1)])).toEqual({ ...none, left: true, below: true })
+  })
+
+  test('a slope of 45 degrees is ground and no wall, and its normal is what the body stands on', () => {
+    const rises = contact(0.7071, -0.7071)
+    expect(felt([rises])).toEqual({ below: true, left: false, right: false, gx: 0.7071, gy: -0.7071 })
+    const falls = contact(-0.7071, -0.7071)
+    expect(felt([falls])).toEqual({ below: true, left: false, right: false, gx: -0.7071, gy: -0.7071 })
+  })
+
+  test('on two grounds the most upright one is what is stood on', () => {
+    expect(felt([contact(0.7071, -0.7071), contact(0, -1)])).toMatchObject({ gx: 0, gy: -1 })
+    expect(felt([contact(0, -1), contact(0.7071, -0.7071)])).toMatchObject({ gx: 0, gy: -1 })
+    // A steeper one that is not ground (a 46 degree face) is not counted, and nor is a near miss.
+    expect(felt([slope(46), contact(0, -1)])).toMatchObject({ gx: 0, gy: -1 })
+    expect(felt([contact(0.7071, -0.7071, TOUCH_SLOP + 0.01)])).toEqual(none)
   })
 
   test('a ceiling is nothing', () => expect(felt([contact(0, 1)])).toEqual(none))

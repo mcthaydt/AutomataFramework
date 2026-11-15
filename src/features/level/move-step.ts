@@ -85,6 +85,12 @@ export interface MoveInput {
   /** The speed physics left the body with, in tiles a second. y points down: up is negative. */
   readonly vx: number
   readonly vy: number
+  /**
+   * The normal of the ground under the hero (y points down, so flat ground is (0, -1)). Given only in a game with a
+   * slope. On the ground, a walk then runs along it, and a hero left alone is held on it. Left out, or flat, nothing
+   * here differs from a game with no slope.
+   */
+  readonly slope?: { readonly nx: number; readonly ny: number } | undefined
 }
 
 /** Which of the optional moves the hero's character file switched on. */
@@ -113,6 +119,9 @@ export interface MoveResult {
   readonly events: readonly MoveEventName[]
 }
 
+/** A ground whose normal leans this little sideways is flat. */
+const FLAT = 1e-3
+
 /** A speed this near its target is on it: sums of a step's size, held as f32, land a hair short of a whole count. */
 const ARRIVED = 1e-4
 
@@ -125,7 +134,8 @@ function toward(value: number, target: number, reach: number): number {
 /**
  * One tick of one hero, in the order the plan fixes (the tests pin it): ground, the press, a dash under way, a dash
  * beginning, the walk, the wall slide, the jump, the cut, the cap, the mode. `hover` is the upward speed that one
- * tick of gravity brings to nothing, so a dash holds its height.
+ * tick of gravity brings to nothing, so a dash holds its height; `pull` is how fast one tick of gravity pulls, which on
+ * a slope is what a hero left alone is given to stand still.
  */
 export function stepMoves(
   state: MoveState,
@@ -133,6 +143,7 @@ export function stepMoves(
   n: MoveNumbers,
   on: MoveSwitches,
   hover: number,
+  pull = 0,
 ): MoveResult {
   const s: MoveState = { ...state }
   const events: MoveEventName[] = []
@@ -223,8 +234,10 @@ export function stepMoves(
 
   // 7. The jump: the ground (or its grace), else a wall, else the air. The first that fits.
   let airJumped = false
+  let jumped = false
   if (s.press > 0) {
     if (canStand) {
+      jumped = true
       vy = -n.jumpSpeed
       s.grace = 0
       s.stood = false
@@ -261,6 +274,18 @@ export function stepMoves(
 
   // 9. The cap.
   vy = Math.min(vy, n.fallSpeed)
+
+  // 9b. A slope. On the ground, and not on the tick of a jump, the walk's speed runs along the slope and not along the
+  // floor: `tx, ty` is the slope's direction, pointing right. A hero that holds nothing is given the speed along it
+  // that one tick of gravity brings to nothing, so it stands where it is and does not creep.
+  const { slope } = input
+  if (below && !jumped && slope !== undefined && Math.abs(slope.nx) > FLAT) {
+    const tx = -slope.ny
+    const ty = slope.nx
+    const along = dir === 0 && s.run === 0 ? -pull * ty : s.run
+    vx = along * tx
+    vy = along * ty
+  }
 
   // 10. The mode, for the clip.
   s.mode = s.sliding
