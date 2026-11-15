@@ -112,9 +112,9 @@ test('a door over the gap: the hero touches it on the way down and it is Well do
     id: 'level-pit',
     tiles: [
       ...Array.from({ length: 8 }, () => '.'.repeat(16)),
-      Array.from({ length: 16 }, (_, col) => (col === 7 || col === 8 ? '.' : '#')).join(''),
+      Array.from({ length: 16 }, (_, col) => (col >= 5 && col <= 10 ? '.' : '#')).join(''),
     ],
-    things: [{ id: 'door-1', character: 'door', x: 7.5, y: 7.5 }],
+    things: [{ id: 'door-1', character: 'door', x: 7.5, y: 8.5 }],
     starts: [{ player: 1, x: 2.5, y: 7.5 }],
   } as never)
   await intoPit({ game: { replace: { 'content/levels/level-pit.json': doorOverGap } } })

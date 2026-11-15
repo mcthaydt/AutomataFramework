@@ -47,7 +47,10 @@ test('an engine with no Intl.Segmenter cuts between code points', () => {
 })
 
 test("a level's goal is the game's word, and undefined for a level with none", async () => {
-  const words = (keys: Record<string, string>) => (key: string): string => keys[key] ?? key
+  const words =
+    (keys: Record<string, string>) =>
+    (key: string): string =>
+      keys[key] ?? key
   const said = words({ 'level.level-1.goal': 'Reach the door.' })
   expect(levelGoal(said, 'level-1')).toBe('Reach the door.')
   expect(levelGoal(said, 'level-2')).toBeUndefined()
