@@ -2,6 +2,19 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 12: the game checklist in every game (plan Q)
+
+Spec: [`specs/2026-11-15-game-checklist-design.md`](specs/2026-11-15-game-checklist-design.md). The Owner (2026-11-15):
+every "Must have" box of the Owner's game checklist is met by every game by default, plus the "Good to have" boxes that
+make sense; only the boxes about the game itself, not about sending it to a host.
+
+Overall: **4%** (the spec is written and in review; stages 2 to 7 follow)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Written, in review, 100%. Every box mapped to done (with proof), framework, template, check or the game maker; new: losing (`lost` and Try again), How to play, the goal line, `score` and best, a strict content security policy in the template, a `page` part of the `rules` step, `automata check --ship`; Part A takes over plan K's Step U (the template on `startFlow`) and moves the template's recording once, for the Owner to see. One Owner question (Q1: a real browser in every game's own CI) | `specs/2026-11-15-game-checklist-design.md` |
+| 2 to 7 | Not started | |
+
 ## The Scenes cycle (the framework's side of the 2D environment builder)
 
 Unnumbered, as the merge session keeps it (2026-11-15); the plan first said Cycle 8, which other plans took (the plan audit's I1).
