@@ -1,10 +1,6 @@
 // The two touch choices a player has, as plain data.
 import { expect, test } from 'vitest'
-import {
-  TOUCH_SETTINGS_DEFAULT,
-  TouchSettingsSchema,
-  touchSettingsOf,
-} from '#src/features/input/input.ts'
+import { TOUCH_SETTINGS_DEFAULT, TouchSettingsSchema, touchSettingsOf } from '#src/features/input/input.ts'
 
 test('the default is the left thumb walking, with buzz on, and passes its own schema', () => {
   expect(TOUCH_SETTINGS_DEFAULT).toEqual({ format: 1, swapSides: false, vibration: true })

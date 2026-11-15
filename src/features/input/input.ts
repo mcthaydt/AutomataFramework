@@ -23,13 +23,6 @@ import {
 } from './bindings.ts'
 import { type Capture, type RunningCapture, startCapture } from './capture.ts'
 import { type Controls, checkControls } from './controls.ts'
-export { heroControls } from './hero-controls.ts'
-export {
-  TOUCH_SETTINGS_DEFAULT,
-  type TouchSettings,
-  TouchSettingsSchema,
-  touchSettingsOf,
-} from './touch-settings.ts'
 import type { PadLike } from './gamepad.ts'
 import { heldBy } from './held.ts'
 import { createInvites } from './invite.ts'
@@ -60,6 +53,13 @@ export {
   checkControls,
   controlsFromList,
 } from './controls.ts'
+export { heroControls } from './hero-controls.ts'
+export {
+  TOUCH_SETTINGS_DEFAULT,
+  type TouchSettings,
+  TouchSettingsSchema,
+  touchSettingsOf,
+} from './touch-settings.ts'
 
 /** What `createInput` takes. */
 export interface InputOptions {
