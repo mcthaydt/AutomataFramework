@@ -130,23 +130,9 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
     await page.viewport(844, 390)
     await expect.poll(() => window.innerHeight).toBe(390)
     // A screen drawn in the kit's frame says "tall" until it has measured its new box; the menu has no frame.
-    const frames = (): HTMLElement[] => [...drive.mount.querySelectorAll<HTMLElement>('[data-height]')]
-    const heights = (): string[] => frames().map((one) => one.dataset.height ?? '')
-    // The frame hears of its new box from a ResizeObserver, which a page that is busy or painting slowly delivers late:
-    // the poll waits as long as the other page waits in these tests (10 s), not the one second `poll` gives by default.
-    // This failed in Chromium alone, a few times in a few dozen runs, with no cause found; if it fails again, the message
-    // says what the frame and the window held, which tells a late observer (the box is already small) from a frame
-    // that never measured (the box is still tall).
-    try {
-      await expect.poll(heights, { timeout: 10_000 }).not.toContain('tall')
-    } catch (error) {
-      const held = frames().map((one) => `${one.dataset.height} in ${one.clientWidth}x${one.clientHeight}`)
-      throw new Error(
-        `A frame still says "tall" 10 s after the turn: [${held.join(', ')}], the window is ` +
-          `${window.innerWidth}x${window.innerHeight}.`,
-        { cause: error },
-      )
-    }
+    const heights = (): string[] =>
+      [...drive.mount.querySelectorAll<HTMLElement>('[data-height]')].map((one) => one.dataset.height ?? '')
+    await expect.poll(heights).not.toContain('tall')
   }
   // The menu: the same button is in focus on its side.
   await drive.wait(es('automata.menu.continue'))
@@ -192,23 +178,9 @@ test('turning the phone on the warnings, the saved games, the players and the do
   const turn = async (): Promise<void> => {
     await page.viewport(844, 390)
     await expect.poll(() => window.innerHeight).toBe(390)
-    const frames = (): HTMLElement[] => [...drive.mount.querySelectorAll<HTMLElement>('[data-height]')]
-    const heights = (): string[] => frames().map((one) => one.dataset.height ?? '')
-    // The frame hears of its new box from a ResizeObserver, which a page that is busy or painting slowly delivers late:
-    // the poll waits as long as the other page waits in these tests (10 s), not the one second `poll` gives by default.
-    // This failed in Chromium alone, a few times in a few dozen runs, with no cause found; if it fails again, the message
-    // says what the frame and the window held, which tells a late observer (the box is already small) from a frame
-    // that never measured (the box is still tall).
-    try {
-      await expect.poll(heights, { timeout: 10_000 }).not.toContain('tall')
-    } catch (error) {
-      const held = frames().map((one) => `${one.dataset.height} in ${one.clientWidth}x${one.clientHeight}`)
-      throw new Error(
-        `A frame still says "tall" 10 s after the turn: [${held.join(', ')}], the window is ` +
-          `${window.innerWidth}x${window.innerHeight}.`,
-        { cause: error },
-      )
-    }
+    const heights = (): string[] =>
+      [...drive.mount.querySelectorAll<HTMLElement>('[data-height]')].map((one) => one.dataset.height ?? '')
+    await expect.poll(heights).not.toContain('tall')
     await page.viewport(390, 844)
     await expect.poll(() => window.innerHeight).toBe(844)
   }
