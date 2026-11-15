@@ -6,6 +6,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { type Browser, type BrowserContext, chromium, firefox, type Page, webkit } from 'playwright'
 import { build, type PreviewServer, preview } from 'vite'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
@@ -59,7 +60,7 @@ beforeAll(async () => {
   const common = {
     root: pageDir,
     configFile: false as const,
-    plugins: [rapierWasm()],
+    plugins: [rapierWasm(), svelte()],
     logLevel: 'warn' as const,
   }
   await build({
