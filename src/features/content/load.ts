@@ -13,6 +13,7 @@ import type { Level } from './level.ts'
 import { languageName, type MessagesFile } from './messages.ts'
 import type { MusicFile } from './music.ts'
 import { type Parsed, parseContent } from './parse.ts'
+import { layoutFor, type PlaceLevel } from './places.ts'
 import type { ContentRef } from './project.ts'
 import { PROJECT_FILE, type Project, parseProject } from './project.ts'
 import { list, noSuch } from './shared.ts'
@@ -20,6 +21,7 @@ import type { SoundFile } from './sound.ts'
 import type { TilesetFile } from './tileset.ts'
 import type { TuningFile } from './tuning.ts'
 import type { Listed } from './type-info.ts'
+import type { WorldFile } from './world.ts'
 
 /**
  * A whole game's content, read and checked, and frozen so nothing can change it by accident. `levels` and
@@ -43,6 +45,13 @@ export interface GameContent {
   readonly conversations?: Readonly<Record<string, ConversationFile>>
   readonly cutscenes?: Readonly<Record<string, CutsceneFile>>
   readonly messages?: Readonly<Record<string, MessagesFile>>
+  /** The world file, by id; a game has one. */
+  readonly worlds?: Readonly<Record<string, WorldFile>>
+  /**
+   * The places that levels join into, only when at least one place holds two or more levels (so a game without one
+   * hashes as it did): each place by its first level, with every joined level's offset from the place's corner.
+   */
+  readonly places?: Readonly<Record<string, readonly PlaceLevel[]>>
 }
 
 /** What a file's id has to be: its name without `.json`. */
@@ -206,6 +215,16 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
       message: `This game lists no words, so it has no language to name. Take the source line out, or list a messages file like ${folder}${project.source}.json.`,
     })
 
+  // A game has one world file: the map of where its levels sit.
+  const worldRefs = project.content.flatMap((entry, i) => (entry.type === 'world' ? [{ entry, i }] : []))
+  const [firstWorld] = worldRefs
+  for (const { i } of worldRefs.slice(1))
+    projectProblems.push({
+      file: PROJECT_FILE,
+      path: `content[${i}]`,
+      message: `A game has one world file, and ${firstWorld?.entry.path} is already listed.`,
+    })
+
   // The flow's fields (plan U) name things in the rest of the game: each must be there.
   const levelIds = named('level')
   project.levels?.forEach((id, i) => {
@@ -290,6 +309,10 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
   const problems = [...projectProblems, ...slots.flatMap((slot) => slot.problems)]
   if (problems.length > 0) return fail(problems)
 
+  // Which levels join into one place, from where the world file puts them. Nothing is added for a game with none.
+  const world = slots.find((slot) => slot.ref.type === 'world')?.value as WorldFile | undefined
+  const places = world === undefined ? undefined : layoutFor(world, game)?.places
+
   // The maps: `levels` and `characters` always, the rest only when a file of that kind is listed.
   const maps: Record<string, Record<string, unknown>> = {
     levels: Object.create(null),
@@ -301,7 +324,8 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
     maps[plural] = map
     map[(slot.value as { id: string }).id] = slot.value
   }
-  return { ok: true, value: deepFreeze({ project, ...maps }) as GameContent }
+  const joined = places !== undefined && Object.keys(places).length > 0 ? { places } : {}
+  return { ok: true, value: deepFreeze({ project, ...maps, ...joined }) as GameContent }
 }
 
 /**

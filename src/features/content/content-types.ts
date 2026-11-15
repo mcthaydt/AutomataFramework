@@ -14,10 +14,12 @@ import { type SoundFile, soundInfo } from './sound.ts'
 import { type TilesetFile, tilesetInfo } from './tileset.ts'
 import { type TuningFile, tuningInfo } from './tuning.ts'
 import type { ContentTypeInfo } from './type-info.ts'
+import { type WorldFile, worldInfo } from './world.ts'
 
 /**
  * The table of every kind of content file. A kind is one file (its type, its schema, its words, its checks) and one
  * row here, in this order; the project file, the loader, the writer and the schema script all work from this table.
+ * A new kind goes last, so anything that lists the kinds in this order sees it at the end and moves no other.
  */
 export const CONTENT_TYPES: {
   readonly level: ContentTypeInfo<Level, Level>
@@ -34,6 +36,7 @@ export const CONTENT_TYPES: {
   readonly conversation: ContentTypeInfo<ConversationFile, ConversationFile>
   readonly cutscene: ContentTypeInfo<CutsceneFile, CutsceneFile>
   readonly messages: ContentTypeInfo<MessagesFile, MessagesFile>
+  readonly world: ContentTypeInfo<WorldFile, WorldFile>
 } = {
   level: levelInfo,
   character: characterInfo,
@@ -49,6 +52,7 @@ export const CONTENT_TYPES: {
   conversation: conversationInfo,
   cutscene: cutsceneInfo,
   messages: messagesInfo,
+  world: worldInfo,
 }
 
 /** The name of a kind: what a `[[content]]` block's `type` says. */

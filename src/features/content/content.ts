@@ -97,6 +97,7 @@ export {
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'
+export { type IsOpen, type Join, layoutWorld, openTile, type PlaceLevel, type WorldLayout } from './places.ts'
 export {
   type ContentRef,
   levelOrder,
@@ -152,4 +153,5 @@ export {
   valueDeclaration,
   withDefaults,
 } from './values.ts'
+export { type WorldFile, WorldSchema } from './world.ts'
 export { writeContent } from './write.ts'

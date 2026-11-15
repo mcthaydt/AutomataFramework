@@ -175,6 +175,17 @@ const behaviour = {
   rules: [{ id: 'walk', when: [], do: { act: 'walk-path', path: 'walk', speed: 2 } }],
 }
 
+/** Room 2 and room 3 touch, and are open where they meet: one place. Room 1 is a long way off. */
+const world = {
+  format: 1,
+  id: 'world',
+  levels: [
+    { level: 'room-1', at: { x: 0, y: 0 } },
+    { level: 'room-2', at: { x: 20, y: 0 } },
+    { level: 'room-3', at: { x: 36, y: 0 } },
+  ],
+}
+
 const words = { format: 1, id: 'en', messages: { 'sign.welcome': 'Welcome to the links game.' } }
 
 /** What each file of the game is: its kind and its folder-and-name, in the order the project lists them. */
@@ -184,6 +195,7 @@ const LISTED: readonly { type: string; path: string }[] = [
   { type: 'behaviour', path: 'content/behaviours/patrol.json' },
   { type: 'tuning', path: 'content/tunings/hero-moves.json' },
   { type: 'messages', path: 'content/messages/en.json' },
+  { type: 'world', path: 'content/worlds/world.json' },
 ]
 
 const PROJECT = `format = 1
@@ -209,6 +221,7 @@ export function linksFiles(overrides: Readonly<Files> = {}): Files {
   files['content/behaviours/patrol.json'] = writeContent('behaviour', behaviour as never)
   files['content/tunings/hero-moves.json'] = writeContent('tuning', tuning as never)
   files['content/messages/en.json'] = writeContent('messages', words as never)
+  files['content/worlds/world.json'] = writeContent('world', world as never)
   return { ...files, ...overrides }
 }
 

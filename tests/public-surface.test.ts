@@ -49,6 +49,7 @@ test('headless exports what a game sim and an editor need', async () => {
     'MessagesSchema',
     'FigureSchema',
     'BackdropSchema',
+    'WorldSchema',
     'encodePng',
     'paintFigure',
     'paintBackdrop',
