@@ -40,7 +40,7 @@ async function hero(start: Start): Promise<{ sim: Sim; at: () => Pose; trace: st
     const below = player.get(Touching).below
     const f = (n: number): string => n.toFixed(2)
     const said = `${f(x)},${f(y)} v ${f(vx)},${f(vy)} n ${f(nx)},${f(ny)} ${below ? 'ground' : 'air'}`
-    if (sim.tick % 6 === 0) trace.push(`t${sim.tick} ${said}`)
+    if (sim.tick % 6 === 0 || (sim.tick >= 46 && sim.tick <= 66)) trace.push(`t${sim.tick} ${said}`)
     return { x, y, below, said }
   }
   return { sim, at, trace }
