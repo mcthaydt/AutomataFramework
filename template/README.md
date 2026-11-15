@@ -20,7 +20,8 @@ The game opens in your browser. Hold the left or right arrow key to move, and pr
 2. Open `content/characters/crate.json` and change its `color`.
 3. Open `content/tunings/hero-moves.json` and change a number, like `walk-speed` or `jump-speed`. A bigger
    `jump-speed` is a higher jump. To give the hero a double jump, a wall jump or a dash, add `"double-jump": true`,
-   `"wall-jump": true` or `"dash": true` to `moves` in `content/characters/hero.json`. There is no movement code to write.
+   `"wall-jump": true` or `"dash": true` to `moves` in `content/characters/hero.json`; a dash also needs a `dash` entry in
+   the tuning file's `controls`, copied from `jump`. There is no movement code to write.
 4. Open the file of your game's language in `content/messages/` (`source` in `automata.toml` names it) and change a
    word. The game says it in six languages: write the same key in the other five files too, and `npm run check` names
    any that is missing.
