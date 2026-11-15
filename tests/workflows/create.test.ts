@@ -22,9 +22,9 @@ test('the create job runs on Linux, Windows and macOS, and one failing does not 
   expect(create).toMatch(/runs-on: \$\{\{ matrix\.os \}\}/)
 })
 
-test('the create matrix has one key, os, and the job no name, so the checks are named create (os)', () => {
+test('the create matrix has one key, os, and the name is create (os), with "quick " in front on a draft', () => {
   const create = job('create')
-  expect(create).not.toMatch(/^ {4}name:/m)
+  expect(create).toContain('name: ${{ needs.plan.outputs.quick }}create (${{ matrix.os }})')
   const matrix = create.slice(create.indexOf('matrix:'), create.indexOf('env:'))
   expect(matrix.match(/^ {8}[a-z]+:/gm)).toEqual(['        os:'])
 })
@@ -33,7 +33,7 @@ test('both jobs install the packed package, never the working folder', () => {
   expect(job('create-pack')).toContain('pnpm pack --pack-destination')
   for (const name of ['create', 'create-play']) {
     const text = job(name)
-    expect(text, name).toContain('needs: create-pack')
+    expect(text, name).toContain('needs: [create-pack, plan]')
     expect(text, name).toContain('--name create-tarball')
   }
   expect(job('create')).toMatch(/node tests\/install\/create-smoke\.mjs "\$\{\{ runner\.temp \}\}\/tarball"/)
