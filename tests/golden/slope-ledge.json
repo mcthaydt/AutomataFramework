@@ -1,1 +1,10 @@
-{ "ticks": 300, "finalHash": "", "checks": [] }
+{
+  "ticks": 300,
+  "finalHash": "7258afbbc1acbad6",
+  "checks": [
+    { "tick": 60, "hash": "0d2c23481b80e580" },
+    { "tick": 120, "hash": "c584b1be2e06561f" },
+    { "tick": 180, "hash": "c990a581409cb77d" },
+    { "tick": 240, "hash": "7b080636303d29ea" }
+  ]
+}
