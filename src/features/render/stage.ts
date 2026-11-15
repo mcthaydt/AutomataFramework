@@ -65,6 +65,12 @@ export interface Stage {
    * drawn on its first.
    */
   draw(views: readonly View[], links: readonly RopeLine[], shot?: Shot): void
+  /**
+   * Draws from this art instead (and this sky, when given): its tiles, ground pages, backdrop and figures. The art the
+   * stage had is destroyed. Draws the last views again. It is for a level whose scene was edited: same size, same
+   * level, new ground.
+   */
+  setArt(next: Art | undefined, sky?: number): void
   destroy(): void
 }
 
@@ -112,8 +118,8 @@ function buildBackdrop(backdrop: BackdropArt, into: Container): BackdropDrawn[] 
  */
 export async function createStage(
   world: { w: number; h: number },
-  sky: number = SKY_COLOR,
-  art?: Art,
+  firstSky: number = SKY_COLOR,
+  firstArt?: Art,
   density: Density = pageDensity,
   keep = false,
 ): Promise<Stage> {
@@ -121,7 +127,7 @@ export async function createStage(
   await app.init({
     width: 1,
     height: 1,
-    background: sky,
+    background: firstSky,
     antialias: true,
     resolution: sane(density.now()),
     autoDensity: false,
@@ -137,12 +143,13 @@ export async function createStage(
   // The backdrop is behind everything and in screen pixels: its strips repeat across the whole canvas.
   const backdropLayer = new Container()
   const root = new Container()
-  // Back to front: boxes, the level's tiles, then the figures. The ropes and pins sit over all of them, so they have a
-  // layer of their own with the same fit.
+  // Back to front: boxes, a scene's painted ground, the level's tiles, then the figures. The ropes and pins sit over
+  // all of them, so they have a layer of their own with the same fit.
   const boxLayer = new Container()
+  const groundLayer = new Container()
   const tileLayer = new Container()
   const figureLayer = new Container()
-  root.addChild(boxLayer, tileLayer, figureLayer)
+  root.addChild(boxLayer, groundLayer, tileLayer, figureLayer)
   const linkLayer = new Container()
   const linkShape = new Graphics()
   linkLayer.addChild(linkShape)
@@ -150,21 +157,40 @@ export async function createStage(
   // sky, over everything.
   const cover = new Graphics()
   app.stage.addChild(backdropLayer, root, linkLayer, cover)
-  const backdropLayers = art?.backdrop === undefined ? [] : buildBackdrop(art.backdrop, backdropLayer)
-  // The tiles are placed once: the level's tiles do not move. When they are drawn, the boxes that make the same ground
-  // are not.
-  for (const tile of art?.tiles ?? []) {
-    const square = new PixiSprite({ texture: tile.texture })
-    square.position.set(tile.col, tile.row)
-    square.width = 1
-    square.height = 1
-    tileLayer.addChild(square)
+  // What the art puts on the stage: the backdrop's layers, and the ground boxes that its pictures replace.
+  let art = firstArt
+  let sky = firstSky
+  let backdropLayers: BackdropDrawn[] = []
+  let replaced = new Set<string>()
+  /**
+   * Puts the art's backdrop, ground pages and tiles on the stage, in place of any there. They are placed once: the level's
+   * ground does not move. When they are drawn, the boxes that make the same ground are not.
+   */
+  const place = (): void => {
+    for (const layer of [backdropLayer, groundLayer, tileLayer])
+      for (const child of layer.removeChildren()) child.destroy({ children: true })
+    backdropLayers = art?.backdrop === undefined ? [] : buildBackdrop(art.backdrop, backdropLayer)
+    for (const page of art?.groundPages ?? []) {
+      const strip = new PixiSprite({ texture: page.texture })
+      strip.position.set(page.col, 0)
+      strip.width = page.w
+      strip.height = page.h
+      groundLayer.addChild(strip)
+    }
+    for (const tile of art?.tiles ?? []) {
+      const square = new PixiSprite({ texture: tile.texture })
+      square.position.set(tile.col, tile.row)
+      square.width = 1
+      square.height = 1
+      tileLayer.addChild(square)
+    }
+    replaced = new Set(
+      (art?.tiles.length ?? 0) > 0 || (art?.groundPages.length ?? 0) > 0
+        ? (art?.ground ?? []).map((b) => boxKey(b.col + b.w / 2, b.row + b.h / 2, b.w, b.h))
+        : [],
+    )
   }
-  const replaced = new Set(
-    (art?.tiles.length ?? 0) > 0
-      ? (art?.ground ?? []).map((b) => boxKey(b.col + b.w / 2, b.row + b.h / 2, b.w, b.h))
-      : [],
-  )
+  place()
   const drawn = new Map<number, Drawn>()
   let box = { w: 0, h: 0 }
   // Room kept clear of the world: either a strip at the bottom (the touch buttons, `inset`, never more than half the
@@ -360,6 +386,23 @@ export async function createStage(
       if (destroyed) return
       last = { views, links, shot }
       if (box.w > 0) paint(views, links, shot)
+    },
+    setArt(next, nextSky) {
+      if (destroyed) {
+        next?.destroy()
+        return
+      }
+      const old = art
+      art = next
+      if (nextSky !== undefined) {
+        sky = nextSky
+        app.renderer.background.color = nextSky
+      }
+      place()
+      // A thing keeps the look it was drawn with, and a look names a texture the old art held.
+      for (const item of drawn.values()) item.look = ''
+      old?.destroy()
+      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
     },
     destroy() {
       if (destroyed) return

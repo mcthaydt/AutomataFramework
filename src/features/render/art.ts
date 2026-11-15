@@ -16,10 +16,16 @@ import {
   type FigureFile,
   figureSheet,
   type GameContent,
+  LEDGE_DEEP,
   paintedPath,
+  type SceneFile,
+  sceneSheet,
+  type TileKind,
+  type TilesetFile,
 } from '../content/content.ts'
-import { type TileBox, tileBoxes } from '../level/level.ts'
-import { tilePictures } from './tiles.ts'
+import { groundColliders, type TileBox, tileBoxes } from '../level/level.ts'
+import { groundPages } from './ground.ts'
+import { type PlacedTile, placedTiles, tilePictures } from './tiles.ts'
 
 /**
  * Reads one picture of the game by its path, like `content/figures/hero.png`. Rejects when there is none: a `fetch`
@@ -42,6 +48,14 @@ export interface Picture {
 export interface TileSprite {
   readonly col: number
   readonly row: number
+  readonly texture: Texture
+}
+
+/** One page of a scene's painted ground: a strip of the level `w` by `h` tiles, its left edge at column `col`. */
+interface GroundPageArt {
+  readonly col: number
+  readonly w: number
+  readonly h: number
   readonly texture: Texture
 }
 
@@ -76,19 +90,25 @@ export interface Art {
    * for a character with no figure.
    */
   figure(character: string, pose: string, player: number): Picture | undefined
-  /** The level's tiles, when it has a tileset with its picture. */
+  /** The level's tiles, when it has a tileset with its picture, or a scene with a tiles material. */
   readonly tiles: readonly TileSprite[]
-  /** The boxes the level's solid tiles make. When tiles are drawn from pictures these boxes are not drawn. */
+  /** A scene's ground, painted: its pages as textures, at the back of the tiles. Empty for a level with no scene. */
+  readonly groundPages: readonly GroundPageArt[]
+  /**
+   * The boxes (and ledges) the level's ground makes. When tiles or a scene's pictures are drawn, these boxes are not
+   * drawn.
+   */
   readonly ground: readonly TileBox[]
   readonly backdrop: BackdropArt | undefined
   /** Frees every texture. Safe to call twice. */
   destroy(): void
 }
 
-/** True when the level has a tileset or a backdrop, or any character has a figure: when there is art to load. */
+/** True when the level has a scene, a tileset or a backdrop, or any character has a figure: when there is art to load. */
 export function needsPictures(content: GameContent, level?: string): boolean {
   const here = content.levels[level ?? content.project.start]
   return (
+    here?.scene !== undefined ||
     here?.tileset !== undefined ||
     here?.backdrop !== undefined ||
     Object.values(content.characters).some((character) => character.figure !== undefined)
@@ -166,11 +186,8 @@ export async function loadArt(options: {
   }
 
   try {
-    // The tileset's picture, cut into the tiles the level uses.
-    let tiles: TileSprite[] = []
-    let ground: TileBox[] = []
-    const tileset = level?.tileset === undefined ? undefined : content.tilesets?.[level.tileset]
-    if (level !== undefined && tileset !== undefined) {
+    // A tileset's picture, checked and cut into the squares `placed` uses.
+    const squaresOf = async (tileset: TilesetFile, placed: readonly PlacedTile[]): Promise<TileSprite[]> => {
       const bitmap = await read(tileset.image)
       const wide = tileset.columns * tileset.tileSize
       if (bitmap.width !== wide)
@@ -184,7 +201,6 @@ export async function loadArt(options: {
           `The tileset "${tileset.id}" uses picture ${used}, but its picture has only ${squares} squares, 0 to ${squares - 1}.`,
         )
       // Each square the level uses, cut once.
-      const placed = tilePictures(level, tileset)
       const squareOf = new Map<number, Texture>()
       const size = tileset.tileSize
       for (const { frame } of placed) {
@@ -193,14 +209,78 @@ export async function loadArt(options: {
         const y = Math.floor(frame / tileset.columns) * size
         squareOf.set(frame, await cut(bitmap, x, y, size, size))
       }
-      tiles = placed.map(({ col, row, frame }) => ({ col, row, texture: squareOf.get(frame) as Texture }))
+      return placed.map(({ col, row, frame }) => ({ col, row, texture: squareOf.get(frame) as Texture }))
+    }
+
+    // The tileset's picture, cut into the tiles the level uses.
+    let tiles: TileSprite[] = []
+    let ground: TileBox[] = []
+    const tileset = level?.tileset === undefined ? undefined : content.tilesets?.[level.tileset]
+    if (level !== undefined && tileset !== undefined) {
+      tiles = await squaresOf(tileset, tilePictures(level, tileset))
       const solid = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
       ground = tileBoxes(level.tiles ?? [], (letter) => solid.has(letter))
     }
 
+    // A scene's ground: its painted pages, and the squares of every tiles material from that tileset's own picture.
+    const pages: GroundPageArt[] = []
+    const scene: SceneFile | undefined =
+      level?.scene === undefined ? undefined : content.scenes?.[level.scene]
+    if (level?.scene !== undefined) {
+      if (scene === undefined)
+        throw new ArtError(`The scene "${level.scene}" has no file in this game, so it cannot be drawn.`)
+      const path = paintedPath(content, 'scene', scene.id)
+      if (path === undefined) throw new ArtError(`The scene "${scene.id}" has no file in this game.`)
+      const bitmap = await read(path)
+      const sheet = sceneSheet(scene)
+      sized(path, bitmap, sheet.w, sheet.h, 'scene file')
+      for (const [i, page] of groundPages(scene).entries()) {
+        const at = sheet.frames[i] as (typeof sheet.frames)[number]
+        pages.push({
+          col: page.col,
+          w: page.w,
+          h: page.h,
+          texture: await cut(bitmap, at.x, at.y, at.w, at.h),
+        })
+      }
+      // Each tileset a material names is read once; a tile is `same` as its neighbour when both hold the same letter.
+      const materialOf = new Map(scene.materials.map((material) => [material.id, material] as const))
+      const tilesetIds = [
+        ...new Set(scene.materials.flatMap((m) => (m.kind === 'tiles' ? [m.tileset] : []))),
+      ].sort()
+      for (const id of tilesetIds) {
+        const found = content.tilesets?.[id]
+        if (found === undefined)
+          throw new ArtError(
+            `The scene "${scene.id}" uses the tileset "${id}", and this game has no such tileset.`,
+          )
+        const kindOf = (letter: string): TileKind | undefined => {
+          const named = scene.ground.letters.find((l) => l.letter === letter)?.material
+          const material = named === undefined ? undefined : materialOf.get(named)
+          return material?.kind === 'tiles' && material.tileset === id
+            ? found.tiles.find((kind) => kind.id === material.tile)
+            : undefined
+        }
+        tiles = [...tiles, ...(await squaresOf(found, placedTiles(scene.ground.rows, kindOf)))]
+      }
+      ground = groundColliders(scene.ground).flatMap((piece) =>
+        piece.kind === 'slope'
+          ? []
+          : [
+              {
+                col: piece.col,
+                row: piece.row,
+                w: piece.w,
+                h: piece.kind === 'ledge' ? LEDGE_DEEP : piece.h,
+              },
+            ],
+      )
+    }
+
     // Every figure a character or a backdrop's prop names, loaded once.
+    const backdropId = scene === undefined ? level?.backdrop : scene.backdrop
     const backdropFile: BackdropFile | undefined =
-      level?.backdrop === undefined ? undefined : content.backdrops?.[level.backdrop]
+      backdropId === undefined ? undefined : content.backdrops?.[backdropId]
     const figureIds = [
       ...new Set([
         ...Object.values(content.characters).flatMap((character) =>
@@ -267,6 +347,7 @@ export async function loadArt(options: {
         return id === undefined ? undefined : pictureOf(id, pose, player)
       },
       tiles,
+      groundPages: pages,
       ground,
       backdrop,
       destroy,
