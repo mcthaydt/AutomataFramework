@@ -143,9 +143,15 @@ reader does not undo it.
   room (the walk hint's picture and words hide when only the dash is due), the template's key hint names the dash when
   the hero has it, the `create-play` journey walks to the spark and jumps in all three ways (key or thumb, stick, and
   the pad's bottom button) and reads the game's count, a finger on the glass is never "left alone" for the hints, a
-  press not yet read does not outlive a mask, and a turned tablet lets go of a held thumb. It is left to a later cycle:
-  M1 (`lockDir`, kept for the hash and for a later move), M4 (kinematic bodies as walls, to decide when moving
-  platforms arrive), M9, M10, M11 and the Owner's two phone items P1 and P2.
+  press not yet read does not outlive a mask, and a turned tablet lets go of a held thumb. The Owner's two phone items
+  P1 and P2 are left for a real phone.
+- **The leftover minors (the Owner asked for them at once).** M1: `lockDir` is written and never read; it stays, with a
+  comment, because it is part of the schema hash both moved goldens hold, and goes the next time they move for another
+  reason. M4: a kinematic platform's side is no longer a wall (a wall is a fixed body or a bare collider), its top is
+  still ground, and a parity test says both. M10: one Chromium journey walks and jumps the hero with real touch input over the
+  devtools protocol. M11: a tuning number a letter or two off one the hero reads (`jump-sped`) is named, with "Did you
+  mean", instead of being taken as the game's own; a number far from every one is still the game's own. M9 is in its own pull
+  request, because it moves `tests/golden/moves.json`.
 - **The hints' words stand on a dark chip, and a tall screen keeps room for the hints (the Owner's choice, 2026-11-15).**
   The words of the walk, jump and dash hints have the buttons' dark background behind them at full strength; only the
   dashed circle is faint. On a screen at least 600 px tall (a tablet, a desktop window) the room under the game is 230 px,

@@ -272,7 +272,9 @@ export async function createRapier(setup: {
       for (const other of others) {
         if (world.getCollider(other).isSensor()) continue
         const parent = world.colliders.raw.coParent(other)
-        const moves = parent !== undefined && world.getRigidBody(parent).isDynamic()
+        // A wall is something that does not move, so a kinematic platform's side is not one: only a fixed body, or a
+        // collider with no body at all, is. A body that moves (dynamic or kinematic) is still ground under a foot.
+        const moves = parent !== undefined && !world.getRigidBody(parent).isFixed()
         narrow.contactPair(handle, other, world.bodies, (manifold, flipped) => {
           const points = manifold.numContacts()
           if (points === 0) return

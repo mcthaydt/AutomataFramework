@@ -194,6 +194,20 @@ describe('the checks, in a game', () => {
       ),
     ).toEqual([]))
 
+  test("a number a letter off one the hero reads is named, and one far from them is the game's own", async () => {
+    expect(await gameProblems(game(tuning([['jump-sped', 12, 4, 30]])))).toEqual([
+      `${path}: numbers[0].id: "jump-sped" is not a number the hero reads. Did you mean "jump-speed"? If it is a number of your own, give it a name that is not so close to "jump-speed".`,
+    ])
+    // Two letters off is a typo in a long name only.
+    expect(await gameProblems(game(tuning([['wall-jump-uupp', 11, 4, 30]])))).toEqual([
+      `${path}: numbers[0].id: "wall-jump-uupp" is not a number the hero reads. Did you mean "wall-jump-up"? If it is a number of your own, give it a name that is not so close to "wall-jump-up".`,
+    ])
+    expect(await gameProblems(game(tuning([['air-gri', 6, 0, 60]])))).toEqual([
+      `${path}: numbers[0].id: "air-gri" is not a number the hero reads. Did you mean "air-grip"? If it is a number of your own, give it a name that is not so close to "air-grip".`,
+    ])
+    expect(await gameProblems(game(tuning([['air-xxip', 6, 0, 60]])))).toEqual([])
+  })
+
   test('a controls list without jump is named', async () =>
     expect(
       await gameProblems(game(tuning([['walk-speed', 6, 1, 20]], [DEFAULT_HERO_CONTROLS[0] as never]))),
