@@ -118,6 +118,10 @@ session on Sonnet at xhigh effort, before the next step starts.
 - One long-lived coordinator. One long-lived merge session merges each finished stage branch to `main` by pull request
   once checks pass, then deletes the branch; it never leaves a passing pull request open. Stage sessions are archived
   when done.
+- **Up to four working threads at once** (the Owner, 2026-11-15), all within the current slice; the mockups (board)
+  thread, the merge session and the advisor (a long-lived Fable 5.2 thread, consulted only on big calls) don't count.
+  Of those four, at most three build code in the same repo at once. Never run threads side by side when they'd
+  conflict (chained pull requests, the same generated files).
 - **Stage sessions report to the coordinator:**
   - one line per task: the commit, the test count, any surprises;
   - immediately at any stop (a stop rule, a cap, a failing test, an access refusal, a missing tool), and that task
