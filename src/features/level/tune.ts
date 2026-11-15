@@ -16,12 +16,14 @@ import {
   type SystemDef,
 } from '../sim/sim.ts'
 
-const tunePayload = z.strictObject({ values: z.array(z.number()).length(MOVE_NUMBERS.length) })
+type Numbers = z.ZodObject<{ values: z.ZodArray<z.ZodNumber> }, z.core.$strict>
+
+const tunePayload: Numbers = z.strictObject({ values: z.array(z.number()).length(MOVE_NUMBERS.length) })
 
 /** The hero's eighteen numbers from this tick on: `values` in `MOVE_NUMBERS` order. Only a tunable sim knows it. */
 export const TuneCommand: CommandDef<typeof tunePayload> = defineCommand('tune', tunePayload)
 
-const tunedSchema = z.strictObject({ values: z.array(z.number()).max(MOVE_NUMBERS.length) })
+const tunedSchema: Numbers = z.strictObject({ values: z.array(z.number()).max(MOVE_NUMBERS.length) })
 
 /** The numbers the last tune gave, or none yet. In every snapshot of a tunable sim. */
 export const Tuned: ResourceDef<typeof tunedSchema> = defineResource('level.tuned', tunedSchema, () => ({
