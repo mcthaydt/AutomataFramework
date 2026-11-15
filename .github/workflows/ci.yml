@@ -251,8 +251,8 @@ jobs:
   # checked, changed, broken and served, using only Node and the tarball. One key in the matrix and no `name:`, so the
   # checks are called `create (ubuntu-latest)`, `create (windows-latest)` and `create (macos-latest)`.
   create:
-    needs: [plan, create-pack]
-    if: needs.plan.outputs.package == 'true'
+    # Left out with create-pack, when a draft does not touch the package.
+    needs: create-pack
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     permissions:
@@ -279,8 +279,8 @@ jobs:
 
   # The same new game in real browsers: Chromium, WebKit and Firefox, at five sizes, by key and by touch.
   create-play:
-    needs: [plan, create-pack]
-    if: needs.plan.outputs.package == 'true'
+    # Left out with create-pack, when a draft does not touch the package.
+    needs: create-pack
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
