@@ -58,7 +58,7 @@ async function begin(
   h = 720,
 ): Promise<{ g: Game; frames: ManualFrames; content: GameContent }> {
   await page.viewport(w, h)
-  const content = await loadSceneMovesGame(start)
+  const content = await loadSceneMovesGame(start, true)
   const frames = manualFrames()
   const g = await startGame({
     content,
