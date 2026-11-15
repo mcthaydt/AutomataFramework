@@ -461,8 +461,10 @@ for. Hiding the page lets go of the keys, so the hero does not run on for everyo
 
 ## Sound
 
-A game ships no audio files. A sound is a few numbers in `content/sounds/`, a track is rows of notes in
-`content/music/`, and a cue list in `content/cues/` says what plays when. Change a number and the sound changes.
+A game ships no audio files, unless you record one. A sound is a few numbers in `content/sounds/`, a track is rows of
+notes in `content/music/`, and a cue list in `content/cues/` says what plays when. Change a number and the sound changes.
+A recording is a `.wav` file in the game (one channel, 16-bit, 44100 samples a second, at most 10 seconds and 1 MB),
+named by a `recording` voice in a sound.
 
 ```toml
 [[content]]
@@ -477,6 +479,63 @@ path = "content/music/meadow.json"
 type = "cues"
 path = "content/cues/cues.json"
 ```
+
+### Folders
+
+A block can list a whole folder instead of one file, so a new file in it is part of the game with nothing else to edit.
+Sounds, songs, loops, motifs and cues are listed this way, once each, and a game made with `automata create` already does:
+
+```toml
+[[content]]
+type = "sound"
+folder = "content/sounds"
+```
+
+A page cannot list a folder, so the build writes `automata.folders.json` beside the game and the page reads that:
+`loadGame(read, listFromManifest(read))`. A game with no list reads a listed folder as empty.
+
+### Sound kinds
+
+`automata sound new jump` makes a sound of a kind (`jump`, `land`, `coin`, `hit`, `explosion`, `door`, `click`,
+`power-up`, `laser` or `blip`) in `content/sounds/`; `--seed 1` is another take of the same kind. In code, `makeSound(kind,
+seed, id)` gives the same sound on every machine.
+
+### Music from loops
+
+A song of `"format": 2` is arranged like a song in a music app: a key, a mode, a tempo, a chord for each bar, and lanes of
+drums, bass, chords and melody that each play a loop. A loop is a few bars written in steps of the key, so it fits any
+key and any chord:
+
+```json
+{
+  "format": 2,
+  "id": "meadow",
+  "tempo": 84,
+  "key": "C",
+  "mode": "major",
+  "bars": 4,
+  "loop": true,
+  "volume": 0.7,
+  "chords": ["I", "vi", "IV", "V"],
+  "lanes": [
+    { "id": "drums", "instrument": "drums", "volume": 0.5, "blocks": [{ "at": 1, "loop": "half-time-drums", "bars": 4 }] },
+    { "id": "bass", "instrument": "bass", "volume": 0.7, "blocks": [{ "at": 1, "loop": "slow-bass", "bars": 4 }] },
+    { "id": "chords", "instrument": "pad", "volume": 0.6, "blocks": [{ "at": 1, "loop": "soft-chords", "bars": 4 }] },
+    { "id": "melody", "instrument": "keys", "volume": 0.6, "blocks": [{ "at": 1, "loop": "calm-tune", "bars": 4 }] }
+  ]
+}
+```
+
+That is the shape, written short to read: the file on disk is in the standard form `automata check --fix` writes. A motif
+is a short tune in steps and beats that a lane or a sound can play moved, slower, sadder or backwards. The framework brings
+twenty-six loops and four styles (`calm`, `bouncy`, `brave` and `spooky`), named in nine languages with `libraryName`;
+`libraryFiles('calm', 'meadow')` gives the files of a finished song and the loops it plays, to write into the game's folders.
+
+### MIDI in and out
+
+`automata music import song.mid` brings a MIDI file in as a song and its loops, and `automata music export meadow
+meadow.mid` takes a song, a loop or a motif out, so a song can be made in any music program and kept as the game's own
+files. In code they are `midiToMusic` and `musicToMidi`. What a song cannot hold is left out and said in words.
 
 The smallest wiring is one audio, handed to `startGame`:
 

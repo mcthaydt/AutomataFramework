@@ -43,6 +43,10 @@ files. Read this page, then the skill for the kind of change you are making.
   language is `source` in `automata.toml`; write the word there first, then in every other file, under the same key; `check` names any language that is missing it. `npx --no automata words` lists the
   translations no native speaker has read, beside the game's own text. Mark a language read (`--read <language>`) only
   once a native speaker has read it.
+- A sound: `npx --no automata sound new <kind>` makes one (jump, land, coin, hit, explosion, door, click, power-up, laser or
+  blip) in `content/sounds/`, and `--seed <n>` is another take of the same kind. A cue in `content/cues/` says when it plays.
+- A song: `npx --no automata music import <file.mid>` brings a MIDI file in as a song and its loops, and
+  `npx --no automata music export <name> <file.mid>` takes one out. Skill `automata-content`, under `music`, has the rest.
 - How the game looks on the page: `src/features/page/` and `src/style.css`.
 - A new kind of file: see `automata-content` for the kinds there are. A kind that is not there is not built yet.
 

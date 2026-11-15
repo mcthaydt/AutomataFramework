@@ -142,6 +142,7 @@ src/headless.ts               the entry for Node and editors: everything that ne
 src/server.ts                 the Node-only entry: the room server (`@automataframework/framework/server`)
 src/cli.ts                    the package's `bin`, `automata`: Node only, calls the `cli` feature
 src/lib/                      shared helpers, no feature logic; `zod.ts` is the one way into Zod (it turns its eval probe off first)
+                              (`wav.ts` reads a recorded sound's bytes, `midi.ts` reads and writes a Standard MIDI File: no feature logic)
 src/features/<feature>/       <feature>.ts entry, <part>.ts one job per file, library/ JSON data
 scripts/                      thin CLI wrappers
 template/                     the game `automata create` writes: a real game folder; `template/replays/level-1.json` is a golden

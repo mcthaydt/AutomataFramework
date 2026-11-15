@@ -14,6 +14,18 @@ type = "level"
 path = "content/levels/level-1.json"
 ```
 
+A whole folder can be listed at once, so a new file in it is part of the game with nothing else to edit. Sounds, songs,
+loops, motifs and cues are listed this way, once each:
+
+```toml
+[[content]]
+type = "sound"
+folder = "content/sounds"
+```
+
+A game made with `automata create` lists those five folders already. For an older game, add the lines yourself:
+`automata music` and `automata sound` say which ones are missing and what to write.
+
 A file that is not listed is not part of the game, and `automata check` says so. Run `npx --no automata check --fix` after
 you edit one: it writes the file in its standard form, which is what the editors and the framework write too. Do not
 format content by hand or with a formatter. `npx --no automata check --only files` says what is wrong with a file, with its
@@ -292,6 +304,15 @@ One sound, made from tones. Put the files in `content/sounds/`; the kind's rules
 
 Besides `tone` and `noise`, a voice can be `recording` (`file`, a `.wav` kept in the game: one channel, 16-bit, 44100 samples a second, at most 10 seconds and 1 MB; `from`, `length`, `speed` from 0.5 to 2) or `motif` (`motif`, `instrument`, `key`, `tempo`, and the changes a motif use carries).
 
+### Make a sound
+
+Do not write the numbers by hand to start with. `npx --no automata sound new jump` writes `content/sounds/jump.json`; the kinds
+are jump, land, coin, hit, explosion, door, click, power-up, laser and blip. `--seed 1`, `--seed 2` and so on are other
+takes of the same kind, and `--id` gives the file another name. Then change a number in the file if it is not quite right.
+
+A recording is a `.wav` file kept in the game (for example `content/sounds/door.wav`) and named by a `recording` voice. Its
+`file` is the path from the game's root, and `check` says in plain words if the file is too long, too big or not the right sort of `.wav`.
+
 ## music
 
 A tune that can loop, made of parts. Put the files in `content/music/`; the kind's rules are in `schemas/music.schema.json`.
@@ -329,6 +350,16 @@ A tune that can loop, made of parts. Put the files in `content/music/`; the kind
 ```
 
 A music file of `"format": 2` is a song arranged from loops and motifs: `key`, `mode`, `bars` (four beats each), one chord per bar in `chords` (Roman numerals of the key, like `"I"`, `"vi"`, `"V7"`) and up to eight `lanes`. A lane has an `instrument` (`drums`, `bass`, `keys`, `pluck`, `lead`, `pad`, `bell` or `organ`), a `volume` and `blocks`: `{ "at": 1, "loop": "easy-drums", "bars": 6 }` plays a loop from bar 1, repeated to fill six bars, and `{ "at": 2, "motif": "hero-theme" }` plays a motif once. Blocks in one lane may not overlap, and a drum loop goes only in a drum lane.
+
+### Songs from the library, and from MIDI files
+
+The framework brings loops and four styles (`calm`, `bouncy`, `brave`, `spooky`) so a song needs no writing: `libraryFiles('calm', 'meadow')`
+gives the files of a finished song called `meadow` and the loops it plays, to write into a game's folders. The built-in loops
+are fit for any key; copy one into `content/loops/` to change it.
+
+`npx --no automata music import song.mid` brings a MIDI file in as a song and its loops (`--id` names it) and says what the file had that
+a song cannot hold. `npx --no automata music export meadow meadow.mid` writes a song, a loop or a motif out as a MIDI file. An import never replaces a song
+or a loop the game already has: pick another name with `--id`.
 
 ## loop
 
