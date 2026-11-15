@@ -18,9 +18,9 @@ The game opens in your browser. Hold the left or right arrow key to move, and pr
 1. Open `content/levels/level-1.json`. The `tiles` are the level's walls, one letter for each square: `#` is a wall and
    `.` is air. Make a wall longer, or add a gap.
 2. Open `content/characters/crate.json` and change its `color`.
-3. Open `content/tunings/hero-moves.json` and change a number, like `walk-speed` or `jump-speed`. A bigger
-   `jump-speed` is a higher jump. To give the hero a double jump, a wall jump or a dash, add `"double-jump": true`,
-   `"wall-jump": true` or `"dash": true` to `moves` in `content/characters/hero.json`. There is no movement code to write.
+3. Open `content/tunings/hero-moves.json` and change a number, like `walk-speed` or `jump-speed`. To give the hero a
+   double jump, a wall jump or a dash, put `"double-jump": true`, `"wall-jump": true` or `"dash": true` in `moves` in
+   `content/characters/hero.json`. A dash also needs a `dash` entry in the tuning file's `controls`, copied from `jump`.
 4. Open the file of your game's language in `content/messages/` (`source` in `automata.toml` names it) and change a
    word. The game says it in six languages: write the same key in the other five files too, and `npm run check` names
    any that is missing.
