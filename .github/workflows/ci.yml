@@ -1,25 +1,80 @@
-# One replay hash must come out the same in Node, Chromium, WebKit and Firefox. `check` runs the static checks and the
-# Node tests; `engines` runs the parity and browser tests once per browser, in parallel, so a failing engine is named
-# by its job. Every action is pinned to a commit.
+# One replay hash must come out the same in Node, Chromium, WebKit and Firefox. `plan` says how much this run tests;
+# `check` runs the static checks and the Node tests; `browsers` runs the parity and browser tests, each browser in two
+# shards side by side; `engines` names each browser's result, so a failing engine is named by its check. Every action
+# is pinned to a commit.
+#
+# How much is tested (the Owner, 2026-11-15): while a pull request is a draft, a thread is still working on it, so only
+# what its change reaches runs, and a run stops at its first failure. The whole suite runs once the pull request is
+# ready for review, on every push to main, and on a draft that carries the `full-tests` label.
 name: ci
 
 on:
   pull_request:
+    # `ready_for_review` starts the whole suite as a draft is handed over; `labeled` lets a thread ask for it sooner.
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
   push:
     branches: [main]
 
 permissions:
   contents: read
 
+# A newer push stops the run it replaces, so no one waits on results that no longer count.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  check:
+  # How much this run tests, from the event and the files the pull request changes. Everything is `true` except on a
+  # draft without the `full-tests` label whose change leaves the build and the test setup alone:
+  #   full     false: the Node and browser tests the change reaches (Vitest's `--changed`), stopping at the first failure
+  #   online   false when the networking and its journeys are untouched: the `online` job is left out
+  #   package  false when the command, the template, the skills, the install checks and the README are untouched: the
+  #            jobs that pack the package and make a new game from it are left out
+  plan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      full: ${{ steps.plan.outputs.full }}
+      online: ${{ steps.plan.outputs.online }}
+      package: ${{ steps.plan.outputs.package }}
     steps:
+      - id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          DRAFT: ${{ github.event.pull_request.draft }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ' ') }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          full=true online=true package=true
+          if [ "$EVENT" = pull_request ] && [ "$DRAFT" = true ] && [[ " $LABELS " != *" full-tests "* ]] &&
+            changed="$(gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only)"; then
+            printf 'This draft changes:\n%s\n' "$changed"
+            # A change to how things are installed, built or tested reaches every test.
+            if ! grep -qE '^(package\.json|pnpm-lock\.yaml|\.pnpmfile\.cjs|[^/]*\.config\.(ts|js)|vite-rapier-wasm\.ts|tsconfig[^/]*\.json|\.github/)' <<<"$changed"; then
+              full=false
+              grep -qE '^(src/server\.ts|src/features/(net|server)/|tests/journeys/)' <<<"$changed" || online=false
+              grep -qE '^(src/(cli|headless|index|server)\.ts|src/features/cli/|template/|skills/|scripts/|tests/install/|tests/create/|tests/golden/|README\.md)' <<<"$changed" || package=false
+            fi
+          fi
+          echo "full=$full online=$online package=$package"
+          { echo "full=$full"; echo "online=$online"; echo "package=$package"; } >> "$GITHUB_OUTPUT"
+
+  check:
+    needs: plan
+    runs-on: ubuntu-latest
+    env:
+      # On a draft: the tests the change reaches, stopping at the first failure.
+      ONLY: ${{ needs.plan.outputs.full != 'true' && '--changed=HEAD^1 --bail=1 --passWithNoTests' || '' }}
+    steps:
+      # Two commits deep: a pull request's run is on the merge commit, and its first parent is the base, which
+      # `--changed` compares against.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -31,35 +86,80 @@ jobs:
       - run: pnpm knip
       # The room server's process test starts the built package, as a game's own server file does.
       - run: pnpm build
-      - run: pnpm test:node
+      - run: pnpm test:node $ONLY
 
-  engines:
+  # Each browser in two shards that run side by side, so a full run takes about half as long (the Owner, 2026-11-15).
+  browsers:
+    needs: plan
+    name: browsers (${{ matrix.engine }} ${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      # On a draft the first failure stops the other shards too; the whole suite lets every shard finish.
+      fail-fast: ${{ needs.plan.outputs.full != 'true' }}
       matrix:
         engine: [chromium, webkit, firefox]
+        shard: [1, 2]
+    env:
+      ONLY: ${{ needs.plan.outputs.full != 'true' && '--changed=HEAD^1 --bail=1' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.21.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps ${{ matrix.engine }}
-      - run: pnpm test:engine ${{ matrix.engine }}
+      # The browser is kept between runs, by Playwright's version; the system libraries it needs are put in each time.
+      - id: version
+        run: echo "playwright=$(pnpm exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: browser
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ matrix.engine }}
+      - if: steps.browser.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps ${{ matrix.engine }}
+      - if: steps.browser.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps ${{ matrix.engine }}
+      - run: pnpm test:engine ${{ matrix.engine }} --shard=${{ matrix.shard }}/2 $ONLY
       # Pictures a person looks at (the drunk-grandma check); nothing compares them.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: screens-${{ matrix.engine }}
+          name: screens-${{ matrix.engine }}-${{ matrix.shard }}
           path: tests/**/__screenshots__/**
           if-no-files-found: ignore
+
+  # One check per browser, `engines (<browser>)`, green only when both of that browser's shards passed, so the names
+  # main's protection asks for stay as they were.
+  engines:
+    needs: browsers
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit, firefox]
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Both shards of ${{ matrix.engine }} passed
+        run: |
+          set -euo pipefail
+          results="$(gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --attempt "$GITHUB_RUN_ATTEMPT" --json jobs \
+            --jq '.jobs[] | select(.name | startswith("browsers (${{ matrix.engine }} ")) | "\(.name): \(.conclusion)"')"
+          echo "$results"
+          [ "$(grep -c ': success$' <<<"$results")" -eq 2 ]
 
   # Proof 3 of the networking: two real browsers play one room on a server started here. It needs the built package (the
   # server is `dist/`, as a game's own server file would be), and all three browsers because every engine plays.
   online:
+    needs: plan
+    if: needs.plan.outputs.online == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -69,7 +169,18 @@ jobs:
           node-version: 24.21.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium webkit firefox
+      # The browser is kept between runs, by Playwright's version; the system libraries it needs are put in each time.
+      - id: version
+        run: echo "playwright=$(pnpm exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: browser
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-all
+      - if: steps.browser.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium webkit firefox
+      - if: steps.browser.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium webkit firefox
       - run: pnpm build
       - run: pnpm test:journeys
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -81,6 +192,8 @@ jobs:
 
   # The package as a game gets it: built, packed, installed into an empty folder, run, and typechecked there.
   package:
+    needs: plan
+    if: needs.plan.outputs.package == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -115,6 +228,8 @@ jobs:
 
   # The package once, as a release would ship it: the next two jobs install these very bytes, never the working folder.
   create-pack:
+    needs: plan
+    if: needs.plan.outputs.package == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -136,6 +251,7 @@ jobs:
   # checked, changed, broken and served, using only Node and the tarball. One key in the matrix and no `name:`, so the
   # checks are called `create (ubuntu-latest)`, `create (windows-latest)` and `create (macos-latest)`.
   create:
+    # Left out with create-pack, when a draft does not touch the package.
     needs: create-pack
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
@@ -163,6 +279,7 @@ jobs:
 
   # The same new game in real browsers: Chromium, WebKit and Firefox, at five sizes, by key and by touch.
   create-play:
+    # Left out with create-pack, when a draft does not touch the package.
     needs: create-pack
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -177,7 +294,18 @@ jobs:
           node-version: 24.21.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium webkit firefox
+      # The browser is kept between runs, by Playwright's version; the system libraries it needs are put in each time.
+      - id: version
+        run: echo "playwright=$(pnpm exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: browser
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-all
+      - if: steps.browser.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium webkit firefox
+      - if: steps.browser.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium webkit firefox
       - name: Get the tarball create-pack made
         shell: bash
         run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name create-tarball --dir "$RUNNER_TEMP/tarball"
