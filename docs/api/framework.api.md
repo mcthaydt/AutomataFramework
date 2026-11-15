@@ -1711,6 +1711,23 @@ interface GroundGrid {
 function groundOf(content: GameContent, level: Level): number;
 ```
 
+### `GroundPage` (interface)
+
+```ts
+interface GroundPage {
+    readonly frame: string;
+    readonly col: number;
+    readonly w: number;
+    readonly h: number;
+}
+```
+
+### `groundPages` (function)
+
+```ts
+function groundPages(scene: SceneFile): GroundPage[];
+```
+
 ### `groundPageTiles` (function)
 
 ```ts
@@ -2523,6 +2540,22 @@ function markRead(content: GameContent, marks: ReadMarks | undefined, language: 
 
 ```ts
 function matchLanguage(tag: string, shipped: readonly Language[]): Language | undefined;
+```
+
+### `MaterialTile` (interface)
+
+```ts
+interface MaterialTile {
+    readonly width: number;
+    readonly height: number;
+    readonly places: Uint8Array;
+}
+```
+
+### `materialTile` (function)
+
+```ts
+function materialTile(material: PhotoMaterial, paints: readonly ScenePaint[], tile: number, photo: PhotoPixels): MaterialTile;
 ```
 
 ### `MaterialTop` (interface)
@@ -3387,6 +3420,22 @@ function pickLanguage(options: {
     readonly device: readonly string[];
     readonly shipped: readonly Language[];
 }): LanguagePick;
+```
+
+### `PlacedTile` (interface)
+
+```ts
+interface PlacedTile {
+    readonly col: number;
+    readonly row: number;
+    readonly frame: number;
+}
+```
+
+### `placedTiles` (function)
+
+```ts
+function placedTiles(rows: readonly string[], kindOf: (letter: string) => TileKind | undefined): PlacedTile[];
 ```
 
 ### `placeholdersOf` (function)
@@ -7459,6 +7508,22 @@ function markRead(content: GameContent, marks: ReadMarks | undefined, language: 
 
 ```ts
 function matchLanguage(tag: string, shipped: readonly Language[]): Language | undefined;
+```
+
+### `MaterialTile` (interface)
+
+```ts
+interface MaterialTile {
+    readonly width: number;
+    readonly height: number;
+    readonly places: Uint8Array;
+}
+```
+
+### `materialTile` (function)
+
+```ts
+function materialTile(material: PhotoMaterial, paints: readonly ScenePaint[], tile: number, photo: PhotoPixels): MaterialTile;
 ```
 
 ### `MaterialTop` (interface)
