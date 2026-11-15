@@ -1266,7 +1266,8 @@ test('replay --accept writes meta.save for a game that exports gameSave, and not
 - Modify: `tests/create/create.journey.test.ts`, `.github/workflows/ci.yml` (`create-play` gets a 60 minute limit),
   `tests/workflows/ci.test.ts`
 
-The made game is served by its own `automata play`, as the journey serves it today.
+The made game is served by its own `automata play`, as the journey serves it today. The built folder (the spec's
+"built folder") is played by the game's own play test, which this job runs last.
 
 - [ ] **Step 1: Write the failing tests.**
 
