@@ -12,7 +12,7 @@ Overall: **4%** (the spec is written and in review; stages 2 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
-| 1. Spec | Written, in review, 100%. Every box mapped to done (with proof), framework, template, check or the game maker; new: losing (`lost` and Try again), How to play, the goal line, `score` and best, a strict content security policy in the template, a `page` part of the `rules` step, `automata check --ship`; Part A takes over plan K's Step U (the template on `startFlow`) and moves the template's recording once, for the Owner to see. One Owner question (Q1: a real browser in every game's own CI) | `specs/2026-11-15-game-checklist-design.md` |
+| 1. Spec | Written, in review, 100%. Every box mapped to done (with proof), framework, template, check or the game maker; new: losing (`lost` and Try again), How to play, the goal line, `score` and best, a strict content security policy in the template, a `page` part of the `rules` step, `automata check --ship`; Part A takes over plan K's Step U (the template on `startFlow`) and moves the template's recording once, for the Owner to see. The Owner answered Q1 (2026-11-15): A, Playwright and a play test in every game's own CI | `specs/2026-11-15-game-checklist-design.md` |
 | 2 to 7 | Not started | |
 
 ## The Scenes cycle (the framework's side of the 2D environment builder)

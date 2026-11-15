@@ -21,7 +21,7 @@ This is **Cycle 12**, one spec and one plan (plan Q, "quality"), built in parts.
   agent that breaks one is told at the file and line, in words, before a person ever plays the game.
 - **The drunk-grandma test.** The new screens (Try again, How to play) and the new check sentences pass it.
 - **6, the stack carries over whole.** No new dependency in the framework. The template's one possible new
-  development dependency (a real browser for the game's own CI) is the Owner's question Q1 below.
+  development dependency, Playwright for a real browser in the game's own CI, is the Owner's yes to Q1 below.
 
 It breaks none: 2D only; no editor code (the editors are on hold until the mockups are approved, and nothing here
 changes a shape they call); nothing ported ahead of its user (the template and the demo use every part at once).
@@ -185,7 +185,10 @@ go in the framework's library in all six languages and wait for native readers l
   lint, types, replays, tests): no browser. The best proof that a made game opens, fits and plays is a browser playing
   it. (A) the template gains Playwright as a development dependency and a short play test in its own `tests/`, run by
   its CI in Chromium and WebKit; (B) no new dependency: the framework's `create-play` job is the only browser proof, and
-  a game's own CI stays without one. Recommended: A. It needs the Owner's yes (a new dependency, in the template).
+  a game's own CI stays without one. **The Owner chose A (2026-11-15).** The template gains Playwright as a development
+  dependency (an exact version, set by the plan) and a play test its CI runs in Chromium and WebKit: it opens the built
+  game at a phone and a desktop size, plays to the end of the level, loses and tries again, and fails on any request
+  to another origin.
 
 Settled here as the builder's calls, for the audit to weigh: losing is an event named in `automata.toml` (as `done`
 is); the built-in hero raises `hero.fell`; the policy's exact text and `[network] allow`; `--ship` as a flag, not a new
