@@ -43,7 +43,7 @@ import { createParty, type Party } from './party.ts'
 import { createPlaces, type Places } from './places.ts'
 import { createPlay } from './play.ts'
 import { defaultSave, type FlowSave, newest, type Progress } from './progress.ts'
-import { RECORDS_DEFAULT, withScore } from './records.ts'
+import { type Finish, RECORDS_DEFAULT, recordScore } from './records.ts'
 import { openSections, type Sections, wireSound } from './sections.ts'
 import { advance, FLOW_START, type FlowEvent, type FlowFacts, type FlowState } from './steps.ts'
 import type { Flow, FlowOptions } from './types.ts'
@@ -257,26 +257,9 @@ export async function startFlow<S extends Progress = Progress>(given: FlowOption
     if (!stopped && epoch === mine) dispatch({ type: 'play', level })
   }
 
-  /**
-   * The level just ended, won or lost: its score, the best now, and the sentence for a best the store would not keep. The
-   * best is shown from the second end on, when there was one before this; the first end keeps it and says nothing of it.
-   */
-  async function recordScore(): Promise<{ score?: number; best?: number; notKept?: string }> {
-    const score = play.game()?.score()
-    if (score === undefined || sections === undefined) return {}
-    const before = sections.records.get()
-    const after = withScore(before, score)
-    let notKept: string | undefined
-    if (after !== before) {
-      const written = await sections.records.set(after)
-      if (!written.ok) notKept = (locale as Locale).words('automata.done.not-kept')
-    }
-    return {
-      score,
-      ...(before.best === undefined || after.best === undefined ? {} : { best: after.best }),
-      ...(notKept === undefined ? {} : { notKept }),
-    }
-  }
+  /** The level just ended: its score and the best, kept (see `recordScore`). */
+  const finishOfLevel = (): Promise<Finish> =>
+    recordScore(sections?.records, play.game()?.score(), (locale as Locale).words('automata.done.not-kept'))
 
   /**
    * Puts the step `next` on the page. The loading bar stays until the step has put something of its own there, so the
@@ -417,7 +400,7 @@ export async function startFlow<S extends Progress = Progress>(given: FlowOption
       case 'done': {
         play.hold()
         dropScreen()
-        const finish = await recordScore()
+        const finish = await finishOfLevel()
         const finished = next.level ?? project.start
         const after = nextLevel(project, finished)
         let notKept: string | undefined
@@ -441,7 +424,7 @@ export async function startFlow<S extends Progress = Progress>(given: FlowOption
       case 'lost': {
         play.hold()
         dropScreen()
-        const finish = await recordScore()
+        const finish = await finishOfLevel()
         if (!current()) return
         audio?.raise('screen.lost')
         shown = makers.lost({

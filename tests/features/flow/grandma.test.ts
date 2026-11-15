@@ -59,7 +59,8 @@ test.each(filesIn('screens', '.ts').filter((file) => !file.endsWith('-rows.ts'))
 /** How many buttons a screen's own files make the main one. */
 const mains = (...files: string[]): number =>
   files.reduce(
-    (sum, file) => sum + (readFileSync(file, 'utf8').match(/kind(?:=|: )["']primary["']/g) ?? []).length,
+    (sum, file) =>
+      sum + (readFileSync(file, 'utf8').match(/kind(?:=|: )["']primary["'](?!\s*\|)/g) ?? []).length,
     0,
   )
 
