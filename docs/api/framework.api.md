@@ -1796,6 +1796,12 @@ type LevelJoint = {
 function levelName(words: Words, levelId: string): string;
 ```
 
+### `levelOrder` (function)
+
+```ts
+function levelOrder(project: Project): readonly string[];
+```
+
 ### `LevelPicture` (interface)
 
 ```ts
@@ -2172,6 +2178,12 @@ const MusicSchema: z.ZodType<MusicFile, MusicFile>;
 
 ```ts
 function needsPictures(content: GameContent, level?: string): boolean;
+```
+
+### `nextLevel` (function)
+
+```ts
+function nextLevel(project: Project, level: string): string | undefined;
 ```
 
 ### `NoiseVoice` (interface)
@@ -2594,6 +2606,10 @@ interface Project {
     readonly hero: string;
     readonly players?: number | undefined;
     readonly source?: Language | undefined;
+    readonly levels?: readonly string[] | undefined;
+    readonly done?: string | undefined;
+    readonly warnings?: readonly string[] | undefined;
+    readonly splash?: string | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -5582,6 +5598,12 @@ type LevelJoint = {
 function levelName(words: Words, levelId: string): string;
 ```
 
+### `levelOrder` (function)
+
+```ts
+function levelOrder(project: Project): readonly string[];
+```
+
 ### `levelPlugin` (const)
 
 ```ts
@@ -5898,6 +5920,12 @@ type MusicPart = TonePart | DrumPart;
 
 ```ts
 const MusicSchema: z.ZodType<MusicFile, MusicFile>;
+```
+
+### `nextLevel` (function)
+
+```ts
+function nextLevel(project: Project, level: string): string | undefined;
 ```
 
 ### `NoiseVoice` (interface)
@@ -6240,6 +6268,10 @@ interface Project {
     readonly hero: string;
     readonly players?: number | undefined;
     readonly source?: Language | undefined;
+    readonly levels?: readonly string[] | undefined;
+    readonly done?: string | undefined;
+    readonly warnings?: readonly string[] | undefined;
+    readonly splash?: string | undefined;
     readonly content: readonly ContentRef[];
 }
 ```

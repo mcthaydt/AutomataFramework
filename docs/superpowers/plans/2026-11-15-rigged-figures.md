@@ -67,7 +67,7 @@ of this plan lists what that builder takes from here. Principles served: 5, 1, 3
 - **Commits:** author and committer `McThayDT <107786093+mcthaydt@users.noreply.github.com>`; set the config before
   every commit; a local hook refuses any other author; no AI attribution anywhere; never force-push.
 - **An Owner question is never defaulted.** Send it to the coordinator with options and a recommendation, and wait.
-- **Tracker:** after each task, update `docs/superpowers/progress.md` (Cycle 7). Tasks 1 to 20 are 4.5% of stage 4
+- **Tracker:** after each task, update `docs/superpowers/progress.md` (Cycle 8). Tasks 1 to 20 are 4.5% of stage 4
   each; the last 10% is the final green run of each part.
 
 ## How the work is cut

@@ -5,7 +5,7 @@ import type { Voice } from './diagnostics.ts'
 import { Id } from './ids.ts'
 import { LANGUAGES, type Language, languageCodes } from './messages.ts'
 import { checkData, type Parsed, withoutMark } from './parse.ts'
-import { isGamePath } from './shared.ts'
+import { isGamePath, MessageKey, WORDS_PATTERN } from './shared.ts'
 
 /** The project file's name: it sits at the top of a game's repository and lists everything else. */
 export const PROJECT_FILE = 'automata.toml'
@@ -35,6 +35,18 @@ export interface Project {
    * be listed; a game with no words leaves it out (and the parsed project has no `source` key at all).
    */
   readonly source?: Language | undefined
+  /**
+   * The order the levels are played in. Left out, the game is its `start` level alone. The flow's fields (this one,
+   * `done`, `warnings` and `splash`) say what a screen shows and never what happens, so none of them is given to the
+   * sim, and the parsed project has no such key at all when the file does not write it.
+   */
+  readonly levels?: readonly string[] | undefined
+  /** The event that ends a level, like `door.touched`. Left out, a level ends only when the game's code says so. */
+  readonly done?: string | undefined
+  /** What a player is told before they play: keys in the game's own words, like `warning.flashing`. */
+  readonly warnings?: readonly string[] | undefined
+  /** The figure shown on the splash, by its id. Left out, the splash is the game's name. */
+  readonly splash?: string | undefined
   readonly content: readonly ContentRef[]
 }
 
@@ -47,6 +59,8 @@ const PLAYERS_HINT =
   'Write how many can play at once, 2, 3 or 4, like players = 2. Leave the line out for a one-player game.'
 
 const SOURCE_HINT = `Write one of ${languageCodes}, like source = "es".`
+
+const DONE_HINT = 'Write the event that ends a level, like done = "door.touched".'
 
 const ref = z.strictObject({
   type: z.enum(KINDS),
@@ -66,9 +80,33 @@ export const ProjectSchema: z.ZodType<Project, Project> = z
     source: z
       .custom<Language>((value) => LANGUAGES.some((language) => language === value), SOURCE_HINT)
       .optional(),
+    levels: z.array(Id).min(1).max(64).optional(),
+    done: z
+      .custom<string>(
+        (text) => typeof text === 'string' && text.length <= 96 && WORDS_PATTERN.test(text),
+        DONE_HINT,
+      )
+      .optional(),
+    warnings: z.array(MessageKey).min(1).max(8).optional(),
+    splash: Id.optional(),
     content: z.array(ref).max(1024),
   })
   .superRefine((project, ctx) => {
+    for (const [field, noun] of [
+      ['levels', 'level'],
+      ['warnings', 'warning'],
+    ] as const) {
+      const seen = new Set<string>()
+      ;(project[field] ?? []).forEach((id, i) => {
+        if (seen.has(id))
+          ctx.addIssue({
+            code: 'custom',
+            path: [field, i],
+            message: `This ${noun} is already in the list.`,
+          })
+        seen.add(id)
+      })
+    }
     const seen = new Set<string>()
     ;(project.content ?? []).forEach((entry, i) => {
       if (seen.has(entry.path))
@@ -80,6 +118,18 @@ export const ProjectSchema: z.ZodType<Project, Project> = z
       seen.add(entry.path)
     })
   })
+
+/** The levels in the order they are played: `levels`, else the start level alone. */
+export function levelOrder(project: Project): readonly string[] {
+  return project.levels ?? [project.start]
+}
+
+/** The level after `level` in `levelOrder`, or `undefined` after the last (or for a level that is not in it). */
+export function nextLevel(project: Project, level: string): string | undefined {
+  const order = levelOrder(project)
+  const at = order.indexOf(level)
+  return at < 0 ? undefined : order[at + 1]
+}
 
 const VOICE: Voice = {
   noun: 'project',
