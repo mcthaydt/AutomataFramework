@@ -27,7 +27,5 @@ export const SoundSettingsSchema: z.ZodType<SoundSettings, SoundSettings> = z.st
 
 /** The volumes the speaker is given: both 0 while `muted`, else the player's own. */
 export function heardVolumes(settings: SoundSettings): { readonly sound: number; readonly music: number } {
-  return settings.muted === true
-    ? { sound: 0, music: 0 }
-    : { sound: settings.sound, music: settings.music }
+  return settings.muted === true ? { sound: 0, music: 0 } : { sound: settings.sound, music: settings.music }
 }

@@ -162,7 +162,9 @@ export function nextLevel(project: Project, level: string): string | undefined {
  * `score` as its two halves: the resource and the field of it that is counted. The last dot splits them, so a
  * resource id may hold dots (`hero.score`). `undefined` when the project names no score.
  */
-export function scoreRef(project: Project): { readonly resource: string; readonly field: string } | undefined {
+export function scoreRef(
+  project: Project,
+): { readonly resource: string; readonly field: string } | undefined {
   const { score } = project
   if (score === undefined) return undefined
   const at = score.lastIndexOf('.')

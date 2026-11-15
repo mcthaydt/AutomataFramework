@@ -128,7 +128,10 @@ test('a hero the framework moves falls too', async () => {
   const files = movesFiles()
   const fall = fallFiles()
   // The moves game's hero, the gap's level, and the line that names the event.
-  const toml = (files['automata.toml'] ?? '').replace('hero = "hero"\n', 'hero = "hero"\nlost = "hero.fell"\n')
+  const toml = (files['automata.toml'] ?? '').replace(
+    'hero = "hero"\n',
+    'hero = "hero"\nlost = "hero.fell"\n',
+  )
   const content = await loadFixtureGame({
     ...files,
     'automata.toml': toml,

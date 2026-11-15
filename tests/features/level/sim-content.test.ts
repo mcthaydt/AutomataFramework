@@ -236,7 +236,10 @@ test('lost and score never reach the sim: the content hash is the same with and 
   for (const key of ['lost', 'score']) expect(given.project).not.toHaveProperty(key)
   expect(given).not.toBe(plain)
   expect(given).toEqual(plain)
-  const [without, withBoth] = [await createGameSim({ content: plain }), await createGameSim({ content: named })]
+  const [without, withBoth] = [
+    await createGameSim({ content: plain }),
+    await createGameSim({ content: named }),
+  ]
   made.push(without, withBoth)
   expect(withBoth.contentHash).toBe(without.contentHash)
   expect(withBoth.hash()).toBe(without.hash())

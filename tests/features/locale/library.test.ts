@@ -218,4 +218,3 @@ test('every automata.* key written in src/ is in en.json, and every key of en.js
     if (OWED.includes(key)) expect(used, `${key} is used now: take it off OWED`).toBe(false)
   }
 })
-

@@ -40,4 +40,6 @@ test('muted gives 0 and 0, and the sliders keep their numbers', () => {
 })
 
 test('muted must be true or false', () =>
-  expect(SoundSettingsSchema.safeParse({ format: 1, music: 0.4, sound: 0.9, muted: 'yes' }).success).toBe(false))
+  expect(SoundSettingsSchema.safeParse({ format: 1, music: 0.4, sound: 0.9, muted: 'yes' }).success).toBe(
+    false,
+  ))

@@ -223,7 +223,10 @@ test('a project that writes none of them has none of the keys', () => {
 })
 
 test.each([
-  ['lost = "Hero Fell!"', 'automata.toml: lost: Write the event that loses a level, like lost = "hero.fell".'],
+  [
+    'lost = "Hero Fell!"',
+    'automata.toml: lost: Write the event that loses a level, like lost = "hero.fell".',
+  ],
   ['lost = 3', 'automata.toml: lost: Write the event that loses a level, like lost = "hero.fell".'],
   [
     'score = "sparks"',

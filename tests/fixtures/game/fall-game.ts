@@ -19,12 +19,17 @@ export interface FallSetup {
 export function fallFiles(setup: FallSetup = {}): Record<string, string> {
   const players = setup.players ?? 1
   const level = JSON.parse(fixtureFiles['content/levels/level-1.json'] ?? '') as Record<string, unknown>
-  const floor = Array.from({ length: 16 }, (_, col) => (col >= GAP.from && col <= GAP.to ? '.' : '#')).join('')
+  const floor = Array.from({ length: 16 }, (_, col) => (col >= GAP.from && col <= GAP.to ? '.' : '#')).join(
+    '',
+  )
   const tiles = [...(level.tiles as string[]).slice(0, -1), floor]
   const starts = Array.from({ length: players }, (_, i) => ({ player: i + 1, x: 2.5 + i, y: 7.5 }))
   const lost = setup.lost === undefined ? 'hero.fell' : setup.lost
   let toml = fixtureFiles['automata.toml'] ?? ''
-  const extra = [...(players > 1 ? [`players = ${players}`] : []), ...(lost === null ? [] : [`lost = "${lost}"`])]
+  const extra = [
+    ...(players > 1 ? [`players = ${players}`] : []),
+    ...(lost === null ? [] : [`lost = "${lost}"`]),
+  ]
   toml = toml.replace('hero = "hero"\n', `hero = "hero"\n${extra.map((line) => `${line}\n`).join('')}`)
   return {
     'automata.toml': toml,

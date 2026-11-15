@@ -318,7 +318,16 @@ test('Next level and Continue each add one to attempt', () => {
 })
 
 test('menu, done, playing and every step before the menu given again: the very same object', () => {
-  for (const step of ['loading', 'watching', 'warnings', 'picking', 'splash', 'menu', 'playing', 'done'] as const) {
+  for (const step of [
+    'loading',
+    'watching',
+    'warnings',
+    'picking',
+    'splash',
+    'menu',
+    'playing',
+    'done',
+  ] as const) {
     const state = at(step, { level: 'level-1' })
     expect(go(state, again), step).toBe(state)
   }

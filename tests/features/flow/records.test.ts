@@ -30,7 +30,12 @@ test('the schema takes none and a finite best, and refuses anything else', () =>
   const ok = (value: unknown): boolean => RecordsSchema.safeParse(value).success
   expect(ok({})).toBe(true)
   expect(ok({ best: 12 })).toBe(true)
-  for (const bad of [{ best: 'high' }, { best: Number.NaN }, { best: Number.POSITIVE_INFINITY }, { best: 1, x: 2 }])
+  for (const bad of [
+    { best: 'high' },
+    { best: Number.NaN },
+    { best: Number.POSITIVE_INFINITY },
+    { best: 1, x: 2 },
+  ])
     expect(ok(bad), JSON.stringify(bad)).toBe(false)
 })
 

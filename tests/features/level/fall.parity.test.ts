@@ -17,7 +17,8 @@ afterEach(() => {
 })
 
 test('the fall, in this engine, ends at the recorded hash', async () => {
-  const sim = await createGameSim({ content: await loadFixtureGame(fallFiles()), plugins: [heroPlugin] })
+  const content = await loadFixtureGame(fallFiles())
+  const sim = await createGameSim({ content, plugins: [heroPlugin], players: [1] })
   made.push(sim)
   const result = runGolden(sim, 240, (tick) => (tick === 10 ? [controlsCommand(tick, 1, 0, ['right'])] : []))
   // The hero is below the level by the end and has been marked, so the run does not end on a standing hero by chance.
