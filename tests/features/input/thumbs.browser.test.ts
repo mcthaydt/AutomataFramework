@@ -67,14 +67,14 @@ const hintBox = (kind: string): HTMLElement => {
   if (found === null) throw new Error(`no ${kind} hint`)
   return found
 }
-const finger = (el: Element, type: string, id: number, x: number, y: number, cancelable = true): PointerEvent => {
+const finger = (el: Element, type: string, id: number, x: number, y: number): PointerEvent => {
   const event = new PointerEvent(type, {
     pointerId: id,
     pointerType: 'touch',
     clientX: x,
     clientY: y,
     bubbles: true,
-    cancelable,
+    cancelable: true,
   })
   el.dispatchEvent(event)
   return event
@@ -221,7 +221,7 @@ test('a game with dash has the dash mark, 64 px, and a tap on it is a dash', () 
   expect(sorted(t.held())).toEqual([])
 })
 
-test("a game without dash has no dash mark, and a game's own action is a 64 px button above the jump half", () => {
+test("a game without dash has no dash mark, and its own action is a 64 px button above the jump half", () => {
   const t = make()
   expect(mount.querySelector('[data-action="dash"]')).toBeNull()
   const own = button('throw')
@@ -232,7 +232,8 @@ test("a game without dash has no dash mark, and a game's own action is a 64 px b
   expect(box.bottom).toBeLessThanOrEqual(390 - 195)
   expect(box.left).toBeGreaterThanOrEqual(422)
   // The thumbs' own actions are not buttons.
-  for (const action of ['left', 'right', 'jump']) expect(mount.querySelector(`button[data-action="${action}"]`)).toBeNull()
+  for (const action of ['left', 'right', 'jump'])
+    expect(mount.querySelector(`button[data-action="${action}"]`)).toBeNull()
   finger(own, 'pointerdown', 21, box.left + 5, box.top + 5)
   expect(sorted(t.held())).toEqual(['throw'])
   expect(sorted(t.drain())).toEqual(['throw'])
@@ -274,7 +275,7 @@ test('a game whose hero has no moves still gets the buttons, and one with moves 
   expect(mount.querySelector('.automata-thumbs')).toBeNull()
 })
 
-test("an element the page stacks over a half, outside the mount, takes its own touch and the half sees none", () => {
+test('an element the page stacks over a half, outside the mount, takes its own touch and the half sees none', () => {
   const t = make()
   const pause = document.createElement('button')
   pause.style.cssText = 'position:fixed;left:600px;top:20px;width:80px;height:80px;z-index:10'

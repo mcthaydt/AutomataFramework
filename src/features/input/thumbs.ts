@@ -245,7 +245,8 @@ export function createThumbs(
       ? 'Dash'
       : buttonLabel(words ?? ((key) => key), action, controls[action]?.label ?? action)
   if (options.dash) addButton('dash', buttonLabelOf('dash'))
-  for (const action of Object.keys(controls)) if (!THUMB_ACTIONS.has(action)) addButton(action, buttonLabelOf(action))
+  for (const action of Object.keys(controls))
+    if (!THUMB_ACTIONS.has(action)) addButton(action, buttonLabelOf(action))
 
   root.append(halves.walk, halves.jump, hints.walk.box, hints.jump.box, ring, arrow, buttonBox)
   mount.append(root)
