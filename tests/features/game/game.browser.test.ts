@@ -8,6 +8,7 @@ import { createGameSim } from '#src/features/level/level.ts'
 import { createLocale } from '#src/features/locale/locale.ts'
 import { Transform } from '#src/features/physics/physics.ts'
 import { openSettings } from '#src/features/saves/saves.ts'
+import { definePlugin, defineSystem } from '#src/features/sim/sim.ts'
 import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
@@ -232,4 +233,96 @@ test('a locale that only watches has a language and was not asked, so it cannot 
     startGame({ content, locale, plugins: [heroPlugin], mount, controls: fixtureControls, host }),
   ).rejects.toThrow('No language is chosen yet.')
   expect(mount.childElementCount).toBe(0)
+})
+
+// Plan U, Task 2: what a game tells a screen. The flow ends a level on an event, and shows a problem when the game's
+// rules throw, so a game says each step, whether it is held, and when it broke.
+
+test('every step is heard once, in order, with its events', async () => {
+  const { game: g, frames } = await start()
+  const heard: { tick: number; events: readonly unknown[] }[] = []
+  g.onStep((step) => heard.push(step))
+  frames.at(0)
+  run(frames, 3)
+  // The tick the sim is at after the step: the one the sound is told, too.
+  expect(heard.map((step) => step.tick)).toEqual([1, 2, 3])
+  expect(g.sim.tick).toBe(3)
+  for (const step of heard) expect(Array.isArray(step.events)).toBe(true)
+})
+
+test('a listener that is taken away hears no more steps', async () => {
+  const { game: g, frames } = await start()
+  const heard: number[] = []
+  const stop = g.onStep((step) => heard.push(step.tick))
+  frames.at(0)
+  run(frames, 2)
+  stop()
+  run(frames, 2)
+  expect(heard).toEqual([1, 2])
+})
+
+test('paused() is true between pause() and resume()', async () => {
+  const { game: g } = await start()
+  expect(g.paused()).toBe(false)
+  g.pause()
+  expect(g.paused()).toBe(true)
+  g.resume()
+  expect(g.paused()).toBe(false)
+})
+
+test('replay() after stop() is the play as it was', async () => {
+  const { game: g, frames } = await start()
+  frames.at(0)
+  run(frames, 5)
+  const before = g.replay()
+  g.stop()
+  const after = g.replay()
+  expect(after.ticks).toBe(before.ticks)
+  expect(after.finalHash).toBe(before.finalHash)
+  expect(after).toEqual(before)
+})
+
+const boom = defineSystem({
+  name: 'boom.system',
+  phase: 'gameplay',
+  run(ctx) {
+    if (ctx.tick === 3) throw new Error('the rules broke')
+  },
+})
+const boomPlugin = definePlugin({ name: 'boom', systems: [boom] })
+
+test('a game whose rules throw stays stopped and says so', async () => {
+  const frames = manualFrames()
+  const host = testHost()
+  game = await startGame({
+    content: await loadFixtureGame(),
+    locale: await chosenLocale(await loadFixtureGame(), 'ko'),
+    plugins: [heroPlugin, boomPlugin],
+    mount,
+    controls: fixtureControls,
+    host,
+    frames,
+  })
+  expect(game.broken()).toBeUndefined()
+  const told: unknown[] = []
+  game.onBroken((error) => told.push(error))
+  frames.at(0)
+  let thrown: unknown
+  try {
+    run(frames, 8)
+  } catch (error) {
+    thrown = error
+  }
+  // The error still goes on to the page's handler, and the game kept the very same one.
+  expect(thrown).toBeInstanceOf(Error)
+  expect(game.broken()).toBe(thrown)
+  expect(told).toEqual([thrown])
+  const stoppedAt = game.sim.tick
+  // Coming back on screen does not start a broken game again.
+  host.hide()
+  host.show()
+  frames.at(100_000)
+  run(frames, 5)
+  expect(game.sim.tick).toBe(stoppedAt)
+  expect(frames.pending).toBe(false)
 })

@@ -120,3 +120,24 @@ test('a step that throws stops the loop and the error is not hidden', () => {
   expect(loop.running).toBe(false)
   expect(frames.pending).toBe(false)
 })
+
+// Plan U, Task 2: a step that throws tells whoever asked before the error goes on, so the game can mark itself broken.
+test('a step that throws tells onError first and still throws', () => {
+  const frames = manualFrames()
+  const told: unknown[] = []
+  const boom = new Error('boom')
+  const loop = createLoop({
+    tickHz: 60,
+    step: () => {
+      throw boom
+    },
+    draw: () => undefined,
+    frames,
+    onError: (error) => told.push(error),
+  })
+  loop.start()
+  frames.at(0)
+  expect(() => frames.at(FRAME)).toThrow(boom)
+  expect(told).toEqual([boom])
+  expect(loop.running).toBe(false)
+})

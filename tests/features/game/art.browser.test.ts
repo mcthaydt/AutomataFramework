@@ -373,3 +373,13 @@ test("game.heroes() gives each hero's box, new after each draw", async () => {
   run(frames, 20)
   expect(g.heroes()[0]?.x).not.toBe(first[0]?.x)
 })
+
+// Plan U, Task 2: the screen before the game must not show a canvas of sky for the frames the game takes to draw.
+test('the canvas stays hidden until the first step has put a picture on it', async () => {
+  const { game: g, frames } = await begin(390, 844)
+  expect(canvasOf().style.visibility).toBe('hidden')
+  expect(g.heroes()).toEqual([])
+  run(frames, 1)
+  expect(canvasOf().style.visibility).toBe('')
+  expect(g.heroes().length).toBeGreaterThan(0)
+})
