@@ -80,7 +80,10 @@ test('a box slid up a slope that passes six tile corners keeps moving to the top
   for (let i = 0; i < 200; i++) {
     sim.step([])
     const here = at(sim, box)
-    if (i % 4 === 0) trace.push(`${i}: ${here.x.toFixed(2)},${here.y.toFixed(2)} v ${sim.entity(box)?.get(Body).vx.toFixed(2)},${sim.entity(box)?.get(Body).vy.toFixed(2)}`)
+    if (i % 4 === 0)
+      trace.push(
+        `${i}: ${here.x.toFixed(2)},${here.y.toFixed(2)} v ${sim.entity(box)?.get(Body).vx.toFixed(2)},${sim.entity(box)?.get(Body).vy.toFixed(2)}`,
+      )
     if (here.x < 6.5 || here.x > 11.5) continue
     climbed++
     expect(sim.entity(box)?.get(Body).vx, `tick ${i} at x ${here.x}`).toBeGreaterThan(1)
