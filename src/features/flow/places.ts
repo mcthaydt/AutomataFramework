@@ -35,6 +35,8 @@ export interface Places<S extends Progress> {
   open(place: number): Promise<string>
   /** Opens the newest saved game, as `open`; with none, a new game. */
   openNewest(): Promise<string>
+  /** The level the newest saved game would open, read without opening it; `undefined` when there is none. */
+  newestLevel(): Promise<string | undefined>
   /** Writes that the player has reached `level`; the problem, as the sentence the player is told, if it was not kept. */
   reach(level: string, notKept: string): Promise<string | undefined>
   /** Replaces what the saved game holds (the game's own data), and keeps it. */
@@ -99,6 +101,14 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
         return context.project().start
       }
       return open(at)
+    },
+    async newestLevel() {
+      const at = newest(slots)
+      if (at === undefined) return undefined
+      const loaded = await context.saves()?.load(at)
+      if (loaded === undefined || !loaded.ok || loaded.data === null) return undefined
+      const project = context.project()
+      return levelOrder(project).includes(loaded.data.level) ? loaded.data.level : project.start
     },
     async reach(level, notKept) {
       if (progress === undefined) return undefined

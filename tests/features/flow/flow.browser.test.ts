@@ -3,10 +3,12 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { testSpeaker } from '#src/features/audio/audio.ts'
+import { Player } from '#src/features/commands/commands.ts'
 import { loadGame, writeContent } from '#src/features/content/content.ts'
 import { type Flow, startFlow } from '#src/features/flow/flow.ts'
 import { testHost } from '#src/features/host/host.ts'
 import { createLocale, frameworkWords } from '#src/features/locale/locale.ts'
+import { Transform } from '#src/features/physics/physics.ts'
 import { openSettings } from '#src/features/saves/saves.ts'
 import { SPLASH_MS } from '#src/features/screens/screens.ts'
 import { definePlugin, defineSystem } from '#src/features/sim/sim.ts'
@@ -301,9 +303,27 @@ test('watch mode: the recording plays with its line of words, and a tap on a fir
   await shown('watching')
   expect(mount.querySelector('canvas')).not.toBeNull()
   await expect.poll(() => mount.textContent).toContain('Tap it to play')
+  const heard: string[] = [step()]
+  flow?.onState((state) => heard.push(state.step))
   await userEvent.click(mount.querySelector('.take') as HTMLElement)
   await shown('picking')
   expect(mount.querySelector('canvas')).toBeNull()
+  // A flag and Go, and the level is played at once: the splash and the menu are skipped, this once.
+  await expect.poll(() => mount.querySelector('.automata-picker-go')).not.toBeNull()
+  ;(mount.querySelector('.automata-flag') as HTMLElement).click()
+  ;(mount.querySelector('.automata-picker-go') as HTMLElement).click()
+  await shown('playing')
+  expect(heard).toEqual(['watching', 'picking', 'playing'])
+  expect(flow?.state().level).toBe('level-1')
+  // Leaving from pause is the ordinary visit again: the menu.
+  frames.at(0)
+  run(200)
+  key('keydown', 'Escape')
+  await shown('paused')
+  await press(es('automata.pause.leave'))
+  await expect.poll(() => mount.querySelector('[role="alertdialog"]')).not.toBeNull()
+  await press(es('automata.pause.leave-yes'))
+  await shown('menu')
 })
 
 test('a recording that cannot be read is skipped: the visit goes on as an ordinary one', async () => {
@@ -315,6 +335,46 @@ test('a recording that cannot be read is skipped: the visit goes on as an ordina
     read: flowRead({ noWarning: true }),
   })
   await shown('splash')
+})
+
+test('a page hidden while the hero runs pauses the game, and nothing is held when it comes back', async () => {
+  const host = testHost()
+  await returning(host, 'es')
+  await open({ host, read: flowRead({ noWarning: true }) })
+  await shown('splash')
+  frames.at(0)
+  run(SPLASH_MS + 200)
+  await shown('menu')
+  await wait(es('automata.menu.play'))
+  await press(es('automata.menu.play'))
+  await shown('playing')
+  frames.at(0)
+  const heroX = (): number => {
+    const found = flow
+      ?.game()
+      ?.sim.query(Player, Transform)
+      .find((one) => one.get(Player).number === 1)
+    if (found === undefined) throw new Error('The game has no hero.')
+    return found.get(Transform).x
+  }
+  run(200)
+  key('keydown', 'ArrowRight')
+  run(200)
+  const hidden = heroX()
+  expect(hidden).toBeGreaterThan(0)
+  host.hide()
+  await shown('paused')
+  expect(flow?.game()?.paused()).toBe(true)
+  // The page comes back and the game is still held: the player says when to go on.
+  host.show()
+  expect(step()).toBe('paused')
+  expect(flow?.game()?.paused()).toBe(true)
+  await press(es('automata.pause.resume'))
+  await shown('playing')
+  run(500)
+  // The key that was down when the page left is not down now, so the hero stays where it stopped.
+  expect(heroX()).toBe(hidden)
+  key('keyup', 'ArrowRight')
 })
 
 // A rule that throws on the third tick, as a game's own code might.
@@ -350,7 +410,9 @@ test('a game whose rules throw shows "The game stopped." and "Load the page agai
   // The error still goes on to the page's handler; the flow has shown its screen by then.
   expect(() => run(500)).toThrow('the rules broke')
   await shown('problem')
-  expect(mount.querySelector('[role="alert"]')?.textContent).toContain('the rules broke')
+  // The player is told in words; the rule's own message is for the console, which has it.
+  expect(mount.querySelector('[role="alert"]')?.textContent).not.toContain('the rules broke')
+  expect(mount.querySelector('[role="alert"]')?.textContent).toContain(es('automata.problem.title'))
   expect(mount.querySelector('canvas')).toBeNull()
   await press(es('automata.problem.reload'))
   expect(reloads).toBe(1)

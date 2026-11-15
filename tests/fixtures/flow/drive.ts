@@ -2,7 +2,7 @@
 // delivered by hand. A test makes one with `createDrive()`, calls `start()` before each test and `stop()` after it.
 import { expect } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
-import { testSpeaker } from '#src/features/audio/audio.ts'
+import { type TestSpeaker, testSpeaker } from '#src/features/audio/audio.ts'
 import { loadGame } from '#src/features/content/content.ts'
 import { type Flow, type FlowOptions, startFlow } from '#src/features/flow/flow.ts'
 import { type TestHost, testHost } from '#src/features/host/host.ts'
@@ -24,12 +24,15 @@ export interface DriveOptions {
   readonly save?: unknown
   readonly watch?: FlowOptions['watch']
   readonly reload?: () => void
+  readonly readPicture?: FlowOptions['readPicture']
 }
 
 export interface Drive {
   readonly mount: HTMLDivElement
   readonly frames: ManualFrames
   readonly pads: FakeGamepads
+  /** The speaker the flow is given: it remembers every voice it plays once tapped. */
+  readonly speaker: TestSpeaker
   readonly game: string
   flow(): Flow | undefined
   /** Opens the flow on the page. */
@@ -64,6 +67,7 @@ export function createDrive(game = 'flow-test'): Drive {
   let mount = document.createElement('div')
   let frames = manualFrames()
   let pads = fakeGamepads()
+  let speaker = testSpeaker()
   let flow: Flow | undefined
 
   const buttons = (): string[] => [...mount.querySelectorAll('button')].map(nameOf)
@@ -82,6 +86,9 @@ export function createDrive(game = 'flow-test'): Drive {
     get pads() {
       return pads
     },
+    get speaker() {
+      return speaker
+    },
     game,
     flow: () => flow,
     async open(options = {}) {
@@ -92,10 +99,11 @@ export function createDrive(game = 'flow-test'): Drive {
         plugins: options.plugins ?? [heroPlugin],
         controls: fixtureControls,
         host: options.host ?? testHost({ deviceLanguages: ['es-MX'] }),
-        speaker: testSpeaker(),
+        speaker,
         frames,
         gamepads: pads.getGamepads,
         reload: options.reload ?? (() => {}),
+        ...(options.readPicture === undefined ? {} : { readPicture: options.readPicture }),
         ...(options.save === undefined ? {} : { save: options.save as never }),
         ...(options.watch === undefined ? {} : { watch: options.watch }),
       })
@@ -151,6 +159,7 @@ export function createDrive(game = 'flow-test'): Drive {
       mount.replaceChildren()
       frames = manualFrames()
       pads = fakeGamepads()
+      speaker = testSpeaker()
     },
     async start() {
       await page.viewport(390, 844)
@@ -159,6 +168,7 @@ export function createDrive(game = 'flow-test'): Drive {
       document.body.append(mount)
       frames = manualFrames()
       pads = fakeGamepads()
+      speaker = testSpeaker()
     },
     stop() {
       flow?.stop()

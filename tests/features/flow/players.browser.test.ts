@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test } from 'vitest'
 import { userEvent } from 'vitest/browser'
 import { frameworkWords } from '#src/features/locale/locale.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
+import { padPress } from '../../fixtures/flow/page.ts'
 
 const es = frameworkWords('es')
 const drive = createDrive()
@@ -119,4 +120,21 @@ test('the player who is in stays in for the next level', async () => {
   await drive.shown('playing')
   expect(drive.flow()?.state().level).toBe('level-2')
   expect(players()).toEqual([1, 2])
+})
+
+test("player 1's own gamepad opens Add a player and presses Done: it does not join as player 2", async () => {
+  drive.pads.connect(0)
+  await drive.toMenu({ game: { noWarning: true, players: 2 } })
+  drive.frames.advance(100)
+  padPress(drive, es('automata.menu.add-player'))
+  await expect.poll(() => drive.mount.querySelector('[data-screen="players"]')).not.toBeNull()
+  drive.frames.advance(100)
+  padPress(drive, es('automata.players.done'))
+  await drive.wait(es('automata.menu.play'))
+  // Nobody joined: another player is still asked for, and the level has the one hero.
+  expect(drive.buttons()).toContain(es('automata.menu.add-player'))
+  padPress(drive, es('automata.menu.play'))
+  await drive.shown('playing')
+  drive.run(500)
+  expect(players()).toEqual([1])
 })
