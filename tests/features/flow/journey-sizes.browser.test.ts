@@ -124,15 +124,17 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
     await page.viewport(844, 390)
     await expect.poll(() => window.innerHeight).toBe(390)
     // A screen drawn in the kit's frame says "tall" until it has measured its new box; the menu has no frame.
-    const unmeasured = (): string[] => {
-      const found: string[] = []
-      for (const one of drive.mount.querySelectorAll<HTMLElement>('[data-height="tall"]')) {
+    // What every kit frame says it measured, for a failure to print: the page's own state, then each frame.
+    const frames = (): string => {
+      const found = [`${document.visibilityState} ${window.innerWidth}x${window.innerHeight}`]
+      for (const one of drive.mount.querySelectorAll<HTMLElement>('[data-height]')) {
         const screen = one.closest<HTMLElement>('[data-screen]')
-        found.push(`${screen?.dataset.screen} ${one.clientHeight}`)
+        const says = `${one.dataset.width}/${one.dataset.height}`
+        found.push(`${screen?.dataset.screen} says ${says} in ${one.clientWidth}x${one.clientHeight}`)
       }
-      return found
+      return found.join(' | ')
     }
-    await expect.poll(unmeasured).toEqual([])
+    await expect.poll(frames).not.toMatch(/tall/)
   }
   // The menu: the same button is in focus on its side.
   await drive.wait(es('automata.menu.continue'))
