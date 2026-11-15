@@ -31,6 +31,7 @@ import type { Flow, FlowOptions } from './types.ts'
 export * from './events.ts'
 export * from './party.ts'
 export * from './progress.ts'
+export * from './records.ts'
 export * from './steps.ts'
 export type { Flow, FlowOptions } from './types.ts'
 

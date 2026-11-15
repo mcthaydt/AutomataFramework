@@ -229,6 +229,23 @@ test('each of the four alone is taken out, and a game that writes only one still
   }
 })
 
+test('lost and score never reach the sim: the content hash is the same with and without them', async () => {
+  const plain = await loadFixtureGame()
+  // A `lost` that is not `hero.fell`: that one joins the fall plugin, which is a sim of its own.
+  const named = withProject(plain, { lost: 'hero.drowned', score: 'hero.score.sparks' })
+  const given = simContent(named)
+  for (const key of ['lost', 'score']) expect(given.project).not.toHaveProperty(key)
+  expect(given).not.toBe(plain)
+  expect(given).toEqual(plain)
+  const [without, withBoth] = [
+    await createGameSim({ content: plain }),
+    await createGameSim({ content: named }),
+  ]
+  made.push(without, withBoth)
+  expect(withBoth.contentHash).toBe(without.contentHash)
+  expect(withBoth.hash()).toBe(without.hash())
+})
+
 test('a game with none of them is handed back as the very same object', async () => {
   const plain = await loadFixtureGame()
   expect(simContent(plain)).toBe(plain)

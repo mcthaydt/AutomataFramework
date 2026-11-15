@@ -2,6 +2,7 @@ import { commandsPlugin } from '../commands/commands.ts'
 import type { GameContent } from '../content/content.ts'
 import { physics } from '../physics/physics.ts'
 import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
+import { fallPlugin, levelBottom } from './fall.ts'
 import { joinPlugin } from './join.ts'
 import { DEFAULT_GRAVITY } from './jump-path.ts'
 import { movesPlugin } from './moves.ts'
@@ -10,7 +11,7 @@ import { simContent } from './sim-content.ts'
 import { spawnLevel } from './spawn-level.ts'
 import { spritesPlugin } from './sprite.ts'
 import { touchPlugin } from './touch.ts'
-import { touchKinds, usesJoints, usesMoves, usesSlopes, usesSprites } from './uses.ts'
+import { touchKinds, usesFalls, usesJoints, usesMoves, usesSlopes, usesSprites } from './uses.ts'
 
 /** What `createGameSim` takes. Only the content is required. */
 export interface GameSimOptions {
@@ -33,6 +34,38 @@ export interface GameSimOptions {
 }
 
 /**
+ * The framework's own plugins for this game, in the order a sim joins them, without the game's own: physics, commands,
+ * the level, then each of join, sprites, touch, moves and fall for the game that asks for it. `createGameSim` joins
+ * exactly these and then `options.plugins`; a check that needs to know what a game's sim registers (its events and
+ * resources) reads it from here, so it never has a list of its own to keep in step.
+ */
+export function gameSimPlugins(options: GameSimOptions): readonly PluginDef[] {
+  const { content } = options
+  const players = content.project.players ?? 1
+  const kinds = touchKinds(content)
+  const gravity = options.gravity ?? { x: 0, y: DEFAULT_GRAVITY }
+  const moved = usesMoves(content)
+  // Only a game with a slope and a hero the framework moves tells that hero its ground's slope.
+  const slopes = moved && usesSlopes(content)
+  const level = options.level ?? content.project.start
+  return [
+    physics({ gravity, joints: usesJoints(content), touching: moved, slopes }),
+    commandsPlugin,
+    levelPlugin,
+    // Only a game for two or more players can have people join and leave (see join.ts).
+    ...(players >= 2 ? [joinPlugin({ level, max: players })] : []),
+    // Only a game with a figure or a camera has sprites, so every other game keeps the sim it had.
+    ...(usesSprites(content) ? [spritesPlugin] : []),
+    // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
+    ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
+    // Only a game whose hero has `moves` has the built-in hero, so every other game keeps the sim it had.
+    ...(moved ? [movesPlugin({ gravity, slopes, tunable: options.tunable === true })] : []),
+    // Only a game that says `lost = "hero.fell"` has the fall, so every other game keeps the sim it had.
+    ...(usesFalls(content) ? [fallPlugin({ bottom: levelBottom(content, level) })] : []),
+  ]
+}
+
+/**
  * The sim a game runs: physics, commands, the level plugin and the game's own plugins, with the level spawned, at
  * tick 0. The content goes into the sim, so it is part of `contentHash` and a replay knows if it changed, but not the
  * game's words or its sound, music and cue files (see `simContent`), so a replay does not notice what a game says or
@@ -41,31 +74,12 @@ export interface GameSimOptions {
  */
 export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const { content } = options
-  const players = content.project.players ?? 1
-  const kinds = touchKinds(content)
-  const gravity = options.gravity ?? { x: 0, y: DEFAULT_GRAVITY }
-  const moved = usesMoves(content)
-  // Only a game with a slope and a hero the framework moves tells that hero its ground's slope.
-  const slopes = moved && usesSlopes(content)
-  if (options.tunable === true && !moved)
+  if (options.tunable === true && !usesMoves(content))
     throw new Error('Only a game whose hero has "moves" can be tuned while it plays.')
   const sim = await createSim({
     seed: options.seed ?? 1,
     content: simContent(content),
-    plugins: [
-      physics({ gravity, joints: usesJoints(content), touching: moved, slopes }),
-      commandsPlugin,
-      levelPlugin,
-      // Only a game for two or more players can have people join and leave (see join.ts).
-      ...(players >= 2 ? [joinPlugin({ level: options.level ?? content.project.start, max: players })] : []),
-      // Only a game with a figure or a camera has sprites, so every other game keeps the sim it had.
-      ...(usesSprites(content) ? [spritesPlugin] : []),
-      // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
-      ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
-      // Only a game whose hero has `moves` has the built-in hero, so every other game keeps the sim it had.
-      ...(moved ? [movesPlugin({ gravity, slopes, tunable: options.tunable === true })] : []),
-      ...(options.plugins ?? []),
-    ],
+    plugins: [...gameSimPlugins(options), ...(options.plugins ?? [])],
   })
   try {
     spawnLevel(sim, content, options.level ?? content.project.start, options.players ?? [1])
