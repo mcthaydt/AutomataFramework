@@ -42,6 +42,8 @@ export interface Drive {
   /** Waits for `data-state` to say `want`. */
   shown(want: string): Promise<void>
   press(label: string): Promise<void>
+  /** Presses the button called `label` in the question on top, where a place's own button may say the same. */
+  answer(label: string): Promise<void>
   /** Waits for a button with this label. */
   wait(label: string): Promise<void>
   buttons(): string[]
@@ -113,7 +115,10 @@ export function createDrive(game = 'flow-test'): Drive {
       frames.at(0)
       drive.run(SPLASH_MS + 200)
       await drive.shown('menu')
-      await drive.wait(frameworkWords('es')('automata.menu.play'))
+      // The menu's first button is Play, or Continue when a game was kept.
+      await expect
+        .poll(() => mount.querySelector('[data-screen="menu"] button') !== null, { timeout: 10_000 })
+        .toBe(true)
       return host
     },
     step: () => flow?.state().step ?? '',
@@ -124,6 +129,12 @@ export function createDrive(game = 'flow-test'): Drive {
         await expect.poll(() => flow?.game() !== undefined, { timeout: 10_000 }).toBe(true)
     },
     press: (label) => userEvent.click(button(label)),
+    answer(label) {
+      const asked = mount.querySelector('[role="alertdialog"]')
+      const found = [...(asked?.querySelectorAll('button') ?? [])].find((b) => nameOf(b) === label)
+      if (found === undefined) throw new Error(`The question has no button that says "${label}".`)
+      return userEvent.click(found)
+    },
     async wait(label) {
       await expect.poll(() => buttons().includes(label), { timeout: 10_000 }).toBe(true)
     },

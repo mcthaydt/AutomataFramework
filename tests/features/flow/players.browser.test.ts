@@ -67,7 +67,7 @@ test('a game for one player has no button for another, on the menu or on pause',
   expect(drive.buttons()).not.toContain(es('automata.menu.add-player'))
 })
 
-test('from pause a gamepad joins at once, Done keeps the pause, and "Take out player 2" takes them out again', async () => {
+test('from pause a gamepad joins, the hero comes when play goes on, and "Take out player 2" takes them out', async () => {
   await drive.toMenu({ game: { noWarning: true, players: 2 } })
   await drive.press(es('automata.menu.play'))
   await drive.shown('playing')
@@ -80,15 +80,26 @@ test('from pause a gamepad joins at once, Done keeps the pause, and "Take out pl
   await expect.poll(() => drive.mount.querySelector('[data-screen="players"]')).not.toBeNull()
   tap(1)
   await expect.poll(onScreen).toContain(said(2))
-  expect(players()).toEqual([1, 2])
   await drive.press(es('automata.players.done'))
   await drive.wait(es('automata.pause.resume'))
   expect(drive.step()).toBe('paused')
+  // The room is taken; and the one who joined can be taken out.
   expect(drive.buttons()).not.toContain(es('automata.menu.add-player'))
+  expect(drive.buttons()).toContain(es('automata.pause.remove', { player: 2 }))
+  // The game holds still while paused: the hero comes on the first ticks after "Keep playing".
+  await drive.press(es('automata.pause.resume'))
+  await drive.shown('playing')
+  drive.run(500)
+  expect(players()).toEqual([1, 2])
+  drive.key('keydown', 'Escape')
+  await drive.shown('paused')
   await drive.press(es('automata.pause.remove', { player: 2 }))
   await drive.wait(es('automata.menu.add-player'))
-  expect(players()).toEqual([1])
   expect(drive.buttons()).not.toContain(es('automata.pause.remove', { player: 2 }))
+  await drive.press(es('automata.pause.resume'))
+  await drive.shown('playing')
+  drive.run(500)
+  expect(players()).toEqual([1])
 })
 
 test('the player who is in stays in for the next level', async () => {

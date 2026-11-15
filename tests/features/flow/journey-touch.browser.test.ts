@@ -13,8 +13,11 @@ const drive = createDrive()
 beforeEach(() => drive.start())
 afterEach(() => drive.stop())
 
-const slider = (label: string): HTMLElement =>
-  drive.mount.querySelector(`[role="slider"][aria-label="${label}"]`) as HTMLElement
+/** The Swap sides switch on the Settings screen: the fixture game has no sound, so it is the setting a visit can change. */
+const swap = (): HTMLElement => {
+  const switches = [...drive.mount.querySelectorAll<HTMLElement>('[role="switch"]')]
+  return switches.find((one) => one.textContent?.trim() === es('automata.settings.swap')) as HTMLElement
+}
 
 test('a first-time player is led from the warning to the last door and the menu, by thumb', async () => {
   await page.viewport(390, 844)
@@ -45,14 +48,13 @@ test('a first-time player is led from the warning to the last door and the menu,
   expect(drive.flow()?.state().level).toBe('level-2')
   drive.frames.at(0)
   ticks(drive, 30)
-  // Pause with the corner button, turn the music down in Settings, and keep playing.
+  // Pause with the corner button, turn Swap sides on in Settings, and keep playing.
   await drive.press(es('automata.pause.button'))
   await drive.shown('paused')
   await drive.press(es('automata.menu.settings'))
   await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
-  slider(es('automata.settings.music')).focus()
-  await userEvent.keyboard('{Home}')
-  await expect.poll(() => slider(es('automata.settings.music')).getAttribute('aria-valuenow')).toBe('0')
+  await userEvent.click(swap())
+  await expect.poll(() => swap().getAttribute('aria-checked')).toBe('true')
   await drive.press(es('automata.back'))
   await drive.wait(es('automata.pause.resume'))
   await drive.press(es('automata.pause.resume'))
@@ -66,7 +68,7 @@ test('a first-time player is led from the warning to the last door and the menu,
   await drive.wait(es('automata.menu.play'))
 })
 
-test('the same player comes back: no flags, Continue is first and opens the level reached, music still low', async () => {
+test('the same player comes back: no flags, Continue is first and opens the level reached, Swap sides still on', async () => {
   await page.viewport(390, 844)
   const host = testHost()
   await drive.toMenu({ host, game: { noWarning: true } })
@@ -82,9 +84,8 @@ test('the same player comes back: no flags, Continue is first and opens the leve
   await drive.wait(es('automata.menu.settings'))
   await drive.press(es('automata.menu.settings'))
   await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
-  slider(es('automata.settings.music')).focus()
-  await userEvent.keyboard('{Home}')
-  await expect.poll(() => slider(es('automata.settings.music')).getAttribute('aria-valuenow')).toBe('0')
+  await userEvent.click(swap())
+  await expect.poll(() => swap().getAttribute('aria-checked')).toBe('true')
   drive.leave()
   // A fresh page on the same store: the splash, then the menu with Continue first.
   await drive.open({ host, game: { noWarning: true } })
@@ -96,7 +97,7 @@ test('the same player comes back: no flags, Continue is first and opens the leve
   expect(drive.buttons()[0]).toBe(es('automata.menu.continue'))
   await drive.press(es('automata.menu.settings'))
   await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
-  expect(slider(es('automata.settings.music')).getAttribute('aria-valuenow')).toBe('0')
+  expect(swap().getAttribute('aria-checked')).toBe('true')
   await drive.press(es('automata.back'))
   await drive.wait(es('automata.menu.continue'))
   await drive.press(es('automata.menu.continue'))

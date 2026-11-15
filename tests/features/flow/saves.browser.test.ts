@@ -103,7 +103,7 @@ test('Delete asks first; "Keep it" keeps it; "Delete it" empties the place and t
   expect(((await placesOn(host).load(0)) as { data: unknown }).data).not.toBeNull()
   expect(place(1).textContent).toContain('Nivel Uno')
   inPlace(1, es('automata.saves.erase')).click()
-  await drive.press(es('automata.saves.erase-yes'))
+  await drive.answer(es('automata.saves.erase-yes'))
   await expect.poll(() => place(1).textContent).toContain(es('automata.saves.empty'))
   const loaded = await placesOn(host).load(0)
   expect(loaded).toMatchObject({ ok: true, data: null })

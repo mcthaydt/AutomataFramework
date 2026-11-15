@@ -58,6 +58,11 @@ const inPlace = (place: string, label: string): HTMLButtonElement => {
   return found
 }
 const game = (number: number): string => es('automata.saves.place', { number })
+/** A button of the question on top: in Spanish its "Delete" says what a place's own button says. */
+function inQuestion(label: string): HTMLElement {
+  const asked = [...(mount.querySelector('[role="alertdialog"]')?.querySelectorAll('button') ?? [])]
+  return asked.find((one) => one.textContent?.trim() === label) as HTMLElement
+}
 
 test.each(SCREENS)(
   'at %s three places fit with no scrolling, except on the sideways phone where only the list scrolls',
@@ -118,7 +123,7 @@ test('Delete asks first; "Keep it" keeps it; "Delete it" empties the place', asy
   await userEvent.click(named(es('automata.keep')))
   expect(told).toEqual([])
   await userEvent.click(inPlace(game(2), es('automata.saves.erase')))
-  await userEvent.click(named(es('automata.saves.erase-yes')))
+  await userEvent.click(inQuestion(es('automata.saves.erase-yes')))
   expect(told).toEqual(['erase 1'])
 })
 

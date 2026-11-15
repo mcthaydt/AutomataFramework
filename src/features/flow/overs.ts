@@ -137,10 +137,15 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
   }
 
   /** Add a player: a gamepad's button or Enter, then the screen says who is in; from pause the hero comes at once. */
-  function players(refused?: string): Screen {
+  function players(refused?: string, kept?: ReadonlySet<number>): Screen {
     const party = context.party()
     const { input, release } = inputForScreen()
     const words = context.locale().words
+    // The gamepad whose button opened this screen is the one navigating it, and its next press is "Done", not a person
+    // arriving: it never joins. (Everyone else's first press does.)
+    const navigating = new Set(kept)
+    for (const [index, pad] of (context.gamepads?.() ?? []).entries())
+      if (pad?.buttons.some((button) => button.pressed)) navigating.add(index)
     const keyboardIsFree = !party.members().some((member) => member.claim === 'keyboard')
     const canShare =
       keyboardIsFree && Object.values(input.controls()).every((one) => one.shared !== undefined)
@@ -148,7 +153,7 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
     const again = (said?: string): void => {
       if (shown !== mine) return
       shown?.destroy()
-      shown = players(said)
+      shown = players(said, navigating)
     }
     /** The sentence for a try that was refused. */
     const sentence = (claim: Claim): string =>
@@ -173,7 +178,10 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
       players: party.members().map((member) => member.player),
       canShare,
       ...(refused === undefined ? {} : { refused }),
-      invite: input.invite,
+      invite: (onPad) =>
+        input.invite((pad) => {
+          if (!navigating.has(pad)) onPad(pad)
+        }),
       onJoin: join,
       onDone: context.back,
     })

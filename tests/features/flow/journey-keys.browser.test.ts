@@ -17,11 +17,16 @@ afterEach(() => drive.stop())
 
 /** Walks the focus with the down and up arrows to the button called `label`, and presses it with Enter. */
 async function enter(label: string): Promise<void> {
+  const seen: string[] = [focusedName()]
   for (const arrow of ['{ArrowDown}', '{ArrowUp}']) {
-    for (let step = 0; step < 10 && focusedName() !== label; step++) await userEvent.keyboard(arrow)
+    for (let step = 0; step < 10 && focusedName() !== label; step++) {
+      await userEvent.keyboard(arrow)
+      seen.push(focusedName())
+    }
     if (focusedName() === label) break
   }
-  expect(focusedName(), `Arrow keys could not reach "${label}".`).toBe(label)
+  const went = seen.join(' > ')
+  expect(focusedName(), `Arrow keys could not reach "${label}": ${went}`).toBe(label)
   await userEvent.keyboard('{Enter}')
 }
 

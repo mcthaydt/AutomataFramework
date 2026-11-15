@@ -67,7 +67,7 @@ test.each(SCREENS)(
     drive.frames.at(0)
     drive.run(SPLASH_MS + 200)
     await drive.shown('menu')
-    await drive.wait(es('automata.menu.play'))
+    await drive.wait(es('automata.menu.continue'))
     await look(size, 'menu', 1)
     // Settings, the saved games and the players are each opened from the menu and left by Back or Done.
     await drive.press(es('automata.menu.settings'))
@@ -130,19 +130,19 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
   expect(focusedName()).toBe(first)
   expect(drive.step()).toBe('menu')
   await page.viewport(390, 844)
-  // Settings: the music is left where it was put, and the slider is still the one in focus.
+  // Settings: Swap sides is left on, and it is still the control in focus.
   await drive.press(es('automata.menu.settings'))
   await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
-  const music = (): HTMLElement => {
-    const label = es('automata.settings.music')
-    return drive.mount.querySelector(`[role="slider"][aria-label="${label}"]`) as HTMLElement
+  const swap = (): HTMLElement => {
+    const switches = [...drive.mount.querySelectorAll<HTMLElement>('[role="switch"]')]
+    return switches.find((one) => one.textContent?.trim() === es('automata.settings.swap')) as HTMLElement
   }
-  music().focus()
-  await userEvent.keyboard('{Home}')
-  await expect.poll(() => music().getAttribute('aria-valuenow')).toBe('0')
+  await userEvent.click(swap())
+  await expect.poll(() => swap().getAttribute('aria-checked')).toBe('true')
+  swap().focus()
   await turn()
-  expect(music().getAttribute('aria-valuenow')).toBe('0')
-  expect(document.activeElement).toBe(music())
+  expect(swap().getAttribute('aria-checked')).toBe('true')
+  expect(document.activeElement).toBe(swap())
   await drive.press(es('automata.back'))
   await page.viewport(390, 844)
   // Pause: still paused, with the same button in focus.

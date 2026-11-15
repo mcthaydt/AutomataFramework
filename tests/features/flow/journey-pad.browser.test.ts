@@ -65,7 +65,8 @@ test('every screen from the warning to the last "Main menu" is walked and presse
   drive.frames.advance(100)
   padPress(drive, es('automata.done.menu'))
   await drive.shown('menu')
-  await drive.wait(es('automata.menu.play'))
+  // A game was kept on the way, so the menu offers Continue.
+  await drive.wait(es('automata.menu.continue'))
 })
 
 test('start pauses and resumes; a second gamepad joins from the menu and both reach the door', async () => {
