@@ -3,7 +3,7 @@
 // puts the picture right when the room's answer differs. The page is only ever as late as the room is: it never
 // pauses, because the room does not wait for anyone.
 import { pageFrames } from '../../lib/frames.ts'
-import { createInput } from '../input/input.ts'
+import { createInput, touchSettingsOf } from '../input/input.ts'
 import { createGameSim, levelSize, skyOf } from '../level/level.ts'
 import {
   coopSeats,
@@ -20,6 +20,7 @@ import { type Art, createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
+import { createBuzzer } from './buzz.ts'
 import { resolveControls } from './controls.ts'
 import type { GameOptions } from './game.ts'
 import { requireLanguage } from './language.ts'
@@ -52,6 +53,8 @@ export interface OnlineGame {
   readonly code: string
   status(): OnlineStatus
   stats(): SessionStats
+  /** The player's setting: whether the device may buzz when a feel file says so. */
+  setVibration(on: boolean): void
   /** Leaves the room, removes the canvas and the controls, and disposes both sims. Safe to call twice. */
   leave(): void
 }
@@ -80,6 +83,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     soundNotice: noticeOption,
     locale,
     readPicture,
+    touchSettings,
     ...simOptions
   } = options
   const controls = resolveControls('startOnlineGame', simOptions.content, options.controls)
@@ -219,10 +223,18 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     input.setPlayers([seat])
 
     // The room can put this page back on its own state (a sync): ticks heard before it are not the ticks after it.
+    const buzzer = createBuzzer({
+      content: simOptions.content,
+      host,
+      device: (player) => input.device(player),
+      tickHz: session.sim.tickHz,
+      on: touchSettingsOf(touchSettings).vibration,
+    })
     let syncsHeard = session.stats().syncs
     const step = (): void => {
       const advance = session.advance(input.poll(session.sim.tick))
       for (const delta of advance.deltas) renderer.apply(delta)
+      for (const heard of advance.steps) buzzer.hear(heard)
       if (audio === undefined) return
       const syncs = session.stats().syncs
       if (syncs !== syncsHeard) {
@@ -314,6 +326,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       code: joined.code,
       status: () => status,
       stats: () => session.stats(),
+      setVibration: (on) => buzzer.setOn(on),
       leave() {
         if (stopped) return
         stopped = true

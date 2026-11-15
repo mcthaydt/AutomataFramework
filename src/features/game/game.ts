@@ -12,6 +12,7 @@ import {
   createInput,
   type Input,
   type PadLike,
+  touchSettingsOf,
 } from '../input/input.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
@@ -19,6 +20,7 @@ import { createRenderer, type HeroBox, type ReadPicture } from '../render/render
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
+import { createBuzzer } from './buzz.ts'
 import { resolveControls } from './controls.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
@@ -63,6 +65,11 @@ export interface GameOptions extends GameSimOptions {
    */
   readonly readPicture?: ReadPicture
   /**
+   * What the player chose about touch (`TouchSettings`, as the settings file kept it). Anything that does not read as
+   * that is the default: swapSides off and vibration on.
+   */
+  readonly touchSettings?: unknown
+  /**
    * The player's language, which the game cannot start without: `startGame` throws if the player has not chosen one
    * (`locale.asked()` is false), so show the language picker first. The touch buttons say `controls.<action>` and
    * `automata.touch.label` in it, a refused `addPlayer` or change of key explains itself in it, the sound's button asks
@@ -90,6 +97,8 @@ export interface Game {
    * renderer tells a hero from a crate by the sprite, which such a game does not have.
    */
   heroes(): readonly HeroBox[]
+  /** The player's setting: whether the device may buzz when a feel file says so. */
+  setVibration(on: boolean): void
   /** The play so far, from tick 0. Not available after `stop`, which disposes the sim. */
   replay(): Replay
   /** Stops the loop, removes the canvas and the controls, and disposes the sim. Safe to call twice. */
@@ -171,6 +180,13 @@ export async function startGame(options: GameOptions): Promise<Game> {
       words: locale.words,
     })
     const { audio } = options
+    const buzzer = createBuzzer({
+      content: options.content,
+      host,
+      device: (player) => input.device(player),
+      tickHz: sim.tickHz,
+      on: touchSettingsOf(options.touchSettings).vibration,
+    })
     const loop = createLoop({
       tickHz: sim.tickHz,
       step() {
@@ -179,6 +195,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         renderer.apply(result.render)
         // Only the tick and the events: the audio is never handed the sim, the render delta or the commands.
         audio?.hear({ tick: result.tick, events: result.events })
+        buzzer.hear(result)
         people.afterStep()
       },
       draw: (alpha) => renderer.draw(alpha),
@@ -230,6 +247,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         sync()
       },
       heroes: () => renderer.heroes(),
+      setVibration: (on) => buzzer.setOn(on),
       replay: () => recorder.replay(),
       stop() {
         if (stopped) return
