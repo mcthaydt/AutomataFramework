@@ -26,6 +26,10 @@ const ONE: readonly (readonly [number, Held])[] = [
   [210, []],
   [226, [J]],
   [230, []],
+  // A press four ticks before the landing, with the air jump already spent at 226: nothing to spend it on, so it waits
+  // and jumps on the landing (the early press), tapped, and the hero is down again well before the walk at 300.
+  [259, [J]],
+  [260, []],
   // Walk right, and off the ledge (left-ground), and a jump three ticks after it: inside the ledge grace.
   [300, [R]],
   [404, [R, J]],
