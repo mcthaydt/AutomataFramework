@@ -148,7 +148,7 @@ describe('the checks, in a game', () => {
       ),
     ).toEqual([]))
 
-  test('a number a letter off one the hero reads is named, and one far from them is the game\'s own', async () => {
+  test("a number a letter off one the hero reads is named, and one far from them is the game's own", async () => {
     expect(await gameProblems(game(tuning([['jump-sped', 12, 4, 30]])))).toEqual([
       `${path}: numbers[0].id: "jump-sped" is not a number the hero reads. Did you mean "jump-speed"? If it is a number of your own, give it a name that is not so close to "jump-speed".`,
     ])
