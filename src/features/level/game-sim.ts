@@ -3,6 +3,7 @@ import type { GameContent } from '../content/content.ts'
 import { physics } from '../physics/physics.ts'
 import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
 import { joinPlugin } from './join.ts'
+import { DEFAULT_GRAVITY } from './jump-path.ts'
 import { movesPlugin } from './moves.ts'
 import { levelPlugin } from './plugin.ts'
 import { simContent } from './sim-content.ts'
@@ -37,7 +38,7 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const { content } = options
   const players = content.project.players ?? 1
   const kinds = touchKinds(content)
-  const gravity = options.gravity ?? { x: 0, y: 30 }
+  const gravity = options.gravity ?? { x: 0, y: DEFAULT_GRAVITY }
   const moved = usesMoves(content)
   const sim = await createSim({
     seed: options.seed ?? 1,
