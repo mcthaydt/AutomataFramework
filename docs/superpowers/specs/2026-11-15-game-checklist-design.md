@@ -8,7 +8,8 @@ one. It also takes the "Good to have" boxes that a framework can give for free.
 
 The Owner, same day: only the boxes about **the game itself** are in scope. The parts about sending a game to a
 host (the questions asked when it is sent, appeals, a store page's name, line, clips and age rating, content ratings
-and the feed) are not about the game's code and are left out here.
+and the feed) are not about the game's code and are left out here. "No ads" is left out too: it is one host's rule,
+not the framework's (the Owner, 2026-11-15).
 
 This is **Cycle 12**, one spec and one plan (plan Q, "quality"), built in parts.
 
@@ -93,7 +94,7 @@ Most boxes get more than one. "Proof" names where it is held today; the plan wri
 | Box | How | Proof today, and what is added |
 |---|---|---|
 | The store page shows the real game; the host's content rules | Left out | About sending the game (the Owner, 2026-11-15) |
-| No ads; nothing pops up to cut in while playing | Framework + Template + Check | Added: the template's page carries a **strict content security policy** (below), so no ad script or outside frame can load. The framework opens nothing on its own: its only `window.open` is a link the player pressed (`host/link.ts`). `automata check`'s `rules` step, today on the game's rules only, gains a `page` part over every file under `src/`: `alert`, `confirm`, `prompt`, `window.open`, `Notification`, `document.write` and an outside address in code are problems, each sentence naming the safe way |
+| Nothing pops up to cut in while playing | Framework + Template + Check | Added: the template's page carries a **strict content security policy** (below), so no outside script or frame can load. The framework opens nothing on its own: its only `window.open` is a link the player pressed (`host/link.ts`). `automata check`'s `rules` step, today on the game's rules only, gains a `page` part over every file under `src/`: `alert`, `confirm`, `prompt`, `window.open`, `Notification`, `document.write` and an outside address in code are problems, each sentence naming the safe way |
 
 ### Must have: It's safe
 
