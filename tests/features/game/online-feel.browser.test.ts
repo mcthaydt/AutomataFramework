@@ -7,7 +7,7 @@ import { Player } from '#src/features/commands/commands.ts'
 import { writeContent } from '#src/features/content/content.ts'
 import { type OnlineGame, startOnlineGame } from '#src/features/game/online.ts'
 import { type TestHost, testHost } from '#src/features/host/host.ts'
-import { createGameSim } from '#src/features/level/level.ts'
+import { createGameSim, JoinCommand, LeaveCommand } from '#src/features/level/level.ts'
 import {
   createRoomEngine,
   createSession,
@@ -61,7 +61,12 @@ async function start(files: Record<string, string | undefined> = {}): Promise<St
   const content = await loadFeelGame(files)
   const engineSim = await createGameSim({ content, players: [] })
   made.push(engineSim)
-  const engine = createRoomEngine({ sim: engineSim, level: 'level-1', seats: 2 })
+  const engine = createRoomEngine({
+    sim: engineSim,
+    level: 'level-1',
+    seats: 2,
+    seatCommands: { join: JoinCommand.id, leave: LeaveCommand.id },
+  })
   const wire = createWire(engine)
   const frames = manualFrames()
   const host = testHost()
