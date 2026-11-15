@@ -213,7 +213,7 @@ export function readMidi(bytes: Uint8Array): MidiFile | undefined {
   if (format > 1 || division === 0 || division >= 0x8000) return undefined
   const skipped: Record<string, number> = {}
   const tracks: MidiEvent[][] = []
-  let length = 0
+  let fileEnd = 0
   let at = 8 + headerLength
   while (at + 8 <= bytes.length && tracks.length < declared) {
     const tag = tagAt(bytes, at)
@@ -223,12 +223,12 @@ export function readMidi(bytes: Uint8Array): MidiFile | undefined {
       const track = readTrack(bytes, at + 8, at + 8 + length, skipped)
       if (track === undefined) return undefined
       tracks.push(track.events)
-      length = Math.max(length, track.end)
+      fileEnd = Math.max(fileEnd, track.end)
     }
     at += 8 + length
   }
   if (tracks.length < declared || tracks.length === 0) return undefined
-  return { division, tracks, length, skipped }
+  return { division, tracks, length: fileEnd, skipped }
 }
 
 /** A variable-length number as bytes. */
