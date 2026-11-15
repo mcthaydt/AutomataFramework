@@ -1,8 +1,9 @@
-// The template's page in each real browser: it starts the game, shows a broken file in words, keeps a changed key, tells
+// The template's page in each real browser: it starts the game, plays its sound, shows a broken file in words, keeps a changed key, tells
 // a keyboard player which keys to press, gives a thumb two whole halves at every screen size, and asks a player with no
 // language for one, in flags, before it says anything.
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page } from 'vitest/browser'
+import { testSpeaker } from '#src/features/audio/audio.ts'
 import { Player } from '#src/features/commands/commands.ts'
 import type { Language } from '#src/features/content/content.ts'
 import { testHost } from '#src/features/host/host.ts'
@@ -65,6 +66,7 @@ async function open(
   const shown = await startPage(root, {
     read: readFiles(options.files),
     readPicture,
+    speaker: testSpeaker({ state: 'on' }),
     host,
     frames,
     coarse: options.coarse ?? false,
@@ -92,6 +94,20 @@ test('the page starts the game, and holding right moves the hero', async () => {
   expect(heroX(shown)).toBeGreaterThan(before + 1)
 })
 
+test("the page plays the game's sound: the song when the level starts, the jump sound on a jump", async () => {
+  await page.viewport(1280, 720)
+  const { frames, shown } = await open({ language: 'en' })
+  run(frames, 30)
+  key('keydown', 'Space')
+  run(frames, 4)
+  key('keyup', 'Space')
+  // The cues come from the files in the folders `automata.toml` lists, read through the manifest like a browser does.
+  expect(shown.audio?.log().map((entry) => [entry.on, entry.do, entry.id])).toEqual([
+    ['level.started', 'music', 'meadow'],
+    ['hero.jumped', 'sound', 'jump'],
+  ])
+})
+
 test('a broken level is shown in words, in the page', async () => {
   const level = JSON.parse(templateFiles['content/levels/level-1.json'] ?? '') as { things: { x: unknown }[] }
   ;(level.things[0] as { x: unknown }).x = 'far'
@@ -114,6 +130,7 @@ test("a picture that was never painted is said in the player's language, with th
   started = await startPage(root, {
     read: readFiles(),
     readPicture: unpainted,
+    speaker: testSpeaker({ state: 'on' }),
     host,
     frames,
     coarse: false,
@@ -213,6 +230,7 @@ test('while the files load the page has no letters, only a mark that says it is 
       return reading(path)
     },
     readPicture,
+    speaker: testSpeaker({ state: 'on' }),
     host: testHost({ deviceLanguages: ['fr-FR'] }),
     frames,
     coarse: false,

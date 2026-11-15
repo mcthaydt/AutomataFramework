@@ -150,6 +150,19 @@ if (!marks.startsWith('format = 2\nsource = "en"\n\n[read.pt]\n'))
 said('check after marking', checkOf('check after marking'), 'Everything passed.')
 step('npm install and npm run check pass in the new game, and a language can be marked read')
 
+// The new game has a sound and a song, and the sound commands work on the installed package: a new sound, the song taken
+// out as a MIDI file and brought back in under another name, and the game is still sound.
+for (const [what, words, made] of [
+  ['automata sound new coin', ['sound', 'new', 'coin'], 'content/sounds/coin.json'],
+  ['automata music export', ['music', 'export', 'meadow', 'meadow.mid'], 'meadow.mid'],
+  ['automata music import', ['music', 'import', 'meadow.mid', '--id', 'meadow-2'], 'content/music/meadow-2.json'],
+]) {
+  must(what, 'npx', ['--no', 'automata', ...words], game)
+  if (!existsSync(join(game, ...made.split('/')))) fail(`${what} did not write ${made}.`)
+}
+said('check after sound and music', checkOf('check after sound and music'), 'Everything passed.')
+step('a new sound is made, and a song goes out as MIDI and comes back in')
+
 // A game written in Korean has Korean as its source and marks that have read nothing yet.
 const korean = join(work, 'ko-game')
 must(

@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "soft-chords",
+  "lane": "chords",
+  "bars": 1,
+  "stepsPerBar": 4,
+  "voicing": "close",
+  "notes": [
+    "x = = ="
+  ]
+}

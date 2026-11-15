@@ -44,6 +44,28 @@ test('it writes every template file, the three under their real names', async ()
   expect(files.filter((file) => file.endsWith('.template.json') || file === 'gitignore')).toEqual([])
 })
 
+test('the new game lists folders for its sounds and songs, and has a sound, a song, its loops and its cues', async () => {
+  const memory = await made(['my-game'])
+  expect(written(memory, 'my-game')).toEqual(
+    expect.arrayContaining([
+      'content/sounds/jump.json',
+      'content/music/meadow.json',
+      'content/loops/half-time-drums.json',
+      'content/cues/cues.json',
+    ]),
+  )
+  const folders = text(memory, 'my-game/automata.toml').match(/^folder = ".*"$/gm)
+  expect(folders).toEqual([
+    'folder = "content/sounds"',
+    'folder = "content/music"',
+    'folder = "content/loops"',
+    'folder = "content/motifs"',
+    'folder = "content/cues"',
+  ])
+  // A made folder is the build's to list, never a file to commit.
+  expect(text(memory, 'my-game/.gitignore')).toContain('automata.folders.json')
+})
+
 test('the new game passes the files and rules steps as it is', async () => {
   const memory = await made(['my-game'])
   for (const only of ['files', 'rules'] as const) {
@@ -203,11 +225,17 @@ test('--source ko writes source = "ko", marks made against Korean, and a game th
     Effect.provide(runCheck({ folder: 'my-game', only: 'files' }), memory.layer),
   )
   expect(report.steps[0]?.problems).toEqual([])
-  const loaded = await loadGame(async (path) => {
-    const file = memory.files.get(`my-game/${path}`)
-    if (file === undefined) throw new Error(`${path}: no such file`)
-    return typeof file === 'string' ? file : new TextDecoder().decode(file)
-  })
+  const loaded = await loadGame(
+    async (path) => {
+      const file = memory.files.get(`my-game/${path}`)
+      if (file === undefined) throw new Error(`${path}: no such file`)
+      return typeof file === 'string' ? file : new TextDecoder().decode(file)
+    },
+    async (folder) =>
+      written(memory, 'my-game')
+        .filter((file) => file.startsWith(`${folder}/`) && !file.slice(folder.length + 1).includes('/'))
+        .map((file) => file.slice(folder.length + 1)),
+  )
   if (!loaded.ok) throw new Error('the new game does not load')
   expect(loaded.value.project.source).toBe('ko')
   expect(translationProblems(loaded.value)).toEqual([])

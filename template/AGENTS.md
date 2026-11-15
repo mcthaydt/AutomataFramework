@@ -11,6 +11,7 @@ the skills below.
 | Levels and characters (JSON, one thing per file) | `content/levels/`, `content/characters/` |
 | How the hero moves: eighteen numbers and the controls, and what the player feels | `content/tunings/hero-moves.json`, `content/feels/` |
 | What things look like: a figure for each character, and its painted picture | `content/figures/` |
+| Sounds, songs, loops and what plays when (cues) | `content/sounds/`, `content/music/`, `content/loops/`, `content/cues/` |
 | Every word a player reads, one file for each language (the `source` language in `automata.toml` says what a word is for) | `content/messages/` |
 | The list of the game's rules | `src/headless.ts` |
 | One feature's rules (a plugin and its systems) | `src/features/<name>/` |
@@ -31,6 +32,10 @@ Run them as `npx --no automata <command>`, which never fetches anything. A perso
 - `npx --no automata words` lists the translated words no native speaker has read yet, each beside the game's own text.
   Run it after you add or change a word. `--read <language>` marks a language's words read once a person has read
   them, and only then; `--json` prints the answer as JSON.
+- `npx --no automata sound new <kind>` makes a new sound (jump, land, coin, hit, explosion, door, click, power-up, laser
+  or blip) in the sounds folder. `--seed <n>` is another take of the same kind.
+- `npx --no automata music import <file.mid>` brings a MIDI file in as a song and its loops;
+  `npx --no automata music export <name> <file.mid>` takes one out. A cue in `content/cues/` says when it plays.
 - `npx --no automata play` serves the game for a browser.
 - `npx --no automata create <name>` makes a new game.
 
@@ -46,7 +51,8 @@ Exit codes: 0 fine, 1 the game needs fixing, 2 the command could not do its work
    ticks with `ctx.tick` and use `ctx.rng` for chance.
 3. The same keys give the same game on every machine. A recorded play proves it.
 4. Content is JSON, and only `automata check --fix` writes it in its standard form. Do not hand-format it.
-5. A file the game uses is listed in `automata.toml`. One that is not listed is not part of the game.
+5. A file the game uses is listed in `automata.toml`, one by one or as a folder block that lists every file in a
+   folder (sounds, songs, loops, motifs and cues are). One that is not listed is not part of the game.
 
 ## Verify in this order
 

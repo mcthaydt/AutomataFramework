@@ -2,9 +2,10 @@
 // and what `create` renames is where it is expected.
 import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
+import { libraryFiles, makeSound } from '#src/features/audio/audio.ts'
 import { ruleProblems } from '#src/features/cli/check-rules.ts'
 import { loadGame, parseContent, parseProject, writeContent } from '#src/features/content/content.ts'
-import { readTemplate, templateTree } from './tree.ts'
+import { listTemplate, readTemplate, templateTree } from './tree.ts'
 
 const tree = templateTree()
 const rootPackage = JSON.parse(readFileSync('package.json', 'utf8')) as {
@@ -12,7 +13,7 @@ const rootPackage = JSON.parse(readFileSync('package.json', 'utf8')) as {
 }
 
 test('the template loads with no problems', async () => {
-  const loaded = await loadGame(readTemplate())
+  const loaded = await loadGame(readTemplate(), listTemplate())
   expect(loaded.ok ? [] : loaded.diagnostics).toEqual([])
 })
 
@@ -21,15 +22,38 @@ test('every content file is exactly what writeContent writes', () => {
   expect(project.ok).toBe(true)
   if (!project.ok) return
   expect(project.value.content.length).toBe(14)
-  for (const ref of project.value.content) {
+  // The files a folder block lists are the ones directly inside it.
+  const inFolders = (project.value.folders ?? []).flatMap((ref) =>
+    Object.keys(tree)
+      .filter((path) => path.startsWith(`${ref.folder}/`) && !path.slice(ref.folder.length + 1).includes('/'))
+      .map((path) => ({ type: ref.type, path })),
+  )
+  for (const ref of [...project.value.content, ...inFolders]) {
     const parsed = parseContent(ref.type, tree[ref.path] ?? '', ref.path)
     expect(parsed.ok, ref.path).toBe(true)
     if (parsed.ok) expect(writeContent(ref.type, parsed.value as never), ref.path).toBe(tree[ref.path])
   }
   // And nothing under content/ is left out of the project.
-  const listed = new Set(project.value.content.map((ref) => ref.path))
+  const listed = new Set([...project.value.content, ...inFolders].map((ref) => ref.path))
   const json = Object.keys(tree).filter((path) => path.startsWith('content/') && path.endsWith('.json'))
   expect(json.sort()).toEqual([...listed].sort())
+})
+
+test('the template lists a folder each for sounds, music, loops, motifs and cues, and none for feels', () => {
+  const project = parseProject(tree['automata.toml'] ?? '')
+  expect(project.ok && project.value.folders).toEqual([
+    { type: 'sound', folder: 'content/sounds' },
+    { type: 'music', folder: 'content/music' },
+    { type: 'loop', folder: 'content/loops' },
+    { type: 'motif', folder: 'content/motifs' },
+    { type: 'cues', folder: 'content/cues' },
+  ])
+  // The sound is the kind's first take and the song is the library's calm style, byte for byte.
+  expect(tree['content/sounds/jump.json']).toBe(writeContent('sound', makeSound('jump', 0)))
+  for (const file of libraryFiles('calm', 'meadow')) {
+    const path = `content/${file.type === 'music' ? 'music/meadow' : `loops/${file.value.id}`}.json`
+    expect(tree[path], path).toBe(writeContent(file.type, file.value as never))
+  }
 })
 
 test("the template's rules break no rule", () => {

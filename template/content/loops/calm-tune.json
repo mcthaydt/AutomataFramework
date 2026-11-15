@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "calm-tune",
+  "lane": "melody",
+  "bars": 2,
+  "stepsPerBar": 4,
+  "notes": [
+    "3 = = =",
+    "5 = = ="
+  ]
+}

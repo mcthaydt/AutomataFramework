@@ -10,7 +10,7 @@ import {
 import { withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { fixtureFiles, readFixture } from '../../fixtures/game/read.ts'
-import { readFiles as readTemplate, templateFiles } from '../../template/game.ts'
+import { listFiles, readFiles as readTemplate, templateFiles } from '../../template/game.ts'
 
 /** What a person reads when the game does not load: one sentence per problem, none when it loads. */
 async function problems(overrides: Record<string, string | undefined> = {}): Promise<string[]> {
@@ -301,7 +301,7 @@ const withLines = (files: Record<string, string>, ...lines: string[]): Record<st
 })
 
 async function flowProblems(files: Record<string, string>): Promise<string[]> {
-  const loaded = await loadGame(readTemplate(files))
+  const loaded = await loadGame(readTemplate(files), listFiles(files))
   return loaded.ok ? [] : loaded.diagnostics.map(formatDiagnostic)
 }
 

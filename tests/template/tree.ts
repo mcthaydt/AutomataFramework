@@ -16,6 +16,17 @@ export function templateTree(): Record<string, string> {
   return files
 }
 
+/** A `list` over the template's folders, as `loadGame` takes it: the names directly inside a folder. */
+export function listTemplate(
+  overrides: Readonly<Record<string, string>> = {},
+): (folder: string) => Promise<readonly string[]> {
+  const files = { ...templateTree(), ...overrides }
+  return async (folder) =>
+    Object.keys(files)
+      .filter((path) => path.startsWith(`${folder}/`) && !path.slice(folder.length + 1).includes('/'))
+      .map((path) => path.slice(folder.length + 1))
+}
+
 /** A `read` over the template's files, as `loadGame` takes it. An override replaces a file. */
 export function readTemplate(
   overrides: Readonly<Record<string, string>> = {},

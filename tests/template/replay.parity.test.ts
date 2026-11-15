@@ -17,7 +17,7 @@ import type { Sim } from '#src/features/sim/sim.ts'
 import { Score } from '../../template/src/features/hero/score.ts'
 import { gamePlugins } from '../../template/src/headless.ts'
 import { withSource } from '../fixtures/content/kind.ts'
-import { loadTemplateGame, readFiles, templateFiles } from './game.ts'
+import { listFiles, loadTemplateGame, readFiles, templateFiles } from './game.ts'
 import { TEMPLATE_TICKS, templatePlay } from './hero-play.ts'
 
 const recordings = import.meta.glob('../../template/replays/level-1.json', {
@@ -81,7 +81,7 @@ for (const source of LANGUAGES)
   test(`the recorded play ends on the same hash when the game is written in ${source}`, async () => {
     if (recorded === undefined) throw new Error('REPLAY NOT RECORDED: see the first test of this file.')
     const toml = withSource(templateFiles['automata.toml'] ?? '', source)
-    const loaded = await loadGame(readFiles({ 'automata.toml': toml }))
+    const loaded = await loadGame(readFiles({ 'automata.toml': toml }), listFiles({ 'automata.toml': toml }))
     if (!loaded.ok) throw new Error(loaded.diagnostics.map((d) => d.message).join('\n'))
     const sim = await createGameSim({ content: loaded.value, plugins: gamePlugins })
     made.push(sim)
@@ -96,7 +96,7 @@ test('the recorded play ends on the same hash when the project names levels, a d
     'hero = "hero"\n',
     'hero = "hero"\nlevels = ["level-1"]\ndone = "spark.taken"\nsplash = "hero"\n',
   )
-  const loaded = await loadGame(readFiles({ 'automata.toml': toml }))
+  const loaded = await loadGame(readFiles({ 'automata.toml': toml }), listFiles({ 'automata.toml': toml }))
   if (!loaded.ok) throw new Error(loaded.diagnostics.map((d) => d.message).join('\n'))
   const sim = await createGameSim({ content: loaded.value, plugins: gamePlugins })
   made.push(sim)

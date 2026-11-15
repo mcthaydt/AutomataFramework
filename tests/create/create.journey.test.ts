@@ -19,6 +19,8 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { type Browser, chromium, firefox, type Page, webkit } from 'playwright'
 import { afterAll, beforeAll, expect, test } from 'vitest'
+import { makeSound } from '#src/features/audio/audio.ts'
+import { writeContent } from '#src/features/content/content.ts'
 
 const shots = fileURLToPath(new URL('./__screenshots__/', import.meta.url))
 const ENGINES = { chromium, webkit, firefox }
@@ -46,7 +48,12 @@ interface PageGame {
     }
   }
 }
-type PageWindow = { automataGame?: PageGame }
+/** What a page's `window.automataAudio` offers: what the cues asked for, and whether the sound is on. */
+interface PageAudio {
+  log(): readonly { readonly on: string; readonly do: string; readonly id?: string }[]
+  state(): string
+}
+type PageWindow = { automataGame?: PageGame; automataAudio?: PageAudio }
 
 let work = ''
 let gameFolder = ''
@@ -468,6 +475,58 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
         }
       }
     } finally {
+      await browser.close()
+    }
+  }, 300_000)
+}
+
+// The new game's sound, in each real browser: the song starts with the level, a jump is heard, a tap turns the sound on,
+// and a sound dropped into a folder the game lists, with a cue for it, is heard after a reload with nothing built again.
+for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
+  test(`${name}: the new game plays its song and its jump sound, and a sound dropped in a folder is heard after a reload`, async () => {
+    const browser: Browser = await ENGINES[name].launch()
+    const cues = join(gameFolder, 'content', 'cues', 'cues.json')
+    const ping = join(gameFolder, 'content', 'sounds', 'ping.json')
+    const original = readFileSync(cues, 'utf8')
+    try {
+      const context = await browser.newContext({ viewport: { width: 1280, height: 720 } })
+      try {
+        const page = await context.newPage()
+        const where = `${name} sound`
+        page.on('pageerror', (error) => console.log(`[${where}] page error: ${error.message}`))
+        const heard = (): Promise<string[]> =>
+          page.evaluate(() =>
+            ((window as unknown as PageWindow).automataAudio?.log() ?? []).map(
+              (entry) => `${entry.on} ${entry.do} ${entry.id ?? ''}`.trim(),
+            ),
+          )
+        await page.goto(address)
+        await pickLanguage(page, 'en')
+        await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(30)
+        // The level has started, so the song was asked for; a tap is the player's first gesture, and turns the sound on.
+        await expect.poll(heard, POLL).toContain('level.started music meadow')
+        await page.mouse.click(40, 40)
+        await expect
+          .poll(() => page.evaluate(() => (window as unknown as PageWindow).automataAudio?.state()), POLL)
+          .toBe('on')
+        await page.keyboard.press('Space')
+        await expect.poll(heard, POLL).toContain('hero.jumped sound jump')
+
+        // A sound dropped into the folder, and a cue for it: nothing is built, a reload is all it takes.
+        writeFileSync(ping, writeContent('sound', makeSound('coin', 3, 'ping')))
+        const cueList = JSON.parse(original) as { cues: unknown[] }
+        cueList.cues.push({ on: 'hero.landed', do: 'sound', sound: 'ping' })
+        writeFileSync(cues, writeContent('cues', cueList as never))
+        await page.reload()
+        await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(30)
+        await page.keyboard.press('Space')
+        await expect.poll(heard, POLL).toContain('hero.landed sound ping')
+      } finally {
+        await context.close()
+      }
+    } finally {
+      writeFileSync(cues, original)
+      rmSync(ping, { force: true })
       await browser.close()
     }
   }, 300_000)

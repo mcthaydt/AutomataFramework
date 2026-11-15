@@ -21,12 +21,12 @@ The game opens in your browser. Hold the left or right arrow key to move, and pr
 3. Open `content/tunings/hero-moves.json` and change a number, like `walk-speed` or `jump-speed`. A bigger
    `jump-speed` is a higher jump. To give the hero a double jump, a wall jump or a dash, add `"double-jump": true`,
    `"wall-jump": true` or `"dash": true` to `moves` in `content/characters/hero.json`. There is no movement code to write.
-4. Open the file of your game's language in `content/messages/` (`source` in `automata.toml` names it) and change a
-   word. The game says it in six languages: write the same key in the other five files too, and `npm run check` names
-   any that is missing.
+4. Open the file of your game's language in `content/messages/` and change a word. Write the same key in the other five
+   files too: `npm run check` names any that is missing.
 5. Open `content/figures/crate.json` and change a paint's `color`, then run `npm run art` to paint its picture again. Commit
    the picture with the file.
-6. Run `npm run dev` again.
+6. Make a new sound with `npx --no automata sound new coin`, say when it plays in `content/cues/cues.json`, and run
+   `npm run dev` again.
 
 ## Give it a name
 
@@ -50,6 +50,7 @@ recording in `replays/` no longer matches; run `npm run accept` to record the ne
 | Levels and characters | `content/` |
 | What things look like, painted by `npm run art` | `content/figures/` |
 | The words, one file for each language | `content/messages/` |
+| Sounds, songs and what plays when | `content/sounds/`, `content/music/`, `content/cues/` |
 | How the hero moves: its numbers and its controls | `content/tunings/` |
 | The game's own rules (the score) | `src/features/` |
 | The page that shows the game | `src/features/page/` |

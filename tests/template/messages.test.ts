@@ -7,12 +7,12 @@ import {
   translationProblems,
   unreadWords,
 } from '#src/features/content/content.ts'
-import { readTemplate, templateTree } from './tree.ts'
+import { listTemplate, readTemplate, templateTree } from './tree.ts'
 
 const tree = templateTree()
 
 async function loaded() {
-  const game = await loadGame(readTemplate())
+  const game = await loadGame(readTemplate(), listTemplate())
   if (!game.ok) throw new Error(game.diagnostics.map((d) => d.message).join('\n'))
   return game.value
 }

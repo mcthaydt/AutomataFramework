@@ -3,24 +3,31 @@
 // screen and never an error nobody reads.
 import {
   ArtError,
+  createAudio,
   createLocale,
   type Frames,
   followLanguage,
   formatDiagnostic,
   type Game,
+  type GameAudio,
   type Host,
   INPUT_SETTINGS_DEFAULT,
   InputSettingsSchema,
   languagePicker,
+  listFromManifest,
   loadGame,
+  loadRecordings,
   openSettings,
   playHint,
   type ReadPicture,
+  RecordingError,
+  type Speaker,
   startGame,
   TOUCH_SETTINGS_DEFAULT,
   TouchSettingsSchema,
   type Words,
   webHost,
+  webSpeaker,
 } from '@automataframework/framework'
 import { gamePlugins } from '../../headless.ts'
 
@@ -45,6 +52,10 @@ export interface PageOptions {
   readonly read?: (path: string) => Promise<string>
   /** Reads one of the game's pictures by its path from the game's root. Default: fetches it from beside the page. */
   readonly readPicture?: ReadPicture
+  /** Reads a recorded sound by its path from the game's root; `undefined` when there is none. Default: fetches it. */
+  readonly readBytes?: (path: string) => Promise<Uint8Array | undefined>
+  /** What plays the sound. Default `webSpeaker()`. A test hands a test speaker, which plays nothing. */
+  readonly speaker?: Speaker
   /** Default `webHost()`. */
   readonly host?: Host
   /** Default: the page's animation frames. A test hands its own. */
@@ -56,6 +67,8 @@ export interface PageOptions {
 export interface Page {
   /** The running game, or `undefined` while loading and when there was a problem. */
   readonly game: Game | undefined
+  /** The game's sound: what its cues asked for and whether the sound is on. `undefined` while loading and on a problem. */
+  readonly audio: GameAudio | undefined
   /** Stops the game and empties the element. Safe to call twice. */
   stop(): void
 }
@@ -70,6 +83,14 @@ function fetchBeside(base: string | URL): (path: string) => Promise<string> {
     const type = response.headers.get('content-type') ?? ''
     if (!response.ok || type.toLowerCase().startsWith('text/html')) throw new Error(`${path}: no such file`)
     return response.text()
+  }
+}
+
+/** A `readBytes` that fetches `path` from beside the page: a file that is not there is `undefined`. */
+function fetchBytesBeside(base: string | URL): (path: string) => Promise<Uint8Array | undefined> {
+  return async (path) => {
+    const response = await fetch(new URL(path, base))
+    return response.ok ? new Uint8Array(await response.arrayBuffer()) : undefined
   }
 }
 
@@ -100,9 +121,16 @@ function loading(): HTMLDivElement {
 /** Loads the game and starts it in `root`. Never rejects: anything that goes wrong is words in `root`. */
 export async function startPage(root: HTMLElement, options: PageOptions = {}): Promise<Page> {
   const here = new URL('./', location.href)
-  const { read = fetchBeside(here), readPicture = fetchPictureBeside(here), host = webHost() } = options
+  const {
+    read = fetchBeside(here),
+    readPicture = fetchPictureBeside(here),
+    readBytes = fetchBytesBeside(here),
+    host = webHost(),
+  } = options
   const coarse = options.coarse ?? window.matchMedia('(pointer: coarse)').matches
   let game: Game | undefined
+  let audio: GameAudio | undefined
+  let speaker: Speaker | undefined
   let stopped = false
   let forgetHint = (): void => {}
   let forgetLanguage = (): void => {}
@@ -114,6 +142,9 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
     get game() {
       return game
     },
+    get audio() {
+      return audio
+    },
     stop() {
       if (stopped) return
       stopped = true
@@ -122,6 +153,10 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       forgetPicker()
       game?.stop()
       game = undefined
+      // The page made the audio and its speaker, so the page closes them: a game never stops its own music.
+      audio?.close()
+      audio = undefined
+      if (options.speaker === undefined) speaker?.close()
       root.replaceChildren()
     },
   }
@@ -146,6 +181,8 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
     const reason = error instanceof Error ? error.message : String(error)
     // A picture that is missing or old: it is the game's pictures that need painting again, not the browser. The words
     // are there by now, so the player reads it in their language.
+    if (error instanceof RecordingError)
+      return problem(say?.('page.problem-title') ?? WORDS.problemTitle, [reason], WORDS.problemFix)
     if (error instanceof ArtError)
       return problem(
         say?.('page.problem-title') ?? WORDS.problemTitle,
@@ -158,9 +195,12 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
   root.replaceChildren(loading())
   root.dataset.state = 'loading'
   try {
-    const loaded = await loadGame(read)
+    // A page cannot list a folder, so the folders `automata.toml` lists are read from the manifest the build writes.
+    const loaded = await loadGame(read, listFromManifest(read))
     if (!loaded.ok)
       return problem(WORDS.problemTitle, loaded.diagnostics.map(formatDiagnostic), WORDS.problemFix)
+    // Recorded sounds, read and judged before anything plays. A game with none reads nothing.
+    const recordings = await loadRecordings(loaded.value, readBytes)
 
     // What the player changed last time, kept in the host's store (a browser's own storage on the web).
     const settings = await openSettings({ game: GAME_ID, store: host.store })
@@ -186,9 +226,12 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       try {
         say = locale.words
         root.replaceChildren()
+        speaker = options.speaker ?? webSpeaker({ host })
+        audio = createAudio({ content: loaded.value, speaker, recordings })
         const started = await startGame({
           content: loaded.value,
           plugins: gamePlugins,
+          audio,
           mount: root,
           host,
           locale,

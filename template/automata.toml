@@ -79,3 +79,29 @@ path = "content/messages/zh.json"
 [[content]]
 type = "messages"
 path = "content/messages/pt.json"
+
+# A folder block lists every file in a folder at once: put a new sound in content/sounds and it is part of the game.
+# The sounds: short effects, each made of tones and hisses. `automata sound new coin` makes another.
+[[content]]
+type = "sound"
+folder = "content/sounds"
+
+# The music: a song is a track that plays loops one after another. `automata music import song.mid` brings one in.
+[[content]]
+type = "music"
+folder = "content/music"
+
+# The loops: a bar or two of drums, bass, chords or tune that a song repeats.
+[[content]]
+type = "loop"
+folder = "content/loops"
+
+# The motifs: short tunes, easy to write, that a song or a sound can play.
+[[content]]
+type = "motif"
+folder = "content/motifs"
+
+# The cues: what plays when something happens. The hero jumping plays the jump sound; the level starting plays the song.
+[[content]]
+type = "cues"
+folder = "content/cues"
