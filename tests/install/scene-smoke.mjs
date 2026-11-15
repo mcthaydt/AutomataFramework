@@ -1,8 +1,9 @@
 // An agent moves a game onto a scene, with the packed package: `automata create`, `automata scene from-level level-1`, then
-// `check` (the files and the art) and `replay`. Every command exits 0, and the replay says the level ends on the hash it
-// was recorded with: the content changed, the play did not. CI copies this file beside smoke.mjs, in the folder the
-// tarball was installed into, and runs it there; it uses only Node and what that folder holds, and the game borrows that
-// folder's `node_modules` (the game's own code imports only the framework), so nothing is fetched.
+// `check` (the files and the art) and `replay`. Every command exits 0, and the replay says the content changed and plays all
+// the recorded ticks. (It cannot end on the recorded hash: a snapshot's hash includes the content's own hash, and a scene is
+// content. That the world is the same is proved with that hash blanked, in tests/features/level/scene.parity.test.ts.)
+// CI copies this file beside smoke.mjs, in the folder the tarball was installed into, and runs it there; it uses only Node
+// and what that folder holds, and the game borrows that folder's `node_modules` (the game's own code imports only the framework), so nothing is fetched.
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -37,7 +38,6 @@ try {
   const game = join(work, 'g')
   // The game's rules import the framework: it borrows the folder the package was installed into.
   symlinkSync(resolve(here, 'node_modules'), join(game, 'node_modules'), 'dir')
-  const recorded = JSON.parse(readFileSync(join(game, 'replays', 'level-1.json'), 'utf8')).finalHash
   said('the new game', automata('check', ['check', 'g', '--only', 'files'], work), 'Everything passed.')
 
   const moved = automata('scene from-level', ['scene', 'from-level', 'level-1', 'g'], work)
@@ -58,11 +58,11 @@ try {
     automata('art --check', ['art', 'g', '--check'], work),
     'Every picture is painted and up to date.',
   )
-  // The content changed, so the recording's hashes are not compared; the play still ends where it was recorded to.
+  // The content changed, so the recording's hashes are not compared; the play still runs every recorded tick.
   const replayed = automata('replay', ['replay', 'g'], work)
   said('replay', replayed, "The game's content has changed since this was recorded")
-  said('replay', replayed, `ended on ${recorded}`)
-  console.log(`ok  a game moved onto a scene still plays to ${recorded}`)
+  said('replay', replayed, 'It played 300 ticks')
+  console.log('ok  a game moved onto a scene still checks, paints and plays its recorded run')
 } finally {
   rmSync(work, { recursive: true, force: true })
 }
