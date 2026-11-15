@@ -4,96 +4,93 @@ The order we build AutomataFramework in. One page, read top to bottom.
 
 ## The rules
 
-**We finish Release 1, 2D finished, and only Release 1.** (Proposed. The owner has not yet named the one release to
-finish.) Release 1 is the framework in full and the demo game. Everything after it is marked **Later**. Nothing marked
-Later starts until Release 1 is done and the owner says go.
+**We work on one slice at a time.** A slice is one thing someone can see or use when it is done. There is one
+**Now** slice. Everything after it is marked **Later**, and nothing marked Later starts until the Now slice is done
+and the owner says go.
 
-1. **One thing at a time.** There is one **Now**. Nothing else is built until it is done.
-2. **One design track.** Beside the Now, one design can be worked on: today, the shell and World mockups. Only one
-   editor is designed at a time, and no editor is built until the owner approves its design.
-3. **Releases go in order.** A release starts only when the one before it is merged and green.
-4. **New ideas wait.** A new idea goes in "Not yet placed" at the bottom. It moves up only when the owner says where it
+1. **One slice at a time.** Nothing outside the Now slice is built, designed or planned.
+2. **Slices go in order.** A slice starts only when the one before it is merged and green.
+3. **New ideas wait.** A new idea goes in "Not yet placed" at the bottom. It moves up only when the owner says where it
    goes.
-5. **Designs can wait in line.** An approved design sits under its release until that release comes up. Approved is not
+4. **Designs can wait in line.** An approved design sits under its slice until that slice comes up. Approved is not
    the same as building.
-6. "Done" means merged to main and green there. Nothing else counts as done.
+5. "Done" means merged to main and green there. Nothing else counts as done.
+6. **A recorded play that changes is shown to the owner first,** before and after, before it goes in.
 
-How to read each list: **Done** is merged and green. **Now** is the one thing being built. **Next** is in line, in
-order. **Waiting** is approved, but its turn has not come. **Later** is after Release 1: not worked on now.
+How to read each list: **Done** is merged and green. **Now** is the one slice being worked on. **Later** is in line,
+in order: not worked on now.
 
-## Release 1: 2D finished
+## Done
 
-1. Done: the first thin slice: the framework, the demo game, the editors' first screen and the site, each with its
-   tests on every change.
-2. Done: content files, saves, input with gamepads and new keys, playing together online, physics joints and touch,
-   art, sound, languages, the `automata` command for agents.
-3. Done: the built-in hero (walk, jump, double jump, wall jump, dash), no default language, the default game flow
-   (warnings, language picker, splash, menu, pause), live move numbers.
-4. Done: Scenes part 1 (painted ground and photo materials), its audit and its fixes (#147), except fix I1.
-5. Done: the game checklist, parts 1, 2a and 2b (#143, #145, #148).
-6. Done: the demo game's words in six languages, its room server and the built-in hero (Examples #37, #39, #40), and
-   the demo playing itself.
-7. **Now: the feel runtime and the story (plans F and T, #120 and #64), being merged.**
-8. Next: the game checklist, the rest: the starter game on the new game flow (part 3), the checks (part 4), the last
-   part (part 5), then its audit and fixes. Part 3 changes the starter game's recorded play, so the owner sees it
-   before and after.
-9. Next: the demo's three levels, the door and playing together (Examples #41, then the page). It changes five
-   recorded plays, so the owner sees them first.
-10. Next: Scenes fix I1 (photo materials). It changes the scene pictures' record, so the owner sees it first.
-11. Next: the sound formats (plan M) and the rigged figures (plan R), restarted from main, one at a time.
-12. Next: links on things and the world map: the 8 questions asked again, then the spec, plan, build and audit. The
-    demo then uses it: a button opens a door, and two levels are joined by a door.
-13. Next: the demo's sound, feel, story, and screens, saves and "What's inside" (Parts 5 to 8), each right after the
-    framework work it uses.
-14. Next: the 2D figure and environment builders. Their designs come first (see the design track), because the demo's
-    real art is made in them.
-15. Next: the demo's real art and the close (Parts 9 and 10): an agent drafts every figure and scene, the owner
-    finishes them, and the owner plays the demo and says it is fine.
-16. Next: the owner's reviews still owed on finished work: the built-in hero, no default language, live move numbers,
-    the game flow, and the site's and demo's earlier rounds.
-17. Next: the owner starts Release 1 by hand.
+1. Done: the four repos, their rules, and the tests that run on every change.
+2. Done: a small game plays in the browser, on phones, tablets and computers.
+3. Done: a game has levels, saves, gamepads and new keys, playing together online, ropes and pins, pictures, sound and
+   six languages, all from its files.
+4. Done: an agent makes, checks and replays a game with the `automata` command.
+5. Done: the hero walks, jumps, double jumps, wall jumps and dashes, set in its file.
+6. Done: a first visit goes warnings, language, splash, menu, play, pause.
+7. Done: the demo game speaks six languages and plays itself on the site.
+8. Done: ground painted with photo materials, for scenes (all but one fix, slice 17).
+9. Done: every game has Try again, How to play, a goal line, a score and best score, and Delete all my saves (game
+   checklist parts 1 to 2b).
+10. Finishing: the feel runtime (dust, shake, freeze) and the story (talking and cutscenes) are built and being merged
+    (#120, #64). No new work goes into them.
 
-### The design track: the editor mockups
+## Now
 
-1. Done: three rounds of mockups of all five editors (Editors #34), the plain-words audit, two design checks, the
-   first harsh review of the shell and World, what World takes from LDtk, and the Apple Pencil review.
-2. **Now: the shell and World: the fixes from the harsh review, then the plain-words audit, two design checks, a second
-   harsh review, then the owner. Again until the owner is satisfied.**
-3. Waiting: Characters, Feel, Sound and Story, one at a time, the same way. Characters goes first, for the demo's art.
+11. **Now: the shell and World editor mockups, approved by the owner.** Next step: the fixes from the harsh review,
+    then the plain-words audit, two design checks and a second harsh review, then the owner looks. Again until the
+    owner is satisfied.
+
+*Why this one:* it is the owner's hard stop, it is half done, and every editor after it uses the same shell.
 
 ---
 
-# Later: after Release 1
+# Later
 
-## Release 2: the 2D editors
+## The demo game
 
-1. Done: the plans for the figure builder, the environment builder, Feel, Sound and Story.
-2. Waiting: taking back the two editor builds made too early (Editors #50; the owner said yes).
-3. Later: the editor specs and plans brought in line with the approved mockups, then audited.
-4. Later: the shell first, then World's Levels, then Feel with Tuner, then the rest of the five editors.
-5. Later: the editors as an app for iPad, Android and computers.
+12. Later: a new game made with `automata create` passes the whole game checklist (game checklist parts 3 to 5, then
+    the audit). It changes the starter game's recorded play.
+13. Later: the demo plays three levels with a door, and two players can finish them together (Examples #41, then its
+    page). It changes five recorded plays.
+14. Later: the demo has its feel: dust when the hero lands, a shake, a short freeze.
+15. Later: in the demo, the keeper talks to you and a cutscene plays.
+16. Later: the demo has music and sound, with recorded sounds and loops (the sound formats, restarted from main).
+17. Later: the scene pictures look right (Scenes fix I1). It changes the scene pictures' record.
+18. Later: in the demo, a button opens a door, and two levels are joined through a door on a world map (the spec's 8
+    questions first).
+19. Later: the demo's screens, its saves and "What's inside".
 
-## Release 3: the website
+## The builders and the demo's art
 
-1. Done: the home page, its look, and the demo playing itself on it.
-2. Later: the sales site (spec done), built once the demo has landed.
-3. Later: the site live on its Cloudflare address.
+20. Later: the Characters mockups, approved.
+21. Later: the editor shell, built from the approved design (Editors #50 first takes back the two early builds).
+22. Later: the demo's hero is made in the figure builder (rigged figures, restarted from main).
+23. Later: the demo's scenes are made in the environment builder.
+24. Later: the demo wears its real art, and the owner plays it end to end and says it is fine. Release 1 goes out
+    after this, when the owner starts it.
 
-## Release 4: distribution
+## The rest of the editors
 
-Later. Games ship to the web, itch.io, Wavedash (if its rules fit) and computers. The editor app ships.
+25. Later: World: open a level, change it on an iPad, and save it into the game.
+26. Later: Feel, with Tuner: change how the hero moves and feel it at once (its mockups first).
+27. Later: Sound (its mockups first).
+28. Later: Story (its mockups first).
+29. Later: the editors as an app for iPad, Android and computers.
 
-## Release 5: 3D
+## The website, shipping, 3D
 
-Later. 3D as its own layer on top of 2D, then the same loop again for 3D.
+30. Later: the sales site, live, with the finished demo on it.
+31. Later: a game ships to itch.io; then to Wavedash (if its rules fit) and computers.
+32. Later: the editor app ships.
+33. Later: 3D, as its own layer on top, then the same order again for 3D.
 
 ## Not yet placed: needs the owner
 
 Later. Nothing here moves until the owner says.
 
-1. This page: is Release 1 the one release to finish, and is this the order?
-2. The old unfinished work: the sound formats (#125) and rigged figures (#124) were closed. Keep them closed and
-   restart each from main when its turn comes? Same for the editors' old look (Editors #12).
-3. The 8 world map questions, asked again when that item comes up.
-4. The recorded plays that change (the demo's five, the starter game's, the scene pictures'): each one shown to the
-   owner before it goes in.
+1. This page: is the shell and World mockups the right Now, and is this the order?
+2. The closed unfinished work: the sound formats (#125) and rigged figures (#124). Keep them closed and restart each
+   from main at slices 16 and 22? The same for the editors' old look (Editors #12), which can be closed.
+3. The world map's 8 questions, asked again at slice 18.
