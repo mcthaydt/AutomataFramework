@@ -23,7 +23,9 @@ function setStyles(element: HTMLElement, styles: readonly (readonly [string, str
     const value = element.style.getPropertyValue(property)
     const priority = element.style.getPropertyPriority(property)
     return () =>
-      value === '' ? element.style.removeProperty(property) : element.style.setProperty(property, value, priority)
+      value === ''
+        ? element.style.removeProperty(property)
+        : element.style.setProperty(property, value, priority)
   })
   for (const [property, value] of styles) element.style.setProperty(property, value)
   return () => {

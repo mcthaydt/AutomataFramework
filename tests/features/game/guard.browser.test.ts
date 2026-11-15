@@ -16,7 +16,8 @@ test('the mount takes every touch and selects nothing; the page is not pulled or
   const undo = guardPlay(mount)
   expect(getComputedStyle(mount).touchAction).toBe('none')
   // Each browser keeps the spelling it knows: WebKit reads the prefixed one, the others the plain one.
-  const select = mount.style.getPropertyValue('user-select') || mount.style.getPropertyValue('-webkit-user-select')
+  const select =
+    mount.style.getPropertyValue('user-select') || mount.style.getPropertyValue('-webkit-user-select')
   expect(select).toBe('none')
   expect(getComputedStyle(document.documentElement).overscrollBehaviorY).toBe('none')
   expect(getComputedStyle(document.body).overscrollBehaviorY).toBe('none')
