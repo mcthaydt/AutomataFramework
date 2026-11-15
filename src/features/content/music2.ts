@@ -150,28 +150,30 @@ export function checkArrangement(music: ArrangedMusic, game: Listed, report: Rep
     const spans: { at: number; end: number; index: number }[] = []
     one.blocks.forEach((entry, j) => {
       const where = `lanes[${i}].blocks[${j}]`
-      const loopFile = 'loop' in entry ? game.get('loop', entry.loop) : undefined
-      const motifFile = 'motif' in entry ? game.get('motif', entry.motif) : undefined
-      if ('loop' in entry && !game.has('loop', entry.loop))
-        report(`${where}.loop`, noSuch('loop', entry.loop, game.ids('loop')))
-      if ('motif' in entry && !game.has('motif', entry.motif))
-        report(`${where}.motif`, noSuch('motif', entry.motif, game.ids('motif')))
+      const loopName = 'loop' in entry ? entry.loop : undefined
+      const motifName = 'motif' in entry ? entry.motif : undefined
+      const loopFile = loopName === undefined ? undefined : game.get('loop', loopName)
+      const motifFile = motifName === undefined ? undefined : game.get('motif', motifName)
+      if (loopName !== undefined && !game.has('loop', loopName))
+        report(`${where}.loop`, noSuch('loop', loopName, game.ids('loop')))
+      if (motifName !== undefined && !game.has('motif', motifName))
+        report(`${where}.motif`, noSuch('motif', motifName, game.ids('motif')))
       if (loopFile !== undefined) {
         if (loopFile.lane === 'drums' && one.instrument !== 'drums')
           report(
             `${where}.loop`,
-            `"${entry.loop}" is a drum loop, so it goes in a lane whose instrument is "drums".`,
+            `"${loopName}" is a drum loop, so it goes in a lane whose instrument is "drums".`,
           )
         else if (loopFile.lane !== 'drums' && one.instrument === 'drums')
           report(
             `${where}.loop`,
-            `This lane plays drums, so it takes drum loops only. "${entry.loop}" is a ${loopFile.lane} loop.`,
+            `This lane plays drums, so it takes drum loops only. "${loopName}" is a ${loopFile.lane} loop.`,
           )
       }
       if (motifFile !== undefined && one.instrument === 'drums')
         report(
           `${where}.motif`,
-          `This lane plays drums, so it takes drum loops only. "${entry.motif}" is a motif.`,
+          `This lane plays drums, so it takes drum loops only. "${motifName}" is a motif.`,
         )
       if (entry.at > music.bars) {
         report(`${where}.at`, `This block starts at bar ${entry.at}, but the track has ${music.bars} bars.`)

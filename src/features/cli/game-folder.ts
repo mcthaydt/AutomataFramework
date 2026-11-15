@@ -53,6 +53,7 @@ const OWN_CONTENT: ContentApi = {
   parseContent,
   parseReadMarks,
   READ_MARKS_FILE,
+  recordingProblems,
   translationProblems,
   unreadWords,
   writeContent,
