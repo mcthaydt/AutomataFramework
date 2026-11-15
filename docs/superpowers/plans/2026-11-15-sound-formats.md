@@ -129,6 +129,14 @@ The spec leaves these to the plan, or is silent. They are settled here so the ex
     sound must not be late the first time it is asked for.
 25. **`recordingProblems` is the one judge** of a recording file (length, size, shape, the game's total, a voice that
     reads past its end). `automata check`'s `files` step and `loadRecordings` both call it.
+26. **`project-write.ts` is the framework's one writer of `automata.toml`** (plan audit, I5, with the figure plan
+    audit, PR 117). Plan R's Part 0 builds it first, with `listContent(text, entry, about?): Parsed<string>` for a
+    path block; this plan **adds `withFolders` beside `listContent` in that file** and does not create its own. If
+    this plan's Task 1 runs before Part 0 has landed, it creates the file with `withFolders` only and Part 0 adds
+    `listContent` beside it. Both append a block after one blank line and keep every other byte. Once folders
+    exist, `listContent` treats a path directly inside a listed folder of the same kind as already listed (and
+    gives the text back unchanged). Every editor and command that adds a block calls one of these two, so an
+    editor and an agent make the same bytes.
 
 ## Review Focus
 
@@ -153,7 +161,7 @@ Each line names its test and the task that owns it.
 src/lib/wav.ts                              NEW encodeWav, decodeWav: the recording file's bytes
 src/lib/midi.ts                             NEW readMidi, writeMidi: a Standard MIDI File's bytes and its events
 src/features/content/project.ts             a [[content]] block may name a folder; Project.folders
-src/features/content/project-write.ts       NEW withFolders: adds folder blocks to automata.toml's text
+src/features/content/project-write.ts       + withFolders beside plan R's listContent (call 26)
 src/features/content/folders.ts             NEW folder listing: filesIn, FOLDERS_FILE, folderManifest, listFromManifest
 src/features/content/load.ts                loadGame(read, list?)
 src/features/content/shared.ts              isGamePath takes '.wav'; Key, Mode, Chord, motif changes (shared by kinds)
@@ -195,7 +203,8 @@ tests/                                      mirrors the above; tests/fixtures/au
 **Golden impact:** none. A project with no folder block parses to the very object it does today.
 
 **Files:**
-- Create: `src/features/content/project-write.ts`, `tests/features/content/project-write.test.ts`
+- Create or widen (call 26: plan R's Part 0 may have made it, with `listContent`): `src/features/content/project-write.ts`,
+  `tests/features/content/project-write.test.ts`
 - Modify: `src/features/content/project.ts`, `src/features/content/content.ts`, `src/headless.ts`
 - Test: `tests/features/content/project.test.ts`
 
@@ -317,7 +326,9 @@ is; a folder file not in the standard form is named, and `--fix` rewrites it.
 - [ ] **Step 3: Implement.** In `load.ts`, after the project parses, list each folder (all at once), build the full
   list of refs, and carry on as today from "read every file". Keep the listing code in `folders.ts` so `load.ts`
   stays under 600 lines. `simContent` filters `folders` as it filters `content`, and counts a folder of a left-out
-  kind as "listed".
+  kind as "listed". Its early "the very same object" return must also check `project.folders` (and, from Tasks 5 and
+  6, `content.loops` and `content.motifs`): a game whose only new thing is a folder of sounds must not hand the sim a
+  project with `folders` in it (plan audit, M1).
 - [ ] **Step 4: The command line.** `readGame` hands `loadGame` a `list` over `files.list(join(folder, dir))`,
   keeping only names with no `/`. `filesStep` reads the loaded project's `content` (so folder files are checked and
   fixed) in place of parsing the file again for paths; when the game did not load it falls back to the parsed path
@@ -356,7 +367,8 @@ export const RECORDINGS_MAX_BYTES = 20971520
 /** A recording file once read. */
 export interface Recording { readonly seconds: number; readonly samples: Float32Array }
 /** Decoded audio as a recording file's bytes: the channels mixed to one (their mean), resampled to 44 100 by
- *  straight-line steps between samples. Throws a RangeError in plain words when it is over 10 seconds or empty. */
+ *  straight-line steps between samples. The resampled length is rounded down, so ten seconds of input is at most
+ *  441 000 samples and never over the limit. Throws a RangeError in plain words when it is over 10 seconds or empty. */
 export function writeRecording(channels: readonly Float32Array[], sampleRate: number): Uint8Array<ArrayBuffer>
 /** A recording file's bytes, read, or the one sentence that says what is wrong with them. `name` is for the words. */
 export function readRecording(bytes: Uint8Array, name: string):
@@ -560,7 +572,9 @@ export interface MotifVoice extends MotifChanges { readonly kind: 'motif'; reado
 export type SoundVoice = ToneVoice | NoiseVoice | RecordingVoice | MotifVoice
 ```
 
-A motif voice has no `length`: it lasts `motifBeats * 60 / tempo` seconds. `soundInfo` gains a `check`:
+A motif voice has no `length`: it lasts `motifBeats * 60 / tempo` seconds, and `SoundSchema`'s own end check (today
+`v.at + v.length`) skips it by its `kind` rather than by a missing field. A motif voice with no `mode` plays in
+`major`: a sound has no song to take a mode from (plan audit, M4). `soundInfo` gains a `check`:
 the motif must be in the game (`noSuch('motif', …)` at `voices[i].motif`), and `at` plus its seconds must be at most
 10 (`'This motif ends after 10 seconds, which is the longest a sound can be. Raise "tempo" or "speed".'`).
 
@@ -854,12 +868,15 @@ The first recipes (call 16; pitches in hertz, lengths in seconds):
 |---|---|
 | `jump` | tone square or triangle, from 260–420 to 520–900, 0.12–0.22 s, 0.6–0.8 |
 | `land` | noise 180–400, 0.06–0.12 s, 0.6–0.9; tone sine 140–200 to 60–90, 0.08–0.14 s, 0.5–0.8 |
-| `coin` | tone square or sine 880–1320 held, 0.05–0.08 s; a second, 1.33 to 1.5 times as high, at the first's end, 0.15–0.3 s |
+| `coin` | tone square or sine 880–1320 held, 0.05–0.08 s, 0.5–0.7; a second, 1.33 to 1.5 times as high, at the first's end, 0.15–0.3 s, 0.5–0.7 |
 | `hit` | noise 600–1600, 0.05–0.12 s, 0.8–1; tone sawtooth 300–500 to 80–140, 0.08–0.15 s, 0.5–0.7 |
-| `explosion` | noise 200–600, 0.5–1.1 s, 0.9–1; noise 60–140, 0.6–1.3 s, 0.7–0.9; tone sine 120–180 to 30–50, 0.4–0.8 s |
-| `door` | tone triangle 180–260 to 120–180, 0.15–0.3 s; noise 300–700 at 0.1–0.2 s, 0.08–0.15 s |
+| `explosion` | noise 200–600, 0.5–1.1 s, 0.9–1; noise 60–140, 0.6–1.3 s, 0.7–0.9; tone sine 120–180 to 30–50, 0.4–0.8 s, 0.6–0.8 |
+| `door` | tone triangle 180–260 to 120–180, 0.15–0.3 s, 0.6–0.8; noise 300–700 at 0.1–0.2 s, 0.08–0.15 s, 0.4–0.6 |
 | `click` | tone square 900–1600 held, 0.02–0.04 s, 0.5–0.7 |
-| `power-up` | three tones, square or triangle, each 0.08–0.12 s, one after another, each 1.2 to 1.35 times the one before, the first at 330–520 |
+| `power-up` | three tones, square or triangle, each 0.08–0.12 s, 0.5–0.7, one after another, each 1.2 to 1.35 times the one before, the first at 330–520 |
+
+Every voice above carries its loudness as its last range; the sound's own `volume` is 0.8 for every kind (plan
+audit, M2: the first table left four out).
 | `laser` | tone sawtooth or square 1200–2200 to 200–500, 0.15–0.35 s, 0.5–0.7 |
 | `blip` | tone sine or square 500–1000 held, 0.04–0.09 s, 0.5–0.7 |
 
@@ -912,7 +929,9 @@ The loops, by id (original, written for this library; the executor writes each a
 
 Styles, each four bars with a drums, a bass, a chords and a melody lane: `calm` (C major, 84, `I vi IV V`, pad and
 keys), `bouncy` (G major, 128, `I IV V IV`, pluck), `spooky` (D minor, 96, `i VI iv V`, organ and bell), `brave`
-(D major, 116, `I V vi IV`, lead).
+(D major, 116, `I V vi IV`, lead). A style uses only loops of 4, 8 or 16 steps a bar, so it lies on MIDI's
+sixteenths and comes back from Task 15's round trip unmoved (plan audit, I3); a 12-step loop (`shuffle-drums` may be
+one) is in the library but in no style.
 
 `words.json` is `{ "<id>": { "zh": …, "es": …, … } }` for every loop, style, sound kind (Task 11), instrument and
 drum: short plain names ("Easy drums", "Batería fácil").
@@ -1021,11 +1040,17 @@ clap 39, tom 45, each a sixteenth long. Each track starts with its lane's id as 
 ```ts
 export interface MidiImport { readonly music: ArrangedMusic; readonly loops: readonly LoopFile[]
   /** What the file had that the game's music cannot hold, each a whole sentence. Empty when nothing was lost. */
-  readonly dropped: readonly string[]
+  readonly dropped: readonly MidiDropped[]
   /** For the panel that says what came in. */ readonly lanes: number; readonly bars: number; readonly tempo: number }
+/** One thing a file had that the game's music cannot hold: what, how many where it counts, and the sentence the
+ *  command line prints. The editors word `what` in their own nine languages and never show `sentence`. */
+export interface MidiDropped {
+  readonly what: 'moved' | 'tempo' | 'bends' | 'controllers' | 'time' | 'lanes' | 'bars' | 'together' | 'cut'
+  readonly count?: number; readonly tempo?: number; readonly beats?: number; readonly sentence: string }
 /** A MIDI file as a format 2 track and its loops. `id` names the track (and starts each loop's id). */
 export function midiToMusic(bytes: Uint8Array, id: string):
-  { readonly ok: true; readonly value: MidiImport } | { readonly ok: false; readonly message: string }
+  | { readonly ok: true; readonly value: MidiImport }
+  | { readonly ok: false; readonly why: 'not-midi' | 'no-notes'; readonly message: string }
 ```
 
 How it reads (calls 5 and 18 to 21, and the spec's "MIDI"):
@@ -1039,16 +1064,24 @@ How it reads (calls 5 and 18 to 21, and the spec's "MIDI"):
 - Drums: each note number goes to the nearest of 36 (kick), 38 (snare), 42 (hat), 39 (clap), 45 (tom); a tie goes to
   the first in that order.
 - Bars: 16 steps each; the track's `bars` is up to the last note, at most 128 (more are dropped and said).
-- Loops: each bar of a lane is a one-bar loop; bars with the same steps are one loop, and bars in a row that are the
-  same are one block with `bars` counted. A silent bar is no block. Loop ids are `<id>-<lane>-1`, `-2`, ….
+- Loops (plan audit, I2 and I7): a lane is first cut into pieces at every bar line that no note sounds across, so a
+  note held over a bar line stays whole (a loop's `=` carries it inside one loop; `notesOf` never carries one across
+  two blocks). A piece longer than 8 bars (a loop's most) is cut at bar 8 and the note there is cut too (`cut`).
+  Pieces with the same steps are one loop, and the same piece again and again in a row is one block with `bars`
+  counted. Then each run of pieces used once, side by side, is joined into one loop of up to 8 bars, so a long song
+  that never repeats gives about one loop for each eight bars of each lane, not one for each bar. A silent bar is no
+  block. Loop ids are `<id>-<lane>-1`, `-2`, ….
 - Chords: call 20. Steps: call 21.
 - `dropped`, in this order, each only when it happened: `'12 notes were moved to the nearest sixteenth.'`, `'The
   tempo changes after the start were dropped; the song keeps 110 beats a minute.'`, `'Pitch bends were dropped.'`,
   `'Controllers (like the sustain pedal) were dropped.'`, `'The file is in 3/4; it was read as four beats to a
   bar.'`, `'2 instruments were dropped: a song has at most eight lanes.'`, `'Notes after bar 128 were dropped.'`,
-  `'Some notes played together in one instrument were dropped.'`.
-- Refusals: `'This is not a MIDI file this game can read. Save it as a Standard MIDI File (type 0 or 1).'` and
-  `'This MIDI file has no notes.'`.
+  `'Some notes played together in one instrument were dropped.'`, `'3 long notes were cut at the end of a loop.'`.
+  Each is a `MidiDropped` with that `sentence` and its `what` (`moved`, `tempo`, `bends`, `controllers`, `time`,
+  `lanes`, `bars`, `together`, `cut`), so a screen can say it in its own words without the word "MIDI" (the Sound
+  editor's spec bans it on screen).
+- Refusals: `why: 'not-midi'`, `'This is not a MIDI file this game can read. Save it as a Standard MIDI File (type 0
+  or 1).'`, and `why: 'no-notes'`, `'This MIDI file has no notes.'`.
 
 Every value it gives passes `MusicSchema` and `LoopSchema`, and loading a game made of them gives no problem.
 
@@ -1057,7 +1090,8 @@ Every value it gives passes `MusicSchema` and `LoopSchema`, and loading a game m
   a channel 10 file becomes a drum lane with the right drums; four equal bars become one loop in one block of four;
   a bar of C, E and G under a melody gives `I`, of A, C and E gives `vi`; an out-of-key note is written as a fixed
   note and an in-key one as a step; a three-note chord on one channel becomes three lanes; nine channels keep the
-  eight busiest; every `dropped` sentence; both refusals; a file whose notes all sit off the grid by 10 ticks counts
+  eight busiest; every `dropped` entry, its `what` and its sentence; both refusals and their `why`; a note held across
+  a bar line comes back as one note of its own length; a 64-bar lane that never repeats gives at most 8 loops; a file whose notes all sit off the grid by 10 ticks counts
   them. `midi-round-trip.parity.test.ts` (Node and three browsers): for the fixture song and each of the four
   library styles, `midiToMusic(musicToMidi(track))` read with `notesOf` gives the same pitch, tick and length for
   every note that is not a drum, and the same drum at the same tick for every hit, and `dropped` is empty (the
@@ -1091,7 +1125,7 @@ automata sound new <kind> [folder]          --seed <n>  --id <name>  --json
 
 - `music import` reads the file, names the track `--id` or the file's name made into an id (`My Song.mid` is
   `my-song`), writes the track into the first folder the project lists for `music` and each loop into the first for
-  `loop`, with `writeContent`, and prints `Made content/music/my-song.json and 6 loops.` then each `dropped`
+  `loop`, with `writeContent`, and prints `Made content/music/my-song.json and 6 loops.` then each `dropped` entry's
   sentence. It writes nothing when: the id is taken (`'There is already a music track called "my-song". Pick
   another name with --id.'`), a folder is not listed (call 23: `'This game lists no folder for music. Add these
   lines to automata.toml, then try again:'` and the block), or the file is refused.
@@ -1133,8 +1167,10 @@ proof. If it moves, stop and report.
 
 - `automata.toml` gains, each with its one-line comment in the file's own voice, folder blocks for `sound`
   (`content/sounds`), `music` (`content/music`), `loop` (`content/loops`), `motif` (`content/motifs`) and `cues`
-  (`content/cues`); and, when the template has a feel file by then, its block becomes `feel`, `content/feel` (the
-  Owner, 2026-11-15: Feel lists its folder once too). The comment above the first: `# A folder block lists every
+  (`content/cues`). A feel file's block is not touched here (plan audit, I6): `feel` is in the sim on `main`
+  (`sim-content.ts` does not leave it out), so a feel folder block would put `folders` into the hashed project and
+  move `template/replays/level-1.json`; the cycle that decides whether feel stays in the sim (plan F, or the Feel
+  editor's Part 3) moves it. The comment above the first: `# A folder block lists every
   file in a folder at once: put a new sound in content/sounds and it is part of the game.`
 - `cues.json`: `hero.jumped` plays `jump`; `level.started` starts `meadow`. (Use the event names the template's
   hero raises on `main` then.)
@@ -1197,12 +1233,24 @@ proof. If it moves, stop and report.
   editor's plan (`docs/superpowers/plans/2026-11-15-sound-editor.md` there) names every export it uses: `withFolders`,
   `loadGame`'s `list`, `makeSound`, `SOUND_KINDS`, `LIBRARY`, `libraryName`, `libraryFiles`, `writeRecording`,
   `readRecording`, the limits, `soundVoices`, `playSound`, `createMusicPlayer`, `scoreOf`, `notesOf`, `loopNotes`,
-  `motifNotes`, `chordName`, `chordOf`, `midiToMusic`,
+  `motifNotes`, `chordName`, `chordOf`, `midiToMusic` (with `MidiDropped` and `why`),
   `musicToMidi`, `webSpeaker`'s `keep`. Changing one of those names after this plan is audited means changing that
   plan too.
 - **The Feel editor's plan** lists its effects' folder with `withFolders` (Tasks 1 and 2), not one block a file.
+- **A game that lists a folder cannot be opened by anything built before this plan** (plan audit, I1): the project
+  file's schema refuses an unknown key, and `loadGame` without a `list` refuses a game with a folder. So the order is:
+  this plan merges; the Editors' pin moves to it and their open and save list folders (the Sound plan's Tasks 1 to 3);
+  the Site's own reader of `automata.toml` (`src/features/facts/project.ts`, which throws on a `[[content]]` table
+  with no `path`) reads folder blocks and the files in them; only then does the demo move a block to a folder. Until
+  all three are on `main`, the demo lists by path.
 - **AutomataFrameworkExamples:** the demo's own cycle moves its sound, music and cue blocks to folders and gives
-  `scripts/copy-game.ts` the folder manifest (`folderManifest`) and the recordings (`recordingPaths`).
+  `scripts/copy-game.ts` the folder manifest (`folderManifest`) and the recordings (`recordingPaths`). Moving a kind
+  the sim keeps (`level`, `character`, `feel`, `tuning`) into a folder changes the hashed project and so moves
+  `replays/level-1.json` and `replays/test-game.json`; only `sound`, `music`, `loop`, `motif` and `cues` move
+  without one. The editors' saves into the demo now include `.wav` files and, once, `automata.toml` folder lines, so
+  that repo's `CLAUDE.md` line "the change is content files only" is widened in the same cycle.
+- **AutomataFrameworkSite:** a cycle that teaches `facts` to read folder blocks (see the order above), before the
+  demo moves.
 - **For the Owner's ears:** the instruments, the drums, the ten sound kinds, the 26 loops and the four styles are
   first values written without hearing them. The Owner's review of this cycle is by listening (the template plays
   three of them); what sounds wrong is changed in `library/` and nowhere else.

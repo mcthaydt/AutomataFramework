@@ -7,13 +7,14 @@ The tracker every stage reads first and updates last. One section per cycle; new
 Spec: [`specs/2026-11-15-sound-formats-design.md`](specs/2026-11-15-sound-formats-design.md), written with the Sound
 editor's spec in AutomataFrameworkEditors (`docs/superpowers/specs/2026-11-15-sound-editor-design.md`).
 
-Overall: **12%** (the spec and plan M are written and in review; stages 3 to 7 follow)
+Overall: **18%** (the spec, plan M and its audit are written and in review; stages 4 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Written, in review, 100%. The Owner answered (2026-11-15): recorded sounds are in (Q4 B), music as GarageBand-style loops, chords and motifs (Q3), new formats in the framework first (Q5 A) with MIDI to JSON and back, and content folders listed once in `automata.toml` (Q6 A). Flagged: the Feel editor's cycle lists one line per effect, which differs from Q6 | `specs/2026-11-15-sound-formats-design.md` |
 | 2. Plan (plan M) | Written, in review, 100%. Eighteen tasks (5% each, 10% for the last green run): a folder in a `[[content]]` block and `withFolders`; the loader lists folders (`loadGame(read, list)`, and `automata.folders.json` for a page, which cannot list one); the recording file (`src/lib/wav.ts`), its voice and its limits; keys, chords and steps as pitches; the `loop` kind; the `motif` kind and a motif as a sound's voice; music format 2; instruments, plain notes (`notesOf`) and `scoreOf` for a song; motif voices and recordings through the speaker (`keep`); the page's speaker plays a recording; sound kinds (`makeSound`); 26 loops and four styles named in nine languages; a MIDI file's bytes (`src/lib/midi.ts`); `musicToMidi`; `midiToMusic` and the round trip; `automata music import` and `export` and `automata sound new`, with MCP tools; the template with folders, a sound, a song and its audio; one game with everything in four engines, and the docs. No hash moves, three new goldens (`song.json`, `kinds.json`, `full-sound.json`), no dependency. Folders work for every kind, so Feel lists its folder once too (the Owner, 2026-11-15). Settled in the plan because the spec is silent: a page reads folders from a generated `automata.folders.json`; four beats to a bar; `automata sound new`. The instruments, kinds and loops are first values for the Owner's ears. No Owner question is open | `plans/2026-11-15-sound-formats.md` |
-| 3 to 7 | Not started | |
+| 3. Plan audit | Written, in review, 100%. Sound, no critical fault; seven important and six minor, all fixed in the plan but one (the tracker's Cycle 8 is also plan F's; the second to merge renumbers): the order in which games may start listing folders (the Editors and the Site first, then the demo); MIDI cut into loops only where no note crosses a bar line, and long songs joined into loops of up to 8 bars; styles only on sixteenths; `MidiDropped` codes so the editors can word them; `project-write.ts` the one writer of `automata.toml` (plan R's `listContent` and `withFolders` side by side); the template's feel block left alone so its golden cannot move. No Owner question | `audits/2026-11-15-plan-m-plan-audit.md` |
+| 4 to 7 | Not started | |
 ## Cycle 7: the default game flow (plan U)
 
 Spec: [`specs/2026-11-14-m2-design.md`](specs/2026-11-14-m2-design.md) ("UI, screens and layouts (plan U)"), with the
