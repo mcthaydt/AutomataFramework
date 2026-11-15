@@ -56,7 +56,11 @@ test('a second take with the same name replaces the first', async () => {
 test('--json says what was made', async () => {
   const memory = start()
   const said = await run(memory, 'sound', 'new', 'laser', 'game', '--seed', '2', '--json')
-  expect(JSON.parse(said.out.join('\n'))).toEqual({ made: 'content/sounds/laser.json', kind: 'laser', seed: 2 })
+  expect(JSON.parse(said.out.join('\n'))).toEqual({
+    made: 'content/sounds/laser.json',
+    kind: 'laser',
+    seed: 2,
+  })
 })
 
 test('a kind that does not exist lists the kinds', async () => {
@@ -75,7 +79,11 @@ test('a seed that is not a whole number, and a name a file cannot have, are refu
   const memory = start()
   for (const seed of ['x', '-1', '1.5']) {
     const said = await run(memory, 'sound', 'new', 'jump', 'game', '--seed', seed)
-    expect(said, seed).toEqual({ code: 2, out: [], err: ['--seed needs a whole number from 0, like --seed 3.'] })
+    expect(said, seed).toEqual({
+      code: 2,
+      out: [],
+      err: ['--seed needs a whole number from 0, like --seed 3.'],
+    })
   }
   const named = await run(memory, 'sound', 'new', 'jump', 'game', '--id', 'Big Jump')
   expect(named.code).toBe(2)

@@ -123,7 +123,7 @@ function checkRows(
       path: [...at],
       message: `This loop has ${loop.bars} ${loop.bars === 1 ? 'bar' : 'bars'} but ${list.length} ${list.length === 1 ? 'row' : 'rows'}. Write one row for each bar.`,
     })
-  list.forEach((row, r) => {
+  for (const [r, row] of list.entries()) {
     const steps = stepsOf(row)
     if (loop.stepsPerBar !== undefined && steps.length !== loop.stepsPerBar) {
       ctx.addIssue({
@@ -131,32 +131,39 @@ function checkRows(
         path: [...at, r],
         message: `This bar has ${steps.length} ${steps.length === 1 ? 'step' : 'steps'} but "stepsPerBar" is ${loop.stepsPerBar}. Write ${loop.stepsPerBar}, separated by one space.`,
       })
-      return
+      continue
     }
+    // The first wrong step of a bar is the one said: a bar is not scolded once for each step in it.
     for (const step of steps) {
-      if (lane === 'drums' && !DRUM_STEP.test(step))
-        return ctx.addIssue({
+      if (lane === 'drums' && !DRUM_STEP.test(step)) {
+        ctx.addIssue({
           code: 'custom',
           path: [...at, r],
           message: `"${step}" is not a drum step. Write x for a hit or - for a rest.`,
         })
-      if (lane === 'chords' && !CHORD_STEP.test(step))
-        return ctx.addIssue({
+        break
+      }
+      if (lane === 'chords' && !CHORD_STEP.test(step)) {
+        ctx.addIssue({
           code: 'custom',
           path: [...at, r],
           message: `"${step}" is not a chord step. Write x to play the chord, - for a rest, or = to hold it.`,
         })
+        break
+      }
       if (
         (lane === 'bass' || lane === 'melody') &&
         !(STEP.test(step) || NOTE.test(step) || step === '-' || step === '=')
-      )
-        return ctx.addIssue({
+      ) {
+        ctx.addIssue({
           code: 'custom',
           path: [...at, r],
           message: `"${step}" is not a step. Write a step of the chord like 1, 3 or b7, a note like C4, - for a rest, or = to hold.`,
         })
+        break
+      }
     }
-  })
+  }
 }
 
 /** The checks that look across fields. Written to cope with a half-read file, since it may run beside other problems. */

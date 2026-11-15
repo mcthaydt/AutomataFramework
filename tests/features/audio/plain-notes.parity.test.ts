@@ -32,7 +32,8 @@ test("the spec's bouncy bass follows the chords: C2 and G2, A2 and E3, F2 and C3
   expect(pitches(notes)).toEqual([36, 43, 36, 43, 45, 52, 57, 52, 41, 48, 41, 48, 43, 50, 55, 50])
   expect(ats(notes).slice(0, 4)).toEqual([0, 480, 960, 1440])
   expect(ats(notes).slice(4, 6)).toEqual([TICKS_PER_BAR, TICKS_PER_BAR + 480])
-  for (const note of notes) expect(note).toMatchObject({ lane: 'line', instrument: 'bass', ticks: 240, volume: 1 })
+  for (const note of notes)
+    expect(note).toMatchObject({ lane: 'line', instrument: 'bass', ticks: 240, volume: 1 })
 })
 
 test('the same song in Eb has its roots in octave 2 too, and in B the first root is B2', () => {
@@ -55,7 +56,9 @@ const line = (lane: 'bass' | 'melody', row: string, bars = 1): LoopFile => ({
 
 test('in minor the thirds fall, and a chord has its own scale', () => {
   expect(pitches(loopNotes(line('bass', '1 3 5 8')))).toEqual([36, 40, 43, 48])
-  expect(pitches(loopNotes(line('bass', '1 3 5 8'), { chords: ['i'], mode: 'minor' }))).toEqual([36, 39, 43, 48])
+  expect(pitches(loopNotes(line('bass', '1 3 5 8'), { chords: ['i'], mode: 'minor' }))).toEqual([
+    36, 39, 43, 48,
+  ])
   // A diminished chord's fifth is lowered.
   expect(pitches(loopNotes(line('bass', '1 3 5 8'), { chords: ['vii°'] }))).toEqual([47, 50, 53, 59])
 })
@@ -175,7 +178,14 @@ test('a motif slowed, in minor, backwards, and with notes between', () => {
   const back = motifNotes(THEME, { ...use, backwards: true })
   expect(pitches(back)).toEqual([72, 67, 64, 60])
   expect(back.map((note) => note.ticks)).toEqual([960, 240, 240, 480])
-  const between: MotifFile = { format: 1, id: 'x', notes: [{ step: 'b3', beats: 1 }, { step: '#4', beats: 1 }] }
+  const between: MotifFile = {
+    format: 1,
+    id: 'x',
+    notes: [
+      { step: 'b3', beats: 1 },
+      { step: '#4', beats: 1 },
+    ],
+  }
   expect(pitches(motifNotes(between, use))).toEqual([63, 66])
 })
 

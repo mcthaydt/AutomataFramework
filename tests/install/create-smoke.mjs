@@ -155,7 +155,11 @@ step('npm install and npm run check pass in the new game, and a language can be 
 for (const [what, words, made] of [
   ['automata sound new coin', ['sound', 'new', 'coin'], 'content/sounds/coin.json'],
   ['automata music export', ['music', 'export', 'meadow', 'meadow.mid'], 'meadow.mid'],
-  ['automata music import', ['music', 'import', 'meadow.mid', '--id', 'meadow-2'], 'content/music/meadow-2.json'],
+  [
+    'automata music import',
+    ['music', 'import', 'meadow.mid', '--id', 'meadow-2'],
+    'content/music/meadow-2.json',
+  ],
 ]) {
   must(what, 'npx', ['--no', 'automata', ...words], game)
   if (!existsSync(join(game, ...made.split('/')))) fail(`${what} did not write ${made}.`)

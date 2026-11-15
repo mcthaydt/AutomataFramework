@@ -142,10 +142,10 @@ export {
   writeReadMarks,
 } from './read-marks.ts'
 export {
-  RECORDINGS_MAX_BYTES,
   RECORDING_MAX_BYTES,
   RECORDING_MAX_SECONDS,
   RECORDING_RATE,
+  RECORDINGS_MAX_BYTES,
   type Recording,
   readRecording,
   recordingPaths,

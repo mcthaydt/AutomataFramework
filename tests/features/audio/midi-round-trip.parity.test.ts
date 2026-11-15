@@ -19,15 +19,23 @@ function roundTrip(track: ArrangedMusic, parts: ReturnType<typeof songParts>): v
   if (!result.ok) throw new Error(result.message)
   const back = { loops: Object.fromEntries(result.value.loops.map((loop) => [loop.id, loop])) }
   expect(result.value.dropped).toEqual([])
-  expect(result.value.music).toMatchObject({ tempo: track.tempo, key: track.key, mode: track.mode, bars: track.bars })
+  expect(result.value.music).toMatchObject({
+    tempo: track.tempo,
+    key: track.key,
+    mode: track.mode,
+    bars: track.bars,
+  })
   expect(sounding(notesOf(result.value.music, back))).toEqual(sounding(notesOf(track, parts)))
 }
 
 test('the fixture song comes back from MIDI as the same notes', () => roundTrip(meadow(), songParts()))
 
-test.each(LIBRARY.styles.map((style) => style.id))('the %s style comes back from MIDI as the same notes', (id) => {
-  const style = LIBRARY.styles.find((entry) => entry.id === id)
-  if (style === undefined) throw new Error(`no style ${id}`)
-  const loops = Object.fromEntries(LIBRARY.loops.map((loop) => [loop.id, loop]))
-  roundTrip(style, { loops, motifs: {} } as ReturnType<typeof songParts>)
-})
+test.each(LIBRARY.styles.map((style) => style.id))(
+  'the %s style comes back from MIDI as the same notes',
+  (id) => {
+    const style = LIBRARY.styles.find((entry) => entry.id === id)
+    if (style === undefined) throw new Error(`no style ${id}`)
+    const loops = Object.fromEntries(LIBRARY.loops.map((loop) => [loop.id, loop]))
+    roundTrip(style, { loops, motifs: {} } as ReturnType<typeof songParts>)
+  },
+)

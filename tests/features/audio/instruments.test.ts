@@ -29,9 +29,9 @@ test('a pluck rings 0.3 seconds however long it is written, in two layers', () =
 
 test('a note shorter than its ring lasts as long as written', () => {
   // 480 ticks at 240 beats a minute is a quarter of a second.
-  expect(instrumentVoices(note({ ticks: 480 }), 240).map((voice) => voice.kind === 'tone' && voice.length)).toEqual([
-    0.25, 0.25,
-  ])
+  expect(
+    instrumentVoices(note({ ticks: 480 }), 240).map((voice) => voice.kind === 'tone' && voice.length),
+  ).toEqual([0.25, 0.25])
 })
 
 test('an instrument with no ring lasts as long as written', () => {
@@ -44,10 +44,12 @@ test('an instrument with no ring lasts as long as written', () => {
 })
 
 test("a drum hit is the table's voices, each volume times the note's", () => {
-  expect(instrumentVoices(note({ instrument: 'drums', pitch: 'snare', ticks: 0, volume: 0.5 }), 120)).toEqual([
-    { kind: 'noise', pitch: 1800, at: 0, length: 0.12, volume: 0.4 },
-    { kind: 'tone', wave: 'triangle', from: 180, to: 120, at: 0, length: 0.08, volume: 0.25 },
-  ])
+  expect(instrumentVoices(note({ instrument: 'drums', pitch: 'snare', ticks: 0, volume: 0.5 }), 120)).toEqual(
+    [
+      { kind: 'noise', pitch: 1800, at: 0, length: 0.12, volume: 0.4 },
+      { kind: 'tone', wave: 'triangle', from: 180, to: 120, at: 0, length: 0.08, volume: 0.25 },
+    ],
+  )
   const clap = instrumentVoices(note({ instrument: 'drums', pitch: 'clap', ticks: 0 }), 120)
   expect(clap.map((voice) => voice.at)).toEqual([0, 0.015])
 })

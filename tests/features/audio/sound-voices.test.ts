@@ -63,7 +63,10 @@ test('a tone, a hiss and a recording pass through with the sound volume times th
   }
   const hiss: SoundVoice = { kind: 'noise', pitch: 1000, at: 0, length: 0.1, volume: 1 }
   const voices = soundVoices(sound([recording, hiss], 0.5), {})
-  expect(voices).toEqual([{ ...recording, volume: 0.25 }, { ...hiss, volume: 0.5 }])
+  expect(voices).toEqual([
+    { ...recording, volume: 0.25 },
+    { ...hiss, volume: 0.5 },
+  ])
 })
 
 test('a motif the parts do not have is said in plain words', () => {

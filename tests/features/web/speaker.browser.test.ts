@@ -175,7 +175,15 @@ test('a recording kept after the context exists gets its buffer at once, and pla
   fake.set('running')
   speaker.keep('a.wav', { seconds: 0.5, samples: new Float32Array(22050) })
   expect(fake.buffers).toHaveLength(1)
-  const voice = { kind: 'recording', file: 'a.wav', from: 0.1, length: 0.2, speed: 2, at: 0, volume: 1 } as const
+  const voice = {
+    kind: 'recording',
+    file: 'a.wav',
+    from: 0.1,
+    length: 0.2,
+    speed: 2,
+    at: 0,
+    volume: 1,
+  } as const
   speaker.play('sound', voice, 1)
   expect(fake.sources).toHaveLength(1)
   expect(fake.sources[0]?.starts).toEqual([[1, 0.1, 0.4]])
@@ -185,7 +193,15 @@ test('a recording that was never kept makes no source', () => {
   const { fake, speaker, tap } = setup()
   tap()
   fake.set('running')
-  const voice = { kind: 'recording', file: 'a.wav', from: 0, length: 0.2, speed: 1, at: 0, volume: 1 } as const
+  const voice = {
+    kind: 'recording',
+    file: 'a.wav',
+    from: 0,
+    length: 0.2,
+    speed: 1,
+    at: 0,
+    volume: 1,
+  } as const
   speaker.play('sound', voice, 1)
   expect(fake.sources).toEqual([])
 })

@@ -541,8 +541,8 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
         page.on('pageerror', (error) => console.log(`[${where}] page error: ${error.message}`))
         const heard = (): Promise<string[]> =>
           page.evaluate(() =>
-            ((window as unknown as PageWindow).automataAudio?.log() ?? []).map(
-              (entry) => `${entry.on} ${entry.do} ${entry.id ?? ''}`.trim(),
+            ((window as unknown as PageWindow).automataAudio?.log() ?? []).map((entry) =>
+              `${entry.on} ${entry.do} ${entry.id ?? ''}`.trim(),
             ),
           )
         await page.goto(address)

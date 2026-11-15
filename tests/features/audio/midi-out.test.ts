@@ -51,8 +51,18 @@ test('the drums are on channel 10, as the five General MIDI notes, each a sixtee
 test('a song in E flat minor writes six flats and minor; one in A major writes three sharps', () => {
   const key = (value: ArrangedMusic) =>
     read(musicToMidi({ type: 'music', value }, songParts()))[0]?.find((event) => event.kind === 'key')
-  expect(key({ ...meadow(), key: 'Eb', mode: 'minor' })).toEqual({ kind: 'key', tick: 0, sharps: -6, minor: true })
-  expect(key({ ...meadow(), key: 'A', mode: 'major' })).toEqual({ kind: 'key', tick: 0, sharps: 3, minor: false })
+  expect(key({ ...meadow(), key: 'Eb', mode: 'minor' })).toEqual({
+    kind: 'key',
+    tick: 0,
+    sharps: -6,
+    minor: true,
+  })
+  expect(key({ ...meadow(), key: 'A', mode: 'major' })).toEqual({
+    kind: 'key',
+    tick: 0,
+    sharps: 3,
+    minor: false,
+  })
 })
 
 test('a step track writes its parts: a tone part as notes, a drum part as snare hits on channel 10', () => {

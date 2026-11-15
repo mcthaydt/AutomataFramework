@@ -29,7 +29,9 @@ const theme: SoundFile = {
   format: 1,
   id: 'theme',
   volume: 0.8,
-  voices: [{ kind: 'motif', motif: 'hero-theme', instrument: 'pluck', key: 'C', tempo: 120, at: 0, volume: 1 }],
+  voices: [
+    { kind: 'motif', motif: 'hero-theme', instrument: 'pluck', key: 'C', tempo: 120, at: 0, volume: 1 },
+  ],
 }
 
 const voice: SoundFile = {
@@ -84,8 +86,12 @@ export async function loadFullSoundGame(): Promise<{ content: GameContent; recor
     return text
   }, listOf(files))
   if (!loaded.ok)
-    throw new Error(`The full sound game did not load:\n${loaded.diagnostics.map((d) => d.message).join('\n')}`)
+    throw new Error(
+      `The full sound game did not load:\n${loaded.diagnostics.map((d) => d.message).join('\n')}`,
+    )
   const bytes = blipBytes()
-  const recordings = await loadRecordings(loaded.value, async (path) => (path === BLIP_PATH ? bytes : undefined))
+  const recordings = await loadRecordings(loaded.value, async (path) =>
+    path === BLIP_PATH ? bytes : undefined,
+  )
   return { content: loaded.value, recordings }
 }

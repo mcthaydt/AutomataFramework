@@ -65,7 +65,7 @@ test('what is written reads back, to a step of 16 bits', () => {
   const samples = new Float32Array([0, 0.5, -0.5, 1, -1, 0.25])
   const wav = decodeWav(encodeWav(samples, 22050))
   expect(wav).toMatchObject({ sampleRate: 22050, channels: 1, bits: 16 })
-  samples.forEach((s, i) => expect(wav?.samples[i]).toBeCloseTo(s, 4))
+  for (const [i, s] of samples.entries()) expect(wav?.samples[i]).toBeCloseTo(s, 4)
 })
 
 test('the same samples give the same bytes', () => {
