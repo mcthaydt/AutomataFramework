@@ -1,8 +1,17 @@
 // A level drawn as it is written, with nothing run: an editor's picture of a level, and a card's thumbnail. It builds the
 // views a sim would have at tick 0 straight from the content, then hands them to the same stage a running game uses, so
 // what a person sees is what the game draws.
-import type { Character, GameContent, Level } from '../content/content.ts'
-import { groundOf, levelSize, skyOf, tileBoxes, tileRuns, usesSprites } from '../level/level.ts'
+import { type Character, type GameContent, LEDGE_DEEP, type Level } from '../content/content.ts'
+import {
+  type GroundCollider,
+  groundColliders,
+  groundOf,
+  skyOf,
+  tileBoxes,
+  tileRuns,
+  usesSprites,
+  worldSize,
+} from '../level/level.ts'
 import type { Art } from './art.ts'
 import type { Density } from './density.ts'
 import type { Fit, Room } from './fit.ts'
@@ -37,12 +46,29 @@ function viewOf(
   }
 }
 
+/** The box a scene's box or ledge is drawn as, when no picture is. */
+function groundView(sid: number, piece: Exclude<GroundCollider, { kind: 'slope' }>, color: number): View {
+  const h = piece.kind === 'ledge' ? LEDGE_DEEP : piece.h
+  return {
+    sid,
+    x: piece.col + piece.w / 2,
+    y: piece.row + h / 2,
+    rotation: 0,
+    w: piece.w,
+    h,
+    color,
+  }
+}
+
 /**
  * A level as it is written, with nothing run: the ground boxes `spawnLevel` makes, every thing at its place in its
  * character's size and color (and, in a game with figures, its sprite in the first pose facing right), each start
  * point as that player's hero, and each joint as its pin or rope. Sids count from 1 in the order `spawnLevel` spawns
  * them (ground, things, the level's anchor when a joint has no holder, joints, heroes), so a view's sid is the entity's
  * StableId in a sim made from the same level.
+ *
+ * A level with a scene gets the boxes and ledges the scene's ground makes, in the order `spawnLevel` spawns them (a slope
+ * takes a sid and gives no view).
  *
  * A level in the middle of an edit may name a character, a tileset or a thing the game does not have. Nothing throws:
  * what cannot be drawn is left out (a thing with no character, a joint with no thing), and a missing tileset leaves
@@ -58,23 +84,32 @@ export function levelViews(content: GameContent, level: Level): { views: View[];
     tileset === undefined
       ? undefined
       : (letter: string): boolean => tileset.tiles.some((tile) => tile.solid && tile.letter === letter)
-  // A level with a tileset joins stacked tiles of one width into one box; one without keeps one box a row.
-  const tiles = level.tiles ?? []
-  const boxes =
-    level.tileset === undefined
-      ? tileRuns(tiles, solid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
-      : tileBoxes(tiles, solid)
-  const ground = groundOf(level)
-  for (const box of boxes)
-    views.push({
-      sid: ++sid,
-      x: box.col + box.w / 2,
-      y: box.row + box.h / 2,
-      rotation: 0,
-      w: box.w,
-      h: box.h,
-      color: ground,
-    })
+  const ground = groundOf(content, level)
+  const scene = level.scene === undefined ? undefined : content.scenes?.[level.scene]
+  if (scene !== undefined) {
+    // A scene's colliders in spawn order. A slope takes a sid and is not a box, so it has no view.
+    for (const piece of groundColliders(scene.ground)) {
+      sid++
+      if (piece.kind !== 'slope') views.push(groundView(sid, piece, ground))
+    }
+  } else {
+    // A level with a tileset joins stacked tiles of one width into one box; one without keeps one box a row.
+    const tiles = level.tiles ?? []
+    const boxes =
+      level.tileset === undefined
+        ? tileRuns(tiles, solid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
+        : tileBoxes(tiles, solid)
+    for (const box of boxes)
+      views.push({
+        sid: ++sid,
+        x: box.col + box.w / 2,
+        y: box.row + box.h / 2,
+        rotation: 0,
+        w: box.w,
+        h: box.h,
+        color: ground,
+      })
+  }
   const placed = new Map<string, { sid: number }>()
   for (const thing of level.things) {
     const character = content.characters[thing.character]
@@ -114,6 +149,12 @@ export interface LevelPicture {
   readonly canvas: HTMLCanvasElement
   /** Draws this version of the level. Its size, tileset and backdrop must be those the picture was made with. */
   show(level: Level): void
+  /**
+   * Draws the same level with its scene's ground changed (same scene, same size): the views and pictures come from this
+   * content and `art`, and the art the picture had is destroyed. A different size needs a new picture. The picture owns
+   * `art` from here, as it owned the one it was given.
+   */
+  showScene(content: GameContent, art: Art): void
   /** Draws again with this room. */
   setRoom(room: Room): void
   /**
@@ -142,8 +183,9 @@ export async function createLevelPicture(options: {
   /** Keeps what was drawn readable afterwards (a test, a copy onto another canvas). Default false. */
   keep?: boolean
 }): Promise<LevelPicture> {
-  const { mount, content, level, art, density, keep } = options
-  const stage = await createStage(levelSize(level), skyOf(level), art, density, keep)
+  const { mount, level, art, density, keep } = options
+  let content = options.content
+  const stage = await createStage(worldSize(content, level), skyOf(content, level), art, density, keep)
   mount.append(stage.canvas)
   let shown = level
   const draw = (): void => {
@@ -162,6 +204,16 @@ export async function createLevelPicture(options: {
     canvas: stage.canvas,
     show(next) {
       shown = next
+      draw()
+    },
+    showScene(next, nextArt) {
+      if (destroyed) {
+        nextArt.destroy()
+        return
+      }
+      content = next
+      // The sky is the scene's own, and an edit may have changed it.
+      stage.setArt(nextArt, skyOf(content, shown))
       draw()
     },
     setRoom: (room) => stage.setRoom(room),

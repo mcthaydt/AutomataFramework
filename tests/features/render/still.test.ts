@@ -2,12 +2,13 @@
 // file. The views are held against the sim's own entities, so a thing is drawn exactly where the game would put it.
 import { afterEach, expect, test } from 'vitest'
 import { type GameContent, loadGame } from '#src/features/content/content.ts'
-import { createGameSim, Look, Thing } from '#src/features/level/level.ts'
+import { createGameSim, groundColliders, Look, Thing } from '#src/features/level/level.ts'
 import { Joint, Transform } from '#src/features/physics/physics.ts'
 import { fitInRoom, fitWorld, levelViews } from '#src/features/render/render.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
 import { readFullGame } from '../../fixtures/full-game/read.ts'
 import { character, loadFixtureWith } from '../../fixtures/game/extra.ts'
+import { loadSceneGame } from '../../fixtures/scene-game/game.ts'
 
 const made: Sim[] = []
 afterEach(() => {
@@ -130,4 +131,36 @@ test('what a level in the middle of an edit cannot draw is left out, and nothing
   const drawn = levelViews(content, edited)
   expect(drawn.links).toEqual([])
   expect(drawn.views).toHaveLength(whole.views.length)
+})
+
+test('the views of a level with a scene are a box and a ledge for each, and none for a slope', async () => {
+  const content = await loadSceneGame()
+  const level = content.levels['level-1']
+  const scene = content.scenes?.meadow
+  if (level === undefined || scene === undefined) throw new Error('the scene game has no level-1 or meadow')
+  const colliders = groundColliders(scene.ground)
+  const { views } = levelViews(content, level)
+  const ground = views.filter((v) => v.sid <= colliders.length)
+  expect(ground).toHaveLength(colliders.filter((c) => c.kind !== 'slope').length)
+  expect(colliders.some((c) => c.kind === 'slope')).toBe(true)
+  // A ledge is a quarter of a tile deep, and drawn so.
+  expect(ground.some((v) => v.h === 0.25)).toBe(true)
+  // The first thing's sid is the count of colliders (slopes too) plus one, as it is in a sim.
+  expect(views.find((v) => v.sid === colliders.length + 1)?.w).toBe(content.characters.crate?.size.w)
+})
+
+test('the views of a level with a scene are the ground and things its sim has at tick 0', async () => {
+  const content = await loadSceneGame()
+  const level = content.levels['level-1']
+  if (level === undefined) throw new Error('the scene game has no level-1')
+  const sim = await createGameSim({ content })
+  made.push(sim)
+  const drawn = (v: { x: number; y: number; w: number; h: number; color: number }): string =>
+    [v.x, v.y, v.w, v.h].map(Math.fround).concat(v.color).join('|')
+  const wanted = sim.query(Transform, Look).map((e) => {
+    const t = e.get(Transform)
+    const l = e.get(Look)
+    return drawn({ x: t.x, y: t.y, w: l.w, h: l.h, color: l.color })
+  })
+  expect(levelViews(content, level).views.map(drawn).sort()).toEqual(wanted.sort())
 })

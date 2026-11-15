@@ -1,10 +1,21 @@
 import { afterEach, expect, test } from 'vitest'
 import { Player } from '#src/features/commands/commands.ts'
-import { createGameSim, LevelError, Look, Thing, TILE_COLOR } from '#src/features/level/level.ts'
-import { Body, Collider, Transform } from '#src/features/physics/physics.ts'
+import { loadGame } from '#src/features/content/content.ts'
+import {
+  createGameSim,
+  type GroundCollider,
+  groundColliders,
+  LevelError,
+  Look,
+  Thing,
+  TILE_COLOR,
+} from '#src/features/level/level.ts'
+import { Body, Collider, ShapeKind, Transform } from '#src/features/physics/physics.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
+import { loadSceneGame } from '../../fixtures/scene-game/game.ts'
+import { readSceneGame } from '../../fixtures/scene-game/read.ts'
 
 // Koota allows 16 live worlds in a process, so every sim a test makes is disposed when it ends.
 const made: Sim[] = []
@@ -95,4 +106,48 @@ test("a level that sets its ground draws its floor in that colour, and one that 
   made.push(sim)
   expect(sim.entity(1)?.get(Look)).toMatchObject({ w: 16, h: 1, color: 0x111314 })
   expect((await gameSim()).entity(1)?.get(Look)).toMatchObject({ color: TILE_COLOR })
+})
+
+test("a level with a scene spawns the scene's colliders in order, before its things, and a slope has no look", async () => {
+  const content = await loadSceneGame()
+  const meadow = content.scenes?.meadow
+  if (meadow === undefined) throw new Error('the scene game has no meadow')
+  const pieces: GroundCollider[] = groundColliders(meadow.ground)
+  const sim = await createGameSim({ content })
+  made.push(sim)
+  // One fixed entity for each collider, then the crate and the hero.
+  expect(sim.query(Transform)).toHaveLength(pieces.length + 2)
+  for (const [i, piece] of pieces.entries()) {
+    const entity = sim.entity(i + 1)
+    expect(entity?.has(Thing)).toBe(false)
+    if (piece.kind === 'slope') {
+      expect(entity?.has(Look)).toBe(false)
+      expect(entity?.get(Collider).shape).toBe(piece.rises > 0 ? ShapeKind.slopeUp : ShapeKind.slopeDown)
+    } else {
+      expect(entity?.get(Look)).toMatchObject({ w: piece.w })
+    }
+    if (piece.kind === 'ledge') expect(entity?.get(Collider).shape).toBe(ShapeKind.ledge)
+  }
+  expect(pieces.some((piece) => piece.kind === 'slope')).toBe(true)
+  expect(pieces.some((piece) => piece.kind === 'ledge')).toBe(true)
+  expect(sim.entity(pieces.length + 1)?.get(Thing)).toEqual({ id: 'crate-1', character: 'crate' })
+})
+
+test('a scene the game lacks is a LevelError that names it', async () => {
+  const { scenes: _gone, ...without } = await loadSceneGame()
+  await expect(createGameSim({ content: without })).rejects.toThrow(
+    'Level "level-1" uses the scene "meadow", and this game has no such scene.',
+  )
+})
+
+test("a scene's ground colour is the colour its boxes are drawn in", async () => {
+  const scene = JSON.parse(await readSceneGame()('content/scenes/meadow.json')) as {
+    ground: Record<string, unknown>
+  }
+  scene.ground.color = '#102030'
+  const loaded = await loadGame(readSceneGame({ 'content/scenes/meadow.json': JSON.stringify(scene) }))
+  if (!loaded.ok) throw new Error(loaded.diagnostics.map((d) => d.message).join('\n'))
+  const sim = await createGameSim({ content: loaded.value })
+  made.push(sim)
+  expect(sim.entity(1)?.get(Look)).toMatchObject({ color: 0x102030 })
 })

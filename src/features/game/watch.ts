@@ -7,7 +7,7 @@
 // because then the commands mean something else.
 import type { Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
-import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
+import { createGameSim, type GameSimOptions, skyOf, worldSize } from '../level/level.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Command, Sim } from '../sim/sim.ts'
 import { levelArt } from './art.ts'
@@ -103,8 +103,8 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
     }
     const renderer = await createRenderer({
       mount,
-      world: levelSize(level),
-      sky: skyOf(level),
+      world: worldSize(options.content, level),
+      sky: skyOf(options.content, level),
       art,
       view: level.view,
     })

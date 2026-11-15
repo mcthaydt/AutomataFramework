@@ -100,6 +100,32 @@ test('the level’s colours go to the scene', async () => {
   expect(scene.paints).toEqual([{ id: 'ground', color: '#111314' }])
 })
 
+test('a level of a game whose hero the framework moves keeps the joined boxes it had', async () => {
+  const game = await loadFixtureGame()
+  const hero = game.characters[game.project.hero] as NonNullable<(typeof game.characters)[string]>
+  const moving = {
+    ...game,
+    characters: { ...game.characters, [game.project.hero]: { ...hero, moves: {} } },
+  } as GameContent
+  expect(sceneFromLevel(moving, 'level-1', 'meadow').scene.ground.oneBoxPerRow).toBeUndefined()
+  expect(sceneFromLevel(game, 'level-1', 'meadow').scene.ground.oneBoxPerRow).toBe(true)
+})
+
+test('a tileset of more kinds than a scene holds materials is told so, not cut short', async () => {
+  const game = await loadFull()
+  const tileset = game.tilesets?.meadow as NonNullable<NonNullable<GameContent['tilesets']>[string]>
+  const first = tileset.tiles[0] as object
+  const kinds = Array.from({ length: 33 }, (_, i) => ({
+    ...first,
+    id: `t${i}`,
+    letter: String.fromCharCode(48 + i),
+  }))
+  const crowded = { ...game, tilesets: { meadow: { ...tileset, tiles: kinds } } } as unknown as GameContent
+  expect(() => sceneFromLevel(crowded, 'level-1', 'meadow-scene')).toThrow(
+    'The tileset "meadow" has 33 kinds of tile, and a scene holds 32 materials at most.',
+  )
+})
+
 test('a level that already has a scene is not moved again', async () => {
   const game = await loadSceneGame()
   expect(() => sceneFromLevel(game, 'level-1', 'other')).toThrow(

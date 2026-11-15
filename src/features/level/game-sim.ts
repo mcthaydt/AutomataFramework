@@ -10,7 +10,7 @@ import { simContent } from './sim-content.ts'
 import { spawnLevel } from './spawn-level.ts'
 import { spritesPlugin } from './sprite.ts'
 import { touchPlugin } from './touch.ts'
-import { touchKinds, usesJoints, usesMoves, usesSprites } from './uses.ts'
+import { touchKinds, usesJoints, usesMoves, usesSlopes, usesSprites } from './uses.ts'
 
 /** What `createGameSim` takes. Only the content is required. */
 export interface GameSimOptions {
@@ -45,13 +45,15 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const kinds = touchKinds(content)
   const gravity = options.gravity ?? { x: 0, y: DEFAULT_GRAVITY }
   const moved = usesMoves(content)
+  // Only a game with a slope and a hero the framework moves tells that hero its ground's slope.
+  const slopes = moved && usesSlopes(content)
   if (options.tunable === true && !moved)
     throw new Error('Only a game whose hero has "moves" can be tuned while it plays.')
   const sim = await createSim({
     seed: options.seed ?? 1,
     content: simContent(content),
     plugins: [
-      physics({ gravity, joints: usesJoints(content), touching: moved }),
+      physics({ gravity, joints: usesJoints(content), touching: moved, slopes }),
       commandsPlugin,
       levelPlugin,
       // Only a game for two or more players can have people join and leave (see join.ts).
@@ -61,7 +63,7 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
       // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
       ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
       // Only a game whose hero has `moves` has the built-in hero, so every other game keeps the sim it had.
-      ...(moved ? [movesPlugin({ gravity, tunable: options.tunable === true })] : []),
+      ...(moved ? [movesPlugin({ gravity, slopes, tunable: options.tunable === true })] : []),
       ...(options.plugins ?? []),
     ],
   })
