@@ -320,8 +320,10 @@ try {
 } catch {
   fail('replay --json: stdout is not JSON when the rules print.', diverged.stdout)
 }
-if (divergedJson[0]?.verdict !== 'diverged')
-  fail('replay: the agent run does not say diverged after the rules changed.', diverged.output)
+// A rule of the game's own that reaches for the hero's body changes the rules' shape, which `replay` names before it
+// plays (`code-changed`); one that only changed a number inside a rule would be `diverged`. Either says the rules moved.
+if (!['diverged', 'code-changed'].includes(divergedJson[0]?.verdict))
+  fail('replay: the agent run does not say the rules changed after they did.', diverged.output)
 writeFileSync(movePath, move)
 rmSync(join(game, 'replays', 'agent-run.json'))
 step('an agent plays a session, saves it, and sees the rules change')
@@ -439,8 +441,8 @@ try {
 } catch {
   fail('mcp replay: the answer is not JSON when the rules print.', changed.text)
 }
-if (!changed.isError || changedJson[0]?.verdict !== 'diverged')
-  fail('mcp replay: the saved play does not say diverged after the rules changed.', changed.text)
+if (!changed.isError || !['diverged', 'code-changed'].includes(changedJson[0]?.verdict))
+  fail('mcp replay: the saved play does not say the rules changed after they did.', changed.text)
 writeFileSync(movePath, move)
 const again = await mcp.tool('replay', { folder: '.', file: 'mcp-run' })
 if (again.isError || JSON.parse(again.text)[0].verdict !== 'ok')

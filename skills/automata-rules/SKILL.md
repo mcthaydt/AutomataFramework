@@ -61,8 +61,8 @@ The hero jumps by itself. This plugin counts the jumps, in the air as well as fr
 
 ```ts
 import {
-  defineResource,
   definePlugin,
+  defineResource,
   defineSystem,
   moveEvent,
   type PluginDef,
