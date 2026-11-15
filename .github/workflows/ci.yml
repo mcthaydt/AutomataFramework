@@ -79,65 +79,6 @@ jobs:
           path: tests/journeys/__screenshots__/**
           if-no-files-found: ignore
 
-  # The same pictures, also as plain files on the `ci-screens` branch, because a cloud session can read the repository
-  # through the GitHub API but is refused by the host that serves artifacts. Only the newest pictures are kept
-  # (the Owner, 2026-11-15: "Let's do 1-4", keeping ci-screens as the one branch besides main, trimmed to the newest):
-  # `main/<engine>/<name>.png` for the newest push to main and `pr-<number>/<engine>/` for the newest run of each open
-  # pull request. Each run replaces its own folder and takes away the folders of closed pull requests. Only this job
-  # may write, only to that branch (branch protection covers `main`), and never for a pull request from a fork.
-  screens:
-    needs: [engines, online, create-play]
-    if: always() && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: write
-      pull-requests: read
-    # One writer at a time, so two runs never race to push the branch.
-    concurrency:
-      group: ci-screens
-      cancel-in-progress: false
-    env:
-      GH_TOKEN: ${{ github.token }}
-      LATEST: ${{ github.event_name == 'push' && 'main' || format('pr-{0}', github.event.pull_request.number) }}
-    steps:
-      - name: Download this run's pictures
-        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --pattern 'screens-*' --dir "$RUNNER_TEMP/screens" || true
-      - name: Commit them to the ci-screens branch
-        run: |
-          set -euo pipefail
-          shopt -s nullglob
-          engines=("$RUNNER_TEMP"/screens/screens-*)
-          if [ ${#engines[@]} -eq 0 ]; then echo "This run made no pictures."; exit 0; fi
-          git init -q "$RUNNER_TEMP/branch" && cd "$RUNNER_TEMP/branch"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          # The branch has no history in common with main; the first run starts it.
-          if git fetch -q --depth 1 origin ci-screens; then git checkout -q -B ci-screens FETCH_HEAD; else git checkout -q --orphan ci-screens; fi
-          # Keep only `main` and the folders of open pull requests; everything else (closed pull requests, and the
-          # per-commit folders earlier runs kept) goes.
-          open_prs=" $(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 200 --json number --jq '.[].number' | tr '\n' ' ') "
-          for old in */; do
-            old="${old%/}"
-            case "$old" in
-              main | "$LATEST") ;;
-              pr-*) [[ "$open_prs" == *" ${old#pr-} "* ]] || rm -rf "$old" ;;
-              *) rm -rf "$old" ;;
-            esac
-          done
-          for dir in "${engines[@]}"; do
-            engine="${dir##*/screens-}"
-            rm -rf "$LATEST/$engine"
-            mkdir -p "$LATEST/$engine"
-            find "$dir" -name '*.png' -exec cp {} "$LATEST/$engine/" \;
-          done
-          git add -A
-          if git diff --cached --quiet; then echo "No new pictures."; exit 0; fi
-          git commit -q -m "screens: $LATEST (${{ github.event.pull_request.head.sha || github.sha }})"
-          git push -q origin ci-screens
-          echo "Pictures: https://github.com/${GITHUB_REPOSITORY}/tree/ci-screens/$LATEST"
-
   # The package as a game gets it: built, packed, installed into an empty folder, run, and typechecked there.
   package:
     runs-on: ubuntu-latest

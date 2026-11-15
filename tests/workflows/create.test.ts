@@ -54,8 +54,7 @@ test('neither job may write, and neither holds a secret', () => {
   }
 })
 
-test('the screens job waits for create-play too, and the pictures it makes are uploaded', () => {
-  expect(job('screens')).toContain('needs: [engines, online, create-play]')
+test('the pictures create-play makes are uploaded', () => {
   const play = job('create-play')
   expect(play).toContain('name: screens-create')
   expect(play).toContain('tests/create/__screenshots__/**')
