@@ -75,10 +75,18 @@ export const STUCK: Uint8Array = midiFile(1, 480, [
 ])
 
 /** Format 2 (separate songs), which a song cannot use. */
-export const FORMAT_2: Uint8Array = new Uint8Array([...chunk('MThd', [0, 2, 0, 1, 0, 96]), ...chunk('MTrk', END)])
+export const FORMAT_2: Uint8Array = new Uint8Array([
+  ...chunk('MThd', [0, 2, 0, 1, 0, 96]),
+  ...chunk('MTrk', END),
+])
 
 /** SMPTE time (frames a second, not quarter notes), which a song cannot use. */
-export const SMPTE: Uint8Array = new Uint8Array([...chunk('MThd', [0, 1, 0, 1, 0xe7, 0x28]), ...chunk('MTrk', END)])
+export const SMPTE: Uint8Array = new Uint8Array([
+  ...chunk('MThd', [0, 1, 0, 1, 0xe7, 0x28]),
+  ...chunk('MTrk', END),
+])
 
 /** The start of a WAV file, which is not MIDI. */
-export const RIFF: Uint8Array = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56, 0x45])
+export const RIFF: Uint8Array = new Uint8Array([
+  0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56, 0x45,
+])
