@@ -255,6 +255,7 @@ const withScenes = (
       } as never),
       ...replace,
     },
+    'en',
   )
 
 test('a cutscene the game has, staged in the keeper’s level, loads', async () =>

@@ -195,6 +195,7 @@ const keeperGame = (fields: Record<string, unknown>, extra: Parameters<typeof st
         ...fields,
       } as never),
     },
+    'en',
   )
 
 test('a keeper with a name English has and a conversation the game has loads', async () =>

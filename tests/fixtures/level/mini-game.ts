@@ -8,7 +8,7 @@ import {
   loadGame,
   writeContent,
 } from '#src/features/content/content.ts'
-import { gameFiles, readFiles } from '../content/kind.ts'
+import { gameFiles, readFiles, withSource } from '../content/kind.ts'
 import { fixtureFiles } from '../game/read.ts'
 
 /** The player start points, one tile apart from the second on, along the floor. */
@@ -115,9 +115,13 @@ export function miniFiles(game: MiniGame = {}): Record<string, string | undefine
     })
   const base = {
     ...fixtureFiles,
-    'automata.toml': (fixtureFiles['automata.toml'] ?? '').replace(
-      'hero = "hero"\n',
-      players > 1 ? `hero = "hero"\nplayers = ${players}\n` : 'hero = "hero"\n',
+    // The fixture game lists words, so the project names the language they are written in.
+    'automata.toml': withSource(
+      (fixtureFiles['automata.toml'] ?? '').replace(
+        'hero = "hero"\n',
+        players > 1 ? `hero = "hero"\nplayers = ${players}\n` : 'hero = "hero"\n',
+      ),
+      'en',
     ),
     // The behaviours look for a hero by its kind.
     'content/characters/hero.json': writeContent('character', {
