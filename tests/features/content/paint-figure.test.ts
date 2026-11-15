@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { type FigureFile, paintFigure } from '#src/features/content/content.ts'
+import { type FreeFigure, paintFigure } from '#src/features/content/content.ts'
 import type { IndexedPicture } from '#src/lib/png.ts'
 
 /** One string per row of one frame: '.' is clear, anything else is the number of its place in the palette. */
@@ -19,7 +19,7 @@ function rows(picture: IndexedPicture, frame = 0, size = { w: picture.width, h: 
   return out
 }
 
-const dot = (): FigureFile =>
+const dot = (): FreeFigure =>
   ({
     format: 1,
     id: 'dot',
@@ -28,10 +28,10 @@ const dot = (): FigureFile =>
     paints: [{ id: 'body', color: '#f37f94' }],
     parts: [{ id: 'body', shape: 'block', x: 2, y: 2, w: 2, h: 2, paint: 'body' }],
     poses: [{ id: 'idle', moves: [] }],
-  }) as unknown as FigureFile
+  }) as unknown as FreeFigure
 
 /** The dot with something changed. */
-const dotWith = (change: Record<string, unknown>): FigureFile => ({ ...dot(), ...change }) as FigureFile
+const dotWith = (change: Record<string, unknown>): FreeFigure => ({ ...dot(), ...change }) as FreeFigure
 
 test('a block is painted where it is', () =>
   expect(rows(paintFigure(dot()))).toEqual(['....', '.11.', '.11.', '....']))

@@ -18,6 +18,16 @@ export interface Voice {
   readonly noun: string
   /** Advice for a missing field, keyed by its place with the list numbers left out, like `things.id`. */
   readonly missing: Readonly<Record<string, string>>
+  /** For a kind that has two shapes (a figure's format 1 and 2): words that are true of the shape this data has. */
+  readonly shaped?: ((data: unknown) => Shaped | undefined) | undefined
+}
+
+/** Words for one shape of a kind: they win over the kind's own where both have the key. */
+export interface Shaped {
+  /** Advice for a missing field of this shape, keyed as `Voice.missing` is. */
+  readonly missing?: Readonly<Record<string, string>> | undefined
+  /** What to say of a key this shape does not have but the other shape does, keyed by the key's place, like `body`. */
+  readonly stray?: Readonly<Record<string, string>> | undefined
 }
 
 type Place = readonly PropertyKey[]
@@ -122,16 +132,23 @@ export function toDiagnostics(
   voice: Voice,
 ): Diagnostic[] {
   const found: Diagnostic[] = []
+  const shaped = voice.shaped?.(data)
+  const words: Voice =
+    shaped?.missing === undefined ? voice : { ...voice, missing: { ...voice.missing, ...shaped.missing } }
   for (const issue of issues) {
     if (issue.code === 'unrecognized_keys') {
-      for (const key of issue.keys)
+      for (const key of issue.keys) {
+        const path = pathText([...issue.path, key])
         found.push({
           file,
-          path: pathText([...issue.path, key]),
-          message: `This is not something a ${voice.noun} has. Remove it or check the spelling.`,
+          path,
+          message:
+            shaped?.stray?.[path] ??
+            `This is not something a ${voice.noun} has. Remove it or check the spelling.`,
         })
+      }
     } else {
-      found.push({ file, path: pathText(issue.path), message: sentence(issue, data, voice) })
+      found.push({ file, path: pathText(issue.path), message: sentence(issue, data, words) })
     }
   }
   return found

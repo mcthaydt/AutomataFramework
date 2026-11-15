@@ -3,6 +3,7 @@
 // both are the same two functions, so an agent, CI and an editor on an iPad make and judge the same bytes.
 import { encodePng, type IndexedPicture } from '../../lib/png.ts'
 import type { Diagnostic } from './diagnostics.ts'
+import { isRigged } from './figure.ts'
 import type { GameContent } from './load.ts'
 import { paintBackdrop } from './paint-backdrop.ts'
 import { paintFigure } from './paint-figure.ts'
@@ -66,8 +67,11 @@ function madeFrom(content: GameContent, type: Painted, id: string): Made[] {
   const figure = content.figures?.[id]
   const backdrop = content.backdrops?.[id]
   if (path === undefined) return []
-  if (type === 'figure' && figure !== undefined)
+  if (type === 'figure' && figure !== undefined) {
+    // A rigged figure has no painter until plan R's Task 5, so it makes no picture yet.
+    if (isRigged(figure)) return []
     return pair(path, paintFigure(figure), figureSheet(figure), 'figure file')
+  }
   if (type === 'backdrop' && backdrop !== undefined)
     return pair(path, paintBackdrop(backdrop), backdropSheet(backdrop), 'backdrop file')
   return []

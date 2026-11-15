@@ -57,7 +57,19 @@ export {
   type FigurePose,
   FigureSchema,
   type FigureVariant,
+  type FreeFigure,
+  isRigged,
 } from './figure.ts'
+export { posesOf } from './figure-poses.ts'
+export type {
+  FaceChoices,
+  PersonSliders,
+  RiggedFigure,
+  RiggedPaints,
+  RiggedVariant,
+  RiggedVariantPaints,
+} from './figure-rigged.ts'
+export { FACE_SLIDERS, FACE_STYLES, PERSON_SLIDERS, type Slider } from './figure-sliders.ts'
 export { Id } from './ids.ts'
 export { jsonSchemaFor } from './json-schema.ts'
 export {

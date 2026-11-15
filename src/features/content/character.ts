@@ -1,6 +1,7 @@
 import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { noPose } from './figure.ts'
+import { posesOf } from './figure-poses.ts'
 import { Id } from './ids.ts'
 import { noSuch, unique } from './shared.ts'
 import type { ContentTypeInfo } from './type-info.ts'
@@ -237,10 +238,10 @@ export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
     }
     const figure = game.get('figure', character.figure)
     if (figure === undefined) return
-    const poses = new Set(figure.poses.map((pose) => pose.id))
+    const poses = posesOf(figure)
     character.clips?.forEach((one, i) => {
       one.poses.forEach((pose, j) => {
-        if (!poses.has(pose)) report(`clips[${i}].poses[${j}]`, noPose(figure, pose))
+        if (!poses.includes(pose)) report(`clips[${i}].poses[${j}]`, noPose(figure, poses, pose))
       })
     })
   },

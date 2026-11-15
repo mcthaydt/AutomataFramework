@@ -6,7 +6,7 @@
 // drawn last; a figure's pose is placed by its frame, so a figure stands on its feet where its parts put them.
 import type { IndexedPicture } from '../../lib/png.ts'
 import { cos, sin } from '../sim/sim.ts'
-import type { FigureFile, FigurePart, FigurePose } from './figure.ts'
+import type { FreeFigure as FigureFile, FigurePart, FigurePose } from './figure.ts'
 import { createPicture, type Picture, rgb } from './pixels.ts'
 import { figureSheet } from './sheet.ts'
 

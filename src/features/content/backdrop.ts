@@ -1,6 +1,7 @@
 import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { noPose } from './figure.ts'
+import { posesOf } from './figure-poses.ts'
 import { Id } from './ids.ts'
 import { noSuch, unique } from './shared.ts'
 import { MAX_PICTURE_SIDE, stripHeight } from './sheet.ts'
@@ -164,8 +165,9 @@ export const backdropInfo: ContentTypeInfo<BackdropFile, BackdropFile> = {
         return
       }
       const figure = game.get('figure', p.figure)
-      if (figure !== undefined && p.pose !== undefined && !figure.poses.some((pose) => pose.id === p.pose))
-        report(`props[${i}].pose`, noPose(figure, p.pose))
+      if (figure === undefined || p.pose === undefined) return
+      const poses = posesOf(figure)
+      if (!poses.includes(p.pose)) report(`props[${i}].pose`, noPose(figure, poses, p.pose))
     })
   },
 }

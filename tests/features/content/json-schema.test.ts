@@ -64,17 +64,23 @@ function expectSchema(type: ContentType, title: string, fields: string[]): void 
 test('the JSON Schema of a tileset', () =>
   expectSchema('tileset', 'Tileset', ['format', 'id', 'image', 'tileSize', 'columns', 'tiles']))
 
-test('the JSON Schema of a figure and a backdrop', () => {
-  expectSchema('figure', 'Figure', [
-    'format',
-    'id',
-    'tile',
-    'frame',
-    'outline',
-    'paints',
-    'parts',
-    'poses',
-    'variants',
+/** A kind read in two shapes: its title, and each shape's fields in order, a description on each, and no unknown keys. */
+function expectShapes(type: ContentType, title: string, shapes: string[][]): void {
+  const schema = jsonSchemaFor(type) as { title?: string; oneOf?: Described[]; anyOf?: Described[] }
+  const options = (schema.oneOf ?? schema.anyOf ?? []) as (Described & { additionalProperties?: unknown })[]
+  expect(schema.title).toBe(title)
+  expect(options.map((option) => Object.keys(option.properties))).toEqual(shapes)
+  for (const option of options) {
+    for (const [name, field] of Object.entries(option.properties))
+      expect(field.description, `${type}.${name} has a description`).toMatch(/\w{4,}/)
+    expect(option.additionalProperties).toBe(false)
+  }
+}
+
+test('the JSON Schema of a figure, a free one and a rigged one, and of a backdrop', () => {
+  expectShapes('figure', 'Figure', [
+    ['format', 'id', 'tile', 'frame', 'outline', 'paints', 'parts', 'poses', 'variants'],
+    ['format', 'id', 'body', 'tile', 'frame', 'sliders', 'face', 'paints', 'palette', 'outline', 'variants'],
   ])
   expectSchema('backdrop', 'Backdrop', ['format', 'id', 'seed', 'tile', 'width', 'layers', 'props'])
 })

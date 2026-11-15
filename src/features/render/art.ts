@@ -17,6 +17,7 @@ import {
   figureSheet,
   type GameContent,
   paintedPath,
+  posesOf,
 } from '../content/content.ts'
 import { type TileBox, tileBoxes } from '../level/level.ts'
 import { tilePictures } from './tiles.ts'
@@ -226,7 +227,7 @@ export async function loadArt(options: {
       const found = figures.get(id)
       if (found === undefined) return undefined
       const { figure, frames } = found
-      const name = pose === '' || !frames.has(pose) ? (figure.poses[0]?.id ?? '') : pose
+      const name = pose === '' || !frames.has(pose) ? (posesOf(figure)[0] ?? '') : pose
       const variant = player >= 2 ? figure.variants?.[player - 2] : undefined
       const texture =
         (variant === undefined ? undefined : frames.get(`${variant.id}/${name}`)) ?? frames.get(name)

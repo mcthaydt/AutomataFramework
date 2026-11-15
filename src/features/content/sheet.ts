@@ -4,6 +4,7 @@
 // renderer never learn which painter ran.
 import type { BackdropFile } from './backdrop.ts'
 import type { FigureFile } from './figure.ts'
+import { posesOf } from './figure-poses.ts'
 
 /** How many pictures go in a row of a figure's sheet. */
 export const SHEET_COLUMNS = 8
@@ -37,7 +38,7 @@ export function stripHeight(height: number, tile: number): number {
  * `<variant>/<pose>`. Frame `n` is in column `n % 8` and row `floor(n / 8)`.
  */
 export function figureSheet(figure: FigureFile): Sheet {
-  const names = figure.poses.map((pose) => pose.id)
+  const names = posesOf(figure)
   const all = [...names, ...(figure.variants ?? []).flatMap((v) => names.map((name) => `${v.id}/${name}`))]
   const { w, h } = figure.frame
   const frames = all.map((name, n) => ({

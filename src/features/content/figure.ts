@@ -1,7 +1,10 @@
 import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
+import type { Shaped } from './diagnostics.ts'
+import { checkRigged } from './figure-check.ts'
+import { type RiggedFigure, RiggedFigureSchema } from './figure-rigged.ts'
 import { Id } from './ids.ts'
-import { list, noSuch, unique } from './shared.ts'
+import { list, noSuch, unique, variants } from './shared.ts'
 import { MAX_PICTURE_SIDE, SHEET_COLUMNS } from './sheet.ts'
 import type { ContentTypeInfo } from './type-info.ts'
 
@@ -44,10 +47,11 @@ export interface FigureVariant {
 }
 
 /**
- * A figure file once read: a picture made of parts, and the poses it can take. It paints a character, a tile or a prop,
- * and it is drawn facing right. Sizes and places are in pixels of the picture; `tile` says how many make one tile.
+ * A free figure file once read, `"format": 1`: a picture made of parts, and the poses it can take. It paints a character,
+ * a tile or a prop, and it is drawn facing right. Sizes and places are in pixels of the picture; `tile` says how many
+ * make one tile.
  */
-export interface FigureFile {
+export interface FreeFigure {
   readonly format: 1
   readonly id: string
   /** How many pixels of the picture make one tile of the game. */
@@ -63,9 +67,17 @@ export interface FigureFile {
   readonly variants?: readonly FigureVariant[] | undefined
 }
 
+/** A figure file once read: a free figure (`"format": 1`, made of parts) or a rigged one (`"format": 2`, a person). */
+export type FigureFile = FreeFigure | RiggedFigure
+
+/** True for a rigged figure (`"format": 2`), false for a free one. */
+export function isRigged(figure: FigureFile): figure is RiggedFigure {
+  return figure.format === 2
+}
+
 /** `The figure "hero" has no pose called "runn". It has: idle, run-1, run-2.` The one sentence for a pose that is not there. */
-export function noPose(figure: Pick<FigureFile, 'id' | 'poses'>, pose: string): string {
-  return `The figure "${figure.id}" has no pose called "${pose}". It has: ${list(figure.poses.map((p) => p.id))}.`
+export function noPose(figure: Pick<FigureFile, 'id'>, poses: readonly string[], pose: string): string {
+  return `The figure "${figure.id}" has no pose called "${pose}". It has: ${list(poses)}.`
 }
 
 const whole = (what: string, min: number, max: number): z.ZodInt =>
@@ -144,12 +156,12 @@ const variant = z.strictObject({
 })
 
 /** How many pictures a figure's sheet holds: every pose, once for the figure and once for each variant. */
-function frameCount(figure: Partial<FigureFile>): number {
+function frameCount(figure: Partial<FreeFigure>): number {
   return (figure.poses?.length ?? 0) * (1 + (figure.variants?.length ?? 0))
 }
 
 /** The checks that look across fields. Written to cope with a half-read file, since it may run beside other problems. */
-function checkFigure(figure: Partial<FigureFile>, ctx: z.core.$RefinementCtx): void {
+function checkFigure(figure: Partial<FreeFigure>, ctx: z.core.$RefinementCtx): void {
   const add = (path: readonly PropertyKey[], message: string): void =>
     ctx.addIssue({ code: 'custom', path: [...path], message })
   const paints = figure.paints ?? []
@@ -202,8 +214,8 @@ function checkFigure(figure: Partial<FigureFile>, ctx: z.core.$RefinementCtx): v
   }
 }
 
-/** The rules for a figure file; unknown keys are refused. */
-export const FigureSchema: z.ZodType<FigureFile, FigureFile> = z
+/** The rules for a free figure file; unknown keys are refused. */
+const FreeFigureSchema = z
   .strictObject({
     format: z.literal(1).describe('The version of this file format. Always 1.'),
     id: Id.describe('A name for this figure, like "hero". It matches the file name.'),
@@ -244,6 +256,34 @@ export const FigureSchema: z.ZodType<FigureFile, FigureFile> = z
   })
   .superRefine(checkFigure)
 
+/** The rules for a figure file of either format, told apart by `format`; unknown keys are refused. */
+export const FigureSchema: z.ZodType<FigureFile, FigureFile> = variants('format', [
+  FreeFigureSchema,
+  RiggedFigureSchema,
+])
+
+/** What a key of the other format has to say, one sentence that says which format has it (Review Focus 1). */
+const only = (own: 1 | 2, file: 1 | 2): string =>
+  `This is only in a figure with "format": ${own}, and this one has "format": ${file}. Remove it, or write "format": ${own}.`
+
+/** The keys a format 2 file has that a format 1 file does not (later tasks add theirs here). */
+const RIGGED_ONLY = ['body', 'sliders', 'face', 'palette'] as const
+
+/** Advice for a field only a format 2 file must have. */
+const RIGGED_MISSING: Readonly<Record<string, string>> = {
+  body: 'Write "person".',
+  paints: 'Write the colours as { "skin": "tan" }, each the id of a colour in the palette.',
+  'paints.skin': 'Write the id of a colour in the palette for the skin, like "tan".',
+}
+
+/** The words true of the format the file says it is: its own missing-field advice, and what its strays belong to. */
+function shapedFigure(data: unknown): Shaped | undefined {
+  const format = typeof data === 'object' && data !== null ? (data as { format?: unknown }).format : undefined
+  if (format === 1) return { stray: Object.fromEntries(RIGGED_ONLY.map((key) => [key, only(2, 1)])) }
+  if (format === 2) return { missing: RIGGED_MISSING, stray: { parts: only(1, 2) } }
+  return undefined
+}
+
 /** The figure's row of the content table. */
 export const figureInfo: ContentTypeInfo<FigureFile, FigureFile> = {
   schema: FigureSchema,
@@ -278,5 +318,9 @@ export const figureInfo: ContentTypeInfo<FigureFile, FigureFile> = {
     'variants.paints': 'List the paints that change, each with an id and a color.',
     'variants.paints.id': 'Write which of the figure\'s paints changes, like "body".',
     'variants.paints.color': 'Write the new colour as # and six digits, like #afd472.',
+  },
+  shaped: shapedFigure,
+  check(figure, game, report) {
+    if (isRigged(figure)) checkRigged(figure, game, report)
   },
 }

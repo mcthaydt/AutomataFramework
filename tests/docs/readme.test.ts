@@ -288,7 +288,7 @@ test("the README has an Art section whose figure reads, paints, and whose names 
   const parsed = framework.parseContent('figure', block ?? '', 'content/figures/hero.json')
   expect(parsed.ok ? [] : parsed.diagnostics.map(framework.formatDiagnostic)).toEqual([])
   if (!parsed.ok) return
-  expect(() => framework.paintFigure(parsed.value as framework.FigureFile)).not.toThrow()
+  expect(() => framework.paintFigure(parsed.value as framework.FreeFigure)).not.toThrow()
   for (const name of ['artFiles', 'artProblems', 'setClip', 'setFacing', 'paintFigure'])
     expect(framework, name).toHaveProperty(name)
 })
