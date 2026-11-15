@@ -85,21 +85,27 @@ every part).
   every commit; install the local hook that refuses any other author before the first; no AI attribution anywhere;
   never the Owner's real name; never force-push.
 - **Tracker:** after each task, update `docs/superpowers/progress.md` (Cycle 12). Tasks 1 to 22 are 4% of stage 4
-  each; the last 12% is the final green run with every check passing and the Owner's yes to the moved recording.
+  each (7a and 7b are 2% each); the last 12% is the final green run with every check passing and the Owner's yes to the moved recording.
 
 ## Order, and what each part waits for
 
-The parts keep the spec's letters. They are built in this order, five pull requests, each green and merged before the
-next starts. B comes before A because the template's level names `lost`, `score` and a goal, and its recording may
-move only once.
+The parts keep the spec's letters. They are built in this order, six pull requests. B comes before A because the
+template's level names `lost`, `score` and a goal, and its recording may move only once. Each is green and merged
+before the next starts, with one exception: Part C does not wait for the Owner's gate on Part A.
 
 | Pull request | Part | Tasks | Waits for |
 |---|---|---|---|
 | 1 | B1, what needs no page | 1 to 5 | The spec merged (AF 137). |
-| 2 | B2, the screens and the flow | 6 to 13 | Pull request 1. Plan U's audit fixes (AF 136) on `main`: if they are not, merge `main` when they land and keep going. |
-| 3 | A, the template on the flow | 14 to 17 | Pull request 2. **The Owner's yes to the moved recording, before merge.** |
-| 4 | C, the checks | 18 to 20 | Pull request 3 (the checks are tested on the new template). |
-| 5 | D, the journeys and the docs | 21, 22 | Pull request 4. |
+| 2a | B2, losing, the start of a level, How to play, the score, the switches | 6 to 9 | Pull request 1. Plan U's audit fixes (AF 136) on `main`: if they are not, merge `main` when they land and keep going. |
+| 2b | B2, the page, loading, sound, the whole visit | 10 to 13 | Pull request 2a. |
+| 3 | A, the template on the flow | 14 to 17 | Pull request 2b. **The Owner's yes to the moved recording, before merge.** |
+| 4 | C, the checks | 18 to 20 | Pull request 2b on `main`, and pull request 3 green (merged, or waiting only for the Owner). |
+| 5 | D, the journeys and the docs | 21, 22 | Pull requests 3 and 4, both merged. |
+
+Pull request 4 branches from `main`, not from pull request 3: Part C's tests hold on the template before and after
+Part A. Pull requests 3 and 4 both touch `template/AGENTS.md` and the README, so whichever merges second merges `main`
+first. At most two of this plan's branches are open at once, so the count stays under five. Task 7 is two tasks, 7a
+and 7b; where this plan says "Task 7" it means both.
 
 Plan F (the feel runtime) and the Scenes cycle are being built at the same time and touch `game.ts`, `hud` and
 `level/`. Whichever lands second merges `main` and keeps the other's change. If a file this plan names has moved,
@@ -116,7 +122,8 @@ audit should weigh each.
 2. **`hero.fell` is its own small plugin, joined only to a game whose `lost` is exactly `"hero.fell"`.** Adding an
    event to `movesPlugin` would change the schema hash of every game with a built-in hero and move every recording.
    So `fallPlugin` follows `joinPlugin` and `touchPlugin`: "only a game that asks has it, so every other game keeps the
-   sim it had". A hero has fallen when its center is more than two tiles below the level's lowest row. It is said once
+   sim it had". A hero is any thing with `Player` and a `Body`, whether the framework moves it or the game's own
+   rules do, so the plugin depends on `physics` and `commands` and never on the moves plugin. A hero has fallen when its center is more than two tiles below the level's lowest row. It is said once
    for each hero in a sim. In a game for several players, the first hero to fall loses the level for all; a game that
    wants another rule raises its own event and names that.
 3. **Try again and Start again start the level afresh in the same page**, as "Next level" starts one today: the old
@@ -128,8 +135,10 @@ audit should weigh each.
    reads. A level with no such message has no goal line. So no level file changes shape and no hash can move for a
    word.
 6. **A level waits for the first press.** The first picture is drawn, the goal line and the hint are up, and the sim
-   does not step until a key, a gamepad button or a touch. Nothing is silenced while it waits, so a held Right walks
-   from tick 0. The goal line stays three seconds after that press (on the injected `Frames`), then goes; it is also on
+   does not step until a press that begins after the level is shown: a `keydown` that is not a repeat, a gamepad
+   button that was up and goes down, or a `pointerdown`. The Enter, the pad button or the tap that chose Play is still
+   down when the level appears, and it does not count. Nothing is silenced once the level starts, so a direction
+   pressed that way walks from tick 0. The goal line stays three seconds after that press (on the injected `Frames`), then goes; it is also on
    the pause screen. Watch mode does not wait.
 7. **`score` names one number of one resource:** `score = "hero.score.sparks"` is the field `sparks` of the resource
    `hero.score` (the last dot splits them). It is read after each step and shown in the HUD's top center, on Well done
@@ -141,10 +150,13 @@ audit should weigh each.
    put them. It is on the pause screen and in Settings.
 10. **"Delete all my saves" erases every saved game and the best score.** It leaves the language, the keys and the
     volumes: those are not what a player calls a save. It asks first, and "No" has the focus.
-11. **Back** is one history entry, added the first time a level starts. Back while playing pauses and puts the entry
-    back; Back with a screen on top closes it and puts the entry back; Back on pause, Well done or Try again goes to
-    the menu; Back on the menu leaves the page as it always did. `FlowOptions.back: false` turns it off, for a page
-    that frames a game and owns its own history.
+11. **Back** is one history entry, held while a level is on the page. The flow keeps whether it holds one, and pushes
+    one whenever `playing` is entered and none is held. Back while playing pauses and puts the entry back; Back with a
+    screen on top closes it and puts the entry back; Back on pause, Well done or Try again goes to the menu, and the
+    entry is spent, so the next Play pushes a new one; Back on the menu leaves the page as it always did.
+    `FlowOptions.back` is on by default only when the page is not framed (`window.top === window.self`, which a frame
+    of another origin may read): a `pushState` in a frame joins the top page's history, so a framed game leaves Back
+    to the page that frames it. `back: true` or `false` overrides the default.
 12. **The page-wide defaults** are set by `startFlow` on the document (`overscroll-behavior: none`, no scrolling of the
     page while a game is mounted full-height) and on the mount (`touch-action: none`, `user-select: none`,
     `-webkit-touch-callout: none`), and put back by `stop()`. The screens' own lists still scroll inside themselves.
@@ -158,7 +170,9 @@ audit should weigh each.
     `check` says the same findings as notes.
 16. **The saves-version check reads `gameSave`**, an optional export of a game's `src/headless.ts` (a `SaveDef`).
     `automata replay --accept` writes `meta.save` (`"<version>:<hash of the schema>"`) into each recording; `--ship`
-    fails when the hash differs from the newest recording's and the version does not. A game with no `gameSave` uses
+    fails when the hash differs from the newest recording's and the version does not. The hash is the framework's own hash of the save schema's JSON Schema (`z.toJSONSchema`
+    with `io: 'input'`, as `describeSchemas` in `sim/create-sim.ts` makes one), so one schema gives one hash in every
+    engine and every run. A game with no `gameSave` uses
     the flow's own save, which the framework versions, and is not checked.
 17. **The template is for two players** (`players = 2`, a second start point, "Add a player"), as Step U says. It all
     moves in the one move of the recording.
@@ -192,7 +206,7 @@ src/features/content/project.ts          + lost, score; scoreRef
 src/features/content/load.ts             the new fields' cross-file checks
 src/features/level/fall.ts               NEW: fallPlugin, fellEvent, levelBottom
 src/features/level/uses.ts               + usesFalls
-src/features/level/game-sim.ts           joins fallPlugin when the game asks
+src/features/level/game-sim.ts           + gameSimPlugins; joins fallPlugin when the game asks
 src/features/level/sim-content.ts        lost and score leave what the sim is given
 src/features/sim/create-sim.ts           + Sim.read(resourceId)
 src/features/audio/settings.ts           + muted
@@ -217,12 +231,13 @@ src/features/flow/
   sections.ts                            + records
   events.ts                              + screen.lost
 src/features/locale/library/*.json       + Task 5's words, six languages
+src/features/locale/labels.ts            + levelGoal
 src/features/cli/
   check-page.ts                          NEW: the page part of the rules step
   check-words.ts                         NEW: the words rule
   check-ends.ts                          NEW: done, lost and score can happen
   check-ship.ts                          NEW: the ship step and its list
-  check.ts args.ts report.ts help.ts mcp-tools.ts replay.ts             --ship, the new step, meta.save
+  check.ts args.ts report.ts help.ts mcp-tools.ts replay.ts live.ts ports.ts   --ship, the new step, meta.save, gameSave
 template/                                the page, the level, the door, the words, the feels and sounds,
                                          tests/play/, vitest.play.config.ts, the second CI job; the recording
 skills/, template/AGENTS.md, README.md   the maker's boxes; the new fields, screens and checks
@@ -299,14 +314,21 @@ export const fellEvent: EventDef<z.ZodType<{ readonly player: number; readonly s
 export function levelBottom(content: GameContent, level: string): number
 /** How far below the lowest row a hero's center must be to have fallen, in tiles. */
 export const FALL_DEPTH = 2
-/** Says `hero.fell` once for each hero whose center is below `bottom + FALL_DEPTH`. */
+/**
+ * Says `hero.fell` once for each hero whose center is below `bottom + FALL_DEPTH`. A hero is any thing with `Player`
+ * and a `Body`: it needs `physics` and `commands`, and never the moves plugin.
+ */
 export function fallPlugin(options: { readonly bottom: number }): PluginDef
-/** True for a game whose project says `lost = "hero.fell"`. */
+/** The framework's own plugins for this game, in the order a sim joins them, without the game's own. */
+export function gameSimPlugins(options: GameSimOptions): readonly PluginDef[]
+/** True for a game whose project says `lost = "hero.fell"`, and for nothing else: the hero needs no `moves`. */
 export function usesFalls(content: GameContent): boolean
 ```
 
-  `createGameSim` adds `fallPlugin({ bottom: levelBottom(content, level) })` after `movesPlugin`, only when
-  `usesFalls(content)`. The comment says what the others say: only a game that asks has it, so every other game keeps
+  The list `createGameSim` builds today moves, with the same plugins in the same order, into `gameSimPlugins`
+  (exported from the headless entry). `createGameSim` calls it and puts `options.plugins` after it, so no sim changes
+  and no hash moves. A caller that needs to know what a game's sim registers (Task 19) reads it from there.
+  `gameSimPlugins` adds `fallPlugin({ bottom: levelBottom(content, level) })` last, only when `usesFalls(content)`. The comment says what the others say: only a game that asks has it, so every other game keeps
   the sim it had. The plugin keeps who has fallen in a component of its own on the hero (`level.fallen`), so a
   snapshot carries it.
 
@@ -321,12 +343,14 @@ test('two heroes that fall raise one event each', …)
 test('a restored snapshot of a fallen hero does not raise it again', …)
 test('a game with no lost has no fall plugin: its schema hash is the recorded one', …)   // tests/golden/schema-hash.json
 test('a game whose lost is another event has no fall plugin', …)
+test('a hero with no moves, moved by the game\'s own rules, falls and raises hero.fell', …)   // the fixture's hero
+test('gameSimPlugins gives the plugins createGameSim joins, in its order, for each fixture game', …)   // by plugin id
 // fall.parity.test.ts
 test('the fall, in this engine, ends at the recorded hash', …)   // expectGolden(…, fall.json), 240 ticks
 ```
 
 - [ ] **Step 2: Push; red.** The Node job says GOLDEN NOT RECORDED and prints the JSON.
-- [ ] **Step 3: Build `fall.ts`, `usesFalls` and the line in `createGameSim`.**
+- [ ] **Step 3: Build `fall.ts`, `usesFalls` and `gameSimPlugins`, which `createGameSim` then calls.**
 - [ ] **Step 4: Commit the printed `fall.json`** in a commit that says the golden is new. **Push; green in four
   engines, and no other golden differs.** If one does, stop and report.
 - [ ] **Step 5: Commit** `feat(level): a hero that falls out of the level raises hero.fell, for a game that names it`.
@@ -365,11 +389,18 @@ export const FLOW_START: FlowState   // { step: 'loading', warned: false, taken:
 | `paused`, no `over` | `again` | `playing` the same level, `attempt + 1` |
 | `paused`, with `over` | `again` | unchanged |
 | `lost`, `done` | `level-lost`, `level-done`, `pause` | unchanged (the very same object) |
+| every step but `playing` | `level-lost` | unchanged (the very same object) |
+| `menu`, `done`, `playing`, and every step before the menu | `again` | unchanged (the very same object) |
 | `menu` or `paused`, no `over` | `open`, `over: 'how'` | the same step with `over: 'how'` (plan U's rule, one more name) |
+
+  `to()`, which builds "what a visit carries and nothing else", carries `attempt` too, so the count is never dropped
+  on the way to the menu and back.
 
 - [ ] **Step 1: Write the failing tests:** one per row, then:
 
 ```ts
+test.each(/* every step */)('%s given level-lost, and given again: only the table\'s rows change anything', …)
+test('leave for the menu and play again: attempt keeps counting, it does not start over', …)
 test('lose, try again, lose, try again, win: attempt is 1, 2, 3 and the step ends at done', …)
 test('pause, Keep playing: attempt does not change', …)
 test('pause, Start again: attempt goes up and the step is playing', …)
@@ -469,7 +500,7 @@ hints (`automata.hint.*`).
 
 ---
 
-## Part B2: the screens and the flow (pull request 2)
+## Part B2: the screens and the flow (pull requests 2a and 2b)
 
 Every screen task has the same proof, as plan U's have: a Node test of the pure part, and a real-browser test
 (`*.browser.test.ts`, three engines) that opens the screen at the five sizes of `tests/fixtures/game/screens.ts`,
@@ -503,7 +534,7 @@ export function lostScreen(options: ScreenBase & {
 }): Screen
 export interface ScreenMakers { /* …as today, plus: */ readonly lost: typeof lostScreen }
 // screens/pause.ts
-export type PauseItem = 'resume' | 'again' | 'add-player' | 'settings' | 'leave'   // Task 7 adds 'how'
+export type PauseItem = 'resume' | 'again' | 'add-player' | 'settings' | 'leave'   // Task 7b adds 'how'
 // flow/loading.ts: what one step's events mean for the level. `done` wins over `lost`.
 export function levelEnd(
   project: Pick<Project, 'done' | 'lost'>,
@@ -544,29 +575,82 @@ test('a game with no lost can never reach the lost step', …)
 - [ ] **Step 5: Push; green in three engines.**
 - [ ] **Step 6: Commit** `feat(flow): Try again when a level is lost, and Start again on pause`.
 
-### Task 7: The goal line, a level that waits for you, and How to play
+### Task 7a: The goal line, and a level that waits for you
 
 **Files:**
-- Create: `src/features/screens/how.ts`, `src/features/screens/How.svelte`, `src/features/screens/how-rows.ts`,
-  `tests/features/screens/how-rows.test.ts`, `tests/features/screens/how.browser.test.ts`,
-  `tests/features/flow/start-card.browser.test.ts`
+- Create: `tests/features/flow/start-card.browser.test.ts`, `tests/fixtures/flow/press.ts` (one helper,
+  `pressToStart`, for every test that needs a level moving)
 - Modify: `src/features/game/game.ts`, `src/features/screens/hud.ts`, `src/features/screens/Hud.svelte`,
-  `src/features/screens/menu-items.ts`, `src/features/screens/pause.ts`, `src/features/screens/screens.ts`,
-  `src/features/flow/overs.ts`, `src/features/flow/play.ts`, `src/features/locale/names.ts` (`levelGoal`)
+  `src/features/screens/pause.ts`, `src/features/flow/play.ts`, `src/features/locale/labels.ts` (`levelGoal`, beside
+  `levelName`), `tests/features/locale/labels.test.ts`
 
 **Interfaces:**
 - Produces:
 
 ```ts
-// locale: the level's goal in the player's words (`level.<id>.goal`), or undefined when the game has no such word.
-export function levelGoal(words: Words, has: (key: string) => boolean, level: string): string | undefined
+// locale/labels.ts: the level's goal in the player's words (`level.<id>.goal`), or undefined when the game has no
+// such word. Read as `levelName` reads `level.<id>.name`: a key that comes back as itself is a word the game lacks.
+export function levelGoal(words: Words, levelId: string): string | undefined
 // game.ts
 export interface GameOptions { /* …plus: */
-  /** The sim does not step until the first key, gamepad button or touch. Nothing is silenced meanwhile. */
+  /**
+   * The sim does not step until the first press that begins after the game is shown: a `keydown` that is not a
+   * repeat, a gamepad button that was up and goes down, or a `pointerdown`. Nothing is silenced once it starts.
+   */
   readonly waitForPress?: boolean }
 export interface Game { /* …plus: */
   /** True from the start until that first press, in a game made with `waitForPress`. */
   waiting(): boolean }
+// screens/hud.ts
+export function hud(options: /* …as today, plus: */ {
+  /** The level's goal and what to press, shown at the top until three seconds after the first press. */
+  readonly card?: () => { readonly goal?: string; readonly hint?: string } | undefined
+}): …
+```
+
+  A press that was already down when the level appeared does not start it: the game notes which keys and pad buttons
+  are down on its first frame and waits for each to come up before it counts, and a `pointerdown` counts only when it
+  arrives after that frame. So the Enter, the pad's bottom button or the tap that chose Play, Try again or Next level
+  never starts a level. The hint on the card is `playHint(...)` for keys and a gamepad and nothing on touch (the
+  thumbs' own hints are on the screen). The flow starts every level with `waitForPress: true`, sets
+  `mount.dataset.waiting` (present while waiting), and takes the card down three seconds after `waiting()` turns false,
+  counted on `frames`. The pause screen shows the goal line under "Paused". Flow tests written before this task that
+  expect a level to move at once call `pressToStart` after the level shows.
+
+- [ ] **Step 1: Write the failing tests.**
+
+```ts
+// labels.test.ts
+test('levelGoal gives the game\'s word, and undefined for a level with none', …)
+// start-card.browser.test.ts
+test('a level starts still: the tick stays 0, data-waiting is there, the goal line and the hint show', …)
+test('pressing Right starts it and the hero walks from the first tick', …)
+test('a touch starts it; a gamepad button starts it', …)
+test('the Enter, the pad button and the tap that pressed Play do not start the level', …)   // each held for 30 frames
+test('a held key\'s repeats do not start it; letting go and pressing again does', …)
+test('Try again and Next level wait the same way', …)
+test('three seconds after the first press the card is gone; before that it is there', …)   // frames moved by hand
+test('a level with no goal word shows the hint alone; on touch with no goal, no card', …)
+test('the pause screen shows the goal line', …)
+test('watch mode does not wait', …)
+```
+
+- [ ] **Step 2: Push; red. Step 3: build. Step 4: push; green in three engines.**
+- [ ] **Step 5: Commit** `feat(flow): the goal line, and a level that waits for the first press`.
+
+### Task 7b: How to play
+
+**Files:**
+- Create: `src/features/screens/how.ts`, `src/features/screens/How.svelte`, `src/features/screens/how-rows.ts`,
+  `tests/features/screens/how-rows.test.ts`, `tests/features/screens/how.browser.test.ts`
+- Modify: `src/features/screens/menu-items.ts`, `src/features/screens/pause.ts`, `src/features/screens/screens.ts`,
+  `src/features/flow/overs.ts`, `src/features/flow/play.ts`
+
+**Interfaces:**
+- Consumes: `levelGoal` (Task 7a); Task 3's `over: 'how'`.
+- Produces:
+
+```ts
 // screens/how-rows.ts (pure)
 export interface HowRow {
   /** What the hero does: "Walk", "Jump", "Jump again in the air", "Jump off a wall", "Dash", "Pause". */
@@ -590,21 +674,13 @@ export function howScreen(options: ScreenBase & {
 export interface ScreenMakers { /* …plus: */ readonly how: typeof howScreen }
 export type MenuItem = /* … */ | 'how'      // after 'settings', before 'quit'
 export type PauseItem = /* … */ | 'how'     // after 'settings', before 'leave'
-// screens/hud.ts
-export function hud(options: /* …as today, plus: */ {
-  /** The level's goal and what to press, shown at the top until three seconds after the first press. */
-  readonly card?: () => { readonly goal?: string; readonly hint?: string } | undefined
-}): …
 ```
 
   `howRows`: Walk and Jump always; "Jump again in the air", "Jump off a wall" and "Dash" only when the hero has them; a
   hero with no `moves` lists the game's own controls by their labels (`controlRows`' labels); "Pause" last (Escape, the
   start button, or the corner button's name). On touch, with the sides not swapped, walking is
   `automata.how.slide-left` and jumping `automata.how.tap-right`; swapped, the other two; the dash is
-  `automata.how.dash-button`. The hint on the card is `playHint(...)` for keys and a gamepad and nothing on touch
-  (the thumbs' own hints are on the screen). The flow starts every level with `waitForPress: true`, sets
-  `mount.dataset.waiting` (present while waiting), and takes the card down three seconds after `waiting()` turns false,
-  counted on `frames`. The pause screen shows the goal line under "Paused".
+  `automata.how.dash-button`. On the menu the goal is the first level's; on pause it is the level being played.
 
 - [ ] **Step 1: Write the failing tests.**
 
@@ -616,14 +692,6 @@ test('a gamepad: Walk is "The stick", Jump is its button\'s name', …)
 test('touch: slide left, tap right; swapped: slide right, tap left; a dash is the dash button', …)
 test('a changed key is the one named', …)
 test('a hero with no moves lists the game\'s own controls', …)
-// start-card.browser.test.ts
-test('a level starts still: the tick stays 0, data-waiting is there, the goal line and the hint show', …)
-test('holding Right starts it and the hero walks from the first tick', …)
-test('a touch starts it; a gamepad button starts it', …)
-test('three seconds after the first press the card is gone; before that it is there', …)   // frames moved by hand
-test('a level with no goal word shows the hint alone; on touch with no goal, no card', …)
-test('the pause screen shows the goal line', …)
-test('watch mode does not wait', …)
 // how.browser.test.ts
 test('How to play from the menu and from pause: the rows, Back has the focus, Back returns to where it was opened', …)
 test('plugging in a gamepad while it is open changes the rows', …)
@@ -631,7 +699,7 @@ test('at 844x390 with a hero that has every move, only the list scrolls', …)
 ```
 
 - [ ] **Step 2: Push; red. Step 3: build. Step 4: push; green in three engines.**
-- [ ] **Step 5: Commit** `feat(flow): the goal line, a level that waits for the first press, and How to play`.
+- [ ] **Step 5: Commit** `feat(flow): How to play, on the menu and on pause`.
 
 ### Task 8: The score and the best score
 
@@ -716,6 +784,9 @@ test('a saved game that is garbage in storage: the game still opens, and Delete 
 
 - [ ] **Step 2: Push; red. Step 3: build. Step 4: push; green.**
 - [ ] **Step 5: Commit** `feat(flow): a sound switch on pause, and Delete all my saves`.
+  **Open pull request 2a.** Tracker to 36% of stage 4.
+
+*Pull request 2b starts here.*
 
 ### Task 10: The page holds still, and Back does something sensible
 
@@ -743,12 +814,16 @@ export function wireBack(options: {
   readonly onState: (listener: (state: FlowState) => void) => () => void
   readonly seams?: BackSeams
 }): () => void
-export interface FlowOptions { /* …plus: */ readonly back?: boolean }   // default true
+/** Whether Back is the game's when nobody says: only in a page that is not framed (`top === self`). */
+export function backDefault(page: { readonly top: unknown; readonly self: unknown }): boolean
+export interface FlowOptions { /* …plus: */ readonly back?: boolean }   // default backDefault(window)
 ```
 
   `backMeans`: with `over` → `back`, again; `playing` → `pause`, again; `paused`, `done`, `lost` → `leave`, not again;
-  anything else → `undefined`. The entry is pushed the first time `playing` is entered and again whenever `again` says
-  so, and never twice in a row.
+  anything else → `undefined`. `wireBack` keeps whether an entry is held: it pushes one whenever `playing` is entered
+  and none is held, and after each `again: true`; an entry Back took with `again: false` is no longer held. So there
+  are never two entries, and Play after a return to the menu gets a new one. In a frame nothing is pushed unless the
+  game says `back: true`: a frame's `pushState` joins the top page's history, and that Back is the top page's.
 
 - [ ] **Step 1: Write the failing tests.**
 
@@ -766,6 +841,10 @@ test('Back on pause is the menu; Back on the menu leaves (the test\'s history he
 test('Back with Settings open on pause closes Settings and stays paused', …)               // Review Focus 3
 test('Back while loading and on the language picker is not caught', …)
 test('Back twice in one frame while playing: paused, then the menu; never two entries', …)
+test('Play, Back, Back to the menu, Play again, Back: paused, not gone', …)
+test('lose, Back to the menu, Continue, Back: paused, not gone', …)
+test('backDefault: true when top is self, false when it is not', …)
+test('in a frame nothing is pushed and nothing is listened to; back: true in a frame turns it on', …)   // a real iframe
 test('back: false pushes nothing and listens to nothing; after stop() nothing is listened to', …)
 ```
 
@@ -840,8 +919,12 @@ test('the mount is never without a child from the first frame to the menu', …)
   `tests/features/ui/frame.browser.test.ts`
 
 **Interfaces:**
-- Produces: no new name. The speaker's graph becomes: each bus → a `DynamicsCompressorNode` (threshold −12 dB, knee
-  12, ratio 8, attack 0.003 s, release 0.25 s) → the master gain (0.5, as it is) → the destination. A screen put up
+- Produces: no new name. The speaker's graph becomes: each bus → a `DynamicsCompressorNode` set as a limiter
+  (threshold −3 dB, knee 0, ratio 20, attack 0.003 s, release 0.25 s) → the master gain (0.5, as it is) → the
+  destination. A limiter, not a softer compressor, because Web Audio adds make-up gain worked out from the curve: at
+  −12 dB, ratio 8 it is about +6 dB on everything quiet, which would change every existing game's mix. If the "within
+  1 dB" test below still fails in an engine, a gain after the compressor takes off the measured difference, as one
+  named constant with a comment; the test is never loosened. A screen put up
   by `show` fades in over 150 ms and out over 100 ms (opacity only), and does neither under
   `prefers-reduced-motion: reduce`. A screen that is fading out takes no press.
 
@@ -849,7 +932,9 @@ test('the mount is never without a child from the first frame to the menu', …)
 
 ```ts
 test('every bus reaches the destination through one compressor, then the master gain', …)   // the fake context's graph
-test('sixteen voices at once, rendered offline: no sample is above 1', …)
+test('one voice alone is within 1 dB of what it was before, in peak and in RMS', …)   // the old graph and the new, both rendered
+test('sixteen voices at once: no sample is above 1', …)
+// both render with an OfflineAudioContext in each of the three engines: the compressor's look-ahead differs by engine
 test('a looped track: the last note of one pass and the first of the next are one beat apart, to the sample', …)
 test('a screen fades in; under reduced motion it is fully there on the first frame', …)
 test('a press on a screen that is fading out does nothing', …)
@@ -891,7 +976,7 @@ test('with both volumes at 0 a level is lost, tried again and won', …)
   shrinking a control below its floor is a stop: report it.
 - [ ] **Step 3: Push; green in three engines.** The pictures reach `ci-screens`.
 - [ ] **Step 4: Commit** `test(flow): a visit lost and won by thumb and by keys; names, contrast, a hidden page`.
-- [ ] **Step 5: Open pull request 2. Report the pictures to the coordinator** for the Owner's screenshot review (the
+- [ ] **Step 5: Open pull request 2b. Report the pictures to the coordinator** for the Owner's screenshot review (the
   five sizes; say plainly the fixture's art is boxes). Tracker to 52% of stage 4.
 
 ---
@@ -946,7 +1031,7 @@ test('no message key starts with page.', …)
   `template/replays/level-1.json` (**the golden**), `tests/template/hero-play.ts`,
   `tests/template/replay.parity.test.ts`, `tests/template/art.test.ts`, `tests/template/files.test.ts`
 
-**The level** (16 wide, 9 rows; a gap two tiles wide in the floor; the door past it; the crate before it):
+**The level** (16 wide, 9 rows; a gap two tiles wide in the floor; the crate and the door past it):
 
 ```
 #..............#
@@ -957,13 +1042,17 @@ test('no message key starts with page.', …)
 #..............#
 #..............#
 #..............#
-#########..#####
+#######..#######
 ```
 
-  Things: `spark-1` at (4.5, 7.5), `crate-1` at (6.5, 7.5), `door-1` at (13.5, 7.5). Starts: player 1 at (2.5, 7.5),
-  player 2 at (1.5, 7.5). The gap is columns 9 and 10: a jump from a standing run clears two tiles with the template's
-  move numbers (`jumpPaths` gives the reach; `hero.test.ts` holds it, so a changed number that makes the gap
-  impossible fails a test).
+  Things: `spark-1` at (4.5, 7.5), `crate-1` at (11.5, 7.5), `door-1` at (13.5, 7.5). Starts: player 1 at (2.5, 7.5),
+  player 2 at (1.5, 7.5). The gap is columns 7 and 8. The crate stands past the gap, between the landing and the
+  door, so a play that wins pushes it toward the door and not into the gap. A player who jumps over it and pushes it
+  back can still drop it in: that is play, not a fault, since a fallen crate raises nothing (Task 2) and the level can
+  still be won. The level file's `$comment` says so. A running jump clears the gap with a tile to spare with the template's move numbers
+  (`jumpPaths` gives the reach; `hero.test.ts` holds it, so a changed number that makes the gap impossible, or leaves
+  no margin, fails a test). If the template's numbers do not give that tile of margin, stop and report: do not change
+  the hero's numbers or the gap to fit.
 
   `door.json`: `body: "fixed"`, `size` 1 by 2, `kind: "door"`, `touch: "sense"`, `figure: "door"`. Its figure is a
   rounded frame in two of the template's own colors.
@@ -985,7 +1074,8 @@ score = "hero.score.sparks"
   shape, modeled on `tests/fixtures/audio/content.ts` (a low thud for `land`, a rising two-note chirp for `take`, a
   falling tone for `fall`). `cues.json` plays each on `hero.landed`, `spark.taken` and `hero.fell`.
 
-**The play** (`tests/template/hero-play.ts`): hold right from tick 0; jump at the gap's edge; keep right to the door.
+**The play** (`tests/template/hero-play.ts`): hold right from tick 0; jump one tile before the gap's edge; keep right
+to the door.
 `TEMPLATE_TICKS` is the tick the door is touched plus 60. The test asserts, on the recorded play, that the spark was
 taken, the crate was pushed, `hero.fell` was never raised and `door.touched` was, by player 1.
 
@@ -995,6 +1085,8 @@ taken, the crate was pushed, `hero.fell` was never raised and `door.touched` was
 // template/tests/features/hero/hero.test.ts (the game's own tests, which a new game keeps)
 test('walking off the edge of the gap loses the level', …)        // hero.fell is raised
 test('a jump at the edge clears the gap', …)
+test('a jump started up to one tile before the edge clears the gap', …)   // the margin a real-time page needs
+test('a crate pushed back into the gap falls, loses nothing, and the door still wins the level', …)
 test('touching the door wins the level', …)                       // door.touched with player 1
 test('taking the spark makes the score 1', …)
 // tests/template
@@ -1052,7 +1144,9 @@ test('walk into the gap: You lost; Try again plays again without the page loadin
 
   It reads the game only as a player and an agent can: `data-state`, `data-attempt`, what is on the screen, and
   `window.automataGame`. It holds no hash and no position, so a maker who redraws the level changes two numbers at the
-  top of the file (where the gap is, where the door is), which a comment says.
+  top of the file (where the gap is, where the door is), which a comment says. It jumps one tile before the gap, not
+  at its edge: a page playing in real time reads the hero's place a few ticks late, and Task 15's margin is what keeps
+  this test from failing now and then.
 
 - [ ] **Step 1: Write the failing tests** in the framework: `files.test.ts` (the template has the three files, the two
   scripts and `playwright` at exactly 1.63.0; `tests/play/` is excluded from `npm test`); `create.test.ts` (the
@@ -1110,18 +1204,27 @@ export function pageProblems(files: Readonly<Record<string, string>>): Diagnosti
 
 | Found | Sentence |
 |---|---|
-| `alert(`, `confirm(`, `prompt(` | `{name} stops the game with a box the player did not ask for. Show a screen of your own instead.` |
-| `window.open`, `open(` on `window` or bare | `A game does not open windows by itself. To offer a link, use host.openLink from a button the player presses.` |
+| `alert`, `confirm`, `prompt`, called | `{name} stops the game with a box the player did not ask for. Show a screen of your own instead.` |
+| `open`, called | `A game does not open windows by itself. To offer a link, use host.openLink from a button the player presses.` |
 | `Notification`, `PushManager` | `A game sends no notifications.` |
 | `document.write` | `document.write can wipe the page. Add elements with document.createElement.` |
 | `navigator.serviceWorker`, `new SharedWorker` | `A game runs nothing in the background. Take this out.` |
 | `navigator.geolocation`, `getUserMedia`, `getDisplayMedia`, `navigator.clipboard.read` | `A game does not ask for the player's place, camera, microphone or clipboard. Take this out.` |
 | `<input` or `createElement('input')` with `type` `password`, `email` or `tel`, or an `autocomplete` of `name`, `email`, `tel`, `street-address`, `postal-code`, `cc-number` or one starting `address-` | `A game never asks for a password or personal details. Take this field out.` |
 
+  A called name (the first two rows) counts as `window.name(`, `globalThis.name(` or `self.name(` anywhere, and as a
+  bare `name(` only when it follows no dot and the file declares no `name` of its own (`const`, `let`, `var`,
+  `function`, a parameter or an import). So `db.open(`, `indexedDB.open(` and a game's own `confirm` are not found.
+  `withoutComments` strips script comments; in an `.html` file `<!-- -->` is stripped too.
+
 - [ ] **Step 1: Write the failing tests:** one per row (found, at its line, with its sentence); then:
 
 ```ts
 test('the template as create writes it has no page problem', …)
+test('window.confirm(, globalThis.alert( and self.open( are found', …)
+test('a file that declares its own confirm, prompt or open may call it', …)   // const confirm = …; function open() {}
+test('indexedDB.open(…) and db.open(…) are not found', …)
+test('a field inside <!-- --> in index.html is not found', …)
 test('a name in a comment or as part of a longer name is not found', …)       // myalert(, // alert(
 test('an address of another site in the code is not a problem', …)             // cut by the Owner: no row for it
 test('a game with no index.html says so once, at index.html', …)
@@ -1142,17 +1245,25 @@ test('a game with no index.html says so once, at index.html', …)
 
 ```ts
 /** A finding that is a note every day and a problem under `--ship`. */
-export interface ShipFinding extends Diagnostic { readonly rule: 'words' | 'screens' | 'size' | 'small-words' | 'save' }
+export interface ShipFinding extends Diagnostic { readonly rule: 'words' | 'size' | 'small-words' | 'save' }
 export interface StepReport { /* …plus: */ readonly ship?: readonly ShipFinding[] }
 /** Messages that are not finished, in every language the game has. */
 export function unfinishedWords(content: GameContent): ShipFinding[]
+/** The event and resource ids these plugins register, read from each plugin's own `events` and `resources`. */
+export function simIds(plugins: readonly PluginDef[]): {
+  readonly events: readonly string[]
+  readonly resources: readonly string[]
+}
 /**
- * What is wrong with how the game's levels end. `events` and `resources` are the ids the game's own sim registers
- * (read from a sim made with its plugins, as the replays step makes one).
+ * What is wrong with how the game's levels end. `ids` is `simIds` of the game's whole list of plugins; `read` gives
+ * a resource's value at tick 0 (Task 8's `Sim.read`), for the score's field.
  */
 export function endProblems(
   content: GameContent,
-  sim: { readonly events: readonly string[]; readonly resources: Readonly<Record<string, unknown>> },
+  sim: {
+    readonly ids: ReturnType<typeof simIds>
+    readonly read: (resourceId: string) => unknown
+  },
 ): { readonly problems: Diagnostic[]; readonly notes: string[] }
 ```
 
@@ -1167,14 +1278,18 @@ export function endProblems(
 |---|---|
 | `done` names an event the sim does not register | problem: `done = "{event}" can never happen: nothing in this game raises it. A door needs a character with "kind": "door" and "touch": "sense".` |
 | `done` is a touch event of a kind no thing in some level of `levels` has | problem, at that level's file: `This level has no {kind}, so it can never be finished. Put one in "things".` |
-| `lost` names an event the sim does not register | problem: `lost = "{event}" can never happen: nothing in this game raises it. A hero with "moves" raises hero.fell when it falls out of the level.` |
-| `lost` is `hero.fell` and the hero has no `moves` | problem: `lost = "hero.fell" needs a hero the framework moves. Give the hero "moves", or name an event your own rules raise.` |
+| `lost` names an event the sim does not register | problem: `lost = "{event}" can never happen: nothing in this game raises it. Write lost = "hero.fell" and the framework raises it when a hero falls out of the level, or name an event your own rules raise.` |
 | `score` names a resource the sim does not have, or a field that is not a number | problem: `score = "{score}" is not a number this game counts. Name a resource and one of its numbers, like "hero.score.sparks".` |
 | neither `done` nor `lost` | note: `This game can be neither won nor lost. Add done = "…" or lost = "…" to automata.toml, or give the player something to aim for.` |
 
   The `files` step carries `unfinishedWords` in `ship` and one note with their count (`3 words are not finished. See
-  them with automata check --ship.`). The `rules` step carries `endProblems` when the game's code could be loaded, and
-  says nothing about ends when it could not.
+  them with automata check --ship.`). The `rules` step carries `endProblems` when the game's code could be loaded
+  (`game.code.rules` has `plugins`), and says nothing about ends when it could not (the code's own problem is already
+  reported). It gets the ids from the game's own copy of the framework, as the replays step does, never from the
+  command's: `simIds([...game.code.framework.gameSimPlugins({ content }), ...game.code.rules.plugins])` (Task 2). For
+  `score` alone it makes one sim with `game.code.framework.createGameSim`, reads the field with `Sim.read` and
+  disposes the sim. A hero needs no `moves` to fall (Task 2), so `lost = "hero.fell"` is always registered and has no
+  row of its own.
 
 - [ ] **Step 1: Write the failing tests:** one per row of both lists, then: the template has none of them; a game in
   three languages reports a `TODO` in each language it is in; "contest" and "latest" are not "test".
@@ -1186,7 +1301,8 @@ export function endProblems(
 **Files:**
 - Create: `src/features/cli/check-ship.ts`, `tests/features/cli/check-ship.test.ts`
 - Modify: `src/features/cli/args.ts`, `check.ts`, `report.ts`, `help.ts`, `mcp-tools.ts`, `replay.ts`, `cli.ts`,
-  `tests/features/cli/args.test.ts`, `report.test.ts`, `mcp-tools.test.ts`, `replay.test.ts`,
+  `live.ts`, `ports.ts`, `tests/features/cli/args.test.ts`, `report.test.ts`, `mcp-tools.test.ts`, `replay.test.ts`,
+  the tests of `live.ts` and of the test `Code` service the other CLI tests use,
   `skills/automata/SKILL.md`, `skills/automata-content/SKILL.md`, `skills/automata-rules/SKILL.md`,
   `template/AGENTS.md`, `tests/skills/skills.test.ts`, `README.md` ("automata check")
 
@@ -1204,18 +1320,33 @@ export interface CheckReport { /* …plus: */
 export function shipStep(game: GameFolder, earlier: readonly StepReport[]): Effect.Effect<StepReport, never, FilesService>
 /** The list a maker tries by hand. */
 export const BY_HAND: readonly string[]
-// replay.ts: `--accept` writes meta.save when src/headless.ts exports gameSave (builder's call 16)
+// ports.ts: the game's code as the command loads it. `save` is `gameSave`, when src/headless.ts exports one.
+export interface GameCode { /* …rules, when it loaded, gains: */ readonly save?: SaveDef<unknown> }
+/** `"<version>:<hash>"` of a save: the hash is of its schema's JSON Schema, `io: 'input'`, as describeSchemas makes it. */
+export function saveMark(framework: typeof Headless, save: SaveDef<unknown>): string
+// replay.ts: `--accept` writes meta.save (saveMark) when the game has a gameSave (builder's call 16)
 ```
+
+  `live.ts` reads `gameSave` from the loaded `src/headless.ts` beside `gamePlugins` and `actions`, and refuses one that
+  is not a `SaveDef` with a sentence at `src/headless.ts`. The hash uses the game's own copy of the framework, like
+  everything else the command works out about a game.
 
   `check --ship` and the MCP `check` tool's new `ship: true` do the same. `--ship` with `--only` is refused: `--ship
   checks everything. Leave out --only.` The ship step's own findings:
 
 | Rule | When | Sentence |
 |---|---|---|
-| `screens` | `FlowOptions.screens` names a screen whose file is not there (an import under `src/` that does not resolve) | `{file} names a screen that is not there. Add the file, or take the screen out.` |
 | `size` | a picture under `content/` is over 512 KB | `{file} is {n} KB. A picture over 512 KB makes the game slow to open. Make it smaller.` |
 | `small-words` | a `font-size` under 14px in a `.css` or `.svelte` file under `src/` | `{file} has words {n} pixels tall. Under 14 a phone cannot read them.` |
 | `save` | `gameSave`'s schema hash differs from the newest recording's `meta.save` and its version does not | `The saved game's shape changed and its version did not, so players would lose their saves. Raise version in defineSave and add the step that upgrades the old one.` |
+
+  Half-made menus have no rule of their own: a `screens` option that imports a file that is not there already fails
+  the `types` step every day, and the rest ("is this menu finished?") is the sixth line of the list below. The spec's
+  table gives that box to `--ship`; it is held by `types` and the list instead.
+
+  The ship step also says one note, which never fails, for each level in `levels` that has no `level.<id>.goal` in the
+  source language: `{level} has no goal line. Add "level.{level}.goal" to your messages, so a new player is told what
+  to do.` It is a note because a game may say its goal in its own way.
 
   After the steps, the report prints `BY_HAND` under "Try these yourself":
 
@@ -1248,6 +1379,9 @@ test('--ship --only files is refused with its sentence', …)
 test('--json carries ship findings and byHand', …)
 test('the MCP check tool with ship: true gives the same report', …)
 test('replay --accept writes meta.save for a game that exports gameSave, and nothing for one that does not', …)
+test('the same save schema gives the same mark twice; a changed field changes the hash; a changed version changes the version', …)
+test('a gameSave that is not a SaveDef is a problem at src/headless.ts', …)
+test('a level with no goal line is a note under --ship and does not fail it; the template has none', …)
 ```
 
 - [ ] **Step 2: Push; red. Step 3: build. Step 4: push; green. API report and help text from the job's log.**
@@ -1302,12 +1436,12 @@ test('automata check --ship on the untouched game passes and prints the list to 
   `docs/superpowers/progress.md`
 
 - [ ] **Step 1: Write the failing tests.** `readme.test.ts`: "Screens and the flow" names `lost`, `score`, the goal
-  message, How to play, Back and `back: false`, each with one example; a new section, "The checklist every game
+  message, How to play, Back, `back: false` and that a framed game leaves Back alone, each with one example; a new section, "The checklist every game
   meets", lists the Must-have groups in the spec's words with, for each box, where it is held (a default, a check, or
   "yours": the `BY_HAND` line); "The automata command" documents `--ship` and the `page` part; a
   new game's README says what its `play` job does and how to change the two numbers. `public-surface.test.ts`: the
   browser entry has `lostScreen`, `howScreen`, `howRows`; the headless entry has `scoreRef`,
-  `fellEvent`, `usesFalls`, and none of the screens.
+  `fellEvent`, `usesFalls`, `gameSimPlugins`, and none of the screens.
 - [ ] **Step 2: Push; red. Step 3: write them** (developer text, in English, on purpose).
 - [ ] **Step 4: Push; every check green.**
 - [ ] **Step 5: Commit** `docs: the checklist every game meets, in the README, the skills and the tracker`.
@@ -1318,12 +1452,14 @@ test('automata check --ship on the untouched game passes and prints the list to 
 
 ## Handoffs
 
-- **Plan D (Examples).** When its framework pin moves past pull request 2, the demo gets Try again, Start again, How
+- **Plan D (Examples).** When its framework pin moves past pull request 2b, the demo gets Try again, Start again, How
   to play, the sound switch, Delete all my saves, Back and the loading bar with no change. It names its own `lost`
   (its co-op rule may raise its own event), `score` and `level.<id>.goal` in six languages, and gains a `play` job like the template's. Its recordings move only if it names
-  `lost = "hero.fell"`: that is a golden move there, named and shown.
-- **The Site.** It frames the demo and owns its own history: when the demo moves to this flow it passes
-  `back: false`, or Back in the Site would pause the framed game first.
+  `lost = "hero.fell"`: that is a golden move there, named and shown. Every level now waits for the first press, so
+  the demo's journeys must press once after a level shows before they expect it to move, in the same pull request that
+  moves the pin, or the pin move turns them red.
+- **The Site.** Nothing to do. The Site only frames the demo's built page and never calls `startFlow`; the framework
+  leaves Back alone in a frame (Task 10), so Back on the Site is the Site's.
 - **Editors.** Nothing they call changes shape. `automata.toml`'s three new fields load when their pin moves. Their
   Play stays `startGame`, which does not wait for a press unless asked.
 - **Plan F (the feel runtime).** The start card and the score are in the HUD, over the mount: a shake must not move
@@ -1338,7 +1474,9 @@ test('automata check --ship on the untouched game passes and prints the list to 
   this file's history at commit bfc4e414); a `--ship` that fails an unchanged starter; and the device and gamepad
   checks (iPhone, Android, computer, WebGL without WebGPU, a game played by gamepad alone). `CLAUDE.md` still lists
   Ruken as left out; that line changes with that plan, not this one.
-- **Release 4.** A publish step runs `automata check --ship`. `--ship` is ready for it; nothing here calls it.
+- **Release 4.** A publish step runs `automata check --ship`. `--ship` is ready for it; nothing here calls it. Task
+  18 refuses a service worker, which is the checklist's box. If distribution wants one so a game plays offline, that
+  plan reopens the row on purpose, with the Owner, instead of tripping on it.
 - **Before Release 1:** every word of Task 5 and the template's goal line wait for a native speaker's read in five
   languages.
 - **Left to the maker, and said so by `--ship`:** whether it is clear, fun, fair, original and finished to look at;
@@ -1354,10 +1492,10 @@ test('automata check --ship on the untouched game passes and prints the list to 
   here:* clear in five seconds (the goal line, the hint and the waiting start, Task 7; the template's goal, Task 15);
   win or lose (Tasks 1 to 3, 6, 15; the note, Task 19); works it out alone (Task 7); enough to do (the best score,
   Task 8; the maker's, Task 20). *Its own thing:* the art is the maker's (the list, Task 20); "still the starter" is
-  cut. *Finished:* test words, half-made menus (Tasks 19, 20); stand-in pictures, hidden spots and sloppy pictures
+  cut. *Finished:* test words (Tasks 19, 20); half-made menus (the `types` step and the list, Task 20); stand-in pictures, hidden spots and sloppy pictures
   (the list, Task 20). *Honest:* nothing pops up to cut in (the `page` part, Task 18); "no ads" and the store-page
-  boxes are left out. *Safe:* passwords and details, and background work (Task 18); money, tracking and other sites
-  are cut.
+  boxes are left out. *Safe:* passwords and details, background work, and no other window unless the player asks
+  (Task 18's `open` row); money, tracking and the lockdown on outside sites are cut.
 - **Spec coverage, Good to have.** Score and best (Tasks 1, 4, 8); double tap and long press (Task 10); address bar
   (Task 21); Back (Task 10); no slow-down over restarts (Tasks 6, 21); small files and tiny words (Task 20); mute
   (Tasks 4, 9); loud sounds and the music's seam (Task 12); loading progress and retry (Task 11); How to play, game
@@ -1376,15 +1514,27 @@ test('automata check --ship on the untouched game passes and prints the list to 
   `lost` (1), Start again asks (4), a level waits for the first press (6), what Delete erases (10), Back's rules (11),
   the saves-version check through `gameSave` (16), two players in the template (17). Reduced motion for shake and
   freeze is plan F's and is not a task here.
+- **After the plan audit** (`audits/2026-11-15-plan-q-plan-audit.md`, 2026-11-15). All seven important findings and
+  all eleven minor ones are in: any hero can fall, with or without `moves` (I1); `gameSimPlugins` is what a check
+  reads a game's events and resources from (I2); Back gets a new entry on every Play (I3); only a press that begins
+  after the level shows starts it (I4); a framed game leaves Back alone (I5); the compressor is a limiter, held to 1
+  dB on one voice (I6); `gameSave` reaches the command through `live.ts` and `ports.ts`, with a defined hash (I7);
+  `levelGoal` is in `labels.ts` (M1); the rows of `advance` left unsaid are said (M2); the `page` part's names do not
+  catch a game's own (M3); the `screens` rule is dropped for the `types` step and the list (M4); the crate stands
+  past the gap, and what happens if it is pushed back in is said and tested (M5); the play jumps a tile early, with a test of the margin (M6); the "Safe" sentence is right (M7);
+  Task 7 is 7a and 7b, pull request 2 is 2a and 2b, and Part C does not wait for the Owner's gate (M8); the demo's
+  journeys press first (M9); the service worker row is handed to Release 4 (M10); `--ship` notes a level with no goal
+  line (M11).
 - **Not covered, on purpose:** the demo (handoff); the editors; a publish step; anything about sending a game to a
   host; `automata words --compile` (handoff, with no owner).
-- **End to end.** Every pull request has real-browser tests: pull request 1 the fall's parity in four engines; 2 every
-  new screen at five sizes and whole visits by thumb and by keys; 3 the template's page and the create journey on the flow; 4 `check --ship` through the packed package in `create-smoke`; 5 the made game
+- **End to end.** Every pull request has real-browser tests: pull request 1 the fall's parity in four engines; 2a each new
+  screen at five sizes; 2b whole visits by thumb and by keys; 3 the template's page and the create journey on the flow; 4 `check --ship` through the packed package in `create-smoke`; 5 the made game
   in three engines, and the game's own play test in two.
 - **Type consistency.** `FlowState.attempt`, `'lost'`, `'again'`, `'level-lost'` and `Over`'s `'how'` are Task 3's and
   are what Tasks 6, 7 and 10 read. `levelEnd` (Task 6) replaces `endsLevel`'s one use. `Records`, `withScore` and
   `heardVolumes` are Task 4's, used in Tasks 8 and 9. `scoreRef` (Task 1) is read by `Game.score()` (Task 8) and
-  `endProblems` (Task 19).
+  `endProblems` (Task 19). `gameSimPlugins` (Task 2) and `Sim.read` (Task 8) are what Task 19's `simIds` and
+  `endProblems` are given. `levelGoal` is Task 7a's, used in 7b and in Task 20's note.
   `ShipFinding` and `StepReport.ship` are Task 19's, used in Task 20. `PauseItem` and `MenuItem` each gain names in
   Tasks 6 and 7 and nowhere else.
 - **Review Focus.** Each of the five lines names a test in a task that owns the code (Tasks 3, 6, 8, 9, 10, 11).
