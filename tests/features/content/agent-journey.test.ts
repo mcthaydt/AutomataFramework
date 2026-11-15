@@ -233,8 +233,9 @@ test('an agent writes a scene by hand from the skill page, is told a slope has a
   }
   smallest.id = 'yard'
   const files: Record<string, string | undefined> = { ...fixtureFiles }
+  // `writeContent` refuses a scene that does not hold together, so a hand edit that does not is written as plain JSON.
   const write = (): void => {
-    files['content/scenes/yard.json'] = writeContent('scene', smallest as never)
+    files['content/scenes/yard.json'] = `${JSON.stringify(smallest, null, 2)}\n`
   }
   write()
   files['automata.toml'] += '\n[[content]]\ntype = "scene"\npath = "content/scenes/yard.json"\n'

@@ -163,7 +163,7 @@ test('a scene whose own photo has no picture paints nothing and says which file 
   expect(said.code).toBe(1)
   expect(said.out).toEqual([])
   expect(said.err).toEqual([
-    'content/photos/moss.json: There is no picture at "content/photos/moss.png". Put the photo there.',
+    'content/photos/moss.json: image: There is no picture at "content/photos/moss.png". Put the photo there.',
   ])
   expect(memory.files.has('game/content/scenes/meadow.png')).toBe(false)
 })
