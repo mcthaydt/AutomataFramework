@@ -84,7 +84,10 @@ test('the moves game plays as its script says, and matches its golden', async ()
   // jump left to spend, jumps on the landing: move-step's own tests hold that, and the press at tick 259 shows it in
   // the golden: the hero comes down at 263 and jumps at once, from a press made four ticks before.
   expect(n('air-jumped'), trace).toBe(3)
-  expect(times(frames, 'jumped').filter((tick) => tick >= 259 && tick <= 270), trace).toHaveLength(1)
+  expect(
+    times(frames, 'jumped').filter((tick) => tick >= 259 && tick <= 270),
+    trace,
+  ).toHaveLength(1)
   expect(n('wall-jumped'), trace).toBe(3)
   expect(n('dashed'), trace).toBe(2)
   expect(n('wall-slid'), trace).toBeGreaterThanOrEqual(1)
