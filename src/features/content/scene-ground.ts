@@ -196,19 +196,26 @@ export function runTop(run: SlopeRun): number {
 }
 
 /**
+ * The tiles under a run's line, wholly inside its triangle, whatever they hold: the ground a slope stands on, which the
+ * slope's own collider covers. Reading order, top row first.
+ */
+export function tilesUnder(run: SlopeRun): { col: number; row: number }[] {
+  const inside: { col: number; row: number }[] = []
+  for (let row = Math.floor(runTop(run)); row < Math.ceil(runBottom(run)); row++) {
+    for (let col = run.col; col < run.col + run.w; col++) {
+      // A tile is inside when its corner nearest the line is on or below it, and its bottom is above the foot.
+      const nearest = lineAt(run, run.rise > 0 ? col : col + 1)
+      if (row >= nearest && row + 1 <= runBottom(run)) inside.push({ col, row })
+    }
+  }
+  return inside
+}
+
+/**
  * The tiles under a run's line, wholly inside its triangle, that are not `solid`: what a slope asks to be filled so a
  * foot never catches between two tiles. Reading order, top row first.
  */
 export function gapsUnder(ground: GroundGrid, run: SlopeRun): { col: number; row: number }[] {
   const shapeAt = shapesOf(ground)
-  const gaps: { col: number; row: number }[] = []
-  for (let row = Math.floor(runTop(run)); row < Math.ceil(runBottom(run)); row++) {
-    for (let col = run.col; col < run.col + run.w; col++) {
-      // A tile is inside when its corner nearest the line is on or below it, and its bottom is above the foot.
-      const nearest = lineAt(run, run.rise > 0 ? col : col + 1)
-      const inside = row >= nearest && row + 1 <= runBottom(run)
-      if (inside && shapeAt(col, row) !== 'solid') gaps.push({ col, row })
-    }
-  }
-  return gaps
+  return tilesUnder(run).filter(({ col, row }) => shapeAt(col, row) !== 'solid')
 }

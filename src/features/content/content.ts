@@ -147,6 +147,7 @@ export {
   shapesOf,
   slopeRuns,
   surfaceAt,
+  tilesUnder,
 } from './scene-ground.ts'
 export {
   type Atlas,

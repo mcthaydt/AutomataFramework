@@ -2,6 +2,7 @@
 export { groundOf, skyOf } from './colours.ts'
 export { Look, SKY_COLOR, Thing, TILE_COLOR } from './components.ts'
 export { createGameSim, type GameSimOptions } from './game-sim.ts'
+export { type GroundCollider, groundColliders } from './ground.ts'
 export { JoinCommand, joinCommand, joinPlugin, LeaveCommand, leaveCommand, playersIn } from './join.ts'
 export { DEFAULT_GRAVITY, type Flight, type JumpPaths, jumpPaths, type PathPoint } from './jump-path.ts'
 export {
