@@ -84,8 +84,8 @@ In order. Each line says who does it and where it stands today (2026-11-15).
 | 9 | Phase 3: the 3D layer, with a 3D test game (Release 5) | Agents | Later |
 | 10 | Phase 4: a real 3D demo game | Agents and the owner | Later |
 
-The order of steps 4 to 8 waits on one answer from the owner (see "Not yet placed" at the bottom). Until then this is
-the order, taken from the owner's release list (2026-11-13).
+The order of steps 4 to 8 is the owner's release list (2026-11-13), confirmed by the owner on 2026-11-15: Release 1
+to 4 in order, then the real 2D demo, then 3D.
 
 ## Slice 0: Start
 
@@ -286,7 +286,4 @@ Later. Made with the finished 3D editors.
 
 Nothing here is built until the owner says where it goes.
 
-1. **The order after the six editors** (asked 2026-11-15). (a) As above: Release 1 with the sales site's first page,
-   Release 2, Release 3, Release 4, then the real 2D demo (suggested; it follows the release list). (b) The real 2D
-   demo right after Release 2, so the full site and the stores show it. (c) As (a), but the sales site waits for
-   Release 3 and nothing sells at Release 1.
+1. Nothing yet.
