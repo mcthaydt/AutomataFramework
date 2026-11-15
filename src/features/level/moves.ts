@@ -6,7 +6,7 @@
 import { z } from '../../lib/zod.ts'
 import { isHeld, Player, wasPressed } from '../commands/commands.ts'
 import { type GameContent, moveNumbers } from '../content/content.ts'
-import { Body, Touching } from '../physics/physics.ts'
+import { Body, Ground, Touching } from '../physics/physics.ts'
 import {
   type ComponentDef,
   defineComponent,
@@ -89,6 +89,8 @@ export function moveEvent(name: MoveEventName): EventDef<z.ZodType<MoveEvent>> {
  */
 export function movesPlugin(options: {
   readonly gravity: { readonly x: number; readonly y: number }
+  /** The game has a slope: the hero has `Ground`, and walks along it. Left out, the plugin is exactly as it was. */
+  readonly slopes?: boolean
   /** Adds the tune command, its resource and its system (tune.ts). Left out, the plugin is exactly as it was. */
   readonly tunable?: boolean
 }): PluginDef {
@@ -114,6 +116,7 @@ export function movesPlugin(options: {
           wall: touching.left === touching.right ? 0 : touching.left ? -1 : 1,
           vx: body.vx,
           vy: body.vy,
+          ...(options.slopes === true && hero.has(Ground) ? { slope: hero.get(Ground) } : {}),
         }
         const result = stepMoves(
           { ...hero.get(Moves) } as MoveState,

@@ -447,6 +447,8 @@ const collider: {
     ball(radius: number, opts?: ColliderOptions): SpawnPart;
     cuboid(hx: number, hy: number, opts?: ColliderOptions): SpawnPart;
     capsule(halfHeight: number, radius: number, opts?: ColliderOptions): SpawnPart;
+    slope(hx: number, hy: number, rises: 1 | -1, opts?: ColliderOptions): SpawnPart;
+    ledge(hx: number, hy: number, opts?: ColliderOptions): SpawnPart;
 };
 ```
 
@@ -1180,6 +1182,8 @@ interface Felt {
     readonly below: boolean;
     readonly left: boolean;
     readonly right: boolean;
+    readonly gx: number;
+    readonly gy: number;
 }
 ```
 
@@ -1646,10 +1650,46 @@ function gapsUnder(ground: GroundGrid, run: SlopeRun): {
 }[];
 ```
 
+### `Ground` (const)
+
+```ts
+const Ground: ComponentDef<typeof groundFields>;
+```
+
 ### `GROUND_SHAPES` (const)
 
 ```ts
 const GROUND_SHAPES: readonly ["solid", "slope-up", "slope-down", "half-up-low", "half-up-high", "half-down-high", "half-down-low", "ledge", "back"];
+```
+
+### `GroundCollider` (type)
+
+```ts
+type GroundCollider = {
+    readonly kind: 'box';
+    readonly col: number;
+    readonly row: number;
+    readonly w: number;
+    readonly h: number;
+} | {
+    readonly kind: 'ledge';
+    readonly col: number;
+    readonly row: number;
+    readonly w: number;
+} | {
+    readonly kind: 'slope';
+    readonly col: number;
+    readonly row: number;
+    readonly w: number;
+    readonly h: number;
+    readonly rises: 1 | -1;
+};
+```
+
+### `groundColliders` (function)
+
+```ts
+function groundColliders(ground: GroundSource): GroundCollider[];
 ```
 
 ### `GroundGrid` (interface)
@@ -1664,10 +1704,10 @@ interface GroundGrid {
 }
 ```
 
-### `groundOf` (const)
+### `groundOf` (function)
 
 ```ts
-const groundOf: (level: Level) => number;
+function groundOf(content: GameContent, level: Level): number;
 ```
 
 ### `groundPageTiles` (function)
@@ -2729,6 +2769,10 @@ interface MoveInput {
     readonly wall: -1 | 0 | 1;
     readonly vx: number;
     readonly vy: number;
+    readonly slope?: {
+        readonly nx: number;
+        readonly ny: number;
+    } | undefined;
 }
 ```
 
@@ -2820,6 +2864,7 @@ function movesPlugin(options: {
         readonly x: number;
         readonly y: number;
     };
+    readonly slopes?: boolean;
     readonly tunable?: boolean;
 }): PluginDef;
 ```
@@ -3304,6 +3349,7 @@ interface PhysicsOptions {
     };
     readonly joints?: boolean;
     readonly touching?: boolean;
+    readonly slopes?: boolean;
 }
 ```
 
@@ -4366,6 +4412,9 @@ const ShapeKind: {
     readonly ball: 0;
     readonly cuboid: 1;
     readonly capsule: 2;
+    readonly slopeUp: 16;
+    readonly slopeDown: 17;
+    readonly ledge: 18;
 };
 type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind];
 ```
@@ -4546,10 +4595,10 @@ function sizeOf(width: number, height: number): Size;
 const SKY_COLOR = 10474480;
 ```
 
-### `skyOf` (const)
+### `skyOf` (function)
 
 ```ts
-const skyOf: (level: Level) => number;
+function skyOf(content: GameContent, level: Level): number;
 ```
 
 ### `Slider` (const)
@@ -5075,6 +5124,15 @@ interface TilesMaterial {
 }
 ```
 
+### `tilesUnder` (function)
+
+```ts
+function tilesUnder(run: SlopeRun): {
+    col: number;
+    row: number;
+}[];
+```
+
 ### `TileWhen` (interface)
 
 ```ts
@@ -5335,6 +5393,12 @@ function usesJoints(content: GameContent): boolean;
 function usesMoves(content: GameContent): boolean;
 ```
 
+### `usesSlopes` (function)
+
+```ts
+function usesSlopes(content: GameContent): boolean;
+```
+
 ### `usesSprites` (function)
 
 ```ts
@@ -5526,6 +5590,15 @@ type Words = (key: string, values?: Values) => string;
 
 ```ts
 function wordsOf(content: GameContent, language: Language): Words;
+```
+
+### `worldSize` (function)
+
+```ts
+function worldSize(content: GameContent, level: Level): {
+    readonly w: number;
+    readonly h: number;
+};
 ```
 
 ### `writeContent` (function)
@@ -5895,6 +5968,8 @@ const collider: {
     ball(radius: number, opts?: ColliderOptions): SpawnPart;
     cuboid(hx: number, hy: number, opts?: ColliderOptions): SpawnPart;
     capsule(halfHeight: number, radius: number, opts?: ColliderOptions): SpawnPart;
+    slope(hx: number, hy: number, rises: 1 | -1, opts?: ColliderOptions): SpawnPart;
+    ledge(hx: number, hy: number, opts?: ColliderOptions): SpawnPart;
 };
 ```
 
@@ -6463,6 +6538,8 @@ interface Felt {
     readonly below: boolean;
     readonly left: boolean;
     readonly right: boolean;
+    readonly gx: number;
+    readonly gy: number;
 }
 ```
 
@@ -6745,10 +6822,46 @@ function gapsUnder(ground: GroundGrid, run: SlopeRun): {
 }[];
 ```
 
+### `Ground` (const)
+
+```ts
+const Ground: ComponentDef<typeof groundFields>;
+```
+
 ### `GROUND_SHAPES` (const)
 
 ```ts
 const GROUND_SHAPES: readonly ["solid", "slope-up", "slope-down", "half-up-low", "half-up-high", "half-down-high", "half-down-low", "ledge", "back"];
+```
+
+### `GroundCollider` (type)
+
+```ts
+type GroundCollider = {
+    readonly kind: 'box';
+    readonly col: number;
+    readonly row: number;
+    readonly w: number;
+    readonly h: number;
+} | {
+    readonly kind: 'ledge';
+    readonly col: number;
+    readonly row: number;
+    readonly w: number;
+} | {
+    readonly kind: 'slope';
+    readonly col: number;
+    readonly row: number;
+    readonly w: number;
+    readonly h: number;
+    readonly rises: 1 | -1;
+};
+```
+
+### `groundColliders` (function)
+
+```ts
+function groundColliders(ground: GroundSource): GroundCollider[];
 ```
 
 ### `GroundGrid` (interface)
@@ -6763,10 +6876,10 @@ interface GroundGrid {
 }
 ```
 
-### `groundOf` (const)
+### `groundOf` (function)
 
 ```ts
-const groundOf: (level: Level) => number;
+function groundOf(content: GameContent, level: Level): number;
 ```
 
 ### `groundPageTiles` (function)
@@ -7537,6 +7650,10 @@ interface MoveInput {
     readonly wall: -1 | 0 | 1;
     readonly vx: number;
     readonly vy: number;
+    readonly slope?: {
+        readonly nx: number;
+        readonly ny: number;
+    } | undefined;
 }
 ```
 
@@ -7628,6 +7745,7 @@ function movesPlugin(options: {
         readonly x: number;
         readonly y: number;
     };
+    readonly slopes?: boolean;
     readonly tunable?: boolean;
 }): PluginDef;
 ```
@@ -8020,6 +8138,7 @@ interface PhysicsOptions {
     };
     readonly joints?: boolean;
     readonly touching?: boolean;
+    readonly slopes?: boolean;
 }
 ```
 
@@ -8817,6 +8936,9 @@ const ShapeKind: {
     readonly ball: 0;
     readonly cuboid: 1;
     readonly capsule: 2;
+    readonly slopeUp: 16;
+    readonly slopeDown: 17;
+    readonly ledge: 18;
 };
 type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind];
 ```
@@ -8958,10 +9080,10 @@ function sin(x: number): number;
 const SKY_COLOR = 10474480;
 ```
 
-### `skyOf` (const)
+### `skyOf` (function)
 
 ```ts
-const skyOf: (level: Level) => number;
+function skyOf(content: GameContent, level: Level): number;
 ```
 
 ### `SlopeRun` (interface)
@@ -9414,6 +9536,15 @@ interface TilesMaterial {
 }
 ```
 
+### `tilesUnder` (function)
+
+```ts
+function tilesUnder(run: SlopeRun): {
+    col: number;
+    row: number;
+}[];
+```
+
 ### `TileWhen` (interface)
 
 ```ts
@@ -9624,6 +9755,12 @@ function usesJoints(content: GameContent): boolean;
 function usesMoves(content: GameContent): boolean;
 ```
 
+### `usesSlopes` (function)
+
+```ts
+function usesSlopes(content: GameContent): boolean;
+```
+
 ### `usesSprites` (function)
 
 ```ts
@@ -9699,6 +9836,15 @@ type Words = (key: string, values?: Values) => string;
 
 ```ts
 function wordsOf(content: GameContent, language: Language): Words;
+```
+
+### `worldSize` (function)
+
+```ts
+function worldSize(content: GameContent, level: Level): {
+    readonly w: number;
+    readonly h: number;
+};
 ```
 
 ### `writeContent` (function)

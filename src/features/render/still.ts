@@ -2,7 +2,7 @@
 // views a sim would have at tick 0 straight from the content, then hands them to the same stage a running game uses, so
 // what a person sees is what the game draws.
 import type { Character, GameContent, Level } from '../content/content.ts'
-import { groundOf, levelSize, skyOf, tileBoxes, tileRuns, usesSprites } from '../level/level.ts'
+import { groundOf, skyOf, tileBoxes, tileRuns, usesSprites, worldSize } from '../level/level.ts'
 import type { Art } from './art.ts'
 import type { Density } from './density.ts'
 import type { Fit, Room } from './fit.ts'
@@ -64,7 +64,7 @@ export function levelViews(content: GameContent, level: Level): { views: View[];
     level.tileset === undefined
       ? tileRuns(tiles, solid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
       : tileBoxes(tiles, solid)
-  const ground = groundOf(level)
+  const ground = groundOf(content, level)
   for (const box of boxes)
     views.push({
       sid: ++sid,
@@ -143,7 +143,7 @@ export async function createLevelPicture(options: {
   keep?: boolean
 }): Promise<LevelPicture> {
   const { mount, content, level, art, density, keep } = options
-  const stage = await createStage(levelSize(level), skyOf(level), art, density, keep)
+  const stage = await createStage(worldSize(content, level), skyOf(content, level), art, density, keep)
   mount.append(stage.canvas)
   let shown = level
   const draw = (): void => {

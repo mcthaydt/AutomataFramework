@@ -1,4 +1,4 @@
-import type { GameContent } from '../content/content.ts'
+import { type GameContent, slopeRuns } from '../content/content.ts'
 
 /**
  * Whether any level of the game lists a joint. It switches joints on for the whole game: a sim's schema hash covers
@@ -45,4 +45,12 @@ export function usesSprites(content: GameContent): boolean {
  */
 export function usesMoves(content: GameContent): boolean {
   return content.characters[content.project.hero]?.moves !== undefined
+}
+
+/**
+ * Whether any scene of the game has a slope tile. It switches what the hero is told of the ground it stands on (its
+ * slope) on for the whole game, so a game with no slope keeps exactly the sim it had.
+ */
+export function usesSlopes(content: GameContent): boolean {
+  return Object.values(content.scenes ?? {}).some((scene) => slopeRuns(scene.ground).length > 0)
 }

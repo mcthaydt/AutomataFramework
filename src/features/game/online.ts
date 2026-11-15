@@ -4,7 +4,7 @@
 // pauses, because the room does not wait for anyone.
 import { pageFrames } from '../../lib/frames.ts'
 import { createInput, touchSettingsOf } from '../input/input.ts'
-import { createGameSim, levelSize, skyOf } from '../level/level.ts'
+import { createGameSim, skyOf, worldSize } from '../level/level.ts'
 import {
   coopSeats,
   type Joined,
@@ -193,8 +193,8 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
   try {
     const renderer = await createRenderer({
       mount,
-      world: levelSize(levelData),
-      sky: skyOf(levelData),
+      world: worldSize(simOptions.content, levelData),
+      sky: skyOf(simOptions.content, levelData),
       art,
       view: levelData.view,
     })
