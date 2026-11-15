@@ -274,15 +274,20 @@ export function stepMoves(
   vy = Math.min(vy, n.fallSpeed)
 
   // 9b. A slope. On the ground, and not on the tick of a jump, the walk's speed runs along the slope and not along the
-  // floor: `tx, ty` is the slope's direction, pointing right. A hero that holds nothing is given no speed, and the
-  // ground's grip (hero.ts) holds it where it stands.
+  // floor: `tx, ty` is the slope's direction, pointing right. A hero that holds nothing is given the lift that cancels
+  // one tick of gravity (Rapier moves a body in four steps of a quarter tick, so the speed that comes back to where the
+  // body began is `5/8` of the tick's pull, as a dash's `hover` is taken): it is neither pulled down the slope nor
+  // pressed into it, and so, whatever the slope's angle and friction, it stands where it is.
   const { slope } = input
   if (below && !jumped && slope !== undefined && Math.abs(slope.nx) > FLAT) {
-    const tx = -slope.ny
-    const ty = slope.nx
-    // `+ 0` turns a minus nought into a nought, as the sim's numbers want.
-    vx = s.run * tx + 0
-    vy = s.run * ty + 0
+    if (dir === 0 && s.run === 0) {
+      vx = 0
+      vy = (hover * 5) / 8
+    } else {
+      // `+ 0` turns a minus nought into a nought, as the sim's numbers want.
+      vx = s.run * -slope.ny + 0
+      vy = s.run * slope.nx + 0
+    }
   }
 
   // 10. The mode, for the clip.

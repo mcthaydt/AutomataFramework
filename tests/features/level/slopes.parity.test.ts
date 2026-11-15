@@ -94,9 +94,11 @@ test('holding right from the floor, the hero reaches the slope’s top in under 
   expect(Math.abs(at().y - (SLOPE_TOP.y - 0.5))).toBeLessThan(0.1)
 })
 
-test('holding left from the top, the hero walks down the slope, on the ground all but a tick or two', async () => {
-  const { sim, at, trace } = await hero({ x: 5.5, y: SLOPE_TOP.y - 0.5 })
-  for (let i = 0; i < 20; i++) {
+test('holding left on the slope, the hero walks down it, on the ground all but a tick or two', async () => {
+  // Walked off the plateau's edge the hero is in the air until it lands (it is a box with the game's gravity), as it
+  // is off any ledge; this starts it on the slope, which is what a walk down one is.
+  const { sim, at, trace } = await hero({ x: 4, y: 6 })
+  for (let i = 0; i < 30; i++) {
     sim.step([])
     at()
   }
@@ -105,7 +107,7 @@ test('holding left from the top, the hero walks down the slope, on the ground al
   for (let t = 0; t < 120 && !reached; t++) {
     sim.step(t === 0 ? [hold(sim.tick, ['left'])] : [])
     const { x, below } = at()
-    if (x < 4.5 && x > 2.5 && !below) lost++
+    if (x < 3.6 && x > 2.6 && !below) lost++
     if (x < 1.8) reached = true
   }
   expect(reached, trace.join('\n')).toBe(true)

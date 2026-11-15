@@ -439,10 +439,11 @@ describe('on a slope', () => {
     expect(vy).toBeCloseTo(6 * Math.SQRT1_2, 5)
   })
 
-  test('standing on a slope, no speed is written: the ground’s grip holds the hero, not a speed', () => {
+  test('standing on a slope, the lift that cancels one tick of gravity is written, and nothing sideways', () => {
     const { vx, vy } = last(slopeRun(repeat(3, tick({ slope: UP }))))
     expect(Object.is(vx, 0)).toBe(true)
-    expect(Object.is(vy, 0)).toBe(true)
+    // HOVER is a whole tick's lift; the quarter-tick steps of the physics make five eighths of it the speed that stays.
+    expect(vy).toBe((HOVER * 5) / 8)
   })
 
   test('a flat slope, or none, gives what the floor gives', () => {

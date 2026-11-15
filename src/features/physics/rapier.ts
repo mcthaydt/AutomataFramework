@@ -23,6 +23,9 @@ const COLLISION_TYPES =
   RAPIER.ActiveCollisionTypes.KINEMATIC_FIXED |
   RAPIER.ActiveCollisionTypes.KINEMATIC_KINEMATIC
 
+/** How fast, in tiles a second, a body must be moving up for a ledge to let it through. A resting body's solver jitter is far under it. */
+const LEDGE_RISE = 0.5
+
 /** How far above a ledge's top the lowest point of something may be, in metres, and still stand on it. */
 const LEDGE_SLOP = 0.05
 
@@ -107,7 +110,7 @@ function holds(world: World, ledge: RAPIER.Collider, other: RAPIER.Collider): bo
   const reach = reachBelow(other)
   // Something this cannot judge (no body, a shape it does not measure) is held as any ground holds it.
   if (parent === undefined || reach === undefined) return true
-  if (world.getRigidBody(parent).linvel().y < 0) return false
+  if (world.getRigidBody(parent).linvel().y < -LEDGE_RISE) return false
   const top = ledge.translation().y - (ledge.halfExtents() as RAPIER.Vector).y
   return other.translation().y + reach <= top + LEDGE_SLOP
 }
@@ -137,7 +140,7 @@ function ledgeFacts(world: World): LedgeFacts {
     if (parent === undefined || world.getRigidBody(parent).isFixed()) return
     const reach = reachBelow(collider)
     if (reach === undefined) lows.set(collider.handle, Number.NEGATIVE_INFINITY)
-    else if (world.getRigidBody(parent).linvel().y < 0) lows.set(collider.handle, Number.POSITIVE_INFINITY)
+    else if (world.getRigidBody(parent).linvel().y < -LEDGE_RISE) lows.set(collider.handle, Number.POSITIVE_INFINITY)
     else lows.set(collider.handle, collider.translation().y + reach)
   })
   return { tops, lows }
