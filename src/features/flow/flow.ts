@@ -23,7 +23,7 @@ import { createParty, type Party } from './party.ts'
 import { createPlaces, type Places } from './places.ts'
 import { createPlay } from './play.ts'
 import { defaultSave, type FlowSave, newest, type Progress } from './progress.ts'
-import { withScore } from './records.ts'
+import { RECORDS_DEFAULT, withScore } from './records.ts'
 import { openSections, type Sections, wireSound } from './sections.ts'
 import { advance, FLOW_START, type FlowEvent, type FlowFacts, type FlowState } from './steps.ts'
 import type { Flow, FlowOptions } from './types.ts'
@@ -154,6 +154,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     places: places as unknown as Places<Progress>,
     play: (level) => dispatch({ type: 'play', level }),
     fail: (error) => fail(error),
+    eraseSaves: eraseEverything,
     back: () => dispatch({ type: 'back' }),
   })
 
@@ -192,6 +193,16 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     epoch++
     present(before, next, epoch).catch(fail)
     for (const listener of [...listeners]) listener(next)
+  }
+
+  /**
+   * "Delete all my saves": every saved game and the best score. What cannot be erased is told by the answer, and the
+   * rest is still erased. The language, the keys and the volumes are not saves, and stay.
+   */
+  async function eraseEverything(): Promise<{ readonly ok: boolean }> {
+    const failed = await places.eraseAll()
+    const records = sections === undefined ? { ok: true } : await sections.records.set(RECORDS_DEFAULT)
+    return { ok: failed === 0 && records.ok }
   }
 
   /** What the player pressed on the main menu. */

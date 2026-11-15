@@ -44,6 +44,8 @@ export interface OverContext {
   readonly play: (level: string) => void
   /** Whatever went wrong, as the flow's problem screen. */
   readonly fail: (error: unknown) => void
+  /** Erases every saved game and the best score; whether all of it could be erased. */
+  readonly eraseSaves: () => Promise<{ readonly ok: boolean }>
   /** The way back to the menu or the pause screen. */
   readonly back: () => void
 }
@@ -99,6 +101,8 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
       ...(audio === undefined || audio.silent ? {} : { audio, sound: sections.sound }),
       input,
       touch: sections.touch,
+      // A player in the middle of a level is not offered it: only the main menu's Settings has the row.
+      ...(context.game() === undefined ? { onDeleteSaves: context.eraseSaves } : {}),
       onVibration: (on) => context.game()?.setVibration(on),
       canBuzz: context.host.canBuzz,
       coarse: coarse(),

@@ -60,6 +60,7 @@ async function open(
     coarse?: boolean
     sharing?: boolean
     state?: 'on' | 'waiting' | 'unavailable'
+    erase?: () => Promise<{ ok: boolean }>
   } = {},
 ): Promise<void> {
   const host = options.host ?? testHost()
@@ -101,6 +102,7 @@ async function open(
     coarse: options.coarse ?? false,
     ...(sections.settings.problem === undefined ? {} : { problem: sections.settings.problem }),
     sharing: options.sharing ?? false,
+    ...(options.erase === undefined ? {} : { onDeleteSaves: options.erase }),
     onBack: () => {
       backs += 1
     },
@@ -370,4 +372,69 @@ test("Back, Escape and the pad's right button each go back", async () => {
   expect(backs).toBe(2)
   tap('east')
   expect(backs).toBe(3)
+})
+
+test('Sound is a switch above the sliders: off, the speaker is given 0 and 0 and the sliders keep their numbers', async () => {
+  await open()
+  const on = switchOf(es('automata.settings.sound'))
+  expect(on?.getAttribute('aria-checked')).toBe('true')
+  // The switch comes before the first slider.
+  const order = [...mount.querySelectorAll('[role="switch"], [role="slider"]')]
+  expect(order[0]).toBe(on)
+  await userEvent.click(on as HTMLElement)
+  await expect.poll(() => volumes).toMatchObject({ music: 0, sound: 0 })
+  expect(sections.sound.get().muted).toBe(true)
+  expect(slider(es('automata.settings.music')).getAttribute('aria-valuenow')).toBe(
+    String(SOUND_SETTINGS_DEFAULT.music),
+  )
+  await userEvent.click(switchOf(es('automata.settings.sound')) as HTMLElement)
+  await expect
+    .poll(() => volumes)
+    .toMatchObject({ music: SOUND_SETTINGS_DEFAULT.music, sound: SOUND_SETTINGS_DEFAULT.sound })
+  expect(sections.sound.get().muted).toBe(false)
+})
+
+test('a slider moved while the sound is off changes nothing the player hears', async () => {
+  await open()
+  await userEvent.click(switchOf(es('automata.settings.sound')) as HTMLElement)
+  slider(es('automata.settings.music')).focus()
+  await userEvent.keyboard('{ArrowLeft}')
+  await expect.poll(() => sections.sound.get().music).toBeLessThan(SOUND_SETTINGS_DEFAULT.music)
+  expect(volumes).toMatchObject({ music: 0, sound: 0 })
+})
+
+test('with no way to erase, Settings has no "Delete all my saves"', async () => {
+  await open()
+  expect(buttons().map((one) => one.textContent?.trim())).not.toContain(es('automata.settings.delete'))
+})
+
+test('"Delete all my saves" is the last row, asks first with "Keep them" focused, and Escape keeps them', async () => {
+  let erased = 0
+  await open({
+    erase: () => {
+      erased += 1
+      return Promise.resolve({ ok: true })
+    },
+  })
+  const all = buttons()
+  expect(all.at(-1)?.textContent?.trim()).toBe(es('automata.settings.delete'))
+  await userEvent.click(named(es('automata.settings.delete')))
+  const dialog = mount.querySelector('[role="alertdialog"]') as HTMLElement
+  expect(dialog.textContent).toContain(es('automata.settings.delete-ask'))
+  expect(document.activeElement?.textContent?.trim()).toBe(es('automata.settings.delete-no'))
+  await userEvent.keyboard('{Escape}')
+  expect(mount.querySelector('[role="alertdialog"]')).toBeNull()
+  expect(erased).toBe(0)
+  await userEvent.click(named(es('automata.settings.delete')))
+  await userEvent.click(named(es('automata.settings.delete-yes')))
+  expect(erased).toBe(1)
+  expect(mount.querySelector('[role="alertdialog"]')).toBeNull()
+})
+
+test('an erase that could not be finished says once that it was not kept', async () => {
+  await open({ erase: () => Promise.resolve({ ok: false }) })
+  await userEvent.click(named(es('automata.settings.delete')))
+  await userEvent.click(named(es('automata.settings.delete-yes')))
+  await expect.poll(() => mount.textContent).toContain(es('automata.settings.not-kept'))
+  expect(mount.querySelectorAll('[role="status"]')).toHaveLength(1)
 })

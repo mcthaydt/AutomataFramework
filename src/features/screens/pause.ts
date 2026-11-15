@@ -24,6 +24,8 @@ export type PauseProps = {
   /** The level's goal, under the title, when the game has words for it. */
   readonly goal?: string
   readonly buttons: readonly PauseButton[]
+  /** The sound switch, after the buttons; left out for a game with no sound. */
+  readonly sound?: { readonly label: string; readonly on: boolean; readonly onchange: (on: boolean) => void }
   /** The question before leaving, while it is asked. */
   readonly asking?: {
     readonly title: string
@@ -65,6 +67,8 @@ export function pauseScreen(
     readonly removable: readonly number[]
     /** The level's goal in the player's words, shown under "Paused" when the game has one. */
     readonly goal?: () => string | undefined
+    /** The sound switch: `on` is where it stands now. Left out, the screen has none. */
+    readonly sound?: { readonly on: boolean; readonly onChange: (on: boolean) => void }
     readonly onPick: (item: PauseItem) => void
     readonly onRemove: (player: number) => void
   },
@@ -109,10 +113,14 @@ export function pauseScreen(
         }
       }
       const goal = options.goal?.()
+      const { sound } = options
       return {
         title: words('automata.pause.title'),
         ...(goal === undefined ? {} : { goal }),
         buttons,
+        ...(sound === undefined
+          ? {}
+          : { sound: { label: words('automata.settings.sound'), on: sound.on, onchange: sound.onChange } }),
         ...(asking === undefined
           ? {}
           : {

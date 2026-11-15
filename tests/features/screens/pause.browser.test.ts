@@ -47,7 +47,10 @@ afterEach(() => {
 
 const ITEMS: readonly PauseItem[] = ['resume', 'again', 'add-player', 'settings', 'leave']
 
-function open(removable: readonly number[] = []): void {
+function open(
+  removable: readonly number[] = [],
+  sound?: { on: boolean; onChange: (on: boolean) => void },
+): void {
   screen = pauseScreen({
     mount,
     locale: testLocale('es').locale,
@@ -55,6 +58,7 @@ function open(removable: readonly number[] = []): void {
     gamepads: fake.getGamepads,
     items: ITEMS,
     removable,
+    ...(sound === undefined ? {} : { sound }),
     onPick: (item) => picked.push(item),
     onRemove: (player) => removed.push(player),
   })
@@ -175,4 +179,30 @@ test('the pause buttons run Keep playing, Start again, Add a player, Settings, M
     words('automata.menu.settings'),
     words('automata.pause.leave'),
   ])
+})
+
+test('a game with sound has a Sound switch after the buttons, and a tap on it tells the new state', async () => {
+  await page.viewport(390, 844)
+  const said: boolean[] = []
+  open([], { on: true, onChange: (on) => said.push(on) })
+  const switches = [...mount.querySelectorAll<HTMLElement>('[role="switch"]')]
+  expect(switches.map((one) => one.textContent?.trim())).toEqual([words('automata.settings.sound')])
+  expect(switches[0]?.getAttribute('aria-checked')).toBe('true')
+  expect(switches[0]?.getBoundingClientRect().height).toBeGreaterThanOrEqual(44)
+  await userEvent.click(switches[0] as HTMLElement)
+  expect(said).toEqual([false])
+  expect(switches[0]?.getAttribute('aria-checked')).toBe('false')
+  expect(picked).toEqual([])
+})
+
+test('a game that was left silent shows the switch off', async () => {
+  await page.viewport(390, 844)
+  open([], { on: false, onChange: () => {} })
+  expect(mount.querySelector('[role="switch"]')?.getAttribute('aria-checked')).toBe('false')
+})
+
+test('a game with no sound has no switch', async () => {
+  await page.viewport(390, 844)
+  open()
+  expect(mount.querySelector('[role="switch"]')).toBeNull()
 })

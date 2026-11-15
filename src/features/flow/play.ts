@@ -143,12 +143,23 @@ export function createPlay(deps: PlayDeps): Play {
     const items: PauseItem[] = ['resume', 'again']
     if (members.length < (party?.room ?? 1)) items.push('add-player')
     items.push('settings', 'how', 'leave')
+    const audio = deps.audio()
+    const sections = deps.sections()
     deps.dropScreen()
     deps.setScreen(
       makers.pause({
         ...deps.base(),
         items,
         goal: goalOf,
+        // A game with no sound has no switch; "off" is a flag the sections keep, and `wireSound` makes the speaker hear it.
+        ...(audio === undefined || audio.silent || sections === undefined
+          ? {}
+          : {
+              sound: {
+                on: sections.sound.get().muted !== true,
+                onChange: (on: boolean) => void sections.sound.set({ ...sections.sound.get(), muted: !on }),
+              },
+            }),
         removable: members.filter((member) => member.player !== 1).map((member) => member.player),
         onPick: (item) => {
           if (item === 'resume') deps.dispatch({ type: 'resume' })
