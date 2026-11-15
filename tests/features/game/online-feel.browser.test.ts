@@ -59,7 +59,7 @@ interface Started {
 /** Two seats in a room of the feel game: this page is seat 1, and a scripted player stands in seat 2. */
 async function start(files: Record<string, string | undefined> = {}): Promise<Started> {
   const content = await loadFeelGame(files)
-  const engineSim = await createGameSim({ content, players: [1, 2] })
+  const engineSim = await createGameSim({ content, players: [] })
   made.push(engineSim)
   const engine = createRoomEngine({ sim: engineSim, level: 'level-1', seats: 2 })
   const wire = createWire(engine)
@@ -96,8 +96,8 @@ async function start(files: Record<string, string | undefined> = {}): Promise<St
   })
   online = game
   // The other seat: a session that holds nothing, so the room can start.
-  const confirmed = await createGameSim({ content, players: [1, 2] })
-  const predicted = await createGameSim({ content, players: [1, 2] })
+  const confirmed = await createGameSim({ content, players: [] })
+  const predicted = await createGameSim({ content, players: [] })
   made.push(confirmed, predicted)
   const other = createSession({ link: wire.link(ONE), confirmed, predicted })
   sessions.push(other)
