@@ -140,7 +140,8 @@ function ledgeFacts(world: World): LedgeFacts {
     if (parent === undefined || world.getRigidBody(parent).isFixed()) return
     const reach = reachBelow(collider)
     if (reach === undefined) lows.set(collider.handle, Number.NEGATIVE_INFINITY)
-    else if (world.getRigidBody(parent).linvel().y < -LEDGE_RISE) lows.set(collider.handle, Number.POSITIVE_INFINITY)
+    else if (world.getRigidBody(parent).linvel().y < -LEDGE_RISE)
+      lows.set(collider.handle, Number.POSITIVE_INFINITY)
     else lows.set(collider.handle, collider.translation().y + reach)
   })
   return { tops, lows }
