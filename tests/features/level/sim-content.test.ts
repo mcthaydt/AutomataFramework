@@ -263,7 +263,8 @@ test('the world file is not given to the sim, what it joins is, and dragging a l
 
 test('a game that lists only a world file is not handed back whole', async () => {
   const files = { ...fixtureFiles }
-  files['automata.toml'] = `${files['automata.toml']}\n[[content]]\ntype = "world"\npath = "content/worlds/world.json"\n`
+  files['automata.toml'] =
+    `${files['automata.toml']}\n[[content]]\ntype = "world"\npath = "content/worlds/world.json"\n`
   files['content/worlds/world.json'] = writeContent('world', {
     format: 1,
     id: 'world',

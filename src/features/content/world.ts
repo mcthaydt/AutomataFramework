@@ -19,11 +19,11 @@ const placed = z.strictObject({
   level: Id.describe('Which level this is, by its id, like "room-1".'),
   at: z
     .strictObject({
-      x: z.number().describe('Where the level\'s left edge is on the map, in tiles.'),
-      y: z.number().describe('Where the level\'s top edge is on the map, in tiles.'),
+      x: z.number().describe("Where the level's left edge is on the map, in tiles."),
+      y: z.number().describe("Where the level's top edge is on the map, in tiles."),
     })
     .describe(
-      'Where the level\'s top left corner is on the map, in tiles. Levels that touch along a side, and are open there, join into one place.',
+      "Where the level's top left corner is on the map, in tiles. Levels that touch along a side, and are open there, join into one place.",
     ),
 })
 

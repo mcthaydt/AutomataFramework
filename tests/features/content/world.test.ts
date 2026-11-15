@@ -51,7 +51,9 @@ describe('the world in a game', () => {
           }),
         }),
       ),
-    ).toEqual([`${WORLD}: levels[3].level: There is no level called "room-9". This game has: room-1, room-2, room-3.`]))
+    ).toEqual([
+      `${WORLD}: levels[3].level: There is no level called "room-9". This game has: room-1, room-2, room-3.`,
+    ]))
 
   test('a level that touches another, open on one side and solid on the other', async () =>
     expect(
@@ -75,7 +77,9 @@ describe('the world in a game', () => {
         'automata.toml': `${files['automata.toml']}\n[[content]]\ntype = "world"\npath = "content/worlds/other.json"\n`,
         'content/worlds/other.json': writeContent('world', { format: 1, id: 'other', levels: [] } as never),
       }),
-    ).toEqual([`automata.toml: content[${listed}]: A game has one world file, and ${WORLD} is already listed.`])
+    ).toEqual([
+      `automata.toml: content[${listed}]: A game has one world file, and ${WORLD} is already listed.`,
+    ])
   })
 
   test('a world file listed as another kind is said in one sentence', async () => {

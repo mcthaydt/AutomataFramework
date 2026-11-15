@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this world, like \"world\". It matches the file name."
+    },
+    "levels": {
+      "maxItems": 1024,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "Which level this is, by its id, like \"room-1\"."
+          },
+          "at": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "description": "Where the level's left edge is on the map, in tiles."
+              },
+              "y": {
+                "type": "number",
+                "description": "Where the level's top edge is on the map, in tiles."
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ],
+            "additionalProperties": false,
+            "description": "Where the level's top left corner is on the map, in tiles. Levels that touch along a side, and are open there, join into one place."
+          }
+        },
+        "required": [
+          "level",
+          "at"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The levels on the map, each with where it sits. Levels left out are not on the map."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "levels"
+  ],
+  "additionalProperties": false,
+  "title": "World"
+}

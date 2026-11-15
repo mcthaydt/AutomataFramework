@@ -117,6 +117,81 @@
           "y": {
             "type": "number",
             "description": "Where the middle of the thing is, in tiles from the top edge."
+          },
+          "values": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+            },
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string",
+                  "maxLength": 96
+                },
+                {
+                  "maxItems": 16,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+                  }
+                },
+                {
+                  "maxItems": 64,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number",
+                        "description": "A place on the path, in tiles from the left edge."
+                      },
+                      "y": {
+                        "type": "number",
+                        "description": "A place on the path, in tiles from the top edge."
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "level": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                      "description": "The level to go into, by its id, like \"level-2\"."
+                    },
+                    "thing": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                      "description": "The thing in that level to come out beside, by its id, like \"door-in\"."
+                    }
+                  },
+                  "required": [
+                    "level"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "description": "What this thing holds, by the ids its character declares, like { \"opens\": [\"gate-1\"] }. Left out means only its character's defaults."
           }
         },
         "required": [

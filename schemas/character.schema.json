@@ -160,6 +160,461 @@
       ],
       "additionalProperties": false,
       "description": "Set on the hero only: the framework walks and jumps it from a tuning file, with no game code. Walk and jump are always on; \"double-jump\", \"wall-jump\" and \"dash\" are each switched on here."
+    },
+    "values": {
+      "maxItems": 16,
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this value, used once in this character, like \"opens\"."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "What an editor calls this value, in your own words, like \"Opens\". It is not translated."
+              },
+              "about": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "A short help line for whoever sets this value. Left out means none."
+              },
+              "shown": {
+                "type": "string",
+                "enum": [
+                  "tag",
+                  "reach",
+                  "arrow",
+                  "path",
+                  "none"
+                ],
+                "description": "How the level view draws it: \"tag\" a small badge, \"reach\" a ring, \"arrow\" a line to another thing, \"path\" a line through places, \"none\" not at all. A number may be a tag, a reach or none; a switch, choice, words or leads-to value a tag or none; a thing an arrow or none; a path a path or none. Left out means the usual one for its type."
+              },
+              "type": {
+                "type": "string",
+                "const": "number",
+                "description": "\"number\": a number between two limits."
+              },
+              "least": {
+                "type": "number",
+                "description": "The smallest it may be."
+              },
+              "most": {
+                "type": "number",
+                "description": "The largest it may be."
+              },
+              "step": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "description": "It moves in jumps of this size from \"least\". Left out means any number in between."
+              },
+              "default": {
+                "type": "number",
+                "description": "What a thing holds when it says nothing. Between \"least\" and \"most\"."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "type",
+              "least",
+              "most",
+              "default"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this value, used once in this character, like \"opens\"."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "What an editor calls this value, in your own words, like \"Opens\". It is not translated."
+              },
+              "about": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "A short help line for whoever sets this value. Left out means none."
+              },
+              "shown": {
+                "type": "string",
+                "enum": [
+                  "tag",
+                  "reach",
+                  "arrow",
+                  "path",
+                  "none"
+                ],
+                "description": "How the level view draws it: \"tag\" a small badge, \"reach\" a ring, \"arrow\" a line to another thing, \"path\" a line through places, \"none\" not at all. A number may be a tag, a reach or none; a switch, choice, words or leads-to value a tag or none; a thing an arrow or none; a path a path or none. Left out means the usual one for its type."
+              },
+              "type": {
+                "type": "string",
+                "const": "switch",
+                "description": "\"switch\": yes or no."
+              },
+              "default": {
+                "type": "boolean",
+                "description": "What a thing holds when it says nothing: true or false."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "type",
+              "default"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this value, used once in this character, like \"opens\"."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "What an editor calls this value, in your own words, like \"Opens\". It is not translated."
+              },
+              "about": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "A short help line for whoever sets this value. Left out means none."
+              },
+              "shown": {
+                "type": "string",
+                "enum": [
+                  "tag",
+                  "reach",
+                  "arrow",
+                  "path",
+                  "none"
+                ],
+                "description": "How the level view draws it: \"tag\" a small badge, \"reach\" a ring, \"arrow\" a line to another thing, \"path\" a line through places, \"none\" not at all. A number may be a tag, a reach or none; a switch, choice, words or leads-to value a tag or none; a thing an arrow or none; a path a path or none. Left out means the usual one for its type."
+              },
+              "type": {
+                "type": "string",
+                "const": "choice",
+                "description": "\"choice\": one of a few named options."
+              },
+              "from": {
+                "minItems": 1,
+                "maxItems": 16,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                      "description": "The option's name in a file, like \"red\"."
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40,
+                      "description": "What an editor calls this option, in your own words. It is not translated."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "The options, from 1 to 16."
+              },
+              "default": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "The option a thing holds when it says nothing, by its name."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "type",
+              "from",
+              "default"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this value, used once in this character, like \"opens\"."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "What an editor calls this value, in your own words, like \"Opens\". It is not translated."
+              },
+              "about": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "A short help line for whoever sets this value. Left out means none."
+              },
+              "shown": {
+                "type": "string",
+                "enum": [
+                  "tag",
+                  "reach",
+                  "arrow",
+                  "path",
+                  "none"
+                ],
+                "description": "How the level view draws it: \"tag\" a small badge, \"reach\" a ring, \"arrow\" a line to another thing, \"path\" a line through places, \"none\" not at all. A number may be a tag, a reach or none; a switch, choice, words or leads-to value a tag or none; a thing an arrow or none; a path a path or none. Left out means the usual one for its type."
+              },
+              "type": {
+                "type": "string",
+                "const": "words",
+                "description": "\"words\": the key of one of the game's own messages, like \"sign.welcome\"."
+              },
+              "default": {
+                "type": "string",
+                "maxLength": 96,
+                "pattern": "^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$",
+                "description": "The key a thing holds when it says nothing. Left out means none."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this value, used once in this character, like \"opens\"."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "What an editor calls this value, in your own words, like \"Opens\". It is not translated."
+              },
+              "about": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "A short help line for whoever sets this value. Left out means none."
+              },
+              "shown": {
+                "type": "string",
+                "enum": [
+                  "tag",
+                  "reach",
+                  "arrow",
+                  "path",
+                  "none"
+                ],
+                "description": "How the level view draws it: \"tag\" a small badge, \"reach\" a ring, \"arrow\" a line to another thing, \"path\" a line through places, \"none\" not at all. A number may be a tag, a reach or none; a switch, choice, words or leads-to value a tag or none; a thing an arrow or none; a path a path or none. Left out means the usual one for its type."
+              },
+              "type": {
+                "type": "string",
+                "const": "thing",
+                "description": "\"thing\": a link to other things in the same level."
+              },
+              "kinds": {
+                "maxItems": 16,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+                },
+                "description": "The kinds of thing it may link to, like [\"gate\"]. Left out means any."
+              },
+              "most": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 16,
+                "description": "How many things it may link to, from 1 to 16. 1, or left out, means one thing, written as its id; more means a list of up to that many."
+              },
+              "needed": {
+                "type": "boolean",
+                "description": "True when every thing of this character must say it. Left out means false."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this value, used once in this character, like \"opens\"."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "What an editor calls this value, in your own words, like \"Opens\". It is not translated."
+              },
+              "about": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "A short help line for whoever sets this value. Left out means none."
+              },
+              "shown": {
+                "type": "string",
+                "enum": [
+                  "tag",
+                  "reach",
+                  "arrow",
+                  "path",
+                  "none"
+                ],
+                "description": "How the level view draws it: \"tag\" a small badge, \"reach\" a ring, \"arrow\" a line to another thing, \"path\" a line through places, \"none\" not at all. A number may be a tag, a reach or none; a switch, choice, words or leads-to value a tag or none; a thing an arrow or none; a path a path or none. Left out means the usual one for its type."
+              },
+              "type": {
+                "type": "string",
+                "const": "path",
+                "description": "\"path\": a list of places in the level, one after another."
+              },
+              "least": {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 64,
+                "description": "The fewest places it needs. Left out means 2."
+              },
+              "most": {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 64,
+                "description": "The most places it may have. Left out means 64."
+              },
+              "loop": {
+                "type": "boolean",
+                "description": "True when the end of the path joins its start. Left out means false."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this value, used once in this character, like \"opens\"."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40,
+                "description": "What an editor calls this value, in your own words, like \"Opens\". It is not translated."
+              },
+              "about": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "A short help line for whoever sets this value. Left out means none."
+              },
+              "shown": {
+                "type": "string",
+                "enum": [
+                  "tag",
+                  "reach",
+                  "arrow",
+                  "path",
+                  "none"
+                ],
+                "description": "How the level view draws it: \"tag\" a small badge, \"reach\" a ring, \"arrow\" a line to another thing, \"path\" a line through places, \"none\" not at all. A number may be a tag, a reach or none; a switch, choice, words or leads-to value a tag or none; a thing an arrow or none; a path a path or none. Left out means the usual one for its type."
+              },
+              "type": {
+                "type": "string",
+                "const": "leads-to",
+                "description": "\"leads-to\": a way into another level, and a thing in it to come out beside."
+              },
+              "needed": {
+                "type": "boolean",
+                "description": "True when every thing of this character must say it. Left out means false."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "description": "The values its things may hold, like a number, a switch, a link to other things, a path or a way into another level. A thing in a level gives them. Left out means none."
+    },
+    "switch": {
+      "type": "object",
+      "properties": {
+        "opens": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "The \"thing\" value that lists what this switch opens, like \"opens\"."
+        },
+        "stays": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "The \"switch\" value that says this one stays down once pressed, like \"stays\". Left out means it comes up when nothing stands on it."
+        }
+      },
+      "required": [
+        "opens"
+      ],
+      "additionalProperties": false,
+      "description": "Set on a plate or a button: it is pressed by what touches it, so it needs \"touch\": \"sense\". \"opens\" names the \"thing\" value that lists what it opens; \"stays\" names a \"switch\" value that makes it stay down once pressed."
+    },
+    "opens": {
+      "type": "string",
+      "const": "walk-through",
+      "description": "\"walk-through\": things pass through this character while it is open, like a gate. A fixed character with no \"touch\"."
+    },
+    "one-per-level": {
+      "type": "boolean",
+      "description": "True when a level may hold only one thing of this character, like a goal. Left out means false."
     }
   },
   "required": [

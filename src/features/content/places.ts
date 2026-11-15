@@ -171,8 +171,7 @@ export function layoutWorld(
         const offset = (box: Box): number => (along === 'y' ? box.y0 : box.x0)
         const here = range(unit, start - offset(open), end - 1 - offset(open))
         const there = range(unit, start - offset(solid), end - 1 - offset(solid))
-        const those =
-          here === there ? (end - start === 1 ? `that ${unit}` : `those ${unit}s`) : there
+        const those = here === there ? (end - start === 1 ? `that ${unit}` : `those ${unit}s`) : there
         problems.push({
           entry: open.entry,
           message: `${open.id}'s ${side(open)} edge is open at ${here}, but ${solid.id}, which touches it, is solid there. Open ${solid.id}'s ${side(solid)} edge at ${those}, or move it.`,

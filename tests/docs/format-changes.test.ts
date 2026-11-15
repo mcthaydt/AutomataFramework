@@ -66,5 +66,7 @@ test('the newest entry of every kind ends with the hash of its schema file', () 
 test('no entry names a kind that has no schema', () => {
   const known = new Set(kinds())
   for (const entry of entries())
-    expect(known.has(entry.kind), `The page has an entry for "${entry.kind}", which has no schema.`).toBe(true)
+    expect(known.has(entry.kind), `The page has an entry for "${entry.kind}", which has no schema.`).toBe(
+      true,
+    )
 })

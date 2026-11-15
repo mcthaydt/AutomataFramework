@@ -42,16 +42,13 @@ function checkNumber(declaration: Declaration<'number'>, given: unknown, say: Sa
   else if (given < least || given > most)
     say(`"${id}" must be from ${show(least)} to ${show(most)}. Got ${show(given)}.`)
   else if (step !== undefined && !onStep(given, least, step))
-    say(
-      `"${id}" must be ${show(least)} plus a whole number of steps of ${show(step)}. Got ${show(given)}.`,
-    )
+    say(`"${id}" must be ${show(least)} plus a whole number of steps of ${show(step)}. Got ${show(given)}.`)
 }
 
 function checkChoice(declaration: Declaration<'choice'>, given: unknown, say: Say): void {
   const ids = declaration.from.map((option) => option.id)
   if (typeof given !== 'string') say(`"${declaration.id}" is one of: ${list(ids)}.`)
-  else if (!ids.includes(given))
-    say(`"${declaration.id}" must be one of: ${list(ids)}. Got "${given}".`)
+  else if (!ids.includes(given)) say(`"${declaration.id}" must be one of: ${list(ids)}. Got "${given}".`)
 }
 
 function checkWords(declaration: Declaration<'words'>, given: unknown, at: Where, say: Say): void {
