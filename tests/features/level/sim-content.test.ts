@@ -183,7 +183,7 @@ const withProject = (content: GameContent, fields: Record<string, unknown>): Gam
   project: { ...content.project, ...fields } as GameContent['project'],
 })
 
-test('the flow\'s four fields are not given to the sim', async () => {
+test("the flow's four fields are not given to the sim", async () => {
   // All four written, each asked about alone (audit I2: one `arrayContaining` passes when any one key is missing).
   const given = simContent(
     withProject(await loadFixtureGame(), {
@@ -198,7 +198,12 @@ test('the flow\'s four fields are not given to the sim', async () => {
 
 test('each of the four alone is taken out, and a game that writes only one still hashes as it did', async () => {
   const plain = await loadFixtureGame()
-  for (const fields of [{ levels: ['level-1'] }, { done: 'x.y' }, { warnings: ['a.b'] }, { splash: 'hero' }]) {
+  for (const fields of [
+    { levels: ['level-1'] },
+    { done: 'x.y' },
+    { warnings: ['a.b'] },
+    { splash: 'hero' },
+  ]) {
     // Audit M7: the early "same object" return must not be taken while one of the four is in the project.
     const given = simContent(withProject(plain, fields))
     expect(given, JSON.stringify(fields)).toEqual(plain)
