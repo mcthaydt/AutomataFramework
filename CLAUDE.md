@@ -106,7 +106,9 @@ session on Sonnet at xhigh effort, before the next step starts.
 2. **Design pass** (Fable, medium effort): every screen, device and orientation, for layout, touch size and polish.
 3. **End-to-end check** (Opus, medium effort): walk every real user journey from first open to playing the result, and
    check that every action has its opposite and a visible way back (open/close, hide/show, undo/redo, cancel, leave and
-   return) at every size; fully usable, nothing missing, no dead ends.
+   return) at every size; fully usable, nothing missing, no dead ends. It also runs the drunk-grandma UX test on every journey: could a
+   drunk grandma find each action, understand what it does and what happened, and recover from a wrong tap, with no
+   hidden gestures, guessing or reading the docs.
 4. **Second visual look** (Opus, xhigh effort): a fresh, harsh look after all the fixes.
 5. **Owner review.**
 
