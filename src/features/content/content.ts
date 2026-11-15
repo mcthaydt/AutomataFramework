@@ -96,6 +96,7 @@ export {
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'
+export { MAX_PHOTO_SIDE, type PhotoFile, PhotoSchema, photoPictureProblem } from './photo.ts'
 export {
   type ContentRef,
   levelOrder,

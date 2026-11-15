@@ -15,6 +15,7 @@ import type { MusicFile } from './music.ts'
 import { type Parsed, parseContent } from './parse.ts'
 import type { ContentRef } from './project.ts'
 import { PROJECT_FILE, type Project, parseProject } from './project.ts'
+import type { PhotoFile } from './photo.ts'
 import type { SceneFile } from './scene.ts'
 import { list, noSuch } from './shared.ts'
 import type { SoundFile } from './sound.ts'
@@ -35,6 +36,7 @@ export interface GameContent {
   readonly tilesets?: Readonly<Record<string, TilesetFile>>
   readonly backdrops?: Readonly<Record<string, BackdropFile>>
   readonly scenes?: Readonly<Record<string, SceneFile>>
+  readonly photos?: Readonly<Record<string, PhotoFile>>
   readonly figures?: Readonly<Record<string, FigureFile>>
   readonly behaviours?: Readonly<Record<string, BehaviourFile>>
   readonly tunings?: Readonly<Record<string, TuningFile>>

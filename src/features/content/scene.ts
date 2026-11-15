@@ -4,6 +4,8 @@
 import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { Id } from './ids.ts'
+import { PHOTO_LIBRARY } from './photo-library.ts'
+import { PHOTO_NAME } from './photo.ts'
 import { GROUND_SHAPES, type GroundShape, gapsUnder, slopeRuns } from './scene-ground.ts'
 import { list, noSuch, unique, variants } from './shared.ts'
 import { groundPageTiles, MAX_PICTURE_SIDE } from './sheet.ts'
@@ -93,8 +95,6 @@ export interface SceneFile {
 
 /** The letters a scene's rows may use: `!` to `~`, less the `.` that always means empty air. */
 const LETTER = /^[!-~]$/
-/** A photo's name: a library photo like `brickYellow`, or a game's own like `moss`. */
-const PHOTO_NAME = /^[a-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*$/
 
 const paintId = Id.describe("One of the scene's paints, by id, like \"grass\".")
 
@@ -431,6 +431,15 @@ export const sceneInfo: ContentTypeInfo<SceneFile, SceneFile> = {
     if (scene.backdrop !== undefined && !game.has('backdrop', scene.backdrop))
       report('backdrop', noSuch('backdrop', scene.backdrop, game.ids('backdrop')))
     scene.materials.forEach((material, i) => {
+      if (
+        material.kind === 'photo' &&
+        !game.has('photo', material.photo) &&
+        !Object.hasOwn(PHOTO_LIBRARY, material.photo)
+      )
+        report(
+          `materials[${i}].photo`,
+          `There is no photo called "${material.photo}". This game has: ${list(game.ids('photo'))}. The library has: ${list(Object.keys(PHOTO_LIBRARY))}.`,
+        )
       if (material.kind === 'tiles') {
         if (!game.has('tileset', material.tileset)) {
           report(`materials[${i}].tileset`, noSuch('tileset', material.tileset, game.ids('tileset')))

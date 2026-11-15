@@ -12,6 +12,10 @@ type = "scene"
 path = "content/scenes/meadow.json"
 
 [[content]]
+type = "photo"
+path = "content/photos/moss.json"
+
+[[content]]
 type = "tileset"
 path = "content/tilesets/meadow.json"
 

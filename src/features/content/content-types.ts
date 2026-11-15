@@ -10,6 +10,7 @@ import { type FigureFile, figureInfo } from './figure.ts'
 import { type Level, levelInfo } from './level.ts'
 import { type MessagesFile, messagesInfo } from './messages.ts'
 import { type MusicFile, musicInfo } from './music.ts'
+import { type PhotoFile, photoInfo } from './photo.ts'
 import { type SceneFile, sceneInfo } from './scene.ts'
 import { type SoundFile, soundInfo } from './sound.ts'
 import { type TilesetFile, tilesetInfo } from './tileset.ts'
@@ -27,6 +28,7 @@ export const CONTENT_TYPES: {
   readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>
   readonly backdrop: ContentTypeInfo<BackdropFile, BackdropFile>
   readonly scene: ContentTypeInfo<SceneFile, SceneFile>
+  readonly photo: ContentTypeInfo<PhotoFile, PhotoFile>
   readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>
   readonly tuning: ContentTypeInfo<TuningFile, TuningFile>
   readonly feel: ContentTypeInfo<FeelFile, FeelFile>
@@ -43,6 +45,7 @@ export const CONTENT_TYPES: {
   tileset: tilesetInfo,
   backdrop: backdropInfo,
   scene: sceneInfo,
+  photo: photoInfo,
   behaviour: behaviourInfo,
   tuning: tuningInfo,
   feel: feelInfo,

@@ -6,6 +6,7 @@ import crate from './content/characters/crate.json?raw'
 import hero from './content/characters/hero.json?raw'
 import figureMeadow from './content/figures/meadow.json?raw'
 import level1 from './content/levels/level-1.json?raw'
+import photoMoss from './content/photos/moss.json?raw'
 import sceneMeadow from './content/scenes/meadow.json?raw'
 import tilesetMeadow from './content/tilesets/meadow.json?raw'
 
@@ -14,6 +15,7 @@ export const sceneGameFiles: Record<string, string> = {
   'automata.toml': automata,
   'content/levels/level-1.json': level1,
   'content/scenes/meadow.json': sceneMeadow,
+  'content/photos/moss.json': photoMoss,
   'content/tilesets/meadow.json': tilesetMeadow,
   'content/figures/meadow.json': figureMeadow,
   'content/characters/hero.json': hero,

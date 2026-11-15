@@ -113,3 +113,6 @@ test('the JSON Schema of a scene', () =>
     'materials',
     'ground',
   ]))
+
+test('the JSON Schema of a photo', () =>
+  expectSchema('photo', 'Photo', ['format', 'id', 'image', 'size', 'source', 'licence', 'credit']))
