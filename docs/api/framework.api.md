@@ -74,6 +74,7 @@ function applySettings(defaults: Controls, saved: unknown): {
 interface Art {
     figure(character: string, pose: string, player: number): Picture | undefined;
     readonly tiles: readonly TileSprite[];
+    readonly groundPages: readonly GroundPageArt[];
     readonly ground: readonly TileBox[];
     readonly backdrop: BackdropArt | undefined;
     destroy(): void;
@@ -2287,6 +2288,7 @@ function levelOrder(project: Project): readonly string[];
 interface LevelPicture {
     readonly canvas: HTMLCanvasElement;
     show(level: Level): void;
+    showScene(content: GameContent, art: Art): void;
     setRoom(room: Room): void;
     setView(view: Fit | undefined): void;
     fit(): Fit;

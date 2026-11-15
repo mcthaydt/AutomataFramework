@@ -1,6 +1,7 @@
 // Saved games on the flow's page: Continue after a visit, three places and the questions before a loss, a place that is
 // damaged, a host that keeps nothing, and a game that keeps data of its own beside the level.
 import { afterEach, beforeEach, expect, test } from 'vitest'
+import { userEvent } from 'vitest/browser'
 import { Id } from '#src/features/content/content.ts'
 import { defaultSave, type FlowSave, type Progress } from '#src/features/flow/flow.ts'
 import { testHost } from '#src/features/host/host.ts'
@@ -10,6 +11,7 @@ import { createSaves, defineSave, memoryStore, type Saves } from '#src/features/
 import { SPLASH_MS } from '#src/features/screens/screens.ts'
 import { z } from '#src/lib/zod.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
+import { flowReplay } from '../../fixtures/flow/game.ts'
 
 const es = frameworkWords('es')
 const drive = createDrive()
@@ -163,4 +165,26 @@ test('a game with a save of its own shape keeps its own data beside the level', 
   // Reaching level two keeps the coins beside it.
   const loaded = await createSaves({ def: own, store: host.store }).load(0)
   expect(loaded).toMatchObject({ ok: true, data: { level: 'level-2', coins: 7 } })
+})
+
+test('a tap on a watching game plays the newest saved game, and writes no new one', async () => {
+  const host = testHost()
+  await drive.returning(host, 'es')
+  const saves = placesOn(host)
+  await saves.save(0, { level: 'level-1' }, { label: 'Nivel Uno' })
+  // The later save is the newest.
+  await new Promise((resolve) => setTimeout(resolve, 20))
+  await saves.save(1, { level: 'level-2' }, { label: 'Nivel Dos' })
+  await drive.open({ host, watch: await flowReplay(), game: { noWarning: true } })
+  await drive.shown('watching')
+  const heard: string[] = [drive.step()]
+  drive.flow()?.onState((state) => heard.push(state.step))
+  await userEvent.click(drive.mount.querySelector('.take') as HTMLElement)
+  await drive.shown('playing')
+  // Not the flags, the splash or the menu: the language is known, so the level itself, the one the game was left at.
+  expect(heard).toEqual(['watching', 'playing'])
+  expect(drive.flow()?.state().level).toBe('level-2')
+  const listed = await saves.list()
+  const kept = listed.ok ? listed.value.filter((one) => one.kind === 'ready').length : -1
+  expect(kept).toBe(2)
 })

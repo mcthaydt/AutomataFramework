@@ -65,6 +65,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
   let party: Party | undefined
   let saving: StoreResult<void> = { ok: true, value: undefined }
   let splashPicture: Blob | undefined
+  // The level the main menu's first action opens: the newest saved game's, or `undefined` when there is none.
+  let firstLevel: string | undefined
   let problem: { readonly lines: readonly string[]; readonly fix?: string } = { lines: [] }
   let stopFollowing = (): void => {}
   let stopSound = (): void => {}
@@ -107,7 +109,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       warnings: (project.warnings?.length ?? 0) > 0 || noSaving,
       readable: locale.language() !== undefined || locale.suggested() !== undefined,
       asked: locale.asked(),
-      first: project.start,
+      first: firstLevel ?? project.start,
       next: state.level === undefined ? undefined : nextLevel(project, state.level),
     }
   }
@@ -409,9 +411,10 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     stopGame()
     dropScreen()
     if (places.progress() === undefined) {
-      // A visitor who took over a watching game plays from the start without having chosen Play.
+      // A visitor who took over a watching game plays what the menu's first action would have opened: the newest saved
+      // game, or a new one when there is none.
       await places.refresh()
-      await places.begin()
+      await places.openNewest()
     }
     try {
       const started = await startGame({
@@ -447,9 +450,15 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
         started.onStep((step) => {
           if (endsLevel(done, step.events)) dispatch({ type: 'level-done' })
         }),
-        started.onBroken((error) => fail(error)),
+        // The player is told in words, not in the rule's own message; the loop has thrown that one to the console.
+        started.onBroken((error) => fail(error, [])),
         started.input.onMenu((press) => {
           if (press === 'pause') dispatch({ type: 'pause' })
+        }),
+        // A page that is hidden pauses the game and it stays paused when the page comes back: a thumb that was on the
+        // screen may not be there now, so the player says when to go on.
+        host.onVisibility((visible) => {
+          if (!visible) dispatch({ type: 'pause' })
         }),
       ]
       // Escape pauses, heard on the window as the game's own keys are: a tap on the canvas leaves the focus outside
@@ -530,6 +539,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     if (stopped) return
     saves = createSaves({ def: save.def, store: host.store })
     saving = await saves.check()
+    await places.refresh()
+    firstLevel = await places.newestLevel()
     party = createParty(project.players ?? 1)
     if (options.speaker === undefined) madeSpeaker = webSpeaker({ host })
     const speaker = options.speaker ?? (madeSpeaker as Speaker)

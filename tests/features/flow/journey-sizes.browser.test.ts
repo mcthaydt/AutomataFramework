@@ -1,6 +1,6 @@
 // Every screen of the flow at the five sizes: nothing is cut off, nothing but a list scrolls, every control is big enough
 // to touch, the screen's one main button is bigger still, and a picture is taken (the screens job keeps them). Then the
-// phone is turned on three screens, and the focus and the state stay where they were.
+// phone is turned on the screens that matter, and the focus and the state stay where they were.
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { defaultSave } from '#src/features/flow/flow.ts'
@@ -30,6 +30,12 @@ async function look(size: string, name: string, mains?: number): Promise<void> {
   const root = document.scrollingElement as Element
   const fits = [root.scrollWidth <= window.innerWidth, root.scrollHeight <= window.innerHeight]
   expect(fits, `${name} fits the page`).toEqual([true, true])
+  // Nothing scrolls but a list: whatever can scroll is a `List`, or the language picker's own box.
+  for (const one of drive.mount.querySelectorAll<HTMLElement>('*')) {
+    const scrolls = ['auto', 'scroll'].includes(getComputedStyle(one).overflowY)
+    const allowed = one.classList.contains('list') || one.classList.contains('automata-picker')
+    if (scrolls) expect(allowed, `${name}: only a list scrolls`).toBe(true)
+  }
   for (const button of drive.mount.querySelectorAll<HTMLElement>('.automata-screen button')) {
     const box = button.getBoundingClientRect()
     const says = button.textContent?.trim() || button.getAttribute('aria-label')
@@ -121,34 +127,12 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
   await twoGames(host)
   await drive.toMenu({ host, game: { noWarning: true } })
   const turn = async (): Promise<void> => {
-    // Counted for a failure to print: did the page hear the window change, and did a box watcher hear the mount's?
-    let heard = 0
-    let watched = 0
-    const count = (): void => {
-      heard += 1
-    }
-    window.addEventListener('resize', count)
-    const watcher = new ResizeObserver(() => {
-      watched += 1
-    })
-    watcher.observe(drive.mount)
     await page.viewport(844, 390)
     await expect.poll(() => window.innerHeight).toBe(390)
     // A screen drawn in the kit's frame says "tall" until it has measured its new box; the menu has no frame.
-    // What every kit frame says it measured, for a failure to print: the page's own state, then each frame.
-    const frames = (): string => {
-      const state = `${document.visibilityState} ${window.innerWidth}x${window.innerHeight}`
-      const found = [`${state} heard ${heard} watched ${watched}`]
-      for (const one of drive.mount.querySelectorAll<HTMLElement>('[data-height]')) {
-        const screen = one.closest<HTMLElement>('[data-screen]')
-        const says = `${one.dataset.width}/${one.dataset.height}`
-        found.push(`${screen?.dataset.screen} says ${says} in ${one.clientWidth}x${one.clientHeight}`)
-      }
-      return found.join(' | ')
-    }
-    await expect.poll(frames).not.toMatch(/tall/)
-    window.removeEventListener('resize', count)
-    watcher.disconnect()
+    const heights = (): string[] =>
+      [...drive.mount.querySelectorAll<HTMLElement>('[data-height]')].map((one) => one.dataset.height ?? '')
+    await expect.poll(heights).not.toContain('tall')
   }
   // The menu: the same button is in focus on its side.
   await drive.wait(es('automata.menu.continue'))
@@ -185,4 +169,58 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
   await turn()
   expect(drive.step()).toBe('paused')
   expect(focusedName()).toBe(paused)
+})
+
+test('turning the phone on the warnings, the saved games, the players and the done screen keeps the state and the focus', async () => {
+  await page.viewport(390, 844)
+  const host = testHost({ deviceLanguages: ['es-MX'] })
+  await twoGames(host)
+  const turn = async (): Promise<void> => {
+    await page.viewport(844, 390)
+    await expect.poll(() => window.innerHeight).toBe(390)
+    const heights = (): string[] =>
+      [...drive.mount.querySelectorAll<HTMLElement>('[data-height]')].map((one) => one.dataset.height ?? '')
+    await expect.poll(heights).not.toContain('tall')
+    await page.viewport(390, 844)
+    await expect.poll(() => window.innerHeight).toBe(844)
+  }
+  await drive.open({ host, game: { players: 2 } })
+  await drive.shown('warnings')
+  await drive.wait('OK')
+  const warning = focusedName()
+  await turn()
+  expect(drive.step()).toBe('warnings')
+  expect(focusedName()).toBe(warning)
+  await drive.press('OK')
+  await drive.shown('picking')
+  await expect.poll(() => drive.mount.querySelector('.automata-picker-go')).not.toBeNull()
+  ;(drive.mount.querySelector('.automata-flag') as HTMLElement).click()
+  ;(drive.mount.querySelector('.automata-picker-go') as HTMLElement).click()
+  await drive.shown('splash')
+  drive.frames.at(0)
+  drive.run(SPLASH_MS + 200)
+  await drive.shown('menu')
+  await drive.wait(es('automata.menu.saves'))
+  for (const [button, screen] of [
+    [es('automata.menu.saves'), 'saves'],
+    [es('automata.menu.add-player'), 'players'],
+  ] as const) {
+    await drive.press(button)
+    await expect.poll(() => drive.mount.querySelector(`[data-screen="${screen}"]`)).not.toBeNull()
+    const focused = focusedName()
+    await turn()
+    expect(drive.mount.querySelector(`[data-screen="${screen}"]`)).not.toBeNull()
+    expect(focusedName()).toBe(focused)
+    await drive.press(screen === 'saves' ? es('automata.back') : es('automata.players.done'))
+    await drive.wait(es('automata.menu.continue'))
+  }
+  await drive.press(es('automata.menu.continue'))
+  await drive.shown('playing')
+  drive.flow()?.finishLevel()
+  await drive.shown('done')
+  await drive.wait(es('automata.done.menu'))
+  const done = focusedName()
+  await turn()
+  expect(drive.step()).toBe('done')
+  expect(focusedName()).toBe(done)
 })

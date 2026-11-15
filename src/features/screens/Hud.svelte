@@ -39,14 +39,14 @@
 <style>
   .pause {
     position: absolute;
-    top: max(12px, env(safe-area-inset-top));
+    top: calc(12px + env(safe-area-inset-top));
     pointer-events: auto;
   }
   .pause[data-side='left'] {
-    left: max(12px, env(safe-area-inset-left));
+    left: calc(12px + env(safe-area-inset-left));
   }
   .pause[data-side='right'] {
-    right: max(12px, env(safe-area-inset-right));
+    right: calc(12px + env(safe-area-inset-right));
   }
   .number {
     position: absolute;
