@@ -96,7 +96,15 @@ export {
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'
-export { type ContentRef, PROJECT_FILE, type Project, ProjectSchema, parseProject } from './project.ts'
+export {
+  type ContentRef,
+  levelOrder,
+  nextLevel,
+  PROJECT_FILE,
+  type Project,
+  ProjectSchema,
+  parseProject,
+} from './project.ts'
 export {
   emptyReadMarks,
   markRead,
