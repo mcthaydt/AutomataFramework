@@ -3,11 +3,11 @@ import { expect, test } from 'vitest'
 import {
   type FigureFile,
   isRigged,
-  noPose,
   parseContent,
   posesOf,
   writeContent,
 } from '#src/features/content/content.ts'
+import { noPose } from '#src/features/content/figure.ts'
 import { heroFigure } from '../../fixtures/content/art.ts'
 import { expectRoundTrip, gameFiles, gameProblems, problemsOf } from '../../fixtures/content/kind.ts'
 import { keeperPerson, plainPerson } from '../../fixtures/figures/person.ts'
