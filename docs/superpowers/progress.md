@@ -2,6 +2,25 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 7: rigged figures (people, animals and free shapes)
+
+Spec: [`specs/2026-11-15-rigged-figures-design.md`](specs/2026-11-15-rigged-figures-design.md). It widens M2 plan A's
+`figure` format so the editors' 2D figure builder (its spec is in AutomataFrameworkEditors) can be as powerful as the
+old 3D builder (the Owner, 2026-11-15). The Owner answered Q1 to Q5 on 2026-11-15.
+
+Overall: **4%** (stage 1 counts 4 points, stage 2 is 4, stage 3 is 4, stage 4 is 60, stage 5 is 10, stage 6 is 12,
+stage 7 is 6; the plan may split the cycle into several plans)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Written; in review | [`specs/2026-11-15-rigged-figures-design.md`](specs/2026-11-15-rigged-figures-design.md) |
+| 2. Plan | Not started | |
+| 3. Plan audit | Not started | |
+| 4. Execution | Not started | |
+| 5. Implementation audit | Not started | |
+| 6. Fixes | Not started | |
+| 7. Owner review | Not started | |
+
 ## Cycle 6: the built-in hero (walk, jump and more, from content)
 
 Spec: [`specs/2026-11-14-content-hero-controls-design.md`](specs/2026-11-14-content-hero-controls-design.md)
