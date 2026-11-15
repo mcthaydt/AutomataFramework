@@ -10,6 +10,7 @@ const blockType = (stream: Uint8Array): number => ((stream[2] as number) >> 1) &
 
 test('a stored block unpacks', () => {
   // 78 01: header. 01: last block, stored. 05 00 fa ff: length 5 and its complement. Then "hello" and its Adler-32.
+  // biome-ignore format: one byte of the stream a column, as the RFC prints them
   const stream = Uint8Array.of(0x78, 0x01, 0x01, 0x05, 0x00, 0xfa, 0xff, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x06, 0x2c, 0x02, 0x15)
   expect(text(inflate(stream))).toBe('hello')
 })
@@ -62,6 +63,7 @@ test('a block of type 3 is refused', () => {
 })
 
 test('a stored block whose length does not match its complement is refused', () => {
+  // biome-ignore format: as above
   const stream = Uint8Array.of(0x78, 0x01, 0x01, 0x05, 0x00, 0xfa, 0xfe, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x06, 0x2c, 0x02, 0x15)
   expect(() => inflate(stream)).toThrow(InflateError)
 })
