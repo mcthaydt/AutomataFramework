@@ -9,7 +9,7 @@ one. It also takes the "Good to have" boxes that a framework can give for free.
 The Owner, same day: only the boxes about **the game itself** are in scope. The parts about sending a game to a
 host (the questions asked when it is sent, appeals, a store page's name, line, clips and age rating, content ratings
 and the feed) are not about the game's code and are left out here. "No ads" is left out too: it is one host's rule,
-not the framework's (the Owner, 2026-11-15).
+not the framework's, and so are the other boxes listed under "Ruken, later" (the Owner, 2026-11-15).
 
 This is **Cycle 12**, one spec and one plan (plan Q, "quality"), built in parts.
 
@@ -47,11 +47,6 @@ Most boxes get more than one. "Proof" names where it is held today; the plan wri
 
 | Box | How | Proof today, and what is added |
 |---|---|---|
-| Opens and plays on an iPhone | Done + Check | The `create-play` job plays the made game in WebKit at phone sizes (`tests/create/create.journey.test.ts`). Added: the journey also plays it from the built folder, as a host serves it, not only from `automata play`. A real iPhone is the maker's (see "Check these yourself") |
-| Opens and plays on an Android phone | Done + Check | The same journey in Chromium at 390×844 with touch. Added: a Chromium run with Android's user agent and a mobile viewport |
-| Opens and plays on a computer | Done | The same journey at 1280×720 in three engines |
-| Runs with WebGL; WebGPU optional | Done | `render/stage.ts` asks Pixi for `preference: 'webgl'`; nothing needs WebGPU. Added: a browser test that starts a game with WebGPU missing |
-| Can be played with a gamepad | Done + Framework | Plan H's hero takes a gamepad; plan U's menus and pause answer one (`input/pad-menu.ts`). Added: the Try again and How to play screens (below) answer a gamepad too; a journey plays a level, loses and tries again by pad alone |
 | The Play again button always works | Framework + Template | **New: losing.** The flow has no lost step today: a level can only be finished. `automata.toml` gains `lost = "<event>"`, as `done` names the event that ends a level; the flow gains a `lost` step and the **Try again** screen (Try again, the main button; Menu). Pause gains **Start again**. Both start the level afresh with no reload. The template's level gains a gap to fall into, and its hero raises `hero.fell` when it drops below the level's lowest tile: a plugin of its own that the framework joins only when `lost = "hero.fell"`, so no other game's schema hash or recording moves (plan Q) |
 | You can't get stuck with no way forward | Framework + Check | Pause is always there (plan U's HUD button, Escape, a pad's Start), and now pause always has Start again and Menu. Added to `automata check`: a level whose `done` event can never be raised (no door, no thing of the kind it names) is a problem at the level's file |
 | Play again without reloading the page | Framework | Try again and Start again build a new sim in the same page (as Continue does today). A journey restarts 50 times in a row and checks the page did not reload |
@@ -76,14 +71,13 @@ Most boxes get more than one. "Proof" names where it is held today; the plan wri
 
 | Box | How | Proof today, and what is added |
 |---|---|---|
-| Not a copy, or a starter kit with nothing changed | Check | Added: `automata check --ship` fails a game that is still the starter: the name "My Game", the id `my-game`, or a level, figure or word file byte-for-byte the template's. Plain `automata check` only notes it |
 | You made the art, music and characters, or may use them | Game maker | The figure builder and the photo library make art the maker owns (library photos are CC0, with their records). `automata check --ship` lists it to confirm |
 
 ### Must have: It feels finished
 
 | Box | How | Proof today, and what is added |
 |---|---|---|
-| No stand-in pictures | Done + Check | A picture that is missing is a problem screen (`ArtError`); `automata art` paints every figure. Added: `--ship` fails a figure still the template's |
+| No stand-in pictures | Done | A picture that is missing is a problem screen (`ArtError`); `automata art` paints every figure |
 | No test words or numbers on screen | Check | Added: a `words` rule in the `files` step: a message that is empty, equals its key, or holds `TODO`, `FIXME`, `lorem`, `xxx` or `test` as a word is a problem, in every language. `--ship` fails on it; plain `check` notes it |
 | No half-made menus | Done + Framework | The framework's screens are whole and tested; a game that replaces one (`screens`) owns it. Added: `--ship` fails a game whose `screens` option names a screen with no file |
 | No hidden spots that do something when tapped | Game maker | A game's own page is its makers'. The framework's screens have none, and every button has a name (see "Easy for everyone") |
@@ -94,37 +88,20 @@ Most boxes get more than one. "Proof" names where it is held today; the plan wri
 | Box | How | Proof today, and what is added |
 |---|---|---|
 | The store page shows the real game; the host's content rules | Left out | About sending the game (the Owner, 2026-11-15) |
-| Nothing pops up to cut in while playing | Framework + Template + Check | Added: the template's page carries a **strict content security policy** (below), so no outside script or frame can load. The framework opens nothing on its own: its only `window.open` is a link the player pressed (`host/link.ts`). `automata check`'s `rules` step, today on the game's rules only, gains a `page` part over every file under `src/`: `alert`, `confirm`, `prompt`, `window.open`, `Notification`, `document.write` and an outside address in code are problems, each sentence naming the safe way |
+| Nothing pops up to cut in while playing | Framework + Check | The framework opens nothing on its own: its only `window.open` is a link the player pressed (`host/link.ts`). Added: `automata check`'s `rules` step, today on the game's rules only, gains a `page` part over every file under `src/`: `alert`, `confirm`, `prompt`, `Notification` and `document.write` are problems, and `window.open` outside a press is one, each sentence naming the safe way |
 
 ### Must have: It's safe
 
 | Box | How | Proof today, and what is added |
 |---|---|---|
 | Never asks for a password or personal details | Check + Game maker | Added: the `page` part flags an `<input>` of type `password`, `email` or `tel`, or with `autocomplete` of a name, address or phone. A question in words is the maker's |
-| Never asks for money or sends players to pay | Check | Added: the `page` part flags the Payment Request API and an outside address; the policy blocks both at run time |
-| Doesn't track players or send what they do | Framework + Template + Check | The framework sends nothing anywhere (its only network is a game's own files and, online, the game's own room). Added: the policy's `connect-src` is the game's own origin plus the room server `automata.toml` names; `navigator.sendBeacon` and an outside address are `page` problems; a journey records every request a whole visit makes and fails on any to another origin |
 | No other sites or windows unless asked | Done + Check | A link opens only from a player's press (`host/link.ts`). Added: as above |
-| Only does what a game does; nothing hidden in the background | Framework + Check | The loop stops on a hidden page (`game/game.ts`). Added: the `page` part flags service workers, `Worker` from an outside address, `navigator.geolocation`, camera and microphone requests and clipboard reads; the policy's `worker-src` is the game's own origin |
-
-### The policy
-
-The template's `index.html` gains one `<meta http-equiv="Content-Security-Policy">`, the strictest that the framework
-runs under (its no-eval promise is proven in `tests/features/csp/`):
-
-`default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;
-media-src 'self' blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self';
-form-action 'none'`.
-
-`'unsafe-inline'` for styles stays because Svelte and the kit set inline styles; scripts never get it. `automata.toml` names no room
-server today, so an online game lists its room's address like any other: a game that truly needs another address lists it in a new `[network] allow = [...]` table in `automata.toml`, which the policy and
-the `page` check both read, so it is one documented line an agent and a reviewer can see. `automata check` keeps the
-meta in the page (removing it is a problem) and reads the allow list back to the maker in `--ship`.
+| Only does what a game does; nothing hidden in the background | Framework + Check | The loop stops on a hidden page (`game/game.ts`). Added: the `page` part flags service workers, `navigator.geolocation`, camera and microphone requests and clipboard reads |
 
 ### `automata check --ship`
 
 Plain `automata check` stays what a game passes every day. `--ship` is what a game passes before it goes anywhere:
-every step, with the notes above turned into problems ("still the starter", placeholder words, a figure still the
-template's), and at the end the boxes only the makers can judge, as a short list in plain words (the "Game maker" rows
+every step, with the notes above turned into problems (placeholder words, a replaced screen with no file), and at the end the boxes only the makers can judge, as a short list in plain words (the "Game maker" rows
 and the "Check these yourself" list). The template's CI runs `automata check`; `--ship` is run by hand, by an agent
 before a release, or by a publish step later (Release 4).
 
@@ -162,10 +139,10 @@ slowed-network journeys are the framework's best stand-ins.
 - **Part B, framework defaults.** `lost` and the Try again screen; Start again on pause; How to play; the goal line;
   `score` and the best score; the pause screen's sound switch; Delete all my saves; the page-wide touch and scroll defaults; the
   loading bar, the slow line, one retry and Try again on the problem screen; Back; the compressor; screen fades.
-- **Part C, checks.** The policy in the template and its check; the `page` part of the `rules` step; the `words` rule;
+- **Part C, checks.** The `page` part of the `rules` step; the `words` rule;
   the `done`/`lost` reachability rule; `--ship` and its list; the skills and `AGENTS.md` name the maker's boxes.
-- **Part D, journeys.** The create journey grows: built folder, lose and try again by touch, keys and pad, 50
-  restarts, hide and show, reload on every screen, slowed and failing network, every request same-origin, fits the
+- **Part D, journeys.** The create journey grows: built folder, lose and try again by touch and keys, 50
+  restarts, hide and show, reload on every screen, slowed and failing network, fits the
   viewport and safe area, no sound before a tap, broken storage.
 
 New words (Try again, Start again, How to play, Still loading, Delete all my saves, the sound switch, the move names)
@@ -177,7 +154,26 @@ go in the framework's library in all six languages and wait for native readers l
   goal lines and score are plan D's, in its repo. A handoff, not a part.
 - The editors: nothing here changes what they call. Their Play stays `startGame`.
 - A publish step that runs `--ship` (Release 4).
-- The Ruken target stays left out (CLAUDE.md); the boxes are judged on the plain web build.
+- The Ruken target (see "Ruken, later").
+
+## Ruken, later
+
+The Owner, 2026-11-15: these boxes are Ruken's rules more than good game rules, so they are cut from every game's
+defaults. Ruken will become an export target later, and when it
+does, **that target enforces the full checklist**, every box, including these:
+
+- Opens and plays on an iPhone, on an Android phone and on a computer; runs with WebGL (WebGPU optional); can be
+  played with a gamepad. The framework's own journeys keep testing phones, tablets and a desktop in three engines,
+  and plan H's pad support stays; what is cut is adding new device and gamepad checks for this cycle.
+- No ads.
+- Never asks for money, or sends players somewhere else to pay.
+- Doesn't track players or send what they do to anyone else, with a strict content security policy that keeps out
+  every outside site and request.
+- Not a copy, or a starter kit with nothing changed (a check that fails an unchanged starter game).
+- The host's own rules: a store page that shows the real game, content ratings, the questions asked when a game is
+  sent.
+
+The Ruken target's spec starts from this list.
 
 ## Questions for the Owner
 
@@ -187,9 +183,8 @@ go in the framework's library in all six languages and wait for native readers l
   its CI in Chromium and WebKit; (B) no new dependency: the framework's `create-play` job is the only browser proof, and
   a game's own CI stays without one. **The Owner chose A (2026-11-15).** The template gains Playwright as a development
   dependency (an exact version, set by the plan) and a play test its CI runs in Chromium and WebKit: it opens the built
-  game at a phone and a desktop size, plays to the end of the level, loses and tries again, and fails on any request
-  to another origin.
+  game at a phone and a desktop size, plays to the end of the level, and loses and tries again.
 
 Settled here as the builder's calls, for the audit to weigh: losing is an event named in `automata.toml` (as `done`
-is); `hero.fell` from a plugin joined only by `lost`; the policy's exact text and `[network] allow`; `--ship` as a flag, not a new
+is); `hero.fell` from a plugin joined only by `lost`; `--ship` as a flag, not a new
 command; the 10-second slow line; the Good to have boxes taken and left as in the table.
