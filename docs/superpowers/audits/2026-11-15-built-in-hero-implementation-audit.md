@@ -15,7 +15,7 @@ in four engines, alone, in co-op and online through a rollback. The weak spots a
 journeys: one onboarding hint disappears before its move is learned, the template's key hint forgets the dash a
 developer is told to switch on, and the `create-play` journey proves much less than the plan asked.
 
-**4 important, 11 minor, 2 for the Owner's phone review.** None needs an Owner decision before the fix stage starts;
+**5 important, 11 minor, 2 for the Owner's phone review.** None needs an Owner decision before the fix stage starts;
 the two phone items are numbers to settle on a real phone and are listed so they are not lost.
 
 **Left out on purpose:** the touch hints' colour on the pale sky and the circles over the floor edge at tablet
@@ -77,6 +77,16 @@ hint back over the game mid-play. The spec's rule is "comes back after the game 
 thumb on the glass is not alone.
 *Fix:* count a finger that is down as touching (refresh `lastTouch` on `pointermove`, or treat any finger down as
 `msSinceTouch` 0), with a test that holds a thumb for 21 s and sees no hint.
+
+**I5. A thumb test failed once on a run that changed only this doc.** On this audit's own pull request (PR 126, run
+43667409175, `engines (chromium)`), `tests/features/input/thumbs.browser.test.ts` "the screen turned with a thumb down"
+failed at line 171: still `['right']` held after the mount was resized to 390 by 844. The same test passed on PR 101.
+The likely cause is the test's wait, not the code: the halves are redrawn from a `ResizeObserver`, and the test waits
+for that with `vi.waitFor`'s default of one second, on a runner that reported its workers 95% busy over a 251-second
+run. That is a guess from the log; nothing has proved it yet. The project's rule is that a test which fails once is a
+defect, not a flake. *Fix:* have the test wait for the observer itself (for example, wait for the band's height to
+change before checking what is held), or call `layout` from a resize the test can await. Then run it to see whether
+it still fails.
 
 ## Minor
 
@@ -150,6 +160,6 @@ numbers.
 
 ## For the fix stage
 
-In order: I1, I2, I4, M5, M6 (the touch side, one PR is fine), then I3 (the journey), then the notes M2, M3, M7, M8
+In order: I1, I2, I4, I5, M5, M6 (the touch side, one PR is fine), then I3 (the journey), then the notes M2, M3, M7, M8
 into the plan. M1, M4, M9, M10, M11 can wait for a later cycle or ride along. No golden moves for any of these, unless
 the fix stage takes out `lockDir` (M1), which it should not.
