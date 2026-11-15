@@ -2,7 +2,17 @@
 // checked by tests/install/smoke.mjs in CI.
 import { readdirSync, readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
-import { CONTENT_TYPES, type ContentType, jsonSchemaFor } from '#src/headless.ts'
+import {
+  CONTENT_TYPES,
+  type ContentType,
+  jsonSchemaFor,
+  type MoveEventName,
+  type MoveInput,
+  type MoveNumberInfo,
+  type MoveNumbers,
+  type MoveState,
+  type MoveSwitches,
+} from '#src/headless.ts'
 
 test('headless exports what a game sim and an editor need', async () => {
   const api = await import('#src/headless.ts')
@@ -143,6 +153,33 @@ test('headless exports what a game sim and an editor need', async () => {
     'bindParaglide',
   ])
     expect(api, name).toHaveProperty(name)
+})
+
+// The editors' Feel builds its sliders, its jump note and its controls from these (plan G, F3).
+test('the headless entry has every name the editors read for the hero', async () => {
+  const api = await import('#src/headless.ts')
+  for (const name of [
+    'MOVE_NUMBERS',
+    'moveNumbers',
+    'moveNumbersOf',
+    'DEFAULT_HERO_CONTROLS',
+    'tuningNumbers',
+    'usesMoves',
+    'stepMoves',
+    'MOVE_START',
+    'MOVE_EVENTS',
+    'Moves',
+    'Touching',
+    'RESERVED_KEYS',
+    'RESERVED_PAD',
+    'PAD_BUTTONS',
+    'PAD_STICKS',
+    'MAX_ACTIONS',
+  ])
+    expect(api, name).toHaveProperty(name)
+  // The types are checked by the compiler: this file fails to build if one is not exported.
+  const types: [MoveNumberInfo?, MoveNumbers?, MoveState?, MoveInput?, MoveSwitches?, MoveEventName?] = []
+  expect(types).toEqual([])
 })
 
 test("the server entry exports what a game's own server file needs", async () => {
