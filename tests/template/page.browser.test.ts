@@ -148,6 +148,23 @@ test('a keyboard player is told the keys, until they move', async () => {
   expect(hint()).toBeUndefined()
 })
 
+test('a hero with the dash switched on is told its key too', async () => {
+  await page.viewport(1280, 720)
+  // What the README tells a developer to do: `"dash": true` in the hero's file, and a key for it in the tuning's list.
+  const heroFile = JSON.parse(templateFiles['content/characters/hero.json'] as string)
+  heroFile.moves.dash = true
+  const tuning = JSON.parse(templateFiles['content/tunings/hero-moves.json'] as string)
+  tuning.controls.push({ action: 'dash', label: 'Dash', keys: ['ShiftLeft'] })
+  await open({
+    language: 'en',
+    files: {
+      'content/characters/hero.json': JSON.stringify(heroFile),
+      'content/tunings/hero-moves.json': JSON.stringify(tuning),
+    },
+  })
+  expect(root.querySelector('.hint')?.textContent).toBe('Arrow keys to move. Space to jump. Shift to dash.')
+})
+
 /** The flag of a language on the picker, and Go. */
 const flag = (language: Language): HTMLButtonElement => {
   const found = root.querySelector<HTMLButtonElement>(`.automata-flag[data-language='${language}']`)

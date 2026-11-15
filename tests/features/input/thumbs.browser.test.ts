@@ -211,6 +211,101 @@ test('the hints fade after three uses and come back after twenty seconds of quie
   await vi.waitFor(() => expect(hintBox('walk').style.display).toBe('flex'))
 })
 
+test('the dash hint stays after three walks and goes after three flicks', () => {
+  let clock = 0
+  make({
+    dash: true,
+    now: () => clock,
+    words: said({ 'automata.thumbs.walk-hint': 'Slide to walk', 'automata.thumbs.dash-hint': 'Flick to dash' }),
+  })
+  for (let i = 0; i < 3; i++) {
+    clock += 1000
+    finger(half('walk'), 'pointerdown', 30 + i, 100, 300)
+    finger(half('walk'), 'pointermove', 30 + i, 140, 300)
+    finger(half('walk'), 'pointerup', 30 + i, 140, 300)
+  }
+  // The walk is learned: its picture and words are out of sight, the box and the dash words are still there.
+  const picture = hintBox('walk').querySelector<HTMLElement>('.automata-thumb-hint-picture')
+  expect(picture?.style.visibility).toBe('hidden')
+  expect(hintBox('walk').style.display).toBe('flex')
+  expect(hintBox('dash').style.display).toBe('block')
+  expect(hintBox('dash').textContent).toBe('Flick to dash')
+  // A flick is a quick, long slide: three of them teach it, and then the whole box goes.
+  for (let i = 0; i < 3; i++) {
+    clock += 1000
+    finger(half('walk'), 'pointerdown', 40 + i, 100, 300)
+    finger(half('walk'), 'pointermove', 40 + i, 170, 300)
+    finger(half('walk'), 'pointerup', 40 + i, 170, 300)
+  }
+  expect(hintBox('dash').style.display).toBe('none')
+  expect(hintBox('walk').style.display).toBe('none')
+})
+
+test('the hints stay away while a thumb is held down, still or not, however long', async () => {
+  let clock = 0
+  const t = make({ now: () => clock, words: said({ 'automata.thumbs.walk-hint': 'Slide to walk' }) })
+  for (let i = 0; i < 3; i++) {
+    clock += 1000
+    finger(half('walk'), 'pointerdown', 50 + i, 100, 300)
+    finger(half('walk'), 'pointermove', 50 + i, 140, 300)
+    finger(half('walk'), 'pointerup', 50 + i, 140, 300)
+  }
+  expect(hintBox('walk').style.display).toBe('none')
+  // Walking for 21 seconds without lifting or touching the jump half: the thumb is on the glass, so the game is not
+  // being left alone.
+  finger(half('walk'), 'pointerdown', 60, 100, 300)
+  finger(half('walk'), 'pointermove', 60, 140, 300)
+  clock += 21_000
+  await new Promise((resolve) => setTimeout(resolve, 300))
+  expect(hintBox('walk').style.display).toBe('none')
+  expect(sorted(t.held())).toEqual(['right'])
+  // Lift, and the twenty seconds start from now.
+  finger(half('walk'), 'pointerup', 60, 140, 300)
+  clock += 19_000
+  await new Promise((resolve) => setTimeout(resolve, 300))
+  expect(hintBox('walk').style.display).toBe('none')
+  clock += 2000
+  await vi.waitFor(() => expect(hintBox('walk').style.display).toBe('flex'))
+})
+
+test('a tap on the jump half just before a mask is not a jump when play resumes', () => {
+  const t = make()
+  finger(half('jump'), 'pointerdown', 70, 600, 300)
+  finger(half('jump'), 'pointerup', 70, 600, 300)
+  t.mask()
+  expect(sorted(t.drain())).toEqual([])
+  // A round button's tap is held back the same way.
+  const own = button('throw')
+  const box = own.getBoundingClientRect()
+  finger(own, 'pointerdown', 71, box.left + 5, box.top + 5)
+  finger(own, 'pointerup', 71, box.left + 5, box.top + 5)
+  t.mask()
+  expect(sorted(t.drain())).toEqual([])
+})
+
+test('a tablet turned from upright to sideways lets go of a held thumb', async () => {
+  // Both are wider than 600 px, so both are `over`: the shape does not change, the screen does.
+  mount.style.cssText = 'position:fixed;left:0;top:0;width:820px;height:1180px;overflow:hidden'
+  await page.viewport(1180, 1180)
+  const t = make()
+  finger(half('walk'), 'pointerdown', 80, 100, 300)
+  finger(half('walk'), 'pointermove', 80, 140, 300)
+  expect(sorted(t.held())).toEqual(['right'])
+  mount.style.width = '1180px'
+  mount.style.height = '820px'
+  await vi.waitFor(() => expect(sorted(t.held())).toEqual([]))
+  expect(ring().style.display).toBe('none')
+})
+
+test('a browser bar sliding in and out does not let go of a held thumb', async () => {
+  const t = make()
+  finger(half('walk'), 'pointerdown', 90, 100, 300)
+  finger(half('walk'), 'pointermove', 90, 140, 300)
+  mount.style.height = '340px'
+  await new Promise((resolve) => setTimeout(resolve, 150))
+  expect(sorted(t.held())).toEqual(['right'])
+})
+
 test('a game with dash has the dash mark, 64 px, and a tap on it is a dash', () => {
   const t = make({ dash: true })
   const mark = button('dash')

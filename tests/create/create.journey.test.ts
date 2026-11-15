@@ -43,6 +43,7 @@ interface PageGame {
     readonly tick: number
     describeSnapshot(): {
       readonly entities: readonly { readonly components: Record<string, Record<string, number>> }[]
+      readonly resources: Record<string, { readonly sparks?: number } | undefined>
     }
   }
 }
@@ -177,6 +178,20 @@ const heroX = (page: Page): Promise<number> =>
     const hero = game?.sim.describeSnapshot().entities.find((entity) => 'player' in entity.components)
     return hero?.components.transform?.x ?? Number.NaN
   })
+/** The hero's y, read from the running game: a jump takes it away from where it stood. */
+const heroY = (page: Page): Promise<number> =>
+  page.evaluate(() => {
+    const game = (window as unknown as PageWindow).automataGame
+    const hero = game?.sim.describeSnapshot().entities.find((entity) => 'player' in entity.components)
+    return hero?.components.transform?.y ?? Number.NaN
+  })
+/** How many sparks the hero has taken: the game's own count, which the spark's touch adds to. */
+const sparksTaken = (page: Page): Promise<number> =>
+  page.evaluate(
+    () =>
+      (window as unknown as PageWindow).automataGame?.sim.describeSnapshot().resources['hero.score']?.sparks ??
+      Number.NaN,
+  )
 const tickOf = (page: Page): Promise<number> =>
   page.evaluate(() => (window as unknown as PageWindow).automataGame?.sim.tick ?? -1)
 
@@ -262,24 +277,42 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
         if (size.touch) expect(await hint.count(), `${where}: the hint on a touch screen`).toBe(0)
         else await expect.poll(() => hint.isVisible(), POLL).toBe(true)
 
-        // Holding right moves the hero right: by the arrow key, or by a thumb slid right on the walking half.
+        // The way to the spark: holding right moves the hero right (by the arrow key, or by a thumb slid right on the
+        // walking half) until the spark is taken and the game's count says so, then a jump lifts the hero off the floor
+        // (the space bar, or a thumb on the jump half).
         const start = await heroX(page)
+        expect(await sparksTaken(page), `${where}: no spark is taken before the hero moves`).toBe(0)
+        const floor = await heroY(page)
         if (size.touch) {
-          const finger = { pointerType: 'touch', pointerId: 7, isPrimary: true, bubbles: true } as const
+          const walk = { pointerType: 'touch', pointerId: 7, isPrimary: true, bubbles: true } as const
           const half = page.locator("[data-half='walk']")
           const box = await half.boundingBox()
           expect(box, `${where}: the walking half is on the screen`).not.toBeNull()
           const x = (box?.x ?? 0) + (box?.width ?? 0) / 2
           const y = (box?.y ?? 0) + (box?.height ?? 0) / 2
-          await half.dispatchEvent('pointerdown', { ...finger, clientX: x, clientY: y })
-          await half.dispatchEvent('pointermove', { ...finger, clientX: x + 80, clientY: y })
+          await half.dispatchEvent('pointerdown', { ...walk, clientX: x, clientY: y })
+          await half.dispatchEvent('pointermove', { ...walk, clientX: x + 80, clientY: y })
           await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
-          await half.dispatchEvent('pointerup', { ...finger, clientX: x + 80, clientY: y })
+          await expect.poll(() => sparksTaken(page), POLL).toBe(1)
+          await half.dispatchEvent('pointerup', { ...walk, clientX: x + 80, clientY: y })
+          const jump = { pointerType: 'touch', pointerId: 8, isPrimary: true, bubbles: true } as const
+          const upper = page.locator("[data-half='jump']")
+          const at = await upper.boundingBox()
+          expect(at, `${where}: the jumping half is on the screen`).not.toBeNull()
+          const jx = (at?.x ?? 0) + (at?.width ?? 0) / 2
+          const jy = (at?.y ?? 0) + (at?.height ?? 0) / 2
+          await upper.dispatchEvent('pointerdown', { ...jump, clientX: jx, clientY: jy })
+          await expect.poll(async () => Math.abs((await heroY(page)) - floor), POLL).toBeGreaterThan(0.5)
+          await upper.dispatchEvent('pointerup', { ...jump, clientX: jx, clientY: jy })
         } else {
           await page.keyboard.down('ArrowRight')
           await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
+          await expect.poll(() => sparksTaken(page), POLL).toBe(1)
           await page.keyboard.up('ArrowRight')
           await expect.poll(() => hint.count(), POLL).toBe(0)
+          await page.keyboard.down('Space')
+          await expect.poll(async () => Math.abs((await heroY(page)) - floor), POLL).toBeGreaterThan(0.5)
+          await page.keyboard.up('Space')
         }
         await page.screenshot({ path: `${shots}${name}-${size.width}x${size.height}.png` })
 
@@ -381,6 +414,11 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
           ;(window as unknown as { __stick: (x: number) => void }).__stick = (x) => {
             axes[0] = x
           }
+          // The bottom button of the four, which jumps.
+          ;(window as unknown as { __south: (on: boolean) => void }).__south = (on) => {
+            const south = buttons[0]
+            if (south !== undefined) Object.assign(south, { pressed: on, touched: on, value: on ? 1 : 0 })
+          }
           navigator.getGamepads = () => [pad as unknown as Gamepad]
         })
         const page = await context.newPage()
@@ -389,9 +427,16 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
         await pickLanguage(page, 'ja')
         await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
         const start = await heroX(page)
+        const floor = await heroY(page)
         await page.evaluate(() => (window as unknown as { __stick: (x: number) => void }).__stick(1))
         await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
+        // On to the spark, and the game's count says it was taken.
+        await expect.poll(() => sparksTaken(page), POLL).toBe(1)
         await page.evaluate(() => (window as unknown as { __stick: (x: number) => void }).__stick(0))
+        // The bottom button jumps.
+        await page.evaluate(() => (window as unknown as { __south: (on: boolean) => void }).__south(true))
+        await expect.poll(async () => Math.abs((await heroY(page)) - floor), POLL).toBeGreaterThan(0.5)
+        await page.evaluate(() => (window as unknown as { __south: (on: boolean) => void }).__south(false))
       } finally {
         await context.close()
       }

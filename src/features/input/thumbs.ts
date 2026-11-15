@@ -33,6 +33,8 @@ const ARROW_PX = 96
 const REST_PX = 96
 /** The round buttons sit above the jump half's resting corner: no lower than this, or half the overlay. */
 const BUTTONS_FLOOR_PX = 200
+/** A mount whose width moves more than this between two layouts has been turned, not nudged. */
+const TURNED_PX = 24
 /** How often the hints look at the clock, so they come back after a while with no touch. */
 const HINT_LOOK_MS = 250
 
@@ -80,6 +82,8 @@ export function createThumbs(
   let shape: 'band' | 'over' = 'over'
   let visible = false
   let lastTouch = now()
+  /** The mount's size at the last layout, to tell a turned screen from a small resize. */
+  let seen: { readonly w: number; readonly wide: boolean } | undefined
 
   const root = div('automata-thumbs', 'position:absolute;left:0;right:0;bottom:0;top:0;pointer-events:none')
   const half = (name: Half): HTMLDivElement => {
@@ -160,7 +164,9 @@ export function createThumbs(
   arrow.append(arrowShape())
 
   // The hints: a faint ring and arrow at the thumbs' resting places, each with its words under it.
-  const hint = (kind: 'walk' | 'jump'): { readonly box: HTMLDivElement; readonly words: HTMLDivElement } => {
+  const hint = (
+    kind: 'walk' | 'jump',
+  ): { readonly box: HTMLDivElement; readonly picture: HTMLDivElement; readonly words: HTMLDivElement } => {
     const box = div(
       'automata-thumb-hint',
       [
@@ -192,7 +198,7 @@ export function createThumbs(
       `margin-top:6px;text-align:center;font:var(--automata-touch-font,700 18px/1.1 system-ui,sans-serif);color:${COLOR}`,
     )
     box.append(picture, text)
-    return { box, words: text }
+    return { box, picture, words: text }
   }
   const hints = { walk: hint('walk'), jump: hint('jump') }
   const dashHint = div(
@@ -200,6 +206,8 @@ export function createThumbs(
     `margin-top:4px;text-align:center;font:var(--automata-touch-font,700 18px/1.1 system-ui,sans-serif);color:${COLOR}`,
   )
   dashHint.dataset.hint = 'dash'
+  // The dash hint rides in the walk hint's box, under its words. The box stays up while either is due, and when only the
+  // dash is due the walk hint's picture and words are hidden but keep their room, so the dash words stay where they were.
   hints.walk.box.append(dashHint)
 
   // Buttons for what the thumbs do not: the dash mark in a game with dash, then each action of the game's own.
@@ -211,6 +219,12 @@ export function createThumbs(
   const fingers = new Map<number, string>()
   const masked = new Set<number>()
   const tapped = new Set<string>()
+  /** Lets go of every finger: the window lost focus, or the screen turned or changed shape. */
+  const release = (): void => {
+    rules.clear()
+    fingers.clear()
+    masked.clear()
+  }
   const addButton = (action: string, label: string): void => {
     const b = document.createElement('button')
     b.type = 'button'
@@ -263,10 +277,17 @@ export function createThumbs(
   const layout = (): void => {
     const upright = mount.clientHeight > mount.clientWidth && mount.clientWidth < BAND_BELOW_PX
     const next = upright ? 'band' : 'over'
-    if (next !== shape) {
+    const w = mount.clientWidth
+    const h = mount.clientHeight
+    // A tablet turned from upright to sideways is `over` both times, so the shape alone does not see it. A turn flips
+    // which side is longer or moves the width a lot; a browser bar sliding in and out only moves the height.
+    const wide = w > h
+    const turned = seen !== undefined && (wide !== seen.wide || Math.abs(w - seen.w) > TURNED_PX)
+    seen = { w, wide }
+    if (next !== shape || turned) {
       shape = next
       // The halves are somewhere else now: fingers that were on the old ones mean nothing here.
-      rules.clear()
+      release()
     }
     const bandPx = Math.round(mount.clientHeight * BAND)
     root.style.top = shape === 'band' ? 'auto' : '0'
@@ -317,8 +338,13 @@ export function createThumbs(
   }
 
   function refreshHints(): void {
+    // A finger on the glass is not "left alone": the hints stay away for as long as one is down, still or moving.
+    if (rules.touching() || fingers.size > 0) lastTouch = now()
     const shownNow = hintsShown(rules.uses(), now() - lastTouch, options.dash)
-    hints.walk.box.style.display = visible && shownNow.walk ? 'flex' : 'none'
+    hints.walk.box.style.display = visible && (shownNow.walk || shownNow.dash) ? 'flex' : 'none'
+    const walkShown = shownNow.walk ? 'visible' : 'hidden'
+    hints.walk.picture.style.visibility = walkShown
+    hints.walk.words.style.visibility = walkShown
     hints.jump.box.style.display = visible && shownNow.jump ? 'flex' : 'none'
     dashHint.style.display = shownNow.dash ? 'block' : 'none'
     hints.walk.words.textContent = said('automata.thumbs.walk-hint') ?? ''
@@ -381,9 +407,7 @@ export function createThumbs(
   }
   win.addEventListener('pointerdown', onFirstTouch, true)
   const onBlur = (): void => {
-    rules.clear()
-    fingers.clear()
-    masked.clear()
+    release()
     paint()
   }
   win.addEventListener('blur', onBlur)
@@ -398,6 +422,8 @@ export function createThumbs(
     },
     mask() {
       rules.mask()
+      // A tap that landed just before the screen it ended must not jump the hero when play resumes.
+      tapped.clear()
       for (const id of fingers.keys()) masked.add(id)
       paint()
     },
@@ -426,9 +452,7 @@ export function createThumbs(
       insetListeners.clear()
       win.removeEventListener('pointerdown', onFirstTouch, true)
       win.removeEventListener('blur', onBlur)
-      rules.clear()
-      fingers.clear()
-      masked.clear()
+      release()
       root.remove()
       if (restorePosition !== undefined) mount.style.position = restorePosition
     },
