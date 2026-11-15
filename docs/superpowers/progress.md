@@ -2,6 +2,25 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 8: rigged figures (people, animals and free shapes)
+
+Spec: [`specs/2026-11-15-rigged-figures-design.md`](specs/2026-11-15-rigged-figures-design.md). It widens M2 plan A's
+`figure` format so the editors' 2D figure builder (its spec is in AutomataFrameworkEditors) can be as powerful as the
+old 3D builder (the Owner, 2026-11-15). The Owner answered Q1 to Q5 on 2026-11-15.
+
+Overall: **8%** (stage 1 counts 4 points, stage 2 is 4, stage 3 is 4, stage 4 is 60, stage 5 is 10, stage 6 is 12,
+stage 7 is 6; the cycle is one plan, plan R, built in six parts, each its own pull request)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Written; in review | [`specs/2026-11-15-rigged-figures-design.md`](specs/2026-11-15-rigged-figures-design.md) |
+| 2. Plan (plan R) | Written, in review, 100%. Twenty tasks in six parts, each part its own branch and pull request that leaves `main` green (each task is 4.5% of stage 4; the last 10% is the parts' final green runs): 1, a person from the side (the `palette` kind and the library's 32 ramps; the format 2 file with eighteen sliders, each with its sentence; the skeleton and the two-bends rule; shapes filled in a ramp's shades; a standing person, its sheet and a contact sheet on `ci-screens`); 2, pieces (the `piece` kind, a game's own over the library's, painting them, the library's 41 for a person); 3, motion (poses as bends inside each joint's limits; poses placed by hands, feet, head and hips; the `gait` kind with a walk and a run; the `stand` kind with an idle); 4, views (front and back painted; a `Side` component switched on only by a figure that paints them, `setSide`, a cutscene key's `view`); 5, animals (their file, fourteen sliders and skeleton; painting, 12 pieces, walk, trot and stands); 6, new files and the way in (`listContent`, `automata add` and the agent's `add` tool, six starters and the figure tools on the public surface, the README and skills, and a new game given a rigged figure and played in three browsers at five sizes). No existing golden moves (free figures stay format 1 and keep their painter untouched); two new ones, `figures.json` and `sides.json`. No dependency is added. Readings of the spec the plan records for the audit: face styles are a list in code, not library files; a behaviour sets no view (no act sets facing today); a sheet never spills into a second picture (a rigged sheet is up to 32 pictures across); `stand` left out is `easy` and `gait` left out is no walk; six starter figures are added for the builder's New figure. No Owner question is open | [`plans/2026-11-15-rigged-figures.md`](plans/2026-11-15-rigged-figures.md) |
+| 3. Plan audit | Not started | |
+| 4. Execution | Not started | |
+| 5. Implementation audit | Not started | |
+| 6. Fixes | Not started | |
+| 7. Owner review | Not started | |
+
 ## Cycle 7: the default game flow (plan U)
 
 Spec: [`specs/2026-11-14-m2-design.md`](specs/2026-11-14-m2-design.md) ("UI, screens and layouts (plan U)"), with the
