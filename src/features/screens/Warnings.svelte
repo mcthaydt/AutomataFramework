@@ -1,13 +1,13 @@
 <script lang="ts">
   // What a player reads before they play: a title, the sentences in the one region that scrolls, and OK at the bottom,
   // where a thumb is, with the focus already on it.
-  import { Button, Frame, List } from '../ui/ui.ts'
+  import { Button, List, ScreenFrame } from '../ui/ui.ts'
   import type { WarningsProps } from './warnings.ts'
 
   let { title, lines, ok, onok }: WarningsProps = $props()
 </script>
 
-<Frame {title}>
+<ScreenFrame {title}>
   <List label={title}>
     {#each lines as line, at (at)}
       <p>{line}</p>
@@ -16,7 +16,7 @@
   {#snippet actions()}
     <Button label={ok} kind="primary" onpress={onok} />
   {/snippet}
-</Frame>
+</ScreenFrame>
 
 <style>
   p {

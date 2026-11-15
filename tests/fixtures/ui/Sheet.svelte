@@ -2,7 +2,7 @@
   // A screen made of every part of the kit, for the browser tests: a slider and a switch that keep their own value, a
   // list long enough to scroll, a key row, a back button and two buttons, and a dialog that opens from one of them.
   // Everything that happens is told to `log`, in the words "what:value".
-  import { Button, Dialog, Frame, KeyRow, List, Slider, Toggle } from '#src/features/ui/ui.ts'
+  import { Button, Dialog, KeyRow, List, ScreenFrame, Slider, Toggle } from '#src/features/ui/ui.ts'
 
   let { log, long = true }: { log: (what: string) => void; long?: boolean } = $props()
 
@@ -12,7 +12,7 @@
   let waiting = $state(false)
 </script>
 
-<Frame title="Settings" back={{ label: 'Back', onpress: () => log('back') }}>
+<ScreenFrame title="Settings" back={{ label: 'Back', onpress: () => log('back') }}>
   <Slider
     label="Volume"
     value={volume}
@@ -73,4 +73,4 @@
       }}
     />
   {/if}
-</Frame>
+</ScreenFrame>

@@ -33,7 +33,9 @@ export function show<P extends Record<string, unknown>>(
 
   let drawn: ReturnType<typeof render> | undefined
   const draw = (): void => {
-    drawn = render(component, { target: box, props: props(locale.words) })
+    // `component` is any screen; to Svelte its props are one record, which is what `props` makes.
+    const any = component as unknown as Component<Record<string, unknown>>
+    drawn = render(any, { target: box, props: props(locale.words) })
     // Mounting leaves its effects (the first focus, the first measure) for later; the keys must find the screen done.
     flushSync()
   }

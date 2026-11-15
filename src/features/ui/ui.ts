@@ -43,8 +43,11 @@ export const List: Component<ListProps> = ListPart as never
 export const KeyRow: Component<KeyRowProps> = KeyRowPart as never
 /** A question over the screen. It holds the focus, and Escape and the gamepad's right button say no. */
 export const Dialog: Component<DialogProps> = DialogPart as never
-/** The shape of a screen: a title, a body and buttons, inside the safe area, laid out by the room it has. */
-export const Frame: Component<FrameProps> = FramePart as never
+/**
+ * The shape of a screen: a title, a body and buttons, inside the safe area, laid out by the room it has. Not `Frame`: that
+ * is already the name of a frame of a sprite sheet.
+ */
+export const ScreenFrame: Component<FrameProps> = FramePart as never
 
 /**
  * The CSS custom properties a game sets, on the mount or above it, to dress every screen: the screen's background and

@@ -24,17 +24,17 @@ export function nextFocus(boxes: readonly Box[], from: number, direction: Direct
   const vertical = direction === 'up' || direction === 'down'
   let best = from
   let bestScore = Number.POSITIVE_INFINITY
-  boxes.forEach((box, index) => {
-    if (index === from) return
+  for (const [index, box] of boxes.entries()) {
+    if (index === from) continue
     const dx = box.x + box.w / 2 - x
     const dy = box.y + box.h / 2 - y
     const along = direction === 'down' ? dy : direction === 'up' ? -dy : direction === 'right' ? dx : -dx
-    if (along <= 0) return
+    if (along <= 0) continue
     const score = along + 2 * Math.abs(vertical ? dx : dy)
     if (score < bestScore) {
       best = index
       bestScore = score
     }
-  })
+  }
   return best
 }

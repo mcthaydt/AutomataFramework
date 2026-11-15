@@ -6,7 +6,8 @@ module.exports = {
   hooks: {
     readPackage(pkg) {
       if (pkg.name === 'svelte-check') {
-        delete pkg.peerDependencies.typescript
+        const peers = Object.entries(pkg.peerDependencies ?? {}).filter(([name]) => name !== 'typescript')
+        pkg.peerDependencies = Object.fromEntries(peers)
         pkg.dependencies = { ...pkg.dependencies, typescript: 'npm:typescript@6.0.3' }
       }
       return pkg
