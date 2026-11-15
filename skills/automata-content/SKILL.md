@@ -19,6 +19,12 @@ you edit one: it writes the file in its standard form, which is what the editors
 format content by hand or with a formatter. `npx --no automata check --only files` says what is wrong with a file, with its
 place in it.
 
+Four more lines of `automata.toml` say what the screens around the game show, and never what happens in it: `levels = ["level-1",
+"level-2"]` is the order the levels are played in (add a level to this list, after its file is listed, and "Next level" and Continue
+reach it), `done = "door.touched"` is the event that ends a level, `warnings = ["warning.flashing"]` lists message keys the player
+reads before they play (each key needs a word in every language), and `splash = "logo"` names the figure shown first. `automata check`
+says which one is wrong.
+
 Each kind has a JSON Schema in the package, `schemas/<kind>.schema.json`, that lists every field and what it means. Read
 it for what the file may hold. The smallest whole file of each kind is below, to copy.
 

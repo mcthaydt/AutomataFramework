@@ -55,6 +55,7 @@ export {
   controlsFromList,
 } from './controls.ts'
 export { heroControls } from './hero-controls.ts'
+export { buttonLabel } from './touch.ts'
 export {
   TOUCH_SETTINGS_DEFAULT,
   type TouchSettings,

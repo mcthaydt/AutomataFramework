@@ -268,6 +268,60 @@ changed". A recording made with another seed or tick rate is refused with a `Wat
 default it plays again and again, resting `restTicks` (one second) on the last picture between rounds; `rounds: 1`
 holds the last picture for good. It stands still while the page is hidden and does not catch up when it comes back.
 
+## Screens and the flow
+
+`startFlow` is the whole visit: warnings if the game has any, the language picker, the splash, the main menu, the level
+with its pause, "Well done!", and back to the menu. Settings, saved games and adding a player open from the menu and
+from pause. A game gives it its files and its rules, and nothing else:
+
+```ts
+import { startFlow } from '@automataframework/framework'
+import { heroPlugin } from './features/hero/hero.ts'
+
+const read = async (path: string): Promise<string> => (await fetch(path)).text()
+
+void startFlow({
+  mount: document.getElementById('game') as HTMLElement,
+  game: 'crate-game',
+  read,
+  plugins: [heroPlugin],
+})
+```
+
+It never rejects: whatever goes wrong shows a screen of words with a button that loads the page again. `startFlow`
+answers at once, and the object it gives back says where the visit is (`state()`, `onState`), holds the running game
+(`game()`), ends a level the way the game's event does (`finishLevel()`), lets a watching visitor take over
+(`takeOver()`), and stops everything (`stop()`). The mount carries `data-state` (`loading`, `warnings`, `picking`,
+`splash`, `menu`, `playing`, `paused`, `done`, `watching` or `problem`), and `data-over` while settings, saved games or
+the players screen is on top. A test or an agent reads those two attributes to know where a page is.
+
+Four fields of `automata.toml` say what the screens show. None of them changes the rules of the game:
+
+```toml
+levels = ["level-1", "level-2"]   # the order the levels are played in; "Next level" follows it, Continue opens the one reached
+done = "door.touched"             # the event that ends a level (a hero, not a crate, must raise it)
+warnings = ["warning.flashing"]   # message keys read on one screen at the start of each visit
+splash = "logo"                   # a figure shown for two seconds; left out, the splash is the game's name
+```
+
+A game dresses every screen with CSS properties set on the mount or above it: `--automata-ui-background`,
+`--automata-ui-color`, `--automata-ui-accent` (the main button), `--automata-ui-accent-color` (its text),
+`--automata-ui-border`, `--automata-ui-radius`, `--automata-ui-font` and `--automata-ui-scrim` (over a paused game).
+`UI_PROPERTIES` lists them. The touch buttons keep their own properties (see "Make the touch buttons your own").
+
+Every word on a screen is a message key, and the framework has all six languages for its own. A game changes one by
+writing the same key in its own messages files, which win over the framework's: `"automata.menu.play": "Start"` in
+`content/messages/en.json` renames the main menu's first button, and a game that does it in one language must do it in
+every language it ships.
+
+A game replaces a screen by giving `startFlow` a function of the same shape in `screens`: `screens: { menu: myMenu }`.
+Each one is given the mount, the player's words, and the callbacks the framework's own calls (`onPick`, `onDone`, and so
+on), and returns `{ destroy() }`. The kit the framework's screens are made of (`Button`, `Slider`, `Toggle`, `List`,
+`ScreenFrame`, `Dialog`, `KeyRow`) is exported for a game's own screens to use.
+
+The flow raises page events on the game's sound, so a cues file can give the menu its own music and a button its own click:
+`screen.menu`, `screen.pause`, `screen.done`, `ui.move`, `ui.press` and `ui.back`. `FLOW_EVENTS` lists them.
+
 ## Saves
 
 A game keeps progress in save slots and its settings in one record. Both go through the host (see "The host" below), so
