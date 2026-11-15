@@ -35,7 +35,7 @@
       action="Jump"
       input="Space"
       change="Change"
-      waiting={waiting ? 'Press a key' : undefined}
+      {...waiting ? { waiting: 'Press a key' } : {}}
       cancel="Cancel"
       onchange={() => {
         waiting = true
