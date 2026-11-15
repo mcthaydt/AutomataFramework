@@ -33,7 +33,12 @@ export function sceneFromLevel(
   } else {
     // One material for each kind of tile, and a letter for it: solid when the kind is, a wall to look at when not.
     const tilesetId = old.tileset
-    materials = tileset.tiles.map((kind) => ({ id: kind.id, kind: 'tiles', tileset: tilesetId, tile: kind.id }))
+    materials = tileset.tiles.map((kind) => ({
+      id: kind.id,
+      kind: 'tiles',
+      tileset: tilesetId,
+      tile: kind.id,
+    }))
     letters = tileset.tiles.map((kind) => ({
       letter: kind.letter,
       material: kind.id,

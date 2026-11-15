@@ -344,9 +344,9 @@ test.each([
 })
 
 test('the painter may sort with a comparator and use a Float64Array', () =>
-  expect(
-    one(painterFile('const x = [3, 1].sort((a, b) => a - b)\nconst y = new Float64Array(4)')),
-  ).toEqual([]))
+  expect(one(painterFile('const x = [3, 1].sort((a, b) => a - b)\nconst y = new Float64Array(4)'))).toEqual(
+    [],
+  ))
 
 test('another file of content may use any Math function', () =>
   expect(one(painterFile('const x = Math.hypot(3, 4)', 'level'))).toEqual([]))

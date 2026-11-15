@@ -86,19 +86,29 @@ test('in ladder mode every place is one of the paints the material names', () =>
 
 test('in match mode every place is a paint of the scene, and two colours keep two paints', () => {
   const photo = photoOf((x, y) => (((x >> 1) + (y >> 1)) % 2 === 0 ? grey(GREY_DARK) : grey(GREY_LIGHT)))
-  const places = placesOf({ id: 'm', kind: 'photo', photo: 'x', match: 2, flatten: 0, facet: 0, wear: 0 }, photo)
+  const places = placesOf(
+    { id: 'm', kind: 'photo', photo: 'x', match: 2, flatten: 0, facet: 0, wear: 0 },
+    photo,
+  )
   for (const place of places) expect(place).toBeLessThan(PAINTS.length)
   expect(new Set(places).size).toBe(2)
 })
 
 test('a flat grey photo is one place everywhere when it is not worn', () => {
-  const places = placesOf(material(), photoOf(() => grey(0x80)))
+  const places = placesOf(
+    material(),
+    photoOf(() => grey(0x80)),
+  )
   expect(new Set(places).size).toBe(1)
   expect(places[0]).toBe(1) // the middle of three paints
 })
 
 test('wear darkens some texels one place, and none goes below the first paint', () => {
-  const worn = placesOf(material({ wear: 1 }), photoOf(() => grey(0x80)), 32)
+  const worn = placesOf(
+    material({ wear: 1 }),
+    photoOf(() => grey(0x80)),
+    32,
+  )
   expect([...new Set(worn)].sort((a, b) => a - b)).toEqual([0, 1])
 })
 

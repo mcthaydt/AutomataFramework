@@ -419,7 +419,10 @@ function clean(labels: Uint16Array, width: number, height: number, min: number):
 
 /** The index of the paint called `id`, or 0 for one a checked scene cannot name. */
 const placeOf = (paints: readonly ScenePaint[], id: string | undefined): number =>
-  Math.max(0, paints.findIndex((paint) => paint.id === id))
+  Math.max(
+    0,
+    paints.findIndex((paint) => paint.id === id),
+  )
 
 /** The whole pipeline for one photo material at the scene's tile size. */
 export function materialTile(

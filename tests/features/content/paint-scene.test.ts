@@ -73,12 +73,11 @@ test('a solid tile fills its square, and air is clear', () => {
 test('a slope-up fills the pixels under its line: i + j at least 7 at tile 8, 36 of 64', () => {
   const rows = drawn(sceneOf({ rows: ['/'], materials: [rock], letters: SLOPE }))
   let filled = 0
-  rows.forEach((row, j) =>
-    [...row].forEach((pixel, i) => {
+  for (const [j, row] of rows.entries())
+    for (const [i, pixel] of [...row].entries()) {
       expect(pixel === '1', `pixel ${i}, ${j}`).toBe(i + j >= TILE - 1)
       if (pixel === '1') filled++
-    }),
-  )
+    }
   expect(filled).toBe((TILE * (TILE + 1)) / 2)
 })
 
