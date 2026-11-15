@@ -2,8 +2,10 @@
 // gamepad that joins from the menu.
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { page } from 'vitest/browser'
+import { Player } from '#src/features/commands/commands.ts'
 import { testHost } from '#src/features/host/host.ts'
 import { frameworkWords } from '#src/features/locale/locale.ts'
+import { Transform } from '#src/features/physics/physics.ts'
 import { SPLASH_MS } from '#src/features/screens/screens.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
 import { padPress, tapPad, ticks, walkByPad } from '../../fixtures/flow/page.ts'
@@ -102,11 +104,27 @@ test('start pauses and resumes; a second gamepad joins from the menu and both re
   tapPad(drive, 'east')
   await drive.shown('playing')
   expect(drive.flow()?.game()?.paused()).toBe(false)
-  // Both walk right; the level is over when a hero reaches the door.
+  // Both walk right; the level is over when a hero reaches the door. Each pad drives its own hero: both have walked on
+  // from where they started (2.5 and 3.5 tiles) by the time the first reaches the door.
+  const heroX = (player: number): number => {
+    const found = drive
+      .flow()
+      ?.game()
+      ?.sim.query(Player, Transform)
+      .find((one) => one.get(Player).number === player)
+    return found === undefined ? Number.NaN : found.get(Transform).x
+  }
   drive.pads.press('dpad-right', 0)
   drive.pads.press('dpad-right', 1)
-  for (let tick = 0; tick < 400 && drive.step() === 'playing'; tick++) drive.frames.advance(1000 / 60)
+  let last = [heroX(1), heroX(2)]
+  for (let tick = 0; tick < 400 && drive.step() === 'playing'; tick++) {
+    drive.frames.advance(1000 / 60)
+    const now = [heroX(1), heroX(2)]
+    if (now.every((x) => !Number.isNaN(x))) last = now
+  }
   drive.pads.release('dpad-right', 0)
   drive.pads.release('dpad-right', 1)
   expect(drive.step()).toBe('done')
+  expect(last[0]).toBeGreaterThan(3)
+  expect(last[1]).toBeGreaterThan(4)
 })
