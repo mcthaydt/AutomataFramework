@@ -75,7 +75,7 @@ test('a sense or an act that does not exist names the choices', () => {
         ruleAt(rules, 1).do = { act: 'fly' }
       }),
     ),
-  ).toEqual([`${file}: rules[1].do.act: This must be one of: stay, wander, flee, follow, jump.`])
+  ).toEqual([`${file}: rules[1].do.act: This must be one of: stay, wander, flee, follow, jump, walk-path.`])
 })
 
 test('a field the sense does not have', () =>

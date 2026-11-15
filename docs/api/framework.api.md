@@ -24,6 +24,10 @@ type Act = {
 } | {
     readonly act: 'jump';
     readonly speed: number;
+} | {
+    readonly act: 'walk-path';
+    readonly path: string;
+    readonly speed: number;
 };
 ```
 
@@ -373,6 +377,13 @@ interface Character {
     readonly tuning?: string | undefined;
     readonly touch?: 'sense' | 'take' | undefined;
     readonly moves?: HeroMoves | undefined;
+    readonly values?: readonly ValueDeclaration[] | undefined;
+    readonly switch?: {
+        readonly opens: string;
+        readonly stays?: string | undefined;
+    } | undefined;
+    readonly opens?: 'walk-through' | undefined;
+    readonly 'one-per-level'?: boolean | undefined;
 }
 ```
 
@@ -536,6 +547,7 @@ const CONTENT_TYPES: {
     readonly conversation: ContentTypeInfo<ConversationFile, ConversationFile>;
     readonly cutscene: ContentTypeInfo<CutsceneFile, CutsceneFile>;
     readonly messages: ContentTypeInfo<MessagesFile, MessagesFile>;
+    readonly world: ContentTypeInfo<WorldFile, WorldFile>;
 };
 ```
 
@@ -1514,6 +1526,8 @@ interface GameContent {
     readonly conversations?: Readonly<Record<string, ConversationFile>>;
     readonly cutscenes?: Readonly<Record<string, CutsceneFile>>;
     readonly messages?: Readonly<Record<string, MessagesFile>>;
+    readonly worlds?: Readonly<Record<string, WorldFile>>;
+    readonly places?: Readonly<Record<string, readonly PlaceLevel[]>>;
 }
 ```
 
@@ -1771,10 +1785,28 @@ const InputSettingsSchema: z.ZodType<InputSettings, InputSettings>;
 function isHeld(player: EntityRef, action: string): boolean;
 ```
 
+### `IsOpen` (type)
+
+```ts
+type IsOpen = (level: Level, col: number, row: number) => boolean;
+```
+
 ### `isOpenableLink` (function)
 
 ```ts
 function isOpenableLink(url: string): boolean;
+```
+
+### `Join` (interface)
+
+```ts
+interface Join {
+    readonly a: string;
+    readonly b: string;
+    readonly along: 'x' | 'y';
+    readonly from: number;
+    readonly to: number;
+}
 ```
 
 ### `JoinAnswer` (type)
@@ -2016,6 +2048,12 @@ function latestSlot(states: readonly SlotState[]): number | undefined;
 type LayerKind = 'flat' | 'hills' | 'mountains' | 'clouds';
 ```
 
+### `layoutWorld` (function)
+
+```ts
+function layoutWorld(world: WorldFile, levels: Readonly<Record<string, Level>>, isOpen: IsOpen): WorldLayout;
+```
+
 ### `LEAD_DECAY_TICKS` (const)
 
 ```ts
@@ -2144,6 +2182,7 @@ interface LevelThing {
     readonly character: string;
     readonly x: number;
     readonly y: number;
+    readonly values?: Readonly<Record<string, ThingValue>> | undefined;
 }
 ```
 
@@ -2759,6 +2798,12 @@ function openSettings(options: {
 }): Promise<Settings>;
 ```
 
+### `openTile` (function)
+
+```ts
+function openTile(tilesets: Readonly<Record<string, TilesetFile>> | undefined): IsOpen;
+```
+
 ### `PAD_BUTTONS` (const)
 
 ```ts
@@ -2980,6 +3025,16 @@ function pickLanguage(options: {
 
 ```ts
 function placeholdersOf(text: string): readonly string[];
+```
+
+### `PlaceLevel` (interface)
+
+```ts
+interface PlaceLevel {
+    readonly level: string;
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `Played` (interface)
@@ -3934,6 +3989,18 @@ function show<P extends Record<string, unknown>>(component: Component<P>, base: 
 };
 ```
 
+### `SHOWN_FOR` (const)
+
+```ts
+const SHOWN_FOR: Readonly<Record<ValueDeclaration['type'], readonly ValueShown[]>>;
+```
+
+### `shownOf` (function)
+
+```ts
+function shownOf(declaration: ValueDeclaration): ValueShown;
+```
+
 ### `Sim` (interface)
 
 ```ts
@@ -4469,6 +4536,15 @@ function testSpeaker(options?: {
 const Thing: ComponentDef<typeof thingFields>;
 ```
 
+### `ThingValue` (type)
+
+```ts
+type ThingValue = number | boolean | string | readonly string[] | readonly LevelPoint[] | {
+    readonly level: string;
+    readonly thing?: string | undefined;
+};
+```
+
 ### `TILE_COLOR` (const)
 
 ```ts
@@ -4795,10 +4871,60 @@ function usesSprites(content: GameContent): boolean;
 type Value = string | number | readonly (string | number)[];
 ```
 
+### `ValueDeclaration` (type)
+
+```ts
+type ValueDeclaration = (Declared & {
+    readonly type: 'number';
+    readonly least: number;
+    readonly most: number;
+    readonly step?: number | undefined;
+    readonly default: number;
+}) | (Declared & {
+    readonly type: 'switch';
+    readonly default: boolean;
+}) | (Declared & {
+    readonly type: 'choice';
+    readonly from: readonly {
+        readonly id: string;
+        readonly name: string;
+    }[];
+    readonly default: string;
+}) | (Declared & {
+    readonly type: 'words';
+    readonly default?: string | undefined;
+}) | (Declared & {
+    readonly type: 'thing';
+    readonly kinds?: readonly string[] | undefined;
+    readonly most?: number | undefined;
+    readonly needed?: boolean | undefined;
+}) | (Declared & {
+    readonly type: 'path';
+    readonly least?: number | undefined;
+    readonly most?: number | undefined;
+    readonly loop?: boolean | undefined;
+}) | (Declared & {
+    readonly type: 'leads-to';
+    readonly needed?: boolean | undefined;
+});
+```
+
+### `valueDeclaration` (const)
+
+```ts
+const valueDeclaration: z.ZodType<ValueDeclaration, ValueDeclaration>;
+```
+
 ### `Values` (type)
 
 ```ts
 type Values = Readonly<Record<string, Value>>;
+```
+
+### `ValueShown` (type)
+
+```ts
+type ValueShown = 'tag' | 'reach' | 'arrow' | 'path' | 'none';
 ```
 
 ### `Verdict` (type)
@@ -4976,6 +5102,16 @@ function webSpeaker(options?: {
 }): Speaker;
 ```
 
+### `withDefaults` (function)
+
+```ts
+function withDefaults(character: {
+    readonly values?: readonly ValueDeclaration[] | undefined;
+}, thing: {
+    readonly values?: Readonly<Record<string, ThingValue>> | undefined;
+}): Readonly<Record<string, ThingValue>>;
+```
+
 ### `Words` (type)
 
 ```ts
@@ -4986,6 +5122,38 @@ type Words = (key: string, values?: Values) => string;
 
 ```ts
 function wordsOf(content: GameContent, language: Language): Words;
+```
+
+### `WorldFile` (interface)
+
+```ts
+interface WorldFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly levels: readonly {
+        readonly level: string;
+        readonly at: LevelPoint;
+    }[];
+}
+```
+
+### `WorldLayout` (interface)
+
+```ts
+interface WorldLayout {
+    readonly joins: readonly Join[];
+    readonly places: Readonly<Record<string, readonly PlaceLevel[]>>;
+    readonly problems: readonly {
+        readonly entry: number;
+        readonly message: string;
+    }[];
+}
+```
+
+### `WorldSchema` (const)
+
+```ts
+const WorldSchema: z.ZodType<WorldFile, WorldFile>;
 ```
 
 ### `writeContent` (function)
@@ -5033,6 +5201,10 @@ type Act = {
     readonly speed: number;
 } | {
     readonly act: 'jump';
+    readonly speed: number;
+} | {
+    readonly act: 'walk-path';
+    readonly path: string;
     readonly speed: number;
 };
 ```
@@ -5293,6 +5465,13 @@ interface Character {
     readonly tuning?: string | undefined;
     readonly touch?: 'sense' | 'take' | undefined;
     readonly moves?: HeroMoves | undefined;
+    readonly values?: readonly ValueDeclaration[] | undefined;
+    readonly switch?: {
+        readonly opens: string;
+        readonly stays?: string | undefined;
+    } | undefined;
+    readonly opens?: 'walk-through' | undefined;
+    readonly 'one-per-level'?: boolean | undefined;
 }
 ```
 
@@ -5444,6 +5623,7 @@ const CONTENT_TYPES: {
     readonly conversation: ContentTypeInfo<ConversationFile, ConversationFile>;
     readonly cutscene: ContentTypeInfo<CutsceneFile, CutsceneFile>;
     readonly messages: ContentTypeInfo<MessagesFile, MessagesFile>;
+    readonly world: ContentTypeInfo<WorldFile, WorldFile>;
 };
 ```
 
@@ -6126,6 +6306,8 @@ interface GameContent {
     readonly conversations?: Readonly<Record<string, ConversationFile>>;
     readonly cutscenes?: Readonly<Record<string, CutsceneFile>>;
     readonly messages?: Readonly<Record<string, MessagesFile>>;
+    readonly worlds?: Readonly<Record<string, WorldFile>>;
+    readonly places?: Readonly<Record<string, readonly PlaceLevel[]>>;
 }
 ```
 
@@ -6245,10 +6427,28 @@ function inputName(input: string, words: Words): string;
 function isHeld(player: EntityRef, action: string): boolean;
 ```
 
+### `IsOpen` (type)
+
+```ts
+type IsOpen = (level: Level, col: number, row: number) => boolean;
+```
+
 ### `isOpenableLink` (function)
 
 ```ts
 function isOpenableLink(url: string): boolean;
+```
+
+### `Join` (interface)
+
+```ts
+interface Join {
+    readonly a: string;
+    readonly b: string;
+    readonly along: 'x' | 'y';
+    readonly from: number;
+    readonly to: number;
+}
 ```
 
 ### `JoinCommand` (const)
@@ -6422,6 +6622,12 @@ function latestSlot(states: readonly SlotState[]): number | undefined;
 type LayerKind = 'flat' | 'hills' | 'mountains' | 'clouds';
 ```
 
+### `layoutWorld` (function)
+
+```ts
+function layoutWorld(world: WorldFile, levels: Readonly<Record<string, Level>>, isOpen: IsOpen): WorldLayout;
+```
+
 ### `LEAD_DECAY_TICKS` (const)
 
 ```ts
@@ -6550,6 +6756,7 @@ interface LevelThing {
     readonly character: string;
     readonly x: number;
     readonly y: number;
+    readonly values?: Readonly<Record<string, ThingValue>> | undefined;
 }
 ```
 
@@ -7034,6 +7241,12 @@ function openSettings(options: {
 }): Promise<Settings>;
 ```
 
+### `openTile` (function)
+
+```ts
+function openTile(tilesets: Readonly<Record<string, TilesetFile>> | undefined): IsOpen;
+```
+
 ### `PAD_BUTTONS` (const)
 
 ```ts
@@ -7198,6 +7411,16 @@ function pickLanguage(options: {
 
 ```ts
 function placeholdersOf(text: string): readonly string[];
+```
+
+### `PlaceLevel` (interface)
+
+```ts
+interface PlaceLevel {
+    readonly level: string;
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `Played` (interface)
@@ -7880,6 +8103,18 @@ interface Sheet {
 const SHEET_COLUMNS = 8;
 ```
 
+### `SHOWN_FOR` (const)
+
+```ts
+const SHOWN_FOR: Readonly<Record<ValueDeclaration['type'], readonly ValueShown[]>>;
+```
+
+### `shownOf` (function)
+
+```ts
+function shownOf(declaration: ValueDeclaration): ValueShown;
+```
+
 ### `Sim` (interface)
 
 ```ts
@@ -8327,6 +8562,15 @@ function testSpeaker(options?: {
 const Thing: ComponentDef<typeof thingFields>;
 ```
 
+### `ThingValue` (type)
+
+```ts
+type ThingValue = number | boolean | string | readonly string[] | readonly LevelPoint[] | {
+    readonly level: string;
+    readonly thing?: string | undefined;
+};
+```
+
 ### `TILE_COLOR` (const)
 
 ```ts
@@ -8603,10 +8847,60 @@ function usesSprites(content: GameContent): boolean;
 type Value = string | number | readonly (string | number)[];
 ```
 
+### `ValueDeclaration` (type)
+
+```ts
+type ValueDeclaration = (Declared & {
+    readonly type: 'number';
+    readonly least: number;
+    readonly most: number;
+    readonly step?: number | undefined;
+    readonly default: number;
+}) | (Declared & {
+    readonly type: 'switch';
+    readonly default: boolean;
+}) | (Declared & {
+    readonly type: 'choice';
+    readonly from: readonly {
+        readonly id: string;
+        readonly name: string;
+    }[];
+    readonly default: string;
+}) | (Declared & {
+    readonly type: 'words';
+    readonly default?: string | undefined;
+}) | (Declared & {
+    readonly type: 'thing';
+    readonly kinds?: readonly string[] | undefined;
+    readonly most?: number | undefined;
+    readonly needed?: boolean | undefined;
+}) | (Declared & {
+    readonly type: 'path';
+    readonly least?: number | undefined;
+    readonly most?: number | undefined;
+    readonly loop?: boolean | undefined;
+}) | (Declared & {
+    readonly type: 'leads-to';
+    readonly needed?: boolean | undefined;
+});
+```
+
+### `valueDeclaration` (const)
+
+```ts
+const valueDeclaration: z.ZodType<ValueDeclaration, ValueDeclaration>;
+```
+
 ### `Values` (type)
 
 ```ts
 type Values = Readonly<Record<string, Value>>;
+```
+
+### `ValueShown` (type)
+
+```ts
+type ValueShown = 'tag' | 'reach' | 'arrow' | 'path' | 'none';
 ```
 
 ### `Verdict` (type)
@@ -8656,6 +8950,16 @@ function wasPressed(player: EntityRef, action: string): boolean;
 type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
 ```
 
+### `withDefaults` (function)
+
+```ts
+function withDefaults(character: {
+    readonly values?: readonly ValueDeclaration[] | undefined;
+}, thing: {
+    readonly values?: Readonly<Record<string, ThingValue>> | undefined;
+}): Readonly<Record<string, ThingValue>>;
+```
+
 ### `Words` (type)
 
 ```ts
@@ -8666,6 +8970,38 @@ type Words = (key: string, values?: Values) => string;
 
 ```ts
 function wordsOf(content: GameContent, language: Language): Words;
+```
+
+### `WorldFile` (interface)
+
+```ts
+interface WorldFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly levels: readonly {
+        readonly level: string;
+        readonly at: LevelPoint;
+    }[];
+}
+```
+
+### `WorldLayout` (interface)
+
+```ts
+interface WorldLayout {
+    readonly joins: readonly Join[];
+    readonly places: Readonly<Record<string, readonly PlaceLevel[]>>;
+    readonly problems: readonly {
+        readonly entry: number;
+        readonly message: string;
+    }[];
+}
+```
+
+### `WorldSchema` (const)
+
+```ts
+const WorldSchema: z.ZodType<WorldFile, WorldFile>;
 ```
 
 ### `writeContent` (function)

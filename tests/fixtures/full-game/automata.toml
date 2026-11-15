@@ -115,3 +115,7 @@ path = "content/messages/zh.json"
 [[content]]
 type = "messages"
 path = "content/messages/pt.json"
+
+[[content]]
+type = "world"
+path = "content/worlds/world.json"

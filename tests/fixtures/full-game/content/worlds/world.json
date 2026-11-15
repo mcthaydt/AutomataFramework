@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "id": "world",
+  "levels": [
+    {
+      "level": "level-1",
+      "at": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ]
+}

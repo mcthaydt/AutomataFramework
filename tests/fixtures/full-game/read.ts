@@ -31,6 +31,7 @@ import soundsJump from './content/sounds/jump.json?raw'
 import soundsLand from './content/sounds/land.json?raw'
 import tilesetsMeadow from './content/tilesets/meadow.json?raw'
 import tuningsHero from './content/tunings/hero.json?raw'
+import worldsWorld from './content/worlds/world.json?raw'
 
 /** Every file of the full game, by its path from the game's root. */
 export const fullGameFiles: Record<string, string> = {
@@ -63,6 +64,7 @@ export const fullGameFiles: Record<string, string> = {
   'content/messages/ja.json': messagesJa,
   'content/messages/zh.json': messagesZh,
   'content/messages/pt.json': messagesPt,
+  'content/worlds/world.json': worldsWorld,
 }
 
 /** The full game's marks file: not content, so `loadGame` never asks for it and it is not in `fullGameFiles`. */

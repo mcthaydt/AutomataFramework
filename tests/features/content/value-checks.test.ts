@@ -155,16 +155,14 @@ describe('a value the character does not declare, or of the wrong kind', () => {
       `${R1}: things[3].values.to: "to" is a way into a level, like { "level": "level-2", "thing": "door-in" }.`,
     ]))
 
-  test('a value no shape fits is told in one sentence', async () =>
-    expect(
-      await problems(
-        editLevel('room-1', (things) => {
-          ;(things[0] as Json).values = { colour: [1, 2] }
-        }),
-      ),
-    ).toEqual([
+  test('a value no shape fits is told in one sentence', async () => {
+    // Written by hand: `writeContent` refuses a value like this, which is the sentence under test.
+    const level = JSON.parse(FILES[levelPath('room-1')] ?? '') as { things: Json[] }
+    ;(level.things[0] as Json).values = { colour: [1, 2] }
+    expect(await problems({ [levelPath('room-1')]: JSON.stringify(level, null, 2) })).toEqual([
       `${R1}: things[0].values.colour: A value is a number, true or false, text, a list of ids like ["gate-1"], a list of places like [{ "x": 4, "y": 7.5 }], or a way into a level like { "level": "level-2" }.`,
-    ]))
+    ])
+  })
 })
 
 describe('links', () => {

@@ -13,28 +13,28 @@ line here saying so.
 A character can now list the `values` its things may hold: a number, a switch, a choice, words, a link to other things, a path or a way into a level. It can say it is a `switch` that opens the things a value links to, that it `opens` (a gate that things walk through while it is open), and that a level may hold only one thing of it (`one-per-level`). None of these has a default, so a character that says none of them is read, written and hashed as it was.
 
 **An older file needs:** nothing.
-**Schema:** `0000000000000000`
+**Schema:** `bbd85ad90838e33f`
 
 ## 2026-11-15 · level · a thing holds values
 
 A thing in a level can now hold `values`, by the ids its character declares: numbers, switches, choices, message keys, links to other things in the level, a path of places and a way into another level. A thing that writes none is read and written as it was.
 
 **An older file needs:** nothing.
-**Schema:** `0000000000000000`
+**Schema:** `bbaf90bcb0cbde62`
 
 ## 2026-11-15 · behaviour · walk-path
 
 A rule can now do `walk-path`: walk along a path its character holds, naming the path's value and a speed. The format and its checks are here; the framework does not run it yet, because behaviour rules wait for the Characters editor.
 
 **An older file needs:** nothing.
-**Schema:** `0000000000000000`
+**Schema:** `bd1f3437ec03e694`
 
 ## 2026-11-15 · world · a new kind
 
 A new kind of file, `world`, in `content/worlds/`: where each level sits on the map, in whole tiles. Levels that touch along a side, and are open there, join into one place. A game has one world file.
 
 **An older file needs:** nothing: a game with no world file is read and played as it was.
-**Schema:** `0000000000000000`
+**Schema:** `381ddb55f82370a3`
 
 ## 2026-11-15 · level · The format as first listed
 
