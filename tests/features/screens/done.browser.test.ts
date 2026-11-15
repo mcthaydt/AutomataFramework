@@ -57,12 +57,8 @@ test.each(SCREENS)('at %s it fits with no scrolling and its main button is 48 px
   ])
   for (const button of all) {
     const box = button.getBoundingClientRect()
-    expect([box.left >= 0, box.right <= window.innerWidth, box.top >= 0, box.bottom <= window.innerHeight]).toEqual([
-      true,
-      true,
-      true,
-      true,
-    ])
+    expect([box.left >= 0, box.right <= window.innerWidth]).toEqual([true, true])
+    expect([box.top >= 0, box.bottom <= window.innerHeight]).toEqual([true, true])
   }
   expect(all[0]?.getBoundingClientRect().height).toBeGreaterThanOrEqual(48)
   expect(document.activeElement).toBe(all[0])
