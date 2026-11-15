@@ -12,7 +12,7 @@ import {
   type SimContext,
   SnapshotFormatError,
 } from '../sim/sim.ts'
-import { Ground, Touching } from './components.ts'
+import { Touching } from './components.ts'
 import { handleBits, sameHandles } from './handle-bits.ts'
 import { type JointAdapter, type JointRow, JointTable } from './joint-table.ts'
 import { type FeltContact, felt } from './touching.ts'
@@ -114,8 +114,6 @@ export class PhysicsWorld<World> implements PluginState {
 
   /** Whether the sim has the `Touching` component to fill in. */
   private readonly fillsTouching: boolean
-  /** Whether the sim has the `Ground` component to fill in beside it. */
-  private readonly fillsGround: boolean
 
   /**
    * `options.joints` is whether the sim has the `Joint` component and `options.touching` whether it has `Touching`;
@@ -123,10 +121,9 @@ export class PhysicsWorld<World> implements PluginState {
    */
   constructor(
     private readonly rapier: PhysicsAdapter<World>,
-    options: { readonly joints?: boolean; readonly touching?: boolean; readonly slopes?: boolean } = {},
+    options: { readonly joints?: boolean; readonly touching?: boolean } = {},
   ) {
     this.fillsTouching = options.touching === true
-    this.fillsGround = options.slopes === true
     this.world = rapier.createWorld()
     this.joints = options.joints ? new JointTable(rapier) : undefined
   }
@@ -252,18 +249,11 @@ export class PhysicsWorld<World> implements PluginState {
       if (!entity?.has(Touching)) continue
       const now =
         row.collider === undefined
-          ? { below: false, left: false, right: false, gx: 0, gy: -1 }
+          ? { below: false, left: false, right: false }
           : felt(this.rapier.contactsOf(this.world, row.collider))
       const was = entity.get(Touching)
       if (was.below !== now.below || was.left !== now.left || was.right !== now.right)
-        entity.set(Touching, { below: now.below, left: now.left, right: now.right })
-      // The ground's normal is held as 32-bit floats, so it is compared as one: a body at rest writes nothing.
-      if (this.fillsGround && entity.has(Ground)) {
-        const ground = entity.get(Ground)
-        const nx = Math.fround(now.gx)
-        const ny = Math.fround(now.gy)
-        if (ground.nx !== nx || ground.ny !== ny) entity.set(Ground, { nx, ny })
-      }
+        entity.set(Touching, now)
     }
   }
 

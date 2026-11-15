@@ -1,4 +1,4 @@
-// The tools `automata mcp` offers an agent. `create`, `check`, `replay`, `art`, `add`, `scene_from_level` and `words` are the commands themselves,
+// The tools `automata mcp` offers an agent. `create`, `check`, `replay`, `art` and `words` are the commands themselves,
 // run as a child process through `Runner.command` with `--json` (audit C1: this long-lived server never loads a game's
 // code, so every answer comes from the files as they are now); `content_types`, `schema` and `skill` read what the
 // package ships; the `play_` tools run a game a few ticks at a time (`session.ts`). Every description is one sentence
@@ -111,7 +111,7 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
     ),
     tool(
       'art',
-      "Paint a game's pictures from its figure, backdrop and scene files: use it after you change one, and commit what it writes.",
+      "Paint a game's pictures from its figure and backdrop files: use it after you change one, and commit what it writes.",
       z.object({
         folder,
         check: z
@@ -120,45 +120,6 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
           .describe('Paint nothing; only say which pictures are missing or older than their file.'),
       }),
       (input) => command(['art', input.folder, ...(input.check === true ? ['--check'] : [])]),
-    ),
-    tool(
-      'add',
-      "List a content file you have just written in a game's automata.toml: use it after you create a figure, a level or any other file, so it is part of the game.",
-      z.object({
-        folder,
-        type: z.string().describe('The kind of file, like figure, level or character.'),
-        path: z
-          .string()
-          .describe("Where the file is, from the game's folder, like content/figures/keeper.json."),
-        about: z.string().optional().describe('One line of words to write above it in automata.toml.'),
-      }),
-      (input) =>
-        command([
-          'add',
-          input.folder,
-          '--type',
-          input.type,
-          '--path',
-          input.path,
-          ...(input.about === undefined ? [] : ['--about', input.about]),
-        ]),
-    ),
-    tool(
-      'scene_from_level',
-      "Move a level's ground onto a scene file you can paint: use it to give a game's level a scene, and it answers the files it wrote.",
-      z.object({
-        folder,
-        level: z.string().describe('The level to move, like level-1.'),
-        as: z.string().optional().describe("The scene's name. Left out, level-1 becomes scene-1."),
-      }),
-      (input) =>
-        command([
-          'scene',
-          'from-level',
-          input.level,
-          input.folder,
-          ...(input.as === undefined ? [] : ['--as', input.as]),
-        ]),
     ),
     tool(
       'words',

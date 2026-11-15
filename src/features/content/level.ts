@@ -1,8 +1,7 @@
 import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { Id } from './ids.ts'
-import { type Add, checkLevelBody, pathText } from './level-checks.ts'
-import { list, noSuch, variants } from './shared.ts'
+import { list, noSuch, unique, variants } from './shared.ts'
 import type { ContentTypeInfo } from './type-info.ts'
 
 /** A thing standing in a level: one placed copy of a character. `x` and `y` are its centre, in tiles. */
@@ -72,8 +71,6 @@ export interface LevelView {
 export interface Level {
   readonly format: 1
   readonly id: string
-  /** The scene the level is played in: its ground, its sky and its backdrop. A level has this or `tiles`. */
-  readonly scene?: string | undefined
   /** The tileset whose letters the rows use. Without one, `#` is solid and `.` is empty. */
   readonly tileset?: string | undefined
   /** The backdrop behind it. Left out means only the sky. */
@@ -82,8 +79,7 @@ export interface Level {
   readonly ground?: string | undefined
   /** Switches the camera on. Left out, the whole level is always in view. */
   readonly view?: LevelView | undefined
-  /** The level's own map, for a level with no scene. */
-  readonly tiles?: readonly string[] | undefined
+  readonly tiles: readonly string[]
   readonly things: readonly LevelThing[]
   readonly starts: readonly LevelStart[]
   /** Pins and ropes that hold things. Left out, nothing is held. */
@@ -171,55 +167,138 @@ const screen = z.strictObject({
 /** One row of the map. Which letters it may hold depends on the tileset, so `checkLevel` looks at them. */
 const row = z.string().min(1).max(MAX_SIDE)
 
-/** `scene` is the one place a level's ground comes from, and `tiles` the other: a level has exactly one of the two. */
-const FROM_SCENE = ['tileset', 'backdrop', 'sky', 'ground'] as const
+/** The view and the most the camera pulls back to must fit in the level, and `most` must not be less than the view. */
+function checkView(view: LevelView, width: number, height: number, ctx: z.core.$RefinementCtx): void {
+  const add = (path: readonly PropertyKey[], message: string): void =>
+    ctx.addIssue({ code: 'custom', path: [...path], message })
+  const sides = [
+    { key: 'w', size: width, word: 'wide' },
+    { key: 'h', size: height, word: 'tall' },
+  ] as const
+  for (const { key, size, word } of sides) {
+    const tooBig = `The level is ${size} tiles ${word}, so the view cannot be`
+    const leave = `Make "${key}" ${size} or less, or leave "view" out to show the whole level.`
+    if (size > 0 && view[key] > size) add(['view', key], `${tooBig} ${view[key]}. ${leave}`)
+    const most = view.most?.[key]
+    if (most === undefined) continue
+    if (size > 0 && most > size) add(['view', 'most', key], `${tooBig} ${most}. ${leave}`)
+    else if (most < view[key])
+      add(
+        ['view', 'most', key],
+        `The camera cannot pull back to less than it shows. Make "${key}" ${view[key]} or more.`,
+      )
+  }
+}
 
 /**
- * The checks that look across fields: a scene or tiles and not both, every row as long as the first, ids and player
- * numbers used once, and everything inside the map. Written to cope with a half-read file, since it may run beside
- * other problems. A level with a scene is only as big as the scene, which is checked once the game is read.
+ * The checks that look across fields: every row as long as the first, ids and player numbers used once, and
+ * everything inside the map. Written to cope with a half-read file, since it may run beside other problems.
  */
 function checkLevel(level: Partial<Level>, ctx: z.core.$RefinementCtx): void {
-  const add: Add = (path, message) => ctx.addIssue({ code: 'custom', path: [...path], message })
-  if (level.scene !== undefined && level.tiles !== undefined)
-    add(
-      ['scene'],
-      'This level has a scene and its own tiles. A level with a scene takes its ground from the scene: remove "tiles".',
-    )
-  else if (level.scene === undefined && level.tiles === undefined)
-    add(['scene'], 'This level has no ground. Name a scene, like "scene": "meadow", or write "tiles".')
-  if (level.scene !== undefined)
-    for (const key of FROM_SCENE)
-      if (level[key] !== undefined)
-        add(
-          [key],
-          `A level with a scene takes this from the scene. Remove "${key}", and set it in the scene "${level.scene}".`,
-        )
   const tiles = level.tiles ?? []
   // Naming the first wrong letter tells a person where to look.
   const wrong = level.tileset === undefined ? /[^#.]/ : /[^!-~]/
   tiles.forEach((tileRow, i) => {
     const found = wrong.exec(tileRow)
     if (found)
-      add(
-        ['tiles', i],
-        level.tileset === undefined
-          ? `Use only # (solid) and . (empty). Found "${found[0]}".`
-          : `Use one letter per tile, with no spaces. Found "${found[0]}".`,
-      )
+      ctx.addIssue({
+        code: 'custom',
+        path: ['tiles', i],
+        message:
+          level.tileset === undefined
+            ? `Use only # (solid) and . (empty). Found "${found[0]}".`
+            : `Use one letter per tile, with no spaces. Found "${found[0]}".`,
+      })
   })
   const width = tiles[0]?.length ?? 0
   const height = tiles.length
   tiles.forEach((tileRow, i) => {
     if (i > 0 && tileRow.length !== width)
-      add(
-        ['tiles', i],
-        `This row has ${tileRow.length} tiles but the first row has ${width}. Every row must be the same length.`,
-      )
+      ctx.addIssue({
+        code: 'custom',
+        path: ['tiles', i],
+        message: `This row has ${tileRow.length} tiles but the first row has ${width}. Every row must be the same length.`,
+      })
   })
-  // Places are held to the level's own tiles only when they are its ground; a scene's size is checked with the game.
-  const ownGround = level.scene === undefined && level.tiles !== undefined
-  checkLevelBody(level, width, height, add, ownGround ? 'all' : 'names')
+
+  const outside = (path: readonly (string | number)[], at: { x: number; y: number }): void => {
+    if (at.x < 0 || at.x > width)
+      ctx.addIssue({
+        code: 'custom',
+        path: [...path, 'x'],
+        message: `${at.x} is outside the level, which is ${width} tiles wide.`,
+      })
+    if (at.y < 0 || at.y > height)
+      ctx.addIssue({
+        code: 'custom',
+        path: [...path, 'y'],
+        message: `${at.y} is outside the level, which is ${height} tiles tall.`,
+      })
+  }
+
+  if (level.view !== undefined) checkView(level.view, width, height, ctx)
+
+  const thingIds = new Set<string>()
+  ;(level.things ?? []).forEach((t, i) => {
+    if (thingIds.has(t.id))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['things', i, 'id'],
+        message: `"${t.id}" is used twice. Each thing needs its own id.`,
+      })
+    const hero = /^player-([1-4])$/.exec(t.id)
+    if (hero)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['things', i, 'id'],
+        message: `"${t.id}" is the name of player ${hero[1]}'s hero. Give this thing another id.`,
+      })
+    thingIds.add(t.id)
+    outside(['things', i], t)
+  })
+
+  const players = new Set<number>()
+  ;(level.starts ?? []).forEach((s, i) => {
+    if (players.has(s.player))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['starts', i, 'player'],
+        message: `Player ${s.player} already has a start point. Each player needs only one.`,
+      })
+    players.add(s.player)
+    outside(['starts', i], s)
+  })
+
+  const joints = level.joints ?? []
+  unique(joints, 'id', 'joint', ['joints'], ctx)
+  joints.forEach((joint, i) => {
+    const at = (field: string, message: string): void =>
+      ctx.addIssue({ code: 'custom', path: ['joints', i, ...field.split('.')], message })
+    for (const end of ['thing', 'holder'] as const) {
+      const named = joint[end]
+      if (named === undefined) continue
+      if (/^player-[1-4]$/.test(named))
+        at(end, 'A hero cannot be joined to anything. Join a thing from this level\'s "things".')
+      else if (!thingIds.has(named)) at(end, noSuch('thing', named, [...thingIds], 'This level'))
+    }
+    if (joint.holder !== undefined && joint.holder === joint.thing)
+      at('holder', 'A thing cannot be joined to itself. Leave "holder" out to join it to the level.')
+    if (joint.kind === 'pin') {
+      outside(['joints', i], joint)
+      const turn = joint.turn
+      if (turn !== undefined) {
+        if (turn.min >= turn.max) at('turn.min', '"min" must be less than "max".')
+        else if (turn.min > 0 || turn.max < 0)
+          at('turn', 'The thing starts level, so "min" must be 0 or less and "max" 0 or more.')
+      }
+    } else {
+      outside(['joints', i, 'from'], joint.from)
+      outside(['joints', i, 'to'], joint.to)
+      const gap = Math.hypot(joint.to.x - joint.from.x, joint.to.y - joint.from.y)
+      if (gap < 0.01 && !(joint.slack !== undefined && joint.slack > 0))
+        at('to', 'A rope needs some length. Move its two ends apart, or give it "slack".')
+    }
+  })
 }
 
 /** The rules for a level file; unknown keys are refused, so a misspelling is caught instead of ignored. */
@@ -227,9 +306,6 @@ export const LevelSchema: z.ZodType<Level, Level> = z
   .strictObject({
     format: z.literal(1).describe('The version of this file format. Always 1.'),
     id: Id.describe('A name for this level, like "level-1". It matches the file name.'),
-    scene: Id.describe(
-      'The scene the level is played in, by the id in its file, like "meadow". The ground, sky and backdrop come from it, so a level with a scene has no "tiles".',
-    ).optional(),
     tileset: Id.describe(
       'The tileset whose letters the rows use, by the id in its file, like "meadow". Left out means # is solid and . is empty.',
     ).optional(),
@@ -252,9 +328,8 @@ export const LevelSchema: z.ZodType<Level, Level> = z
       .min(1)
       .max(MAX_SIDE)
       .describe(
-        'The map, one text row per line, top to bottom. # is solid ground and . is empty air. With a tileset, each letter is one of its tiles. Left out when the level names a "scene".',
-      )
-      .optional(),
+        'The map, one text row per line, top to bottom. # is solid ground and . is empty air. With a tileset, each letter is one of its tiles.',
+      ),
     things: z.array(thing).max(1024).describe('The things standing in the level, like crates. Can be empty.'),
     starts: z.array(start).min(1).max(4).describe('Where each player begins. At least one is needed.'),
     joints: z
@@ -278,7 +353,6 @@ export const levelInfo: ContentTypeInfo<Level, Level> = {
   missing: {
     format: 'Write "format": 1.',
     id: 'Give the level a name like "level-1".',
-    scene: 'Write which scene the level is played in, like "meadow".',
     tiles: 'Write the map as a list of text rows, using # for solid and . for empty.',
     things: 'Write [] if the level has no things in it.',
     'things.id': 'Give the thing a name like "crate-1".',
@@ -309,21 +383,6 @@ export const levelInfo: ContentTypeInfo<Level, Level> = {
   check(level, game, report) {
     if (level.backdrop !== undefined && !game.has('backdrop', level.backdrop))
       report('backdrop', noSuch('backdrop', level.backdrop, game.ids('backdrop')))
-    if (level.scene !== undefined) {
-      if (!game.has('scene', level.scene)) report('scene', noSuch('scene', level.scene, game.ids('scene')))
-      else {
-        const scene = game.get('scene', level.scene)
-        // The scene's size is the level's size, so what the level places has to be inside it.
-        if (scene !== undefined)
-          checkLevelBody(
-            level,
-            scene.size.w,
-            scene.size.h,
-            (path, message) => report(pathText(path), message),
-            'places',
-          )
-      }
-    }
     if (level.tileset !== undefined) {
       if (!game.has('tileset', level.tileset))
         report('tileset', noSuch('tileset', level.tileset, game.ids('tileset')))
@@ -331,7 +390,7 @@ export const levelInfo: ContentTypeInfo<Level, Level> = {
         const tileset = game.get('tileset', level.tileset)
         const letters = new Set(tileset?.tiles.map((tile) => tile.letter))
         if (tileset !== undefined)
-          level.tiles?.forEach((tileRow, r) => {
+          level.tiles.forEach((tileRow, r) => {
             const letter = [...tileRow].find((c) => c !== '.' && !letters.has(c))
             if (letter !== undefined)
               report(

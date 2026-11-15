@@ -2,9 +2,7 @@ import { expect, test } from 'vitest'
 import { main } from '#src/features/cli/cli.ts'
 import { under } from '../../fixtures/cli/game.ts'
 import { type Memory, memoryLayer } from '../../fixtures/cli/memory.ts'
-import { sceneGameInMemory } from '../../fixtures/cli/scene-game.ts'
 import { fullGameFiles } from '../../fixtures/full-game/read.ts'
-import { sceneGameFiles } from '../../fixtures/scene-game/read.ts'
 
 /** A memory with the full game (figures, a backdrop, a keeper) in the folder `game`. */
 const game = (changes: Record<string, string> = {}): Memory =>
@@ -134,36 +132,4 @@ test('the files step does not call a painted atlas unlisted, and still names a j
   )
   expect(await main(['check', 'game', '--only', 'files'], stray.layer)).toBe(1)
   expect(stray.out.join('\n')).toContain('content/figures/stray.json')
-})
-
-test('a game with a scene is painted: the scene’s picture and atlas are written beside its file, and then checked', async () => {
-  const memory = memoryLayer(await sceneGameInMemory())
-  const painted = await run(memory)
-  expect(painted.code).toBe(0)
-  expect(painted.out).toContain('Painted content/scenes/meadow.png')
-  expect(painted.out).toContain('Painted content/scenes/meadow.atlas.json')
-  expect([...(memory.files.get('game/content/scenes/meadow.png') as Uint8Array).slice(0, 4)]).toEqual([
-    137, 80, 78, 71,
-  ])
-  expect(await run(memory, '--check')).toEqual({
-    code: 0,
-    out: ['Every picture is painted and up to date.'],
-    err: [],
-  })
-})
-
-test('a scene whose own photo has no picture paints nothing and says which file to fix', async () => {
-  const mossy = (sceneGameFiles['content/scenes/meadow.json'] ?? '').replaceAll(
-    '"photo": "dirt"',
-    '"photo": "moss"',
-  )
-  const memory = memoryLayer(await sceneGameInMemory('game', { 'content/scenes/meadow.json': mossy }))
-  memory.files.delete('game/content/photos/moss.png')
-  const said = await run(memory)
-  expect(said.code).toBe(1)
-  expect(said.out).toEqual([])
-  expect(said.err).toEqual([
-    'content/photos/moss.json: image: There is no picture at "content/photos/moss.png". Put the photo there.',
-  ])
-  expect(memory.files.has('game/content/scenes/meadow.png')).toBe(false)
 })

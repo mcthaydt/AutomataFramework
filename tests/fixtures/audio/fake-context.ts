@@ -12,13 +12,6 @@ export interface FakeGain {
   connect(to: unknown): void
 }
 
-/** What the speaker sets on a `WaveShaperNode`. */
-export interface FakeShaper {
-  curve: Float32Array | null
-  oversample: string
-  connect(to: unknown): void
-}
-
 export interface FakeContext {
   readonly context: AudioContext
   /** Changes the context's state and says so, as the browser's `statechange` does. */
@@ -29,10 +22,6 @@ export interface FakeContext {
   readonly closed: boolean
   /** Every gain made, in order: the master, then the sound bus's gain and its inner gain, then the music bus's two. */
   readonly gains: readonly FakeGain[]
-  /** Every wave shaper made. */
-  readonly shapers: readonly FakeShaper[]
-  /** What each node was connected to, in the order it was told. */
-  readonly connections: ReadonlyMap<unknown, readonly unknown[]>
 }
 
 /** A context that starts `suspended`, as a browser's does before the first tap. */
@@ -43,13 +32,6 @@ export function fakeContext(): FakeContext {
   let closed = false
   const listeners = new Set<() => void>()
   const gains: FakeGain[] = []
-  const shapers: FakeShaper[] = []
-  const connections = new Map<unknown, unknown[]>()
-  const connectFrom =
-    (node: () => unknown) =>
-    (to: unknown): void => {
-      connections.set(node(), [...(connections.get(node()) ?? []), to])
-    }
   const fake = {
     get state() {
       return state
@@ -75,19 +57,10 @@ export function fakeContext(): FakeContext {
           setValueAtTime: () => undefined,
           linearRampToValueAtTime: () => undefined,
         },
-        connect: (to: unknown) => connectFrom(() => gain)(to),
+        connect: () => undefined,
       }
       gains.push(gain)
       return gain
-    },
-    createWaveShaper: (): FakeShaper => {
-      const shaper: FakeShaper = {
-        curve: null,
-        oversample: 'none',
-        connect: (to: unknown) => connectFrom(() => shaper)(to),
-      }
-      shapers.push(shaper)
-      return shaper
     },
   }
   return {
@@ -106,7 +79,5 @@ export function fakeContext(): FakeContext {
       return closed
     },
     gains,
-    shapers,
-    connections,
   }
 }

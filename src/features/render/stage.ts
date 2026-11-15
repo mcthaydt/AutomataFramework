@@ -7,7 +7,7 @@ import { SKY_COLOR } from '../level/level.ts'
 import type { Art, BackdropArt } from './art.ts'
 import { layerShift, placeCamera, type Shot } from './camera.ts'
 import { type Density, pageDensity, sane } from './density.ts'
-import { type Fit, fitInRoom, type Room } from './fit.ts'
+import { type Fit, fitWorld } from './fit.ts'
 import type { RopeLine, View } from './scene.ts'
 
 // Pixi types the loader's config as optional; a Pixi without it would leave the probe on, so say so.
@@ -40,23 +40,8 @@ export interface Stage {
    */
   setInset(px: number): void
   /**
-   * Keeps this room free of the world on each side (a negative or missing number is none) and draws the last views
-   * again. The sky and the backdrop still fill the canvas. Unlike `setInset` it is taken as given: nothing limits it, so
-   * a room as big as the box leaves no level at all. Whichever of the two is called last is the one that holds.
-   */
-  setRoom(room: Room): void
-  /**
-   * Draws the world exactly here, in place of the fit in the room: `scale` pixels a tile, its top-left corner at `left`,
-   * `top` (CSS pixels, rounded to whole device pixels; either may be negative). `undefined` goes back to the fit in the
-   * room. A scale that is not above zero, or not a number, is taken as `undefined`. The sky and the backdrop still fill
-   * the canvas, the backdrop standing on the level's bottom edge as it does for a fitted level. Draws the last views
-   * again. It is for a level drawn without a shot: a draw with a shot is placed by its camera whatever the view.
-   */
-  setView(view: Fit | undefined): void
-  /**
-   * Where the level is on the canvas for this shot: the view while one is set, and otherwise the whole level fitted in
-   * the room (`fitInRoom`), when there is no shot; and the camera's placement, with the offset rounded to whole device
-   * pixels, when there is one.
+   * Where the level is on the canvas for this shot: the whole level fitted (`fitWorld`) when there is no shot, and the
+   * camera's placement, with the offset rounded to whole device pixels, when there is one.
    */
   fit(shot?: Shot): Fit
   /**
@@ -65,12 +50,6 @@ export interface Stage {
    * drawn on its first.
    */
   draw(views: readonly View[], links: readonly RopeLine[], shot?: Shot): void
-  /**
-   * Draws from this art instead (and this sky, when given): its tiles, ground pages, backdrop and figures. The art the
-   * stage had is destroyed. Draws the last views again. It is for a level whose scene was edited: same size, same
-   * level, new ground.
-   */
-  setArt(next: Art | undefined, sky?: number): void
   destroy(): void
 }
 
@@ -118,24 +97,21 @@ function buildBackdrop(backdrop: BackdropArt, into: Container): BackdropDrawn[] 
  */
 export async function createStage(
   world: { w: number; h: number },
-  firstSky: number = SKY_COLOR,
-  firstArt?: Art,
+  sky: number = SKY_COLOR,
+  art?: Art,
   density: Density = pageDensity,
-  keep = false,
 ): Promise<Stage> {
   const app = new Application()
   await app.init({
     width: 1,
     height: 1,
-    background: firstSky,
+    background: sky,
     antialias: true,
     resolution: sane(density.now()),
     autoDensity: false,
     autoStart: false,
     sharedTicker: false,
     preference: 'webgl',
-    // A read of the canvas after the page has shown it (a test, a copy onto another canvas) needs the buffer kept.
-    preserveDrawingBuffer: keep,
   })
   const canvas = app.canvas
   // The canvas is as big as its mount; its drawing buffer is set to match by `resize`.
@@ -143,13 +119,12 @@ export async function createStage(
   // The backdrop is behind everything and in screen pixels: its strips repeat across the whole canvas.
   const backdropLayer = new Container()
   const root = new Container()
-  // Back to front: boxes, a scene's painted ground, the level's tiles, then the figures. The ropes and pins sit over
-  // all of them, so they have a layer of their own with the same fit.
+  // Back to front: boxes, the level's tiles, then the figures. The ropes and pins sit over all of them, so they have a
+  // layer of their own with the same fit.
   const boxLayer = new Container()
-  const groundLayer = new Container()
   const tileLayer = new Container()
   const figureLayer = new Container()
-  root.addChild(boxLayer, groundLayer, tileLayer, figureLayer)
+  root.addChild(boxLayer, tileLayer, figureLayer)
   const linkLayer = new Container()
   const linkShape = new Graphics()
   linkLayer.addChild(linkShape)
@@ -157,48 +132,25 @@ export async function createStage(
   // sky, over everything.
   const cover = new Graphics()
   app.stage.addChild(backdropLayer, root, linkLayer, cover)
-  // What the art puts on the stage: the backdrop's layers, and the ground boxes that its pictures replace.
-  let art = firstArt
-  let sky = firstSky
-  let backdropLayers: BackdropDrawn[] = []
-  let replaced = new Set<string>()
-  /**
-   * Puts the art's backdrop, ground pages and tiles on the stage, in place of any there. They are placed once: the level's
-   * ground does not move. When they are drawn, the boxes that make the same ground are not.
-   */
-  const place = (): void => {
-    for (const layer of [backdropLayer, groundLayer, tileLayer])
-      for (const child of layer.removeChildren()) child.destroy({ children: true })
-    backdropLayers = art?.backdrop === undefined ? [] : buildBackdrop(art.backdrop, backdropLayer)
-    for (const page of art?.groundPages ?? []) {
-      const strip = new PixiSprite({ texture: page.texture })
-      strip.position.set(page.col, 0)
-      strip.width = page.w
-      strip.height = page.h
-      groundLayer.addChild(strip)
-    }
-    for (const tile of art?.tiles ?? []) {
-      const square = new PixiSprite({ texture: tile.texture })
-      square.position.set(tile.col, tile.row)
-      square.width = 1
-      square.height = 1
-      tileLayer.addChild(square)
-    }
-    replaced = new Set(
-      (art?.tiles.length ?? 0) > 0 || (art?.groundPages.length ?? 0) > 0
-        ? (art?.ground ?? []).map((b) => boxKey(b.col + b.w / 2, b.row + b.h / 2, b.w, b.h))
-        : [],
-    )
+  const backdropLayers = art?.backdrop === undefined ? [] : buildBackdrop(art.backdrop, backdropLayer)
+  // The tiles are placed once: the level's tiles do not move. When they are drawn, the boxes that make the same ground
+  // are not.
+  for (const tile of art?.tiles ?? []) {
+    const square = new PixiSprite({ texture: tile.texture })
+    square.position.set(tile.col, tile.row)
+    square.width = 1
+    square.height = 1
+    tileLayer.addChild(square)
   }
-  place()
+  const replaced = new Set(
+    (art?.tiles.length ?? 0) > 0
+      ? (art?.ground ?? []).map((b) => boxKey(b.col + b.w / 2, b.row + b.h / 2, b.w, b.h))
+      : [],
+  )
   const drawn = new Map<number, Drawn>()
   let box = { w: 0, h: 0 }
-  // Room kept clear of the world: either a strip at the bottom (the touch buttons, `inset`, never more than half the
-  // height) or, once `setRoom` is called, a room on every side as given. The sky still fills the whole canvas.
+  // Room kept clear at the bottom of the box (the touch buttons). The sky still fills the whole canvas.
   let inset = 0
-  let given: Room | undefined
-  // Where the world goes when it is set by hand (`setView`), in place of the fit in the room.
-  let view: Fit | undefined
   let destroyed = false
   // A sharper or softer screen: the canvas gets the pixels it now needs and the last picture is drawn again.
   const stopWatching = density.onChange(() => {
@@ -216,17 +168,14 @@ export async function createStage(
       }
     | undefined
 
-  /** The room kept on each side now. */
-  const kept = (): Room => given ?? { top: 0, right: 0, bottom: Math.min(inset, box.h / 2), left: 0 }
-  /** The room a camera has: the canvas without the strip kept free at the bottom. */
-  const room = (): { w: number; h: number } => ({ w: box.w, h: box.h - kept().bottom })
+  /** The room the level has: the canvas without the strip kept free at the bottom. */
+  const room = (): { w: number; h: number } => ({ w: box.w, h: box.h - Math.min(inset, box.h / 2) })
   const snap = (v: number): number => Math.round(v * app.renderer.resolution) / app.renderer.resolution
-  /** A view with its offset in whole device pixels. */
-  const placed = (at: Fit): Fit => ({ scale: at.scale, left: snap(at.left), top: snap(at.top) })
   const fitFor = (shot: Shot | undefined): Fit => {
-    if (shot === undefined) return view === undefined ? fitInRoom(box, kept(), world) : placed(view)
+    if (shot === undefined) return fitWorld(room(), world)
+    const placed = placeCamera(room(), world, shot)
     // Whole device pixels, so pixels move as one while the camera eases and do not shimmer.
-    return placed(placeCamera(room(), world, shot))
+    return { scale: placed.scale, left: snap(placed.left), top: snap(placed.top) }
   }
 
   const paintBackdrop = (backdrop: BackdropArt, fit: Fit, camera: boolean): void => {
@@ -270,10 +219,10 @@ export async function createStage(
 
   const paint = (views: readonly View[], links: readonly RopeLine[], shot: Shot | undefined): void => {
     const fit = fitFor(shot)
-    // The strip is covered with sky, over everything, so a camera's view cannot show the level through the buttons. A room
-    // given on four sides is for a level drawn still, where nothing reaches into it and the backdrop must show there.
-    cover.clear()
-    if (given === undefined && view === undefined) cover.rect(0, room().h, box.w, box.h - room().h).fill(sky)
+    cover
+      .clear()
+      .rect(0, room().h, box.w, box.h - room().h)
+      .fill(sky)
     if (art?.backdrop !== undefined) paintBackdrop(art.backdrop, fit, shot !== undefined)
     root.scale.set(fit.scale)
     root.position.set(fit.left, fit.top)
@@ -360,25 +309,6 @@ export async function createStage(
       if (destroyed) return
       // Not above zero, or not a number, is no room at all.
       inset = px > 0 ? px : 0
-      given = undefined
-      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
-    },
-    setRoom(next) {
-      if (destroyed) return
-      const side = (px: number): number => (px > 0 ? px : 0)
-      given = {
-        top: side(next.top),
-        right: side(next.right),
-        bottom: side(next.bottom),
-        left: side(next.left),
-      }
-      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
-    },
-    setView(next) {
-      if (destroyed) return
-      const usable =
-        next !== undefined && next.scale > 0 && Number.isFinite(next.left + next.top + next.scale)
-      view = usable ? next : undefined
       if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
     },
     fit: fitFor,
@@ -386,23 +316,6 @@ export async function createStage(
       if (destroyed) return
       last = { views, links, shot }
       if (box.w > 0) paint(views, links, shot)
-    },
-    setArt(next, nextSky) {
-      if (destroyed) {
-        next?.destroy()
-        return
-      }
-      const old = art
-      art = next
-      if (nextSky !== undefined) {
-        sky = nextSky
-        app.renderer.background.color = nextSky
-      }
-      place()
-      // A thing keeps the look it was drawn with, and a look names a texture the old art held.
-      for (const item of drawn.values()) item.look = ''
-      old?.destroy()
-      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
     },
     destroy() {
       if (destroyed) return

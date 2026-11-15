@@ -14,22 +14,11 @@ import { createStage } from './stage.ts'
  */
 const JUMP = 1
 
-export {
-  type Art,
-  ArtError,
-  type GroundPageArt,
-  loadArt,
-  needsPictures,
-  type ReadPicture,
-  type TileSprite,
-} from './art.ts'
+export { type Art, ArtError, loadArt, needsPictures, type ReadPicture } from './art.ts'
 export type { Shot } from './camera.ts'
 export { type Density, pageDensity } from './density.ts'
-export { type Fit, fitInRoom, fitWorld, type Room } from './fit.ts'
-export { type GroundPage, groundPages } from './ground.ts'
+export { type Fit, fitWorld } from './fit.ts'
 export { createScene, type RopeLine, type Scene, type View, type ViewSprite } from './scene.ts'
-export { createLevelPicture, type LevelPicture, levelViews } from './still.ts'
-export { type PlacedTile, placedTiles } from './tiles.ts'
 
 /** A hero's box on the canvas, in CSS pixels. */
 export interface HeroBox {

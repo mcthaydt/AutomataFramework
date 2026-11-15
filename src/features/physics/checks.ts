@@ -14,13 +14,9 @@ export function checkBody(sid: number, component: string, kind: number): void {
     invalid(sid, component, 'kind', `is ${kind}; expected a BodyKind (0..3)`)
 }
 
-/** Every code a collider's `shape` may hold. */
-const SHAPES: readonly number[] = Object.values(ShapeKind)
-
-/** The sizes the shape uses must be positive (ball: hx; every other shape: hx and hy). */
+/** The sizes the shape uses must be positive (ball: hx; cuboid and capsule: hx and hy). */
 export function checkCollider(sid: number, component: string, shape: number, hx: number, hy: number): void {
-  if (!SHAPES.includes(shape))
-    invalid(sid, component, 'shape', `is ${shape}; expected a ShapeKind (0, 1, 2, 16, 17 or 18)`)
+  if (shape > ShapeKind.capsule) invalid(sid, component, 'shape', `is ${shape}; expected a ShapeKind (0..2)`)
   if (!(hx > 0)) invalid(sid, component, 'hx', `is ${hx}; sizes must be positive`)
   if (shape === ShapeKind.ball) return
   if (!(hy > 0)) invalid(sid, component, 'hy', `is ${hy}; sizes must be positive`)

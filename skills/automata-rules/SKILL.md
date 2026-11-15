@@ -47,7 +47,7 @@ writes no rule for it. `moves` names the tuning file (`"tuning": "hero-moves"`) 
 `air-grip`, `jump-speed`, `jump-cut`, `ledge-grace`, `early-press`, `fall-speed`, `air-jumps`, `air-jump-speed`,
 `wall-slide-speed`, `wall-jump-out`, `wall-jump-up`, `wall-jump-lock`, `dash-speed`, `dash-ticks`, `dash-rest` and
 `air-dashes`. The controls are in the same file. To change how the hero moves, change a number; do not copy movement
-into code. An editor may change these numbers while the game plays; a game changes them in its tuning file.
+into code.
 
 The framework says what the hero did with eight events: `hero.walked`, `hero.jumped`, `hero.landed`,
 `hero.left-ground`, `hero.air-jumped`, `hero.wall-slid`, `hero.wall-jumped` and `hero.dashed`. Name one with

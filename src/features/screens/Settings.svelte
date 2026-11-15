@@ -7,12 +7,11 @@
   import { languageFlag } from '../web/web.ts'
   import type { RowView, SettingsProps } from './settings.ts'
 
-  let { title, back, notices, order, language, sound, touch, controls, erase, asking }: SettingsProps = $props()
+  let { title, back, notices, order, language, sound, touch, controls, asking }: SettingsProps = $props()
 
   /** Where the sliders and switches start; only read once, here. */
-  function start(): { on: boolean; music: number; effects: number; swap: boolean; vibration: boolean } {
+  function start(): { music: number; effects: number; swap: boolean; vibration: boolean } {
     return {
-      on: sound?.toggle.on ?? true,
       music: sound?.music.value ?? 0,
       effects: sound?.effects.value ?? 0,
       swap: touch.swap.on,
@@ -69,14 +68,6 @@
       {:else if part === 'sound' && sound !== undefined}
         <section>
           <h2>{sound.title}</h2>
-          <Toggle
-            label={sound.toggle.label}
-            on={now.on}
-            onchange={(on) => {
-              now.on = on
-              sound.toggle.onchange(on)
-            }}
-          />
           <Slider
             label={sound.music.label}
             value={now.music}
@@ -136,11 +127,6 @@
         </section>
       {/if}
     {/each}
-    {#if erase !== undefined}
-      <section>
-        <Button label={erase.label} onpress={erase.onpress} />
-      </section>
-    {/if}
   </List>
 </ScreenFrame>
 {#if asking !== undefined}

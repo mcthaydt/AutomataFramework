@@ -52,15 +52,8 @@ const PURE_FEATURES: ReadonlySet<string> = new Set(['sim', 'physics', 'commands'
  * `Math.max` and `dmath`'s `sin` and `cos`, and no other `Math` function whose last bit an engine may choose. `content`
  * is not one of the pure features, so these files are also held to their list (no clock, no I/O) by name.
  */
-const PAINTER_FILES =
-  /^src\/features\/content\/(?:paint-[^/]+|pixels|sheet|art|scene-ground|photo-library|lab|photo-tile|scene-from-level)\.ts$|^src\/lib\/(?:png|inflate|png-read)\.ts$/
-const PAINTER_MATH = /\bMath\.(sin|cos|tan|atan2|atan|pow|exp|log|hypot|random|cbrt)\b/g
-/** What else the painter may not use: each gives its last bit, or its order, by the engine's own rule. */
-const PAINTER_OTHER: readonly { readonly pattern: RegExp; readonly what: string }[] = [
-  { pattern: /\*\*/g, what: '`**`' },
-  { pattern: /\bFloat32Array\b/g, what: 'Float32Array' },
-  { pattern: /\.sort\(\s*\)/g, what: '.sort() with no comparator' },
-]
+const PAINTER_FILES = /^src\/features\/content\/(?:paint-[^/]+|pixels|sheet|art)\.ts$|^src\/lib\/png\.ts$/
+const PAINTER_MATH = /\bMath\.(sin|cos|tan|atan2|atan|pow|exp|log|hypot|random)\b/g
 /** Features that need a page (a DOM, a canvas): the headless entry may not reach them. */
 const PAGE_FEATURES: ReadonlySet<string> = new Set([
   'render',
@@ -325,21 +318,12 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
     }
     const painter = PAINTER_FILES.test(file)
     if (painter) {
-      const lineOf = (index: number | undefined): number =>
-        source.text.slice(0, index ?? 0).split('\n').length
       for (const call of source.text.matchAll(PAINTER_MATH))
         add(
           file,
           'painter-math',
-          `Math.${call[1]} is not allowed in the painter (line ${lineOf(call.index)}): its last bit may differ between engines. Use dmath's functions, or whole numbers.`,
+          `Math.${call[1]} is not allowed in the painter: its last bit may differ between engines. Use dmath's sin and cos, or whole numbers.`,
         )
-      for (const { pattern, what } of PAINTER_OTHER)
-        for (const found of source.text.matchAll(pattern))
-          add(
-            file,
-            'painter-math',
-            `${what} is not allowed in the painter (line ${lineOf(found.index)}): its result may differ between engines. Use dmath's pow, a Float64Array and a comparator.`,
-          )
     }
     const pure =
       painter || file.startsWith('src/lib/') || (feature !== undefined && PURE_FEATURES.has(feature))

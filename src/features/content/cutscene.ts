@@ -143,10 +143,8 @@ function checkNames(file: CutsceneFile, game: Listed, report: Report): void {
   const level = game.get('level', file.level)
   if (!game.has('level', file.level)) report('level', noSuch('level', file.level, game.ids('level')))
   if (level !== undefined) {
-    // A level with a scene is as big as the scene.
-    const size = level.scene === undefined ? undefined : game.get('scene', level.scene)?.size
-    const width = size?.w ?? level.tiles?.[0]?.length ?? 0
-    const height = size?.h ?? level.tiles?.length ?? 0
+    const width = level.tiles[0]?.length ?? 0
+    const height = level.tiles.length
     const inside = (path: string, x: number, y: number): void => {
       if (x < 0 || x > width) report(`${path}.x`, `${x} is outside the level, which is ${width} tiles wide.`)
       if (y < 0 || y > height)

@@ -76,12 +76,6 @@ export interface GameFolder {
 /** The path to name a folder by in a sentence: the one typed, or where "." is. */
 const shown = (folder: string): string => (folder === '.' ? resolve('.') : folder)
 
-/** What a folder with no `automata.toml` is told: it is not a game, and how to name one. */
-export const notAGame = (folder: string): CliError =>
-  new CliError(
-    `${shown(folder)} is not a game: it has no automata.toml. Go to your game's folder, or name it: automata check <folder>.`,
-  )
-
 /** A `read` for `loadGame` over the files port: a file that is not there is a rejection, as `loadGame` expects. */
 function readerOver(files: FilesService, folder: string): Effect.Effect<(path: string) => Promise<string>> {
   return Effect.map(Effect.runtime<never>(), (runtime) => async (path: string) => {
@@ -99,7 +93,12 @@ export function readGame(folder: string): Effect.Effect<GameFolder, CliError, Co
   return Effect.gen(function* () {
     const files = yield* Files
     const project = yield* files.readText(join(folder, 'automata.toml'))
-    if (project === undefined) return yield* Effect.fail(notAGame(folder))
+    if (project === undefined)
+      return yield* Effect.fail(
+        new CliError(
+          `${shown(folder)} is not a game: it has no automata.toml. Go to your game's folder, or name it: automata check <folder>.`,
+        ),
+      )
 
     const loadedCode = yield* Effect.either(Effect.flatMap(Code, (c) => c.load(folder)))
     const code = loadedCode._tag === 'Right' ? loadedCode.right : undefined

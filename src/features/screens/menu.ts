@@ -38,7 +38,6 @@ const LABELS: Record<MenuItem, (words: Words) => string> = {
   saves: (words) => words('automata.menu.saves'),
   'add-player': (words) => words('automata.menu.add-player'),
   settings: (words) => words('automata.menu.settings'),
-  how: (words) => words('automata.menu.how'),
   quit: (words) => words('automata.menu.quit'),
 }
 

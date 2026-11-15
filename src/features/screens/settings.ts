@@ -3,7 +3,7 @@
 // know (a key that was refused, a change the browser did not keep).
 import type { Component } from 'svelte'
 import type { Words } from '../../lib/message.ts'
-import { type GameAudio, heardVolumes, type SoundSettings } from '../audio/audio.ts'
+import type { GameAudio, SoundSettings } from '../audio/audio.ts'
 import type { Language } from '../content/content.ts'
 import type { BindingSlot, Input, TouchSettings } from '../input/input.ts'
 import { LANGUAGE_NAMES, LANGUAGE_TAGS, type Locale } from '../locale/locale.ts'
@@ -68,8 +68,6 @@ export type SettingsProps = {
   /** Left out for a game with no sound. */
   readonly sound?: {
     readonly title: string
-    /** The sound switch, above the sliders: off, the player hears nothing and the sliders keep their numbers. */
-    readonly toggle: ToggleView
     readonly music: SliderView
     readonly effects: SliderView
     /** "Tap anywhere to start the sound.", or that this browser cannot play any. */
@@ -85,9 +83,7 @@ export type SettingsProps = {
     readonly keyboard: readonly RowView[]
     readonly reset: { readonly label: string; readonly onpress: () => void }
   }
-  /** "Delete all my saves", the last row; left out while a level is being played. */
-  readonly erase?: { readonly label: string; readonly onpress: () => void }
-  /** The question before the controls are put back or the saves are erased, while it is asked. */
+  /** The question before the controls are put back, while it is asked. */
   readonly asking?: {
     readonly title: string
     readonly yes: string
@@ -139,11 +135,6 @@ export function settingsScreen(
     readonly problem?: SaveProblem
     /** Two people share one keyboard. */
     readonly sharing: boolean
-    /**
-     * Erases every saved game and the best score. Given only where the row may show (the main menu): left out, there is no
-     * "Delete all my saves". The answer says whether all of it could be erased.
-     */
-    readonly onDeleteSaves?: () => Promise<{ readonly ok: boolean }>
     readonly onBack: () => void
   },
 ): Screen {
@@ -153,10 +144,10 @@ export function settingsScreen(
     | { readonly action: string; readonly slot: BindingSlot; readonly cancel: () => void }
     | undefined
   let refused: { readonly action: string; readonly slot: BindingSlot; readonly message: string } | undefined
-  let asking: 'reset' | 'erase' | undefined
+  let asking = false
   let notKept = false
-  const ask = (question: 'reset' | 'erase' | undefined): void => {
-    asking = question
+  const ask = (on: boolean): void => {
+    asking = on
     screen.update()
   }
 
@@ -224,16 +215,14 @@ export function settingsScreen(
           },
         }
       }
-      // The sliders show the player's own numbers, even while the sound is off and the speaker hears none.
-      const volumes = sound?.get() ?? audio?.volumes()
-      const give = (next: SoundSettings): void => audio?.setVolumes({ format: 1, ...heardVolumes(next) })
+      const volumes = audio?.volumes() ?? sound?.get()
       const slider = (bus: 'music' | 'sound', label: string): SliderView => ({
         label,
         value: volumes?.[bus] ?? 1,
         onchange: (value) => {
           if (audio === undefined || sound === undefined) return
           const next: SoundSettings = { ...sound.get(), [bus]: value }
-          give(next)
+          audio.setVolumes(next)
           void kept(sound.set(next))
         },
         onrelease: () => audio?.sample(bus),
@@ -280,15 +269,6 @@ export function settingsScreen(
           : {
               sound: {
                 title: words('automata.settings.sound'),
-                toggle: {
-                  label: words('automata.settings.sound'),
-                  on: sound.get().muted !== true,
-                  onchange: (on: boolean) => {
-                    const next: SoundSettings = { ...sound.get(), muted: !on }
-                    give(next)
-                    void kept(sound.set(next))
-                  },
-                },
                 music: slider('music', words('automata.settings.music')),
                 effects: slider('sound', words('automata.settings.effects')),
                 ...(note === undefined ? {} : { note }),
@@ -323,12 +303,9 @@ export function settingsScreen(
           keyboardTitle: words('automata.settings.keyboard'),
           gamepad: input.pads().some((pad) => pad.usable) ? rows.gamepad.map(view) : [],
           keyboard: rows.keyboard.map(view),
-          reset: { label: words('automata.settings.reset'), onpress: () => ask('reset') },
+          reset: { label: words('automata.settings.reset'), onpress: () => ask(true) },
         },
-        ...(options.onDeleteSaves === undefined
-          ? {}
-          : { erase: { label: words('automata.settings.delete'), onpress: () => ask('erase') } }),
-        ...(asking === 'reset'
+        ...(asking
           ? {
               asking: {
                 title: words('automata.settings.reset-ask'),
@@ -336,23 +313,10 @@ export function settingsScreen(
                 no: words('automata.keep'),
                 onyes: () => {
                   input.resetBindings()
-                  ask(undefined)
+                  asking = false
+                  screen.update()
                 },
-                onno: () => ask(undefined),
-              },
-            }
-          : {}),
-        ...(asking === 'erase'
-          ? {
-              asking: {
-                title: words('automata.settings.delete-ask'),
-                yes: words('automata.settings.delete-yes'),
-                no: words('automata.settings.delete-no'),
-                onyes: () => {
-                  ask(undefined)
-                  if (options.onDeleteSaves !== undefined) void kept(options.onDeleteSaves())
-                },
-                onno: () => ask(undefined),
+                onno: () => ask(false),
               },
             }
           : {}),

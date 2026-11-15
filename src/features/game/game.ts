@@ -5,7 +5,6 @@
 import { type Frames, pageFrames } from '../../lib/frames.ts'
 import type { GameAudio } from '../audio/audio.ts'
 import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
-import { moveNumbersOf, scoreRef } from '../content/content.ts'
 import type { Host } from '../host/host.ts'
 import {
   type Claim,
@@ -15,10 +14,10 @@ import {
   type PadLike,
   touchSettingsOf,
 } from '../input/input.ts'
-import { createGameSim, type GameSimOptions, skyOf, tuneCommand, worldSize } from '../level/level.ts'
+import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
-import type { Command, Sim, SimEvent } from '../sim/sim.ts'
+import type { Sim, SimEvent } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
 import { createBuzzer } from './buzz.ts'
@@ -26,7 +25,6 @@ import { resolveControls } from './controls.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
-import { watchFirstPress } from './press.ts'
 import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
 export { resolveControls } from './controls.ts'
@@ -80,12 +78,6 @@ export interface GameOptions extends GameSimOptions {
    * for a tap in it, and all of them change when the player picks another.
    */
   readonly locale: Locale
-  /**
-   * The sim does not step until the first press that begins after the game is shown: a `keydown` that is not a repeat, a
-   * gamepad button that was up and goes down, or a `pointerdown`. What was already held when the level appeared never
-   * counts. Nothing is silenced once it starts. Default: the game starts at once.
-   */
-  readonly waitForPress?: boolean
 }
 
 /** One step of the game, as `onStep` tells it: the tick the sim is at after it, and the events it raised in order. */
@@ -107,13 +99,6 @@ export interface Game {
   /** Holds the game still until `resume`. The game is also still while the host says it is not on screen. */
   pause(): void
   resume(): void
-  /**
-   * The project's score now (`score = "hero.score.sparks"` in automata.toml), or `undefined` when the game names none,
-   * the resource or the field is not there, or what is there is not a number. After `stop` it is `undefined`.
-   */
-  score(): number | undefined
-  /** True from the start until the first press, in a game made with `waitForPress`; always false in any other. */
-  waiting(): boolean
   /** True between `pause()` and `resume()`: a game still because its page is off screen is not paused by hand. */
   paused(): boolean
   /**
@@ -136,13 +121,6 @@ export interface Game {
   heroes(): readonly HeroBox[]
   /** The player's setting: whether the device may buzz when a feel file says so. */
   setVibration(on: boolean): void
-  /**
-   * For an editor: the hero's built-in numbers by id (`{ 'jump-speed': 13 }`), from the next tick, with nothing else
-   * reset. A number left out is the framework's value, so pass them all. Only in a game started with `tunable: true`;
-   * a game itself never needs it, because its numbers are its tuning file. While the game is paused, the tune waits and
-   * lands on the first tick after `resume`; after `stop` it does nothing.
-   */
-  tune(values: Readonly<Record<string, number>>): void
   /**
    * The play so far, from tick 0. After `stop`, the play as it was when it stopped. Throws what the game's code threw
    * for a game that broke: its sim is not asked for a hash again.
@@ -180,8 +158,8 @@ export async function startGame(options: GameOptions): Promise<Game> {
     }
     const renderer = await createRenderer({
       mount,
-      world: worldSize(options.content, level),
-      sky: skyOf(options.content, level),
+      world: levelSize(level),
+      sky: skyOf(level),
       art,
       view: level.view,
     })
@@ -216,16 +194,9 @@ export async function startGame(options: GameOptions): Promise<Game> {
     input.setPlayers(options.players ?? [1])
     const levelId = options.level ?? options.content.project.start
     // The level and the players are written into the recording, so `automata replay` can set the same game up.
-    // A tunable game says so, so `automata replay` and `watchReplay` make the same sim, which can read a `tune`.
     const recorder = createRecorder(sim, {
-      meta: {
-        level: levelId,
-        players: (options.players ?? [1]).join(','),
-        ...(options.tunable === true ? { tunable: 'true' } : {}),
-      },
+      meta: { level: levelId, players: (options.players ?? [1]).join(',') },
     })
-    // The latest tune not yet sent: two before one step are one command, with the later values.
-    let waiting: ReturnType<typeof moveNumbersOf> | undefined
     const people = createPlayers({
       sim,
       content: options.content,
@@ -247,22 +218,11 @@ export async function startGame(options: GameOptions): Promise<Game> {
       tickHz: sim.tickHz,
       on: touchSettingsOf(options.touchSettings).vibration,
     })
-    // A level that waits does not step until the first press; the time spent waiting is never owed.
-    const first =
-      options.waitForPress === true
-        ? watchFirstPress({
-            mount,
-            ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
-          })
-        : undefined
     const loop = createLoop({
       tickHz: sim.tickHz,
       step() {
-        if (first !== undefined && !first.pressed()) return
         const tick = sim.tick
-        const tune: Command[] = waiting === undefined ? [] : [tuneCommand(tick, sequence.next(0), waiting)]
-        waiting = undefined
-        const result = recorder.step([...tune, ...people.commands(tick), ...input.poll(tick)])
+        const result = recorder.step([...people.commands(tick), ...input.poll(tick)])
         renderer.apply(result.render)
         // Only the tick and the events: the audio is never handed the sim, the render delta or the commands.
         audio?.hear({ tick: result.tick, events: result.events })
@@ -270,10 +230,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         people.afterStep()
         for (const listener of [...stepListeners]) listener({ tick: result.tick, events: result.events })
       },
-      draw(alpha) {
-        first?.frame()
-        renderer.draw(alpha)
-      },
+      draw: (alpha) => renderer.draw(alpha),
       frames,
       onError(error) {
         broke = { error }
@@ -327,15 +284,6 @@ export async function startGame(options: GameOptions): Promise<Game> {
         unsilence = undefined
         sync()
       },
-      score() {
-        const named = scoreRef(options.content.project)
-        if (named === undefined || stopped) return undefined
-        const resource = sim.read(named.resource)
-        if (typeof resource !== 'object' || resource === null) return undefined
-        const value = (resource as Record<string, unknown>)[named.field]
-        return typeof value === 'number' && Number.isFinite(value) ? value : undefined
-      },
-      waiting: () => first !== undefined && !first.pressed(),
       paused: () => pausedByHand,
       onStep(listener) {
         stepListeners.add(listener)
@@ -348,13 +296,6 @@ export async function startGame(options: GameOptions): Promise<Game> {
       },
       heroes: () => renderer.heroes(),
       setVibration: (on) => buzzer.setOn(on),
-      tune(values) {
-        if (options.tunable !== true)
-          throw new Error(
-            'This game was not started with "tunable": true, so its numbers cannot change while it plays.',
-          )
-        if (!stopped) waiting = moveNumbersOf(values)
-      },
       replay: () => kept ?? recorder.replay(),
       stop() {
         if (stopped) return
@@ -362,7 +303,6 @@ export async function startGame(options: GameOptions): Promise<Game> {
         // A game that broke cannot be hashed again, so it keeps no play: `replay()` then says what broke.
         if (broke === undefined) kept = recorder.replay()
         loop.stop()
-        first?.stop()
         unlisten()
         removeNotice?.()
         cleanup()

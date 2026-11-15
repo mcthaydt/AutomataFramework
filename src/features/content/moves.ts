@@ -166,20 +166,6 @@ function held(n: MoveNumberInfo, value: number): number {
   return n.whole ? Math.floor(inside) : inside
 }
 
-/**
- * The eighteen from plain values by id (a tuning file's `numbers` as `tuningNumbers` gives them, or a slider's), held
- * as `moveNumbers` holds a file's: inside the framework's limits, whole where counted. An id left out, or a value
- * that is not a finite number, is the framework's value. Ids it does not know are ignored. Frozen.
- */
-export function moveNumbersOf(values: Readonly<Record<string, number>>): MoveNumbers {
-  const out: Record<string, number> = {}
-  for (const n of MOVE_NUMBERS) {
-    const own = values[n.id]
-    out[n.key] = typeof own === 'number' && Number.isFinite(own) ? held(n, own) : n.value
-  }
-  return Object.freeze(out) as unknown as MoveNumbers
-}
-
 const memo = new WeakMap<TuningFile, MoveNumbers>()
 
 /**

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, test } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { frameworkWords } from '#src/features/locale/locale.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
-import { crossThePit, focusedName, keyHands, ticks, walkByKey } from '../../fixtures/flow/page.ts'
+import { focusedName, ticks, walkByKey } from '../../fixtures/flow/page.ts'
 
 const es = frameworkWords('es')
 const drive = createDrive()
@@ -114,48 +114,4 @@ test('every screen is walked with arrows, Enter and Escape; a key is changed in 
   await enter(es('automata.pause.leave-yes'))
   await drive.shown('menu')
   await drive.wait(es('automata.menu.continue'))
-})
-
-test("keys alone: the same visit, and the browser's Back pauses", async () => {
-  await drive.toMenu({ game: { noWarning: true, start: 'level-pit' }, back: true })
-  await enter(es('automata.menu.play'))
-  await drive.shown('playing')
-  drive.frames.at(0)
-  await expect
-    .poll(() => drive.mount.querySelector('.card')?.textContent)
-    .toContain('Salta el hueco y llega a la puerta.')
-  // The level waits for a key; the first press starts it, and the hero runs into the gap.
-  ticks(drive, 30)
-  walkByKey(drive)
-  await drive.shown('lost')
-  await enter(es('automata.lost.again'))
-  await drive.shown('playing')
-  drive.frames.at(0)
-  crossThePit(drive, keyHands(drive))
-  await drive.shown('done')
-  await enter(es('automata.done.next'))
-  await drive.shown('playing')
-  expect(drive.flow()?.state().level).toBe('level-2')
-  drive.frames.at(0)
-  ticks(drive, 30)
-  // The browser's Back pauses the level; Escape keeps playing; Back again pauses; the question before the menu is no.
-  window.dispatchEvent(new PopStateEvent('popstate'))
-  await drive.shown('paused')
-  await userEvent.keyboard('{Escape}')
-  await drive.shown('playing')
-  drive.key('keydown', 'Escape')
-  drive.key('keyup', 'Escape')
-  await drive.shown('paused')
-  await enter(es('automata.menu.how'))
-  await expect.poll(() => drive.mount.querySelector('[data-screen="how"]')).not.toBeNull()
-  await userEvent.keyboard('{Escape}')
-  await drive.wait(es('automata.pause.resume'))
-  await enter(es('automata.pause.again'))
-  await drive.answer(es('automata.pause.again'))
-  await drive.shown('playing')
-  drive.frames.at(0)
-  walkByKey(drive)
-  await drive.shown('done')
-  await enter(es('automata.done.menu'))
-  await drive.shown('menu')
 })

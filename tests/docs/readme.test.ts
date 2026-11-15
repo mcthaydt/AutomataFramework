@@ -104,16 +104,6 @@ test('the README has a host section that names every member of the port and both
     expect(host, word).toContain(word)
 })
 
-// An editor tunes a playing hero; a game never needs to, and the README says so where it names the one option.
-test('the README names `tunable` once, in the paragraph that says what the editors use it for', () => {
-  expect(readme.split('`tunable').length - 1).toBe(1)
-  const at = readme.indexOf('`tunable')
-  const paragraph = readme.slice(readme.lastIndexOf('\n\n', at), readme.indexOf('\n\n', at))
-  for (const word of ['An editor', 'game.tune', 'tuning file', 'jumpPaths', 'gravity'])
-    expect(paragraph, word).toContain(word)
-  for (const name of ['jumpPaths', 'moveNumbers']) expect(framework, name).toHaveProperty(name)
-})
-
 // A game finds out how to speak in the player's language from here, and copies an example that uses only what headless exports.
 test('the README has a Languages section: the files, the values, the pick, the two checks and the native read', () => {
   const languages = section('## Languages')
@@ -268,49 +258,6 @@ test('the README names every command and every flag its help has, and no other',
   }
   expect([...flagsInReadme].sort()).toEqual([...flagsInHelp].sort())
   expect(readme).toContain('--help')
-})
-
-test("the README has a Scenes section whose scene file is a whole one, and whose names are the package's", () => {
-  const start = readme.indexOf('## Scenes')
-  expect(start).toBeGreaterThan(-1)
-  const scenes = readme.slice(start, readme.indexOf('\n## ', start + 1))
-  const file = /```json scene\n([\s\S]*?)```/.exec(scenes)?.[1] ?? ''
-  const parsed = framework.parseContent('scene', file, 'content/scenes/meadow.json')
-  expect(parsed.ok ? [] : parsed.diagnostics.map(framework.formatDiagnostic)).toEqual([])
-  for (const shape of framework.GROUND_SHAPES) expect(scenes, shape).toContain(`\`${shape}\``)
-  for (const word of [
-    'scene file',
-    'automata scene from-level',
-    'photos/',
-    'scenes.md',
-    'groundPages',
-    'placedTiles',
-  ])
-    expect(scenes, word).toContain(word)
-  for (const name of [
-    'SceneSchema',
-    'PhotoSchema',
-    'paintScene',
-    'sceneFromLevel',
-    'materialTile',
-    'PHOTO_LIBRARY',
-  ])
-    expect(framework, name).toHaveProperty(name)
-})
-
-// A moved level's content is not the same bytes, so a replay says "the content changed"; the README must not promise
-// that its recordings still end where they did.
-test('the README says a moved level plays as it did but its recordings must be made again', () => {
-  expect(readme).not.toContain('hashes as it did')
-  expect(readme).not.toContain('recordings still end where they did')
-  expect(readme).not.toContain('play of it still ends where it did')
-  expect(readme).toContain('automata replay --accept')
-})
-
-test('the README names automata scene from-level and its two flags', () => {
-  const ref = section('## The automata command')
-  expect(ref).toContain('automata scene from-level <level> [folder]')
-  for (const flag of ['--as', '--json']) expect(ref, flag).toContain(`- \`${flag}`)
 })
 
 test('the README gives the exit codes, and every verdict of a replay', () => {

@@ -39,11 +39,6 @@ export interface FlowOptions<S extends Progress = Progress> {
   readonly gamepads?: () => readonly (PadLike | null)[]
   /** Default: `location.reload()`. */
   readonly reload?: () => void
-  /**
-   * The browser's Back button pauses a level and steps back through the screens before it leaves the page. Default: on
-   * where the page is not framed, since a frame's history is the page's; `true` turns it on in a frame too.
-   */
-  readonly back?: boolean
 }
 
 export interface Flow<S extends Progress = Progress> {

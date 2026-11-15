@@ -55,21 +55,3 @@ test.each(filesIn('screens', '.ts').filter((file) => !file.endsWith('-rows.ts'))
     expect(SENTENCE.exec(readFileSync(file, 'utf8'))?.[0]).toBeUndefined()
   },
 )
-
-/** How many buttons a screen's own files make the main one. */
-const mains = (...files: string[]): number =>
-  files.reduce(
-    (sum, file) =>
-      sum + (readFileSync(file, 'utf8').match(/kind(?:=|: )["']primary["'](?!\s*\|)/g) ?? []).length,
-    0,
-  )
-
-test('the lost screen and the how-to-play screen each name exactly one main button', () => {
-  expect(mains(join(SRC, 'screens/lost.ts'), join(SRC, 'screens/Lost.svelte'))).toBe(1)
-  expect(mains(join(SRC, 'screens/how.ts'), join(SRC, 'screens/How.svelte'))).toBe(1)
-})
-
-test('no word plan Q owes is still owed: every one has code that asks for it', () => {
-  const library = readFileSync(join(import.meta.dirname, '../locale/library.test.ts'), 'utf8')
-  expect(/const OWED: string\[\] = \[\]/.test(library), 'the owed list is empty').toBe(true)
-})

@@ -60,12 +60,6 @@ test('the package has one bin, automata, built from src/cli.ts', () => {
   expect(build).toContain("cli: 'src/cli.ts'")
 })
 
-test('the package ships the photos a scene is made from, and exports them by name', () => {
-  expect(manifest.files).toContain('photos')
-  expect(manifest.exports['./photos/*']).toBe('./photos/*')
-  expect(readdirSync(new URL('../photos/', import.meta.url))).toContain('brick.png')
-})
-
 test('the package ships the template and the skills', () => {
   expect(manifest.files).toEqual(expect.arrayContaining(['template', 'skills', 'docs/api/framework.api.md']))
 })

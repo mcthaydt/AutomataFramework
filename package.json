@@ -21,7 +21,6 @@
     "schemas",
     "template",
     "skills",
-    "photos",
     "docs/api/framework.api.md"
   ],
   "exports": {
@@ -38,8 +37,7 @@
       "import": "./dist/server.js"
     },
     "./rapier.LICENSE": "./dist/rapier.LICENSE",
-    "./schemas/*": "./schemas/*",
-    "./photos/*": "./photos/*"
+    "./schemas/*": "./schemas/*"
   },
   "packageManager": "pnpm@10.34.6",
   "engines": {
