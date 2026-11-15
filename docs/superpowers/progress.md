@@ -2,6 +2,24 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 7: live move numbers and the jump's path (for the editors' Feel)
+
+Spec: the Feel editor's, in AutomataFrameworkEditors
+([`2026-11-15-feel-editor-design.md`](https://github.com/mcthaydt/AutomataFrameworkEditors/blob/main/docs/superpowers/specs/2026-11-15-feel-editor-design.md),
+"What Feel needs from the framework", F1 to F3). F4 is plan F's.
+
+Overall: **8%** (stage 1 is the Feel spec; stage 2, this plan, is written; stages 3 to 7 follow)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | The Feel spec (Editors pull request 30); the Owner answered its Q1 to Q4 (2026-11-15) | the link above |
+| 2. Plan (plan G) | Written, in review. Four tasks in one pull request (22% each, 12% for the last green run): the numbers from plain values and the names Feel reads; `jumpPaths`, what a jump reaches, as one pure function over `stepMoves`, held to the real sim by a parity test; a tune as a command and a resource, joined to a sim only when it is made with `tunable`; `game.tune`, the docs and the API report. No golden moves, none is added, no dependency. Builder's call for the audit: a tune is a command, so a tuned play still replays (plan H's handoff said a number cannot change in a running game). No Owner question is open | `plans/2026-11-15-live-tuning.md` |
+| 3. Plan audit | Not started | |
+| 4. Execution | Not started; waits for plan H (pull request 101) to be merged | |
+| 5 to 7 | Not started | |
+
+Nothing was run: this stage wrote documents.
+
 ## Cycle 6: the built-in hero (walk, jump and more, from content)
 
 Spec: [`specs/2026-11-14-content-hero-controls-design.md`](specs/2026-11-14-content-hero-controls-design.md)
