@@ -1,6 +1,7 @@
 // The scene game with a hero the framework moves, put where a test says: the meadow's slope, ledge and floor, walked by
-// the built-in hero. Built in memory from the scene game's files and the moves game's hero and tuning.
+// the built-in hero. The hero has the example figure, so it is drawn and a test can find it on the canvas. Built in memory from the scene game's files and the moves game's hero and tuning.
 import { type GameContent, loadGame, writeContent } from '#src/features/content/content.ts'
+import { heroFigure } from '../content/art.ts'
 import { movesFiles } from '../game/moves-game.ts'
 import { readSceneGame, sceneGameFiles } from './read.ts'
 
@@ -12,12 +13,13 @@ export interface Start {
 
 /** Loads the scene game with its hero given `moves`, alone on the meadow at `start`. Throws if it does not load. */
 export async function loadSceneMovesGame(start: Start): Promise<GameContent> {
-  const moves = movesFiles()
+  const moves = movesFiles({ figure: true })
   const level = JSON.parse(sceneGameFiles['content/levels/level-1.json'] ?? '') as Record<string, unknown>
   const files: Record<string, string | undefined> = {
-    'automata.toml': `${sceneGameFiles['automata.toml'] ?? ''}\n[[content]]\ntype = "tuning"\npath = "content/tunings/hero-moves.json"\n`,
+    'automata.toml': `${sceneGameFiles['automata.toml'] ?? ''}\n[[content]]\ntype = "tuning"\npath = "content/tunings/hero-moves.json"\n\n[[content]]\ntype = "figure"\npath = "content/figures/hero.json"\n`,
     'content/characters/hero.json': moves['content/characters/hero.json'],
     'content/tunings/hero-moves.json': moves['content/tunings/hero-moves.json'],
+    'content/figures/hero.json': writeContent('figure', heroFigure() as never),
     'content/levels/level-1.json': writeContent('level', {
       ...level,
       things: [],
