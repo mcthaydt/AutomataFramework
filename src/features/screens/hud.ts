@@ -7,14 +7,6 @@ import HudPart from './Hud.svelte'
 import type { Screen, ScreenBase } from './screens.ts'
 import { show } from './show.ts'
 
-/** One number over a hero. */
-export type Badge = {
-  readonly player: number
-  readonly x: number
-  readonly y: number
-  readonly w: number
-}
-
 /** What the HUD draws. */
 export type HudProps = {
   readonly pause: string
