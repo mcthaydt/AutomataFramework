@@ -15,8 +15,9 @@ slice runs the same five steps in order:
    something new to try there. The demo grows with every slice; there is no separate demo slice at the end.
 
 Then the next editor starts. The editors go in this order: **World** (levels), **Characters**, **Feel** (with Tuner inside it),
-**Sound**, **Story**: levels first, then who is in them, then how they move, then sound, then the story that ties them
-together (the owner, 2026-11-15). The shell is built with the first editor and every later editor reuses it, so
+**Sound**, **Story**, **Screens**: levels first, then who is in them, then how they move, then sound, then the story that
+ties them together (the owner, 2026-11-15), then the screens and the game's flow, added as the sixth editor
+(the owner, 2026-11-15). The shell is built with the first editor and every later editor reuses it, so
 each later mockup also follows the design language (see the rule below).
 
 1. **One thing at a time.** There is one **Now**. Nothing else is built until it is done.
@@ -34,6 +35,25 @@ each later mockup also follows the design language (see the rule below).
 
 How to read each list: **Done** is merged and green. **Now** is the one thing being built. **Next** is in line, in
 order. **Waiting** is approved, but its turn has not come. **Later** is after the current slice: not worked on now.
+
+## The four phases
+
+The whole road, in four phases (the owner, 2026-11-15). The slices below are phase 1.
+
+1. **The 2D editors, with a 2D test game.** The game in AutomataFrameworkExamples, and the one on the website, is a
+   test game. It is not the real demo. Its job is to prove each editor and to find out what the editors must do to
+   support a real game. The website keeps playing it until the real 2D demo game exists.
+2. **A real 2D demo game,** made with the finished 2D editors. It starts only when phase 1 is done, and lives in
+   AutomataFrameworkExamples under `demos/`.
+3. **The 3D layer, with a 3D test game,** which proves the 3D editors the same way.
+4. **A real 3D demo game,** made with the finished 3D editors.
+
+The real demo games are named and planned elsewhere; nothing about them is worked on until their phase comes.
+
+**Spikes, kept apart from the test game** (the owner, 2026-11-15). Each slice may try one small piece a real demo game
+will need (a room put together from a seed, a chaser, a fact the story remembers) as a **spike**: its own small example,
+never wired into the test game. The test game stays pure: it shows only how the framework's code and the editors
+relate.
 
 ## Slice 0: Start
 
@@ -63,12 +83,13 @@ whole gate.
 
 1. Done: the first rounds of mockups, the check against professional tools, the harsh reviews of the shell and World,
    what World takes from LDtk, the Apple Pencil review, the plain-words audit, the design pass, the end-to-end check
-   and the second visual look (Editors #49, #51, #52, #57).
-2. **Now: the editor mockup, the shell and World's levels, until the owner says they are fine** (Editors #57, with the
-   owner reviewing).
+   and the second visual look (Editors #49, #51, #52, #57, closed and carried on in #64).
+2. **Now: the editor mockup, the shell and World's levels, until the owner says they are fine** (Editors #64, which
+   replaced #57, with the owner reviewing).
 3. Next: build in Automata what the levels editor needs. Level pictures on save, so an agent can see a level; a public
    list of format changes; what a placed thing may hold (values and links); the world map of levels, which needs the
-   owner's 8 answers first (the closed #149, last commit `c449fca`, has them).
+   owner's 8 answers first (the closed #149, last commit `c449fca`, has them), and now lets levels join edge to edge
+   (the owner, 2026-11-15; `specs/2026-11-15-rooms-and-storylets-amendment.md`).
 4. Next: build the editor: the shell (top bar, tools, panels, Help, Settings, tour, sign-in, Share) and World's
    Levels part, open a level, change it on an iPad, save it into the game.
 5. Next: test the editor, in real browsers at iPad, phone and computer sizes, with the journeys from the end-to-end
@@ -127,18 +148,33 @@ whole gate.
 1. Done: the story plan and audit (#58, #60); the Story editor's spec, plan audit and fixes (Editors #32, #41, #46,
    #48).
 2. Later: build in Automata: the story build. Pull request #64 was closed on 2026-11-15 (last commit `fc909a2`); it is
-   rebuilt from its plan.
+   rebuilt from its plan, changed first by the amendment (all story is facts and conditions, as storylets; the owner,
+   2026-11-15): `specs/2026-11-15-rooms-and-storylets-amendment.md`.
 3. Later: the Story mockups, through the visual review process.
 4. Later: build the Story editor.
 5. Later: test the Story editor.
 6. Later: the website demo's keeper talks and a cutscene plays, and the demo's screens, its saves and "What's inside"
    come together: the thumbs remember what a player has learned (#142, closed on 2026-11-15, last commit `6b0a79d`).
 
+## Slice 8: Screens
+
+The sixth editor (the owner, 2026-11-15): the UI and the game's flow. The UI is every screen a player sees, such as
+the menus, pause, settings and what is shown while playing; the flow is how one leads to the next (the menu, then
+play, then pause, and back). Today both are the framework's own, in code (the `screens` feature draws the screens and
+the `flow` feature walks the steps), and Story edits only their words.
+
+1. Later: build in Automata: a screens format and a flow format, so a screen and the way screens lead to each other
+   are content files an agent can write too.
+2. Later: the Screens mockups, through the visual review process.
+3. Later: build the Screens editor.
+4. Later: test the Screens editor.
+5. Later: the website demo's screens come from the editor.
+
 ## Before launch
 
 Later. Each is built after the slices above, in this order.
 
-1. Release 1: 2D finished, the framework and the demo game. The owner starts it by hand.
+1. Release 1: 2D finished, the framework and the 2D test game (the owner, 2026-11-15). The owner starts it by hand.
 2. Release 2: the 2D editors, in the browser and as an app for iPad, Android and computers.
 3. The sales site, live, with the finished demo on it. Its spec is done (Site #23).
 4. Shipping a game to itch.io, Wavedash (if its rules fit) and computers, and the editor app.
@@ -151,8 +187,10 @@ The date is not set. Launch is when the owner starts the releases above.
 
 Later.
 
-1. 3D, as its own layer on top of 2D, then the same order again for 3D: each editor's 3D version runs the same five
-   steps.
+1. Phase 2: a real 2D demo game, made with the finished 2D editors, after Release 2 (the owner, 2026-11-15).
+2. Phase 3: 3D, as its own layer on top of 2D, with a 3D test game, then the same order again for 3D: each editor's 3D
+   version runs the same five steps.
+3. Phase 4: a real 3D demo game, made with the finished 3D editors.
 
 ## Not yet placed: needs the owner
 
