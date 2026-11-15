@@ -309,6 +309,8 @@ test('one frame of ten seconds ends everything: idle, no NaN, no fade below 0', 
     events: [event('hero.landed', 7), event('crate.dropped', 7), event('spark.taken', 9)],
   })
   feel.frame(F, place)
+  // The loop spends the hold first, then draws.
+  feel.hold(10)
   const frame = feel.frame(10, place)
   expect(frame).toEqual({ specks: [], shake: { x: 0, y: 0 }, freeze: 0 })
   expect(feel.idle).toBe(true)
@@ -386,11 +388,14 @@ test('idle is true before anything, false with a speck, a shake or a hold, and t
   expect(feel.idle).toBe(true)
   feel.hear({ tick: 2, events: [event('crate.dropped', 7)] })
   expect(feel.idle).toBe(false)
+  // A thing that starts at a frame is drawn at age 0 in it, so it takes a second frame to be over.
+  feel.frame(1, place)
   feel.frame(1, place)
   expect(feel.idle).toBe(true)
   feel.hear({ tick: 3, events: [event('spark.taken', 9)] })
   expect(feel.idle).toBe(false)
   feel.hold(1)
+  feel.frame(1, place)
   feel.frame(1, place)
   expect(feel.idle).toBe(true)
 })
