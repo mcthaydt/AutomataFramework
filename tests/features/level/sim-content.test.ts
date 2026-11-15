@@ -295,8 +295,8 @@ test("a scene's paint, material, seed, sky and tile move no hash, and a row or a
   ).not.toBe(base)
   expect(
     await same((scene) => {
-      const [letter] = scene.ground.letters
-      if (letter !== undefined) letter.shape = letter.shape === 'solid' ? 'back' : 'solid'
+      const ledge = scene.ground.letters.find((l) => l.shape === 'ledge')
+      if (ledge !== undefined) ledge.shape = 'back'
     }),
   ).not.toBe(base)
 })

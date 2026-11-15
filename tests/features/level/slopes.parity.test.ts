@@ -3,7 +3,7 @@
 import { afterEach, expect, test } from 'vitest'
 import { controlsCommand, Player } from '#src/features/commands/commands.ts'
 import { createGameSim } from '#src/features/level/level.ts'
-import { Ground, Touching, Transform } from '#src/features/physics/physics.ts'
+import { Body, Ground, Touching, Transform } from '#src/features/physics/physics.ts'
 import type { Command, Sim } from '#src/features/sim/sim.ts'
 import { expectGolden, runGolden } from '../../fixtures/golden.ts'
 import { loadSceneMovesGame, type Start } from '../../fixtures/scene-game/moves.ts'
@@ -19,18 +19,31 @@ const SLOPE_TOP = { x: 5, y: 6 }
 /** The ledge's top, over the flat ground. */
 const LEDGE_TOP = 4
 
-async function hero(start: Start): Promise<{ sim: Sim; at: () => { x: number; y: number; below: boolean } }> {
+interface Pose {
+  x: number
+  y: number
+  below: boolean
+  /** The hero's speed and the ground's normal it was last told, for a failure's message. */
+  said: string
+}
+
+async function hero(start: Start): Promise<{ sim: Sim; at: () => Pose; trace: string[] }> {
   const sim = await createGameSim({ content: await loadSceneMovesGame(start) })
   made.push(sim)
   const player = sim.query(Player).find((e) => e.get(Player).number === 1)
   if (player === undefined) throw new Error('the scene moves game has no hero')
-  return {
-    sim,
-    at: () => {
-      const { x, y } = player.get(Transform)
-      return { x, y, below: player.get(Touching).below }
-    },
+  const trace: string[] = []
+  const at = (): Pose => {
+    const { x, y } = player.get(Transform)
+    const { vx, vy } = player.get(Body)
+    const { nx, ny } = player.get(Ground)
+    const below = player.get(Touching).below
+    const f = (n: number): string => n.toFixed(2)
+    const said = `${f(x)},${f(y)} v ${f(vx)},${f(vy)} n ${f(nx)},${f(ny)} ${below ? 'ground' : 'air'}`
+    if (sim.tick % 6 === 0) trace.push(`t${sim.tick} ${said}`)
+    return { x, y, below, said }
   }
+  return { sim, at, trace }
 }
 const hold = (tick: number, held: string[]): Command => controlsCommand(tick, 1, tick, held)
 
@@ -44,18 +57,27 @@ test('the hero is told the slope it stands on, and flat ground is flat', async (
 })
 
 test('left alone on the slope for 600 ticks, the hero moves less than 0.02 tiles', async () => {
-  const { sim, at } = await hero({ x: 3.2, y: 6.5 })
-  for (let i = 0; i < 120; i++) sim.step([]) // it settles
+  const { sim, at, trace } = await hero({ x: 3.2, y: 6.5 })
+  for (let i = 0; i < 120; i++) {
+    sim.step([]) // it settles
+    at()
+  }
   const settled = at()
   expect(settled.below).toBe(true)
-  for (let i = 0; i < 600; i++) sim.step([])
+  for (let i = 0; i < 600; i++) {
+    sim.step([])
+    at()
+  }
   const now = at()
-  expect(Math.hypot(now.x - settled.x, now.y - settled.y)).toBeLessThan(0.02)
+  expect(Math.hypot(now.x - settled.x, now.y - settled.y), trace.join('\n')).toBeLessThan(0.02)
 })
 
 test('holding right from the floor, the hero reaches the slope’s top in under 90 ticks, on the ground all the way up', async () => {
-  const { sim, at } = await hero({ x: 1, y: 8.5 })
-  for (let i = 0; i < 20; i++) sim.step([])
+  const { sim, at, trace } = await hero({ x: 1, y: 8.5 })
+  for (let i = 0; i < 20; i++) {
+    sim.step([])
+    at()
+  }
   let arrived = -1
   let climbing = false
   let lost = 0
@@ -66,15 +88,18 @@ test('holding right from the floor, the hero reaches the slope’s top in under 
     if (climbing && x < SLOPE_TOP.x && !below) lost++
     if (arrived < 0 && x >= SLOPE_TOP.x) arrived = t
   }
-  expect(arrived).toBeGreaterThanOrEqual(0)
+  expect(arrived, trace.join('\n')).toBeGreaterThanOrEqual(0)
   expect(arrived).toBeLessThan(90)
-  expect(lost).toBe(0)
+  expect(lost, trace.join('\n')).toBe(0)
   expect(Math.abs(at().y - (SLOPE_TOP.y - 0.5))).toBeLessThan(0.1)
 })
 
 test('holding left from the top, the hero walks down the slope, on the ground all but a tick or two', async () => {
-  const { sim, at } = await hero({ x: 5.5, y: SLOPE_TOP.y - 0.5 })
-  for (let i = 0; i < 20; i++) sim.step([])
+  const { sim, at, trace } = await hero({ x: 5.5, y: SLOPE_TOP.y - 0.5 })
+  for (let i = 0; i < 20; i++) {
+    sim.step([])
+    at()
+  }
   let lost = 0
   let reached = false
   for (let t = 0; t < 120 && !reached; t++) {
@@ -83,8 +108,8 @@ test('holding left from the top, the hero walks down the slope, on the ground al
     if (x < 4.5 && x > 2.5 && !below) lost++
     if (x < 1.8) reached = true
   }
-  expect(reached).toBe(true)
-  expect(lost).toBeLessThanOrEqual(2)
+  expect(reached, trace.join('\n')).toBe(true)
+  expect(lost, trace.join('\n')).toBeLessThanOrEqual(2)
 })
 
 test('a jump from the slope goes up', async () => {
@@ -102,7 +127,7 @@ test('a jump from under the ledge goes up through it and lands on its top', asyn
   sim.step([hold(sim.tick, ['jump'])])
   let highest = Number.POSITIVE_INFINITY
   for (let i = 0; i < 240; i++) {
-    sim.step(i === 5 ? [hold(sim.tick, [])] : [])
+    sim.step([])
     highest = Math.min(highest, at().y)
   }
   expect(highest).toBeLessThan(LEDGE_TOP - 1)
