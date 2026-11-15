@@ -16,6 +16,7 @@ import {
   type MotifFile,
   type NoteLoop,
   STEP,
+  type StepMusic,
 } from '../content/content.ts'
 import { chordOf, keyRoot, pitchOf, scaleOf, stepOffset } from './theory.ts'
 
@@ -299,4 +300,53 @@ export function loopNotes(loop: LoopFile, options: LoopOptions = {}): PlainNote[
   return playLoop(loop, place, 0, options.bars ?? loop.bars).sort(
     (a, b) => a.at - b.at || order(a.pitch) - order(b.pitch),
   )
+}
+
+/**
+ * Format 1 music as plain notes: each part a lane (a tone part plays `lead`, a drum part's hit is a `snare`). A step is
+ * a beat divided by `stepsPerBeat` and rounded to a whole tick; a held note grows by a step for each `=`.
+ */
+export function stepNotes(music: StepMusic): PlainNote[] {
+  const stepTicks = Math.round(TICKS_PER_BEAT / music.stepsPerBeat)
+  const notes: PlainNote[] = []
+  for (const part of music.parts) {
+    const volume = part.volume * music.volume
+    const steps = part.notes.flatMap(stepsOf)
+    let held: { pitch: number; at: number; ticks: number } | undefined
+    const flush = (): void => {
+      if (held !== undefined)
+        notes.push({
+          lane: part.id,
+          instrument: 'lead',
+          pitch: held.pitch,
+          at: held.at,
+          ticks: held.ticks,
+          volume,
+        })
+      held = undefined
+    }
+    steps.forEach((step, i) => {
+      if (part.kind === 'drums') {
+        if (step === 'x')
+          notes.push({
+            lane: part.id,
+            instrument: 'drums',
+            pitch: 'snare',
+            at: i * stepTicks,
+            ticks: 0,
+            volume,
+          })
+        return
+      }
+      if (step === '=') {
+        if (held !== undefined) held.ticks += stepTicks
+        return
+      }
+      flush()
+      const pitch = pitchOf(step)
+      if (pitch !== undefined) held = { pitch, at: i * stepTicks, ticks: stepTicks }
+    })
+    flush()
+  }
+  return notes.sort((a, b) => a.at - b.at)
 }

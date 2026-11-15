@@ -22,6 +22,8 @@ export {
   libraryFiles,
   libraryName,
 } from './library.ts'
+export { type MidiDropped, type MidiImport, midiToMusic } from './midi-in.ts'
+export { type MidiSource, musicToMidi } from './midi-out.ts'
 export { createMusicPlayer, type MusicPlayer } from './music-player.ts'
 export { hertzOf, hertzOfPitch } from './notes.ts'
 export {
@@ -32,6 +34,7 @@ export {
   notesOf,
   type PlainNote,
   type SongParts,
+  stepNotes,
   TICKS_PER_BAR,
   TICKS_PER_BEAT,
 } from './plain-notes.ts'

@@ -141,3 +141,66 @@ export function pitchOf(note: string): number | undefined {
 export function noteName(pitch: number): string {
   return `${SHARPS[((pitch % 12) + 12) % 12] ?? 'C'}${Math.floor(pitch / 12) - 1}`
 }
+
+/**
+ * How many sharps (or, below 0, flats) a key signature has for each key, for the major and the minor. A key with no
+ * signature of its own (D# major, A# major, G# major) is written as the key it sounds the same as.
+ */
+const SIGNATURES: Readonly<Record<Mode, Readonly<Record<Key, number>>>> = {
+  major: {
+    C: 0,
+    'C#': 7,
+    Db: -5,
+    D: 2,
+    'D#': -3,
+    Eb: -3,
+    E: 4,
+    F: -1,
+    'F#': 6,
+    Gb: -6,
+    G: 1,
+    'G#': -4,
+    Ab: -4,
+    A: 3,
+    'A#': -2,
+    Bb: -2,
+    B: 5,
+  },
+  minor: {
+    C: -3,
+    'C#': 4,
+    Db: 4,
+    D: -1,
+    'D#': 6,
+    Eb: -6,
+    E: 1,
+    F: -4,
+    'F#': 3,
+    Gb: 3,
+    G: -2,
+    'G#': 5,
+    Ab: 5,
+    A: 0,
+    'A#': 7,
+    Bb: -5,
+    B: 2,
+  },
+}
+
+/** The sharps (positive) or flats (negative) of a key's signature: `keySignature('A', 'major')` is 3. */
+export function keySignature(key: Key, mode: Mode): number {
+  return SIGNATURES[mode][key]
+}
+
+/** The key named by a signature, from -7 flats to 7 sharps: `keyOfSignature(-3, true)` is C minor. */
+export function keyOfSignature(sharps: number, minor: boolean): { readonly key: Key; readonly mode: Mode } {
+  const mode: Mode = minor ? 'minor' : 'major'
+  const table = SIGNATURES[mode]
+  // The names that stand for a signature: the first key in this list that has it.
+  const order: readonly Key[] = minor
+    ? ['A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'D', 'G', 'C', 'F', 'Bb', 'Eb']
+    : ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb']
+  const clamped = Math.max(-7, Math.min(7, sharps))
+  const found = order.find((key) => table[key] === clamped)
+  return { key: found ?? (minor ? 'Ab' : 'B'), mode }
+}
