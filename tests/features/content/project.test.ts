@@ -7,6 +7,7 @@ import {
   PROJECT_FILE,
   type Project,
   parseProject,
+  scoreRef,
 } from '#src/features/content/content.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
@@ -206,4 +207,44 @@ test('nextLevel is the level after, and nothing after the last or for an unknown
   expect(nextLevel(project, 'level-3')).toBeUndefined()
   expect(nextLevel(project, 'level-9')).toBeUndefined()
   expect(nextLevel(projectOf(FIXTURE), 'level-1')).toBeUndefined()
+})
+
+// The checklist's two fields (plan Q, Task 1): what loses a level, and the number the game counts.
+
+test('lost and score are read', () => {
+  const project = projectOf(withLines('lost = "hero.fell"', 'score = "hero.score.sparks"'))
+  expect(project.lost).toBe('hero.fell')
+  expect(project.score).toBe('hero.score.sparks')
+})
+
+test('a project that writes none of them has none of the keys', () => {
+  const project = projectOf(FIXTURE)
+  for (const key of ['lost', 'score']) expect(Object.hasOwn(project, key), key).toBe(false)
+})
+
+test.each([
+  ['lost = "Hero Fell!"', 'automata.toml: lost: Write the event that loses a level, like lost = "hero.fell".'],
+  ['lost = 3', 'automata.toml: lost: Write the event that loses a level, like lost = "hero.fell".'],
+  [
+    'score = "sparks"',
+    'automata.toml: score: Write a resource and one of its numbers, like score = "hero.score.sparks".',
+  ],
+  [
+    'score = "Hero Score.sparks"',
+    'automata.toml: score: Write a resource and one of its numbers, like score = "hero.score.sparks".',
+  ],
+])('%s is refused with its sentence', (line, sentence) => {
+  expect(problems(withLines(line))).toEqual([sentence])
+})
+
+test('lost and done may not name the same event', () => {
+  expect(problems(withLines('done = "door.touched"', 'lost = "door.touched"'))).toEqual([
+    'automata.toml: lost: A level cannot be won and lost by the same event. Change lost or done.',
+  ])
+})
+
+test('scoreRef splits at the last dot', () => {
+  const project = projectOf(withLines('score = "hero.score.sparks"'))
+  expect(scoreRef(project)).toEqual({ resource: 'hero.score', field: 'sparks' })
+  expect(scoreRef(projectOf(FIXTURE))).toBeUndefined()
 })
