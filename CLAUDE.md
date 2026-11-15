@@ -167,7 +167,14 @@ The default game flow is the feature `flow` (page, the one above `game`: the ste
 progress a game keeps and who is playing; plan U adds the screens below `game` and `startFlow` here).
 Features import only from features below them. No top-level `components/`, `services/` or `utils/`.
 
+The screens are drawn with Svelte 5, in two features between `web` and `game`: `ui` (the kit: buttons, sliders, a frame)
+and `screens` (one screen per `.ts` and `.svelte` pair). Only those two features may hold a `.svelte` file or import
+`svelte` (`tests/architecture/rules.ts` fails anything else). `svelte` is a dependency left for the game's bundler, and
+`pnpm typecheck` also runs `svelte-check`, which needs TypeScript 6: `.pnpmfile.cjs` gives it the `typescript-6` copy,
+since a pnpm override does not reach a peer dependency.
+
 `biome.json` turns off a rule for two groups of files and says why here, since JSON has no comments: `noSvgWithoutTitle` for
-the drawings in `src/features/web/library/` (a flag or an icon is drawn inside a button that has the name; the page marks
-the drawing hidden from a screen reader, and a title inside it would be read twice), and `useHtmlLang` for
-`template/index.html` (no language is the default, so the page sets `lang` itself once the player has one).
+the drawings in `src/features/web/library/` and `src/features/ui/library/` (a flag or an icon is drawn inside a button that
+has the name; the page marks the drawing hidden from a screen reader, and a title inside it would be read twice), and
+`useHtmlLang` for `template/index.html` (no language is the default, so the page sets `lang` itself once the player has
+one). It also leaves `.svelte` files out: Biome does not read Svelte's runes, and `svelte-check` is their check.

@@ -94,3 +94,19 @@ test('Paraglide and its message-format plugin are development dependencies at ex
     .map((file) => file.split('\\').join('/'))
   expect(naming).toEqual(['features/cli/words.ts'])
 })
+
+// The Owner's answer to the Svelte question (2026-11-15): the screens are drawn with Svelte 5. `svelte` is a dependency,
+// left for the game's bundler like the other packages the compiled parts import; the compiler plugin and `svelte-check`
+// are development tools, all at exact versions. Only the kit and the screens name it.
+test('Svelte is a dependency and its two tools are development dependencies, all at exact versions', () => {
+  expect(manifest.dependencies.svelte).toBe('5.57.1')
+  expect(manifest.devDependencies?.['@sveltejs/vite-plugin-svelte']).toBe('7.3.1')
+  expect(manifest.devDependencies?.['svelte-check']).toBe('4.7.6')
+  expect(manifest.dependencies['@sveltejs/vite-plugin-svelte']).toBeUndefined()
+  expect(manifest.dependencies['svelte-check']).toBeUndefined()
+})
+
+test('typecheck runs svelte-check as well as tsc', () => {
+  expect(manifest.scripts.typecheck).toContain('tsc -p .')
+  expect(manifest.scripts.typecheck).toContain('svelte-check --tsconfig ./tsconfig.json --fail-on-warnings')
+})

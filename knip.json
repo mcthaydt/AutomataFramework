@@ -8,7 +8,7 @@
     "tests/fixtures/online/server.ts",
     "tests/fixtures/online/page/main.ts"
   ],
-  "project": ["src/**/*.ts", "tests/**/*.ts"],
+  "project": ["src/**/*.ts", "src/**/*.svelte", "tests/**/*.ts"],
   "ignore": ["tests/install/**", "template/**"],
   "ignoreDependencies": ["@inlang/paraglide-js", "@inlang/plugin-message-format"]
 }

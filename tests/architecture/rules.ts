@@ -19,6 +19,8 @@ export const LAYERS = [
   'host',
   'locale',
   'web',
+  'ui',
+  'screens',
   'game',
   'flow',
   'cli',
@@ -34,6 +36,8 @@ export interface Violation {
 }
 
 const MAX_LINES = 600
+/** The features that hold `.svelte` files: the kit and the screens. */
+const SVELTE_FEATURES: readonly string[] = ['ui', 'screens']
 /**
  * The features that must run the same on every machine: no clock, no randomness, no I/O.
  * `audio` is one of them although it is not the sim: its only clock is its speaker's, so a test moves time by hand and
@@ -51,7 +55,15 @@ const PURE_FEATURES: ReadonlySet<string> = new Set(['sim', 'physics', 'commands'
 const PAINTER_FILES = /^src\/features\/content\/(?:paint-[^/]+|pixels|sheet|art)\.ts$|^src\/lib\/png\.ts$/
 const PAINTER_MATH = /\bMath\.(sin|cos|tan|atan2|atan|pow|exp|log|hypot|random)\b/g
 /** Features that need a page (a DOM, a canvas): the headless entry may not reach them. */
-const PAGE_FEATURES: ReadonlySet<string> = new Set(['render', 'input', 'web', 'game', 'flow'])
+const PAGE_FEATURES: ReadonlySet<string> = new Set([
+  'render',
+  'input',
+  'web',
+  'ui',
+  'screens',
+  'game',
+  'flow',
+])
 
 const IMPURE: readonly { readonly pattern: RegExp; readonly what: string }[] = [
   { pattern: /\bMath\.random\b/, what: 'Math.random' },
@@ -98,6 +110,11 @@ const CONFINED: readonly {
     why: "Effect is only for the server's process and the command",
   },
   {
+    package: /^svelte(\/|$)/,
+    only: ['src/features/ui/', 'src/features/screens/'],
+    why: 'Svelte draws the kit and the screens, and nothing else',
+  },
+  {
     package: /^@inlang\//,
     only: ['src/features/cli/words.ts'],
     why: 'Paraglide is named by the words compiler alone, which loads it only when words are compiled',
@@ -139,8 +156,13 @@ interface Source {
   readonly packages: readonly string[]
 }
 
+/** What a `.svelte` file's code is: its `<script>` blocks. Its markup holds no imports, and comments in it are text. */
+function scriptsOf(text: string): string {
+  return [...text.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1] ?? '').join('\n')
+}
+
 function read(file: string, text: string): Source {
-  const code = withoutComments(text)
+  const code = withoutComments(file.endsWith('.svelte') ? scriptsOf(text) : text)
   const local: string[] = []
   const runtime: string[] = []
   const packages: string[] = []
@@ -230,6 +252,9 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
       add(file, 'at-most-600-lines', `${source.lines} lines; split the file by job.`)
     if (file.startsWith('src/') && file.endsWith('.test.ts')) {
       add(file, 'no-tests-in-src', 'Tests live in tests/, mirroring src/.')
+    }
+    if (file.endsWith('.svelte') && (feature === undefined || !SVELTE_FEATURES.includes(feature))) {
+      add(file, 'svelte-in-its-place', `A .svelte file belongs to ${SVELTE_FEATURES.join(' or ')}.`)
     }
 
     if (feature !== undefined && layerOf(feature) < 0) {
