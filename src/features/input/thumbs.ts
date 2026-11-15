@@ -240,10 +240,11 @@ export function createThumbs(
     buttons.set(action, b)
     buttonBox.append(b)
   }
-  const buttonLabelOf = (action: string): string =>
-    action === 'dash' && controls.dash === undefined
-      ? 'Dash'
-      : buttonLabel(words ?? ((key) => key), action, controls[action]?.label ?? action)
+  const buttonLabelOf = (action: string): string => {
+    // A game whose controls do not list dash (the framework's own are used) names the mark in the player's words.
+    if (action === 'dash' && controls.dash === undefined) return said('automata.thumbs.dash') ?? 'Dash'
+    return buttonLabel(words ?? ((key) => key), action, controls[action]?.label ?? action)
+  }
   if (options.dash) addButton('dash', buttonLabelOf('dash'))
   for (const action of Object.keys(controls))
     if (!THUMB_ACTIONS.has(action)) addButton(action, buttonLabelOf(action))

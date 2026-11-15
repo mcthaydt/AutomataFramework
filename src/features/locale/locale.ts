@@ -3,6 +3,7 @@
 export type { Message, Value, Values, Words } from '../../lib/message.ts'
 export { createLocale, type Locale } from './create.ts'
 export { fill } from './fill.ts'
+export { inputName, playHint, teachHint } from './hints.ts'
 export { fitLabel, levelName } from './labels.ts'
 export { LANGUAGE_NAMES, LANGUAGE_TAGS } from './names.ts'
 export { onlineWords } from './online.ts'
