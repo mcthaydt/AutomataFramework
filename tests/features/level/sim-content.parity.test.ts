@@ -12,17 +12,7 @@ import { expectRecorded } from '../../fixtures/golden.ts'
 import golden from '../../golden/push-crate.json' with { type: 'json' }
 
 /** The maps of the full game the sim is not given. */
-const LEFT_OUT = [
-  'sounds',
-  'music',
-  'loops',
-  'motifs',
-  'cues',
-  'messages',
-  'figures',
-  'feels',
-  'backdrops',
-]
+const LEFT_OUT = ['sounds', 'music', 'loops', 'motifs', 'cues', 'messages', 'figures', 'feels', 'backdrops']
 
 const made: Sim[] = []
 afterEach(() => {

@@ -84,7 +84,9 @@ function gameWith(added: readonly Added[], how: 'path' | 'folder'): Record<strin
     }))
     files['automata.toml'] = withFolders(toml, folders)
   } else {
-    const listed = added.map((file) => `\n[[content]]\ntype = "${file.type}"\npath = "${file.path}"\n`).join('')
+    const listed = added
+      .map((file) => `\n[[content]]\ntype = "${file.type}"\npath = "${file.path}"\n`)
+      .join('')
     files['automata.toml'] = `${toml}${listed}`
   }
   return files

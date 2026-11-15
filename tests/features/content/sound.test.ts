@@ -129,7 +129,16 @@ const theme = (change: Json = {}) => ({
   id: 'theme',
   volume: 0.9,
   voices: [
-    { kind: 'motif', motif: 'hero-theme', instrument: 'pluck', key: 'C', tempo: 120, at: 0, volume: 1, ...change },
+    {
+      kind: 'motif',
+      motif: 'hero-theme',
+      instrument: 'pluck',
+      key: 'C',
+      tempo: 120,
+      at: 0,
+      volume: 1,
+      ...change,
+    },
   ],
 })
 

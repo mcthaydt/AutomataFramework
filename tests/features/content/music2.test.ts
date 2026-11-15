@@ -117,9 +117,7 @@ test('a block that starts after the track ends', async () =>
   ]))
 
 test('a loop that runs past the end of the track', async () =>
-  expect(
-    await problemsWith((s) => (s.lanes[0].blocks[1] = { at: 7, loop: 'drum-fill', bars: 3 })),
-  ).toEqual([
+  expect(await problemsWith((s) => (s.lanes[0].blocks[1] = { at: 7, loop: 'drum-fill', bars: 3 }))).toEqual([
     `${file}: lanes[0].blocks[1].bars: This block runs to bar 9, but the track has 8 bars. Lower "bars" to 2.`,
   ]))
 
