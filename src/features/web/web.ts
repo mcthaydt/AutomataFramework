@@ -19,6 +19,18 @@ export interface WebSeams {
   readonly open: (url: string, target: string) => { opener: unknown } | null
   /** Gives the page's `localStorage`. May throw: a browser can refuse even to hand it over. */
   readonly storage: () => Storage
+  /**
+   * `window.matchMedia`. Left out, the page's own is used when it has one; `undefined` says the page has none. May
+   * throw: the host then answers false.
+   */
+  readonly matchMedia?: ((query: string) => { readonly matches: boolean }) | undefined
+}
+
+/** The page's own `matchMedia`, when it has one. */
+function pageMatchMedia(): WebSeams['matchMedia'] {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? (query) => window.matchMedia(query)
+    : undefined
 }
 
 /** The host for a game in a web page. `seams` are only for tests; each one left out is the real page's. */
@@ -36,6 +48,15 @@ export function webHost(seams: Partial<WebSeams> = {}): Host {
       return () => doc.removeEventListener('visibilitychange', onChange)
     },
     store: webStore(seams.storage ?? (() => localStorage)),
+    reducedMotion() {
+      try {
+        const ask = 'matchMedia' in seams ? seams.matchMedia : pageMatchMedia()
+        return ask?.('(prefers-reduced-motion: reduce)').matches === true
+      } catch {
+        // A page that cannot say is a page that did not ask for less motion.
+        return false
+      }
+    },
     // A browser has no say in the language; the page's own list is `deviceLanguages`.
     language: () => undefined,
     deviceLanguages: () =>

@@ -118,3 +118,33 @@ test('with no seams it reads the real page', () => {
   expect(typeof host.visible()).toBe('boolean')
   expect(Array.isArray(host.deviceLanguages())).toBe(true)
 })
+
+test("reducedMotion is the page's answer to prefers-reduced-motion", () => {
+  const asked: string[] = []
+  const answer = (matches: boolean) => (query: string) => {
+    asked.push(query)
+    return { matches }
+  }
+  expect(webHost(seams({ matchMedia: answer(true) })).reducedMotion()).toBe(true)
+  expect(webHost(seams({ matchMedia: answer(false) })).reducedMotion()).toBe(false)
+  expect(asked).toEqual(['(prefers-reduced-motion: reduce)', '(prefers-reduced-motion: reduce)'])
+})
+
+test('a page with no matchMedia has not asked for less motion', () => {
+  expect(webHost(seams({ matchMedia: undefined })).reducedMotion()).toBe(false)
+})
+
+test('a matchMedia that throws has not asked for less motion', () => {
+  const host = webHost(
+    seams({
+      matchMedia: () => {
+        throw new Error('no')
+      },
+    }),
+  )
+  expect(host.reducedMotion()).toBe(false)
+})
+
+test('with no matchMedia seam it asks the real page', () => {
+  expect(typeof webHost(seams()).reducedMotion()).toBe('boolean')
+})

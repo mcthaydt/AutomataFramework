@@ -81,3 +81,8 @@ test('a game runs on it', async () => {
   expect(await saves.save(0, { level: 'level-1', doors: 2 })).toEqual({ ok: true })
   expect(await saves.load(0)).toMatchObject({ ok: true, data: { level: 'level-1', doors: 2 } })
 })
+
+test('the device has not asked for less motion unless the option says so', () => {
+  expect(testHost().reducedMotion()).toBe(false)
+  expect(testHost({ reducedMotion: true }).reducedMotion()).toBe(true)
+})

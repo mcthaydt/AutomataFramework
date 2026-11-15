@@ -17,6 +17,8 @@ export interface TestHostOptions {
   readonly canQuit?: boolean
   /** Default false: an https link answers 'opened'. When true it answers 'blocked', as if the player said no. */
   readonly blockLinks?: boolean
+  /** Did the device ask for less motion. Default false. */
+  readonly reducedMotion?: boolean
 }
 
 /** A host a test can change (`show`, `hide`) and look at (`opened`, `quits`). */
@@ -61,6 +63,7 @@ export function testHost(options: TestHostOptions = {}): TestHost {
       return 'opened'
     },
     canQuit,
+    reducedMotion: () => options.reducedMotion ?? false,
     async quit() {
       if (!canQuit) return false
       quits += 1

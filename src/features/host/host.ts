@@ -32,4 +32,9 @@ export interface Host {
   readonly canQuit: boolean
   /** Hands the player back to wherever the game was opened from. Answers false, and does nothing, when `canQuit` is false. */
   quit(): Promise<boolean>
+  /**
+   * True where the device asked for less motion (a phone's "Reduce Motion"). Read when a game starts, to choose the first
+   * value of the "Screen shake" setting; a player's own choice, once made, wins over it.
+   */
+  reducedMotion(): boolean
 }
