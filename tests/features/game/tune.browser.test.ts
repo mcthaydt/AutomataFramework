@@ -98,7 +98,7 @@ test('two tunes before one frame send one command, with the later values', async
   run(frames, 3)
   const sent = tunes(g)
   expect(sent).toHaveLength(1)
-  const values = (sent[0]?.payload as { values: number[] }).values
+  const values = (sent[0]?.payload as { values: number[] } | undefined)?.values ?? []
   expect(values[MOVE_NUMBERS.findIndex((n) => n.id === 'jump-speed')]).toBe(18)
 })
 

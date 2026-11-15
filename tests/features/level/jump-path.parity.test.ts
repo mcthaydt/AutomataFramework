@@ -24,8 +24,9 @@ const FLOOR_ROW = 14
 
 /** A flat floor 48 tiles long with a wall at each end, and the hero's start at x 3.5. Nothing else. */
 function flatLevel(): string {
+  const solid = (x: number, y: number): boolean => y >= FLOOR_ROW || x === 0 || x === WIDTH - 1
   const tiles = Array.from({ length: HEIGHT }, (_, y) =>
-    Array.from({ length: WIDTH }, (_, x) => (y >= FLOOR_ROW || x === 0 || x === WIDTH - 1 ? '#' : '.')).join(''),
+    Array.from({ length: WIDTH }, (_, x) => (solid(x, y) ? '#' : '.')).join(''),
   )
   const starts = [{ player: 1, x: 3.5, y: FLOOR_ROW - 0.5 }]
   return writeContent('level', { format: 1, id: 'level-1', tiles, things: [], starts } as never)
