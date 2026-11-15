@@ -74,4 +74,4 @@ The Owner also chose turn-based fights, with timed presses during a move, as a g
 honest reading: a turn-based fight is new content (who fights, their stats, their moves, what each move does, which
 fight starts where), so it needs a format and a home in the editors. It fits the planned editors without a new one:
 stats and moves on a character in **Characters**, the numbers and the timing windows of a timed press in **Feel**, which fight starts and when in **Story**
-(a storylet), and the fight's screen in **Screens**. It is not in any slice yet; it waits for the Owner to place it.
+(a storylet), and the fight screen and how it is reached in **Screens** (the UI and the game's flow). It is not in any slice yet; it waits for the Owner to place it.

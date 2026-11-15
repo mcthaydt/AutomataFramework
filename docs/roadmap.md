@@ -16,7 +16,7 @@ slice runs the same five steps in order:
 
 Then the next editor starts. The editors go in this order: **World** (levels), **Characters**, **Feel** (with Tuner inside it),
 **Sound**, **Story**, **Screens**: levels first, then who is in them, then how they move, then sound, then the story that
-ties them together (the owner, 2026-11-15), then the screens a player sees around the game, added as the sixth editor
+ties them together (the owner, 2026-11-15), then the screens and the game's flow, added as the sixth editor
 (the owner, 2026-11-15). The shell is built with the first editor and every later editor reuses it, so
 each later mockup also follows the design language (see the rule below).
 
@@ -158,11 +158,13 @@ whole gate.
 
 ## Slice 8: Screens
 
-The sixth editor (the owner, 2026-11-15): the screens a player sees around the game, such as the score and the other
-numbers shown while playing, the menus, and the screens a game adds of its own. Today they are the framework's own
-screens, drawn in code, and Story edits only their words.
+The sixth editor (the owner, 2026-11-15): the UI and the game's flow. The UI is every screen a player sees, such as
+the menus, pause, settings and what is shown while playing; the flow is how one leads to the next (the menu, then
+play, then pause, and back). Today both are the framework's own, in code (the `screens` feature draws the screens and
+the `flow` feature walks the steps), and Story edits only their words.
 
-1. Later: build in Automata: a screens format, so a screen is a content file an agent can write too.
+1. Later: build in Automata: a screens format and a flow format, so a screen and the way screens lead to each other
+   are content files an agent can write too.
 2. Later: the Screens mockups, through the visual review process.
 3. Later: build the Screens editor.
 4. Later: test the Screens editor.
