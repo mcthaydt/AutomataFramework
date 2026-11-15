@@ -120,9 +120,9 @@ whole gate.
    replaced #57, with the owner reviewing).
 3. Next: write down the editors' design language and patterns, so every editor after World reuses it (rule 7).
 4. Next: build in Automata what the levels editor needs. Level pictures on save, so an agent can see a level; a public
-   list of format changes; what a placed thing may hold (values and links); the world map of levels, which needs the
-   owner's 8 answers first (the closed #149, last commit `c449fca`, has them), and now lets levels join edge to edge
-   (the owner, 2026-11-15; `specs/2026-11-15-rooms-and-storylets-amendment.md`).
+   list of format changes; what a placed thing may hold (values and links); the world map of levels, with levels joined
+   by doors and edge to edge as one seamless place (the spec's second version, #165, with the owner's answers of
+   2026-11-15; it replaces part 1 of `specs/2026-11-15-rooms-and-storylets-amendment.md`).
 5. Next: build the editor: the shell (top bar, tools, panels, Help, Settings, tour, sign-in, Share) and World's
    Levels part, open a level, change it on an iPad, save it into the game.
 6. Next: test the editor, in real browsers at iPad, phone and computer sizes, with the journeys from the end-to-end

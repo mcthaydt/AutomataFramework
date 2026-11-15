@@ -10,12 +10,13 @@ world map, doors between levels, level pictures and a public list of format chan
 edge (for rooms put together from a seed later) and all story as facts and conditions
 (`specs/2026-11-15-rooms-and-storylets-amendment.md`). The first version was closed pull request #149 (`c449fca`).
 
-Overall: **8%** (stage 1 written, waiting on the Owner's five answers; stages 2 to 7 follow)
+Overall: **10%** (stage 1 done, the Owner's five answers taken in; stages 2 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
-| 1. Spec | Second version written, in review (2026-11-15), 100% written; five open questions asked as cards: how an edge join is written down (recommended: by where levels sit on the map, LDtk's way), the twelve calls, what the player sees crossing an edge (recommended: a slide, one level running), what a level remembers (recommended: what was done for good, kept as facts), whether the test game gets an edge join (recommended: yes, a third level) | the spec |
-| 2 to 7 | Not started; the plan waits for the Owner's answers | |
+| 1. Spec | Second version done (2026-11-15), 100%. The Owner's answers: edge joins come from where levels sit on the map (LDtk's way); a joined place plays as one seamless world, everything crossing, the whole place running at once (streaming later); what was done for good is remembered, as facts the story can read; the test game gets a third level joined by an edge; all twelve calls fine | the spec |
+| 2. Plan | Next: Fable 5.2, medium, from this spec | |
+| 3 to 7 | Not started | |
 
 Nothing was run: this stage wrote a document.
 

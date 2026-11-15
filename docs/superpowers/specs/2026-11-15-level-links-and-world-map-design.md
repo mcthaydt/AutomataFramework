@@ -11,7 +11,9 @@ levels through doors only. The Owner has since decided that levels can also join
 put together from a seed later, and that **all story is facts and conditions, as storylets**
 (`specs/2026-11-15-rooms-and-storylets-amendment.md`). This version takes both in, with LDtk still the inspiration,
 no auto-tiling, and nothing locked to 2D. The amendment's part 1 is replaced by this page once the Owner says it is
-fine. What is still open is listed in "Open questions for the Owner"; nothing there is decided by this page.
+fine. The Owner answered its five questions the same day ("The Owner's answers"): levels join by where they sit on
+the map, a joined place plays as one seamless world, what was done for good is remembered, the test game gets a third
+level joined by an edge, and every call is fine.
 
 ## Principles served
 
@@ -70,20 +72,22 @@ The Owner (2026-11-15), on the LDtk report:
 7. **A picture of any level, made by a command,** with a "what it is" view that draws the links, paths, reaches and
    tags, for agents to check their work and for the map.
 8. **A public list of format changes,** kept beside the schemas, that a check holds to the schemas.
-9. **Levels that touch edge to edge:** walking off an edge where another level touches it carries the hero into that
-   level, for every player at once, as a door does.
+9. **Levels that touch edge to edge, as one seamless place:** levels joined by their edges run together, so a hero (or
+   a crate) just keeps going from one into the next, with no cut, no slide and no load.
 10. **Ready for rooms from a seed:** nothing in the formats stops a later part from laying rooms out from a seed; a
     thing in a laid-out room has an id a save can find again.
-11. **The demo uses all of it,** on levels joined by a door and by an edge (see open question 5).
+11. **The demo uses all of it,** on three levels joined by a door and by an edge (the Owner, 2026-11-15).
 
 ## Non-goals
 
 - Auto-tiling rules (the Owner: not at launch).
 - The part that puts rooms together from a seed (Spelunky style), and the World editor's "Try a seed" view. Both are a
   later spike and plan; this page only keeps the formats ready.
-- One seamless place where two levels are live at once (see open question 3).
+- Loading and unloading parts of a big place as the hero moves (streaming). This cycle runs the whole place at once,
+  which the test game's place of two levels fits; streaming is a later cycle, when a game's place is too big for it,
+  most likely in 3D.
 - Facts, conditions and storylets themselves. They are the Story slice's; this page uses only what a level must
-  remember (open question 4).
+  remember.
 - Moving platforms or lifts on a path: they need a moved body kind that is neither `dynamic` nor `fixed`. Later, and the
   path value is ready for them.
 - A general rules language ("when this, do that") on values. Built-in parts read values; anything else is the game's
@@ -96,9 +100,9 @@ The Owner (2026-11-15), on the LDtk report:
 
 - A value the editor can set but an agent cannot read, write and check by hand.
 - A slider, a typed number or a hand edit that passes a value's limits without `automata check` failing.
-- A "where it sits" on the map that changes how the game plays without `automata check` saying so. (If the Owner picks
-  joins by where levels sit, open question 1, a move on the map can make or break a join; `check` then names every
-  join that appears, moves or breaks, and the editor says it on the map.)
+- A "where it sits" on the map that changes how the game plays without `automata check` saying so. (Joins come from
+  where levels sit, the Owner's choice, so a move on the map can make or break a join; `check` names every join that
+  appears, moves or breaks, and the editor says it on the map.)
 - An edge that leads into a wall: one side open where the other is solid, with no sentence from `check`.
 - A game with no values, links or doors whose sim, hash or replay moves.
 - Flat-only words in the formats ("layer", "left and top only") that 3D would inherit.
@@ -117,7 +121,7 @@ The Owner (2026-11-15), on the LDtk report:
    physical holder with its own places, not a setting of one thing.
 
 For how levels join, the Owner first chose doors only, then (2026-11-15) doors **and** edges. How an edge join is
-written down has three ways, set out under "Edges between levels"; which one is open question 1.
+written down had three ways, set out under "Edges between levels"; the Owner chose by where the levels sit.
 
 ## Values on things
 
@@ -251,12 +255,14 @@ failure: a team may be building it.
 
 ## Edges between levels
 
-A hero who walks, falls or jumps off an edge of a level where another level touches it goes into that level, carrying
-on from the same spot and at the same speed. Doors and edges work side by side: a game may use either, both or neither.
+Levels joined by their edges make one **place**, and a place plays as one seamless world (the Owner, 2026-11-15): a
+hero who walks, falls or jumps over the edge is simply in the next level, with nothing in between. Doors and edges work
+side by side: a door leads from one place into another, an edge is inside a place. A game may use either, both or
+neither, and a level that touches no other is a place of one, which is every game today.
 
-### How a join is written down (open question 1)
+### How a join is written down (the Owner: by where the levels sit, 2026-11-15)
 
-1. **By where the levels sit (recommended; LDtk's way).** The world file's `at` already says where each level sits.
+1. **By where the levels sit (chosen; LDtk's way).** The world file's `at` already says where each level sits.
    Two levels whose edges touch on the sheet, along a stretch both are open on, are joined there. There is nothing more
    to write: drag a level against another on the map and they join; pull it away and they part. From my own knowledge
    of LDtk (not read from its docs here): its "GridVania" and "Free" world layouts find a level's neighbours the same
@@ -271,7 +277,8 @@ on from the same spot and at the same speed. Doors and edges work side by side: 
    through sideways. No world file needed, but both sides must be kept in step by hand, and where you come out has to
    be worked out from two things' sizes.
 
-The rest of this section is written for way 1; ways 2 and 3 change only where the join is read from.
+The Owner chose way 1 (2026-11-15); the rest of this section is written for it. Ways 2 and 3 are kept here as the
+ones considered.
 
 ### Open stretches come from the tiles
 
@@ -285,18 +292,29 @@ tiles as today, and the open stretches follow. `automata check` holds the two si
 
 An open edge that touches no level behaves as it does today.
 
-### Crossing (open question 3 for what the player sees)
+### One seamless place (the Owner, 2026-11-15)
 
-- The sim says the hero left the level and where (it already knows the hero's place every tick). The flow, as for a
-  door, ends this level and opens the one the hero went into, with every hero placed at the matching spot just inside
-  it, each keeping its speed. In a game with more than one player, the first hero across takes everyone, as a door
-  does; the others come out beside it, spread as starts are.
-- Only heroes cross. A crate or a critter at an open edge that touches a level stops there as at a wall, so a level's
-  things stay its own (my call).
-- A replay is still one level. The new level's recording starts from the place and speed the hero came in with, which
-  the flow hands in as numbers, so it replays the same in every browser.
-- The saved game keeps the level and where the hero came in (the door's thing, or the edge and the spot along it), so
-  Continue puts the hero back there.
+- **A place is every level its edges reach,** found from the world file. When a place opens (the game's start, a door,
+  Continue), the sim builds all its levels into one world: each level's ground, things and joints set at its `at`, in
+  one physics world. Nothing marks the edges inside it: the open stretches meet, so a body passes as it would over any
+  open floor.
+- **Everything crosses, not only heroes.** A crate pushed over the edge goes with you and is in the next level; a
+  critter's path stays where its level put it. A thing keeps its id with its level's in front (`level-2.crate-1`), so
+  saves, events and links still say which level it was written in. Links between things (a `thing` value) stay inside
+  one level, as before.
+- **The camera follows the hero across.** Its limits are the outline of the whole place, not one level's box.
+- **Which level the hero is in** is known every tick from its place against the levels' boxes. It is what the level
+  name on screen, the goal line, a level's own music or look, and the save read. Crossing is an event, `level.entered`,
+  with the hero and the level, so game code and later the story can act on it.
+- **More than one player:** each hero may be in a different level of the same place, since it is one world. A door
+  still takes everyone, as today.
+- **A replay is of a place.** A recording starts where the place was opened and plays the whole place, so a crate
+  pushed from level 2 into level 3 replays the same in Node and every browser. It is named after the level it starts
+  in (`replays/level-2.json` plays the place of levels 2 and 3).
+- **The saved game** keeps the place, the level the hero was last in and where it came into that level (by a door's
+  thing, or the spot along the edge it crossed), so Continue builds the place again and puts the hero there. Inside a
+  place nothing is "left and come back to", since it all keeps running; what was done for good is kept as facts across
+  places (below).
 
 ### Ready for rooms from a seed
 
@@ -309,10 +327,10 @@ Nothing here is built for it, but nothing stops it:
   things (a `thing` value) stay inside one level, so a laid-out room's links never point outside it.
 - The seed is the sim's seed, so the same seed lays out the same place in every browser.
 
-## What a level remembers (open question 4)
+## What a level remembers (the Owner: what was done for good, 2026-11-15)
 
-With doors and edges, a player can go back into a level they left. What it remembers is open question 4. The
-recommendation, written here: **what was done for good is remembered** (a gate opened by a button with `stays`, later a
+With doors and edges, a player can go back into a level they left. The Owner chose (2026-11-15): **what was done for
+good is remembered** (a gate opened by a button with `stays`, later a
 thing taken), and everything else (a crate's place, a critter on its walk) starts again as the level is written.
 
 What is remembered is kept as **facts**, the story's own kind of state (the amendment's part 2): named values that only
@@ -394,22 +412,22 @@ release ahead (LDtk's "deprecation cycles"); until Release 1 nothing is removed 
 ## The demo game
 
 AutomataFrameworkExamples gains two levels and the parts above, so a first-time player meets each one, in order
-(the third level and its edge depend on open question 5):
+(the Owner chose a third level joined by an edge, 2026-11-15):
 
 - **Level 1:** today's room, the crate, a **plate** on the floor linked to a **gate**, and an **exit door**. The crate
   is pushed onto the plate, the gate opens while it stays there, and the exit door behind the gate `leads-to` level 2.
   The goal line says what to do ("Push the crate onto the plate"), in all six languages.
 - **Level 2:** a **critter** walking a path between two points and a **button** with `stays` on that opens a gate for
   good. You come out beside level 2's entry door. Its right edge is open and touches level 3.
-- **Level 3:** you walk in from level 2's edge; the goal that ends the game. Walking back shows level 2 remembers its
-  gate (open question 4).
+- **Level 3:** you run in from level 2's edge with no break, in one seamless place, and can push level 2's crate
+  across with you; the goal that ends the game.
 - **The world file** places the three levels on the sheet, so the map has three pictures, one arrow and one edge bar.
 - Putting rooms together from a seed is not in the demo: it is a spike of its own, later.
 - New characters: plate, gate, door, critter, with a `patrol` behaviour using `walk-path`. Until the figure builder
   draws them (the demo's art comes from the builders), they are drawn in the demo's colours as boxes with an icon or
   figure the agent drafts, as the crate was.
 - `replays/level-1.json` changes because the level changes, and CI says "the content changed" as it does for any
-  content edit; the new recording is shown to the Owner before its merge. `replays/level-2.json` and `replays/level-3.json` are new.
+  content edit; the new recording is shown to the Owner before its merge. `replays/level-2.json`, the place of levels 2 and 3, is new.
   `tests/fixtures/pinned-level.ts` is untouched, so the journeys that check gameplay do not move.
 - The framework pin moves once the framework's parts are merged (its own pull request), then the demo changes.
 
@@ -448,8 +466,11 @@ All in GitHub-hosted CI.
   and a `walk-path` critter, each with a new golden (`switch.json`, `walk-path.json`); every existing golden unmoved,
   which proves "joined only when used".
 - A flow test: a door opens its level with every hero beside the named thing; Continue after it.
-- A flow test and a parity test for an edge: a hero running off level 2's edge comes into level 3 at the same height and
-  speed, in Node and the three browsers; Continue after it; a crate at that edge stops.
+- A parity test for a place (Node and the three browsers), with its own golden: a hero runs from level 2 into level 3
+  with no break in speed, and pushes a crate across the edge; `level.entered` fires once per crossing; the camera's
+  limits are the place's outline. Continue after it puts the hero back in level 3.
+- A test that a game with no edge joins builds exactly the one-level world it does today (every existing golden
+  unmoved).
 - `check` sentences for an edge open on one side only, overlapping levels, and `at` off whole tiles.
 - A save test: a gate opened for good is open again after leaving and coming back; a crate is back at its place.
 - The picture command's bytes in Node, held to a recorded hash, for one level as it plays and with `--what-it-is`.
@@ -473,17 +494,18 @@ All in GitHub-hosted CI.
 - How the gate's "wait until nobody is inside" is sensed in Rapier.
 - The walker's steering on slopes and at a wall in the way (it turns back, as `wander` does when blocked).
 - How the picture command lays out tags so they do not cover each other.
-- How the sim says a hero left by an edge, and how far inside the next level a hero is placed so it does not cross
-  straight back.
+- How the sim builds several levels into one world with their offsets, and how a place's hash is made.
+- How large a place may be before `check` warns (a note, not a failure) that it needs streaming.
 - How the plan splits into pull requests: likely formats and checks; switches, gates and paths in the sim; doors and
   edges in the flow and the world file, with what a level remembers; pictures and the change list; then the demo in
   Examples after the pin moves.
 
-## Calls I made (for the Owner to check)
+## Calls I made (the Owner: all fine, 2026-11-15)
 
 1. A value's `name` is the team's word in the editor and is not translated; only `words` values are player words.
 2. A plate and a button are one part, `switch`, with a `stays` value; the demo uses both forms.
-3. What leads to what lives only in the doors; the world file holds only where levels sit.
+3. What leads to what through a door lives only in the doors; the world file holds where levels sit, which is also
+   where they join edge to edge.
 4. A door takes every player at once, as `done` does today.
 5. Level pictures go to `.automata/pictures/` and are never committed.
 6. The template stays one level; the demo game shows two.
@@ -493,21 +515,21 @@ All in GitHub-hosted CI.
 New in this version:
 
 9. Open stretches come from the tiles; nothing marks an opening.
-10. Only heroes cross an edge; a crate or critter stops there.
+10. Everything crosses an edge in a place; a thing keeps its level's id in front of its own. The whole place runs at
+    once; streaming comes later.
 11. There is no `room` mark; any level can be a room.
 12. The files never name a side; only `check`'s sentences say "left" or "top", for a 2D level.
 
-## Open questions for the Owner
+## The Owner's answers
 
-Asked as cards in the spec's thread, 2026-11-15; none is decided until the Owner answers.
+Asked as cards in the spec's thread and answered by the Owner, 2026-11-15.
 
-1. **How do two levels join at an edge?** By where they sit on the map (recommended, LDtk's way), by a list of joins in
-   the world file, or by an edge thing in each level.
-2. **Are calls 1 to 12 above fine?** All as written (recommended), or the Owner names the ones to change.
-3. **What does the player see when crossing an edge?** The screen slides to the next level, the hero keeping its speed,
-   one level running at a time (recommended), or one seamless place with both levels running (a much bigger build).
-4. **When you go back into a level, what does it remember?** Nothing, it starts again; what was done for good, kept as
-   facts the story can read (recommended); or everything, crates and all.
-5. **Does the test game get an edge join?** Yes, a third level joined to the second by its edge, which proves the
-   editor's map (recommended); or only a spike.
+1. **How do two levels join at an edge?** **Answered (2026-11-15): by where they sit on the map**, LDtk's way (way 1).
+2. **Are calls 1 to 12 above fine?** **Answered (2026-11-15): yes, all twelve.**
+3. **What does the player see when crossing an edge?** **Answered (2026-11-15): one seamless place**, every joined
+   level running together (it fits 3D, where players expect to keep walking).
+4. **When you go back into a level, what does it remember?** **Answered (2026-11-15): what was done for good**, kept as
+   facts the story can read.
+5. **Does the test game get an edge join?** **Answered (2026-11-15): yes, a third level** joined to the second by its
+   edge.
 
