@@ -38,8 +38,11 @@ const KNOB_PX = 48
 const ARROW_PX = 96
 /** The resting place of a thumb: its hint's middle is this far from the left or right edge and from the bottom. */
 const REST_PX = 96
-/** The round buttons sit above the jump half's resting corner: no lower than this, or half the overlay. */
-const BUTTONS_FLOOR_PX = 200
+/**
+ * The round buttons sit above the jump half's resting corner: no lower than this, or half the overlay. The jump hint's
+ * circle and its two-line words on their chip reach about 205 px up from the bottom, so the buttons start above that.
+ */
+const BUTTONS_FLOOR_PX = 220
 /** A mount whose width moves more than this between two layouts has been turned, not nudged. */
 const TURNED_PX = 24
 /** How often the hints look at the clock, so they come back after a while with no touch. */
