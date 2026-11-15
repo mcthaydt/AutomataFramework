@@ -15,7 +15,6 @@ const INPUT_WORDS: Readonly<Record<string, string>> = {
   Space: 'automata.key.space',
   ShiftLeft: 'automata.key.shift',
   ShiftRight: 'automata.key.shift',
-  start: 'automata.pad.start',
   south: 'automata.pad.south',
   west: 'automata.pad.west',
   r2: 'automata.pad.r2',

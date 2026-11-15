@@ -2,17 +2,7 @@
 // checked by tests/install/smoke.mjs in CI.
 import { readdirSync, readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
-import {
-  CONTENT_TYPES,
-  type ContentType,
-  jsonSchemaFor,
-  type MoveEventName,
-  type MoveInput,
-  type MoveNumberInfo,
-  type MoveNumbers,
-  type MoveState,
-  type MoveSwitches,
-} from '#src/headless.ts'
+import { CONTENT_TYPES, type ContentType, jsonSchemaFor } from '#src/headless.ts'
 
 test('headless exports what a game sim and an editor need', async () => {
   const api = await import('#src/headless.ts')
@@ -40,7 +30,6 @@ test('headless exports what a game sim and an editor need', async () => {
     'parseContent',
     'writeContent',
     'parseProject',
-    'listContent',
     'loadGame',
     'formatDiagnostic',
     'jsonSchemaFor',
@@ -69,7 +58,6 @@ test('headless exports what a game sim and an editor need', async () => {
     'artFiles',
     'artProblems',
     'paintedPath',
-    'paintedFiles',
     'Sprite',
     'spritesPlugin',
     'usesSprites',
@@ -156,33 +144,6 @@ test('headless exports what a game sim and an editor need', async () => {
     expect(api, name).toHaveProperty(name)
 })
 
-// The editors' Feel builds its sliders, its jump note and its controls from these (plan G, F3).
-test('the headless entry has every name the editors read for the hero', async () => {
-  const api = await import('#src/headless.ts')
-  for (const name of [
-    'MOVE_NUMBERS',
-    'moveNumbers',
-    'moveNumbersOf',
-    'DEFAULT_HERO_CONTROLS',
-    'tuningNumbers',
-    'usesMoves',
-    'stepMoves',
-    'MOVE_START',
-    'MOVE_EVENTS',
-    'Moves',
-    'Touching',
-    'RESERVED_KEYS',
-    'RESERVED_PAD',
-    'PAD_BUTTONS',
-    'PAD_STICKS',
-    'MAX_ACTIONS',
-  ])
-    expect(api, name).toHaveProperty(name)
-  // The types are checked by the compiler: this file fails to build if one is not exported.
-  const types: [MoveNumberInfo?, MoveNumbers?, MoveState?, MoveInput?, MoveSwitches?, MoveEventName?] = []
-  expect(types).toEqual([])
-})
-
 test("the server entry exports what a game's own server file needs", async () => {
   const api = await import('#src/server.ts')
   for (const name of ['createRoomServer', 'runRoomServer']) expect(api, name).toHaveProperty(name)
@@ -221,8 +182,7 @@ test('the page entry has the flow, the kit and the screens, and headless has onl
   const api = await import('#src/headless.ts')
   for (const name of ['startFlow', 'Button', 'Slider', 'ScreenFrame', 'menuScreen'])
     expect(api, name).not.toHaveProperty(name)
-  for (const name of ['levelOrder', 'nextLevel', 'scoreRef', 'fellEvent', 'usesFalls', 'gameSimPlugins'])
-    expect(api, name).toHaveProperty(name)
+  for (const name of ['levelOrder', 'nextLevel']) expect(api, name).toHaveProperty(name)
   const entry = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
   for (const name of ['startFlow', 'FLOW_EVENTS']) expect(entry, name).toContain(name)
   for (const path of ['features/screens/screens.ts', 'features/ui/ui.ts'])
@@ -234,36 +194,6 @@ test('the page entry has the flow, the kit and the screens, and headless has onl
   for (const name of ['Button', 'Slider', 'Toggle', 'List', 'KeyRow', 'Dialog', 'ScreenFrame'])
     expect(ui, name).toContain(name)
   expect(ui).toContain('UI_PROPERTIES')
-})
-
-// Scenes (slice 1): what an agent or an editor reads and writes a scene file, and its pictures, with.
-test('the headless entry has every name a scene file is read, written, painted and played with', async () => {
-  const api = await import('#src/headless.ts')
-  for (const name of [
-    'SceneSchema',
-    'PhotoSchema',
-    'paintScene',
-    'sceneSheet',
-    'materialTile',
-    'sceneFromLevel',
-    'listContent',
-    'groundColliders',
-    'slopeRuns',
-    'gapsUnder',
-    'covers',
-    'surfaceAt',
-    'GROUND_SHAPES',
-    'PHOTO_LIBRARY',
-    'photosUsed',
-    'worldSize',
-    'decodePng',
-    'atlasText',
-  ])
-    expect(api, name).toHaveProperty(name)
-  // The ground's pages and tiles need the page's renderer, so they are the browser entry's.
-  for (const name of ['groundPages', 'placedTiles']) expect(api, name).not.toHaveProperty(name)
-  const render = readFileSync(new URL('../src/features/render/render.ts', import.meta.url), 'utf8')
-  for (const name of ['groundPages', 'placedTiles']) expect(render, name).toContain(name)
 })
 
 test('the committed JSON Schemas are what the code produces', () => {

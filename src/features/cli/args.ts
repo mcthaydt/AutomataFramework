@@ -3,7 +3,7 @@
 // Ported in shape from AutomataFrameworkFailed@ed8592e8: packages/tools/src/app/cli.ts (one small file parses the
 // words; the work is in files a test runs with fakes).
 
-export type CommandName = 'create' | 'check' | 'play' | 'replay' | 'art' | 'add' | 'scene' | 'words' | 'mcp'
+export type CommandName = 'create' | 'check' | 'play' | 'replay' | 'art' | 'words' | 'mcp'
 
 /** The commands, in the order help lists them. One row per command in `cli.ts`'s table. */
 export const COMMAND_NAMES: readonly CommandName[] = [
@@ -12,8 +12,6 @@ export const COMMAND_NAMES: readonly CommandName[] = [
   'play',
   'replay',
   'art',
-  'add',
-  'scene',
   'words',
   'mcp',
 ]
@@ -28,10 +26,6 @@ export interface CommandInput {
   readonly lists: Readonly<Record<string, readonly string[]>>
   /** Words after the folder. */
   readonly rest: readonly string[]
-  /** For `scene`: what to do, the first word after it (`from-level`). */
-  readonly action?: string
-  /** For `scene from-level`: the level to move onto a scene. */
-  readonly level?: string
 }
 
 export type Parsed =
@@ -56,40 +50,11 @@ const FLAGS: Readonly<Record<CommandName, Flags>> = {
   play: { switches: ['no-open'], values: ['port'], lists: [] },
   replay: { switches: ['accept', 'state', 'json'], values: [], lists: [] },
   art: { switches: ['check', 'json'], values: [], lists: [] },
-  add: { switches: ['json'], values: ['type', 'path', 'about'], lists: [] },
-  scene: { switches: ['json'], values: ['as'], lists: [] },
   words: { switches: ['json'], values: [], lists: ['read'] },
   mcp: { switches: [], values: [], lists: [] },
 }
 
 const isCommand = (word: string): word is CommandName => (COMMAND_NAMES as readonly string[]).includes(word)
-
-/** What `automata scene` can do so far; later slices add `another`, `furnish` and `new`. */
-const SCENE_ACTIONS: readonly string[] = ['from-level']
-
-/** The whole command, for the sentences that say a word of it is missing. */
-export const SCENE_USAGE = 'automata scene from-level level-1'
-
-/** Reads `scene`'s words: the action, the level, then the folder. */
-function sceneInput(flags: CommandInput['flags'], words: readonly string[]): Parsed {
-  const [action, level, folder, ...rest] = words
-  if (action === undefined) return { problem: `automata scene needs an action, like: ${SCENE_USAGE}` }
-  if (!SCENE_ACTIONS.includes(action))
-    return {
-      problem: `automata scene does not know "${action}". What it can do is: ${SCENE_ACTIONS.join(', ')}, like: ${SCENE_USAGE}`,
-    }
-  if (level === undefined)
-    return { problem: `automata scene ${action} needs the level to move, like: ${SCENE_USAGE}` }
-  return {
-    command: 'scene',
-    flags,
-    lists: {},
-    rest,
-    action,
-    level,
-    ...(folder === undefined ? {} : { folder }),
-  }
-}
 
 const noCommand = (word: string): Parsed => ({
   problem: `There is no command called "${word}". Run automata --help to see the commands.`,
@@ -143,7 +108,6 @@ export function parseArgs(args: readonly string[]): Parsed {
       }
     }
   }
-  if (first === 'scene') return sceneInput(flags, words)
   const [folder, ...rest] = words
   return folder === undefined
     ? { command: first, flags, lists, rest }

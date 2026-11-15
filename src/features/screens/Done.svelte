@@ -4,12 +4,11 @@
   import { Button, ScreenFrame } from '../ui/ui.ts'
   import type { DoneProps } from './done.ts'
 
-  let { title, line, lines, notKept, buttons }: DoneProps = $props()
+  let { title, line, notKept, buttons }: DoneProps = $props()
 </script>
 
 <ScreenFrame {title}>
   <p class="line">{line}</p>
-  {#each lines as extra (extra)}<p class="line">{extra}</p>{/each}
   {#if notKept !== undefined}<p class="note" role="status">{notKept}</p>{/if}
   {#snippet actions()}
     {#each buttons as button (button.label)}

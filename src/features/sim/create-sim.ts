@@ -104,11 +104,6 @@ export interface Sim {
   entity(sid: number): EntityRef | undefined
   query(...components: ComponentDef[]): EntityRef[]
   resource<Z extends z.ZodType>(def: ResourceDef<Z>): z.output<Z>
-  /**
-   * A resource's value by its id, as a copy, or `undefined` for an id this sim has none of. For a page that knows only the
-   * id a game's file names (the score); it reads, and never writes, and changes no hash.
-   */
-  read(resourceId: string): unknown
   /** Canonical snapshot v1 bytes. */
   snapshot(): Uint8Array
   /** Replaces the whole state. Throws SnapshotFormatError / SnapshotMismatchError and leaves the sim unchanged. */
@@ -447,10 +442,6 @@ export async function createSim(opts: SimOptions): Promise<Sim> {
     resource: (def) => {
       refuseIfDisposed()
       return resourceOf(def)
-    },
-    read: (resourceId) => {
-      refuseIfDisposed()
-      return resources.has(resourceId) ? structuredClone(resources.get(resourceId)) : undefined
     },
     snapshot() {
       refuseIfFaulted()

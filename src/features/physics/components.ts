@@ -77,13 +77,3 @@ export const Touching: ComponentDef<typeof touchingFields> = defineComponent(
   touchingFields,
   { render: false },
 )
-
-const groundFields = { nx: 'f32', ny: 'f32' } as const
-/**
- * The normal of the ground a body stands on: (0, -1) on flat ground and in the air, and leaning sideways on a slope. The
- * built-in hero walks along it. Not drawn. Only a sim made with `physics({ touching: true, slopes: true })` has it, and
- * only an entity given it (beside its `Touching`) is filled in, in sync-out.
- */
-export const Ground: ComponentDef<typeof groundFields> = defineComponent('physics.ground', groundFields, {
-  render: false,
-})

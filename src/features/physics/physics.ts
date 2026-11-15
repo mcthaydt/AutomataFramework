@@ -1,12 +1,12 @@
 // Lifted from AutomataFrameworkFailed@ed8592e8: extensions/physics/src/features/2d/physics-2d.ts
 // The physics feature's entry: the plugin, and everything another feature may use of it. Game code never imports Rapier.
 import { definePlugin, type PluginDef } from '../sim/sim.ts'
-import { Body, Collider, Ground, Joint, Touching, Transform } from './components.ts'
+import { Body, Collider, Joint, Touching, Transform } from './components.ts'
 import { CollisionEnded, CollisionStarted } from './events.ts'
 import { PhysicsWorld } from './physics-world.ts'
 import { eventsSystem, stepSystem, syncInSystem, syncOutSystem } from './systems.ts'
 
-export { Body, Collider, Ground, Joint, Touching, Transform } from './components.ts'
+export { Body, Collider, Joint, Touching, Transform } from './components.ts'
 export { CollisionEnded, CollisionStarted } from './events.ts'
 export { BodyKind, type ColliderOptions, JointKind, ShapeKind } from './kinds.ts'
 export { body, collider, joint, transform } from './spawn.ts'
@@ -28,11 +28,6 @@ export interface PhysicsOptions {
    * entity that has one. Left out, the sim is exactly as it was before the component existed.
    */
   readonly touching?: boolean
-  /**
-   * Adds the `Ground` component, filled beside `Touching` with the normal of what a body stands on, for each entity that
-   * has both. Needs `touching`. Left out, the sim is exactly as it was before the component existed.
-   */
-  readonly slopes?: boolean
 }
 
 /**
@@ -51,7 +46,6 @@ export function physics(options: PhysicsOptions = {}): PluginDef {
       gravity,
       ...(options.joints ? { joints: true } : {}),
       ...(options.touching ? { touching: true } : {}),
-      ...(options.touching && options.slopes ? { slopes: true } : {}),
     },
     components: [
       Transform,
@@ -59,7 +53,6 @@ export function physics(options: PhysicsOptions = {}): PluginDef {
       Collider,
       ...(options.joints ? [Joint] : []),
       ...(options.touching ? [Touching] : []),
-      ...(options.touching && options.slopes ? [Ground] : []),
     ],
     events: [CollisionStarted, CollisionEnded],
     systems: [syncInSystem, stepSystem, syncOutSystem, eventsSystem],
@@ -68,7 +61,6 @@ export function physics(options: PhysicsOptions = {}): PluginDef {
       return new PhysicsWorld(await createRapier({ gravity, dt }), {
         joints: options.joints === true,
         touching: options.touching === true,
-        slopes: options.touching === true && options.slopes === true,
       })
     },
   })

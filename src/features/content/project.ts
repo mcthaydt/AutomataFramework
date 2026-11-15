@@ -43,10 +43,6 @@ export interface Project {
   readonly levels?: readonly string[] | undefined
   /** The event that ends a level, like `door.touched`. Left out, a level ends only when the game's code says so. */
   readonly done?: string | undefined
-  /** The event that loses a level, like `hero.fell`. Left out, a level cannot be lost. */
-  readonly lost?: string | undefined
-  /** The number the game counts: a resource and one of its fields, like `hero.score.sparks`. Left out, no score. */
-  readonly score?: string | undefined
   /** What a player is told before they play: keys in the game's own words, like `warning.flashing`. */
   readonly warnings?: readonly string[] | undefined
   /** The figure shown on the splash, by its id. Left out, the splash is the game's name. */
@@ -54,8 +50,7 @@ export interface Project {
   readonly content: readonly ContentRef[]
 }
 
-/** What to say for a path that does not stay inside the game. */
-export const PATH_HINT = 'Use a path inside the game, like content/levels/level-1.json.'
+const PATH_HINT = 'Use a path inside the game, like content/levels/level-1.json.'
 
 /** Every kind in the table: `z.enum` wants a non-empty list, and the table always has rows. */
 const KINDS = Object.keys(CONTENT_TYPES) as [ContentType, ...ContentType[]]
@@ -66,15 +61,6 @@ const PLAYERS_HINT =
 const SOURCE_HINT = `Write one of ${languageCodes}, like source = "es".`
 
 const DONE_HINT = 'Write the event that ends a level, like done = "door.touched".'
-
-const LOST_HINT = 'Write the event that loses a level, like lost = "hero.fell".'
-
-const SCORE_HINT = 'Write a resource and one of its numbers, like score = "hero.score.sparks".'
-
-/** A resource and one of its fields, joined by a dot: at least one dot, in the words event names use. */
-function isScoreName(text: unknown): boolean {
-  return typeof text === 'string' && text.length <= 96 && WORDS_PATTERN.test(text) && text.includes('.')
-}
 
 const ref = z.strictObject({
   type: z.enum(KINDS),
@@ -101,24 +87,11 @@ export const ProjectSchema: z.ZodType<Project, Project> = z
         DONE_HINT,
       )
       .optional(),
-    lost: z
-      .custom<string>(
-        (text) => typeof text === 'string' && text.length <= 96 && WORDS_PATTERN.test(text),
-        LOST_HINT,
-      )
-      .optional(),
-    score: z.custom<string>(isScoreName, SCORE_HINT).optional(),
     warnings: z.array(MessageKey).min(1).max(8).optional(),
     splash: Id.optional(),
     content: z.array(ref).max(1024),
   })
   .superRefine((project, ctx) => {
-    if (project.lost !== undefined && project.lost === project.done)
-      ctx.addIssue({
-        code: 'custom',
-        path: ['lost'],
-        message: 'A level cannot be won and lost by the same event. Change lost or done.',
-      })
     for (const [field, noun] of [
       ['levels', 'level'],
       ['warnings', 'warning'],
@@ -156,19 +129,6 @@ export function nextLevel(project: Project, level: string): string | undefined {
   const order = levelOrder(project)
   const at = order.indexOf(level)
   return at < 0 ? undefined : order[at + 1]
-}
-
-/**
- * `score` as its two halves: the resource and the field of it that is counted. The last dot splits them, so a
- * resource id may hold dots (`hero.score`). `undefined` when the project names no score.
- */
-export function scoreRef(
-  project: Project,
-): { readonly resource: string; readonly field: string } | undefined {
-  const { score } = project
-  if (score === undefined) return undefined
-  const at = score.lastIndexOf('.')
-  return { resource: score.slice(0, at), field: score.slice(at + 1) }
 }
 
 const VOICE: Voice = {

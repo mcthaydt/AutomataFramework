@@ -11,8 +11,6 @@ import { readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
-import { loadSceneGame } from '../../fixtures/scene-game/game.ts'
-import { readSceneGame } from '../../fixtures/scene-game/read.ts'
 import golden from '../../golden/push-crate.json' with { type: 'json' }
 
 // Koota allows 16 live worlds in a process, so every sim a test makes is disposed when it ends.
@@ -229,97 +227,7 @@ test('each of the four alone is taken out, and a game that writes only one still
   }
 })
 
-test('lost and score never reach the sim: the content hash is the same with and without them', async () => {
-  const plain = await loadFixtureGame()
-  // A `lost` that is not `hero.fell`: that one joins the fall plugin, which is a sim of its own.
-  const named = withProject(plain, { lost: 'hero.drowned', score: 'hero.score.sparks' })
-  const given = simContent(named)
-  for (const key of ['lost', 'score']) expect(given.project).not.toHaveProperty(key)
-  expect(given).not.toBe(plain)
-  expect(given).toEqual(plain)
-  const [without, withBoth] = [
-    await createGameSim({ content: plain }),
-    await createGameSim({ content: named }),
-  ]
-  made.push(without, withBoth)
-  expect(withBoth.contentHash).toBe(without.contentHash)
-  expect(withBoth.hash()).toBe(without.hash())
-})
-
 test('a game with none of them is handed back as the very same object', async () => {
   const plain = await loadFixtureGame()
   expect(simContent(plain)).toBe(plain)
-})
-
-/** The parts of the meadow scene's JSON these tests change. */
-interface SceneJson {
-  seed: number
-  sky: string
-  tile: number
-  paints: { color: string }[]
-  ground: { rows: string[]; letters: { shape: string }[] }
-}
-
-/** The scene game with the meadow scene's JSON changed by `change`. */
-async function sceneGameWith(change: (scene: SceneJson) => void): Promise<GameContent> {
-  const scene = JSON.parse(await readSceneGame()('content/scenes/meadow.json')) as SceneJson
-  change(scene)
-  return loadSceneGame({ 'content/scenes/meadow.json': `${JSON.stringify(scene, null, 2)}\n` })
-}
-
-test('a scene the sim is given is cut down to its size and ground, and a photo is left out', async () => {
-  const content = await loadSceneGame()
-  const given = simContent(content)
-  expect(given.photos).toBeUndefined()
-  expect(Object.keys(given.scenes?.meadow ?? {}).sort()).toEqual(['format', 'ground', 'id', 'size'])
-  const ground = given.scenes?.meadow?.ground
-  expect(Object.keys(ground ?? {}).sort()).toEqual(['color', 'letters', 'rows'])
-  expect(Object.keys(ground?.letters[0] ?? {}).sort()).toEqual(['letter', 'shape'])
-  expect(given.project.content.some((entry) => entry.type === 'photo')).toBe(false)
-  expect(given.project.content.some((entry) => entry.type === 'scene')).toBe(true)
-})
-
-test("a scene's paint, material, seed, sky and tile move no hash, and a row or a shape moves it", async () => {
-  const base = (await simOf(await loadSceneGame())).contentHash
-  const same = async (change: (scene: SceneJson) => void): Promise<string> =>
-    (await simOf(await sceneGameWith(change))).contentHash
-  expect(
-    await same((scene) => {
-      scene.seed = 99
-    }),
-  ).toBe(base)
-  expect(
-    await same((scene) => {
-      scene.sky = '#000000'
-    }),
-  ).toBe(base)
-  expect(
-    await same((scene) => {
-      const [paint] = scene.paints
-      if (paint !== undefined) paint.color = '#010203'
-    }),
-  ).toBe(base)
-  expect(
-    await same((scene) => {
-      scene.tile = 32
-    }),
-  ).toBe(base)
-  expect(
-    await same((scene) => {
-      const row = scene.ground.rows[0] as string
-      scene.ground.rows[0] = `G${row.slice(1)}`
-    }),
-  ).not.toBe(base)
-  expect(
-    await same((scene) => {
-      const ledge = scene.ground.letters.find((l) => l.shape === 'ledge')
-      if (ledge !== undefined) ledge.shape = 'back'
-    }),
-  ).not.toBe(base)
-})
-
-test('a game with no scene and no photo is given back as it is', async () => {
-  const game = await loadFixtureGame()
-  expect(game.scenes).toBeUndefined()
-  expect(simContent(game)).toBe(game)
 })

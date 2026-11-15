@@ -23,55 +23,14 @@ const COLLISION_TYPES =
   RAPIER.ActiveCollisionTypes.KINEMATIC_FIXED |
   RAPIER.ActiveCollisionTypes.KINEMATIC_KINEMATIC
 
-/** How fast, in tiles a second, a body must be moving up for a ledge to let it through. A resting body's solver jitter is far under it. */
-const LEDGE_RISE = 0.5
-
-/** How far above a ledge's top the lowest point of something may be, in metres, and still stand on it. */
-const LEDGE_SLOP = 0.05
-
-/** How far, in tiles, a slope's high corner is let down below its box's top. */
-const SLOPE_SINK = 0.005
-/** How far, in tiles, a slope's line is carried on past its foot, under the ground. */
-const SLOPE_SKIRT = 0.1
-
-/**
- * The three corners of a slope's triangle about its box's centre: its high corner, and its two bottom ones. A triangle
- * that stopped exactly at the box would have a corner on the floor at its foot and one on the plateau's edge at its top,
- * and a body sliding along either surface would meet a corner with nothing to tell the contact which way to push (Rapier
- * takes a corner on a face as a wall and the body stops dead). So the line goes on past its foot, under the ground, and
- * the high corner is a hair under the surface it meets, which is a step too small to feel and one the contact can read.
- */
-function slopeCorners(hx: number, hy: number, rises: 1 | -1): [number, number][] {
-  const apex = -hy + SLOPE_SINK
-  // How far the line falls over the skirt's run.
-  const drop = (SLOPE_SKIRT * (hy - apex)) / (2 * hx)
-  const side = rises === 1 ? 1 : -1
-  return [
-    [-side * (hx + SLOPE_SKIRT), hy + drop],
-    [side * hx, hy + drop],
-    [side * hx, apex],
-  ]
-}
-
 function colliderDesc(entity: EntityRef): RAPIER.ColliderDesc {
   const c = entity.get(Collider)
-  let desc: RAPIER.ColliderDesc | null
-  if (c.shape === ShapeKind.ball) desc = RAPIER.ColliderDesc.ball(c.hx)
-  else if (c.shape === ShapeKind.cuboid || c.shape === ShapeKind.ledge)
-    desc = RAPIER.ColliderDesc.cuboid(c.hx, c.hy)
-  else if (c.shape === ShapeKind.capsule) desc = RAPIER.ColliderDesc.capsule(c.hy, c.hx)
-  else {
-    desc = RAPIER.ColliderDesc.convexHull(
-      new Float32Array(slopeCorners(c.hx, c.hy, c.shape === ShapeKind.slopeUp ? 1 : -1).flat()),
-    )
-    // Never a silent box: a triangle Rapier cannot make a shape of is the author's to see.
-    if (desc === null)
-      throw new Error(
-        `entity ${entity.sid}: physics.collider is a slope ${c.hx * 2} by ${c.hy * 2} that Rapier cannot shape`,
-      )
-  }
-  // A ledge is told about every contact it makes, so `holds` can say whether it holds what touches it.
-  if (c.shape === ShapeKind.ledge) desc.setActiveHooks(RAPIER.ActiveHooks.FILTER_CONTACT_PAIRS)
+  const desc =
+    c.shape === ShapeKind.ball
+      ? RAPIER.ColliderDesc.ball(c.hx)
+      : c.shape === ShapeKind.cuboid
+        ? RAPIER.ColliderDesc.cuboid(c.hx, c.hy)
+        : RAPIER.ColliderDesc.capsule(c.hy, c.hx)
   return desc
     .setSensor(c.sensor)
     .setCollisionGroups(c.groups)
@@ -79,76 +38,6 @@ function colliderDesc(entity: EntityRef): RAPIER.ColliderDesc {
     .setRestitution(c.restitution)
     .setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS)
     .setActiveCollisionTypes(COLLISION_TYPES)
-}
-
-/** True when the collider carries the flag that makes Rapier ask about each of its contacts: a ledge. */
-const isLedge = (collider: RAPIER.Collider): boolean =>
-  (collider.activeHooks() & RAPIER.ActiveHooks.FILTER_CONTACT_PAIRS) !== 0
-
-/** How far a collider reaches below its centre, in metres, upright; undefined for a shape this does not measure. */
-function reachBelow(collider: RAPIER.Collider): number | undefined {
-  switch (collider.shapeType()) {
-    case RAPIER.ShapeType.Ball:
-      return collider.radius()
-    case RAPIER.ShapeType.Cuboid:
-      return (collider.halfExtents() as RAPIER.Vector).y
-    case RAPIER.ShapeType.Capsule:
-      return collider.halfHeight() + collider.radius()
-    default:
-      return undefined
-  }
-}
-
-/**
- * Whether `ledge` holds `other` now: only when `other` is not moving up and its lowest point is at or above the
- * ledge's top (less `LEDGE_SLOP`). A thing rising through it, or standing below it, passes. The lowest point is read
- * upright, so a turned box is judged by its upright one; a hero never turns, and slice 1 accepts that for the rest.
- * Reads the world, so never inside a step: during one Rapier has the world borrowed, and `ledgeFacts` is read before.
- */
-function holds(world: World, ledge: RAPIER.Collider, other: RAPIER.Collider): boolean {
-  const parent = world.colliders.raw.coParent(other.handle)
-  const reach = reachBelow(other)
-  // Something this cannot judge (no body, a shape it does not measure) is held as any ground holds it.
-  if (parent === undefined || reach === undefined) return true
-  if (world.getRigidBody(parent).linvel().y < -LEDGE_RISE) return false
-  const top = ledge.translation().y - (ledge.halfExtents() as RAPIER.Vector).y
-  return other.translation().y + reach <= top + LEDGE_SLOP
-}
-
-/**
- * What the contact hook knows of a step, read before it starts (Rapier has the world borrowed while it runs, so the hook
- * can read nothing from it): each ledge's top, and for everything else that can move, the height of its lowest point,
- * which is infinite for a thing moving up (no ledge holds it) and minus infinite for one this cannot judge (every ledge
- * holds it). Positions are those the step begins with, the lowest point of something that falls being where it was a tick
- * ago. Empty when the world has no ledge.
- */
-interface LedgeFacts {
-  readonly tops: Map<number, number>
-  readonly lows: Map<number, number>
-}
-
-function ledgeFacts(world: World, dt: number): LedgeFacts {
-  const tops = new Map<number, number>()
-  const lows = new Map<number, number>()
-  world.forEachCollider((collider) => {
-    if (isLedge(collider))
-      tops.set(collider.handle, collider.translation().y - (collider.halfExtents() as RAPIER.Vector).y)
-  })
-  if (tops.size === 0) return { tops, lows }
-  world.forEachCollider((collider) => {
-    if (isLedge(collider)) return
-    const parent = world.colliders.raw.coParent(collider.handle)
-    if (parent === undefined || world.getRigidBody(parent).isFixed()) return
-    const reach = reachBelow(collider)
-    const fall = world.getRigidBody(parent).linvel().y
-    if (reach === undefined) lows.set(collider.handle, Number.NEGATIVE_INFINITY)
-    else if (fall < -LEDGE_RISE) lows.set(collider.handle, Number.POSITIVE_INFINITY)
-    // Rapier finds a contact only once the two overlap, so a thing falling faster than a tick's `LEDGE_SLOP` is first
-    // felt when it is already a tick's fall inside. It is judged by where its lowest point was a tick ago, so that the
-    // tick that finds the contact is one the ledge holds, however fast it falls.
-    else lows.set(collider.handle, collider.translation().y + reach - Math.max(0, fall) * dt)
-  })
-  return { tops, lows }
 }
 
 export async function createRapier(setup: {
@@ -168,21 +57,6 @@ export async function createRapier(setup: {
   // case this misses is `fixedRotation` edited after the last sync-in and before the snapshot; that edit is then lost
   // for the restored sim until it is edited again.
   const rotationLocked = new Map<number, boolean>()
-  // What the contact hook knows of the step under way: Rapier hands it two collider handles and nothing else, and has the
-  // world borrowed while it runs, so the facts are read before the step. The flag a ledge carries is in the world and its
-  // snapshot, so no handle outlives a step and a restored world needs nothing.
-  let facts: LedgeFacts = { tops: new Map(), lows: new Map() }
-  const hooks: RAPIER.PhysicsHooks = {
-    filterContactPair(first, second) {
-      const [ledge, other] = facts.tops.has(first) ? [first, second] : [second, first]
-      const top = facts.tops.get(ledge)
-      const low = facts.lows.get(other)
-      // Not a ledge against something that moves: held as any ground holds.
-      if (top === undefined || low === undefined) return RAPIER.SolverFlags.COMPUTE_IMPULSE
-      return low <= top + LEDGE_SLOP ? RAPIER.SolverFlags.COMPUTE_IMPULSE : RAPIER.SolverFlags.EMPTY
-    },
-    filterIntersectionPair: () => true,
-  }
   const adapter: PhysicsAdapter<World> = {
     Transform,
     RigidBody: Body,
@@ -199,8 +73,7 @@ export async function createRapier(setup: {
     restoreWorld: (bytes) => RAPIER.World.restoreSnapshot(bytes),
     takeSnapshot: (world) => world.takeSnapshot(),
     step(world, onCollision) {
-      facts = ledgeFacts(world, setup.dt)
-      world.step(queue, hooks)
+      world.step(queue)
       queue.drainCollisionEvents(onCollision)
     },
     free(world) {
@@ -329,25 +202,12 @@ export async function createRapier(setup: {
     colliderMatches(world, handle, entity) {
       const collider = world.getCollider(handle)
       const c = entity.get(Collider)
-      const slope = c.shape === ShapeKind.slopeUp || c.shape === ShapeKind.slopeDown
-      // Our slope and ledge codes are not Rapier's: a slope is a convex polygon, and a ledge a box that Rapier asks about.
-      const boxLike = c.shape === ShapeKind.ledge ? ShapeKind.cuboid : c.shape
-      const shape = slope ? RAPIER.ShapeType.ConvexPolygon : boxLike
-      if (collider.shapeType() !== (shape as number)) return false
-      if (isLedge(collider) !== (c.shape === ShapeKind.ledge)) return false
+      if (collider.shapeType() !== (c.shape as number)) return false
       let sizeMatches: boolean
       if (c.shape === ShapeKind.ball) sizeMatches = collider.radius() === c.hx
-      else if (c.shape === ShapeKind.cuboid || c.shape === ShapeKind.ledge) {
+      else if (c.shape === ShapeKind.cuboid) {
         const h = collider.halfExtents() as RAPIER.Vector
         sizeMatches = h.x === c.hx && h.y === c.hy
-      } else if (slope) {
-        // A hull may start at any of its corners, so the three are compared as a set.
-        const vertices = collider.vertices()
-        sizeMatches =
-          vertices.length === 6 &&
-          slopeCorners(c.hx, c.hy, c.shape === ShapeKind.slopeUp ? 1 : -1).every(([x, y]) =>
-            [0, 2, 4].some((i) => vertices[i] === x && vertices[i + 1] === y),
-          )
       } else sizeMatches = collider.radius() === c.hx && collider.halfHeight() === c.hy
       return (
         sizeMatches &&
@@ -410,10 +270,7 @@ export async function createRapier(setup: {
         others.push(other)
       })
       for (const other of others) {
-        const theirs = world.getCollider(other)
-        if (theirs.isSensor()) continue
-        // A ledge that lets this body pass makes no contact it stands on or leans on.
-        if (isLedge(theirs) && !holds(world, theirs, mine)) continue
+        if (world.getCollider(other).isSensor()) continue
         const parent = world.colliders.raw.coParent(other)
         // A wall is something that does not move, so a kinematic platform's side is not one: only a fixed body, or a
         // collider with no body at all, is. A body that moves (dynamic or kinematic) is still ground under a foot.

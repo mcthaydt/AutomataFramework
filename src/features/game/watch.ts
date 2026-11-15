@@ -7,7 +7,7 @@
 // because then the commands mean something else.
 import type { Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
-import { createGameSim, type GameSimOptions, skyOf, worldSize } from '../level/level.ts'
+import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Command, Sim } from '../sim/sim.ts'
 import { levelArt } from './art.ts'
@@ -70,8 +70,6 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
     ...(options.level === undefined ? {} : { level: options.level }),
     ...(options.players === undefined ? {} : { players: options.players }),
     ...(options.gravity === undefined ? {} : { gravity: options.gravity }),
-    // A recording made by a tunable game holds `tune` commands, which only a tunable sim reads (see `startGame`).
-    ...(replay.meta.tunable === 'true' ? { tunable: true } : {}),
   })
   // The tick rate is the sim's, not an option, so it can only be compared once the sim exists.
   const mismatch =
@@ -103,8 +101,8 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
     }
     const renderer = await createRenderer({
       mount,
-      world: worldSize(options.content, level),
-      sky: skyOf(options.content, level),
+      world: levelSize(level),
+      sky: skyOf(level),
       art,
       view: level.view,
     })

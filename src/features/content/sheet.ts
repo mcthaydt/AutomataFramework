@@ -4,18 +4,12 @@
 // renderer never learn which painter ran.
 import type { BackdropFile } from './backdrop.ts'
 import type { FigureFile } from './figure.ts'
-import type { SceneFile } from './scene.ts'
 
 /** How many pictures go in a row of a figure's sheet. */
 export const SHEET_COLUMNS = 8
 
 /** The most pixels wide or tall a painted picture may be. */
 export const MAX_PICTURE_SIDE = 2048
-
-/** How many tiles wide one page of a scene's ground is: as many as fit in a picture, `floor(MAX_PICTURE_SIDE / tile)`. */
-export function groundPageTiles(tile: number): number {
-  return Math.floor(MAX_PICTURE_SIDE / tile)
-}
 
 /** One picture in a sheet: its name and the box it fills, in pixels from the sheet's top left corner. */
 export interface Frame {
@@ -69,24 +63,6 @@ export function backdropSheet(backdrop: BackdropFile): Sheet {
   return { w, h: y, frames }
 }
 
-/**
- * The frames of a scene's ground: its pages, `ground/0` first, each `size.h * tile` tall and as wide as `groundPageTiles`
- * allows, stacked top to bottom. The last page is as wide as the tiles it has left.
- */
-export function sceneSheet(scene: SceneFile): Sheet {
-  const perPage = groundPageTiles(scene.tile)
-  const pages = Math.ceil(scene.size.w / perPage)
-  const tall = scene.size.h * scene.tile
-  const frames = Array.from({ length: pages }, (_, page) => ({
-    name: `ground/${page}`,
-    x: 0,
-    y: page * tall,
-    w: Math.min(perPage, scene.size.w - page * perPage) * scene.tile,
-    h: tall,
-  }))
-  return { w: Math.min(perPage, scene.size.w) * scene.tile, h: pages * tall, frames }
-}
-
 /** A box in a picture, in pixels. */
 interface Box {
   readonly x: number
@@ -110,9 +86,4 @@ export function atlasOf(sheet: Sheet, image: string): Atlas {
   const frames: Record<string, { frame: Box }> = {}
   for (const f of sheet.frames) frames[f.name] = { frame: { x: f.x, y: f.y, w: f.w, h: f.h } }
   return { frames, meta: { image, size: { w: sheet.w, h: sheet.h }, scale: '1' } }
-}
-
-/** The text of an atlas file: the atlas as JSON, two spaces to a level, and a newline at the end. */
-export function atlasText(sheet: Sheet, image: string): string {
-  return `${JSON.stringify(atlasOf(sheet, image), null, 2)}\n`
 }

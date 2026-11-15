@@ -4,7 +4,6 @@
 import { Cause, Effect, Layer } from 'effect'
 import { languageName } from '../content/content.ts'
 import { FRAMEWORK_VERSION } from '../sim/sim.ts'
-import { ADD_USAGE, describeAdd, runAdd } from './add.ts'
 import { type CommandInput, type CommandName, parseArgs } from './args.ts'
 import { describeArt, runArt } from './art.ts'
 import { runCheck } from './check.ts'
@@ -16,7 +15,6 @@ import { runPlay } from './play.ts'
 import { CliError, Out, type OutService, type Ports } from './ports.ts'
 import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
-import { describeScene, runSceneFromLevel } from './scene.ts'
 import { printToStderr } from './stderr.ts'
 import { describeWords, runWords } from './unread.ts'
 
@@ -67,53 +65,6 @@ const art: Command = (input) =>
     if (input.flags.json === true) yield* out.line(JSON.stringify(report, null, 2))
     else {
       const said = describeArt(report, check)
-      for (const line of said.out) yield* out.line(line)
-      for (const line of said.err) yield* out.error(line)
-    }
-    return report.ok ? 0 : 1
-  })
-
-/** `automata add`: a new content file listed in `automata.toml`, as words or as JSON. */
-const add: Command = (input) =>
-  Effect.gen(function* () {
-    const out = yield* Out
-    const { type, path, about, json } = input.flags
-    if (typeof type !== 'string' || typeof path !== 'string')
-      return yield* Effect.fail(
-        new CliError(
-          `Say what to add and where it is, like this: ${ADD_USAGE}. --type is the kind of file, --path is where it is.`,
-        ),
-      )
-    const options = {
-      folder: input.folder ?? '.',
-      type,
-      path,
-      ...(typeof about === 'string' ? { about } : {}),
-    }
-    const report = yield* runAdd(options)
-    if (json === true) yield* out.line(JSON.stringify(report, null, 2))
-    else {
-      const said = describeAdd(report, options)
-      for (const line of said.out) yield* out.line(line)
-      for (const line of said.err) yield* out.error(line)
-    }
-    return report.ok ? 0 : 1
-  })
-
-/** `automata scene from-level`: a level's ground moved onto a scene file, as words or as JSON. */
-const scene: Command = (input) =>
-  Effect.gen(function* () {
-    const out = yield* Out
-    const { as, json } = input.flags
-    const options = {
-      folder: input.folder ?? '.',
-      level: input.level ?? '',
-      ...(typeof as === 'string' ? { as } : {}),
-    }
-    const report = yield* runSceneFromLevel(options)
-    if (json === true) yield* out.line(JSON.stringify(report, null, 2))
-    else {
-      const said = describeScene(report, options)
       for (const line of said.out) yield* out.line(line)
       for (const line of said.err) yield* out.error(line)
     }
@@ -199,8 +150,6 @@ const COMMANDS: Readonly<Record<CommandName, Command>> = {
   play,
   replay,
   art,
-  add,
-  scene,
   words,
   mcp,
 }

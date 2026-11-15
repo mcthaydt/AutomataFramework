@@ -146,7 +146,6 @@ src/features/<feature>/       <feature>.ts entry, <part>.ts one job per file, li
 scripts/                      thin CLI wrappers
 template/                     the game `automata create` writes: a real game folder; `template/replays/level-1.json` is a golden
 skills/                       the skills an agent reads to work on a game (shipped in the package)
-photos/                       the 38 CC0 photos a scene's materials are made from (shipped in the package; records in `src/features/content/library/photos.json`)
 tests/architecture.test.ts    imports go down, no cycles, no tests in src
 tests/features/<feature>/     mirrors src/features
 tests/lib/                    tests of src/lib

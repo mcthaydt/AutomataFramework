@@ -9,7 +9,7 @@ import { frameworkWords } from '#src/features/locale/locale.ts'
 import { createSaves } from '#src/features/saves/saves.ts'
 import { SPLASH_MS } from '#src/features/screens/screens.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
-import { focusedName, ticks, walkByKey } from '../../fixtures/flow/page.ts'
+import { focusedName, ticks } from '../../fixtures/flow/page.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import { keepDrawing } from '../../fixtures/ui/drawing.ts'
 
@@ -102,11 +102,6 @@ test.each(SCREENS)(
     await drive.shown('paused')
     await drive.wait(es('automata.pause.resume'))
     await look(size, 'pause', 1)
-    await drive.press(es('automata.menu.how'))
-    await expect.poll(() => drive.mount.querySelector('[data-screen="how"]')).not.toBeNull()
-    await look(size, 'how', 1)
-    await drive.press(es('automata.back'))
-    await drive.wait(es('automata.pause.resume'))
     await drive.press(es('automata.pause.resume'))
     await drive.shown('playing')
     drive.flow()?.finishLevel()
@@ -116,30 +111,6 @@ test.each(SCREENS)(
     await look(size, 'done', 1)
   },
 )
-
-test('the loading bar, the start card and the lost screen are whole at every size', async () => {
-  for (const [size, w, h] of SCREENS) {
-    await page.viewport(w, h)
-    // Loading: a read that never answers, so the bar is what is on the page.
-    await drive.open({ read: () => new Promise<string>(() => {}) })
-    expect(drive.mount.querySelector('[role="progressbar"]')).not.toBeNull()
-    await look(size, 'loading')
-    drive.leave()
-    // The start card over a level that is waiting, then the lost screen.
-    await drive.toMenu({ game: { noWarning: true, start: 'level-pit' } })
-    await drive.press(es('automata.menu.play'))
-    await drive.shown('playing')
-    drive.frames.at(0)
-    ticks(drive, 5)
-    await expect.poll(() => drive.mount.querySelector('.card')).not.toBeNull()
-    await look(size, 'start-card')
-    walkByKey(drive)
-    await drive.shown('lost')
-    await drive.wait(es('automata.lost.again'))
-    await look(size, 'lost', 1)
-    drive.leave()
-  }
-})
 
 test('a game that cannot be read shows its problem whole at every size', async () => {
   for (const [size, w, h] of SCREENS) {
