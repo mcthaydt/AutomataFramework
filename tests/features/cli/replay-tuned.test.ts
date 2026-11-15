@@ -55,7 +55,9 @@ test('a recording whose meta says tunable verifies, with its tune command played
   const { code, out } = await run(text)
   expect(code).toBe(0)
   expect(out).toHaveLength(1)
-  expect(out[0]).toMatch(/^replays\/level-1\.json: Played 120 ticks and ended on [0-9a-f]{16}, as recorded\.$/)
+  expect(out[0]).toMatch(
+    /^replays\/level-1\.json: Played 120 ticks and ended on [0-9a-f]{16}, as recorded\.$/,
+  )
 })
 
 test('the same recording without the key does not verify', async () => {
