@@ -1,7 +1,7 @@
 // The content feature: every kind of content file, read into values with plain problems and written one way.
 // Nothing here touches a file; callers hand in text and take text back.
 
-export { type ArtFile, artFiles, artProblems, paintedPath } from './art.ts'
+export { type ArtFile, artFiles, artProblems, paintedPath, photosUsed } from './art.ts'
 export {
   type BackdropFile,
   type BackdropLayer,
@@ -96,7 +96,10 @@ export {
 } from './music.ts'
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
+export { MissingPhotoError, paintScene } from './paint-scene.ts'
 export { type Parsed, parseContent } from './parse.ts'
+export { MAX_PHOTO_SIDE, type PhotoFile, PhotoSchema, photoPictureProblem } from './photo.ts'
+export { PHOTO_LIBRARY, type PhotoPixels, type PhotoRecord, type Photos } from './photo-library.ts'
 export {
   type ContentRef,
   levelOrder,
@@ -118,13 +121,44 @@ export {
   writeReadMarks,
 } from './read-marks.ts'
 export {
+  type FlatMaterial,
+  type MaterialTop,
+  type PhotoMaterial,
+  type SceneFile,
+  type SceneGround,
+  type SceneLetter,
+  type SceneMaterial,
+  type ScenePaint,
+  SceneSchema,
+  type TilesMaterial,
+} from './scene.ts'
+export { sceneFromLevel } from './scene-from-level.ts'
+export {
+  covers,
+  GROUND_SHAPES,
+  type GroundGrid,
+  type GroundShape,
+  gapsUnder,
+  LEDGE_DEEP,
+  lineAt,
+  runBottom,
+  runTop,
+  type SlopeRun,
+  shapesOf,
+  slopeRuns,
+  surfaceAt,
+} from './scene-ground.ts'
+export {
   type Atlas,
   atlasOf,
+  atlasText,
   backdropSheet,
   type Frame,
   figureSheet,
+  groundPageTiles,
   SHEET_COLUMNS,
   type Sheet,
+  sceneSheet,
 } from './sheet.ts'
 export {
   type NoiseVoice,

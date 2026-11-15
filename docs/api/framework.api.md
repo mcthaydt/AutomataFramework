@@ -99,13 +99,13 @@ interface ArtFile {
 ### `artFiles` (function)
 
 ```ts
-function artFiles(content: GameContent): ArtFile[];
+function artFiles(content: GameContent, photos?: Photos): ArtFile[];
 ```
 
 ### `artProblems` (function)
 
 ```ts
-function artProblems(content: GameContent, read: (path: string) => Promise<Uint8Array | undefined>): Promise<Diagnostic[]>;
+function artProblems(content: GameContent, read: (path: string) => Promise<Uint8Array | undefined>, photos?: Photos): Promise<Diagnostic[]>;
 ```
 
 ### `atan` (function)
@@ -142,6 +142,12 @@ interface Atlas {
 
 ```ts
 function atlasOf(sheet: Sheet, image: string): Atlas;
+```
+
+### `atlasText` (function)
+
+```ts
+function atlasText(sheet: Sheet, image: string): string;
 ```
 
 ### `BackdropFile` (interface)
@@ -502,6 +508,8 @@ const CONTENT_TYPES: {
     readonly figure: ContentTypeInfo<FigureFile, FigureFile>;
     readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
     readonly backdrop: ContentTypeInfo<BackdropFile, BackdropFile>;
+    readonly scene: ContentTypeInfo<SceneFile, SceneFile>;
+    readonly photo: ContentTypeInfo<PhotoFile, PhotoFile>;
     readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
     readonly tuning: ContentTypeInfo<TuningFile, TuningFile>;
     readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
@@ -645,6 +653,12 @@ function coopSeats(project: {
 
 ```ts
 function cos(x: number): number;
+```
+
+### `covers` (function)
+
+```ts
+function covers(shape: GroundShape, x: number, y: number): boolean;
 ```
 
 ### `createAudio` (function)
@@ -849,6 +863,12 @@ interface CutsceneLine {
 
 ```ts
 const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
+```
+
+### `decodePng` (function)
+
+```ts
+function decodePng(bytes: Uint8Array): RgbaPicture;
 ```
 
 ### `Def` (type)
@@ -1254,6 +1274,18 @@ function fitWorld(box: {
 }): Fit;
 ```
 
+### `FlatMaterial` (interface)
+
+```ts
+interface FlatMaterial {
+    readonly id: string;
+    readonly kind: 'flat';
+    readonly paint: string;
+    readonly top?: MaterialTop | undefined;
+    readonly edge?: string | undefined;
+}
+```
+
 ### `Flight` (interface)
 
 ```ts
@@ -1368,6 +1400,8 @@ interface GameContent {
     readonly characters: Readonly<Record<string, Character>>;
     readonly tilesets?: Readonly<Record<string, TilesetFile>>;
     readonly backdrops?: Readonly<Record<string, BackdropFile>>;
+    readonly scenes?: Readonly<Record<string, SceneFile>>;
+    readonly photos?: Readonly<Record<string, PhotoFile>>;
     readonly figures?: Readonly<Record<string, FigureFile>>;
     readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
     readonly tunings?: Readonly<Record<string, TuningFile>>;
@@ -1416,10 +1450,49 @@ interface GameSimOptions {
 }
 ```
 
+### `gapsUnder` (function)
+
+```ts
+function gapsUnder(ground: GroundGrid, run: SlopeRun): {
+    col: number;
+    row: number;
+}[];
+```
+
+### `GROUND_SHAPES` (const)
+
+```ts
+const GROUND_SHAPES: readonly ["solid", "slope-up", "slope-down", "half-up-low", "half-up-high", "half-down-high", "half-down-low", "ledge", "back"];
+```
+
+### `GroundGrid` (interface)
+
+```ts
+interface GroundGrid {
+    readonly letters: readonly {
+        readonly letter: string;
+        readonly shape: GroundShape;
+    }[];
+    readonly rows: readonly string[];
+}
+```
+
 ### `groundOf` (const)
 
 ```ts
 const groundOf: (level: Level) => number;
+```
+
+### `groundPageTiles` (function)
+
+```ts
+function groundPageTiles(tile: number): number;
+```
+
+### `GroundShape` (type)
+
+```ts
+type GroundShape = (typeof GROUND_SHAPES)[number];
 ```
 
 ### `HASH_EVERY` (const)
@@ -1871,18 +1944,25 @@ const LeaveCommand: CommandDef<typeof emptyPayload>;
 function leaveCommand(tick: number, player: number, seq: number): Command;
 ```
 
+### `LEDGE_DEEP` (const)
+
+```ts
+const LEDGE_DEEP = 0.25;
+```
+
 ### `Level` (interface)
 
 ```ts
 interface Level {
     readonly format: 1;
     readonly id: string;
+    readonly scene?: string | undefined;
     readonly tileset?: string | undefined;
     readonly backdrop?: string | undefined;
     readonly sky?: string | undefined;
     readonly ground?: string | undefined;
     readonly view?: LevelView | undefined;
-    readonly tiles: readonly string[];
+    readonly tiles?: readonly string[] | undefined;
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
     readonly joints?: readonly LevelJoint[] | undefined;
@@ -2017,6 +2097,12 @@ function levelViews(content: GameContent, level: Level): {
     views: View[];
     links: RopeLine[];
 };
+```
+
+### `lineAt` (function)
+
+```ts
+function lineAt(run: SlopeRun, x: number): number;
 ```
 
 ### `Link` (interface)
@@ -2154,6 +2240,15 @@ function markRead(content: GameContent, marks: ReadMarks | undefined, language: 
 function matchLanguage(tag: string, shipped: readonly Language[]): Language | undefined;
 ```
 
+### `MaterialTop` (interface)
+
+```ts
+interface MaterialTop {
+    readonly material: string;
+    readonly deep: number;
+}
+```
+
 ### `MAX_ACTIONS` (const)
 
 ```ts
@@ -2188,6 +2283,12 @@ const MAX_LEAD_TICKS = 60;
 
 ```ts
 const MAX_MESSAGE_BYTES = 16384;
+```
+
+### `MAX_PHOTO_SIDE` (const)
+
+```ts
+const MAX_PHOTO_SIDE = 256;
 ```
 
 ### `MAX_PLAYERS` (const)
@@ -2282,6 +2383,13 @@ const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 
 ```ts
 const MIN_LEAD = 1;
+```
+
+### `MissingPhotoError` (class)
+
+```ts
+class MissingPhotoError extends Error {
+}
 ```
 
 ### `MOVE_EVENTS` (const)
@@ -2688,6 +2796,12 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 function paintFigure(figure: FigureFile): IndexedPicture;
 ```
 
+### `paintScene` (function)
+
+```ts
+function paintScene(scene: SceneFile, photos: Photos): IndexedPicture;
+```
+
 ### `ParaglideRuntime` (interface)
 
 ```ts
@@ -2772,6 +2886,103 @@ type Phase = (typeof PHASES)[number];
 
 ```ts
 const PHASES: readonly ["input", "prePhysics", "physics", "postPhysics", "gameplay", "cleanup"];
+```
+
+### `PHOTO_LIBRARY` (const)
+
+```ts
+const PHOTO_LIBRARY: Readonly<Record<string, PhotoRecord>>;
+```
+
+### `PhotoFile` (interface)
+
+```ts
+interface PhotoFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly image: string;
+    readonly size: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly source: string;
+    readonly licence: string;
+    readonly credit: string;
+}
+```
+
+### `PhotoMaterial` (interface)
+
+```ts
+interface PhotoMaterial {
+    readonly id: string;
+    readonly kind: 'photo';
+    readonly photo: string;
+    readonly ladder?: readonly string[] | undefined;
+    readonly accent?: readonly string[] | undefined;
+    readonly match?: number | undefined;
+    readonly top?: MaterialTop | undefined;
+    readonly edge?: string | undefined;
+    readonly scale?: number | undefined;
+    readonly turn?: boolean | undefined;
+    readonly wear?: number | undefined;
+    readonly seed?: number | undefined;
+    readonly flatten?: number | undefined;
+    readonly facet?: number | undefined;
+    readonly contrast?: number | undefined;
+    readonly hue?: number | undefined;
+    readonly cluster?: number | undefined;
+}
+```
+
+### `photoPictureProblem` (function)
+
+```ts
+function photoPictureProblem(photo: PhotoFile, bytes: Uint8Array | undefined): string | undefined;
+```
+
+### `PhotoPixels` (interface)
+
+```ts
+interface PhotoPixels extends RgbaPicture {
+    readonly size: {
+        readonly w: number;
+        readonly h: number;
+    };
+}
+```
+
+### `PhotoRecord` (interface)
+
+```ts
+interface PhotoRecord {
+    readonly file: string;
+    readonly size: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly source: string;
+    readonly licence: string;
+    readonly credit: string;
+}
+```
+
+### `Photos` (type)
+
+```ts
+type Photos = (id: string) => PhotoPixels | undefined;
+```
+
+### `PhotoSchema` (const)
+
+```ts
+const PhotoSchema: z.ZodType<PhotoFile, PhotoFile>;
+```
+
+### `photosUsed` (function)
+
+```ts
+function photosUsed(content: GameContent): string[];
 ```
 
 ### `physics` (function)
@@ -2925,6 +3136,13 @@ interface PluginState {
 ```ts
 interface PluginStateSetup {
     readonly dt: number;
+}
+```
+
+### `PngError` (class)
+
+```ts
+class PngError extends Error {
 }
 ```
 
@@ -3190,6 +3408,16 @@ interface ResourceDef<Z extends z.ZodType = z.ZodType> {
 }
 ```
 
+### `RgbaPicture` (interface)
+
+```ts
+interface RgbaPicture {
+    readonly width: number;
+    readonly height: number;
+    readonly rgba: Uint8Array;
+}
+```
+
 ### `Rng` (interface)
 
 ```ts
@@ -3296,6 +3524,18 @@ interface RopeLine {
 }
 ```
 
+### `runBottom` (function)
+
+```ts
+function runBottom(run: SlopeRun): number;
+```
+
+### `runTop` (function)
+
+```ts
+function runTop(run: SlopeRun): number;
+```
+
 ### `SaidRebound` (type)
 
 ```ts
@@ -3382,6 +3622,83 @@ interface Scene {
     views(alpha: number): View[];
     links(alpha: number): RopeLine[];
 }
+```
+
+### `SceneFile` (interface)
+
+```ts
+interface SceneFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly seed: number;
+    readonly tile: number;
+    readonly size: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly sky?: string | undefined;
+    readonly backdrop?: string | undefined;
+    readonly paints: readonly ScenePaint[];
+    readonly materials: readonly SceneMaterial[];
+    readonly ground: SceneGround;
+}
+```
+
+### `sceneFromLevel` (function)
+
+```ts
+function sceneFromLevel(content: GameContent, levelId: string, sceneId: string): {
+    scene: SceneFile;
+    level: Level;
+};
+```
+
+### `SceneGround` (interface)
+
+```ts
+interface SceneGround {
+    readonly color?: string | undefined;
+    readonly oneBoxPerRow?: true | undefined;
+    readonly letters: readonly SceneLetter[];
+    readonly rows: readonly string[];
+}
+```
+
+### `SceneLetter` (interface)
+
+```ts
+interface SceneLetter {
+    readonly letter: string;
+    readonly material: string;
+    readonly shape: GroundShape;
+}
+```
+
+### `SceneMaterial` (type)
+
+```ts
+type SceneMaterial = PhotoMaterial | TilesMaterial | FlatMaterial;
+```
+
+### `ScenePaint` (interface)
+
+```ts
+interface ScenePaint {
+    readonly id: string;
+    readonly color: string;
+}
+```
+
+### `SceneSchema` (const)
+
+```ts
+const SceneSchema: z.ZodType<SceneFile, SceneFile>;
+```
+
+### `sceneSheet` (function)
+
+```ts
+function sceneSheet(scene: SceneFile): Sheet;
 ```
 
 ### `Score` (interface)
@@ -3609,6 +3926,12 @@ const ShapeKind: {
 type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind];
 ```
 
+### `shapesOf` (function)
+
+```ts
+function shapesOf(ground: GroundGrid): (col: number, row: number) => GroundShape | undefined;
+```
+
 ### `SharedKeys` (type)
 
 ```ts
@@ -3755,6 +4078,24 @@ const SKY_COLOR = 10474480;
 
 ```ts
 const skyOf: (level: Level) => number;
+```
+
+### `SlopeRun` (interface)
+
+```ts
+interface SlopeRun {
+    readonly col: number;
+    readonly row: number;
+    readonly w: number;
+    readonly rise: number;
+    readonly leftY: number;
+}
+```
+
+### `slopeRuns` (function)
+
+```ts
+function slopeRuns(ground: GroundGrid): SlopeRun[];
 ```
 
 ### `SlotState` (type)
@@ -4015,6 +4356,12 @@ type StoreResult<T> = {
 };
 ```
 
+### `surfaceAt` (function)
+
+```ts
+function surfaceAt(shape: GroundShape, x: number): number;
+```
+
 ### `SYNC_BEHIND` (const)
 
 ```ts
@@ -4203,6 +4550,17 @@ interface TilesetFile {
 
 ```ts
 const TilesetSchema: z.ZodType<TilesetFile, TilesetFile>;
+```
+
+### `TilesMaterial` (interface)
+
+```ts
+interface TilesMaterial {
+    readonly id: string;
+    readonly kind: 'tiles';
+    readonly tileset: string;
+    readonly tile: string;
+}
 ```
 
 ### `TileWhen` (interface)
@@ -4708,13 +5066,13 @@ interface ArtFile {
 ### `artFiles` (function)
 
 ```ts
-function artFiles(content: GameContent): ArtFile[];
+function artFiles(content: GameContent, photos?: Photos): ArtFile[];
 ```
 
 ### `artProblems` (function)
 
 ```ts
-function artProblems(content: GameContent, read: (path: string) => Promise<Uint8Array | undefined>): Promise<Diagnostic[]>;
+function artProblems(content: GameContent, read: (path: string) => Promise<Uint8Array | undefined>, photos?: Photos): Promise<Diagnostic[]>;
 ```
 
 ### `atan` (function)
@@ -4751,6 +5109,12 @@ interface Atlas {
 
 ```ts
 function atlasOf(sheet: Sheet, image: string): Atlas;
+```
+
+### `atlasText` (function)
+
+```ts
+function atlasText(sheet: Sheet, image: string): string;
 ```
 
 ### `BackdropFile` (interface)
@@ -5062,6 +5426,8 @@ const CONTENT_TYPES: {
     readonly figure: ContentTypeInfo<FigureFile, FigureFile>;
     readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
     readonly backdrop: ContentTypeInfo<BackdropFile, BackdropFile>;
+    readonly scene: ContentTypeInfo<SceneFile, SceneFile>;
+    readonly photo: ContentTypeInfo<PhotoFile, PhotoFile>;
     readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
     readonly tuning: ContentTypeInfo<TuningFile, TuningFile>;
     readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
@@ -5173,6 +5539,12 @@ function coopSeats(project: {
 
 ```ts
 function cos(x: number): number;
+```
+
+### `covers` (function)
+
+```ts
+function covers(shape: GroundShape, x: number, y: number): boolean;
 ```
 
 ### `createAudio` (function)
@@ -5329,6 +5701,12 @@ interface CutsceneLine {
 
 ```ts
 const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
+```
+
+### `decodePng` (function)
+
+```ts
+function decodePng(bytes: Uint8Array): RgbaPicture;
 ```
 
 ### `Def` (type)
@@ -5679,6 +6057,18 @@ function fill(text: string, values: Values | undefined, language: Language): str
 function fitLabel(label: string): string;
 ```
 
+### `FlatMaterial` (interface)
+
+```ts
+interface FlatMaterial {
+    readonly id: string;
+    readonly kind: 'flat';
+    readonly paint: string;
+    readonly top?: MaterialTop | undefined;
+    readonly edge?: string | undefined;
+}
+```
+
 ### `Flight` (interface)
 
 ```ts
@@ -5759,6 +6149,8 @@ interface GameContent {
     readonly characters: Readonly<Record<string, Character>>;
     readonly tilesets?: Readonly<Record<string, TilesetFile>>;
     readonly backdrops?: Readonly<Record<string, BackdropFile>>;
+    readonly scenes?: Readonly<Record<string, SceneFile>>;
+    readonly photos?: Readonly<Record<string, PhotoFile>>;
     readonly figures?: Readonly<Record<string, FigureFile>>;
     readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
     readonly tunings?: Readonly<Record<string, TuningFile>>;
@@ -5789,10 +6181,49 @@ interface GameSimOptions {
 }
 ```
 
+### `gapsUnder` (function)
+
+```ts
+function gapsUnder(ground: GroundGrid, run: SlopeRun): {
+    col: number;
+    row: number;
+}[];
+```
+
+### `GROUND_SHAPES` (const)
+
+```ts
+const GROUND_SHAPES: readonly ["solid", "slope-up", "slope-down", "half-up-low", "half-up-high", "half-down-high", "half-down-low", "ledge", "back"];
+```
+
+### `GroundGrid` (interface)
+
+```ts
+interface GroundGrid {
+    readonly letters: readonly {
+        readonly letter: string;
+        readonly shape: GroundShape;
+    }[];
+    readonly rows: readonly string[];
+}
+```
+
 ### `groundOf` (const)
 
 ```ts
 const groundOf: (level: Level) => number;
+```
+
+### `groundPageTiles` (function)
+
+```ts
+function groundPageTiles(tile: number): number;
+```
+
+### `GroundShape` (type)
+
+```ts
+type GroundShape = (typeof GROUND_SHAPES)[number];
 ```
 
 ### `HASH_EVERY` (const)
@@ -6106,18 +6537,25 @@ const LeaveCommand: CommandDef<typeof emptyPayload>;
 function leaveCommand(tick: number, player: number, seq: number): Command;
 ```
 
+### `LEDGE_DEEP` (const)
+
+```ts
+const LEDGE_DEEP = 0.25;
+```
+
 ### `Level` (interface)
 
 ```ts
 interface Level {
     readonly format: 1;
     readonly id: string;
+    readonly scene?: string | undefined;
     readonly tileset?: string | undefined;
     readonly backdrop?: string | undefined;
     readonly sky?: string | undefined;
     readonly ground?: string | undefined;
     readonly view?: LevelView | undefined;
-    readonly tiles: readonly string[];
+    readonly tiles?: readonly string[] | undefined;
     readonly things: readonly LevelThing[];
     readonly starts: readonly LevelStart[];
     readonly joints?: readonly LevelJoint[] | undefined;
@@ -6230,6 +6668,12 @@ interface LevelView {
         readonly h: number;
     } | undefined;
 }
+```
+
+### `lineAt` (function)
+
+```ts
+function lineAt(run: SlopeRun, x: number): number;
 ```
 
 ### `Link` (interface)
@@ -6347,6 +6791,15 @@ function markRead(content: GameContent, marks: ReadMarks | undefined, language: 
 function matchLanguage(tag: string, shipped: readonly Language[]): Language | undefined;
 ```
 
+### `MaterialTop` (interface)
+
+```ts
+interface MaterialTop {
+    readonly material: string;
+    readonly deep: number;
+}
+```
+
 ### `MAX_ACTIONS` (const)
 
 ```ts
@@ -6381,6 +6834,12 @@ const MAX_LEAD_TICKS = 60;
 
 ```ts
 const MAX_MESSAGE_BYTES = 16384;
+```
+
+### `MAX_PHOTO_SIDE` (const)
+
+```ts
+const MAX_PHOTO_SIDE = 256;
 ```
 
 ### `MAX_PLAYERS` (const)
@@ -6463,6 +6922,13 @@ const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 
 ```ts
 const MIN_LEAD = 1;
+```
+
+### `MissingPhotoError` (class)
+
+```ts
+class MissingPhotoError extends Error {
+}
 ```
 
 ### `MOVE_EVENTS` (const)
@@ -6794,6 +7260,12 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 function paintFigure(figure: FigureFile): IndexedPicture;
 ```
 
+### `paintScene` (function)
+
+```ts
+function paintScene(scene: SceneFile, photos: Photos): IndexedPicture;
+```
+
 ### `ParaglideRuntime` (interface)
 
 ```ts
@@ -6878,6 +7350,103 @@ type Phase = (typeof PHASES)[number];
 
 ```ts
 const PHASES: readonly ["input", "prePhysics", "physics", "postPhysics", "gameplay", "cleanup"];
+```
+
+### `PHOTO_LIBRARY` (const)
+
+```ts
+const PHOTO_LIBRARY: Readonly<Record<string, PhotoRecord>>;
+```
+
+### `PhotoFile` (interface)
+
+```ts
+interface PhotoFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly image: string;
+    readonly size: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly source: string;
+    readonly licence: string;
+    readonly credit: string;
+}
+```
+
+### `PhotoMaterial` (interface)
+
+```ts
+interface PhotoMaterial {
+    readonly id: string;
+    readonly kind: 'photo';
+    readonly photo: string;
+    readonly ladder?: readonly string[] | undefined;
+    readonly accent?: readonly string[] | undefined;
+    readonly match?: number | undefined;
+    readonly top?: MaterialTop | undefined;
+    readonly edge?: string | undefined;
+    readonly scale?: number | undefined;
+    readonly turn?: boolean | undefined;
+    readonly wear?: number | undefined;
+    readonly seed?: number | undefined;
+    readonly flatten?: number | undefined;
+    readonly facet?: number | undefined;
+    readonly contrast?: number | undefined;
+    readonly hue?: number | undefined;
+    readonly cluster?: number | undefined;
+}
+```
+
+### `photoPictureProblem` (function)
+
+```ts
+function photoPictureProblem(photo: PhotoFile, bytes: Uint8Array | undefined): string | undefined;
+```
+
+### `PhotoPixels` (interface)
+
+```ts
+interface PhotoPixels extends RgbaPicture {
+    readonly size: {
+        readonly w: number;
+        readonly h: number;
+    };
+}
+```
+
+### `PhotoRecord` (interface)
+
+```ts
+interface PhotoRecord {
+    readonly file: string;
+    readonly size: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly source: string;
+    readonly licence: string;
+    readonly credit: string;
+}
+```
+
+### `Photos` (type)
+
+```ts
+type Photos = (id: string) => PhotoPixels | undefined;
+```
+
+### `PhotoSchema` (const)
+
+```ts
+const PhotoSchema: z.ZodType<PhotoFile, PhotoFile>;
+```
+
+### `photosUsed` (function)
+
+```ts
+function photosUsed(content: GameContent): string[];
 ```
 
 ### `physics` (function)
@@ -7019,6 +7588,13 @@ interface PluginState {
 ```ts
 interface PluginStateSetup {
     readonly dt: number;
+}
+```
+
+### `PngError` (class)
+
+```ts
+class PngError extends Error {
 }
 ```
 
@@ -7232,6 +7808,16 @@ interface ResourceDef<Z extends z.ZodType = z.ZodType> {
 }
 ```
 
+### `RgbaPicture` (interface)
+
+```ts
+interface RgbaPicture {
+    readonly width: number;
+    readonly height: number;
+    readonly rgba: Uint8Array;
+}
+```
+
 ### `Rng` (interface)
 
 ```ts
@@ -7314,6 +7900,18 @@ interface RoomPeer {
 }
 ```
 
+### `runBottom` (function)
+
+```ts
+function runBottom(run: SlopeRun): number;
+```
+
+### `runTop` (function)
+
+```ts
+function runTop(run: SlopeRun): number;
+```
+
 ### `SaveDef` (interface)
 
 ```ts
@@ -7380,6 +7978,83 @@ interface SaveStore {
     set(key: string, value: string): Promise<StoreResult<void>>;
     remove(key: string): Promise<StoreResult<void>>;
 }
+```
+
+### `SceneFile` (interface)
+
+```ts
+interface SceneFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly seed: number;
+    readonly tile: number;
+    readonly size: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly sky?: string | undefined;
+    readonly backdrop?: string | undefined;
+    readonly paints: readonly ScenePaint[];
+    readonly materials: readonly SceneMaterial[];
+    readonly ground: SceneGround;
+}
+```
+
+### `sceneFromLevel` (function)
+
+```ts
+function sceneFromLevel(content: GameContent, levelId: string, sceneId: string): {
+    scene: SceneFile;
+    level: Level;
+};
+```
+
+### `SceneGround` (interface)
+
+```ts
+interface SceneGround {
+    readonly color?: string | undefined;
+    readonly oneBoxPerRow?: true | undefined;
+    readonly letters: readonly SceneLetter[];
+    readonly rows: readonly string[];
+}
+```
+
+### `SceneLetter` (interface)
+
+```ts
+interface SceneLetter {
+    readonly letter: string;
+    readonly material: string;
+    readonly shape: GroundShape;
+}
+```
+
+### `SceneMaterial` (type)
+
+```ts
+type SceneMaterial = PhotoMaterial | TilesMaterial | FlatMaterial;
+```
+
+### `ScenePaint` (interface)
+
+```ts
+interface ScenePaint {
+    readonly id: string;
+    readonly color: string;
+}
+```
+
+### `SceneSchema` (const)
+
+```ts
+const SceneSchema: z.ZodType<SceneFile, SceneFile>;
+```
+
+### `sceneSheet` (function)
+
+```ts
+function sceneSheet(scene: SceneFile): Sheet;
 ```
 
 ### `Score` (interface)
@@ -7591,6 +8266,12 @@ const ShapeKind: {
 type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind];
 ```
 
+### `shapesOf` (function)
+
+```ts
+function shapesOf(ground: GroundGrid): (col: number, row: number) => GroundShape | undefined;
+```
+
 ### `SharedKeys` (type)
 
 ```ts
@@ -7726,6 +8407,24 @@ const SKY_COLOR = 10474480;
 
 ```ts
 const skyOf: (level: Level) => number;
+```
+
+### `SlopeRun` (interface)
+
+```ts
+interface SlopeRun {
+    readonly col: number;
+    readonly row: number;
+    readonly w: number;
+    readonly rise: number;
+    readonly leftY: number;
+}
+```
+
+### `slopeRuns` (function)
+
+```ts
+function slopeRuns(ground: GroundGrid): SlopeRun[];
 ```
 
 ### `SlotState` (type)
@@ -7953,6 +8652,12 @@ type StoreResult<T> = {
 };
 ```
 
+### `surfaceAt` (function)
+
+```ts
+function surfaceAt(shape: GroundShape, x: number): number;
+```
+
 ### `SYNC_BEHIND` (const)
 
 ```ts
@@ -8141,6 +8846,17 @@ interface TilesetFile {
 
 ```ts
 const TilesetSchema: z.ZodType<TilesetFile, TilesetFile>;
+```
+
+### `TilesMaterial` (interface)
+
+```ts
+interface TilesMaterial {
+    readonly id: string;
+    readonly kind: 'tiles';
+    readonly tileset: string;
+    readonly tile: string;
+}
 ```
 
 ### `TileWhen` (interface)

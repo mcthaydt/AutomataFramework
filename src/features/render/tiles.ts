@@ -21,7 +21,7 @@ const SIDES: readonly Side[] = ['up', 'down', 'left', 'right']
 export function tilePictures(level: Level, tileset: TilesetFile): PlacedTile[] {
   const kinds = new Map(tileset.tiles.map((kind) => [kind.letter, kind]))
   const placed: PlacedTile[] = []
-  level.tiles.forEach((text, row) => {
+  level.tiles?.forEach((text, row) => {
     for (let col = 0; col < text.length; col++) {
       const letter = text[col] as string
       const kind = kinds.get(letter)
@@ -29,7 +29,7 @@ export function tilePictures(level: Level, tileset: TilesetFile): PlacedTile[] {
       const neighbour = (side: Side): 'same' | 'other' => {
         const dc = side === 'left' ? -1 : side === 'right' ? 1 : 0
         const dr = side === 'up' ? -1 : side === 'down' ? 1 : 0
-        const there = level.tiles[row + dr]?.[col + dc]
+        const there = level.tiles?.[row + dr]?.[col + dc]
         return there === undefined || there === letter ? 'same' : 'other'
       }
       const fits = (when: TileWhen | undefined): boolean =>

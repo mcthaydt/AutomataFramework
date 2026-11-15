@@ -1,0 +1,415 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this scene, like \"meadow\". It matches the file name."
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295,
+      "description": "Change this number for another painting of the same description."
+    },
+    "tile": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 64,
+      "description": "How many pixels of the picture make one tile of the game."
+    },
+    "size": {
+      "type": "object",
+      "properties": {
+        "w": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256,
+          "description": "How many tiles wide the scene is."
+        },
+        "h": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256,
+          "description": "How many tiles tall the scene is."
+        }
+      },
+      "required": [
+        "w",
+        "h"
+      ],
+      "additionalProperties": false,
+      "description": "How big the scene is, in tiles."
+    },
+    "sky": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "description": "The colour of the sky behind the ground, as # and six digits, like #9fd3f0. Left out: a light blue."
+    },
+    "backdrop": {
+      "description": "A backdrop file drawn behind the ground, by id. Left out: none.",
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "paints": {
+      "minItems": 1,
+      "maxItems": 64,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this paint, like \"grass\"."
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "The paint, as # and six digits, like #5fa04a."
+          }
+        },
+        "required": [
+          "id",
+          "color"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The colours the scene is painted in, each named for what it is for."
+    },
+    "materials": {
+      "minItems": 1,
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this material, like \"earth\"."
+              },
+              "kind": {
+                "type": "string",
+                "const": "photo",
+                "description": "\"photo\": a photo, turned into the scene's paints."
+              },
+              "photo": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*$",
+                "description": "The photo's name: one of this game's own photos, or one of the library's."
+              },
+              "ladder": {
+                "description": "The photo's light as steps on these paints, dark to light. Write this or \"match\".",
+                "minItems": 2,
+                "maxItems": 6,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                  "description": "One of the scene's paints, by id, like \"grass\"."
+                }
+              },
+              "accent": {
+                "description": "A second ladder, as long as the first, for where the photo's colour parts from the rest.",
+                "minItems": 2,
+                "maxItems": 6,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                  "description": "One of the scene's paints, by id, like \"grass\"."
+                }
+              },
+              "match": {
+                "description": "Instead of \"ladder\": keep this many of the photo's own colours, each as the nearest paint.",
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 8
+              },
+              "top": {
+                "description": "Another material along the top of the ground.",
+                "type": "object",
+                "properties": {
+                  "material": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                    "description": "The material drawn along the surface, by id. It must be a photo or a flat material."
+                  },
+                  "deep": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 64,
+                    "description": "How many pixels deep it is. At most one tile."
+                  }
+                },
+                "required": [
+                  "material",
+                  "deep"
+                ],
+                "additionalProperties": false
+              },
+              "edge": {
+                "description": "A one-pixel line in this paint where the ground meets air.",
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+              },
+              "scale": {
+                "description": "How many times bigger the photo is. Left out: 1.",
+                "type": "number",
+                "minimum": 0.25,
+                "maximum": 8
+              },
+              "turn": {
+                "description": "True turns the photo a quarter turn. Left out: false.",
+                "type": "boolean"
+              },
+              "wear": {
+                "description": "0 is new, 1 is derelict. Left out: 0.3.",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "seed": {
+                "description": "Moves where the photo wears. Left out: 0.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "flatten": {
+                "description": "How much slow change of light is taken out of the photo. Left out: 0.85.",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "facet": {
+                "description": "How much the photo is smoothed into patches. Left out: 1.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              },
+              "contrast": {
+                "description": "The lightness one step of the ladder spans. Only with \"ladder\". Left out: 0.07.",
+                "type": "number",
+                "minimum": 0.01,
+                "maximum": 0.5
+              },
+              "hue": {
+                "description": "How far a colour must part from the rest to take the \"accent\" paints. Left out: 0.06.",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.5
+              },
+              "cluster": {
+                "description": "The smallest patch the clean-up keeps, in pixels. Left out: 4.",
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "photo"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this material, like \"stone\"."
+              },
+              "kind": {
+                "type": "string",
+                "const": "tiles",
+                "description": "\"tiles\": one kind of tile of a tileset, drawn from its picture."
+              },
+              "tileset": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "The tileset, by id, like \"meadow\"."
+              },
+              "tile": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "The tileset's kind of tile, by id, like \"stone\"."
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "tileset",
+              "tile"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "A name for this material, like \"turf\"."
+              },
+              "kind": {
+                "type": "string",
+                "const": "flat",
+                "description": "\"flat\": one of the scene's paints, all over."
+              },
+              "paint": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "One of the scene's paints, by id, like \"grass\"."
+              },
+              "top": {
+                "description": "Another material along the top of the ground.",
+                "type": "object",
+                "properties": {
+                  "material": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                    "description": "The material drawn along the surface, by id. It must be a photo or a flat material."
+                  },
+                  "deep": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 64,
+                    "description": "How many pixels deep it is. At most one tile."
+                  }
+                },
+                "required": [
+                  "material",
+                  "deep"
+                ],
+                "additionalProperties": false
+              },
+              "edge": {
+                "description": "A one-pixel line in this paint where the ground meets air.",
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "paint"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "description": "What the ground can be made of: a photo, a tileset's tile, or one paint."
+    },
+    "ground": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "The colour of the ground when no picture is drawn, as # and six digits, like #3b4a5a."
+        },
+        "oneBoxPerRow": {
+          "description": "Only \"automata scene from-level\" writes this.",
+          "type": "boolean",
+          "const": true
+        },
+        "letters": {
+          "maxItems": 93,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "letter": {
+                "type": "string",
+                "pattern": "^[!-~]$",
+                "description": "The letter the rows use for this tile, like \"G\"."
+              },
+              "material": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                "description": "What the tile is made of, by material id."
+              },
+              "shape": {
+                "type": "string",
+                "enum": [
+                  "solid",
+                  "slope-up",
+                  "slope-down",
+                  "half-up-low",
+                  "half-up-high",
+                  "half-down-high",
+                  "half-down-low",
+                  "ledge",
+                  "back"
+                ],
+                "description": "The tile's shape: \"solid\", \"slope-up\", \"ledge\", \"back\" and the rest."
+              }
+            },
+            "required": [
+              "letter",
+              "material",
+              "shape"
+            ],
+            "additionalProperties": false
+          },
+          "description": "What each letter in the rows stands for. \".\" is always air."
+        },
+        "rows": {
+          "minItems": 1,
+          "maxItems": 256,
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The ground, one string a row, top row first, one letter a tile."
+        }
+      },
+      "required": [
+        "letters",
+        "rows"
+      ],
+      "additionalProperties": false,
+      "description": "The scene's ground."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "seed",
+    "tile",
+    "size",
+    "paints",
+    "materials",
+    "ground"
+  ],
+  "additionalProperties": false,
+  "title": "Scene"
+}

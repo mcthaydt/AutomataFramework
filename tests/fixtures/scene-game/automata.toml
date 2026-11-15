@@ -1,0 +1,36 @@
+format = 1
+name = "Scene Game"
+start = "level-1"
+hero = "hero"
+
+[[content]]
+type = "level"
+path = "content/levels/level-1.json"
+
+[[content]]
+type = "level"
+path = "content/levels/level-old.json"
+
+[[content]]
+type = "scene"
+path = "content/scenes/meadow.json"
+
+[[content]]
+type = "photo"
+path = "content/photos/moss.json"
+
+[[content]]
+type = "tileset"
+path = "content/tilesets/meadow.json"
+
+[[content]]
+type = "figure"
+path = "content/figures/meadow.json"
+
+[[content]]
+type = "character"
+path = "content/characters/hero.json"
+
+[[content]]
+type = "character"
+path = "content/characters/crate.json"

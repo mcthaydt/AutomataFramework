@@ -9,6 +9,7 @@ test('the JSON Schema of a level names every field, each with a description', ()
   expect(Object.keys(schema.properties)).toEqual([
     'format',
     'id',
+    'scene',
     'tileset',
     'backdrop',
     'sky',
@@ -99,3 +100,20 @@ test('the JSON Schema of messages, a conversation and a cutscene', () => {
   expectSchema('conversation', 'Conversation', ['format', 'id', 'start', 'nodes'])
   expectSchema('cutscene', 'Cutscene', ['format', 'id', 'level', 'length', 'camera', 'actors', 'lines'])
 })
+
+test('the JSON Schema of a scene', () =>
+  expectSchema('scene', 'Scene', [
+    'format',
+    'id',
+    'seed',
+    'tile',
+    'size',
+    'sky',
+    'backdrop',
+    'paints',
+    'materials',
+    'ground',
+  ]))
+
+test('the JSON Schema of a photo', () =>
+  expectSchema('photo', 'Photo', ['format', 'id', 'image', 'size', 'source', 'licence', 'credit']))
