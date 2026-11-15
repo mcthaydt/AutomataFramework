@@ -9,7 +9,7 @@ requests 29 and 36), the Editors' redesign plan, Examples' plan D and both track
 findings there are numbered G-…. Nothing was run: every fact below is read from the files, or is said to be unchecked.
 
 **Verdict: ready for execution of Parts 0 to 3 once the fixes below are in the plan; they are, in this pull request.**
-No critical finding, eleven important, eight minor. The Owner answered Q1 (A, shades mixed from the four); Q2 is open and does not stop Parts 0 to 3.
+No critical finding, eleven important, eight minor. Q1 is settled (the Owner moved the games to Lospec's DUEL palette); Q2 is open and does not stop Parts 0 to 3.
 No existing golden moves under the plan as fixed. No new dependency.
 
 ## The questions the coordinator asked
@@ -64,8 +64,11 @@ No. 276, and Examples' CI fails any other colour (plan D audit, Q1, answer A). N
 `#f37f94`, `#afd472`, `#fdd4bd`. A ramp is three to six colours, each lighter than the one before, and the spec wants
 "never one flat fill". By `lightness` the four make exactly one ramp, black, pink, green and cream, so every part of
 every demo figure would be shaded through those four. The plan does not say; plan D's Part 9 would find it out when
-it drafts the art. This is the Owner's (Q1). **Answered (the Owner, 2026-11-15): A, shades mixed from the four.** The
-handoff to plan D says how; nothing in plan R's code changes.
+it drafts the art. This is the Owner's (Q1). **Settled (the Owner, 2026-11-15):** "We can just use the duel 256
+palette from lopsec for the games, use current the palette for UI." The games' art moves from No. 276 to Lospec's
+DUEL, whose 32 rows the library's ramps already are, so the demo's figures shade as the old builder's did. **Fixed:**
+Task 1 exports `DUEL_COLOURS` (the 256) for a game's CI, and the plan D handoff says Examples' art check holds the
+pictures to it.
 
 **I5. The library's `ink` is purple, and the "ink" edge has no colour.** Row 28 of the DUEL ramps, named `ink`, keeps
 steps 1, 2, 3, 5 and 6: `#3c3151` to `#baabf7`, a lilac. `eyes` left out is `ink`, so every figure's eyes would be
@@ -158,9 +161,10 @@ corrected so an executor does not rely on it.
 
 **Q1. The demo's figures are shaded in steps of a colour. Palette No. 276 has four colours. How should they be shaded?**
 
-**Answered (the Owner, 2026-11-15): A.**
+**Settled another way (the Owner, 2026-11-15):** the games use Lospec's DUEL 256 palette, and the UI keeps its own
+palettes; No. 276 is no longer the games' palette, so none of the options below applies. See I4.
 
-- **A. Shades mixed from the four (recommended; chosen).** Each shade is an even mix of two of No. 276's colours, the way the
+- **A. Shades mixed from the four (recommended).** Each shade is an even mix of two of No. 276's colours, the way the
   Site mixes its two shades from its own palette. The figures look like the old builder's, in the demo's four
   colours, and CI checks every colour is one of the four or such a mix.
 - **B. Only the four.** Every part is shaded through the same four colours, black to pink to green to cream. Nothing
