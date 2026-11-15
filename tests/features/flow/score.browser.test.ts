@@ -153,7 +153,17 @@ test('storage refuses: the score still counts, and the screen says once that it 
 })
 
 test("at 390x844 the score does not cover the pause button or the heroes' numbers", async () => {
-  await intoLevel('sparks', { game: { players: 2 } })
+  // Two people play: the second is added from the menu, so each hero carries a number.
+  await drive.toMenu({
+    plugins: [heroPlugin, scorePlugin],
+    game: { noWarning: true, score: 'sparks', players: 2 },
+  })
+  await drive.press(es('automata.menu.add-player'))
+  await expect.poll(() => drive.mount.querySelector('[data-screen="players"]')).not.toBeNull()
+  await drive.press(es('automata.players.done'))
+  await drive.press(es('automata.menu.play'))
+  await drive.shown('playing')
+  drive.frames.at(0)
   drive.frames.advance(16)
   ticks(drive, 2)
   const rect = (selector: string): DOMRect => {
