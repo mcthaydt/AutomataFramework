@@ -414,13 +414,11 @@ describe('on a slope', () => {
   /** The normal of a slope that rises to the right at 45 degrees: it leans left and up. */
   const UP = { nx: -Math.SQRT1_2, ny: -Math.SQRT1_2 }
   const DOWN = { nx: Math.SQRT1_2, ny: -Math.SQRT1_2 }
-  /** One tick of gravity's worth of pull. */
-  const PULL = 0.5
   const slopeRun = (inputs: readonly MoveInput[]): MoveResult[] => {
     const out: MoveResult[] = []
     let state = MOVE_START
     for (const input of inputs) {
-      const result = stepMoves(state, input, N, OFF, HOVER, PULL)
+      const result = stepMoves(state, input, N, OFF, HOVER)
       out.push(result)
       state = result.state
     }
@@ -441,14 +439,10 @@ describe('on a slope', () => {
     expect(vy).toBeCloseTo(6 * Math.SQRT1_2, 5)
   })
 
-  test('standing, the speed written is what one tick of gravity along the slope brings to nothing', () => {
+  test('standing on a slope, no speed is written: the ground’s grip holds the hero, not a speed', () => {
     const { vx, vy } = last(slopeRun(repeat(3, tick({ slope: UP }))))
-    // Along the slope's line the pull is PULL * ty, so the speed is PULL * 0.7071 up the line and gravity cancels it.
-    expect(vx).toBeCloseTo(PULL * 0.5, 5)
-    expect(vy).toBeCloseTo(-PULL * 0.5, 5)
-    // Gravity added to it, along the slope's line, is nothing.
-    const along = (vx + 0) * Math.SQRT1_2 + (vy + PULL) * -Math.SQRT1_2
-    expect(along).toBeCloseTo(0, 5)
+    expect(Object.is(vx, 0)).toBe(true)
+    expect(Object.is(vy, 0)).toBe(true)
   })
 
   test('a flat slope, or none, gives what the floor gives', () => {

@@ -100,10 +100,6 @@ export function movesPlugin(options: {
     run(ctx) {
       const content = ctx.content as GameContent
       const hover = -options.gravity.y * ctx.dt
-      // The speed along a slope that makes a hero stand still on it. Rapier takes four steps of a quarter tick, each adding
-      // a quarter of the tick's pull and then moving the body, so a body that begins the tick with `5/8` of one tick's
-      // pull against the gravity along the slope ends it where it began.
-      const pull = (options.gravity.y * ctx.dt * 5) / 8
       for (const hero of ctx.query(Player, Body, Moves, Touching)) {
         const moves = content.characters[hero.get(Thing).character]?.moves
         if (moves === undefined) continue
@@ -129,7 +125,6 @@ export function movesPlugin(options: {
           (options.tunable ? tunedNumbers(ctx) : undefined) ?? moveNumbers(content.tunings?.[moves.tuning]),
           { doubleJump: moves['double-jump'], wallJump: moves['wall-jump'], dash: moves.dash },
           hover,
-          pull,
         )
         hero.set(Body, { vx: result.vx, vy: result.vy })
         hero.set(Moves, result.state)

@@ -26,12 +26,27 @@ const COLLISION_TYPES =
 /** How far above a ledge's top the lowest point of something may be, in metres, and still stand on it. */
 const LEDGE_SLOP = 0.05
 
-/** The three corners of a slope's triangle about its box's centre: its two bottom corners and its high one. */
+/** How far, in tiles, a slope's high corner is let down below its box's top. */
+const SLOPE_SINK = 0.005
+/** How far, in tiles, a slope's line is carried on past its foot, under the ground. */
+const SLOPE_SKIRT = 0.1
+
+/**
+ * The three corners of a slope's triangle about its box's centre: its high corner, and its two bottom ones. A triangle
+ * that stopped exactly at the box would have a corner on the floor at its foot and one on the plateau's edge at its top,
+ * and a body sliding along either surface would meet a corner with nothing to tell the contact which way to push (Rapier
+ * takes a corner on a face as a wall and the body stops dead). So the line goes on past its foot, under the ground, and
+ * the high corner is a hair under the surface it meets, which is a step too small to feel and one the contact can read.
+ */
 function slopeCorners(hx: number, hy: number, rises: 1 | -1): [number, number][] {
+  const apex = -hy + SLOPE_SINK
+  // How far the line falls over the skirt's run.
+  const drop = (SLOPE_SKIRT * (hy - apex)) / (2 * hx)
+  const side = rises === 1 ? 1 : -1
   return [
-    [-hx, hy],
-    [hx, hy],
-    [rises === 1 ? hx : -hx, -hy],
+    [-side * (hx + SLOPE_SKIRT), hy + drop],
+    [side * hx, hy + drop],
+    [side * hx, apex],
   ]
 }
 

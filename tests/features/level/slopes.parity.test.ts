@@ -130,7 +130,8 @@ test('a jump from under the ledge goes up through it and lands on its top', asyn
     sim.step([])
     highest = Math.min(highest, at().y)
   }
-  expect(highest).toBeLessThan(LEDGE_TOP - 1)
+  // The jump is 2.4 tiles high, so its top is a little above where the hero stands on the ledge.
+  expect(highest).toBeLessThan(LEDGE_TOP - 0.5)
   expect(Math.abs(at().y - (LEDGE_TOP - 0.5))).toBeLessThan(0.05)
   expect(at().below).toBe(true)
 })

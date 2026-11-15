@@ -134,8 +134,7 @@ function toward(value: number, target: number, reach: number): number {
 /**
  * One tick of one hero, in the order the plan fixes (the tests pin it): ground, the press, a dash under way, a dash
  * beginning, the walk, the wall slide, the jump, the cut, the cap, the mode. `hover` is the upward speed that one
- * tick of gravity brings to nothing, so a dash holds its height; `pull` is how fast one tick of gravity pulls, which on
- * a slope is what a hero left alone is given to stand still.
+ * tick of gravity brings to nothing, so a dash holds its height.
  */
 export function stepMoves(
   state: MoveState,
@@ -143,7 +142,6 @@ export function stepMoves(
   n: MoveNumbers,
   on: MoveSwitches,
   hover: number,
-  pull = 0,
 ): MoveResult {
   const s: MoveState = { ...state }
   const events: MoveEventName[] = []
@@ -276,15 +274,15 @@ export function stepMoves(
   vy = Math.min(vy, n.fallSpeed)
 
   // 9b. A slope. On the ground, and not on the tick of a jump, the walk's speed runs along the slope and not along the
-  // floor: `tx, ty` is the slope's direction, pointing right. A hero that holds nothing is given the speed along it
-  // that one tick of gravity brings to nothing, so it stands where it is and does not creep.
+  // floor: `tx, ty` is the slope's direction, pointing right. A hero that holds nothing is given no speed, and the
+  // ground's grip (hero.ts) holds it where it stands.
   const { slope } = input
   if (below && !jumped && slope !== undefined && Math.abs(slope.nx) > FLAT) {
     const tx = -slope.ny
     const ty = slope.nx
-    const along = dir === 0 && s.run === 0 ? -pull * ty : s.run
-    vx = along * tx
-    vy = along * ty
+    // `+ 0` turns a minus nought into a nought, as the sim's numbers want.
+    vx = s.run * tx + 0
+    vy = s.run * ty + 0
   }
 
   // 10. The mode, for the clip.
