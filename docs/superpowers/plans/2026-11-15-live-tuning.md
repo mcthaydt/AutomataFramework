@@ -35,7 +35,8 @@ never defaulted). Added by this plan:
   golden keep their hashes: nothing here joins a sim that did not ask for it. If one differs in CI, stop and report.
 - **Offline only.** `startOnlineGame` never makes a tunable sim.
 - **One pull request,** four tasks, 22% each; the last 12% is the final green run. Tracker: `docs/superpowers/progress.md`,
-  a new "Cycle 8: live move numbers and the jump's path" (the sound formats took Cycle 7).
+  a new "Cycle 9: live move numbers and the jump's path" (plan U has Cycle 7 on `main` and plan F claims Cycle 8; the
+  merge session settles the numbers if two branches still share one).
 - **A `patch` changeset** and the API report (`docs/api/framework.api.md`, from the `package` job's log), as every
   change to the public surface has.
 
@@ -111,9 +112,10 @@ export function moveNumbersOf(values: Readonly<Record<string, number>>): MoveNum
 ```
 
 - The headless entry exports, by these names: `MOVE_NUMBERS`, `MoveNumberInfo`, `MoveNumbers`, `moveNumbers`,
-  `moveNumbersOf`, `DEFAULT_HERO_CONTROLS`, `tuningNumbers`, `heroControls`, `usesMoves`, `stepMoves`, `MOVE_START`,
+  `moveNumbersOf`, `DEFAULT_HERO_CONTROLS`, `tuningNumbers`, `usesMoves`, `stepMoves`, `MOVE_START`,
   `MoveState`, `MoveInput`, `MoveSwitches`, `MoveEventName`, `MOVE_EVENTS`, `Moves`, `Touching`, `RESERVED_KEYS`,
-  `RESERVED_PAD`, `PAD_BUTTONS`, `PAD_STICKS`, `MAX_ACTIONS`.
+  `RESERVED_PAD`, `PAD_BUTTONS`, `PAD_STICKS`, `MAX_ACTIONS`. (`heroControls` is not one: it is the `input` feature's,
+  which needs a page, and Feel builds its list from `DEFAULT_HERO_CONTROLS`. Plan audit I3.)
 
 - [ ] **Step 1: Check plan H's names on `main`.** `git grep -n "export" src/features/content/moves.ts
   src/features/level/move-step.ts src/features/level/moves.ts`. Note any that differs from this plan in the tracker
@@ -201,8 +203,9 @@ test('the answer is frozen, and the same call gives equal numbers', ...)
 ```
 
 - [ ] **Step 2: Write the failing parity test** in `jump-path.parity.test.ts` (Node and three browsers, real
-  physics, the moves fixture's `level-2`, whose floor is flat; if its floor is too short for the run, a level made in
-  the test with a floor 40 tiles long and nothing else):
+  physics, on a level made in the test: a flat floor 48 tiles long, walls at both ends, the hero's start at x 3 and
+  nothing else. The moves fixture's `level-2` is 16 tiles wide, too short for `walk-speed` 10 with `jump-speed` 20,
+  which lands about 13 tiles on. Plan audit I5):
 
 ```ts
 test('the real hero, run to full speed and jumped with jump held, tops out and lands where jumpPaths says', ...)
@@ -213,7 +216,11 @@ test('with jump-speed 20 and walk-speed 10 in the tuning file, both still agree'
 ```
 
 - [ ] **Step 3: Push; red.** **Step 4: Write `jumpPaths`.** **Step 5: Push; green in four engines.** If the parity
-  test cannot be made green within 0.05 tiles, stop and report with the numbers it gave (builder's call 5).
+  test cannot be made green within 0.05 tiles, stop and report with the numbers it gave (builder's call 5). The
+  unit test's numbers (2.3, 4.7, 48 points, 3 and 6 tiles) are the plan's sums, not measurements: when the parity
+  test is green and a unit number differs from it in the second decimal, the unit test takes the parity test's
+  number and the report says so; that is not a stop (plan audit I6). The likeliest gap is the dash, which on the
+  real floor meets ground friction the path does not have (plan audit I7).
 - [ ] **Step 6: Commit** `feat: what a hero's jump reaches, by its own move step`
 
 ### Task 3: A tune is a command (F1, the sim's half)
@@ -267,7 +274,8 @@ test('two tunes in one tick: the later one stands', ...)
 test('a hand-made command with jump-speed 99 plays as 30; one with seventeen values, or a NaN, is refused by the sim', ...)   // Review Focus 2
 test('saved after a tune and restored into a new tunable sim, the play ends on the same hash', ...)
 test('a recording with a tune in it verifies', ...)                                    // createRecorder, then the replay check plan H's parity test uses
-test('a sim made without tunable refuses the command, and has the schema hash of tests/golden/moves.json', ...)
+test('a sim made without tunable refuses the command as unknown-command, and its schemaHash differs from the tunable sim\'s', ...)
+// tests/golden/moves.json holds no schema hash; that the plain sim is unchanged is moves.parity.test.ts, untouched and green (plan audit I2)
 test('tunable with a hero that has no moves throws the sentence', ...)
 ```
 
@@ -280,10 +288,12 @@ test('tunable with a hero that has no moves throws the sentence', ...)
 **Golden impact:** none.
 
 **Files:**
-- Modify: `src/features/game/game.ts`, `src/features/game/online.ts`, `README.md`, the skill under `skills/` that
+- Modify: `src/features/game/game.ts`, `src/features/game/online.ts`, `src/features/game/watch.ts`,
+  `src/features/cli/replay.ts`, `README.md`, the skill under `skills/` that
   tells an agent how to tune the hero, `docs/api/framework.api.md` (from the log), a changeset,
   `docs/superpowers/progress.md`
-- Test: `tests/features/game/game.browser.test.ts`, `tests/docs/readme.test.ts`
+- Test: `tests/features/game/game.browser.test.ts`, `tests/docs/readme.test.ts`, the `automata replay` test under
+  `tests/features/cli/` (a recording with a `tune` and `meta.tunable` verifies)
 
 **Interfaces:**
 - Consumes: Task 3's `tuneCommand`, `GameSimOptions.tunable`; Task 1's `moveNumbersOf`.
@@ -306,8 +316,18 @@ export interface Game {
 own sequence, before the players' commands. In a game not started with `tunable` it throws
 `'This game was not started with "tunable": true, so its numbers cannot change while it plays.'` After `stop` it
 does nothing. While the game is paused the tune waits and lands on the first tick after `resume`.
-`startOnlineGame` passes no `tunable` to any sim it makes, whatever it is given; if its options type is built from
-`GameSimOptions`, it leaves `tunable` out of the type.
+`startOnlineGame` passes no `tunable` to any sim it makes, whatever it is given; `OnlineOptions` is
+`Omit<GameOptions, 'players' | 'level'>` today, so it becomes `Omit<GameOptions, 'players' | 'level' | 'tunable'>`.
+
+**A tuned play replays outside the test too** (plan audit I1). `automata replay` (`src/features/cli/replay.ts`) and
+`watchReplay` make their sim from the content and the replay's `meta`, with no `tunable`, so a recording holding a
+`tune` would read as "the rules changed" and drop the command. So `startGame` writes `meta.tunable = "true"` into the
+recording when it was started with `tunable`, and `cli/replay.ts` and `watch.ts` pass `tunable: meta.tunable ===
+"true"` to `createGameSim`. A replay without that key plays exactly as before, so no golden moves.
+
+A freeze from plan F holds the loop's steps as a pause does; a tune made during one lands on the first step after it,
+like a tune made while paused. Plan F and this plan both change the loop's `step` in `game.ts`; the one built second
+is rebased on the first (plan audit I9).
 
 - [ ] **Step 1: Write the failing tests** in `game.browser.test.ts` (three engines, the moves fixture):
 
@@ -317,13 +337,16 @@ test('tune keeps the hero where it is: its box is the same on the frame after th
 test('two tunes before one frame send one command, with the later values', ...)                // Review Focus 3: game.replay() holds one `tune`
 test('tune while paused lands after resume', ...)
 test('tune on a game not started with tunable throws the sentence; tune after stop does nothing', ...)   // Review Focus 4
-test('game.replay() of a tuned play verifies', ...)
+test('game.replay() of a tuned play verifies, and its meta says tunable', ...)
+test('a game not started with tunable writes no tunable key into its replay', ...)
 ```
 
 and in `readme.test.ts`: the README names `tunable` once, in the paragraph that says what the editors use it for.
 
 - [ ] **Step 2: Push; red.** **Step 3: Build it; write the README paragraph and the skill's line** ("An editor may
-  change these numbers while the game plays; a game changes them in its tuning file.").
+  change these numbers while the game plays; a game changes them in its tuning file."). The README paragraph also
+  says that the editors play with the framework's gravity, so a game whose code passes its own `gravity` sees its
+  jump drawn for the default (plan audit I10).
 - [ ] **Step 4: Push.** Take `docs/api/framework.api.md` from the `package` job's log, add the changeset, push again;
   every check green.
 - [ ] **Step 5: Commit** `feat: an editor can tune a playing game`, the tracker at 100% of stage 4, and report: each
