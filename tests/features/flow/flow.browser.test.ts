@@ -71,6 +71,8 @@ async function open(
 const step = (): string => flow?.state().step ?? ''
 const shown = async (want: string): Promise<void> => {
   await expect.poll(() => mount.dataset.state, { timeout: 10_000 }).toBe(want)
+  // The step is `playing` as soon as the level is asked for; the game exists a moment later, and keys before then are lost.
+  if (want === 'playing') await expect.poll(() => flow?.game() !== undefined, { timeout: 10_000 }).toBe(true)
 }
 /** What a person is told a button says: its words, or, for a picture, the name it carries. */
 const nameOf = (b: HTMLElement): string =>

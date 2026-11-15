@@ -119,6 +119,9 @@ export function createDrive(game = 'flow-test'): Drive {
     step: () => flow?.state().step ?? '',
     async shown(want) {
       await expect.poll(() => mount.dataset.state, { timeout: 10_000 }).toBe(want)
+      // The step is `playing` as soon as the level is asked for; the game exists a moment later, and keys before then are lost.
+      if (want === 'playing')
+        await expect.poll(() => flow?.game() !== undefined, { timeout: 10_000 }).toBe(true)
     },
     press: (label) => userEvent.click(button(label)),
     async wait(label) {
