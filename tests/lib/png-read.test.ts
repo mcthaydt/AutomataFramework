@@ -86,7 +86,7 @@ test('a file cut in the middle of its data is refused', () => {
 test('a wrong CRC is refused with the same sentence', () => {
   const file = samplePng({ width: 3, height: 2, rows: [0, 1, 2, 3, 0, 4, 5, 6] })
   const broken = file.slice()
-  broken[40] = (broken[40] as number) ^ 0xff
+  broken[45] = (broken[45] as number) ^ 0xff
   expect(() => decodePng(broken)).toThrow('This PNG is cut short. Save it again.')
 })
 
