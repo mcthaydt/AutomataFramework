@@ -16,7 +16,14 @@ export {
   BehaviourSchema,
   type Sense,
 } from './behaviour.ts'
-export { type Character, type CharacterInput, CharacterSchema, type Clip } from './character.ts'
+export {
+  type Character,
+  type CharacterInput,
+  CharacterSchema,
+  type Clip,
+  type HeroMoves,
+  type HeroMovesInput,
+} from './character.ts'
 export { CONTENT_TYPES, type ContentType, type ContentValue } from './content-types.ts'
 export {
   type Choice as ConversationChoice,
@@ -41,7 +48,7 @@ export {
   type Ease,
 } from './cutscene.ts'
 export { type Diagnostic, formatDiagnostic } from './diagnostics.ts'
-export { type Dust, type FeelFile, FeelSchema, type Freeze, type Shake } from './feel.ts'
+export { type Buzz, type Dust, type FeelFile, FeelSchema, type Freeze, type Shake } from './feel.ts'
 export {
   type FigureFile,
   type FigureMove,
@@ -71,6 +78,13 @@ export {
   MessagesSchema,
   placeholdersOf,
 } from './messages.ts'
+export {
+  DEFAULT_HERO_CONTROLS,
+  MOVE_NUMBERS,
+  type MoveNumberInfo,
+  type MoveNumbers,
+  moveNumbers,
+} from './moves.ts'
 export {
   type DrumPart,
   MAX_STEPS,

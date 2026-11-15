@@ -1,5 +1,5 @@
 // The template's page in each real browser: it starts the game, shows a broken file in words, keeps a changed key, tells
-// a keyboard player which keys to press, gives a thumb whole buttons at every screen size, and asks a player with no
+// a keyboard player which keys to press, gives a thumb two whole halves at every screen size, and asks a player with no
 // language for one, in flags, before it says anything.
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page } from 'vitest/browser'
@@ -238,12 +238,13 @@ test('stopping the page while it asks for a language empties it, and no game sta
   expect(shown.game).toBeUndefined()
 })
 
-test('the touch buttons say their words in the language of the device', async () => {
+test('the touch halves say their words in the language of the device', async () => {
   await page.viewport(390, 844)
   await open({ language: 'pt', coarse: true })
   window.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }))
-  const label = (action: string): string => root.querySelector(`[data-action='${action}']`)?.textContent ?? ''
-  expect([label('left'), label('right'), label('jump')]).toEqual(['Esquerda', 'Direita', 'Pular'])
+  const label = (half: string): string =>
+    root.querySelector(`[data-half='${half}']`)?.getAttribute('aria-label') ?? ''
+  expect([label('walk'), label('jump')]).toEqual(['Andar', 'Pular'])
 })
 
 test('a player with a finger on the screen is not told about keys', async () => {
@@ -256,11 +257,11 @@ const frames2 = (): Promise<void> =>
   new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())))
 
 for (const [name, w, h] of SCREENS) {
-  test(`on ${name} the touch buttons are whole and at least 48 pixels`, async () => {
+  test(`on ${name} the two thumb halves are whole, inside the screen and side by side`, async () => {
     await page.viewport(w, h)
     expect([window.innerWidth, window.innerHeight]).toEqual([w, h])
     const { frames } = await open({ language: 'en', coarse: true })
-    // A finger on the screen brings up the buttons, as it does for a player on a phone.
+    // A finger on the screen brings up the thumbs, as it does for a player on a phone.
     window.dispatchEvent(
       new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }),
     )
@@ -268,17 +269,25 @@ for (const [name, w, h] of SCREENS) {
     await frames2()
     frames.advance(FRAME)
 
-    for (const label of ['Left', 'Right', 'Jump']) {
-      const button = [...root.querySelectorAll('button')].find((b) => b.textContent === label)
-      expect(button, `a "${label}" button`).toBeDefined()
-      const r = (button as HTMLButtonElement).getBoundingClientRect()
-      expect(r.width, `${label} width`).toBeGreaterThanOrEqual(48)
-      expect(r.height, `${label} height`).toBeGreaterThanOrEqual(48)
+    const rect = (half: string): DOMRect => {
+      const found = root.querySelector(`[data-half='${half}']`)
+      expect(found, `the ${half} half`).not.toBeNull()
+      return (found as HTMLElement).getBoundingClientRect()
+    }
+    const walk = rect('walk')
+    const jump = rect('jump')
+    for (const [label, r] of [
+      ['walk', walk],
+      ['jump', jump],
+    ] as const) {
+      expect(r.width, `${label} width`).toBeGreaterThanOrEqual(w * 0.4)
+      expect(r.height, `${label} height`).toBeGreaterThanOrEqual(120)
       expect(r.left, `${label} left`).toBeGreaterThanOrEqual(0)
       expect(r.top, `${label} top`).toBeGreaterThanOrEqual(0)
       expect(r.right, `${label} right`).toBeLessThanOrEqual(w)
       expect(r.bottom, `${label} bottom`).toBeLessThanOrEqual(h)
     }
+    expect(walk.right, 'the walking half is left of the jumping one').toBeLessThanOrEqual(jump.left + 1)
     await page.screenshot({ element: root, path: `__screenshots__/template-${name}.png` })
   })
 }

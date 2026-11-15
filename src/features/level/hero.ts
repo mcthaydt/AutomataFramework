@@ -2,12 +2,14 @@
 // one mid-game). One list of parts, so the hero who joins is the hero the level would have made.
 import { Player } from '../commands/commands.ts'
 import type { Character, GameContent } from '../content/content.ts'
-import { BodyKind, body, collider, transform } from '../physics/physics.ts'
+import { BodyKind, body, collider, Touching, transform } from '../physics/physics.ts'
 import type { SpawnPart } from '../sim/sim.ts'
 import { colourNumber } from './colours.ts'
 import { Look, Thing } from './components.ts'
+import { MOVE_START } from './move-step.ts'
+import { Moves } from './moves.ts'
 import { Sprite } from './sprite.ts'
-import { usesSprites } from './uses.ts'
+import { usesMoves, usesSprites } from './uses.ts'
 
 /**
  * The parts every character-shaped entity gets: where, how it moves, its box and how it looks, and (in a game with
@@ -43,5 +45,7 @@ export function heroParts(content: GameContent, levelId: string, number: number)
     ...characterParts(hero, start, usesSprites(content), number),
     [Thing, { id: `player-${number}`, character: content.project.hero }],
     [Player, { number }],
+    // A hero the framework moves remembers how, and is told what it stands on and leans against.
+    ...(usesMoves(content) ? [[Moves, { ...MOVE_START }] as const, Touching] : []),
   ]
 }

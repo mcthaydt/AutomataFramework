@@ -37,3 +37,12 @@ export function usesSprites(content: GameContent): boolean {
     Object.values(content.levels).some((level) => level.view !== undefined)
   )
 }
+
+/**
+ * Whether the project's hero is one the framework moves: its character file has `moves`. It switches the built-in
+ * hero's plugin, the move state and what bodies touch on for the whole game, so a game whose hero has no `moves` keeps
+ * exactly the sim it had.
+ */
+export function usesMoves(content: GameContent): boolean {
+  return content.characters[content.project.hero]?.moves !== undefined
+}

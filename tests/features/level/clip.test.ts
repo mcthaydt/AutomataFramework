@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import type { Clip } from '#src/features/content/content.ts'
 import { motionClip, pickClip, poseAt } from '#src/features/level/clip.ts'
+import { MoveMode } from '#src/features/level/level.ts'
 
 const clip = (id: string, poses: string[], fps = 1, loop = true): Clip => ({ id, poses, fps, loop })
 const idle = clip('idle', ['idle'])
@@ -31,6 +32,30 @@ test('a character without the clip asked for plays the nearest it has', () => {
   expect(pickClip([talk], 'run')?.id).toBe('talk')
   expect(pickClip([idle, run], 'run')?.id).toBe('run')
   expect(pickClip([], 'idle')).toBeUndefined()
+})
+
+test.each([
+  // What a hero the framework moves is doing wins over how it moves, except an air jump that has stopped rising.
+  [0, 0, 'idle', 4, false, MoveMode.dash, 'dash'],
+  [3, -8, 'jump', 0, false, MoveMode.dash, 'dash'],
+  [0, 5, 'fall', 0, false, MoveMode.wall, 'wall'],
+  [0, -8, 'jump', 0, false, MoveMode.airJump, 'air-jump'],
+  [0, 3, 'air-jump', 0, false, MoveMode.airJump, 'fall'],
+  [3, -8, 'run', 0, false, MoveMode.plain, 'jump'],
+  [3, 0, 'idle', 4, false, MoveMode.plain, 'run'],
+])('moving at %d, %d from %s, still for %d, in mode %d', (vx, vy, now, still, landing, mode, expected) =>
+  expect(motionClip(vx, vy, now, still, landing, mode)).toBe(expected),
+)
+
+test('the new clips fall back to the nearest a character has, a hop at a time', () => {
+  const jump = clip('jump', ['jump'])
+  const fall = clip('fall', ['fall'])
+  expect(pickClip([idle, jump], 'air-jump')?.id).toBe('jump')
+  expect(pickClip([idle, jump, fall], 'wall')?.id).toBe('fall')
+  expect(pickClip([idle, jump], 'wall')?.id).toBe('jump')
+  expect(pickClip([idle, run], 'dash')?.id).toBe('run')
+  expect(pickClip([idle], 'dash')?.id).toBe('idle')
+  expect(pickClip([idle, run, clip('dash', ['run-2'])], 'dash')?.id).toBe('dash')
 })
 
 test('a clip of two poses at 12 a second changes pose every 5 ticks, and a loop goes round', () => {

@@ -1,0 +1,27 @@
+{
+  "ticks": 1100,
+  "finalHash": "f7b96f1cb2fabc83",
+  "checks": [
+    { "tick": 60, "hash": "5f66e293d1641bd3" },
+    { "tick": 120, "hash": "767ca67b2202a733" },
+    { "tick": 180, "hash": "53fb2c0d77f2ab2c" },
+    { "tick": 240, "hash": "941dc6d989ad2019" },
+    { "tick": 300, "hash": "c8aca4ab7f903998" },
+    { "tick": 360, "hash": "a9103011af39a9bd" },
+    { "tick": 420, "hash": "3626d4a1b7533d6e" },
+    { "tick": 480, "hash": "1b1a0fd161c06a08" },
+    { "tick": 540, "hash": "c9f35a1dc9b5123d" },
+    { "tick": 600, "hash": "ecaefc3de6acafce" },
+    { "tick": 660, "hash": "893d71e950f742a1" },
+    { "tick": 720, "hash": "27720ae6e278863e" },
+    { "tick": 780, "hash": "f6b812311d6f49ab" },
+    { "tick": 840, "hash": "6f1e6f63728a70cf" },
+    { "tick": 900, "hash": "c4ae87ec069f9bcc" },
+    { "tick": 960, "hash": "0735e5097e42e7a0" },
+    { "tick": 1020, "hash": "0c4224aa7cfee162" },
+    { "tick": 1080, "hash": "bd50aaa88822493c" }
+  ],
+  "replayText": "8f835da85217526a",
+  "coOpHash": "586674ad4b84da57",
+  "onlineHash": "bebd2a64d2a40b9b"
+}

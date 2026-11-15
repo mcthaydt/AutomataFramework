@@ -159,8 +159,32 @@ The row of buttons has the class `automata-touch`, each button the class `automa
 #game .automata-touch-button[data-action='jump'] { text-transform: uppercase; }
 ```
 
-What a hero does with the controls (run, jump) is the game's own code, a plugin built with `definePlugin` and
-`defineSystem`; pass it to `startGame` as `plugins: [...]`.
+Unless the hero has `moves` (next section), what a hero does with the controls (run, jump) is the game's own code, a
+plugin built with `definePlugin` and `defineSystem`; pass it to `startGame` as `plugins: [...]`.
+
+### A hero with no code
+
+The framework can walk, jump and, if the game wants them, double jump, wall jump and dash a hero with no code at all.
+Two files do it. The hero's character file says so:
+
+```json
+{
+  "format": 1,
+  "id": "hero",
+  "body": "dynamic",
+  "size": { "w": 0.8, "h": 1 },
+  "color": "#e4572e",
+  "upright": true,
+  "moves": { "tuning": "hero-moves", "double-jump": true, "wall-jump": false, "dash": false }
+}
+```
+
+and the tuning file it names, `content/tunings/hero-moves.json`, holds the numbers (`walk-speed`, `jump-speed` and
+sixteen more, each with the range an editor may move it in) and the controls. Pass no `controls` to `startGame`: they
+come from the tuning file. A phone gets two thumbs, not buttons: the left half walks, the right half jumps the moment
+the thumb lands, and a quick flick of the walking thumb dashes. A keyboard and a gamepad work from the same file, and
+the framework says what the hero did with eight events (`hero.jumped`, `hero.landed` and the rest, named with
+`moveEvent`), which a feel file (`content/feels/`) can answer with a buzz.
 
 ## Gamepads, changing keys and playing together
 

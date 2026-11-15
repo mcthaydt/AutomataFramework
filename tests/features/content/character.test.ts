@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { formatDiagnostic, parseContent, writeContent } from '#src/features/content/content.ts'
 import { artGame } from '../../fixtures/content/art.ts'
-import { gameProblems } from '../../fixtures/content/kind.ts'
+import { gameFiles, gameProblems } from '../../fixtures/content/kind.ts'
+import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const hero = () => ({
   format: 1,
@@ -210,4 +211,102 @@ describe('in a game', () => {
     ).toEqual([
       'content/characters/hero.json: clips[0].poses[1]: The figure "hero" has no pose called "sprint". It has: fall, idle, jump, land, push, run-1, run-2.',
     ]))
+})
+
+describe('moves', () => {
+  const walker = (moves: unknown = { tuning: 'hero-moves' }) => ({ ...hero(), moves })
+  const walkerFile = 'content/characters/hero.json'
+
+  test('moves with only a tuning reads, and the three switches are false', () => {
+    const parsed = parseContent('character', JSON.stringify(walker()), walkerFile)
+    expect(parsed.ok && parsed.value).toEqual({
+      ...hero(),
+      moves: { tuning: 'hero-moves', 'double-jump': false, 'wall-jump': false, dash: false },
+    })
+    expect(Object.keys(JSON.parse(writeContent('character', walker() as never))).at(-1)).toBe('moves')
+  })
+
+  test('a hero with every switch on writes back to the same bytes', () => {
+    const all = walker({ tuning: 'hero-moves', 'double-jump': true, 'wall-jump': true, dash: true })
+    const text = writeContent('character', all as never)
+    expect(writeContent('character', JSON.parse(text))).toBe(text)
+  })
+
+  test('moves on a fixed body, or on one that is not upright, is refused in words', () => {
+    const said =
+      'content/characters/hero.json: moves: A hero that walks needs a moving body that stays upright: make its body "dynamic" and "upright" true.'
+    expect(problems(walkerFile, { ...walker(), body: 'fixed' })).toEqual([said])
+    expect(problems(walkerFile, { ...walker(), upright: false })).toEqual([said])
+  })
+
+  test('moves with touch is refused', () => {
+    // A touched character must be fixed, so the body's own problem comes with it; this is the one about both.
+    expect(problems(walkerFile, { ...walker(), kind: 'spark', touch: 'sense' })).toContain(
+      'content/characters/hero.json: moves: A hero that walks cannot also be touched: take out "touch" or "moves".',
+    )
+  })
+
+  test('an unknown key inside moves is refused', () =>
+    expect(problems(walkerFile, walker({ tuning: 'hero-moves', fly: true }))).toEqual([
+      'content/characters/hero.json: moves.fly: This is not something a character has. Remove it or check the spelling.',
+    ]))
+
+  test('moves with no tuning says what to write', () =>
+    expect(problems(walkerFile, walker({}))).toEqual([
+      'content/characters/hero.json: moves.tuning: This is missing. Write the id of the tuning file with the hero\'s numbers, like "hero-moves".',
+    ]))
+
+  test('a hero whose "tuning" names another file than "moves.tuning" is refused', () =>
+    expect(problems(walkerFile, { ...walker(), tuning: 'other' })).toEqual([
+      'content/characters/hero.json: tuning: This hero takes its numbers from "moves.tuning" ("hero-moves"). Take out "tuning", or make it the same file.',
+    ]))
+
+  test('a hero whose "tuning" is the same file as "moves.tuning" is fine', () =>
+    expect(problems(walkerFile, { ...walker(), tuning: 'hero-moves' })).toEqual([]))
+
+  describe('in a game', () => {
+    const tuningFile = {
+      type: 'tuning' as const,
+      path: 'content/tunings/hero-moves.json',
+      text: writeContent('tuning', {
+        format: 1,
+        id: 'hero-moves',
+        numbers: [
+          { id: 'walk-speed', about: 'How fast the hero walks.', value: 6, min: 1, max: 20, step: 0.5 },
+        ],
+      } as never),
+    }
+    const withMoves = (id: string, tuning: string): Record<string, string | undefined> =>
+      gameFiles(
+        fixtureFiles,
+        [tuningFile],
+        id === 'hero'
+          ? {
+              'content/characters/hero.json': writeContent('character', {
+                ...hero(),
+                moves: { tuning },
+              } as never),
+            }
+          : {
+              'content/characters/crate.json': writeContent('character', {
+                ...crate(),
+                upright: true,
+                moves: { tuning },
+              } as never),
+            },
+      )
+
+    test('a hero whose tuning the game has loads', async () =>
+      expect(await gameProblems(withMoves('hero', 'hero-moves'))).toEqual([]))
+
+    test('a tuning that names no listed file is refused with the listed ids', async () =>
+      expect(await gameProblems(withMoves('hero', 'hero-move'))).toEqual([
+        'content/characters/hero.json: moves.tuning: There is no tuning called "hero-move". This game has: hero-moves.',
+      ]))
+
+    test("moves on a character that is not the project's hero is refused", async () =>
+      expect(await gameProblems(withMoves('crate', 'hero-moves'))).toEqual([
+        'content/characters/crate.json: moves: Only the hero is moved by a player: "moves" belongs on "hero", the character automata.toml names as hero.',
+      ]))
+  })
 })

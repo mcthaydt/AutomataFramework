@@ -24,6 +24,13 @@ The rules are `src/headless.ts` and every file it imports. `automata check` fail
 
 The page's own files (`src/features/page/`) may import `@automataframework/framework`.
 
+## The hero's names
+
+The hero's moves are the framework's: `moveEvent('jumped')` names the event of a jump (`MOVE_EVENTS` lists all eight), a
+rule that reads the hero after it moved runs `after: ['level.moves']`, and `DEFAULT_HERO_CONTROLS` and `MOVE_NUMBERS` are
+the controls and the eighteen numbers a tuning file starts from. The page says what to press with `playHint`, and the
+words of a key or a button with `inputName`; both are in the player's language.
+
 ## Where else to look
 
 - A content file's rules: `schemas/<kind>.schema.json` in the package, one for each kind of file, and one for a recording,
