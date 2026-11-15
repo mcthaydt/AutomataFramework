@@ -213,35 +213,55 @@ test('place answers the newest step for a thing there, the last picture for one 
   expect(r.place(99)).toBeUndefined()
 })
 
+/**
+ * Turns the mount to `to`, and runs `read` in the same task as the stage's own refit: a watcher added after the
+ * renderer's is called straight after it, so what the stage put back is still in the buffer (a WebGL buffer is
+ * cleared once the page has shown it).
+ */
+const turnedTo = (to: { w: number; h: number }, read: () => void): Promise<void> =>
+  new Promise((done, fail) => {
+    let started = false
+    const watcher = new ResizeObserver(() => {
+      // The first call is the watcher's own look at the size it starts with.
+      if (!started) {
+        started = true
+        size(to)
+        return
+      }
+      watcher.disconnect()
+      try {
+        read()
+        done()
+      } catch (error) {
+        fail(error)
+      }
+    })
+    watcher.observe(mount)
+  })
+
 test('turning the mount during a shake puts back the same specks and offset; after the shake a resize has none', async () => {
   const sideways = { w: 844, h: 390 }
   const r = await start([box(1, 4, 3)])
   r.draw(1, feel({ shake: { x: 0.25, y: 0 }, specks: [speck(6, 1, 0.8, 0x00aa00)] }))
-  size(sideways)
-  await vi.waitFor(() => expect(r.canvas.width).toBeGreaterThanOrEqual(sideways.w))
   const f = fit(sideways)
-  const resolution = r.canvas.width / sideways.w
-  const row = where(sideways, 4, 3).y
-  const dust = where(sideways, 6, 1)
-  // The stage puts the last picture back after the turn: wait for it, then look at the box and the dust.
-  await vi.waitFor(() => {
-    const span = rowSpan(r.canvas, row)
+  await turnedTo(sideways, () => {
+    const resolution = r.canvas.width / sideways.w
+    const span = rowSpan(r.canvas, where(sideways, 4, 3).y)
     expect(Math.abs((span?.left ?? 0) - (f.left + 3.5 * f.scale + 0.25 * f.scale))).toBeLessThanOrEqual(
       2 / resolution + 1,
     )
+    const dust = where(sideways, 6, 1)
+    expect(pixel(r.canvas, dust.x + 0.25 * f.scale, dust.y)[1]).toBeGreaterThan(120)
   })
-  expect(pixel(r.canvas, dust.x + 0.25 * f.scale, dust.y)[1]).toBeGreaterThan(120)
   // The shake is over: the loop draws a calm frame, and a later turn puts the box back with no offset.
   r.draw(1, feel())
-  size(PHONE)
-  await vi.waitFor(() => expect(r.canvas.width).toBe(Math.round(PHONE.w * resolution)))
-  const calm = where(PHONE, 4, 3)
-  // The turn is seen on the next picture the stage puts back: wait for the box to be where a calm one is.
-  await vi.waitFor(() =>
+  await turnedTo(PHONE, () => {
+    const resolution = r.canvas.width / PHONE.w
+    const calm = where(PHONE, 4, 3)
     expect(
       Math.abs((rowSpan(r.canvas, calm.y)?.left ?? 0) - (fit(PHONE).left + 3.5 * fit(PHONE).scale)),
-    ).toBeLessThanOrEqual(2 / resolution + 1),
-  )
+    ).toBeLessThanOrEqual(2 / resolution + 1)
+  })
 })
 
 test('dust is under the sky strip kept for the thumbs', async () => {
