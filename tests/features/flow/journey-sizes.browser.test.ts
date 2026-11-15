@@ -121,12 +121,24 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
   await twoGames(host)
   await drive.toMenu({ host, game: { noWarning: true } })
   const turn = async (): Promise<void> => {
+    // Counted for a failure to print: did the page hear the window change, and did a box watcher hear the mount's?
+    let heard = 0
+    let watched = 0
+    const count = (): void => {
+      heard += 1
+    }
+    window.addEventListener('resize', count)
+    const watcher = new ResizeObserver(() => {
+      watched += 1
+    })
+    watcher.observe(drive.mount)
     await page.viewport(844, 390)
     await expect.poll(() => window.innerHeight).toBe(390)
     // A screen drawn in the kit's frame says "tall" until it has measured its new box; the menu has no frame.
     // What every kit frame says it measured, for a failure to print: the page's own state, then each frame.
     const frames = (): string => {
-      const found = [`${document.visibilityState} ${window.innerWidth}x${window.innerHeight}`]
+      const window_ = `${document.visibilityState} ${window.innerWidth}x${window.innerHeight}`
+      const found = [`${window_} heard ${heard} watched ${watched}`]
       for (const one of drive.mount.querySelectorAll<HTMLElement>('[data-height]')) {
         const screen = one.closest<HTMLElement>('[data-screen]')
         const says = `${one.dataset.width}/${one.dataset.height}`
@@ -135,6 +147,8 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
       return found.join(' | ')
     }
     await expect.poll(frames).not.toMatch(/tall/)
+    window.removeEventListener('resize', count)
+    watcher.disconnect()
   }
   // The menu: the same button is in focus on its side.
   await drive.wait(es('automata.menu.continue'))
