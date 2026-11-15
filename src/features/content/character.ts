@@ -2,7 +2,7 @@ import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { noPose } from './figure.ts'
 import { Id } from './ids.ts'
-import { englishLacks, englishMissing } from './messages.ts'
+import { sourceLacks, sourceMissing } from './messages.ts'
 import { MessageKey, noSuch, unique } from './shared.ts'
 import type { ContentTypeInfo } from './type-info.ts'
 
@@ -170,8 +170,8 @@ export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
     // A behaviour sets how fast the body moves, and a fixed body does not move.
     if (character.behaviour !== undefined && character.body === 'fixed')
       report('body', 'A character with a behaviour has to move, so its body must be "dynamic".')
-    if (character.name !== undefined && englishLacks(game, character.name))
-      report('name', englishMissing(character.name))
+    if (character.name !== undefined && sourceLacks(game, character.name))
+      report('name', sourceMissing(game, character.name))
     if (character.conversation !== undefined && !game.has('conversation', character.conversation))
       report('conversation', noSuch('conversation', character.conversation, game.ids('conversation')))
     if (character.figure === undefined) return
