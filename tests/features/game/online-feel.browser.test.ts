@@ -4,6 +4,7 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page } from 'vitest/browser'
 import { Player } from '#src/features/commands/commands.ts'
+import { writeContent } from '#src/features/content/content.ts'
 import { type OnlineGame, startOnlineGame } from '#src/features/game/online.ts'
 import { type TestHost, testHost } from '#src/features/host/host.ts'
 import { createGameSim } from '#src/features/level/level.ts'
@@ -19,6 +20,7 @@ import type { Sim } from '#src/features/sim/sim.ts'
 import { FREEZE_TICKS, LAND_BUZZ, loadFeelGame } from '../../fixtures/feel/game.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { chosenLocale } from '../../fixtures/locale/chosen.ts'
+import { levelOne, START_FLOOR } from '../../fixtures/moves/level.ts'
 import { createWire, type Delay } from '../../fixtures/online/wire.ts'
 
 const FRAME = 1000 / 60
@@ -55,8 +57,8 @@ interface Started {
 }
 
 /** Two seats in a room of the feel game: this page is seat 1, and a scripted player stands in seat 2. */
-async function start(): Promise<Started> {
-  const content = await loadFeelGame()
+async function start(files: Record<string, string | undefined> = {}): Promise<Started> {
+  const content = await loadFeelGame(files)
   const engineSim = await createGameSim({ content, players: [1, 2] })
   made.push(engineSim)
   const engine = createRoomEngine({ sim: engineSim, level: 'level-1', seats: 2 })
@@ -144,6 +146,31 @@ test('after the hold the picture is let go, and the world has gone on', async ()
   key('keyup', 'ArrowRight')
 })
 
+/** The feel game's level with no spark in it, so nothing is taken and a walk goes on past where the spark lay. */
+const NO_SPARK = {
+  'content/levels/level-1.json': writeContent('level', {
+    ...(JSON.parse(levelOne()) as Record<string, unknown>),
+    things: [],
+    starts: [
+      { player: 1, x: 2.5, y: START_FLOOR - 0.5 },
+      { player: 2, x: 10.5, y: START_FLOOR - 0.5 },
+    ],
+  } as never),
+}
+
+test('both pages of a room with feel files keep agreeing with the room through jumps and landings', async () => {
+  const { game, beat, checks } = await start(NO_SPARK)
+  for (let jump = 0; jump < 3; jump++) {
+    key('keydown', 'Space')
+    beat(2)
+    key('keyup', 'Space')
+    beat(60)
+  }
+  expect(game.stats(), JSON.stringify(game.stats())).toMatchObject({ desyncs: 0 })
+  expect(checks.length).toBeGreaterThan(0)
+  expect(checks.every(Boolean)).toBe(true)
+})
+
 test('both pages of a room with a freeze file keep agreeing with the room', async () => {
   const { game, beat, checks } = await start()
   key('keydown', 'ArrowRight')
@@ -172,10 +199,13 @@ test('a landing online on touch is one buzz, as before', async () => {
   finger('pointerup')
   const trail: string[] = []
   const landed = until(beat, () => {
-    const hero = game.sim.query(Player, Transform)[0]
-    if (trail.length < 40 && hero !== undefined) trail.push(hero.get(Transform).y.toFixed(2))
+    const hero = game.sim.query(Player, Transform).find((e) => e.get(Player).number === 1)
+    if (trail.length < 60 && hero !== undefined) trail.push(hero.get(Transform).y.toFixed(2))
     return game.feel().specks.length > 0
   })
-  expect(landed, `tick ${game.sim.tick}, the hero's height after the tap: ${trail.join(' ')}`).toBe(true)
+  expect(
+    landed,
+    `tick ${game.sim.tick}, ${JSON.stringify(game.stats())}, the first hero's height after the tap: ${trail.join(' ')}`,
+  ).toBe(true)
   expect(host.buzzes.slice(before)).toEqual([{ strength: LAND_BUZZ.strength, ms: 50 }])
 })
