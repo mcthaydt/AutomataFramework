@@ -127,8 +127,6 @@ function sourcesIn(dir: string): string[] {
  * task lands, and the task takes it out; the list is empty when the plan is built, and this goes with it.
  */
 const WAITING_FOR_SCREENS: readonly string[] = [
-  'automata.done.',
-  'automata.problem.',
   'automata.back',
   'automata.keep',
   'automata.settings.',
