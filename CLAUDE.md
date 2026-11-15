@@ -96,6 +96,18 @@ document and overall progress percentage dynamically."
 relative to the spec and relative to the codebase. Assume nothing. Verify everything. Investigate any incomplete
 implementations or incomplete integrations. Do your best work."
 
+## Visual review process
+
+Every mockup or UI round goes through these steps before the Owner sees it. Each step is its own session, with fixes
+after each, and all of it lands in one pull request.
+
+1. **Plain-words check** (Opus): every word passes the drunk-grandma test.
+2. **Design pass** (Fable): every screen, device and orientation, for layout, touch size and polish.
+3. **End-to-end check**: walk every real user journey from first open to playing the result; fully usable, nothing
+   missing, no dead ends.
+4. **Second visual look** (Opus, xhigh effort): a fresh, harsh look after all the fixes.
+5. **Owner review.**
+
 ## Sessions and reporting
 
 - One long-lived coordinator. One long-lived merge session merges each finished stage branch to `main` by pull request
