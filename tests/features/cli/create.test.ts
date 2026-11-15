@@ -21,7 +21,10 @@ const made = async (args: string[], memory = withTemplate()): Promise<Memory> =>
   expect(await main(['create', ...args, ...source], memory.layer)).toBe(0)
   return memory
 }
-const text = (memory: Memory, path: string): string => String(memory.files.get(path))
+const text = (memory: Memory, path: string): string => {
+  const file = memory.files.get(path)
+  return file instanceof Uint8Array ? new TextDecoder().decode(file) : String(file)
+}
 /** The files of the game that `create` wrote, by path from its folder. */
 const written = (memory: Memory, folder: string): string[] =>
   [...memory.files.keys()]

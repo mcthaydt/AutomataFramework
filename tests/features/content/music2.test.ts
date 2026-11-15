@@ -37,8 +37,8 @@ test("a song is written with its keys in the schema's order", () =>
     'lanes',
   ]))
 
-test('one chord for each bar', async () =>
-  expect(await problemsWith((s) => (s.chords = s.chords.slice(0, 6)))).toEqual([
+test('one chord for each bar', () =>
+  expect(problemsOf('music', { ...meadow(), chords: meadow().chords.slice(0, 6) }, file)).toEqual([
     `${file}: chords: Write one chord for each bar: this track has 8 bars and 6 chords.`,
   ]))
 

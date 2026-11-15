@@ -26,10 +26,13 @@ function entriesOf(text: string): readonly { type: string; path: string }[] {
   return parsed.value.content
 }
 
-test('the template with its last block cut off, given that block back, is the template, byte for byte', () => {
+test('the template with its last folder block cut off, given that folder back, lists the same files again', () => {
   const cut = automata.slice(0, automata.lastIndexOf('\n[[content]]'))
   expect(cut).not.toBe(automata)
-  expect(listed(cut, { type: 'messages', path: 'content/messages/pt.json' })).toBe(automata)
+  const back = withFolders(cut, [{ type: 'cues', folder: 'content/cues' }])
+  // The block comes back after one blank line, below the comment that was left above it.
+  expect(back).toBe(`${cut}\n\n[[content]]\ntype = "cues"\nfolder = "content/cues"\n`)
+  expect(parseProject(back)).toEqual(parseProject(automata))
 })
 
 test('a block is added at the end after one blank line, with the note above it as a comment', () => {

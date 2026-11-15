@@ -206,7 +206,7 @@ test('export finds a loop and a motif as well as a song, and says what the game 
     code: 2,
     out: [],
     err: [
-      'There is no track, loop or motif called "nope". This game has: meadow, easy-drums, drum-fill, bouncy-bass, hero-theme.',
+      'There is no track, loop or motif called "nope". This game has: meadow, bouncy-bass, drum-fill, easy-drums, hero-theme.',
     ],
   })
   expect(memory.files.has('nope.mid')).toBe(false)

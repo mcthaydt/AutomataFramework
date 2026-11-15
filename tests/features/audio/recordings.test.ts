@@ -1,11 +1,7 @@
 import { expect, test, vi } from 'vitest'
 import { loadRecordings, RecordingError } from '#src/features/audio/audio.ts'
-import {
-  type GameContent,
-  RECORDING_RATE,
-  type SoundFile,
-  writeRecording,
-} from '#src/features/content/content.ts'
+import { type GameContent, RECORDING_RATE, type SoundFile } from '#src/features/content/content.ts'
+import { encodeWav } from '#src/lib/wav.ts'
 
 const sound = (id: string, file: string): SoundFile => ({
   format: 1,
@@ -21,9 +17,9 @@ const gameOf = (...sounds: SoundFile[]): GameContent =>
     project: { content: sounds.map((s) => ({ type: 'sound', path: `content/sounds/${s.id}.json` })) },
   }) as unknown as GameContent
 
-/** The bytes of a recording of `seconds` seconds. */
+/** A recording file of `seconds` seconds, made without the checks of `writeRecording`, so one can be too long. */
 const seconds = (n: number): Uint8Array =>
-  writeRecording([new Float32Array(Math.round(n * RECORDING_RATE)).fill(0.25)], RECORDING_RATE)
+  encodeWav(new Float32Array(Math.round(n * RECORDING_RATE)).fill(0.25), RECORDING_RATE)
 
 test('two sounds that name one file read it once', async () => {
   const read = vi.fn(async () => seconds(1))

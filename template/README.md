@@ -24,10 +24,8 @@ The game opens in your browser. Hold the left or right arrow key to move, and pr
 4. Open the file of your game's language in `content/messages/` (`source` in `automata.toml` names it) and change a
    word. The game says it in six languages: write the same key in the other five files too, and `npm run check` names
    any that is missing.
-5. Open `content/figures/crate.json` and change a paint's `color`, then run `npm run art` to paint its picture again. Commit
-   the picture with the file.
-6. Make a new sound with `npx --no automata sound new coin`, say when it plays in `content/cues/cues.json`, and run
-   `npm run dev` again.
+5. Open `content/figures/crate.json`, change a paint's `color`, and run `npm run art`. Commit the picture too.
+6. Make a sound with `npx --no automata sound new coin`, say when it plays in `content/cues/cues.json`, and run `npm run dev`.
 
 ## Give it a name
 
@@ -51,7 +49,7 @@ recording in `replays/` no longer matches; run `npm run accept` to record the ne
 | Levels and characters | `content/` |
 | What things look like, painted by `npm run art` | `content/figures/` |
 | The words, one file for each language | `content/messages/` |
-| Sounds, songs and what plays when | `content/sounds/`, `content/music/`, `content/cues/` |
+| Sounds, songs, loops and what plays when | `content/sounds/`, `content/music/`, `content/loops/`, `content/cues/` |
 | How the hero moves: its numbers and its controls | `content/tunings/` |
 | The game's own rules (the score) | `src/features/` |
 | The page that shows the game | `src/features/page/` |

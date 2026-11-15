@@ -23,7 +23,9 @@ const BEATS_HINT = 'Write how many beats it lasts, from 0.25 to 8, in quarters, 
 
 const note = z.strictObject({
   step: z
-    .union([z.int().min(1).max(15), z.string().regex(STEP)], { error: STEP_HINT })
+    .union([z.int().min(1, STEP_HINT).max(15, STEP_HINT), z.string().regex(STEP, STEP_HINT)], {
+      error: STEP_HINT,
+    })
     .describe('Which note of the key: 1 to 15, with b or # in front for the note between.'),
   beats: z
     .number()
