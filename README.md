@@ -881,6 +881,7 @@ Each kind has a JSON Schema, shipped in the package so an agent can read the for
 | `conversation` | what a character says, and the choices a player has | `content/conversations/` | `schemas/conversation.schema.json` |
 | `cutscene` | a camera move and the lines said during it | `content/cutscenes/` | `schemas/cutscene.schema.json` |
 | `messages` | every word a player reads, in one language | `content/messages/` | `schemas/messages.schema.json` |
+| `world` | where each level sits on the map, which decides which levels join | `content/worlds/` | `schemas/world.schema.json` |
 
 Each schema is at `@automataframework/framework/schemas/<kind>.schema.json`. Three rules hold for every kind:
 

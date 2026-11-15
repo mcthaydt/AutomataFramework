@@ -75,7 +75,7 @@ test('a sense or an act that does not exist names the choices', () => {
         ruleAt(rules, 1).do = { act: 'fly' }
       }),
     ),
-  ).toEqual([`${file}: rules[1].do.act: This must be one of: stay, wander, flee, follow, jump.`])
+  ).toEqual([`${file}: rules[1].do.act: This must be one of: stay, wander, flee, follow, jump, walk-path.`])
 })
 
 test('a field the sense does not have', () =>
@@ -212,3 +212,17 @@ test('a character that names a behaviour the game does not have', async () =>
   ).toEqual([
     'content/characters/critter.json: behaviour: There is no behaviour called "critr". This game has: critter.',
   ]))
+
+test('a rule may walk a path its character holds, and the path is named by id', () => {
+  const walking = (path: Json): ReturnType<typeof critter> =>
+    withRules((rules) => {
+      ruleAt(rules, 1).do = { act: 'walk-path', speed: 2, ...path }
+    })
+  expectRoundTrip('behaviour', walking({ path: 'walk' }))
+  expect(said(walking({}))).toEqual([
+    `${file}: rules[1].do.path: This is missing. Say which "path" value of the character to walk, like "walk".`,
+  ])
+  expect(said(walking({ path: 'Walk' }))).toEqual([
+    `${file}: rules[1].do.path: Use lower-case words joined by dashes, like "level-1".`,
+  ])
+})

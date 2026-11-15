@@ -17,6 +17,7 @@ export type Act =
   | { readonly act: 'flee'; readonly from: string; readonly speed: number }
   | { readonly act: 'follow'; readonly to: string; readonly speed: number }
   | { readonly act: 'jump'; readonly speed: number }
+  | { readonly act: 'walk-path'; readonly path: string; readonly speed: number }
 
 /** One rule: when every sense in `when` holds, the character does `do`. */
 export interface BehaviourRule {
@@ -69,6 +70,13 @@ const act = variants('act', [
     speed,
   }),
   z.strictObject({ act: z.literal('jump').describe('Jumps.'), speed }),
+  z.strictObject({
+    act: z
+      .literal('walk-path')
+      .describe('Walks along a path its thing holds, place to place. The framework does not run this yet.'),
+    path: Id.describe('The "path" value of this character that holds the places to walk, like "walk".'),
+    speed,
+  }),
 ])
 
 const rule = z.strictObject({
@@ -163,6 +171,7 @@ export const behaviourInfo: ContentTypeInfo<BehaviourFile, BehaviourFile> = {
     'rules.do.turnEvery': 'Say how many ticks it walks before it turns around, like 90.',
     'rules.do.from': 'Say which kind of thing to run away from, like "hero".',
     'rules.do.to': 'Say which kind of thing to walk toward, like "hero".',
+    'rules.do.path': 'Say which "path" value of the character to walk, like "walk".',
   },
   check: checkKinds,
 }

@@ -2,8 +2,9 @@ import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { noPose } from './figure.ts'
 import { Id } from './ids.ts'
-import { noSuch, unique } from './shared.ts'
-import type { ContentTypeInfo } from './type-info.ts'
+import { list, noSuch, unique } from './shared.ts'
+import type { ContentTypeInfo, Listed, Report } from './type-info.ts'
+import { checkDeclarations, type ValueDeclaration, valueDeclaration } from './values.ts'
 
 /**
  * One way a character moves, as a run of poses of its figure: shown in order at `fps` pictures a second, and round
@@ -67,6 +68,17 @@ export interface Character {
    * game code. The three switches turn on the double jump, the wall jump and the dash.
    */
   readonly moves?: HeroMoves | undefined
+  /** The values its things may hold, like a switch's link or a door's way into another level. At most 16. */
+  readonly values?: readonly ValueDeclaration[] | undefined
+  /**
+   * Set on a plate or a button: it is pressed by what touches it, and `opens` names its `thing` value (the things it
+   * opens), `stays` an optional `switch` value that says it stays down once pressed. Needs `touch: "sense"`.
+   */
+  readonly switch?: { readonly opens: string; readonly stays?: string | undefined } | undefined
+  /** `walk-through`: a fixed character with no `touch` that lets things pass while it is open, like a gate. */
+  readonly opens?: 'walk-through' | undefined
+  /** True when a level may hold only one thing of this character, like a goal. */
+  readonly 'one-per-level'?: boolean | undefined
 }
 
 /** What a person may write: `upright` can be left out, and then it is false; so can the three switches of `moves`. */
@@ -76,6 +88,13 @@ export interface CharacterInput extends Omit<Character, 'upright' | 'moves'> {
 }
 
 const MAX_SIZE = 16
+
+const switchLinks = z.strictObject({
+  opens: Id.describe('The "thing" value that lists what this switch opens, like "opens".'),
+  stays: Id.describe(
+    'The "switch" value that says this one stays down once pressed, like "stays". Left out means it comes up when nothing stands on it.',
+  ).optional(),
+})
 
 const moves = z.strictObject({
   tuning: Id.describe('The tuning file with the hero\'s numbers and controls, by id, like "hero-moves".'),
@@ -103,6 +122,34 @@ const clip = z.strictObject({
 
 /** One side of the box: more than nothing, and small enough to fit on a screen. */
 const side = (what: string): z.ZodNumber => z.number().gt(0).max(MAX_SIZE).describe(what)
+
+/**
+ * What a character says about being a switch or a gate: each name it gives must be a value of the right type, and a
+ * switch must be pressed by touch. Written to cope with a half-read character, since it may run beside other problems.
+ */
+function checkSwitch(character: Partial<Character>, ctx: z.core.$RefinementCtx): void {
+  const add = (path: readonly string[], message: string): void =>
+    ctx.addIssue({ code: 'custom', path: [...path], message })
+  const named = (type: ValueDeclaration['type']): string[] =>
+    (character.values ?? []).filter((value) => value.type === type).map((value) => value.id)
+  const link = character.switch
+  if (link !== undefined) {
+    if (character.touch !== 'sense')
+      add(['switch'], 'A switch is pressed by what touches it: give this character "touch": "sense".')
+    if (link.opens !== undefined && !named('thing').includes(link.opens))
+      add(
+        ['switch', 'opens'],
+        `"${link.opens}" must name one of this character's "thing" values. It has: ${list(named('thing'))}.`,
+      )
+    if (link.stays !== undefined && !named('switch').includes(link.stays))
+      add(
+        ['switch', 'stays'],
+        `"${link.stays}" must name one of this character's "switch" values. It has: ${list(named('switch'))}.`,
+      )
+  }
+  if (character.opens !== undefined && (character.body !== 'fixed' || character.touch !== undefined))
+    add(['opens'], 'Only a "fixed" character with no "touch" can be walked through when open.')
+}
 
 /** The rules for a character file; unknown keys are refused. */
 export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
@@ -147,6 +194,30 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
         'Set on the hero only: the framework walks and jumps it from a tuning file, with no game code. Walk and jump are always on; "double-jump", "wall-jump" and "dash" are each switched on here.',
       )
       .optional(),
+    values: z
+      .array(valueDeclaration)
+      .max(16)
+      .describe(
+        'The values its things may hold, like a number, a switch, a link to other things, a path or a way into another level. A thing in a level gives them. Left out means none.',
+      )
+      .optional(),
+    switch: switchLinks
+      .describe(
+        'Set on a plate or a button: it is pressed by what touches it, so it needs "touch": "sense". "opens" names the "thing" value that lists what it opens; "stays" names a "switch" value that makes it stay down once pressed.',
+      )
+      .optional(),
+    opens: z
+      .literal('walk-through')
+      .describe(
+        '"walk-through": things pass through this character while it is open, like a gate. A fixed character with no "touch".',
+      )
+      .optional(),
+    'one-per-level': z
+      .boolean()
+      .describe(
+        'True when a level may hold only one thing of this character, like a goal. Left out means false.',
+      )
+      .optional(),
   })
   .superRefine((character, ctx) => {
     unique(character.clips ?? [], 'id', 'clip', ['clips'], ctx)
@@ -172,6 +243,8 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
           message: `This hero takes its numbers from "moves.tuning" ("${character.moves.tuning}"). Take out "tuning", or make it the same file.`,
         })
     }
+    checkDeclarations(character.values ?? [], ctx)
+    checkSwitch(character, ctx)
     if (character.clips !== undefined && character.clips.length > 0 && character.figure === undefined)
       ctx.addIssue({
         code: 'custom',
@@ -194,6 +267,22 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
       })
   })
 
+/** A behaviour that walks a path may name only a path this character's values declare. */
+function checkWalks(character: Character, game: Listed, report: Report): void {
+  const behaviour = character.behaviour === undefined ? undefined : game.get('behaviour', character.behaviour)
+  if (behaviour === undefined) return
+  const paths = (character.values ?? []).filter((value) => value.type === 'path').map((value) => value.id)
+  const reported = new Set<string>()
+  for (const rule of behaviour.rules) {
+    if (rule.do.act !== 'walk-path' || paths.includes(rule.do.path) || reported.has(rule.do.path)) continue
+    reported.add(rule.do.path)
+    report(
+      'behaviour',
+      `The behaviour "${behaviour.id}" walks the path "${rule.do.path}", and this character has no "path" value called "${rule.do.path}". It has: ${list(paths)}.`,
+    )
+  }
+}
+
 /** The character's row of the content table. */
 export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
   schema: CharacterSchema,
@@ -211,6 +300,15 @@ export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
     'size.h': 'Write how tall it is, in tiles.',
     color: 'Write the colour as # and six digits, like #e4572e.',
     'moves.tuning': 'Write the id of the tuning file with the hero\'s numbers, like "hero-moves".',
+    'values.id': 'Give the value a name like "opens".',
+    'values.name': 'Write what an editor calls this value, like "Opens".',
+    'values.least': 'Write the smallest it may be, like 1.',
+    'values.most': 'Write the largest it may be, like 8.',
+    'values.default': 'Write what a thing holds when it says nothing.',
+    'values.from': 'List the options, like [{ "id": "red", "name": "Red" }].',
+    'values.from.id': 'Give the option a name like "red".',
+    'values.from.name': 'Write what an editor calls this option, like "Red".',
+    'switch.opens': 'Write the id of the "thing" value that lists what this switch opens, like "opens".',
     'clips.id': 'Give the clip a name like "run".',
     'clips.poses': 'List the poses it shows, like ["run-1", "run-2"].',
     'clips.fps': 'Write how many pictures a second it shows, like 8.',
@@ -221,6 +319,7 @@ export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
       report('behaviour', noSuch('behaviour', character.behaviour, game.ids('behaviour')))
     if (character.tuning !== undefined && !game.has('tuning', character.tuning))
       report('tuning', noSuch('tuning', character.tuning, game.ids('tuning')))
+    checkWalks(character, game, report)
     if (character.moves !== undefined) {
       if (!game.has('tuning', character.moves.tuning))
         report('moves.tuning', noSuch('tuning', character.moves.tuning, game.ids('tuning')))

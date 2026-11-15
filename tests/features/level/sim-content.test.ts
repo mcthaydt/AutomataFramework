@@ -2,7 +2,7 @@
 // different translations of one game can share a room, and a word changed in a file moves no hash.
 import { afterEach, expect, test } from 'vitest'
 import { createRecorder, verifyReplay } from '#src/features/commands/commands.ts'
-import { type GameContent, loadGame } from '#src/features/content/content.ts'
+import { type GameContent, loadGame, writeContent } from '#src/features/content/content.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import { simContent } from '#src/features/level/sim-content.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
@@ -11,6 +11,7 @@ import { readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
+import { loadLinksGame } from '../../fixtures/links-game/read.ts'
 import golden from '../../golden/push-crate.json' with { type: 'json' }
 
 // Koota allows 16 live worlds in a process, so every sim a test makes is disposed when it ends.
@@ -75,8 +76,9 @@ test('the list of words files is not hashed either', async () => {
   const full = await loadFull()
   const given = simContent(full)
   expect(given.project.content.some((entry) => entry.type === 'messages')).toBe(false)
-  // Every other entry stays, in its order; the sound, music, cue and art files leave with the words (plans S and A).
-  const left = new Set(['messages', 'sound', 'music', 'cues', 'figure', 'backdrop', 'feel'])
+  // Every other entry stays, in its order; the sound, music, cue and art files leave with the words (plans S and A),
+  // and the world file leaves too, since where levels sit on the map changes no play (plan W).
+  const left = new Set(['messages', 'sound', 'music', 'cues', 'figure', 'backdrop', 'feel', 'world'])
   expect(given.project.content).toEqual(full.project.content.filter((entry) => !left.has(entry.type)))
 })
 
@@ -230,4 +232,50 @@ test('each of the four alone is taken out, and a game that writes only one still
 test('a game with none of them is handed back as the very same object', async () => {
   const plain = await loadFixtureGame()
   expect(simContent(plain)).toBe(plain)
+})
+
+test('the world file is not given to the sim, what it joins is, and dragging a level around the map moves no hash', async () => {
+  const game = await loadLinksGame()
+  const given = simContent(game)
+  expect(given.worlds).toBeUndefined()
+  expect(given.places).toEqual({
+    'room-2': [
+      { level: 'room-2', x: 0, y: 0 },
+      { level: 'room-3', x: 16, y: 0 },
+    ],
+  })
+  expect(given.project.content.some((entry) => entry.type === 'world')).toBe(false)
+  // The game itself keeps its map.
+  expect(game.worlds).toBeDefined()
+
+  const dragged = await loadLinksGame({
+    'content/worlds/world.json': writeContent('world', {
+      format: 1,
+      id: 'world',
+      levels: [
+        { level: 'room-1', at: { x: 0, y: 30 } },
+        { level: 'room-2', at: { x: 20, y: 0 } },
+        { level: 'room-3', at: { x: 36, y: 0 } },
+      ],
+    } as never),
+  })
+  expect(simContent(dragged)).toEqual(given)
+})
+
+test('a game that lists only a world file is not handed back whole', async () => {
+  const files = { ...fixtureFiles }
+  files['automata.toml'] =
+    `${files['automata.toml']}\n[[content]]\ntype = "world"\npath = "content/worlds/world.json"\n`
+  files['content/worlds/world.json'] = writeContent('world', {
+    format: 1,
+    id: 'world',
+    levels: [{ level: 'level-1', at: { x: 0, y: 0 } }],
+  } as never)
+  const loaded = await loadGame(readFiles(files))
+  expect(loaded.ok).toBe(true)
+  if (!loaded.ok) return
+  const given = simContent(loaded.value)
+  expect(given).not.toBe(loaded.value)
+  expect(given.worlds).toBeUndefined()
+  expect(given.project.content.map((entry) => entry.type)).toEqual(['level', 'character', 'character'])
 })

@@ -68,6 +68,7 @@ export {
   type LevelStart,
   type LevelThing,
   type LevelView,
+  type ThingValue,
 } from './level.ts'
 export { type GameContent, loadGame } from './load.ts'
 export {
@@ -96,6 +97,7 @@ export {
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'
+export { type IsOpen, type Join, layoutWorld, openTile, type PlaceLevel, type WorldLayout } from './places.ts'
 export {
   type ContentRef,
   levelOrder,
@@ -143,4 +145,13 @@ export {
   tuningNumbers,
 } from './tuning.ts'
 export type { ContentTypeInfo, EditorName, Listed, Report } from './type-info.ts'
+export {
+  SHOWN_FOR,
+  shownOf,
+  type ValueDeclaration,
+  type ValueShown,
+  valueDeclaration,
+  withDefaults,
+} from './values.ts'
+export { type WorldFile, WorldSchema } from './world.ts'
 export { writeContent } from './write.ts'

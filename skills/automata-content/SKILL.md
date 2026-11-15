@@ -473,3 +473,23 @@ All of the game's words in one language, by key. One file for each language, lis
   }
 }
 ```
+
+## world
+
+Where the levels sit on the world map: each level's top left corner, in whole tiles. Two levels that touch along a side and are open there join into one place. Put the files in `content/worlds/`; the kind's rules are in `schemas/world.schema.json`. A game has one world file. Run `npx --no automata check` after you move a level: it says when two levels that touch are open on one side and solid on the other.
+
+```json
+{
+  "format": 1,
+  "id": "world",
+  "levels": [
+    {
+      "level": "level-1",
+      "at": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ]
+}
+```

@@ -25,6 +25,7 @@ const wanted = [
   'skills/automata-rules/SKILL.md',
   'skills/automata-api/SKILL.md',
   'docs/api/framework.api.md',
+  'docs/formats/changes.md',
 ]
 const unwanted = names.filter(
   (name) => name.startsWith('template/node_modules') || /^template\/.*\.png$/.test(name),

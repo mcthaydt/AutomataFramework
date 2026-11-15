@@ -3,11 +3,12 @@ import type { ContentType, GameContent } from '../content/content.ts'
 
 /**
  * The kinds of file the sim is not given: the words a player reads (`messages`), what a game sounds like (`sound`,
- * `music`, `cues`) and how it looks and feels (`figure`, `backdrop`, `feel`). None of them says what happens, so a
- * word, a sound, a colour or a shake changed in a file must not move a hash, stop a replay or keep two players out of one room. (Which clip a
- * character plays is its `character` file's, and stays in.) A plan that takes another kind out of the sim adds it
- * here and to the `GameContent` maps it takes out below: a kind's maps and its files' entries in the project's list
- * always leave together.
+ * `music`, `cues`), how it looks and feels (`figure`, `backdrop`, `feel`) and where its levels sit on the world map
+ * (`world`; what the map joins goes in as `places`, so dragging a level around the map moves no hash). None of them says
+ * what happens, so a word, a sound, a colour or a shake changed in a file must not move a hash, stop a replay or keep two
+ * players out of one room. (Which clip a character plays is its `character` file's, and stays in.) A plan that takes
+ * another kind out of the sim adds it here and to the `GameContent` maps it takes out below: a kind's maps and its files'
+ * entries in the project's list always leave together.
  */
 const LEFT_OUT: ReadonlySet<ContentType> = new Set<ContentType>([
   'messages',
@@ -17,6 +18,7 @@ const LEFT_OUT: ReadonlySet<ContentType> = new Set<ContentType>([
   'figure',
   'backdrop',
   'feel',
+  'world',
 ])
 
 /**
@@ -45,7 +47,8 @@ export function simContent(content: GameContent): GameContent {
     content.cues === undefined &&
     content.figures === undefined &&
     content.backdrops === undefined &&
-    content.feels === undefined
+    content.feels === undefined &&
+    content.worlds === undefined
   )
     return content
   // The team's language is not what happens in the game, so `source` goes with the words, and the flow's fields with it.
@@ -65,6 +68,7 @@ export function simContent(content: GameContent): GameContent {
     figures: _figures,
     backdrops: _backdrops,
     feels: _feels,
+    worlds: _worlds,
     ...kept
   } = content
   return deepFreeze({

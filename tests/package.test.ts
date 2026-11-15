@@ -61,7 +61,9 @@ test('the package has one bin, automata, built from src/cli.ts', () => {
 })
 
 test('the package ships the template and the skills', () => {
-  expect(manifest.files).toEqual(expect.arrayContaining(['template', 'skills', 'docs/api/framework.api.md']))
+  expect(manifest.files).toEqual(
+    expect.arrayContaining(['template', 'skills', 'docs/api/framework.api.md', 'docs/formats/changes.md']),
+  )
 })
 
 // The Owner's answer to Q1 (2026-11-14): `automata mcp` is our own server, and the official MCP SDK is only the client a

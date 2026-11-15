@@ -239,6 +239,34 @@
                   "speed"
                 ],
                 "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "act": {
+                    "type": "string",
+                    "const": "walk-path",
+                    "description": "Walks along a path its thing holds, place to place. The framework does not run this yet."
+                  },
+                  "path": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+                    "description": "The \"path\" value of this character that holds the places to walk, like \"walk\"."
+                  },
+                  "speed": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 32,
+                    "description": "How fast, in tiles a second."
+                  }
+                },
+                "required": [
+                  "act",
+                  "path",
+                  "speed"
+                ],
+                "additionalProperties": false
               }
             ],
             "description": "What the character does."
