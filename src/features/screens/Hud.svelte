@@ -9,9 +9,13 @@
   let { pause, side, onpause, watching, register }: HudProps = $props()
 
   let boxes: readonly HeroBox[] = $state([])
-  register((next) => {
-    boxes = next
-  })
+  // The screen's owner says where the heroes are, now and after each frame; asked for once, here.
+  function listen(): void {
+    register((next) => {
+      boxes = next
+    })
+  }
+  listen()
 
   let taken = false
   function take(): void {

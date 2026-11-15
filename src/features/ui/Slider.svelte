@@ -11,8 +11,12 @@
   const THUMB = 44
 
   let track: HTMLDivElement | undefined = $state()
-  // The value as last said, so a release tells what was said and not what the screen has caught up to.
-  let latest = value
+  // The value as last said, so a release tells what was said and not what the screen has caught up to. It starts as the
+  // value the slider was given, read in a function so that it is plain that it is read once.
+  let latest = valueNow()
+  function valueNow(): number {
+    return value
+  }
 
   const shown = $derived(Math.min(1, Math.max(0, value)))
   const percent = $derived(Math.round(shown * 100))
