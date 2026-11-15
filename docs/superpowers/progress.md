@@ -2,6 +2,18 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 7: sound formats (recordings, loops, chords, motifs, MIDI, content folders)
+
+Spec: [`specs/2026-11-15-sound-formats-design.md`](specs/2026-11-15-sound-formats-design.md), written with the Sound
+editor's spec in AutomataFrameworkEditors (`docs/superpowers/specs/2026-11-15-sound-editor-design.md`).
+
+Overall: **4%** (stage 1 written; stages 2 to 7 follow)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Written, in review, 100%. The Owner answered (2026-11-15): recorded sounds are in (Q4 B), music as GarageBand-style loops, chords and motifs (Q3), new formats in the framework first (Q5 A) with MIDI to JSON and back, and content folders listed once in `automata.toml` (Q6 A). Flagged: the Feel editor's cycle lists one line per effect, which differs from Q6 | `specs/2026-11-15-sound-formats-design.md` |
+| 2 to 7 | Not started | |
+
 ## Cycle 6: the built-in hero (walk, jump and more, from content)
 
 Spec: [`specs/2026-11-14-content-hero-controls-design.md`](specs/2026-11-14-content-hero-controls-design.md)
