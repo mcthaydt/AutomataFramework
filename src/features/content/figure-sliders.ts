@@ -58,12 +58,7 @@ export const PERSON_SLIDERS: readonly Slider[] = [
     normal: 0,
     about: 'How far the head leans to one side, in degrees.',
   },
-  slider(
-    'age',
-    'age',
-    0.3,
-    'How old it looks, from young to old: an older figure stoops and steps shorter.',
-  ),
+  slider('age', 'age', 0.3, 'How old it looks, from young to old: an older figure stoops and steps shorter.'),
   slider('chunk', 'style', 1, 'How blocky it is, from life-like to chunky pixel art.'),
 ]
 

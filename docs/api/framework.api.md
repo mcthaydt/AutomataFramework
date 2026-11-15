@@ -500,6 +500,7 @@ const CONTENT_TYPES: {
     readonly level: ContentTypeInfo<Level, Level>;
     readonly character: ContentTypeInfo<Character, CharacterInput>;
     readonly figure: ContentTypeInfo<FigureFile, FigureFile>;
+    readonly palette: ContentTypeInfo<PaletteFile, PaletteFile>;
     readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
     readonly backdrop: ContentTypeInfo<BackdropFile, BackdropFile>;
     readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
@@ -974,6 +975,12 @@ interface DrumPart {
 }
 ```
 
+### `DUEL_COLOURS` (const)
+
+```ts
+const DUEL_COLOURS: readonly string[];
+```
+
 ### `Dust` (interface)
 
 ```ts
@@ -1036,6 +1043,39 @@ interface EventDef<Z extends z.ZodType = z.ZodType> {
 
 ```ts
 function exp(x: number): number;
+```
+
+### `FACE_SLIDERS` (const)
+
+```ts
+const FACE_SLIDERS: readonly Slider[];
+```
+
+### `FACE_STYLES` (const)
+
+```ts
+const FACE_STYLES: {
+    readonly eyes: readonly string[];
+    readonly brows: readonly string[];
+    readonly mouth: readonly string[];
+};
+```
+
+### `FaceChoices` (interface)
+
+```ts
+interface FaceChoices {
+    readonly eyes?: string | undefined;
+    readonly eyeSize?: number | undefined;
+    readonly eyeSpacing?: number | undefined;
+    readonly eyeTilt?: number | undefined;
+    readonly brows?: string | undefined;
+    readonly browWeight?: number | undefined;
+    readonly mouth?: string | undefined;
+    readonly nose?: number | undefined;
+    readonly cheeks?: number | undefined;
+    readonly jaw?: number | undefined;
+}
 ```
 
 ### `FeelFile` (interface)
@@ -1118,23 +1158,10 @@ type FieldValues<S extends FieldSchema> = {
 };
 ```
 
-### `FigureFile` (interface)
+### `FigureFile` (type)
 
 ```ts
-interface FigureFile {
-    readonly format: 1;
-    readonly id: string;
-    readonly tile: number;
-    readonly frame: {
-        readonly w: number;
-        readonly h: number;
-    };
-    readonly outline?: string | undefined;
-    readonly paints: readonly FigurePaint[];
-    readonly parts: readonly FigurePart[];
-    readonly poses: readonly FigurePose[];
-    readonly variants?: readonly FigureVariant[] | undefined;
-}
+type FigureFile = FreeFigure | RiggedFigure;
 ```
 
 ### `FigureMove` (interface)
@@ -1293,6 +1320,25 @@ const FRAMEWORK_VERSION: string;
 function frameworkWords(language: Language): Words;
 ```
 
+### `FreeFigure` (interface)
+
+```ts
+interface FreeFigure {
+    readonly format: 1;
+    readonly id: string;
+    readonly tile: number;
+    readonly frame: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly outline?: string | undefined;
+    readonly paints: readonly FigurePaint[];
+    readonly parts: readonly FigurePart[];
+    readonly poses: readonly FigurePose[];
+    readonly variants?: readonly FigureVariant[] | undefined;
+}
+```
+
 ### `Freeze` (interface)
 
 ```ts
@@ -1352,6 +1398,7 @@ interface GameContent {
     readonly tilesets?: Readonly<Record<string, TilesetFile>>;
     readonly backdrops?: Readonly<Record<string, BackdropFile>>;
     readonly figures?: Readonly<Record<string, FigureFile>>;
+    readonly palettes?: Readonly<Record<string, PaletteFile>>;
     readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
     readonly tunings?: Readonly<Record<string, TuningFile>>;
     readonly feels?: Readonly<Record<string, FeelFile>>;
@@ -1503,6 +1550,12 @@ interface IndexedPicture {
 }
 ```
 
+### `inkOf` (function)
+
+```ts
+function inkOf(palette: PaletteFile): string;
+```
+
 ### `Input` (interface)
 
 ```ts
@@ -1591,6 +1644,12 @@ function isHeld(player: EntityRef, action: string): boolean;
 
 ```ts
 function isOpenableLink(url: string): boolean;
+```
+
+### `isRigged` (function)
+
+```ts
+function isRigged(figure: FigureFile): figure is RiggedFigure;
 ```
 
 ### `JoinAnswer` (type)
@@ -1976,6 +2035,18 @@ function levelViews(content: GameContent, level: Level): {
     views: View[];
     links: RopeLine[];
 };
+```
+
+### `LIBRARY_PALETTE` (const)
+
+```ts
+const LIBRARY_PALETTE: PaletteFile;
+```
+
+### `lightness` (function)
+
+```ts
+function lightness(hex: string): number;
 ```
 
 ### `Link` (interface)
@@ -2604,6 +2675,23 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 function paintFigure(figure: FigureFile): IndexedPicture;
 ```
 
+### `PaletteFile` (interface)
+
+```ts
+interface PaletteFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly ink?: string | undefined;
+    readonly ramps: readonly Ramp[];
+}
+```
+
+### `PaletteSchema` (const)
+
+```ts
+const PaletteSchema: z.ZodType<PaletteFile, PaletteFile>;
+```
+
 ### `ParaglideRuntime` (interface)
 
 ```ts
@@ -2667,6 +2755,37 @@ function parseRoomOptions(raw: unknown): RoomOptions | undefined;
 
 ```ts
 function parseServerMessage(raw: unknown): ServerMessage | undefined;
+```
+
+### `PERSON_SLIDERS` (const)
+
+```ts
+const PERSON_SLIDERS: readonly Slider[];
+```
+
+### `PersonSliders` (interface)
+
+```ts
+interface PersonSliders {
+    readonly height?: number | undefined;
+    readonly build?: number | undefined;
+    readonly legs?: number | undefined;
+    readonly arms?: number | undefined;
+    readonly shoulders?: number | undefined;
+    readonly hips?: number | undefined;
+    readonly fat?: number | undefined;
+    readonly muscle?: number | undefined;
+    readonly head?: number | undefined;
+    readonly neck?: number | undefined;
+    readonly neckLength?: number | undefined;
+    readonly hands?: number | undefined;
+    readonly feet?: number | undefined;
+    readonly posture?: number | undefined;
+    readonly hunch?: number | undefined;
+    readonly headTilt?: number | undefined;
+    readonly age?: number | undefined;
+    readonly chunk?: number | undefined;
+}
 ```
 
 ### `Phase` (type)
@@ -2835,6 +2954,12 @@ interface PluginStateSetup {
 }
 ```
 
+### `posesOf` (function)
+
+```ts
+function posesOf(figure: FigureFile): readonly string[];
+```
+
 ### `pow` (function)
 
 ```ts
@@ -2884,6 +3009,15 @@ const ProjectSchema: z.ZodType<Project, Project>;
 
 ```ts
 const PROTOCOL_VERSION: 1;
+```
+
+### `Ramp` (interface)
+
+```ts
+interface Ramp {
+    readonly id: string;
+    readonly colors: readonly string[];
+}
 ```
 
 ### `READ_MARKS_FILE` (const)
@@ -3094,6 +3228,56 @@ interface ResourceDef<Z extends z.ZodType = z.ZodType> {
     readonly id: string;
     readonly schema: Z;
     readonly init: () => z.input<Z>;
+}
+```
+
+### `RiggedFigure` (interface)
+
+```ts
+interface RiggedFigure {
+    readonly format: 2;
+    readonly id: string;
+    readonly body: 'person';
+    readonly tile: number;
+    readonly frame: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly sliders?: PersonSliders | undefined;
+    readonly face?: FaceChoices | undefined;
+    readonly paints: RiggedPaints;
+    readonly palette?: string | undefined;
+    readonly outline?: 'dark' | 'ink' | undefined;
+    readonly variants?: readonly RiggedVariant[] | undefined;
+}
+```
+
+### `RiggedPaints` (interface)
+
+```ts
+interface RiggedPaints {
+    readonly skin: string;
+    readonly hair?: string | undefined;
+    readonly eyes?: string | undefined;
+}
+```
+
+### `RiggedVariant` (interface)
+
+```ts
+interface RiggedVariant {
+    readonly id: string;
+    readonly paints?: RiggedVariantPaints | undefined;
+}
+```
+
+### `RiggedVariantPaints` (interface)
+
+```ts
+interface RiggedVariantPaints {
+    readonly skin?: string | undefined;
+    readonly hair?: string | undefined;
+    readonly eyes?: string | undefined;
 }
 ```
 
@@ -3662,6 +3846,19 @@ const SKY_COLOR = 10474480;
 
 ```ts
 const skyOf: (level: Level) => number;
+```
+
+### `Slider` (interface)
+
+```ts
+interface Slider {
+    readonly id: string;
+    readonly min: number;
+    readonly max: number;
+    readonly normal: number;
+    readonly about: string;
+    readonly group: string;
+}
 ```
 
 ### `SlotState` (type)
@@ -4937,6 +5134,7 @@ const CONTENT_TYPES: {
     readonly level: ContentTypeInfo<Level, Level>;
     readonly character: ContentTypeInfo<Character, CharacterInput>;
     readonly figure: ContentTypeInfo<FigureFile, FigureFile>;
+    readonly palette: ContentTypeInfo<PaletteFile, PaletteFile>;
     readonly tileset: ContentTypeInfo<TilesetFile, TilesetFile>;
     readonly backdrop: ContentTypeInfo<BackdropFile, BackdropFile>;
     readonly behaviour: ContentTypeInfo<BehaviourFile, BehaviourFile>;
@@ -5310,6 +5508,12 @@ interface DrumPart {
 }
 ```
 
+### `DUEL_COLOURS` (const)
+
+```ts
+const DUEL_COLOURS: readonly string[];
+```
+
 ### `Dust` (interface)
 
 ```ts
@@ -5372,6 +5576,39 @@ interface EventDef<Z extends z.ZodType = z.ZodType> {
 
 ```ts
 function exp(x: number): number;
+```
+
+### `FACE_SLIDERS` (const)
+
+```ts
+const FACE_SLIDERS: readonly Slider[];
+```
+
+### `FACE_STYLES` (const)
+
+```ts
+const FACE_STYLES: {
+    readonly eyes: readonly string[];
+    readonly brows: readonly string[];
+    readonly mouth: readonly string[];
+};
+```
+
+### `FaceChoices` (interface)
+
+```ts
+interface FaceChoices {
+    readonly eyes?: string | undefined;
+    readonly eyeSize?: number | undefined;
+    readonly eyeSpacing?: number | undefined;
+    readonly eyeTilt?: number | undefined;
+    readonly brows?: string | undefined;
+    readonly browWeight?: number | undefined;
+    readonly mouth?: string | undefined;
+    readonly nose?: number | undefined;
+    readonly cheeks?: number | undefined;
+    readonly jaw?: number | undefined;
+}
 ```
 
 ### `FeelFile` (interface)
@@ -5454,23 +5691,10 @@ type FieldValues<S extends FieldSchema> = {
 };
 ```
 
-### `FigureFile` (interface)
+### `FigureFile` (type)
 
 ```ts
-interface FigureFile {
-    readonly format: 1;
-    readonly id: string;
-    readonly tile: number;
-    readonly frame: {
-        readonly w: number;
-        readonly h: number;
-    };
-    readonly outline?: string | undefined;
-    readonly paints: readonly FigurePaint[];
-    readonly parts: readonly FigurePart[];
-    readonly poses: readonly FigurePose[];
-    readonly variants?: readonly FigureVariant[] | undefined;
-}
+type FigureFile = FreeFigure | RiggedFigure;
 ```
 
 ### `FigureMove` (interface)
@@ -5580,6 +5804,25 @@ const FRAMEWORK_VERSION: string;
 function frameworkWords(language: Language): Words;
 ```
 
+### `FreeFigure` (interface)
+
+```ts
+interface FreeFigure {
+    readonly format: 1;
+    readonly id: string;
+    readonly tile: number;
+    readonly frame: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly outline?: string | undefined;
+    readonly paints: readonly FigurePaint[];
+    readonly parts: readonly FigurePart[];
+    readonly poses: readonly FigurePose[];
+    readonly variants?: readonly FigureVariant[] | undefined;
+}
+```
+
 ### `Freeze` (interface)
 
 ```ts
@@ -5621,6 +5864,7 @@ interface GameContent {
     readonly tilesets?: Readonly<Record<string, TilesetFile>>;
     readonly backdrops?: Readonly<Record<string, BackdropFile>>;
     readonly figures?: Readonly<Record<string, FigureFile>>;
+    readonly palettes?: Readonly<Record<string, PaletteFile>>;
     readonly behaviours?: Readonly<Record<string, BehaviourFile>>;
     readonly tunings?: Readonly<Record<string, TuningFile>>;
     readonly feels?: Readonly<Record<string, FeelFile>>;
@@ -5736,6 +5980,12 @@ interface IndexedPicture {
 }
 ```
 
+### `inkOf` (function)
+
+```ts
+function inkOf(palette: PaletteFile): string;
+```
+
 ### `inputName` (function)
 
 ```ts
@@ -5752,6 +6002,12 @@ function isHeld(player: EntityRef, action: string): boolean;
 
 ```ts
 function isOpenableLink(url: string): boolean;
+```
+
+### `isRigged` (function)
+
+```ts
+function isRigged(figure: FigureFile): figure is RiggedFigure;
 ```
 
 ### `JoinCommand` (const)
@@ -6067,6 +6323,18 @@ interface LevelView {
         readonly h: number;
     } | undefined;
 }
+```
+
+### `LIBRARY_PALETTE` (const)
+
+```ts
+const LIBRARY_PALETTE: PaletteFile;
+```
+
+### `lightness` (function)
+
+```ts
+function lightness(hex: string): number;
 ```
 
 ### `Link` (interface)
@@ -6588,6 +6856,23 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 function paintFigure(figure: FigureFile): IndexedPicture;
 ```
 
+### `PaletteFile` (interface)
+
+```ts
+interface PaletteFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly ink?: string | undefined;
+    readonly ramps: readonly Ramp[];
+}
+```
+
+### `PaletteSchema` (const)
+
+```ts
+const PaletteSchema: z.ZodType<PaletteFile, PaletteFile>;
+```
+
 ### `ParaglideRuntime` (interface)
 
 ```ts
@@ -6651,6 +6936,37 @@ function parseRoomOptions(raw: unknown): RoomOptions | undefined;
 
 ```ts
 function parseServerMessage(raw: unknown): ServerMessage | undefined;
+```
+
+### `PERSON_SLIDERS` (const)
+
+```ts
+const PERSON_SLIDERS: readonly Slider[];
+```
+
+### `PersonSliders` (interface)
+
+```ts
+interface PersonSliders {
+    readonly height?: number | undefined;
+    readonly build?: number | undefined;
+    readonly legs?: number | undefined;
+    readonly arms?: number | undefined;
+    readonly shoulders?: number | undefined;
+    readonly hips?: number | undefined;
+    readonly fat?: number | undefined;
+    readonly muscle?: number | undefined;
+    readonly head?: number | undefined;
+    readonly neck?: number | undefined;
+    readonly neckLength?: number | undefined;
+    readonly hands?: number | undefined;
+    readonly feet?: number | undefined;
+    readonly posture?: number | undefined;
+    readonly hunch?: number | undefined;
+    readonly headTilt?: number | undefined;
+    readonly age?: number | undefined;
+    readonly chunk?: number | undefined;
+}
 ```
 
 ### `Phase` (type)
@@ -6807,6 +7123,12 @@ interface PluginStateSetup {
 }
 ```
 
+### `posesOf` (function)
+
+```ts
+function posesOf(figure: FigureFile): readonly string[];
+```
+
 ### `pow` (function)
 
 ```ts
@@ -6856,6 +7178,15 @@ const ProjectSchema: z.ZodType<Project, Project>;
 
 ```ts
 const PROTOCOL_VERSION: 1;
+```
+
+### `Ramp` (interface)
+
+```ts
+interface Ramp {
+    readonly id: string;
+    readonly colors: readonly string[];
+}
 ```
 
 ### `READ_MARKS_FILE` (const)
@@ -7014,6 +7345,56 @@ interface ResourceDef<Z extends z.ZodType = z.ZodType> {
     readonly id: string;
     readonly schema: Z;
     readonly init: () => z.input<Z>;
+}
+```
+
+### `RiggedFigure` (interface)
+
+```ts
+interface RiggedFigure {
+    readonly format: 2;
+    readonly id: string;
+    readonly body: 'person';
+    readonly tile: number;
+    readonly frame: {
+        readonly w: number;
+        readonly h: number;
+    };
+    readonly sliders?: PersonSliders | undefined;
+    readonly face?: FaceChoices | undefined;
+    readonly paints: RiggedPaints;
+    readonly palette?: string | undefined;
+    readonly outline?: 'dark' | 'ink' | undefined;
+    readonly variants?: readonly RiggedVariant[] | undefined;
+}
+```
+
+### `RiggedPaints` (interface)
+
+```ts
+interface RiggedPaints {
+    readonly skin: string;
+    readonly hair?: string | undefined;
+    readonly eyes?: string | undefined;
+}
+```
+
+### `RiggedVariant` (interface)
+
+```ts
+interface RiggedVariant {
+    readonly id: string;
+    readonly paints?: RiggedVariantPaints | undefined;
+}
+```
+
+### `RiggedVariantPaints` (interface)
+
+```ts
+interface RiggedVariantPaints {
+    readonly skin?: string | undefined;
+    readonly hair?: string | undefined;
+    readonly eyes?: string | undefined;
 }
 ```
 
@@ -7511,6 +7892,19 @@ const SKY_COLOR = 10474480;
 
 ```ts
 const skyOf: (level: Level) => number;
+```
+
+### `Slider` (interface)
+
+```ts
+interface Slider {
+    readonly id: string;
+    readonly min: number;
+    readonly max: number;
+    readonly normal: number;
+    readonly about: string;
+    readonly group: string;
+}
 ```
 
 ### `SlotState` (type)
