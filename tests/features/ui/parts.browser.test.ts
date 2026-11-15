@@ -126,7 +126,8 @@ test('a switch is turned by a tap and by Space, and says whether it is on', asyn
   await expect.poll(() => toggle.getAttribute('aria-checked')).toBe('true')
   toggle.focus()
   await userEvent.keyboard(' ')
-  expect(log).toEqual(['shake:true', 'shake:false'])
+  // A button presses on the release of Space, which a browser may deliver a moment after the keys were sent.
+  await expect.poll(() => log).toEqual(['shake:true', 'shake:false'])
 })
 
 test('a key row says it is waiting, and its button becomes the way out', async () => {
