@@ -17,7 +17,7 @@ The game opens in your browser. Hold the left or right arrow key to move, and pr
 
 1. Open `content/levels/level-1.json`. The `tiles` are the level's walls, one letter for each square: `#` is a wall and
    `.` is air. Make a wall longer, or add a gap.
-2. Open `content/characters/crate.json` and change its `color`.
+2. Open `content/characters/crate.json` and change its `color`, or `content/feels/land.json` and change the dust of a landing.
 3. Open `content/tunings/hero-moves.json` and change a number, like `walk-speed` or `jump-speed`. A bigger
    `jump-speed` is a higher jump. To give the hero a double jump, a wall jump or a dash, add `"double-jump": true`,
    `"wall-jump": true` or `"dash": true` to `moves` in `content/characters/hero.json`. There is no movement code to write.

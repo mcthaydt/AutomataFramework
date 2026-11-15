@@ -2,6 +2,7 @@
   "format": 1,
   "id": "ko",
   "messages": {
+    "automata.feel.shake": "화면 흔들림",
     "automata.hint.arrows": "방향키",
     "automata.hint.dash": "{input}: 대시.",
     "automata.hint.jump": "점프: {key}",

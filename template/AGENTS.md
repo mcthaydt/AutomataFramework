@@ -9,7 +9,7 @@ the skills below.
 |---|---|
 | The project: name, first level, which files are content | `automata.toml` |
 | Levels and characters (JSON, one thing per file) | `content/levels/`, `content/characters/` |
-| How the hero moves: eighteen numbers and the controls, and what the player feels | `content/tunings/hero-moves.json`, `content/feels/` |
+| How the hero moves: eighteen numbers and the controls, and what the player feels (dust, shake, freeze, buzz) | `content/tunings/hero-moves.json`, `content/feels/` |
 | What things look like: a figure for each character, and its painted picture | `content/figures/` |
 | Every word a player reads, one file for each language (the `source` language in `automata.toml` says what a word is for) | `content/messages/` |
 | The list of the game's rules | `src/headless.ts` |

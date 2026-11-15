@@ -2,6 +2,7 @@
   "format": 1,
   "id": "en",
   "messages": {
+    "automata.feel.shake": "Screen shake",
     "automata.hint.arrows": "Arrow keys",
     "automata.hint.dash": "{input} to dash.",
     "automata.hint.jump": "{key} to jump.",

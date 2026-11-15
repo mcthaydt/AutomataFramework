@@ -267,6 +267,13 @@ How the game answers an event: a freeze, a shake or a puff of dust. Put the file
 }
 ```
 
+What each effect does on screen, with no code. `dust` is a burst of specks at the bottom middle of the thing the event
+names (the `sid` in its payload; shake and freeze need no thing). `shake` moves the level's picture and never the touch
+buttons or the words. `freeze` really pauses a game played alone and only holds the picture online. The player's one
+setting, "Screen shake", switches the shake off (it starts off when the device asked for less motion); dust and freeze
+stay either way. A game's own code may emit any event (`crate.dropped`) for a feel file to answer. Feel never changes a
+recording. `game.showFeel(file)` plays a draft once.
+
 ## sound
 
 One sound, made from tones. Put the files in `content/sounds/`; the kind's rules are in `schemas/sound.schema.json`.

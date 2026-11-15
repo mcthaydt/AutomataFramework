@@ -2,6 +2,7 @@
   "format": 1,
   "id": "zh",
   "messages": {
+    "automata.feel.shake": "屏幕震动",
     "automata.hint.arrows": "方向键",
     "automata.hint.dash": "{input}冲刺。",
     "automata.hint.jump": "按{key}跳跃。",

@@ -2,6 +2,7 @@
   "format": 1,
   "id": "pt",
   "messages": {
+    "automata.feel.shake": "Tremor da tela",
     "automata.hint.arrows": "As setas",
     "automata.hint.dash": "{input} para arrancar.",
     "automata.hint.jump": "{key} para pular.",

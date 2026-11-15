@@ -185,7 +185,7 @@ sixteen more, each with the range an editor may move it in) and the controls. Pa
 come from the tuning file. A phone gets two thumbs, not buttons: the left half walks, the right half jumps the moment
 the thumb lands, and a quick flick of the walking thumb dashes. A keyboard and a gamepad work from the same file, and
 the framework says what the hero did with eight events (`hero.jumped`, `hero.landed` and the rest, named with
-`moveEvent`), which a feel file (`content/feels/`) can answer with a buzz.
+`moveEvent`), which a feel file (`content/feels/`) can answer with dust, a shake, a freeze or a buzz (see "Feel").
 
 ## Gamepads, changing keys and playing together
 
@@ -402,6 +402,9 @@ knows), `openLink(url)` (opens a web page outside the game, only `https:` addres
 `'refused'`), and `canQuit` with `quit()` (a web page has nowhere to go back to, so `canQuit` is false there and a
 screen shows no Quit button).
 
+`reducedMotion()` says whether the device asked for less motion (the page's `prefers-reduced-motion`;
+`testHost({ reducedMotion: true })` says yes). It decides whether the "Screen shake" setting starts on (see "Feel").
+
 `webHost()` is the host for a page and comes from the main entry. `testHost()` is for Node and for tests, and comes from
 both entries. You can make it say anything and look at what the game did:
 
@@ -505,6 +508,60 @@ To check a game's sound with no ears, give `createAudio` a `testSpeaker()` and r
 for, in order, with the tick. Too many of one sound at once (`MAX_SAME`, 4) or in all (`MAX_SOUNDS`, 16) are logged as
 `skipped: 'busy'` and not played, counted in ticks so every device agrees; the log keeps the newest `LOG_MAX` (1024).
 Sound never changes the game: the sim does not see it, and changing a sound file moves no replay.
+
+## Feel
+
+A feel file (`content/feels/`) says what a moment looks like: it names an event with `on`, and then one or more of
+`dust`, `shake`, `freeze` and `buzz`. The framework draws the first three, with no code.
+
+```json
+{
+  "format": 1,
+  "id": "land",
+  "on": "hero.landed",
+  "dust": { "count": 6, "color": "#e8dcc0", "speed": 2, "life": 18 },
+  "shake": { "strength": 0.2, "ticks": 8 }
+}
+```
+
+- **Dust** is a burst of small squares that start at the bottom middle of the thing the event names (a landing's dust
+  is on the ground), fly out in an upward fan, slow down, sink a little and fade. At most 256 are on screen.
+- **Shake** moves the level's picture by up to `strength` tiles and fades over `ticks`. The touch buttons, the words
+  and your own screens never shake. Two shakes at once take the larger.
+- **Freeze** holds still for `ticks` (at most 30). In a game played alone (`startGame`, `watchReplay`) it really pauses
+  the game: the loop takes no step for those ticks and does not hurry afterwards, so a freeze never changes a recording.
+  Online (`startOnlineGame`) it only holds the picture, since the room's ticks cannot wait for one page.
+- **Buzz** is for the device in the player's hand, where it can.
+
+An event names a thing when its payload has a `sid` (the hero events and the touch events do). A game's own code may
+send any event it likes, such as `crate.dropped`, for a feel file to answer. Dust needs a thing; shake and freeze do
+not. Feel is presentation only: no feel file is given to the sim, so changing one never moves a hash or a replay.
+
+The player gets one setting, "Screen shake" (`automata.feel.shake`, in all six languages), on by default and off for a
+player whose device asked for less motion. Dust and freezes stay either way.
+
+```ts
+import { FeelSettingsSchema, feelSettingsFirst, openSettings, startGame, webHost } from '@automataframework/framework'
+
+const host = webHost()
+const settings = await openSettings({ game: 'crate-game', store: host.store })
+const feel = settings.section({
+  name: 'feel',
+  schema: FeelSettingsSchema,
+  initial: feelSettingsFirst(host.reducedMotion()), // shake on, unless the device asked for less motion
+})
+const game = await startGame({ content: loaded.value, locale, mount, host, feelSettings: feel.get() })
+
+await feel.set({ format: 1, shake: false }) // from the settings screen's switch
+game.setShake(false) // and now, in the running game
+```
+
+`feelSettingsOf(saved, reducedMotion)` reads whatever the settings kept and gives the first values for anything that
+does not read. `game.feel()` says what the last picture drew (`specks`, `shake` in tiles, and `freeze` in ticks), so a
+test can check a landing with no page. `game.showFeel(file)` plays one feel file once, at the first hero (or at the
+thing whose sid you pass), playing or paused. The file may be a draft that is in no file of the game, and it is checked
+the way `loadGame` checks a feel file: a draft that is refused throws a `RangeError` that says what to write. Nothing is
+sent to the sim and nothing is recorded, and its freeze holds the picture only.
 
 ## Art
 
@@ -845,7 +902,7 @@ Each kind has a JSON Schema, shipped in the package so an agent can read the for
 | `figure` | a character or a prop drawn from blocks in poses, painted into a picture | `content/figures/` | `schemas/figure.schema.json` |
 | `behaviour` | rules for what a character does: flee, follow, wander, jump | `content/behaviours/` | `schemas/behaviour.schema.json` |
 | `tuning` | numbers that decide how something plays, each with its range, and the controls | `content/tunings/` | `schemas/tuning.schema.json` |
-| `feel` | a burst of dust, a shake or a freeze for a moment in the game | `content/feels/` | `schemas/feel.schema.json` |
+| `feel` | dust, a shake, a freeze or a buzz for a moment in the game, drawn by the framework | `content/feels/` | `schemas/feel.schema.json` |
 | `sound` | a sound made of tones and noise | `content/sounds/` | `schemas/sound.schema.json` |
 | `music` | a track of notes and drums | `content/music/` | `schemas/music.schema.json` |
 | `cues` | which sound or music plays when something happens | `content/cues/` | `schemas/cues.schema.json` |

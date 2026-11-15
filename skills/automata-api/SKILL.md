@@ -31,6 +31,12 @@ rule that reads the hero after it moved runs `after: ['level.moves']`, and `DEFA
 the controls and the eighteen numbers a tuning file starts from. The page says what to press with `playHint`, and the
 words of a key or a button with `inputName`; both are in the player's language.
 
+## Feel
+
+A feel file's dust, shake and freeze are drawn by the framework. The names for a game's own code are `FeelSettingsSchema`
+and `feelSettingsFirst` (the "Screen shake" setting), `feelSettings` for `startGame`, and `game.setShake(on)`,
+`game.feel()` and `game.showFeel(file)`; look each up in the API file before you write it.
+
 ## Where else to look
 
 - A content file's rules: `schemas/<kind>.schema.json` in the package, one for each kind of file, and one for a recording,

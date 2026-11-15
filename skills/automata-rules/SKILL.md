@@ -39,6 +39,9 @@ it hears them. A plugin that answers a touch lists `level` and `touch` in `depen
 can be touched has no `touch`, so add one before you depend on it. Test it by stepping a sim and reading the resource
 with `sim.resource(Score)`, as `tests/features/hero/hero.test.ts` does for the sparks.
 
+A rule's own event can be answered with no more code: a feel file in `content/feels/` whose `on` is its name draws dust,
+a shake or a freeze when it is raised (an event that names a thing in its payload `sid` puts the dust at that thing's feet).
+
 ## The hero is the framework's
 
 A game whose hero's character file has `moves` has no movement code: the framework walks and jumps it, and the game

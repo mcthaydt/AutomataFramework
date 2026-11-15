@@ -216,6 +216,36 @@ test('the README has a Sound section: the states, the button, the page event, th
   expect(section('## Without a page')).toContain('audio')
 })
 
+test('the README has a Feel section: what is drawn, the freeze, the setting and the three calls, with an example that uses only what the package exports', () => {
+  const feel = section('## Feel')
+  for (const word of [
+    'dust',
+    'shake',
+    'freeze',
+    'at most 256',
+    'crate.dropped',
+    'feelSettings',
+    'setShake',
+    'FeelSettingsSchema',
+    'feelSettingsFirst',
+    'feelSettingsOf',
+    'showFeel',
+    'RangeError',
+    'game.feel()',
+    'Screen shake',
+    'never changes a recording',
+  ])
+    expect(feel.toLowerCase(), word).toContain(word.toLowerCase())
+  const imported = /import \{([^}]+)\} from '@automataframework\/framework'/.exec(feel)?.[1]
+  expect(imported).toBeDefined()
+  const names = (imported ?? '').split(',').map((name) => name.trim())
+  for (const name of ['FeelSettingsSchema', 'feelSettingsFirst', 'openSettings', 'startGame', 'webHost'])
+    expect(names).toContain(name)
+  for (const name of names.filter((n) => n !== 'startGame' && n !== 'webHost'))
+    expect(framework, name).toHaveProperty(name)
+  expect(section('## The host')).toContain('reducedMotion')
+})
+
 // The page a new person reads first and the commands CI runs are the same list.
 test('"Start here" is the first section, and its commands are the ones the create journey runs', () => {
   expect(readme.indexOf('## ')).toBe(readme.indexOf('## Start here'))

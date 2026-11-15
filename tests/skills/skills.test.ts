@@ -53,6 +53,14 @@ test('automata-content has a section for every kind in CONTENT_TYPES, and no oth
   }
 })
 
+test("the content skill's feel part names the three effects the framework draws and the setting", () => {
+  const feel = sections().get('feel') ?? ''
+  for (const word of ['dust', 'shake', 'freeze', 'Screen shake', 'crate.dropped', 'showFeel'])
+    expect(feel, word).toContain(word)
+  expect(text('automata-api')).toContain('FeelSettingsSchema')
+  expect(framework).toHaveProperty('FeelSettingsSchema')
+})
+
 test("each kind's smallest whole file is read by parseContent with no problems, and is what writeContent writes", () => {
   for (const [type, body] of sections()) {
     const file = /```json\n([\s\S]*?)```/.exec(body)?.[1] ?? ''
