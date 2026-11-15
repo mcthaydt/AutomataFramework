@@ -52,7 +52,13 @@ export function heroParts(content: GameContent, levelId: string, number: number)
   return [
     // A hero in a game with a slope grips it: with the ground's own friction the pair holds a slope of 45 degrees (a
     // friction of 1), which a lone 0.5 would let it slide down. Only such a game has the grip, so no other hash moves.
-    ...characterParts(hero, start, usesSprites(content), number, usesMoves(content) && usesSlopes(content) ? SLOPE_GRIP : undefined),
+    ...characterParts(
+      hero,
+      start,
+      usesSprites(content),
+      number,
+      usesMoves(content) && usesSlopes(content) ? SLOPE_GRIP : undefined,
+    ),
     [Thing, { id: `player-${number}`, character: content.project.hero }],
     [Player, { number }],
     // A hero the framework moves remembers how, and is told what it stands on and leans against, and, in a game with a
