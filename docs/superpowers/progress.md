@@ -2,7 +2,7 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
-## Cycle 7: sound formats (recordings, loops, chords, motifs, MIDI, content folders)
+## Cycle 8: sound formats (recordings, loops, chords, motifs, MIDI, content folders)
 
 Spec: [`specs/2026-11-15-sound-formats-design.md`](specs/2026-11-15-sound-formats-design.md), written with the Sound
 editor's spec in AutomataFrameworkEditors (`docs/superpowers/specs/2026-11-15-sound-editor-design.md`).
@@ -14,6 +14,19 @@ Overall: **12%** (the spec and plan M are written and in review; stages 3 to 7 f
 | 1. Spec | Written, in review, 100%. The Owner answered (2026-11-15): recorded sounds are in (Q4 B), music as GarageBand-style loops, chords and motifs (Q3), new formats in the framework first (Q5 A) with MIDI to JSON and back, and content folders listed once in `automata.toml` (Q6 A). Flagged: the Feel editor's cycle lists one line per effect, which differs from Q6 | `specs/2026-11-15-sound-formats-design.md` |
 | 2. Plan (plan M) | Written, in review, 100%. Eighteen tasks (5% each, 10% for the last green run): a folder in a `[[content]]` block and `withFolders`; the loader lists folders (`loadGame(read, list)`, and `automata.folders.json` for a page, which cannot list one); the recording file (`src/lib/wav.ts`), its voice and its limits; keys, chords and steps as pitches; the `loop` kind; the `motif` kind and a motif as a sound's voice; music format 2; instruments, plain notes (`notesOf`) and `scoreOf` for a song; motif voices and recordings through the speaker (`keep`); the page's speaker plays a recording; sound kinds (`makeSound`); 26 loops and four styles named in nine languages; a MIDI file's bytes (`src/lib/midi.ts`); `musicToMidi`; `midiToMusic` and the round trip; `automata music import` and `export` and `automata sound new`, with MCP tools; the template with folders, a sound, a song and its audio; one game with everything in four engines, and the docs. No hash moves, three new goldens (`song.json`, `kinds.json`, `full-sound.json`), no dependency. Folders work for every kind, so Feel lists its folder once too (the Owner, 2026-11-15). Settled in the plan because the spec is silent: a page reads folders from a generated `automata.folders.json`; four beats to a bar; `automata sound new`. The instruments, kinds and loops are first values for the Owner's ears. No Owner question is open | `plans/2026-11-15-sound-formats.md` |
 | 3 to 7 | Not started | |
+## Cycle 7: the default game flow (plan U)
+
+Spec: [`specs/2026-11-14-m2-design.md`](specs/2026-11-14-m2-design.md) ("UI, screens and layouts (plan U)"), with the
+order of the flow from [`specs/2026-11-14-no-default-language-design.md`](specs/2026-11-14-no-default-language-design.md)
+and the touch settings from [`specs/2026-11-14-content-hero-controls-design.md`](specs/2026-11-14-content-hero-controls-design.md)
+
+Overall: **10%** (the plan is written and in review; three Owner questions are open; stages 3 to 7 follow)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Merged (M2's spec, PR 30; the flow's order is the Owner's, 2026-11-14: warnings if needed, the language picker, the splash, the main menu, the game with pause, back to the main menu) | `specs/2026-11-14-m2-design.md` |
+| 2. Plan (plan U) | Written, in review, 100%; plan U at 0% built. Eighteen tasks (5% each, 10% for the last green run) in three parts. Part A needs nothing and can start at once (Tasks 1 to 4): the project file's `levels`, `done`, `warnings` and `splash`, kept out of the sim so no hash moves; what a `Game` tells a screen (`onStep`, `paused`, `broken`); the flow's steps as one pure function; progress and the party. Part B (Tasks 5 to 13) is the screens and `startFlow`, and waits for the Owner's three answers and for plan H to be merged. Part C (Tasks 14 to 18) is settings, saved games, adding a player, the journeys at five sizes in three browsers, and the docs. Three new page features: `ui`, `screens`, `flow`. No golden moves. **Three Owner questions are open and none is defaulted:** Q1, three Svelte packages (`svelte` 5.57.1, and for development `@sveltejs/vite-plugin-svelte` 7.3.1 and `svelte-check` 4.7.6), which holds Tasks 5 to 16; Q2, what a warning is and what language it is in before the picker, which holds Task 8; Q3, what the splash shows, which holds Task 9 | `plans/2026-11-15-game-flow.md` |
+| 3 to 7 (plan U) | Not started | |
 
 ## Cycle 6: the built-in hero (walk, jump and more, from content)
 
