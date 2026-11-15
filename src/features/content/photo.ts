@@ -26,8 +26,13 @@ export interface PhotoFile {
 
 const IMAGE = /^[A-Za-z0-9][A-Za-z0-9_./-]*\.png$/
 
-const words = (what: string, missing: string): z.ZodString =>
-  z.string().min(1, missing).max(200).describe(what)
+/** Words of 1 to 200 characters; `missing` is the sentence for none (a length rule would say the generic one). */
+const words = (what: string, missing: string): z.ZodType<string, string> =>
+  z
+    .string()
+    .max(200)
+    .refine((text) => text.length > 0, missing)
+    .describe(what)
 
 /** The rules for a photo file; unknown keys are refused. */
 export const PhotoSchema: z.ZodType<PhotoFile, PhotoFile> = z.strictObject({

@@ -9,6 +9,7 @@ test('the JSON Schema of a level names every field, each with a description', ()
   expect(Object.keys(schema.properties)).toEqual([
     'format',
     'id',
+    'scene',
     'tileset',
     'backdrop',
     'sky',

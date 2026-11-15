@@ -217,7 +217,9 @@ function checkLevel(level: Partial<Level>, ctx: z.core.$RefinementCtx): void {
         `This row has ${tileRow.length} tiles but the first row has ${width}. Every row must be the same length.`,
       )
   })
-  checkLevelBody(level, width, height, add, level.tiles === undefined ? 'names' : 'all')
+  // Places are held to the level's own tiles only when they are its ground; a scene's size is checked with the game.
+  const ownGround = level.scene === undefined && level.tiles !== undefined
+  checkLevelBody(level, width, height, add, ownGround ? 'all' : 'names')
 }
 
 /** The rules for a level file; unknown keys are refused, so a misspelling is caught instead of ignored. */

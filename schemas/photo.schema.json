@@ -44,19 +44,16 @@
     },
     "source": {
       "type": "string",
-      "minLength": 1,
       "maxLength": 200,
       "description": "Where the photo came from: a name or a link."
     },
     "licence": {
       "type": "string",
-      "minLength": 1,
       "maxLength": 200,
       "description": "The photo's licence, like \"CC0\"."
     },
     "credit": {
       "type": "string",
-      "minLength": 1,
       "maxLength": 200,
       "description": "Who made the photo, as they want to be named."
     }
