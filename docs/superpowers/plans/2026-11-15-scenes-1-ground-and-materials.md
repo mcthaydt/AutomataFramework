@@ -18,6 +18,9 @@ iPad paints what `automata art` paints.
 8.22.0, Effect 3.22.2 (the `cli` feature only), Vitest 5.0.3, Biome 2.5.15, knip 6.39.0, pnpm 10.34.6, Node 24.21.0.
 **No new dependency.**
 
+**Plan audit:** [`audits/2026-11-15-scenes-1-plan-audit.md`](../audits/2026-11-15-scenes-1-plan-audit.md) (stage 3,
+2026-11-15). Its fixes are written into this plan; each fixed place names its finding (I1 to I7, M1 to M6).
+
 **Spec:** [`2026-11-15-2d-environment-builder-design.md`](https://github.com/mcthaydt/AutomataFrameworkEditors/blob/main/docs/superpowers/specs/2026-11-15-2d-environment-builder-design.md)
 in AutomataFrameworkEditors. Read it first: "What a scene can hold", "How a
 scene and a level split", "The framework's side", "Slices" (this is the framework part of slice 1), "Testing" and
@@ -37,10 +40,10 @@ never copied whole (principle 7). Each task names the file it reads.
 - **No new dependency.** The PNG reader and its inflate are ours. If a task seems to need a package, stop and report.
 - **Painter math** (every file under `src/features/content/` this plan adds, and `src/lib/inflate.ts`,
   `src/lib/png-read.ts`): `+ - * /`, comparisons, `Math.min`, `Math.max`, `Math.abs`, `Math.floor`, `Math.round`,
-  `Math.sqrt`, `Math.imul`, and `sim/dmath.ts`'s `pow` for a root or a power. Never `**`, `Math.pow`, `Math.cbrt`,
+  `Math.sqrt`, `Math.imul`, and `dmath`'s `pow` (imported through `sim/sim.ts`, M3) for a root or a power. Never `**`, `Math.pow`, `Math.cbrt`,
   `Math.hypot`, `Math.exp`, `Math.log` or a trigonometric `Math` function: those differ between engines. Typed arrays
   are `Float64Array`, `Uint8Array`, `Uint16Array` or `Int32Array`. A sort always has a comparator that never answers 0
-  for two different items. Task 6 adds the test that holds every painter file to this.
+  for two different items. Task 6 widens the architecture rule that already holds painter files to this (M1).
 - **Sim math** (the `level` and `physics` code added here): as plan H's: `+ - * /`, comparisons, `Math.min`,
   `Math.max`, `Math.abs`, `Math.floor`; `dmath` for anything else.
 - **Presentation never reaches the sim.** A scene's `paints`, `materials`, `seed`, `tile`, `sky` and `backdrop` are not
@@ -61,15 +64,18 @@ never copied whole (principle 7). Each task names the file it reads.
 - **Stop rules.** Stop and report at once on: a golden that moved; the third fix for the same failure; a need for a
   dependency or a workflow change not named here; an `engines` job over 25 minutes; Rapier lacking a call Task 10
   names.
-- **Tracker:** after each task, update `docs/superpowers/progress.md` (Cycle 8, the Scenes cycle). Tasks 1 to 16 are 5.5% each;
+- **Tracker:** after each task, update `docs/superpowers/progress.md` ("The Scenes cycle", unnumbered: "Cycle 8" is
+  taken by three other plans, I1). Tasks 1 to 16 are 5.5% each;
   the last 12% is the final green run with every check passing.
 
 ## Before starting
 
-- **Plan H (the built-in hero) is being built** (pull request 101). Tasks 1 to 11 and 13 to 16 touch nothing of it and
-  can start now. **Task 12 (the hero on slopes) starts only after pull request 101 is merged**; it names plan H's files
-  as they are on that branch on 2026-11-15 (`physics/touching.ts`, `level/move-step.ts`, `level/moves.ts`,
-  `Touching`, `usesMoves`). If a name differs on `main`, use `main`'s and report the difference as a deviation.
+- **Plan H (the built-in hero) is being built** (pull request 101). It changes `spawn-level.ts`, `uses.ts`,
+  `level.ts`, `game-sim.ts`, `physics-world.ts`, `rapier.ts`, `physics.ts`, `components.ts`, `game.ts`, `online.ts`
+  and `render.ts` (I2). **Part A (Tasks 1 to 8) can start now; Parts B and C start only after pull request 101 is
+  merged.** Task 12 names plan H's files as they are on that branch on 2026-11-15 (`physics/touching.ts`,
+  `level/move-step.ts`, `level/moves.ts`, `Touching`, `usesMoves`). If a name in Part B or C differs on `main`, use
+  `main`'s and report the difference as a deviation.
 - **The rigged-figures spec and plan U** are in review and touch other files. Rebase before each push.
 - **One pull request per part**, each a draft, each merged by the merge session before the next part's is opened:
   Part A (Tasks 1 to 8), Part B (Tasks 9 to 12), Part C (Task 13), Part D (Tasks 14 to 16).
@@ -116,8 +122,11 @@ audit may challenge each; the Owner may overrule any.
 13. **The level's size is its scene's.** `worldSize(content, level)` answers for both kinds of level; `levelSize`
     stays for a level with tiles, so nothing pinned to it breaks.
 14. **`automata.toml` gets one writer,** `listContent`, that adds a `[[content]]` block and changes nothing else in
-    the file's text. `from-level` needs it; the editors and the figure builder's plan need the same thing. If another
-    plan has landed one first, use it and report.
+    the file's text. Three plans create `content/project-write.ts` (I3): rigged figures (PR 109, Task 17:
+    `listContent(text, entry, about?): Parsed<string>`), the sound formats (PR 112: `withFolders`) and this one. This
+    plan uses plan R's signature and test cases. Whichever plan builds first creates the file; the others add to it
+    and report it as a deviation. When a listed folder (plan M's folder form) already holds a new file's path, no
+    block is added.
 
 ## Review Focus
 
@@ -407,6 +416,10 @@ The schema's own checks (`superRefine`, coping with a half-read file), each one 
 | air or a non-solid tile under a slope's line | `ground.rows[row]` | `The slope that starts at column 4 needs solid ground under it. The tile at column 6, row 12 is not solid: fill it, or shorten the slope.` |
 | too big to paint | `size` | `This scene's ground picture would be 8192 by 2048 pixels, cut into 4 pages stacked 8192 pixels tall. A picture can be 2048 at most: use a smaller "tile", or a smaller scene.` |
 
+Too big (M2): `pages = ceil(w / groundPageTiles(tile))`; the picture is `min(w, groundPageTiles(tile)) * tile` wide
+and `pages * h * tile` tall; it is too big when that height is over `MAX_PICTURE_SIDE`. The sentence's numbers come
+from these lines.
+
 `sceneInfo.check` (across files): `backdrop` is a listed backdrop; a `tiles` material's `tileset` is listed and has
 the `tile` (`The tileset "meadow" has no tile called "stone". It has: dirt, grass.`); a `photo` material's `photo` is a
 listed `photo` file or in `PHOTO_LIBRARY` (`There is no photo called "dirt2". This game has: moss. The library has:
@@ -486,7 +499,8 @@ a height. A scene that is not listed: `noSuch('scene', …)`. Every existing lev
 
 **Files:**
 - Create: `src/features/content/lab.ts`, `src/features/content/photo-tile.ts`
-- Test: `tests/features/content/lab.test.ts`, `photo-tile.test.ts`, `painter-math.test.ts`
+- Modify: `tests/architecture/rules.ts` (`PAINTER_FILES`, `PAINTER_MATH`), `tests/architecture/rules.test.ts` (M1)
+- Test: `tests/features/content/lab.test.ts`, `photo-tile.test.ts`, `tests/architecture/rules.test.ts`
 
 **Interfaces:**
 - Consumes: `PhotoPixels`, `PhotoMaterial`, `ScenePaint`, `pow` from `sim/sim.ts`.
@@ -527,10 +541,11 @@ Port, stage by stage, from world-kit `src/features/textures/pipeline.ts` and `ti
       names (ladder mode) or of the scene (match mode); a flat grey photo gives one place everywhere at `wear: 0`;
       `wear: 1` darkens some texels and none below the first paint; the same input gives the same bytes twice, and
       another `seed` gives other bytes; the left column's neighbours wrap (a run that touches both edges is one run
-      to `clean`); `ladder` with `accent` puts the red block on the accent's paints. `painter-math.test.ts` reads
-      every file listed under "Painter math" and fails on `**`, `Math.pow`, `Math.cbrt`, `Math.hypot`, `Math.exp`,
-      `Math.log`, `Math.sin`, `Math.cos`, `Math.tan`, `Math.atan`, `Float32Array` and `.sort()` with no argument,
-      naming the file and the line.
+      to `clean`); `ladder` with `accent` puts the red block on the accent's paints. The architecture rule (M1):
+      `PAINTER_FILES` gains `scene-ground`, `photo-library`, `lab`, `photo-tile`, `scene-from-level`,
+      `src/lib/inflate.ts` and `src/lib/png-read.ts`; `PAINTER_MATH` (or a sibling pattern) gains `**`, `Math.cbrt`,
+      `Float32Array` and `.sort()` with no argument; `rules.test.ts` has a made-up file failing on each, naming the
+      file and the line. No separate `painter-math.test.ts`.
 - [ ] **Steps 2 to 4:** red, implement, green. **Step 5:** Commit `feat(content): the photo pipeline`. Report `Task 6`.
 
 ### Task 7: The ground's picture
@@ -610,6 +625,10 @@ export function photosUsed(content: GameContent): string[]
 export function sceneFromLevel(content: GameContent, levelId: string, sceneId: string): { scene: SceneFile; level: Level }
 ```
 
+`sheet.ts` exports `atlasText(sheet: Sheet, image: string): string`, the text `art.ts` writes today
+(`JSON.stringify(atlasOf(…), null, 2)` and a newline), and `art.ts`'s `pair` uses it, so the editors write the atlas
+with the same bytes (M5).
+
 A scene's two files come where the project lists the scene, the picture before its atlas; a problem's `from` is `scene
 file`. `artProblems` also says, for each listed `photo` file, `photoPictureProblem`'s sentence at the photo's file.
 With no `photos` given and a scene that needs one, `artFiles` throws `MissingPhotoError`.
@@ -663,7 +682,9 @@ export function groundColliders(ground: SceneGround): GroundCollider[]
 
 Boxes come from the `solid` letters only, **less every tile under a slope run's line inside its triangle** (those are
 inside the slope's collider; a box corner on the line is what a foot catches on). A slope's `col`, `row`, `w`, `h` are
-its triangle's bounding box (`h` is `|rise|`). A run of `ledge` tiles in one row is one ledge. `back` gives nothing.
+its triangle's bounding box (`h` is `|rise|`). The one box a slope tile gives (I5): a `half-up-high` or
+`half-down-high` tile that is a run of one gives its slope (`h: 0.5`, starting half a tile down) and a box `h: 0.5`
+for its lower half, both in the slopes' place in the order; in a longer half run the run's triangle holds that half. A run of `ledge` tiles in one row is one ledge. `back` gives nothing.
 
 - [ ] **Step 1: Failing tests:** a `#` scene with `oneBoxPerRow` gives exactly `tileRuns`' boxes in order, and
       without it `tileBoxes`'; a 3-tile `slope-up` on a floor gives one slope `{ w: 3, h: 3, rises: 1 }` and the three
@@ -696,15 +717,24 @@ No component gains a field and the plugin's config does not change, so no schema
   bottom right, top right). `colliderMatches` tells one by `shapeType()` being Rapier's convex polygon and its
   `vertices()` giving the same box and the same missing corner.
 - A ledge is a cuboid with `setActiveHooks(RAPIER.ActiveHooks.FILTER_CONTACT_PAIRS)`. `step` passes one hooks object
-  to `world.step(queue, hooks)`. Its `filterContactPair(c1, c2, b1, b2)` finds which collider is the ledge (a `Set` of
-  ledge handles the adapter fills in `createCollider` and, after a restore, from each ledge entity the first time
-  `colliderMatches` sees it) and answers `RAPIER.SolverFlags.COMPUTE_IMPULSE` only when the other collider's body is
+  to `world.step(queue, hooks)`. Its `filterContactPair(c1, c2, b1, b2)` finds which collider is the ledge by reading
+  `world.getCollider(handle).activeHooks()` (I4: the flag is in the world and its snapshot, so the adapter keeps no set
+  of handles, which after a restore could name another world's colliders), takes the ledge's top from that collider's
+  own `translation().y - halfExtents().y`, and answers `RAPIER.SolverFlags.COMPUTE_IMPULSE` only when the other collider's body is
   not moving up (`linvel().y >= 0`) and its lowest point is at or above the ledge's top plus `LEDGE_SLOP = 0.05`
   (the other's `translation().y` plus its half height: `halfExtents().y` for a cuboid, `halfHeight() + radius()` for a
   capsule, `radius()` for a ball); otherwise `RAPIER.SolverFlags.EMPTY`. `filterIntersectionPair` answers true.
   `colliderMatches` tells a ledge by `activeHooks()`.
-- If 0.21.0 has no `ActiveHooks`, `SolverFlags`, `convexHull` or hooks argument to `step` by these names, the
-  typecheck says so: stop and report with what the package does have. Do not work round it.
+- The names are checked (the plan audit read 0.21.0's declarations): `ActiveHooks.FILTER_CONTACT_PAIRS = 1`,
+  `SolverFlags.COMPUTE_IMPULSE = 1`, `SolverFlags.EMPTY = 0`, `ColliderDesc.convexHull(points: Float32Array):
+  ColliderDesc | null`, `World.step(eventQueue?, hooks?)`, `Collider.activeHooks()`, `Collider.vertices()`,
+  `ShapeType.ConvexPolygon = 9`. A `null` hull throws an error naming the slope's size, never a silent box; `vertices()`
+  is compared as a set of three corners (a hull may start at any of them).
+- `colliderMatches`'s first line (`shapeType() !== c.shape`) maps our codes first (16 and 17 to 9, 18 to 1), or every
+  slope and ledge is rebuilt every tick; `kinds.ts`'s comment ("They equal Rapier's own ShapeType values") says which
+  codes are ours.
+- The ledge rule reads an upright half height, so a turned crate is judged by its upright box; slice 1 accepts that
+  (the hero has fixed rotation), says so in a comment, and the crate cases below set `fixedRotation` (M6).
 
 - [ ] **Step 1: Failing tests** (each a small sim built with `createSim`, run in four engines, with its final hash
       equal across engines and its positions asserted): a ball dropped on a slope rolls down it and ends lower and to
@@ -758,7 +788,10 @@ scene and no photo still gets the very same object back.
       scene gets the same object. `scene.parity.test.ts`: **(a)** for `tests/fixtures/game` (a `#` level) and
       `tests/fixtures/full-game` (a tileset), the recorded play in `tests/golden/push-crate.json` (and the one each
       fixture's own parity test uses) run on the content after `sceneFromLevel` ends on the **same `finalHash`** as on
-      the content before, in four engines; **(b)** the fixture `scene-game`, played by a fixed list of commands for
+      the content before, in four engines; and the same for `tests/fixtures/examples-level-1.json`, a byte copy of
+      AutomataFrameworkExamples' `content/levels/level-1.json` (`#` rows, its own `sky` and `ground`), played with
+      `tests/fixtures/game`'s characters by a fixed command list (I6: the spec's "a copy of the Examples goldens"; their
+      recorded plays need that repo's hero plugin, so plan D replays them there); **(b)** the fixture `scene-game`, played by a fixed list of commands for
       600 ticks, ends on `tests/golden/scene.json`'s hash in four engines. Every existing golden is unchanged.
 - [ ] **Steps 2 to 4,** recording `scene.json` from CI. If (a) differs, the entity order or a `Look` color differs:
       print both sims' first differing entity with `--state` and fix the spawn order; never touch the golden.
@@ -839,6 +872,9 @@ a level's; `ground` is `groundColliders`' boxes and ledges as `TileBox`es, so th
 with no `photo` or `flat` ground still has its (clear) picture. `needsPictures` is true for a level with a scene.
 The stage adds each page as a sprite at (`col`, 0), `w` by `h` tiles, under the tile layer; `createStage`,
 `levelViews` and `createLevelPicture` take the world's size and sky from `worldSize` and `skyOf(content, level)`.
+`LevelPicture` gains `showScene(content: GameContent, art: Art): void` (I7): the same level, its scene's ground
+changed (same scene id and size), drawn from the new content and art; the old `Art` is destroyed; a size change still
+needs a new picture. The builder repaints through it at most once a frame.
 `levelViews` for a level with a scene gives the boxes and ledges `spawnLevel` makes, with sids in spawn order (a
 slope takes a sid and gives no view), so a view's sid is still the entity's.
 
@@ -850,7 +886,8 @@ slope takes a sid and gives no view), so a view's sid is still the entity's.
       `earth` tile is one of the ladder's three colors, at the top of the floor it is `turf`'s, at a `back` tile the
       ladder's darker step, over the upper half of a `slope-up` tile it is the sky's, at the tileset's `stone` tile it
       is not clear; no dark box edge is drawn over the ground; a picture one pixel too narrow stops with the
-      `ArtError` sentence; the picture is the same before and after a resize.
+      `ArtError` sentence; the picture is the same before and after a resize; two `showScene` calls with different
+      rows change the canvas pixel at the changed tile and destroy the first `Art` (I7).
 - [ ] **Steps 2 to 4.** **Step 5:** Commit `feat(render): a scene's ground, drawn`. Open Part C's pull request when
       green; report `Task 13`.
 
@@ -926,7 +963,9 @@ Every example in it is a whole file the test loads.
 - [ ] **Step 1: Failing tests:** each JSON block in `scenes.md` reads as its kind; the headless entry exports
       `SceneSchema`, `PhotoSchema`, `paintScene`, `sceneSheet`, `materialTile`, `sceneFromLevel`, `listContent`,
       `groundColliders`, `slopeRuns`, `covers`, `surfaceAt`, `GROUND_SHAPES`, `PHOTO_LIBRARY`, `photosUsed`,
-      `worldSize`, `decodePng`; the browser entry `groundPages` and `placedTiles`.
+      `worldSize`, `decodePng`, `sceneSheet`, `atlasText`; the browser entry `groundPages` and `placedTiles`. The
+      scenes page and the README say "scene file" where a reader could take the browser entry's `Scene` (the drawn
+      scene graph) for it (M4).
 - [ ] **Steps 2 to 4.** **Step 5:** Commit `docs: scenes for agents and people`. Report `Task 15`.
 
 ### Task 16: End to end
@@ -964,8 +1003,8 @@ Three journeys, each a path a real person or agent takes:
 - **The Editors' slice 1 plan** (`2026-11-15-scenes-1-ground-and-materials.md` there) pins the commit that merges Part
   D. It uses, from the headless entry: `SceneSchema`, `writeContent('scene' | 'level' | 'photo', …)`, `artFiles(content,
   photos)`, `photosUsed`, `PHOTO_LIBRARY`, `decodePng`, `materialTile` (a material's swatch), `sceneFromLevel`,
-  `listContent`, `covers`, `slopeRuns`, `gapsUnder`, `worldSize`; and from the browser entry `createLevelPicture`
-  (which now draws a level with a scene). It serves the library photos from the package's `photos/` folder.
+  `listContent`, `covers`, `slopeRuns`, `gapsUnder`, `worldSize`, `sceneSheet`, `atlasText`; and from the browser
+  entry `createLevelPicture` (which now draws a level with a scene) and `LevelPicture.showScene`. It serves the library photos from the package's `photos/` folder.
 - **Examples' plan D, Part 9** (the demo's real art): its `level-1` is `#` and `.` with its own `sky` and `ground`
   colors, so `automata scene from-level level-1` moves it with `oneBoxPerRow` and both of that repo's goldens keep
   their final hashes; plan D's own test proves it there. The agent then drafts the three scenes as files by the skill
@@ -1014,4 +1053,5 @@ page, and the three journeys of Task 16 for its own part. None moves an existing
 - **Review Focus:** each of the five has its test in the task named.
 - **Open to the audit:** call 5 (a slope must stand on solid ground) is a rule a person meets; call 9 (the bridge)
   and call 8 (`oneBoxPerRow`) are formats' warts taken on for the same-hash goal; Task 10 leans on four Rapier names
-  that could not be checked from this session (no install, no network to the package).
+  that could not be checked from this session (no install, no network to the package). The plan audit checked them
+  all (see Task 10).
