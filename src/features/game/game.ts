@@ -5,6 +5,7 @@
 import { type Frames, pageFrames } from '../../lib/frames.ts'
 import type { GameAudio } from '../audio/audio.ts'
 import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
+import type { FeelFrame } from '../feel/feel.ts'
 import type { Host } from '../host/host.ts'
 import {
   type Claim,
@@ -20,8 +21,8 @@ import { createRenderer, type HeroBox, type ReadPicture } from '../render/render
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
-import { createBuzzer } from './buzz.ts'
 import { resolveControls } from './controls.ts'
+import { createFeelWiring } from './feel-wiring.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
@@ -71,6 +72,11 @@ export interface GameOptions extends GameSimOptions {
    */
   readonly touchSettings?: unknown
   /**
+   * What the player chose about feel (`FeelSettings`, as the settings kept it). Anything that does not read as that is
+   * the default: shake on, unless the device asked for less motion.
+   */
+  readonly feelSettings?: unknown
+  /**
    * The player's language, which the game cannot start without: `startGame` throws if the player has not chosen one
    * (`locale.asked()` is false), so show the language picker first. The touch buttons say `controls.<action>` and
    * `automata.touch.label` in it, a refused `addPlayer` or change of key explains itself in it, the sound's button asks
@@ -100,6 +106,10 @@ export interface Game {
   heroes(): readonly HeroBox[]
   /** The player's setting: whether the device may buzz when a feel file says so. */
   setVibration(on: boolean): void
+  /** The player's setting: whether the picture may shake. Dust and freezes are not changed by it. */
+  setShake(on: boolean): void
+  /** What the last picture drew of the game's feel: the specks, the shake offset and the ticks still held. */
+  feel(): FeelFrame
   /** The play so far, from tick 0. Not available after `stop`, which disposes the sim. */
   replay(): Replay
   /** Stops the loop, removes the canvas and the controls, and disposes the sim. Safe to call twice. */
@@ -183,12 +193,19 @@ export async function startGame(options: GameOptions): Promise<Game> {
       words: locale.words,
     })
     const { audio } = options
-    const buzzer = createBuzzer({
+    // A freeze in a game played alone holds the whole game: the loop waits it out and never owes the time.
+    const wiring = createFeelWiring({
       content: options.content,
       host,
-      device: (player) => input.device(player),
+      renderer,
       tickHz: sim.tickHz,
-      on: touchSettingsOf(options.touchSettings).vibration,
+      seed: sim.seed,
+      feelSettings: options.feelSettings,
+      freezes: 'game',
+      buzz: {
+        device: (player) => input.device(player),
+        on: touchSettingsOf(options.touchSettings).vibration,
+      },
     })
     const loop = createLoop({
       tickHz: sim.tickHz,
@@ -198,10 +215,12 @@ export async function startGame(options: GameOptions): Promise<Game> {
         renderer.apply(result.render)
         // Only the tick and the events: the audio is never handed the sim, the render delta or the commands.
         audio?.hear({ tick: result.tick, events: result.events })
-        buzzer.hear(result)
+        wiring.hear(result)
         people.afterStep()
       },
-      draw: (alpha) => renderer.draw(alpha),
+      draw: wiring.draw,
+      hold: wiring.hold,
+      held: () => wiring.holding,
       frames,
     })
 
@@ -218,6 +237,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
     }
     const unlisten = host.onVisibility(sync)
     // The level is on screen: a new sim is about to be heard, and the page says the level started.
+    wiring.begin()
     audio?.begin()
     audio?.raise('level.started')
     // The notice is the last thing put on the page, so a failure above leaves nothing of it behind.
@@ -250,7 +270,9 @@ export async function startGame(options: GameOptions): Promise<Game> {
         sync()
       },
       heroes: () => renderer.heroes(),
-      setVibration: (on) => buzzer.setOn(on),
+      setVibration: wiring.setVibration,
+      setShake: wiring.setShake,
+      feel: wiring.frame,
       replay: () => recorder.replay(),
       stop() {
         if (stopped) return
