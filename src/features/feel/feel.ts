@@ -90,7 +90,7 @@ function filesByEvent(
 ): ReadonlyMap<string, FeelFile[]> {
   const table = new Map<string, FeelFile[]>()
   if (feels === undefined) return table
-  for (const id of Object.keys(feels).sort()) {
+  for (const id of Object.keys(feels).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) {
     const file = feels[id]
     if (file === undefined) continue
     const limited = withinLimits(file)
