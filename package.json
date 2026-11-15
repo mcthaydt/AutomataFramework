@@ -21,7 +21,8 @@
     "schemas",
     "template",
     "skills",
-    "docs/api/framework.api.md"
+    "docs/api/framework.api.md",
+    "docs/formats/changes.md"
   ],
   "exports": {
     ".": {
