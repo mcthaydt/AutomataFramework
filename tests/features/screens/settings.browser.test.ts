@@ -151,7 +151,8 @@ test.each(SCREENS)(
         return box.width < 44 || box.height < 44
       },
     )
-    expect(small.map((control) => control.textContent?.trim() || control.getAttribute('aria-label'))).toEqual([])
+    const names = small.map((control) => control.textContent?.trim() || control.getAttribute('aria-label'))
+    expect(names).toEqual([])
     expect(buttons()[0]?.textContent?.trim()).toBe(es('automata.back'))
     expect(buttons()[0]?.getBoundingClientRect().height).toBeGreaterThanOrEqual(48)
     const root = document.scrollingElement as Element
@@ -267,7 +268,8 @@ test('a gamepad button is changed with the gamepad alone', async () => {
   expect(rowSays('gamepad', 'Jump')).toBe(es('automata.pad.south'))
   changeOf('gamepad', 'Jump').focus()
   tap('south')
-  await expect.poll(() => mount.textContent).toContain(es('automata.settings.press-button', { action: 'Jump' }))
+  const press = es('automata.settings.press-button', { action: 'Jump' })
+  await expect.poll(() => mount.textContent).toContain(press)
   tap('west')
   await expect.poll(() => rowSays('gamepad', 'Jump')).toBe(es('automata.pad.west'))
   expect(input.controls().jump?.pad?.[0]).toBe('west')

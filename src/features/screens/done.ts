@@ -41,7 +41,7 @@ export function doneScreen(
   },
 ): Screen {
   const { level, next, notKept, onNext, onMenu } = options
-  return show(Part, { ...options, name: 'done' }, (words) => ({
+  return show(Part, { ...options, name: 'done' }, (words): DoneProps => ({
     title: words('automata.done.title'),
     line: next ? words('automata.done.level', { level }) : words('automata.done.game'),
     ...(notKept === undefined ? {} : { notKept }),

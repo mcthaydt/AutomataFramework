@@ -89,7 +89,10 @@ export function flowFiles(options: FlowGameOptions = {}): Record<string, string 
     'done = "door.touched"',
     ...(options.noWarning === true ? [] : ['warnings = ["warning.flashing"]']),
   ].join('\n')
-  const own = (fixtureFiles['automata.toml'] ?? '').replace(/^format = 1\nname = .*\nstart = .*\nhero = .*\n/, '')
+  const own = (fixtureFiles['automata.toml'] ?? '').replace(
+    /^format = 1\nname = .*\nstart = .*\nhero = .*\n/,
+    '',
+  )
   const more = listed.map(([type, path]) => `\n[[content]]\ntype = "${type}"\npath = "${path}"\n`)
   files['automata.toml'] = `${head}\n${own}${more.join('')}`
   return { ...files, ...options.replace }

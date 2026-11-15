@@ -43,7 +43,8 @@ export function controlRows(
     } else {
       keyboard.push({ action, slot: 'keys', label, input: first(control.keys, words) })
     }
-    if (control.pad !== undefined) gamepad.push({ action, slot: 'pad', label, input: first(control.pad, words) })
+    if (control.pad !== undefined)
+      gamepad.push({ action, slot: 'pad', label, input: first(control.pad, words) })
   }
   return { keyboard, gamepad }
 }

@@ -105,7 +105,8 @@ test('on a phone on its side the name is on the left and the buttons are on the 
   await page.viewport(844, 390)
   open()
   const title = (mount.querySelector('h1') as HTMLElement).getBoundingClientRect()
-  for (const button of buttons()) expect(button.getBoundingClientRect().left).toBeGreaterThanOrEqual(title.right)
+  for (const button of buttons())
+    expect(button.getBoundingClientRect().left).toBeGreaterThanOrEqual(title.right)
 })
 
 test('Quit is there only for a host that can quit', () => {

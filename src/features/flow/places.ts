@@ -110,7 +110,11 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
     erase(place) {
       const saves = context.saves()
       if (saves === undefined) {
-        const none: StoreResult<void> = { ok: false, refusal: 'unavailable', detail: 'There is no place to keep it.' }
+        const none: StoreResult<void> = {
+          ok: false,
+          refusal: 'unavailable',
+          detail: 'There is no place to keep it.',
+        }
         return Promise.resolve(none)
       }
       return saves.erase(place)

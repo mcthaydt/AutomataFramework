@@ -270,7 +270,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
         dropScreen()
         // Before the player has chosen, the warnings are in the language of the device, when the game has it.
         const language = locale.language() ?? locale.suggested()
-        const said = locale.language() === undefined && language !== undefined ? locale.wordsIn(language) : words
+        const said =
+          locale.language() === undefined && language !== undefined ? locale.wordsIn(language) : words
         shown = makers.warnings({
           ...base(),
           words: said,

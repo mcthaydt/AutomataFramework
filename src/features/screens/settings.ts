@@ -140,7 +140,9 @@ export function settingsScreen(
 ): Screen {
   const { locale, audio, sound, input, touch, coarse, canBuzz, sharing } = options
   // What the screen is in the middle of.
-  let waiting: { readonly action: string; readonly slot: BindingSlot; readonly cancel: () => void } | undefined
+  let waiting:
+    | { readonly action: string; readonly slot: BindingSlot; readonly cancel: () => void }
+    | undefined
   let refused: { readonly action: string; readonly slot: BindingSlot; readonly message: string } | undefined
   let asking = false
   let notKept = false
@@ -192,11 +194,12 @@ export function settingsScreen(
         options.onBack()
       },
     },
-    (words) => {
+    (words): SettingsProps => {
       const rows = controlRows(input, words, sharing)
       const view = (row: ControlRow): RowView => {
         const mine = waiting?.action === row.action && waiting.slot === row.slot
-        const error = refused?.action === row.action && refused.slot === row.slot ? refused.message : undefined
+        const error =
+          refused?.action === row.action && refused.slot === row.slot ? refused.message : undefined
         return {
           id: `${row.action}/${row.slot}`,
           action: row.label,
@@ -248,7 +251,9 @@ export function settingsScreen(
           },
         },
         notices,
-        order: coarse ? ['language', 'sound', 'touch', 'controls'] : ['language', 'sound', 'controls', 'touch'],
+        order: coarse
+          ? ['language', 'sound', 'touch', 'controls']
+          : ['language', 'sound', 'controls', 'touch'],
         language: {
           title: words('automata.settings.language'),
           choices: locale.listed().map((one) => ({

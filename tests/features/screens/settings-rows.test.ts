@@ -45,5 +45,6 @@ test('a game with no gamepad buttons has no gamepad rows, and an action with no 
 
 test("the game's own word for an action wins over its label", () => {
   const said = (key: string): string => (key === 'controls.jump' ? 'Saltar' : key)
-  expect(controlRows(input, said, false).keyboard.map((row) => row.label)).toEqual(['Left', 'Right', 'Saltar'])
+  const labels = controlRows(input, said, false).keyboard.map((row) => row.label)
+  expect(labels).toEqual(['Left', 'Right', 'Saltar'])
 })

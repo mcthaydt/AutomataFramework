@@ -88,7 +88,9 @@ test.each(SCREENS)(
     }
     const root = document.scrollingElement as Element
     expect(root.scrollHeight).toBeLessThanOrEqual(window.innerHeight)
-    await expect.element(page.getByRole('heading', { name: words('automata.pause.title') })).toBeInTheDocument()
+    await expect
+      .element(page.getByRole('heading', { name: words('automata.pause.title') }))
+      .toBeInTheDocument()
   },
 )
 

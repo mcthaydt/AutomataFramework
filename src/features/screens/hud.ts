@@ -51,12 +51,14 @@ export function hud(
   let paint: ((boxes: readonly HeroBox[]) => void) | undefined
   // Where the jumping thumb was when the button was put down.
   let jumping = jumpSide()
-  const screen = show(Part, { ...options, name: 'hud', overlay: true }, (words) => ({
+  const screen = show(Part, { ...options, name: 'hud', overlay: true }, (words): HudProps => ({
     pause: words('automata.pause.button'),
     // The pause button is on the side away from the jumping thumb.
     side: jumping === 'right' ? 'left' : 'right',
     onpause: onPause,
-    ...(watching === undefined ? {} : { watching: { line: words('automata.watch.tap'), ontake: watching.onTake } }),
+    ...(watching === undefined
+      ? {}
+      : { watching: { line: words('automata.watch.tap'), ontake: watching.onTake } }),
     register(draw) {
       paint = draw
     },
