@@ -1,3 +1,5 @@
+import { pitchOf } from './theory.ts'
+
 /**
  * The twelve notes of octave 4, in hertz, from C to B. A table, not `Math.pow(2, n / 12)`, so a pitch is the same
  * number in every engine; the other octaves are this times a power of two, which is exact.
@@ -7,30 +9,24 @@ const OCTAVE_4: readonly number[] = [
   493.8833,
 ]
 
-/** How many steps above C each letter is. */
-const LETTER: Readonly<Record<string, number>> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
-
-const NOTE = /^([A-G])([#b]?)([0-8])$/
+/**
+ * A pitch's frequency in hertz, from 0 to 127 (a MIDI number, so 69 is 440). The note is looked up in the table and
+ * its octave reached by doubling or halving by hand: each is exact, and no engine's power function is asked for anything.
+ */
+export function hertzOfPitch(pitch: number): number {
+  const step = ((pitch % 12) + 12) % 12
+  const octave = Math.floor(pitch / 12) - 1
+  let hertz = OCTAVE_4[step] ?? 0
+  for (let o = 4; o < octave; o++) hertz *= 2
+  for (let o = 4; o > octave; o--) hertz /= 2
+  return hertz
+}
 
 /**
  * A note's pitch in hertz: `hertzOf('A4')` is 440. A flat is the note a step below, so `Db4` is `C#4`, `Cb4` is `B3` and
  * `B#4` is `C5`. `undefined` for anything that is not a note (a rest, a hold, a drum step, a wrong name).
  */
 export function hertzOf(note: string): number | undefined {
-  const match = NOTE.exec(note)
-  if (match === null) return undefined
-  let step = (LETTER[match[1] ?? ''] ?? 0) + (match[2] === '#' ? 1 : match[2] === 'b' ? -1 : 0)
-  let octave = Number(match[3])
-  if (step < 0) {
-    step += 12
-    octave -= 1
-  } else if (step > 11) {
-    step -= 12
-    octave += 1
-  }
-  let hertz = OCTAVE_4[step] ?? 0
-  // Doubling and halving by hand: each is exact, and no engine's power function is asked for anything.
-  for (let o = 4; o < octave; o++) hertz *= 2
-  for (let o = 4; o > octave; o--) hertz /= 2
-  return hertz
+  const pitch = pitchOf(note)
+  return pitch === undefined ? undefined : hertzOfPitch(pitch)
 }

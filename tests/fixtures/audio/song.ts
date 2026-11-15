@@ -80,6 +80,17 @@ export const meadow = (): ArrangedMusic => ({
   ],
 })
 
+/** The song's loops and motif, by id, as `scoreOf` and `notesOf` take them. */
+export function songParts(): {
+  loops: Record<string, LoopFile>
+  motifs: Record<string, MotifFile>
+} {
+  return {
+    loops: { 'easy-drums': easyDrums(), 'drum-fill': drumFill(), 'bouncy-bass': bouncyBass() },
+    motifs: { 'hero-theme': heroTheme() },
+  }
+}
+
 /** Where each file is in the game. */
 export const SONG_PATHS = {
   'easy-drums': 'content/loops/easy-drums.json',

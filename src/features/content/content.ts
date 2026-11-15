@@ -153,6 +153,18 @@ export {
   writeRecording,
 } from './recording.ts'
 export {
+  CHORD,
+  Chord,
+  INSTRUMENTS,
+  type Instrument,
+  KEYS,
+  Key,
+  Mode,
+  type MotifChanges,
+  type Speed,
+  STEP,
+} from './shared.ts'
+export {
   type Atlas,
   atlasOf,
   backdropSheet,

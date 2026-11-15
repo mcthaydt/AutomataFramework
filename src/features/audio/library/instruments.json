@@ -1,0 +1,64 @@
+{
+  "instruments": {
+    "bass": {
+      "layers": [
+        { "wave": "triangle", "times": 1, "share": 1 },
+        { "wave": "square", "times": 1, "share": 0.2 }
+      ]
+    },
+    "keys": {
+      "layers": [
+        { "wave": "triangle", "times": 1, "share": 0.8 },
+        { "wave": "sine", "times": 2, "share": 0.3 }
+      ],
+      "ring": 1.2
+    },
+    "pluck": {
+      "layers": [
+        { "wave": "square", "times": 1, "share": 0.5 },
+        { "wave": "triangle", "times": 2, "share": 0.3 }
+      ],
+      "ring": 0.3
+    },
+    "lead": {
+      "layers": [
+        { "wave": "sawtooth", "times": 1, "share": 0.45 },
+        { "wave": "square", "times": 1, "share": 0.25 }
+      ]
+    },
+    "pad": {
+      "layers": [
+        { "wave": "sine", "times": 1, "share": 0.7 },
+        { "wave": "triangle", "times": 2, "share": 0.2 }
+      ]
+    },
+    "bell": {
+      "layers": [
+        { "wave": "sine", "times": 1, "share": 0.8 },
+        { "wave": "sine", "times": 3, "share": 0.3 },
+        { "wave": "sine", "times": 4, "share": 0.15 }
+      ],
+      "ring": 1.5
+    },
+    "organ": {
+      "layers": [
+        { "wave": "sine", "times": 1, "share": 0.6 },
+        { "wave": "sine", "times": 2, "share": 0.35 },
+        { "wave": "sine", "times": 4, "share": 0.2 }
+      ]
+    }
+  },
+  "drums": {
+    "kick": [{ "kind": "tone", "wave": "sine", "from": 150, "to": 50, "at": 0, "length": 0.12, "volume": 1 }],
+    "snare": [
+      { "kind": "noise", "pitch": 1800, "at": 0, "length": 0.12, "volume": 0.8 },
+      { "kind": "tone", "wave": "triangle", "from": 180, "to": 120, "at": 0, "length": 0.08, "volume": 0.5 }
+    ],
+    "hat": [{ "kind": "noise", "pitch": 8000, "at": 0, "length": 0.04, "volume": 0.5 }],
+    "clap": [
+      { "kind": "noise", "pitch": 1200, "at": 0, "length": 0.03, "volume": 0.7 },
+      { "kind": "noise", "pitch": 1200, "at": 0.015, "length": 0.08, "volume": 0.7 }
+    ],
+    "tom": [{ "kind": "tone", "wave": "sine", "from": 200, "to": 90, "at": 0, "length": 0.18, "volume": 0.9 }]
+  }
+}

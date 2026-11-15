@@ -9,11 +9,34 @@ import { SOUND_SETTINGS_DEFAULT, type SoundSettings } from './settings.ts'
 import type { Bus, Speaker, SpeakerState, SpeakerVoice } from './speaker.ts'
 
 export { type CueLogEntry, LOG_MAX, MAX_SAME, MAX_SOUNDS } from './cues.ts'
-export { hertzOf } from './notes.ts'
+export { instrumentVoices } from './instruments.ts'
+export { createMusicPlayer, type MusicPlayer } from './music-player.ts'
+export { hertzOf, hertzOfPitch } from './notes.ts'
+export {
+  type LoopOptions,
+  loopNotes,
+  type MotifUse,
+  motifNotes,
+  notesOf,
+  type PlainNote,
+  type SongParts,
+  TICKS_PER_BAR,
+  TICKS_PER_BEAT,
+} from './plain-notes.ts'
 export { type Score, type ScoreNote, scoreOf } from './score.ts'
 export { SOUND_SETTINGS_DEFAULT, type SoundSettings, SoundSettingsSchema } from './settings.ts'
 export type { Bus, Speaker, SpeakerState, SpeakerVoice } from './speaker.ts'
 export { type PlayedVoice, type TestSpeaker, testSpeaker } from './test-speaker.ts'
+export {
+  type ChordNotes,
+  chordName,
+  chordOf,
+  keyRoot,
+  noteName,
+  pitchOf,
+  scaleOf,
+  stepOffset,
+} from './theory.ts'
 
 export interface GameAudio {
   /** True when the game has no cue at all: there is nothing to play and nothing to tell the player. */
@@ -66,7 +89,7 @@ export function createAudio(options: {
   const table = cueTable(options.content, options.tickHz ?? 60)
   const log = createCueLog()
   const limiter = createLimiter()
-  const player = createMusicPlayer(speaker)
+  const player = createMusicPlayer(speaker, options.content)
   /** What `onState` gave out, so `close` can take them all back. */
   const listening = new Set<() => void>()
   let volumes: SoundSettings = SOUND_SETTINGS_DEFAULT

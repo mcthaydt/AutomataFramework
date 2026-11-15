@@ -3,12 +3,14 @@ import { z } from 'zod'
 import { formatDiagnostic } from '#src/features/content/content.ts'
 import { checkData } from '#src/features/content/parse.ts'
 import {
+  CHORD,
   EventName,
   isGamePath,
   list,
   MessageKey,
   noSuch,
   picturePath,
+  STEP,
   ticks,
   unique,
   variants,
@@ -109,4 +111,16 @@ test('the sentence for a name that is not there', () => {
     'There is no layer called "far". This backdrop has: hills, sky.',
   )
   expect(list(['b', 'a'])).toBe('a, b')
+})
+
+test('a chord is a numeral of the key, upper case major and lower case minor', () => {
+  for (const chord of ['I', 'vi', 'vii°', 'V7', 'IVsus4', 'i', 'III', 'VII', 'ii7'])
+    expect(CHORD.test(chord), chord).toBe(true)
+  for (const chord of ['VIII', 'I°', 'iv7sus4', 'C', '', 'viii', 'Vi'])
+    expect(CHORD.test(chord), chord).toBe(false)
+})
+
+test('a step is 1 to 15 with a b or a # in front for the note between', () => {
+  for (const step of ['1', '15', 'b7', '#4', '9']) expect(STEP.test(step), step).toBe(true)
+  for (const step of ['0', '16', 'bb3', 'x', '', '#', '01']) expect(STEP.test(step), step).toBe(false)
 })

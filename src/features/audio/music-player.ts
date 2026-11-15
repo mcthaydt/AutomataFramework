@@ -1,4 +1,5 @@
 import type { MusicFile } from '../content/content.ts'
+import type { SongParts } from './plain-notes.ts'
 import { type Score, scoreOf } from './score.ts'
 import type { Speaker } from './speaker.ts'
 
@@ -8,8 +9,12 @@ const LEAD = 0.05
 const AHEAD = 0.3
 
 export interface MusicPlayer {
-  /** The track to be hearing. The track already wanted is left playing; another replaces it. */
-  want(music: MusicFile): void
+  /**
+   * The track to be hearing. The track already wanted is left playing; another replaces it. `from` is how many seconds
+   * into the track to begin (held inside the track; default 0): only the notes from there on are handed over, each
+   * that much sooner.
+   */
+  want(music: MusicFile, from?: number): void
   /** Fades the music out and wants none. */
   stop(): void
   /** The id of the track wanted, playing or waiting for the speaker. */
@@ -21,6 +26,8 @@ export interface MusicPlayer {
 /** The track being played and how far its notes have been handed over. */
 interface Playing {
   readonly score: Score
+  /** Seconds into the track it began at: the first pass is that much shorter. */
+  readonly from: number
   /** Speaker seconds the track began at; undefined while the speaker is not on and it has not begun. */
   start: number | undefined
   /** Which time through a looping track the next note is in. */
@@ -35,7 +42,7 @@ interface Playing {
  * back to where the clock is with no burst of missed notes. While the speaker is not on, the track is wanted but does
  * not begin: it begins, from its first note, when the speaker turns on.
  */
-export function createMusicPlayer(speaker: Speaker): MusicPlayer {
+export function createMusicPlayer(speaker: Speaker, parts: SongParts = {}): MusicPlayer {
   let playing: Playing | undefined
 
   /** Hands over every note now inside the window, and lets go of a track that has ended. */
@@ -55,23 +62,27 @@ export function createMusicPlayer(speaker: Speaker): MusicPlayer {
           track.next = 0
           continue
         }
-        const time = track.start + track.pass * seconds + note.at
+        const time = track.start + track.pass * seconds + note.at - track.from
         if (time >= now + AHEAD) break
         if (time >= now) speaker.play('music', note.voice, time)
         track.next++
       }
     }
-    if (!loop && track.next >= notes.length && now >= track.start + seconds) playing = undefined
+    if (!loop && track.next >= notes.length && now >= track.start + seconds - track.from) playing = undefined
   }
 
   const offClock = speaker.onClock(handOver)
   const offState = speaker.onState(handOver)
 
   return {
-    want(music) {
+    want(music, from = 0) {
       if (playing?.score.id === music.id) return
       if (playing !== undefined) speaker.cut('music')
-      playing = { score: scoreOf(music), start: undefined, pass: 0, next: 0 }
+      const score = scoreOf(music, parts)
+      const begin = Math.min(Math.max(from, 0), score.seconds)
+      // The notes before `begin` are not handed over: the track starts at the first one from there on.
+      const next = score.notes.findIndex((note) => note.at >= begin)
+      playing = { score, from: begin, start: undefined, pass: 0, next: next === -1 ? score.notes.length : next }
       handOver()
     },
     stop() {
