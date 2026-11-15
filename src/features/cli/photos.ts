@@ -18,6 +18,9 @@ import type { GameFolder } from './game-folder.ts'
 import { Files, type FilesService } from './ports.ts'
 import { packageRoot } from './template.ts'
 
+/** What the painter is given for a game that does not load: no photo. */
+const NONE: Photos = () => undefined
+
 /** The id a content file has: its name without the folder or `.json`. */
 const idOf = (path: string): string => path.slice(path.lastIndexOf('/') + 1, -'.json'.length)
 
@@ -29,7 +32,7 @@ const idOf = (path: string): string => path.slice(path.lastIndexOf('/') + 1, -'.
 export function readPhotos(game: GameFolder): Effect.Effect<Photos, never, FilesService> {
   return Effect.gen(function* () {
     const found = new Map<string, PhotoPixels>()
-    if (!game.loaded.ok) return () => undefined
+    if (!game.loaded.ok) return NONE
     const content = game.loaded.value
     const files = yield* Files
     for (const id of photosUsed(content)) {
@@ -47,7 +50,8 @@ export function readPhotos(game: GameFolder): Effect.Effect<Photos, never, Files
       if (bytes === undefined) return yield* Effect.die(new Error(`The library photo ${path} is missing.`))
       found.set(id, { ...decodePng(bytes), size: record.size })
     }
-    return (id) => found.get(id)
+    const photos: Photos = (id) => found.get(id)
+    return photos
   })
 }
 
