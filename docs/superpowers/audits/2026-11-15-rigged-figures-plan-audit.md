@@ -9,7 +9,7 @@ requests 29 and 36), the Editors' redesign plan, Examples' plan D and both track
 findings there are numbered G-…. Nothing was run: every fact below is read from the files, or is said to be unchecked.
 
 **Verdict: ready for execution of Parts 0 to 3 once the fixes below are in the plan; they are, in this pull request.**
-No critical finding, eleven important, eight minor. Q1 is settled (the Owner moved the games to Lospec's DUEL 128 palette); Q2 is open and does not stop Parts 0 to 3.
+No critical finding, eleven important, eight minor. Q1 is settled (the Owner moved the games to Lospec's DUEL palette, 256 colours); Q2 is open and does not stop Parts 0 to 3.
 No existing golden moves under the plan as fixed. No new dependency.
 
 ## The questions the coordinator asked
@@ -65,10 +65,11 @@ No. 276, and Examples' CI fails any other colour (plan D audit, Q1, answer A). N
 "never one flat fill". By `lightness` the four make exactly one ramp, black, pink, green and cream, so every part of
 every demo figure would be shaded through those four. The plan does not say; plan D's Part 9 would find it out when
 it drafts the art. This is the Owner's (Q1). **Settled (the Owner, 2026-11-15):** "We can just use the duel 256
-palette from lopsec for the games, use current the palette for UI", then "I meant 128". The games' art moves from
-No. 276 to Lospec's DUEL 128. **Fixed:** Task 1 exports `DUEL_COLOURS` (the 128) for a game's CI and holds the
-library's ramps to them, and the plan D handoff says Examples' art check holds the pictures to it. Not checked: lospec.com
-was out of reach, so whether the old builder's 256 DUEL colours are all among the 128 is for Task 1 to find.
+palette from lopsec for the games, use current the palette for UI",  Lospec has no 128-colour DUEL, so it is the 256.
+The games' art moves from No. 276 to Lospec's DUEL, whose 32 rows of 8 the library's ramps already are: Lospec's
+`.hex` (in the project's files) matches the old builder's `duel-ramps.ts` colour for colour. **Fixed:** Task 1
+exports `DUEL_COLOURS` (the 256) for a game's CI, and the plan D handoff says Examples' art check holds the pictures
+to it.
 
 **I5. The library's `ink` is purple, and the "ink" edge has no colour.** Row 28 of the DUEL ramps, named `ink`, keeps
 steps 1, 2, 3, 5 and 6: `#3c3151` to `#baabf7`, a lilac. `eyes` left out is `ink`, so every figure's eyes would be
@@ -161,7 +162,7 @@ corrected so an executor does not rely on it.
 
 **Q1. The demo's figures are shaded in steps of a colour. Palette No. 276 has four colours. How should they be shaded?**
 
-**Settled another way (the Owner, 2026-11-15):** the games use Lospec's DUEL 128 palette, and the UI keeps its own
+**Settled another way (the Owner, 2026-11-15):** the games use Lospec's DUEL palette (256 colours), and the UI keeps its own
 palettes; No. 276 is no longer the games' palette, so none of the options below applies. See I4.
 
 - **A. Shades mixed from the four (recommended).** Each shade is an even mix of two of No. 276's colours, the way the

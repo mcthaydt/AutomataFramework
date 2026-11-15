@@ -229,13 +229,12 @@ Tasks 1, 6, 11 and 12 adds one, so 19 by Task 12).
   "Palette", plural `palettes`, editor `characters`, part `palette`, noun "palette"),
   `LIBRARY_PALETTE: PaletteFile` (id `automata`), `lightness(colour: string): number`,
   `inkOf(palette: PaletteFile): string` (its `ink`, else the darkest step of its darkest ramp),
-  `DUEL_COLOURS: readonly string[]` (Lospec's DUEL 128 palette, its 128 colours in Lospec's order, lower-case
+  `DUEL_COLOURS: readonly string[]` (Lospec's DUEL palette, all 256 colours in Lospec's order, lower-case
   `#rrggbb`), so a game's CI can hold its art to the palette its games use (the Owner, 2026-11-15: "use the duel 256
-  palette from lopsec for the games", then "I meant 128"). Every colour of `LIBRARY_PALETTE`, `ink` included, is in
-  it: a test says so. **Unchecked:** the audit could not reach lospec.com, so whether the old builder's DUEL ramps
-  (256 colours, 32 rows of 8) are all in DUEL 128 is not known. Task 1 copies the 128 from Lospec's own `.hex` file
-  first; where a library ramp's step is not among them, the ramp takes the nearest of the 128 that keeps it getting
-  lighter, and the tracker lists every ramp that changed.
+  palette from lopsec for the games"; Lospec has no 128-colour DUEL, so it is the 256). Lospec's `.hex` file, kept in
+  the project's files as `palettes/lospec-duel-256.hex`, is byte for byte the old builder's 32 rows of 8 in row order
+  (checked by the audit), so the library's ramps need no change. Every colour of `LIBRARY_PALETTE`, `ink` included,
+  is in it: a test says so.
 
 | Field | Rule |
 |---|---|
@@ -1118,11 +1117,11 @@ part as these parts land, each stage only what the pinned framework paints.
 - **Examples (plan D):** the demo's hero, keeper and critter are format 2 files in Examples, drafted by an agent from
   `STARTERS` and finished in the builder (the Owner: "the real art comes from the builders"). Examples moves its pin
   after each part. Its goldens are plan D's. **The palette (the Owner, 2026-11-15: "We can just use the duel 256
-  palette from lopsec for the games, use current the palette for UI", then "I meant 128"):** the games' art is in
-  Lospec's DUEL 128 palette, in place of palette No. 276, and the game's screens keep their own palettes (No. 340 for
-  the demo's). The demo needs no palette file of its own: the library's ramps are DUEL 128's colours (Task 1).
+  palette from lopsec for the games, use current the palette for UI"):** the games' art is in Lospec's DUEL palette
+  (256 colours), in place of palette No. 276, and the game's screens keep their own palettes (No. 340 for the demo's).
+  The demo needs no palette file of its own: the library's 32 ramps are DUEL's rows (Task 1).
   Examples' art check (plan D) holds every picture's colours to `DUEL_COLOURS` and fails any other; it no longer
-  checks No. 276. A game's own palette file may add ramps, and in the demo they too are DUEL 128's colours. Also for Part 9's art list: a rigged figure's walk and
+  checks No. 276. A game's own palette file may add ramps, and in the demo they too are DUEL's colours. Also for Part 9's art list: a rigged figure's walk and
   run come from its gait (`walk-1` …, `run-1` …), and those names are refused as its own poses, so the hero's "run
   (2)" becomes its gait's run.
 - **The template** stays on its two free figures; `automata create` is unchanged.
@@ -1149,5 +1148,5 @@ exported as it is made (I2); `paint-figure.ts`'s one-line type import (I3); a pa
 default naming a library ramp (I5); even walk pictures, the stride's crouch and the walk's bob (I6); an animal's trunk
 measured from forward (I7); places in units from the hips (I8); Part 4 after plans H and T (I9); advice for missing
 keys that fits each format (I10); the sheet's numbers (I11); and the minor ones. Q1 (the demo's shading under
-palette No. 276) is gone: the Owner moved the games to Lospec's DUEL 128 palette (see the plan D handoff). Q2 (a behaviour that sets a view) is
+palette No. 276) is gone: the Owner moved the games to Lospec's DUEL palette, 256 colours (see the plan D handoff). Q2 (a behaviour that sets a view) is
 open and does not stop Parts 0 to 3.
