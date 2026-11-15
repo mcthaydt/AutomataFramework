@@ -36,8 +36,10 @@ test('an agent adds a sound to a game, hooks it up, and is told plainly when it 
   // 2. The agent reads the format from the shipped schema, with nothing running.
   const schema = JSON.parse(
     readFileSync(new URL('../../../schemas/sound.schema.json', import.meta.url), 'utf8'),
-  ) as { properties: Record<string, unknown> }
-  expect(Object.keys(schema.properties)).toEqual(['format', 'id', 'volume', 'voices'])
+  ) as { oneOf?: { properties: Record<string, unknown> }[]; anyOf?: { properties: Record<string, unknown> }[] }
+  // A figure is one of two shapes, told apart by `format`; the first is the one made of parts.
+  const parts = (schema.oneOf ?? schema.anyOf ?? [])[0]
+  expect(Object.keys(parts?.properties ?? {})).toEqual(['format', 'id', 'volume', 'voices'])
 
   // 3. It writes a new sound, lists it, and has it play on an event, with one slip in the name.
   files['content/sounds/door.json'] = writeContent('sound', door)
@@ -73,8 +75,10 @@ test('an agent repaints the hero, and is told when the picture is stale and when
   // 2. It reads the format from the shipped schema, with nothing running.
   const schema = JSON.parse(
     readFileSync(new URL('../../../schemas/figure.schema.json', import.meta.url), 'utf8'),
-  ) as { properties: Record<string, unknown> }
-  expect(Object.keys(schema.properties)).toEqual([
+  ) as { oneOf?: { properties: Record<string, unknown> }[]; anyOf?: { properties: Record<string, unknown> }[] }
+  // A figure is one of two shapes, told apart by `format`; the first is the one made of parts.
+  const parts = (schema.oneOf ?? schema.anyOf ?? [])[0]
+  expect(Object.keys(parts?.properties ?? {})).toEqual([
     'format',
     'id',
     'tile',
