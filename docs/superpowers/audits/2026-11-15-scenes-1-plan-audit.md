@@ -57,9 +57,10 @@ files in one `content = […]` value; the sound formats (PR 112) make `withFolde
 the new folder form of `[[content]]` (`type` and `folder`); this plan makes `listContent(projectText, ref): string`,
 which throws. Whichever lands second breaks the first's tests. The folder form also changes two of this plan's
 assumptions: a game may list a scenes folder, so `from-level` must not add a block for a file the folder already
-covers, and `paintedPath` finds a file by `entry.path`, which a folder entry does not have. *Fix:* this plan uses plan
-R's signature (`Parsed<string>`, with `about`) and its tests' cases; whichever of the three plans builds first creates
-the file and the others add to it, each reporting it as a deviation. Task 14's `from-level` adds a block only when no
+covers, and `paintedPath` finds a file by `entry.path`, which a folder entry does not have. *Fix:* this plan does not make
+the file. The coordinator ruled (2026-11-15, after the rigged-figures audit, AF PR 117) that plan R's Part 0 builds
+`project-write.ts` first and it is the one writer; Task 14 consumes `listContent(text, entry, about?): Parsed<string>`,
+handles its answer instead of a throw, and stops if Part 0 is not on `main` when it starts. Task 14's `from-level` adds a block only when no
 listed folder holds the new path, and if plan M has landed, `paintedPath` and `photosUsed` read listed files through
 the loader's own list of files rather than `project.content`'s paths.
 

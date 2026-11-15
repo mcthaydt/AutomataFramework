@@ -122,10 +122,11 @@ audit may challenge each; the Owner may overrule any.
 13. **The level's size is its scene's.** `worldSize(content, level)` answers for both kinds of level; `levelSize`
     stays for a level with tiles, so nothing pinned to it breaks.
 14. **`automata.toml` gets one writer,** `listContent`, that adds a `[[content]]` block and changes nothing else in
-    the file's text. Three plans create `content/project-write.ts` (I3): rigged figures (PR 109, Task 17:
-    `listContent(text, entry, about?): Parsed<string>`), the sound formats (PR 112: `withFolders`) and this one. This
-    plan uses plan R's signature and test cases. Whichever plan builds first creates the file; the others add to it
-    and report it as a deviation. When a listed folder (plan M's folder form) already holds a new file's path, no
+    the file's text. **This plan does not make it** (I3, and the coordinator, 2026-11-15, after the rigged-figures
+    audit, AF PR 117): plan R's Part 0 builds `src/features/content/project-write.ts` first and it is the one writer,
+    `listContent(text, entry, about?): Parsed<string>`; the sound formats (PR 112) add `withFolders` to the same file.
+    Task 14 consumes plan R's, adapting to its answer (`ok` or a sentence) rather than a throw, and stops if Part 0 is
+    not on `main` when Task 14 starts. When a listed folder (plan M's folder form) already holds a new file's path, no
     block is added.
 
 ## Review Focus
@@ -166,7 +167,6 @@ src/features/content/
   sheet.ts                            sceneSheet (Task 7)
   art.ts                              scenes painted and judged; photos handed in (Task 8)
   scene-from-level.ts                 sceneFromLevel (Task 8)
-  project-write.ts                    listContent (Task 14)
 src/features/level/
   ground.ts                           groundColliders (Task 9)
   spawn-level.ts, sim-content.ts, uses.ts, tile-runs.ts (worldSize)   (Task 11)
@@ -898,20 +898,17 @@ slope takes a sid and gives no view), so a view's sid is still the entity's.
 ### Task 14: `automata scene from-level`, and art and check with photos
 
 **Files:**
-- Create: `src/features/content/project-write.ts`, `src/features/cli/scene.ts`, `src/features/cli/photos.ts`
+- Create: `src/features/cli/scene.ts`, `src/features/cli/photos.ts` (`listContent` is plan R's Part 0, call 14)
 - Modify: `src/features/cli/args.ts`, `cli.ts`, `help.ts`, `art.ts`, `game-folder.ts` (only if the game's own
   `artFiles` needs the photos passed through), `mcp-tools.ts`, `mcp-library.ts`; `src/features/content/content.ts`
-- Test: `tests/features/content/project-write.test.ts`, `tests/features/cli/scene.test.ts`, `photos.test.ts`,
+- Test: `tests/features/cli/scene.test.ts`, `photos.test.ts`,
   `art.test.ts`, `args.test.ts`, `mcp-tools.test.ts`, `tests/docs/readme.test.ts`
 
 **Interfaces:**
 - Produces:
 
 ```ts
-// project-write.ts
-/** The project file's text with one more `[[content]]` block at its end, in the file's own line endings. The text
- *  before it is not changed by a byte. Throws when the path is already listed or the result does not parse. */
-export function listContent(projectText: string, ref: ContentRef): string
+// consumed, plan R's Part 0 (project-write.ts): listContent(text, entry, about?): Parsed<string>
 // cli/photos.ts
 /** The photos a game's scenes use, read and decoded: the game's own from its folder, the library's from the package's `photos/`. */
 export function readPhotos(game: GameFolder): Effect.Effect<Photos, CliError, FilesService>
@@ -935,9 +932,7 @@ error in the package, said as `Something went wrong inside automata` says today.
 `CHECK_HELP` say "figure, backdrop and scene files". The MCP server gains one tool, `scene_from_level` (`level`, `as`),
 thin over `runSceneFromLevel`; its count in the tests and the docs goes up by one.
 
-- [ ] **Step 1: Failing tests.** `project-write.test.ts`: the block is added after the last line, with a blank line
-      before it; a file with CRLF keeps CRLF; a file with comments keeps every byte before the block; a path already
-      listed throws. `scene.test.ts` (the memory ports): from the `game` fixture the three files are written and
+- [ ] **Step 1: Failing tests.** (`listContent`'s own cases are plan R's.) `scene.test.ts` (the memory ports): from the `game` fixture the three files are written and
       `loadGame` of the result is fine; each refusal's sentence, with nothing written; `--json` prints the report.
       `photos.test.ts`: the game's own `moss` wins over a library photo of the same id; a photo no scene uses is not
       read. `art.test.ts`: `automata art` on `scene-game` paints `content/scenes/meadow.png`. `args.test.ts`: the
