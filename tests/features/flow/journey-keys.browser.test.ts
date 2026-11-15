@@ -113,5 +113,5 @@ test('every screen is walked with arrows, Enter and Escape; a key is changed in 
   await expect.poll(() => drive.mount.querySelector('[role="alertdialog"]')).not.toBeNull()
   await enter(es('automata.pause.leave-yes'))
   await drive.shown('menu')
-  await drive.wait(es('automata.menu.play'))
+  await drive.wait(es('automata.menu.continue'))
 })
