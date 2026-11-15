@@ -169,13 +169,12 @@ export async function startGame(options: GameOptions): Promise<Game> {
       },
     })
     // The words on the box's two buttons: the game's own, else the player's language.
-    const boxWords = (): BoxWords | undefined =>
-      options.boxWords ??
-      (locale === undefined
-        ? undefined
-        : { next: locale.words('automata.story.next'), skip: locale.words('automata.story.skip') })
-    const words = options.words ?? locale?.words
-    const firstBoxWords = boxWords()
+    const boxWords = (): BoxWords =>
+      options.boxWords ?? {
+        next: locale.words('automata.story.next'),
+        skip: locale.words('automata.story.skip'),
+      }
+    const words = options.words ?? locale.words
     // A game with a story gets its box; a game without one has nothing of the kind in its page.
     const story = usesStory(options.content)
       ? createStoryView({
@@ -189,20 +188,19 @@ export async function startGame(options: GameOptions): Promise<Game> {
             Object.keys(input.controls()).flatMap((action) => input.inputsFor(player, action)),
           inset: input.inset,
           look: (camera) => renderer.look(camera),
-          ...(words === undefined ? {} : { words }),
-          ...(firstBoxWords === undefined ? {} : { boxWords: firstBoxWords }),
+          words,
+          boxWords: boxWords(),
         })
       : undefined
     if (story !== undefined) {
       const was = cleanup
       // A new language says the box again, in its own words.
-      const follow = locale?.onChange(() => {
-        const now = boxWords()
-        if (now !== undefined) story.setBoxWords(now)
+      const follow = locale.onChange(() => {
+        story.setBoxWords(boxWords())
         story.update()
       })
       cleanup = () => {
-        follow?.()
+        follow()
         story.destroy()
         was()
       }

@@ -6,14 +6,17 @@ import { run, type Started, visibleHost } from '../game/co-op-game.ts'
 import { fixtureControls } from '../game/controls.ts'
 import { manualFrames } from '../game/frames.ts'
 import { fakeGamepads } from '../input/fake-gamepads.ts'
+import { chosenLocale } from '../locale/chosen.ts'
 import { loadStory, storyPlugins } from './game.ts'
 
 /** Starts the story game in `mount`; the first frame has set the clock. `extra` replaces any option. */
 export async function startStory(mount: HTMLElement, extra: Partial<GameOptions> = {}): Promise<Started> {
   const frames = manualFrames()
   const pads = fakeGamepads()
+  const content = extra.content ?? (await loadStory())
   const game: Game = await startGame({
-    content: await loadStory(),
+    content,
+    locale: await chosenLocale(content, 'en'),
     plugins: storyPlugins,
     mount,
     controls: fixtureControls,
