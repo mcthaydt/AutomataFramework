@@ -8,8 +8,8 @@ Spec: the Feel editor's, in AutomataFrameworkEditors
 ([`2026-11-15-feel-editor-design.md`](https://github.com/mcthaydt/AutomataFrameworkEditors/blob/main/docs/superpowers/specs/2026-11-15-feel-editor-design.md),
 "What Feel needs from the framework", F1 to F3). F4 is plan F's.
 
-Overall: **70%** (stage 1 is the Feel spec; stages 2 and 3, the plan and its audit, are merged; stage 4 is at Task 4 of 4,
-written and in CI; stages 5 to 7 follow)
+Overall: **70%** (stage 1 is the Feel spec; stages 2 and 3, the plan and its audit, are merged; stage 4 is built, all four
+tasks, and every check on pull request 122 is green; stages 5 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
