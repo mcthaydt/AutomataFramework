@@ -80,7 +80,7 @@ test('a scene whose paint changed has a picture older than its file', async () =
 test('a scene with no picture yet says to paint it', async () => {
   const game = await loadSceneGame()
   const files = await sceneGamePictures()
-  const have = { ...files, 'content/photos/moss.png': await mossPicture() }
+  const have: Record<string, Uint8Array> = { ...files, 'content/photos/moss.png': await mossPicture() }
   delete have['content/scenes/meadow.png']
   expect(await problemsOf(game, have)).toEqual([
     'content/scenes/meadow.png: This picture has not been painted. Run "automata art".',
