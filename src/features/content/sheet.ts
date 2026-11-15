@@ -111,3 +111,8 @@ export function atlasOf(sheet: Sheet, image: string): Atlas {
   for (const f of sheet.frames) frames[f.name] = { frame: { x: f.x, y: f.y, w: f.w, h: f.h } }
   return { frames, meta: { image, size: { w: sheet.w, h: sheet.h }, scale: '1' } }
 }
+
+/** The text of an atlas file: the atlas as JSON, two spaces to a level, and a newline at the end. */
+export function atlasText(sheet: Sheet, image: string): string {
+  return `${JSON.stringify(atlasOf(sheet, image), null, 2)}\n`
+}

@@ -3,7 +3,6 @@
 import { expect, test } from 'vitest'
 import {
   MissingPhotoError,
-  PHOTO_LIBRARY,
   type PhotoMaterial,
   type PhotoPixels,
   type Photos,
@@ -13,8 +12,7 @@ import {
   type SceneMaterial,
 } from '#src/features/content/content.ts'
 import { materialTile } from '#src/features/content/photo-tile.ts'
-import { decodePng } from '#src/lib/png-read.ts'
-import { photoBytes } from '../../fixtures/content/photo-files.ts'
+import { libraryPhotos } from '../../fixtures/content/photo-files.ts'
 import { sceneGameFiles } from '../../fixtures/scene-game/read.ts'
 
 const PAINTS = [
@@ -182,17 +180,6 @@ test('a material whose photo was not given says which', () => {
     'The material "earth" uses the photo "grey", and no such photo was given to the painter.',
   )
 })
-
-/** The photos of the scene game's meadow, read from the package's own files. */
-async function libraryPhotos(ids: readonly string[]): Promise<Photos> {
-  const loaded = new Map<string, PhotoPixels>()
-  for (const id of ids) {
-    const record = PHOTO_LIBRARY[id]
-    if (record === undefined) throw new Error(`no library photo ${id}`)
-    loaded.set(id, { ...decodePng(await photoBytes(record.file)), size: record.size })
-  }
-  return (id) => loaded.get(id)
-}
 
 test('the meadow paints the same bytes twice, and other bytes with another seed', async () => {
   const parsed = parseContent('scene', sceneGameFiles['content/scenes/meadow.json'] ?? '', 'meadow.json')

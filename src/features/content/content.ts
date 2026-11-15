@@ -1,7 +1,7 @@
 // The content feature: every kind of content file, read into values with plain problems and written one way.
 // Nothing here touches a file; callers hand in text and take text back.
 
-export { type ArtFile, artFiles, artProblems, paintedPath } from './art.ts'
+export { type ArtFile, artFiles, artProblems, paintedPath, photosUsed } from './art.ts'
 export {
   type BackdropFile,
   type BackdropLayer,
@@ -131,6 +131,7 @@ export {
   SceneSchema,
   type TilesMaterial,
 } from './scene.ts'
+export { sceneFromLevel } from './scene-from-level.ts'
 export {
   covers,
   GROUND_SHAPES,
@@ -149,6 +150,7 @@ export {
 export {
   type Atlas,
   atlasOf,
+  atlasText,
   backdropSheet,
   type Frame,
   figureSheet,
