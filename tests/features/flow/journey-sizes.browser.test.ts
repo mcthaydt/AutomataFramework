@@ -137,8 +137,8 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
     // A screen drawn in the kit's frame says "tall" until it has measured its new box; the menu has no frame.
     // What every kit frame says it measured, for a failure to print: the page's own state, then each frame.
     const frames = (): string => {
-      const window_ = `${document.visibilityState} ${window.innerWidth}x${window.innerHeight}`
-      const found = [`${window_} heard ${heard} watched ${watched}`]
+      const state = `${document.visibilityState} ${window.innerWidth}x${window.innerHeight}`
+      const found = [`${state} heard ${heard} watched ${watched}`]
       for (const one of drive.mount.querySelectorAll<HTMLElement>('[data-height]')) {
         const screen = one.closest<HTMLElement>('[data-screen]')
         const says = `${one.dataset.width}/${one.dataset.height}`
