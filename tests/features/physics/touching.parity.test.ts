@@ -107,6 +107,31 @@ describe('touching', () => {
     beside.dispose()
   })
 
+  test('the side of a kinematic platform is not a wall, and its top is still ground', async () => {
+    const beside = await stage()
+    beside.spawn([
+      transform({ x: 2, y: 0 }),
+      body(BodyKind.kinematicVelocity, { vy: 0.2 }),
+      collider.cuboid(0.1, 30),
+    ])
+    const walker = hero(beside, 1.4, 0)
+    const seen = walk(beside, walker, 4, 20)
+    expect(seen.some((s) => s.x > 1.4)).toBe(true) // it did lean on the platform
+    expect(seen.every((s) => s.right === false && s.left === false)).toBe(true)
+    beside.dispose()
+
+    const on = await stage()
+    on.spawn([
+      transform({ y: FLOOR_TOP + 0.1 }),
+      body(BodyKind.kinematicVelocity, { vx: 0.2 }),
+      collider.cuboid(10, 0.1),
+    ])
+    const sid = hero(on, 0, FLOOR_TOP - 0.5)
+    for (let i = 0; i < 60; i++) on.step([])
+    expect(touch(on, sid)).toEqual({ below: true, left: false, right: false })
+    on.dispose()
+  })
+
   test('walking across the seam between two tile runs never says left or right', async () => {
     const sim = await stage()
     // Two runs of floor that meet at x = 0, as a level's tile runs do.

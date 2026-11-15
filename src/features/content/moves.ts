@@ -2,6 +2,7 @@
 // A hero whose character file has `moves` is walked and jumped by `level/moves.ts`; this file is only the content side:
 // what the numbers are called, what they default to, how far a file may stretch them, and what a tuning file for a
 // hero is checked for.
+import { nearest } from '../../lib/near.ts'
 import type { TuningControl, TuningFile } from './tuning.ts'
 import type { Listed, Report } from './type-info.ts'
 
@@ -228,6 +229,12 @@ export const DEFAULT_HERO_CONTROLS: readonly TuningControl[] = Object.freeze([
   ),
 ])
 
+/** The names of the numbers a hero reads. */
+const HERO_NUMBER_IDS: readonly string[] = MOVE_NUMBERS.map((one) => one.id)
+
+/** A number's name this long may be two letters off a hero's number and still be taken for it; a shorter one, one. */
+const NEAR_LONG = 9
+
 /** The actions a hero's tuning file must list when it lists any, with a key to write as the example. */
 const NEEDED = [
   ['left', 'ArrowLeft'],
@@ -246,7 +253,18 @@ export function heroTuningProblems(tuning: TuningFile, game: Listed, report: Rep
 
   tuning.numbers.forEach((own, i) => {
     const n = MOVE_NUMBERS.find((one) => one.id === own.id)
-    if (n === undefined) return
+    if (n === undefined) {
+      // A number of the game's own is allowed, but one a letter or two away from a number the hero reads is a typo
+      // that would leave the hero's number at its default without a word.
+      const limit = own.id.length >= NEAR_LONG ? 2 : 1
+      const near = nearest(own.id, HERO_NUMBER_IDS, limit)
+      if (near !== undefined)
+        report(
+          `numbers[${i}].id`,
+          `"${own.id}" is not a number the hero reads. Did you mean "${near}"? If it is a number of your own, give it a name that is not so close to "${near}".`,
+        )
+      return
+    }
     const inside = `Keep "min" and "max" inside ${n.min} to ${n.max}.`
     const lead = `"${n.id}" can be ${n.min} to ${n.max} in a game, and this file lets it`
     if (own.max > n.max) report(`numbers[${i}].max`, `${lead} reach ${own.max}. ${inside}`)

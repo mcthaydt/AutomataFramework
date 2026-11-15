@@ -17,7 +17,7 @@ import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { type Browser, chromium, firefox, type Page, webkit } from 'playwright'
+import { type Browser, type BrowserContext, chromium, firefox, type Page, webkit } from 'playwright'
 import { afterAll, beforeAll, expect, test } from 'vitest'
 
 const shots = fileURLToPath(new URL('./__screenshots__/', import.meta.url))
@@ -197,6 +197,19 @@ const tickOf = (page: Page): Promise<number> =>
 
 const POLL = { timeout: 30_000, intervals: [50, 100, 250] }
 
+/** A touch screen as the game's own question sees it: every page of the context says its pointer is coarse. */
+const markCoarse = (context: BrowserContext): Promise<void> =>
+  context.addInitScript(() => {
+    const real = window.matchMedia.bind(window)
+    const coarse = {
+      matches: true,
+      media: '(pointer: coarse)',
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    } as unknown as MediaQueryList
+    window.matchMedia = (media: string) => (media.includes('pointer: coarse') ? coarse : real(media))
+  })
+
 /** A new game asks the player's language first, and plays nothing until Go is pressed: one flag, then Go. */
 async function pickLanguage(page: Page, flag: string): Promise<void> {
   const go = page.locator('.automata-picker-go')
@@ -213,17 +226,7 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
       for (const size of SIZES) {
         const context = await browser.newContext({ viewport: { width: size.width, height: size.height } })
         // A touch screen as the game's own question sees it: a coarse pointer.
-        if (size.touch)
-          await context.addInitScript(() => {
-            const real = window.matchMedia.bind(window)
-            const coarse = {
-              matches: true,
-              media: '(pointer: coarse)',
-              addEventListener: () => undefined,
-              removeEventListener: () => undefined,
-            } as unknown as MediaQueryList
-            window.matchMedia = (media: string) => (media.includes('pointer: coarse') ? coarse : real(media))
-          })
+        if (size.touch) await markCoarse(context)
         const page = await context.newPage()
         const where = `${name} ${size.width}x${size.height}`
         page.on('console', (message) => console.log(`[${where}] ${message.type()}: ${message.text()}`))
@@ -517,3 +520,51 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
     }
   }, 300_000)
 }
+
+// The thumbs answer to made-up pointer events everywhere else. Here Chromium's own touch input (the DevTools protocol's
+// touch events, which the browser turns into real touch pointers) walks the hero to the spark and jumps it, so
+// `touch-action`, the capture a finger keeps and a browser that takes a touch for a scroll are proved, not assumed.
+// Playwright has only a tap for a touch, so a drag goes through a protocol session; WebKit and Firefox have none.
+test('chromium: a real finger walks the hero to the spark and jumps it', async () => {
+  const browser: Browser = await chromium.launch()
+  try {
+    const context = await browser.newContext({
+      viewport: { width: 844, height: 390 },
+      hasTouch: true,
+      locale: 'en-US',
+    })
+    try {
+      await markCoarse(context)
+      const page = await context.newPage()
+      const session = await context.newCDPSession(page)
+      const finger = (
+        type: 'touchStart' | 'touchMove' | 'touchEnd',
+        points: readonly { x: number; y: number; id: number }[],
+      ): Promise<unknown> => session.send('Input.dispatchTouchEvent', { type, touchPoints: [...points] })
+      await page.goto(address)
+      await pickLanguage(page, 'en')
+      await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+      const middleOf = async (half: string): Promise<{ x: number; y: number }> => {
+        const box = await page.locator(`[data-half='${half}']`).boundingBox()
+        expect(box, `the ${half} half is on the screen`).not.toBeNull()
+        return { x: (box?.x ?? 0) + (box?.width ?? 0) / 2, y: (box?.y ?? 0) + (box?.height ?? 0) / 2 }
+      }
+      const floor = await heroY(page)
+      const start = await heroX(page)
+      const walk = await middleOf('walk')
+      await finger('touchStart', [{ ...walk, id: 1 }])
+      await finger('touchMove', [{ x: walk.x + 80, y: walk.y, id: 1 }])
+      await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
+      await expect.poll(() => sparksTaken(page), POLL).toBe(1)
+      await finger('touchEnd', [])
+      const jump = await middleOf('jump')
+      await finger('touchStart', [{ ...jump, id: 2 }])
+      await expect.poll(async () => Math.abs((await heroY(page)) - floor), POLL).toBeGreaterThan(0.5)
+      await finger('touchEnd', [])
+    } finally {
+      await context.close()
+    }
+  } finally {
+    await browser.close()
+  }
+}, 300_000)

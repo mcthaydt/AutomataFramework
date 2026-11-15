@@ -26,6 +26,11 @@ export interface MoveState {
   sliding: boolean
   /** Wall-jump-lock ticks left. */
   lock: number
+  /**
+   * Which way the last wall jump pushed (-1 or 1). Written and not read today. It stays because it is part of the
+   * component, so of the schema hash and of both goldens that moved with it (`moves.json` and the template's replay);
+   * take it out the next time those move for another reason, or when a move comes that needs it.
+   */
   lockDir: number
   /** Dash ticks left. */
   dash: number
