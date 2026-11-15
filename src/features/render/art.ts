@@ -195,7 +195,7 @@ export async function loadArt(options: {
       }
       tiles = placed.map(({ col, row, frame }) => ({ col, row, texture: squareOf.get(frame) as Texture }))
       const solid = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
-      ground = tileBoxes(level.tiles, (letter) => solid.has(letter))
+      ground = tileBoxes(level.tiles ?? [], (letter) => solid.has(letter))
     }
 
     // Every figure a character or a backdrop's prop names, loaded once.

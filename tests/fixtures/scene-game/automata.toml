@@ -8,6 +8,10 @@ type = "level"
 path = "content/levels/level-1.json"
 
 [[content]]
+type = "level"
+path = "content/levels/level-old.json"
+
+[[content]]
 type = "scene"
 path = "content/scenes/meadow.json"
 

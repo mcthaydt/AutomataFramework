@@ -59,10 +59,11 @@ export function levelViews(content: GameContent, level: Level): { views: View[];
       ? undefined
       : (letter: string): boolean => tileset.tiles.some((tile) => tile.solid && tile.letter === letter)
   // A level with a tileset joins stacked tiles of one width into one box; one without keeps one box a row.
+  const tiles = level.tiles ?? []
   const boxes =
     level.tileset === undefined
-      ? tileRuns(level.tiles, solid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
-      : tileBoxes(level.tiles, solid)
+      ? tileRuns(tiles, solid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
+      : tileBoxes(tiles, solid)
   const ground = groundOf(level)
   for (const box of boxes)
     views.push({
