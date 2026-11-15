@@ -2,8 +2,10 @@
 // the player's languages are the browser's, a link opens in a new tab, and a game's saves are kept in the browser's
 // storage. Only this feature reads the page for the host (`document`, `navigator`, `window.open`, `localStorage`).
 import { type Host, isOpenableLink, type LinkAnswer } from '../host/host.ts'
+import { type WakeLockLike, wakeLock } from './awake.ts'
 import { webStore } from './storage.ts'
 
+export type { WakeLockLike } from './awake.ts'
 export { languageFlag, languageRow } from './flags.ts'
 export { followLanguage } from './lang.ts'
 export { NOTICE_PROPERTIES, soundNotice } from './notice.ts'
@@ -17,6 +19,8 @@ export interface WebSeams {
   /** `vibrate` is left out where the device cannot buzz (a desktop browser, Safari on iPhone). */
   readonly navigator: Pick<Navigator, 'language' | 'languages'> & {
     readonly vibrate?: ((pattern: number) => boolean) | undefined
+    /** Left out where the browser cannot keep the screen awake (an older Safari, Firefox before 126). */
+    readonly wakeLock?: WakeLockLike | undefined
   }
   /** `window.open`. `null` means the browser blocked the new tab. */
   readonly open: (url: string, target: string) => { opener: unknown } | null
@@ -30,6 +34,7 @@ export function webHost(seams: Partial<WebSeams> = {}): Host {
   const nav = seams.navigator ?? navigator
   const open = seams.open ?? ((url: string, target: string) => window.open(url, target))
   const visible = (): boolean => doc.visibilityState !== 'hidden'
+  const keepAwake = wakeLock(nav.wakeLock)
   return {
     target: 'web',
     visible,
@@ -70,5 +75,6 @@ export function webHost(seams: Partial<WebSeams> = {}): Host {
         return false
       }
     },
+    keepAwake,
   }
 }

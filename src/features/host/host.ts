@@ -39,4 +39,9 @@ export interface Host {
    * happens, where the device cannot buzz. Never throws.
    */
   buzz(strength: number, ms: number): boolean
+  /**
+   * Keeps the screen from going dark while `on` (a game being played asks for it; paused, hidden or stopped, it lets
+   * go). Where the device cannot be kept awake, or says no, nothing happens. Never throws.
+   */
+  keepAwake(on: boolean): void
 }

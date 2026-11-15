@@ -21,6 +21,7 @@ import type { Sim, SimEvent } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
 import { createBuzzer } from './buzz.ts'
+import { guardPlay } from './guard.ts'
 import { resolveControls } from './controls.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
@@ -246,10 +247,13 @@ export async function startGame(options: GameOptions): Promise<Game> {
     let kept: Replay | undefined
     // Still while paused by hand or off screen. Starting the loop afresh each time means the time spent still is
     // never counted, so coming back never fast-forwards.
+    // The screen is kept lit exactly while the loop runs: a paused, hidden or broken game lets it dim.
     const sync = (): void => {
       if (stopped) return
-      if (broke !== undefined || pausedByHand || !host.visible()) loop.stop()
+      const still = broke !== undefined || pausedByHand || !host.visible()
+      if (still) loop.stop()
       else loop.start()
+      host.keepAwake(!still)
     }
     const unlisten = host.onVisibility(sync)
     // The level is on screen: a new sim is about to be heard, and the page says the level started.
@@ -265,6 +269,8 @@ export async function startGame(options: GameOptions): Promise<Game> {
             ...(typeof options.soundNotice === 'string' ? { words: options.soundNotice } : {}),
           })
         : undefined
+    // Last of all, like the notice: the browser's own zoom, selection, menus and pull are kept off the game.
+    const unguard = guardPlay(mount)
     sync()
 
     return {
@@ -304,6 +310,8 @@ export async function startGame(options: GameOptions): Promise<Game> {
         if (broke === undefined) kept = recorder.replay()
         loop.stop()
         unlisten()
+        host.keepAwake(false)
+        unguard()
         removeNotice?.()
         cleanup()
       },

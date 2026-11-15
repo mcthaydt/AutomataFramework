@@ -34,6 +34,8 @@ export interface TestHost extends Host {
   readonly quits: number
   /** Every buzz that was asked of a device that can buzz, in order. */
   readonly buzzes: readonly { readonly strength: number; readonly ms: number }[]
+  /** True while the game has asked for the screen to be kept awake (`keepAwake(true)`) and not let go since. */
+  readonly awake: boolean
 }
 
 /** A host for tests and for Node. */
@@ -44,6 +46,7 @@ export function testHost(options: TestHostOptions = {}): TestHost {
   const opened: string[] = []
   let quits = 0
   const buzzes: { strength: number; ms: number }[] = []
+  let awake = false
   const set = (next: boolean): void => {
     visible = next
     for (const listener of [...listeners]) listener(next)
@@ -77,6 +80,9 @@ export function testHost(options: TestHostOptions = {}): TestHost {
       buzzes.push({ strength, ms })
       return true
     },
+    keepAwake(on) {
+      awake = on
+    },
     show: () => set(true),
     hide: () => set(false),
     get opened() {
@@ -87,6 +93,9 @@ export function testHost(options: TestHostOptions = {}): TestHost {
     },
     get buzzes() {
       return buzzes.map((b) => ({ ...b }))
+    },
+    get awake() {
+      return awake
     },
   }
 }

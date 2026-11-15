@@ -195,6 +195,34 @@ test('stop leaves the mount empty and the sim disposed', async () => {
   game = undefined
 })
 
+test('the screen is kept lit while the game runs, and let go when it is paused, hidden or stopped', async () => {
+  const { game: g, host } = await start()
+  expect(host.awake).toBe(true)
+  g.pause()
+  expect(host.awake).toBe(false)
+  g.resume()
+  expect(host.awake).toBe(true)
+  host.hide()
+  expect(host.awake).toBe(false)
+  host.show()
+  expect(host.awake).toBe(true)
+  g.stop()
+  expect(host.awake).toBe(false)
+  game = undefined
+})
+
+test('while it plays the game takes every touch, and stop gives the page back', async () => {
+  const { game: g } = await start()
+  expect(getComputedStyle(mount).touchAction).toBe('none')
+  const menu = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+  mount.dispatchEvent(menu)
+  expect(menu.defaultPrevented).toBe(true)
+  g.stop()
+  expect(mount.style.getPropertyValue('touch-action')).toBe('')
+  expect(document.documentElement.style.getPropertyValue('overscroll-behavior')).toBe('')
+  game = undefined
+})
+
 test('bad controls stop the game from starting, with the plain message', async () => {
   const bad = { 'Jump!': { label: 'Jump', keys: ['Space'], side: 'right' as const } }
   await expect(start({ controls: bad })).rejects.toThrow('"Jump!" cannot be an action name')
