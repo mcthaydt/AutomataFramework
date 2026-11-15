@@ -10,13 +10,13 @@ world map, doors between levels, level pictures and a public list of format chan
 edge (for rooms put together from a seed later) and all story as facts and conditions
 (`specs/2026-11-15-rooms-and-storylets-amendment.md`). The first version was closed pull request #149 (`c449fca`).
 
-Overall: **20%** (stages 1 and 2 done; stage 3, the plan audit, is next; stages 4 to 7 follow)
+Overall: **25%** (stages 1 to 3 done; the plan's fix round is next; stages 4 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Second version done (2026-11-15), 100%. The Owner's answers: edge joins come from where levels sit on the map (LDtk's way); a joined place plays as one seamless world, everything crossing, the whole place running at once (streaming later); what was done for good is remembered, as facts the story can read; the test game gets a third level joined by an edge; all twelve calls fine | the spec |
 | 2. Plan (plan W) | Written, in review (2026-11-15), 100%; plan W at 0% built. Fifteen framework tasks in five pull requests (formats and checks; switches and gates; a place; doors and what is remembered; the commands and the docs), then three tasks in AutomataFrameworkExamples in two pull requests (the pin; three levels, a door and an edge). Three new goldens (`switch.json`, `place.json`, `level-picture.json`), none moved in this repo; in Examples `replays/level-1.json` moves once (the Owner sees it first) and `replays/level-2.json` is new. The World editor's five tasks are listed and gated behind the mockups. No new dependency | `plans/2026-11-15-level-links-and-world-map.md` |
-| 3. Plan audit | Next: Opus, medium | |
+| 3. Plan audit | Done (2026-11-15), 100%: 22 findings (2 high, 6 medium, 14 low) and 2 questions for the Owner (numbered badges in pictures; no "level done" screen at a door). Next: the fix round on the plan, then stage 4 | `audits/2026-11-15-plan-w-plan-audit.md` |
 | 4 to 7 | Not started | |
 
 What the plan found, for every later stage:
