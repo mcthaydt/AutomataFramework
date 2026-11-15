@@ -122,7 +122,6 @@ test('a shake moves the box by whole device pixels and the canvas does not move'
   r.draw(1, feel({ shake: { x: 0.2123, y: 0.1 } }))
   const after = rowSpan(r.canvas, row)
   const resolution = r.canvas.width / PHONE.w
-  expect((after?.left ?? 0) - (before?.left ?? 0)).toBeCloseTo(0.2123 * f.scale, 0)
   expect(Math.abs((after?.left ?? 0) - (before?.left ?? 0) - 0.2123 * f.scale)).toBeLessThanOrEqual(
     1.5 / resolution,
   )

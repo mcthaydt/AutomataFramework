@@ -14,13 +14,16 @@ export interface Shaking {
   age: number
 }
 
-const NONE = Object.freeze({ x: 0, y: 0, size: 0 })
+/** The offset and size of a shake that is over (or none at all). */
+type Offset = { readonly x: number; readonly y: number; readonly size: number }
+
+const NONE: Offset = Object.freeze({ x: 0, y: 0, size: 0 })
 
 /**
  * The offset now, in tiles, and how big the shake still is (`strength` fading to nothing over `length`); all zero once
  * its age has reached its length. The direction holds for a thirtieth of a second, then another is drawn.
  */
-export function shakeAt(shake: Shaking): { readonly x: number; readonly y: number; readonly size: number } {
+export function shakeAt(shake: Shaking): Offset {
   if (!(shake.age >= 0 && shake.age < shake.length)) return NONE
   const size = shake.strength * (1 - shake.age / shake.length)
   const beat = Math.floor(shake.age * SHAKE_HZ)
