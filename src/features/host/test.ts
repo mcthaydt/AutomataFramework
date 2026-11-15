@@ -19,6 +19,8 @@ export interface TestHostOptions {
   readonly blockLinks?: boolean
   /** Did the device ask for less motion. Default false. */
   readonly reducedMotion?: boolean
+  /** Default true: the made-up device can buzz, and `buzzes` shows what it was asked. */
+  readonly canBuzz?: boolean
 }
 
 /** A host a test can change (`show`, `hide`) and look at (`opened`, `quits`). */
@@ -32,15 +34,18 @@ export interface TestHost extends Host {
   readonly opened: readonly string[]
   /** How many times `quit` handed the player back. */
   readonly quits: number
+  /** Every buzz that was asked of a device that can buzz, in order. */
+  readonly buzzes: readonly { readonly strength: number; readonly ms: number }[]
 }
 
 /** A host for tests and for Node. */
 export function testHost(options: TestHostOptions = {}): TestHost {
-  const { canQuit = false, blockLinks = false } = options
+  const { canQuit = false, blockLinks = false, canBuzz = true } = options
   let visible = options.visible ?? true
   const listeners = new Set<(visible: boolean) => void>()
   const opened: string[] = []
   let quits = 0
+  const buzzes: { strength: number; ms: number }[] = []
   const set = (next: boolean): void => {
     visible = next
     for (const listener of [...listeners]) listener(next)
@@ -69,6 +74,12 @@ export function testHost(options: TestHostOptions = {}): TestHost {
       quits += 1
       return true
     },
+    canBuzz,
+    buzz(strength, ms) {
+      if (!canBuzz) return false
+      buzzes.push({ strength, ms })
+      return true
+    },
     show: () => set(true),
     hide: () => set(false),
     get opened() {
@@ -76,6 +87,9 @@ export function testHost(options: TestHostOptions = {}): TestHost {
     },
     get quits() {
       return quits
+    },
+    get buzzes() {
+      return buzzes.map((b) => ({ ...b }))
     },
   }
 }

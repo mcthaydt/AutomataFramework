@@ -14,7 +14,10 @@ export { playVoice } from './voices.ts'
 /** What the web host reads of the page. Only for tests; a game passes nothing. */
 export interface WebSeams {
   readonly document: Pick<Document, 'visibilityState' | 'addEventListener' | 'removeEventListener'>
-  readonly navigator: Pick<Navigator, 'language' | 'languages'>
+  /** `vibrate` is left out where the device cannot buzz (a desktop browser, Safari on iPhone). */
+  readonly navigator: Pick<Navigator, 'language' | 'languages'> & {
+    readonly vibrate?: ((pattern: number) => boolean) | undefined
+  }
   /** `window.open`. `null` means the browser blocked the new tab. */
   readonly open: (url: string, target: string) => { opener: unknown } | null
   /** Gives the page's `localStorage`. May throw: a browser can refuse even to hand it over. */
@@ -76,5 +79,17 @@ export function webHost(seams: Partial<WebSeams> = {}): Host {
     },
     canQuit: false,
     quit: async () => false,
+    canBuzz: typeof nav.vibrate === 'function',
+    buzz(strength, ms) {
+      if (typeof nav.vibrate !== 'function') return false
+      // A page can say how long to buzz and not how hard, so a weaker buzz is a shorter one.
+      const length = Math.round(ms * Math.min(1, Math.max(0, strength)))
+      if (length < 1) return false
+      try {
+        return nav.vibrate.call(nav, length)
+      } catch {
+        return false
+      }
+    },
   }
 }

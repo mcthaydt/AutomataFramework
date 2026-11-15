@@ -61,6 +61,11 @@ export interface Renderer {
    */
   setInset(px: number): void
   /**
+   * Keeps the heroes this many CSS pixels clear of the bottom, in a level with a view: the box round them has `px / scale`
+   * more tiles under it (the scale of the last frame drawn), still inside the level. 0 is how it was.
+   */
+  setThumbRoom(px: number): void
+  /**
    * Puts the camera exactly at this middle (in tiles), showing the level's view size (the whole level when it has no
    * view) divided by `zoom`, from the next `apply` on. `undefined` lets go, and the camera eases back to the heroes.
    */
@@ -125,6 +130,8 @@ export async function createRenderer(options: {
   // freeze lasts the stage is given these again, so the picture holds and only the dust moves.
   let held: Picture | undefined
   let holding = false
+  // How many CSS pixels at the bottom the heroes are kept clear of (the thumbs' resting corners).
+  let thumbRoom = 0
   const watcher = new ResizeObserver(refit)
   watcher.observe(mount)
 
@@ -146,9 +153,11 @@ export async function createRenderer(options: {
     const size = view ?? world
     const heroes = scene.views(1).filter((v) => (v.sprite?.player ?? 0) > 0)
     const zoom = looking !== undefined && looking.zoom > 0 ? looking.zoom : 1
+    // The thumbs' resting corners, in tiles at the scale of the last frame drawn (none before the first).
+    const under = thumbRoom > 0 ? thumbRoom / Math.max(stage.fit(current).scale, 1e-6) : 0
     const target: Shot =
       looking === undefined
-        ? frameHeroes(world, size, heroes)
+        ? frameHeroes(world, size, heroes, under)
         : { x: looking.x, y: looking.y, w: size.w / zoom, h: size.h / zoom }
     const jumped =
       resync &&
@@ -195,6 +204,9 @@ export async function createRenderer(options: {
       return now === undefined ? undefined : { x: now.x, y: now.y, w: now.w, h: now.h }
     },
     setInset: (px) => stage.setInset(px),
+    setThumbRoom(px) {
+      thumbRoom = px > 0 ? px : 0
+    },
     look(at) {
       looking = at
     },

@@ -37,4 +37,11 @@ export interface Host {
    * value of the "Screen shake" setting; a player's own choice, once made, wins over it.
    */
   reducedMotion(): boolean
+  /** True where the device can buzz in the player's hand (a phone), and false where it cannot. */
+  readonly canBuzz: boolean
+  /**
+   * A short buzz: `strength` 0 (none) to 1 (as strong as it goes), for `ms` milliseconds. Answers false, and nothing
+   * happens, where the device cannot buzz. Never throws.
+   */
+  buzz(strength: number, ms: number): boolean
 }

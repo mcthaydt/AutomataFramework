@@ -86,3 +86,18 @@ test('the device has not asked for less motion unless the option says so', () =>
   expect(testHost().reducedMotion()).toBe(false)
   expect(testHost({ reducedMotion: true }).reducedMotion()).toBe(true)
 })
+
+test('it can buzz, and says what it was asked; with canBuzz off it answers false and keeps nothing', () => {
+  const host = testHost()
+  expect(host.canBuzz).toBe(true)
+  expect(host.buzz(0.5, 80)).toBe(true)
+  expect(host.buzz(1, 20)).toBe(true)
+  expect(host.buzzes).toEqual([
+    { strength: 0.5, ms: 80 },
+    { strength: 1, ms: 20 },
+  ])
+  const quiet = testHost({ canBuzz: false })
+  expect(quiet.canBuzz).toBe(false)
+  expect(quiet.buzz(1, 20)).toBe(false)
+  expect(quiet.buzzes).toEqual([])
+})

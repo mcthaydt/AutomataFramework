@@ -148,3 +148,40 @@ test('a matchMedia that throws has not asked for less motion', () => {
 test('with no matchMedia seam it asks the real page', () => {
   expect(typeof webHost(seams()).reducedMotion()).toBe('boolean')
 })
+
+test('canBuzz follows whether the navigator can vibrate, and a buzz is a vibration as long as it is strong', () => {
+  const calls: number[] = []
+  const vibrate = (ms: number): boolean => {
+    calls.push(ms)
+    return true
+  }
+  const nav = { language: 'en', languages: ['en'], vibrate }
+  const host = webHost(seams({ navigator: nav }))
+  expect(host.canBuzz).toBe(true)
+  expect(host.buzz(0.5, 100)).toBe(true)
+  expect(host.buzz(1, 40)).toBe(true)
+  expect(calls).toEqual([50, 40])
+})
+
+test('with no vibrate, canBuzz is false and a buzz answers false without throwing', () => {
+  const host = webHost(seams())
+  expect(host.canBuzz).toBe(false)
+  expect(host.buzz(1, 40)).toBe(false)
+})
+
+test('a strength that rounds to nothing, or a vibrate that throws, is a buzz that did not happen', () => {
+  const throwing = webHost(
+    seams({
+      navigator: {
+        language: 'en',
+        languages: ['en'],
+        vibrate: () => {
+          throw new Error('not allowed')
+        },
+      },
+    }),
+  )
+  expect(throwing.buzz(1, 40)).toBe(false)
+  const nav = { language: 'en', languages: ['en'], vibrate: () => true }
+  expect(webHost(seams({ navigator: nav })).buzz(0, 40)).toBe(false)
+})

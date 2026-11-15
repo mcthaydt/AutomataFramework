@@ -10,6 +10,7 @@ import { CollisionEnded, CollisionStarted } from './events.ts'
 import { BodyKind, JointKind, ShapeKind } from './kinds.ts'
 import type { PhysicsAdapter } from './physics-world.ts'
 import { loadRapier } from './rapier-wasm.ts'
+import { CORNER, type FeltContact } from './touching.ts'
 
 type World = RAPIER.World
 
@@ -250,6 +251,58 @@ export async function createRapier(setup: {
     // Rapier's `Collider.parent()` is a JS-side cache that a restored world fills by looking up the raw parent,
     // and for a lone collider that lookup returns a body; the raw set reports the true parent handle.
     colliderParent: (world, handle) => world.colliders.raw.coParent(handle),
+    // The normals Rapier's solver used, read from its narrow phase: it works on a seesaw or a swinging platform, and
+    // needs no query of its own. A manifold has no contact points for two boxes whose bounds overlap and no more, and
+    // it keeps a zero normal; it is skipped here so `felt` never sees one.
+    contactsOf(world, handle) {
+      const found: FeltContact[] = []
+      const narrow = world.narrowPhase
+      const mine = world.getCollider(handle)
+      if (mine.isSensor()) return found
+      // Only a box has corners.
+      const half =
+        mine.shapeType() === (ShapeKind.cuboid as number)
+          ? (mine.halfExtents() as RAPIER.Vector).x
+          : undefined
+      // Collected first: the manifolds are read after the enumeration has finished, never inside it.
+      const others: number[] = []
+      narrow.contactPairsWith(handle, (other) => {
+        others.push(other)
+      })
+      for (const other of others) {
+        if (world.getCollider(other).isSensor()) continue
+        const parent = world.colliders.raw.coParent(other)
+        const moves = parent !== undefined && world.getRigidBody(parent).isDynamic()
+        narrow.contactPair(handle, other, world.bodies, (manifold, flipped) => {
+          const points = manifold.numContacts()
+          if (points === 0) return
+          let dist = manifold.contactDist(0)
+          for (let i = 1; i < points; i++) dist = Math.min(dist, manifold.contactDist(i))
+          // The manifold's normal runs from its first shape to its second; `flipped` says the first is `other`. This
+          // is the other way round: from the other collider toward this one.
+          const n = manifold.normal()
+          // Where the points are on this body: in its own frame, which is the second shape's when `flipped`.
+          let corner: -1 | 0 | 1 = 0
+          if (half !== undefined) {
+            let low = true
+            let high = true
+            for (let i = 0; i < points; i++) {
+              const p = flipped ? manifold.localContactPoint2(i) : manifold.localContactPoint1(i)
+              if (p === null || p === undefined) {
+                low = false
+                high = false
+                break
+              }
+              if (p.x > CORNER - half) low = false
+              if (p.x < half - CORNER) high = false
+            }
+            corner = low ? -1 : high ? 1 : 0
+          }
+          found.push({ nx: flipped ? n.x : -n.x, ny: flipped ? n.y : -n.y, dist, moves, corner })
+        })
+      }
+      return found
+    },
   }
   return adapter
 }

@@ -350,6 +350,18 @@ test('the list of languages, the format 1 marks, the page tag and a comment may 
   expect(rules('src/features/locale/words.ts', words)).not.toContain('no-default-language')
 })
 
+// Plan U: `flow` is the top page feature: the only one that may import `game`, and, like `game`, not for a headless
+// entry to reach.
+test('flow sits right above game and may import it; game may not import flow', () => {
+  expect(one({ 'src/features/flow/flow.ts': "import '../game/game.ts'" })).toEqual([])
+  expect(one({ 'src/features/game/game.ts': "import '../flow/flow.ts'" })).toEqual(['imports-go-down'])
+})
+
+test('headless reaches nothing of the flow, which needs a page', () =>
+  expect(one({ 'src/headless.ts': "export * from './features/flow/flow.ts'" })).toEqual([
+    'headless-is-headless',
+  ]))
+
 // Plan F: the feel runtime. `feel` is pure and sits between `server` and `render`: it hears events and gives plain
 // data back, and `render` draws what it says.
 test('feel may import content, sim and level, and render may import feel', () => {

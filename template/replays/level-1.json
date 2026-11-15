@@ -3,8 +3,8 @@
   "framework": "0.1.0",
   "tickHz": 60,
   "seed": 1,
-  "contentHash": "22d45e379ac5df24",
-  "schemaHash": "6dfe31c12bbfab6d",
+  "contentHash": "6ca39659adb6c7e5",
+  "schemaHash": "b36a740f6793385f",
   "ticks": 300,
   "commands": [
     {
@@ -65,21 +65,21 @@
   "checks": [
     {
       "tick": 60,
-      "hash": "fb95f85f82f09910"
+      "hash": "eeca473848130577"
     },
     {
       "tick": 120,
-      "hash": "47f6ddb201a9280a"
+      "hash": "a2bd8e0d194778ac"
     },
     {
       "tick": 180,
-      "hash": "46d2d2509d060a0b"
+      "hash": "436439109cc5702b"
     },
     {
       "tick": 240,
-      "hash": "c775dee88ca979cd"
+      "hash": "fedcd6df53a604b4"
     }
   ],
-  "finalHash": "d0da8dfb33f7afc5",
+  "finalHash": "f20369d0e71c0e73",
   "meta": {}
 }
