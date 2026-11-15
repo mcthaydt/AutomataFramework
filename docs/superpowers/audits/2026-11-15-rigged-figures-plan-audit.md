@@ -9,7 +9,7 @@ requests 29 and 36), the Editors' redesign plan, Examples' plan D and both track
 findings there are numbered G-…. Nothing was run: every fact below is read from the files, or is said to be unchecked.
 
 **Verdict: ready for execution of Parts 0 to 3 once the fixes below are in the plan; they are, in this pull request.**
-No critical finding, eleven important, eight minor. Q1 is settled (the Owner moved the games to Lospec's DUEL palette, 256 colours); Q2 is open and does not stop Parts 0 to 3.
+No critical finding, eleven important, eight minor. Q1 is settled (the Owner moved the games to Lospec's DUEL palette, 256 colours); Q2 is answered (automatic turning, which a behaviour or cutscene can override; plan R's new Task 14b).
 No existing golden moves under the plan as fixed. No new dependency.
 
 ## The questions the coordinator asked
@@ -175,9 +175,11 @@ palettes; No. 276 is no longer the games' palette, so none of the options below 
 
 **Q2. Should a behaviour be able to turn a figure to face you or show its back?**
 
+**Answered (the Owner, 2026-11-15, asked whether a figure seen from above should show its face walking toward the camera and its back walking away, or leave it to the game: "Yes" to automatic, with a behaviour or cutscene able to override it).** Plan R's Task 14b builds it.
+
 - **A. Not yet (recommended).** The game's code and cutscenes set it. No behaviour can set which way a thing faces
   today either, and the demo is seen from the side. It is added when a game seen from above needs it.
-- **B. Yes, now.** A figure painted from the front and back turns by itself to show its front when it walks down and
+- **B. Yes, now (chosen).** A figure painted from the front and back turns by itself to show its front when it walks down and
   its back when it walks up, like it turns left and right today.
 
 ## What was not checked

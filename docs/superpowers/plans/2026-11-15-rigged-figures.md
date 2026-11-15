@@ -14,7 +14,8 @@ joint, written straight or solved from where a hand or a foot is put (`rig-solve
 (`motion-*.ts`); pieces are shapes laid on bones; a **kit** (`figure-kit.ts`) is the library's pieces, gaits, stands
 and palette with the game's own on top. One painter (`paint-rigged.ts` over `paint-shapes.ts`) fills each view's shapes
 in steps of a colour's ramp. `paintFigure` and `figureSheet` take the kit and send a free figure down today's path
-untouched. `level` gains a switched-on `Side` component for the view; `render` picks the picture by pose, view and
+untouched. `level` gains a switched-on `Side` component for the view, which turns by itself as a figure walks up or down in a
+game seen from above and which a behaviour, a cutscene or the game's code can hold; `render` picks the picture by pose, view and
 player. `cli` gains `automata add`.
 
 **Tech Stack:** TypeScript 7.0.2 strict, Zod 4.6.6, smol-toml (already in `content`), PixiJS 8.22.0, Koota 0.6.6,
@@ -87,7 +88,7 @@ the one writer; the others take it. Its tasks keep their numbers (17 and 18) so 
 | 1. A person from the side | 1 to 5 | list a palette and a format 2 person, and paint it standing, shaded, with players' colours |
 | 2. Pieces | 6 to 8 | dress it from the library and its own piece files |
 | 3. Motion | 9 to 12 | pose it by bends or by hands and feet, and give it a walk, a run and an idle for clips to play |
-| 4. Views | 13 to 14 | paint front and back views and show them in play (starts after plan H, pull request 101, and plan T, pull request 64, are on `main`: Task 14 changes `hero.ts`, which plan H rewrites, and the cutscene player is plan T's) |
+| 4. Views | 13, 14 and 14b | paint front and back views, show them in play, turn by itself as it walks up or down, and be turned by a behaviour (starts after plan H, pull request 101, and plan T, pull request 64, are on `main`: Task 14 changes `hero.ts`, which plan H rewrites, and the cutscene player is plan T's) |
 | 5. Animals | 15 to 16 | do all of that for a four-legged animal |
 | 6. Starters and the docs | 19 to 20 | start from a starter, and read how in the README and skills, end to end |
 
@@ -873,11 +874,10 @@ and `src/headless.ts`. Tests: `tests/features/level/side.test.ts`, `side.parity.
   - `ViewSprite.view: FigureView`; `Art.figure(character, pose, player, view)` falls back to the side view when the figure
     has no such view, then to today's fallbacks.
 
-A behaviour file sets no view: no act of a behaviour sets which way a thing faces today (the acts are `stay`,
-`wander`, `flee`, `follow` and `jump`; facing follows the speed in `level.sprites`), so there is nothing to hang it on.
-The spec's "or a behaviour" waits for the act that needs it; record this as a deviation in the tracker. **The audit
-checked this reading and holds it, but it narrows a line of the spec the Owner read, so it is the Owner's to confirm
-(audit Q2).** Until the answer, build Task 14 as written; the answer can only add, never take away from it.
+The `Side` component has a second field, `by: 'string'` (`''` for none): the view something has asked for, as
+`Sprite.by` is the clip. `setSide` and a cutscene key's `view` write `by`, and while `by` is set the view is `by`.
+Task 14b turns the view by itself when `by` is `''`, and lets a behaviour write `by`. `setSide(entity, undefined)` lets
+go, as `setClip` does.
 
 - [ ] **Step 1: Write the failing tests:** `usesSides` is false for the template, the full game and Part 1 to 3's
   fixture as it was before Task 13, and true once a named figure has `front`; a sim of the template has no `side`
@@ -888,6 +888,50 @@ checked this reading and holds it, but it narrows a line of the spec the Owner r
 - [ ] **Step 2: Push; red.** **Step 3: Implement.**
 - [ ] **Step 4: Push; record `sides.json`; every other golden unchanged; green.**
 - [ ] **Step 5: Commit** `feat(level): a sprite's view, switched on only by a figure painted from the front or back`
+- [ ] **Step 6: Go on to Task 14b on the same branch.**
+
+### Task 14b: It turns by itself, and a behaviour turns it
+
+The Owner's answer to audit Q2 (the Owner, 2026-11-15, asked whether a figure seen from above should show its face walking toward the camera and its back walking away, or leave it to the game: "Yes" to automatic, with a behaviour or cutscene able to override it). In a game seen from above, a figure painted from the front and the back
+shows its front when it walks down the screen and its back when it walks up, as it turns left and right today; a
+behaviour, a cutscene or the game's code can hold a view instead.
+
+**Files:** modify `level/side.ts`, `level/sprite.ts` (the `level.sprites` system), plan T's `level/behaviour.ts` (the
+acts), `content/behaviour.ts`, `content/content.ts` (the check across files), `physics/physics.ts` (one getter).
+Tests: `tests/features/level/side.test.ts`, `level/behaviour.test.ts`, `content/behaviour.test.ts`,
+`tests/golden/sides.json` (recorded once, with Tasks 14 and 14b both in), and one journey: a figure seen from above.
+
+**When it turns by itself.** Only in a game seen from above: the sim's gravity has no `y` part. A platformer's gravity
+pulls down, so its jumps and falls never turn a figure to face you. `physics` gives `gravityOf(ctx): { x: number;
+y: number }`, the hashed value it already keeps. In `level.sprites`, for an entity with `Side` whose `by` is `''`, in a
+game seen from above: `|vy| > VERTICAL` and `|vy| > |vx|` gives `front` when `vy > 0` (down the screen) and `back`
+when `vy < 0`; `|vx| > SIDEWAYS` and `|vx| >= |vy|` gives `side`; anything else keeps the view it has, so a figure
+that stops keeps facing the way it walked. A view the figure does not paint is never chosen. `face` still follows
+`vx` as today and mirrors only the side view. In a game with gravity down, the view changes only through `by`.
+
+**A behaviour turns it.** Every act gains `view?: 'side' | 'front' | 'back'`: "Which way it is seen while it does
+this, like "front" to face you. Left out, it turns by itself." While a rule with a `view` runs, the behaviour system
+writes it to `Side.by`; when a rule without one runs, it writes `''`. A cutscene's `view` or `setSide` wins over the
+behaviour's while the cutscene holds the actor (plan T's rule for who moves an actor). Checked across files: every
+character that names the behaviour has a figure that paints that view, else `The figure "critter" is not painted from
+the front, and the behaviour "critter" turns it to the front in its rule "say-hello". Add "front" to its "views".` A
+character with no figure has nothing to show, and is fine.
+
+Nothing in a game without front or back views changes: `Side` is switched on only by `usesSides`, so the template's
+sim, `schema-hash.json`, `sprites.json` and every other golden stay as they are, and a behaviour file without `view`
+reads as before.
+
+- [ ] **Step 1: Write the failing tests:** with zero gravity, a figure painted from three views walking down shows
+  `front`, up shows `back`, sideways `side`, and keeps its view when it stops; with gravity down, a jump and a fall
+  never change the view; a figure painted only from the side never leaves `side`; `setSide('front')` holds against
+  walking up until `setSide(undefined)`; a behaviour rule with `view: 'front'` turns the critter while it runs and
+  lets go when the next rule runs; the across-files sentence for an unpainted view; a behaviour file without `view`
+  reads as before; `sides.json` (zero gravity, a figure walking a square, one `setSide`), committed `""` and recorded
+  from CI, the same in four engines; the journey: a figure seen from above walks down and the stage draws its
+  `front/walk-*` pictures.
+- [ ] **Step 2: Push; red.** **Step 3: Implement.**
+- [ ] **Step 4: Push; record `sides.json`; every other golden unchanged; green.**
+- [ ] **Step 5: Commit** `feat(level): a figure turns to face you as it walks down, and a behaviour can turn it`
 - [ ] **Step 6: Open Part 4's pull request; when green, tell the merge session.**
 
 ---
@@ -1125,7 +1169,7 @@ part as these parts land, each stage only what the pinned framework paints.
   run come from its gait (`walk-1` …, `run-1` …), and those names are refused as its own poses, so the hero's "run
   (2)" becomes its gait's run.
 - **The template** stays on its two free figures; `automata create` is unchanged.
-- **Lamps, swaying cloth and hair, a behaviour that sets a view, a second picture for a big sheet:** not built; the
+- **Lamps, swaying cloth and hair, a second picture for a big sheet:** not built; the
   spec's non-goals and this plan's recorded readings.
 
 ## Self-review (done while writing)
@@ -1137,7 +1181,7 @@ part as these parts land, each stage only what the pinned framework paints.
   byte for byte (constraints, Tasks 2, 5); the `automata.toml` writer and command (Tasks 17, 18); checks and words
   (each task's sentences); the spec's tests (schema tests each task; goldens in four engines Tasks 5 to 16; the solve
   Task 10; the gait Task 11; the writer Task 17; end to end Task 20).
-- **Readings of the spec recorded here:** face styles are a list in code; a behaviour sets no view; a sheet never
+- **Readings of the spec recorded here:** face styles are a list in code; a sheet never
   spills; `stand` left out is `easy` and `gait` left out is no walk; starters are added for the builder's New figure.
 
 ## Plan audit (2026-11-15)
@@ -1148,5 +1192,5 @@ exported as it is made (I2); `paint-figure.ts`'s one-line type import (I3); a pa
 default naming a library ramp (I5); even walk pictures, the stride's crouch and the walk's bob (I6); an animal's trunk
 measured from forward (I7); places in units from the hips (I8); Part 4 after plans H and T (I9); advice for missing
 keys that fits each format (I10); the sheet's numbers (I11); and the minor ones. Q1 (the demo's shading under
-palette No. 276) is gone: the Owner moved the games to Lospec's DUEL palette, 256 colours (see the plan D handoff). Q2 (a behaviour that sets a view) is
-open and does not stop Parts 0 to 3.
+palette No. 276) is gone: the Owner moved the games to Lospec's DUEL palette, 256 colours (see the plan D handoff). Q2 is answered too: a figure turns by
+itself as it walks up or down in a game seen from above, and a behaviour or cutscene can hold a view (Task 14b).
