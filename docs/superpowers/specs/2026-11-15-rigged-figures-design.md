@@ -1,6 +1,6 @@
 # Rigged figures: people, animals and free shapes, painted as pixel art
 
-Stage 1 (spec) of Cycle 7 in AutomataFramework. Written 2026-11-15 with the Owner through the coordinator. It widens
+Stage 1 (spec) of Cycle 8 in AutomataFramework. Written 2026-11-15 with the Owner through the coordinator. It widens
 the `figure` content format that M2 plan A made, so the editors' figure builder can be as powerful as the old 3D figure
 builder. Its partner is the builder's own spec in AutomataFrameworkEditors,
 [`2026-11-15-2d-figure-builder-design.md`](https://github.com/mcthaydt/AutomataFrameworkEditors/blob/main/docs/superpowers/specs/2026-11-15-2d-figure-builder-design.md),

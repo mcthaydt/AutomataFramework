@@ -2,7 +2,7 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
-## Cycle 7: rigged figures (people, animals and free shapes)
+## Cycle 8: rigged figures (people, animals and free shapes)
 
 Spec: [`specs/2026-11-15-rigged-figures-design.md`](specs/2026-11-15-rigged-figures-design.md). It widens M2 plan A's
 `figure` format so the editors' 2D figure builder (its spec is in AutomataFrameworkEditors) can be as powerful as the
