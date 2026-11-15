@@ -141,7 +141,7 @@ export function createPlay(deps: PlayDeps): Play {
     const members = party?.members() ?? []
     const items: PauseItem[] = ['resume', 'again']
     if (members.length < (party?.room ?? 1)) items.push('add-player')
-    items.push('settings', 'leave')
+    items.push('settings', 'how', 'leave')
     deps.dropScreen()
     deps.setScreen(
       makers.pause({
@@ -154,6 +154,7 @@ export function createPlay(deps: PlayDeps): Play {
           else if (item === 'again') deps.dispatch({ type: 'again' })
           else if (item === 'add-player') deps.dispatch({ type: 'open', over: 'players' })
           else if (item === 'settings') deps.dispatch({ type: 'open', over: 'settings' })
+          else if (item === 'how') deps.dispatch({ type: 'open', over: 'how' })
           else if (item === 'leave') deps.dispatch({ type: 'leave' })
         },
         onRemove: (player) => {

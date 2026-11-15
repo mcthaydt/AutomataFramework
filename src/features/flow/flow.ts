@@ -147,6 +147,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     content: () => content as GameContent,
     audio: () => audio,
     game: () => play.game(),
+    // The level being played, or the first one when the menu is what is on show.
+    level: () => state.level ?? (content as GameContent).project.start,
     party: () => party as Party,
     places: places as unknown as Places<Progress>,
     play: (level) => dispatch({ type: 'play', level }),
@@ -197,7 +199,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       await host.quit()
       return
     }
-    if (item === 'settings' || item === 'saves' || item === 'add-player') {
+    if (item === 'settings' || item === 'saves' || item === 'add-player' || item === 'how') {
       dispatch({ type: 'open', over: item === 'add-player' ? 'players' : item })
       return
     }

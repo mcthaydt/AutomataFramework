@@ -6,8 +6,15 @@ import type { GameContent } from '../content/content.ts'
 import { type Game, resolveControls } from '../game/game.ts'
 import type { Host } from '../host/host.ts'
 import { type Claim, type Controls, createInput, type Input, type PadLike } from '../input/input.ts'
-import type { Locale } from '../locale/locale.ts'
-import type { Screen, ScreenBase, ScreenMakers } from '../screens/screens.ts'
+import { type Locale, levelGoal } from '../locale/locale.ts'
+import {
+  controlRows,
+  type HowRow,
+  howRows,
+  type Screen,
+  type ScreenBase,
+  type ScreenMakers,
+} from '../screens/screens.ts'
 import type { Party } from './party.ts'
 import type { Places } from './places.ts'
 import type { Progress } from './progress.ts'
@@ -23,6 +30,8 @@ export interface OverContext {
   readonly content: () => GameContent
   readonly audio: () => GameAudio | undefined
   readonly game: () => Game | undefined
+  /** The level the player is in, or would open first: its goal is on "How to play". */
+  readonly level: () => string
   readonly host: Host
   readonly frames: Frames
   readonly controls: Controls | undefined
@@ -100,6 +109,55 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
     return {
       destroy() {
         screen.destroy()
+        release()
+      },
+    }
+  }
+
+  /** "How to play": the goal and the moves, on the device in use now, drawn again when the device changes. */
+  function how(): Screen {
+    const { input, release } = inputForScreen()
+    const content = context.content()
+    const locale = context.locale()
+    const hero = content.characters[content.project.hero]
+    const moves =
+      hero?.moves === undefined
+        ? undefined
+        : {
+            doubleJump: hero.moves['double-jump'],
+            wallJump: hero.moves['wall-jump'],
+            dash: hero.moves.dash,
+          }
+    // A hero the game moves itself lists the game's own controls, on the device in use, by their labels.
+    const own = (device: 'keyboard' | 'gamepad'): readonly HowRow[] => {
+      const rows = controlRows(input, locale.words, false)
+      return (device === 'gamepad' ? rows.gamepad : rows.keyboard).map((row) => ({
+        move: row.label,
+        how: row.input,
+      }))
+    }
+    const goal = levelGoal(locale.words, context.level())
+    const made = context.makers.how({
+      ...context.base(),
+      ...(goal === undefined ? {} : { goal }),
+      rows: () => {
+        const device = input.device(1)
+        return howRows({
+          device,
+          moves,
+          first: (action) => input.inputsFor(1, action)[0],
+          swapped: input.swapSides(),
+          words: locale.words,
+          ...(device === 'touch' ? {} : { own: own(device) }),
+        })
+      },
+      onBack: context.back,
+    })
+    const stopWatching = input.onDevice(() => made.update())
+    return {
+      destroy() {
+        stopWatching()
+        made.destroy()
         release()
       },
     }
@@ -204,6 +262,7 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
       close()
       if (over === 'settings') shown = settings()
       else if (over === 'saves') shown = saves()
+      else if (over === 'how') shown = how()
       else shown = players()
     },
   }

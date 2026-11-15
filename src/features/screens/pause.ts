@@ -8,7 +8,7 @@ import type { Screen, ScreenBase } from './screens.ts'
 import { show } from './show.ts'
 
 /** One button of the pause screen. */
-export type PauseItem = 'resume' | 'again' | 'add-player' | 'settings' | 'leave'
+export type PauseItem = 'resume' | 'again' | 'add-player' | 'settings' | 'how' | 'leave'
 
 /** One button as the screen draws it. */
 export type PauseButton = {
@@ -42,6 +42,7 @@ const LABELS: Record<PauseItem, (words: Words) => string> = {
   again: (words) => words('automata.pause.again'),
   'add-player': (words) => words('automata.menu.add-player'),
   settings: (words) => words('automata.menu.settings'),
+  how: (words) => words('automata.menu.how'),
   leave: (words) => words('automata.pause.leave'),
 }
 
