@@ -302,8 +302,8 @@ test("the README has a Scenes section whose scene file is a whole one, and whose
 // that its recordings still end where they did.
 test('the README says a moved level plays as it did but its recordings must be made again', () => {
   expect(readme).not.toContain('hashes as it did')
-  expect(readme).not.toContain('still end where they did')
-  expect(readme).not.toContain('still ends where it did')
+  expect(readme).not.toContain('recordings still end where they did')
+  expect(readme).not.toContain('play of it still ends where it did')
   expect(readme).toContain('automata replay --accept')
 })
 
