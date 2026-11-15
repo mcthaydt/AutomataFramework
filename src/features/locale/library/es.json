@@ -2,7 +2,6 @@
   "format": 1,
   "id": "es",
   "messages": {
-    "automata.feel.shake": "Temblor de pantalla",
     "automata.hint.arrows": "Las flechas",
     "automata.hint.dash": "{input} para impulsarte.",
     "automata.hint.jump": "{key} para saltar.",

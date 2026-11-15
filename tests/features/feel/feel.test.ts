@@ -266,13 +266,17 @@ test('play with no thing makes no dust and still shakes and holds', () => {
 test('two plays differ from each other', () => {
   const feel = newFeel()
   feel.play(FEEL_FILES.land as FeelFile, 7)
-  const a = feel.frame(0, place).specks
+  feel.frame(0, place)
+  // A burst is drawn where it began; the dust of a play is told apart once it has moved.
+  const a = feel.frame(0.1, place).specks
   const other = newFeel()
   other.play(FEEL_FILES.land as FeelFile, 7)
-  other.frame(0, place)
   other.play(FEEL_FILES.land as FeelFile, 7)
-  const b = other.frame(0, place).specks.slice(6)
-  expect(b).not.toEqual(a)
+  other.frame(0, place)
+  const both = other.frame(0.1, place).specks
+  expect(both).toHaveLength(12)
+  expect(both.slice(0, 6)).toEqual(a)
+  expect(both.slice(6)).not.toEqual(a)
 })
 
 test('dust keeps moving while held', () => {
@@ -430,7 +434,11 @@ test('the same events and frame times give the same frames', () => {
   }
   expect(run()).toEqual(run())
   const other = newFeel({ seed: 10 })
-  expect(stepAndFrame(other, 1, [event('hero.landed', 7)])).not.toEqual(run()[0])
+  stepAndFrame(other, 1, [event('hero.landed', 7)])
+  // The dust starts at the same feet; it flies a different way.
+  const mine = newFeel({ seed: 9 })
+  stepAndFrame(mine, 1, [event('hero.landed', 7)])
+  expect(other.frame(0.1, place)).not.toEqual(mine.frame(0.1, place))
 })
 
 test('moving is what frames alone can finish: dust, a shake or a hold of the picture, and not a hold of the game', () => {

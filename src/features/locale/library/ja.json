@@ -2,7 +2,6 @@
   "format": 1,
   "id": "ja",
   "messages": {
-    "automata.feel.shake": "画面の揺れ",
     "automata.hint.arrows": "矢印キー",
     "automata.hint.dash": "{input}でダッシュ。",
     "automata.hint.jump": "{key}でジャンプ。",

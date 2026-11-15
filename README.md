@@ -537,7 +537,7 @@ An event names a thing when its payload has a `sid` (the hero events and the tou
 send any event it likes, such as `crate.dropped`, for a feel file to answer. Dust needs a thing; shake and freeze do
 not. Feel is presentation only: no feel file is given to the sim, so changing one never moves a hash or a replay.
 
-The player gets one setting, "Screen shake" (`automata.feel.shake`, in all six languages), on by default and off for a
+The player gets one setting, "Screen shake" (`feelSettings`, `game.setShake`; the game's settings screen shows it), on by default and off for a
 player whose device asked for less motion. Dust and freezes stay either way.
 
 ```ts

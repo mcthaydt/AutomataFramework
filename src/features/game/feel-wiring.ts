@@ -86,9 +86,16 @@ export function createFeelWiring(options: FeelWiringOptions): FeelWiring {
       ? undefined
       : createBuzzer({ content, host, device: options.buzz.device, tickHz, on: options.buzz.on })
   let last: FeelFrame = NOTHING
+  // The last tick heard since `begin`. The feel ignores a step it already heard; the buzzer must not buzz for it either.
+  let heard: number | undefined
   return {
-    begin: () => feel.begin(),
+    begin() {
+      heard = undefined
+      feel.begin()
+    },
     hear(step) {
+      if (heard !== undefined && step.tick <= heard) return
+      heard = step.tick
       feel.hear(step)
       buzzer?.hear(step)
     },
