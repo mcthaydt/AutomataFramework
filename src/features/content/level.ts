@@ -2,7 +2,7 @@ import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { Id } from './ids.ts'
 import { type Add, checkLevelBody, pathText } from './level-checks.ts'
-import { list, noSuch, unique, variants } from './shared.ts'
+import { list, noSuch, variants } from './shared.ts'
 import type { ContentTypeInfo } from './type-info.ts'
 
 /** A thing standing in a level: one placed copy of a character. `x` and `y` are its centre, in tiles. */

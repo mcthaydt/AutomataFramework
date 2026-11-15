@@ -17,12 +17,14 @@ const CODE_LENGTH_ORDER = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2
 // --- The bits, lowest first ----------------------------------------------------------------------------------------
 
 class BitReader {
+  private readonly bytes: Uint8Array
+  private at: number
   private held = 0
   private count = 0
-  constructor(
-    private readonly bytes: Uint8Array,
-    private at: number,
-  ) {}
+  constructor(bytes: Uint8Array, at: number) {
+    this.bytes = bytes
+    this.at = at
+  }
 
   /** The next `n` bits (0 to 16) as a number, the first one read being the lowest. */
   bits(n: number): number {

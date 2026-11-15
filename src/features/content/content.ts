@@ -153,9 +153,9 @@ export {
   type Frame,
   figureSheet,
   groundPageTiles,
-  sceneSheet,
   SHEET_COLUMNS,
   type Sheet,
+  sceneSheet,
 } from './sheet.ts'
 export {
   type NoiseVoice,

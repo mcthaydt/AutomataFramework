@@ -60,7 +60,10 @@ export function checkLevelBody(
     if (thingIds.has(t.id)) name(['things', i, 'id'], `"${t.id}" is used twice. Each thing needs its own id.`)
     const hero = /^player-([1-4])$/.exec(t.id)
     if (hero)
-      name(['things', i, 'id'], `"${t.id}" is the name of player ${hero[1]}'s hero. Give this thing another id.`)
+      name(
+        ['things', i, 'id'],
+        `"${t.id}" is the name of player ${hero[1]}'s hero. Give this thing another id.`,
+      )
     thingIds.add(t.id)
     outside(['things', i], t)
   })

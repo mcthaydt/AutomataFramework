@@ -6,8 +6,8 @@ import {
   type FigureFile,
   figureSheet,
   type SceneFile,
-  sceneSheet,
   SHEET_COLUMNS,
+  sceneSheet,
 } from '#src/features/content/content.ts'
 import { heroFigure, valleyBackdrop } from '../../fixtures/content/art.ts'
 

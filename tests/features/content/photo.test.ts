@@ -3,8 +3,8 @@
 import { expect, test } from 'vitest'
 import {
   loadGame,
-  parseContent,
   type PhotoFile,
+  parseContent,
   photoPictureProblem,
   writeContent,
 } from '#src/features/content/content.ts'
