@@ -404,8 +404,7 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
               ? [readFileSync(join(dir, entry.name), 'utf8')]
               : [],
         )
-      for (const text of source(join(gameFolder, 'src')))
-        expect(text).not.toMatch(/\b(isHeld|wasPressed)\b/)
+      for (const text of source(join(gameFolder, 'src'))) expect(text).not.toMatch(/\b(isHeld|wasPressed)\b/)
     } finally {
       await browser.close()
     }

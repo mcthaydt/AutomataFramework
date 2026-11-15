@@ -1,6 +1,6 @@
 import {
-  defineResource,
   definePlugin,
+  defineResource,
   defineSystem,
   moveEvent,
   type PluginDef,
