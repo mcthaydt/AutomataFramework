@@ -160,6 +160,8 @@ session on Sonnet at xhigh effort, before the next step starts.
   World, Characters, Feel, Sound, Story, Screens. Per slice: build what it needs in AutomataFramework, mockups (visual
   review), the editor, its tests, then the website demo. **Mockups first is a hard stop:** no editor code until the
   Owner approves the mockups.
+- **One roadmap.** `docs/roadmap.md` in AutomataFramework is the only roadmap; update it first, and copy it
+  everywhere else (the project's files, the "needs you" board).
 - **A flaky test seen twice is fixed before other work.** Batch pushes: each push cancels the running CI.
 
 ## Fast CI

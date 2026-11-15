@@ -2,6 +2,9 @@
 
 The order we build AutomataFramework in. One page, read top to bottom.
 
+**This is the only roadmap** (the owner, 2026-11-15). Every other copy (the project's files, the "needs you" board)
+is copied from this file. Change this file first, then copy it everywhere else; a copy that differs is wrong.
+
 ## The rules
 
 **Slices are editor-driven, one editor at a time** (the owner, 2026-11-15). Each editor is one slice, and every editor
@@ -32,6 +35,15 @@ each later mockup also follows the design language (see the rule below).
 7. **The design language comes after the mockups are approved.** The owner asked (2026-11-15) for one document that
    defines the editors' design language and patterns, so later editors do not redo the work. It is written once the
    shell and World mockups are approved, in its own pull request, and every later mockup reads it first.
+8. **One roadmap.** `docs/roadmap.md` in AutomataFramework is the only roadmap; update it first, and copy it
+   everywhere else (the owner, 2026-11-15). Every repo's `CLAUDE.md` says so.
+9. **Nothing private here.** This repo is public, so the roadmap uses plain, general words. Prices, the market and
+   the real demo games' names are kept in the owner's private notes, and this page does not link to them.
+
+**Who does what.** "Agents" means the project's sessions, each stage in its own: spec, plan, plan audit, build,
+implementation audit, fixes, then the owner's review (the workflow in `CLAUDE.md`). A mockup also goes through the
+visual review process. The merge session merges each green pull request. "The owner" means only the owner can do
+it: approve, decide, start a release, or give an account or a key.
 
 How to read each list: **Done** is merged and green. **Now** is the one thing being built. **Next** is in line, in
 order. **Waiting** is approved, but its turn has not come. **Later** is after the current slice: not worked on now.
@@ -54,6 +66,26 @@ The real demo games are named and planned elsewhere; nothing about them is worke
 will need (a room put together from a seed, a chaser, a fact the story remembers) as a **spike**: its own small example,
 never wired into the test game. The test game stays pure: it shows only how the framework's code and the editors
 relate.
+
+## The whole road at a glance
+
+In order. Each line says who does it and where it stands today (2026-11-15).
+
+| # | Step | Who | Where it stands |
+|---|---|---|---|
+| 1 | Slices 0 to 2: a game plays in the browser, made from its files | Agents | Done |
+| 2 | Slice 3: World, the levels editor | Agents; the owner approves the mockups | **Now:** the owner reviews the shell and World mockups (Editors #64) |
+| 3 | Slices 4 to 8: Characters, Feel, Sound, Story, Screens | Agents; the owner approves each mockup | Later; specs and plans for 4 to 7 are done |
+| 4 | Release 1: the framework in full and the 2D test game, on npm | Agents get it ready; the owner gives the npm key and starts the release | Later |
+| 5 | Release 2: the 2D editors, in the browser on the site | Agents; the owner gives the Cloudflare and GitHub App settings and starts it | Later; the editors' first screen and sign-in exist from slice 1 |
+| 6 | Release 3: the sales site in full (its first page goes up with Release 1) | Agents; the owner gives the domain | Later; its spec is done (Site #23) |
+| 7 | Release 4: shipping games to the web, itch.io, Wavedash and computers, and the editor app for iPad, Android and computers | Agents; the owner gives the store, signing, itch.io and Wavedash accounts | Later; in the first layer's spec (M4), not planned yet |
+| 8 | Phase 2: a real 2D demo game, made with the finished 2D editors | Agents and the owner | Later; parked in the owner's private notes |
+| 9 | Phase 3: the 3D layer, with a 3D test game (Release 5) | Agents | Later |
+| 10 | Phase 4: a real 3D demo game | Agents and the owner | Later |
+
+The order of steps 4 to 8 waits on one answer from the owner (see "Not yet placed" at the bottom). Until then this is
+the order, taken from the owner's release list (2026-11-13).
 
 ## Slice 0: Start
 
@@ -86,15 +118,16 @@ whole gate.
    and the second visual look (Editors #49, #51, #52, #57, closed and carried on in #64).
 2. **Now: the editor mockup, the shell and World's levels, until the owner says they are fine** (Editors #64, which
    replaced #57, with the owner reviewing).
-3. Next: build in Automata what the levels editor needs. Level pictures on save, so an agent can see a level; a public
+3. Next: write down the editors' design language and patterns, so every editor after World reuses it (rule 7).
+4. Next: build in Automata what the levels editor needs. Level pictures on save, so an agent can see a level; a public
    list of format changes; what a placed thing may hold (values and links); the world map of levels, which needs the
    owner's 8 answers first (the closed #149, last commit `c449fca`, has them), and now lets levels join edge to edge
    (the owner, 2026-11-15; `specs/2026-11-15-rooms-and-storylets-amendment.md`).
-4. Next: build the editor: the shell (top bar, tools, panels, Help, Settings, tour, sign-in, Share) and World's
+5. Next: build the editor: the shell (top bar, tools, panels, Help, Settings, tour, sign-in, Share) and World's
    Levels part, open a level, change it on an iPad, save it into the game.
-5. Next: test the editor, in real browsers at iPad, phone and computer sizes, with the journeys from the end-to-end
+6. Next: test the editor, in real browsers at iPad, phone and computer sizes, with the journeys from the end-to-end
    check; green on main.
-6. Next: the website demo uses World: three levels with a door, for one or two players, and two levels joined on a
+7. Next: the website demo uses World: three levels with a door, for one or two players, and two levels joined on a
    world map (Examples #41, closed on 2026-11-15, last commit `1defa49`; it changes five recorded plays, so the owner
    sees them first). A new game passes the game checklist, parts 1 to 5 (#137, #139, #140, #151 are its spec, plan,
    audit and pause note; the built parts #143, #145, #148 were taken off main by #153). Part 3 changes the starter
@@ -170,30 +203,90 @@ the `flow` feature walks the steps), and Story edits only their words.
 4. Later: test the Screens editor.
 5. Later: the website demo's screens come from the editor.
 
-## Before launch
+# After the editors: releases, the sales site, shipping and the app
 
-Later. Each is built after the slices above, in this order.
+Releases are big and few (the owner, 2026-11-13): nothing is published when a slice is done, and every release is
+started by the owner, by hand. Each step below starts only when the one before it is done, and each runs the normal
+workflow (spec, plan, audit, build, audit, fixes, the owner's review).
 
-1. Release 1: 2D finished, the framework and the 2D test game (the owner, 2026-11-15). The owner starts it by hand.
-2. Release 2: the 2D editors, in the browser and as an app for iPad, Android and computers.
-3. The sales site, live, with the finished demo on it. Its spec is done (Site #23).
-4. Shipping a game to itch.io, Wavedash (if its rules fit) and computers, and the editor app.
+## Release 1: the framework and the 2D test game
+
+The framework in full, with the test game in AutomataFrameworkExamples (the owner, 2026-11-15). It comes after the
+six slices, because each slice builds part of the framework.
+
+1. Later: agents get the release ready: the API report, the agent skills, the README's first steps, the release notes
+   (`release.yml`). Who: agents.
+2. Later: the npm key for the `@automataframework` name. Who: the owner.
+3. Later: the test game moves from a pinned framework commit to the npm version. Who: agents, in its own pull request.
+4. Later: the sales site's first page goes up with the release: home, "Make a game", the app's sign-up, with the
+   editors and shipping marked "Being built" (the sales site spec, Site #23). Who: agents, from the spec; the owner
+   checks the prices and the sign-up.
+5. Later: the owner starts the release.
+
+## Release 2: the 2D editors, in the browser
+
+All six editors (World, Characters, Feel, Sound, Story, Screens), free in the browser on the site, saving into a
+team's own game (the owner, 2026-11-13).
+
+1. Later: the editors run on the site for anyone, on their own address, with sign-in through the editors' GitHub App
+   (the Editors' `docs/deploy.md`). Who: agents; the owner makes the Cloudflare project and the GitHub App.
+2. Later: every editor's journeys green on main in three browsers, at iPad, phone and computer sizes. Who: agents.
+3. Later: the owner tries every editor on an iPad and starts the release.
+
+## Release 3: the sales site, in full
+
+The site that turns a visitor into someone making a game. Its spec is done (Site #23, `2026-11-14-sales-site-design.md`
+in AutomataFrameworkSite); its plan starts once Release 2 is out.
+
+1. Done: the spec, with the owner's four answers (Site #23).
+2. Later: the plan, its audit, the build, then the visual review process (plain words, design pass, end to end,
+   second look). Who: agents.
+3. Later: the pages of a full framework site: guides, examples, the API reference, the free editors, pricing,
+   `llms.txt`. Who: agents.
+4. Later: the domain, bought and pointed at the site. Who: the owner. Until then it stays at
+   `automataframework.pages.dev`.
+5. Later: the owner reviews it on the live site and starts the release.
+
+## Release 4: shipping games, and the editor app
+
+Distribution (the owner, 2026-11-13): a game made with the framework goes out with one command, and the editors come
+as an app.
+
+1. Later: `automata ship` sends a game to the web, itch.io, Wavedash (if its rules fit; the plan reads its docs first
+   and stops if they don't) and a computer download (macOS, Windows, Linux). The test game is shipped to each as the
+   proof. Who: agents; the owner gives the itch.io and Wavedash accounts and keys.
+2. Later: the editor app: the browser editors wrapped as an app for iPad, Android and computers, signed and sent to
+   the App Store and Google Play. Who: agents build and test it; the owner gives the Apple and Google developer
+   accounts and the signing keys, and sends it for review.
+3. Later: the owner checks the test game on each store page and the app on an iPad and an Android phone, then starts
+   the release.
 
 ## Launch
 
 The date is not set. Launch is when the owner starts the releases above.
 
-## After launch
+# After launch
 
-Later.
+## Phase 2: a real 2D demo game
 
-1. Phase 2: a real 2D demo game, made with the finished 2D editors, after Release 2 (the owner, 2026-11-15).
-2. Phase 3: 3D, as its own layer on top of 2D, with a 3D test game, then the same order again for 3D: each editor's 3D
-   version runs the same five steps.
-3. Phase 4: a real 3D demo game, made with the finished 3D editors.
+Later. Made with the finished 2D editors, in AutomataFrameworkExamples under `demos/`, by agents and the owner. Its
+needs are tried as spikes first (see "The four phases"). When it exists, the website plays it instead of the test
+game, and it is shipped the same way as the test game.
+
+## Phase 3: the 3D layer (Release 5)
+
+Later. 3D as its own layer on top of 2D, with a 3D test game, then the same order again: each editor's 3D version
+runs the same five steps, then 3D's site and shipping.
+
+## Phase 4: a real 3D demo game
+
+Later. Made with the finished 3D editors.
 
 ## Not yet placed: needs the owner
 
-Later. Nothing here is built until the owner says where it goes.
+Nothing here is built until the owner says where it goes.
 
-1. Nothing yet.
+1. **The order after the six editors** (asked 2026-11-15). (a) As above: Release 1 with the sales site's first page,
+   Release 2, Release 3, Release 4, then the real 2D demo (suggested; it follows the release list). (b) The real 2D
+   demo right after Release 2, so the full site and the stores show it. (c) As (a), but the sales site waits for
+   Release 3 and nothing sells at Release 1.
