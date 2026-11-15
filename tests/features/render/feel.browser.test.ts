@@ -222,20 +222,26 @@ test('turning the mount during a shake puts back the same specks and offset; aft
   const f = fit(sideways)
   const resolution = r.canvas.width / sideways.w
   const row = where(sideways, 4, 3).y
-  const span = rowSpan(r.canvas, row)
-  expect(Math.abs((span?.left ?? 0) - (f.left + 3.5 * f.scale + 0.25 * f.scale))).toBeLessThanOrEqual(
-    2 / resolution + 1,
-  )
   const dust = where(sideways, 6, 1)
+  // The stage puts the last picture back after the turn: wait for it, then look at the box and the dust.
+  await vi.waitFor(() => {
+    const span = rowSpan(r.canvas, row)
+    expect(Math.abs((span?.left ?? 0) - (f.left + 3.5 * f.scale + 0.25 * f.scale))).toBeLessThanOrEqual(
+      2 / resolution + 1,
+    )
+  })
   expect(pixel(r.canvas, dust.x + 0.25 * f.scale, dust.y)[1]).toBeGreaterThan(120)
   // The shake is over: the loop draws a calm frame, and a later turn puts the box back with no offset.
   r.draw(1, feel())
   size(PHONE)
   await vi.waitFor(() => expect(r.canvas.width).toBe(Math.round(PHONE.w * resolution)))
   const calm = where(PHONE, 4, 3)
-  expect(
-    Math.abs((rowSpan(r.canvas, calm.y)?.left ?? 0) - (fit(PHONE).left + 3.5 * fit(PHONE).scale)),
-  ).toBeLessThanOrEqual(2 / resolution + 1)
+  // The turn is seen on the next picture the stage puts back: wait for the box to be where a calm one is.
+  await vi.waitFor(() =>
+    expect(
+      Math.abs((rowSpan(r.canvas, calm.y)?.left ?? 0) - (fit(PHONE).left + 3.5 * fit(PHONE).scale)),
+    ).toBeLessThanOrEqual(2 / resolution + 1),
+  )
 })
 
 test('dust is under the sky strip kept for the thumbs', async () => {

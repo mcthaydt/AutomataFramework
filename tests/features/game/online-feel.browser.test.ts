@@ -3,6 +3,7 @@
 // through the scripted wire and stepped beat by beat, as online.browser.test.ts does it.
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page } from 'vitest/browser'
+import { Player } from '#src/features/commands/commands.ts'
 import { type OnlineGame, startOnlineGame } from '#src/features/game/online.ts'
 import { type TestHost, testHost } from '#src/features/host/host.ts'
 import { createGameSim } from '#src/features/level/level.ts'
@@ -13,6 +14,7 @@ import {
   type JoinOptions,
   type Session,
 } from '#src/features/net/net.ts'
+import { Transform } from '#src/features/physics/physics.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
 import { FREEZE_TICKS, LAND_BUZZ, loadFeelGame } from '../../fixtures/feel/game.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
@@ -145,10 +147,11 @@ test('after the hold the picture is let go, and the world has gone on', async ()
 test('both pages of a room with a freeze file keep agreeing with the room', async () => {
   const { game, beat, checks } = await start()
   key('keydown', 'ArrowRight')
-  beat(150)
+  expect(until(beat, () => game.feel().freeze > 0)).toBe(true)
+  // Let go with the spark taken: the first hero stops short of the second, which waits beyond it.
   key('keyup', 'ArrowRight')
-  beat(90)
-  expect(game.stats().desyncs).toBe(0)
+  beat(150)
+  expect(game.stats(), JSON.stringify(game.stats())).toMatchObject({ desyncs: 0 })
   expect(checks.length).toBeGreaterThan(0)
   expect(checks.every(Boolean)).toBe(true)
 })
@@ -167,6 +170,12 @@ test('a landing online on touch is one buzz, as before', async () => {
   finger('pointerdown')
   beat()
   finger('pointerup')
-  expect(until(beat, () => game.feel().specks.length > 0)).toBe(true)
+  const trail: string[] = []
+  const landed = until(beat, () => {
+    const hero = game.sim.query(Player, Transform)[0]
+    if (trail.length < 40 && hero !== undefined) trail.push(hero.get(Transform).y.toFixed(2))
+    return game.feel().specks.length > 0
+  })
+  expect(landed, `tick ${game.sim.tick}, the hero's height after the tap: ${trail.join(' ')}`).toBe(true)
   expect(host.buzzes.slice(before)).toEqual([{ strength: LAND_BUZZ.strength, ms: 50 }])
 })
