@@ -4,6 +4,7 @@ import type { Frames } from '../../lib/frames.ts'
 import type { PadLike } from '../input/input.ts'
 import type { Locale } from '../locale/locale.ts'
 
+export { type MenuItem, menuItems, menuScreen } from './menu.ts'
 export { show } from './show.ts'
 export { SPLASH_MS, splashScreen } from './splash.ts'
 export { warningsFor, warningsScreen } from './warnings.ts'
