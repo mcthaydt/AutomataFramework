@@ -172,9 +172,13 @@ test('while the frame says freeze, the box stays where it was drawn though a ste
   expect(rowSpan(r.canvas, row)?.left).toBe(drawn?.left)
   const low = where(PHONE, 7, 5)
   expect(pixel(r.canvas, low.x, low.y)[1]).toBeGreaterThan(120)
+  // Where the speck was, there is sky again: the same colour as the sky well away from anything drawn.
   const old = where(PHONE, 7, 1)
-  expect(pixel(r.canvas, old.x, old.y)[1]).toBeLessThan(200)
-  expect(brightness(pixel(r.canvas, old.x, old.y))).toBeGreaterThan(100)
+  const sky = where(PHONE, 4, 0.2)
+  const here = pixel(r.canvas, old.x, old.y)
+  const clear = pixel(r.canvas, sky.x, sky.y)
+  for (const channel of [0, 1, 2])
+    expect(Math.abs((here[channel] ?? 0) - (clear[channel] ?? 0))).toBeLessThanOrEqual(6)
 })
 
 test('the first frame of a freeze shows the newest step, and a thing removed in that step is gone', async () => {
