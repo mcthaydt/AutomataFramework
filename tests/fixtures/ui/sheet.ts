@@ -3,7 +3,7 @@
 import type { Component } from 'svelte'
 import SheetPart from './Sheet.svelte'
 
-export interface SheetProps {
+export type SheetProps = {
   /** Told everything that happens on the sheet, as "what:value". */
   readonly log: (what: string) => void
   /** A list long enough to scroll. Default true. */
