@@ -21,8 +21,6 @@
     measure()
     const watcher = new ResizeObserver(measure)
     watcher.observe(frame)
-    // The box changes with the window when it fills it (a phone turned), and a window that has changed says so at once.
-    window.addEventListener('resize', measure)
     // The focus starts on the one thing to press, or else the first control, unless the screen already put it somewhere.
     if (!frame.contains(document.activeElement)) {
       const first =
@@ -30,10 +28,7 @@
         frame.querySelector<HTMLElement>('button:enabled, [role="slider"]')
       first?.focus({ preventScroll: true })
     }
-    return () => {
-      watcher.disconnect()
-      window.removeEventListener('resize', measure)
-    }
+    return () => watcher.disconnect()
   })
 </script>
 

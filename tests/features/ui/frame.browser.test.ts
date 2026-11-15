@@ -49,6 +49,16 @@ test('the frame measures its own box, not the window: a small box on a big page 
   await expect.poll(() => [frame.dataset.width, frame.dataset.height]).toEqual(['narrow', 'short'])
 })
 
+test('a box that is resized by its style, with no window change, is measured again', async () => {
+  await page.viewport(1280, 900)
+  target.style.cssText = 'position:fixed;left:0;top:0;width:360px;height:800px'
+  const frame = open()
+  await expect.poll(() => [frame.dataset.width, frame.dataset.height]).toEqual(['narrow', 'tall'])
+  target.style.width = '900px'
+  target.style.height = '400px'
+  await expect.poll(() => [frame.dataset.width, frame.dataset.height]).toEqual(['wide', 'short'])
+})
+
 test('the frame keeps everything inside the box it is given', async () => {
   await page.viewport(390, 844)
   target.style.cssText = 'position:fixed;left:20px;top:30px;width:350px;height:700px'

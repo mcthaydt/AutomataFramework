@@ -124,7 +124,10 @@ test('a switch is turned by a tap and by Space, and says whether it is on', asyn
   await userEvent.click(toggle)
   expect(log).toEqual(['shake:true'])
   await expect.poll(() => toggle.getAttribute('aria-checked')).toBe('true')
+  // One Space, sent once the page is the one the browser sends keys to and the switch is the one that holds them: a key
+  // sent before that goes nowhere, and sending it again would hide a switch that really ignores Space.
   toggle.focus()
+  await expect.poll(() => [document.hasFocus(), document.activeElement === toggle]).toEqual([true, true])
   await userEvent.keyboard(' ')
   // A button presses on the release of Space, which a browser may deliver a moment after the keys were sent.
   await expect.poll(() => log).toEqual(['shake:true', 'shake:false'])

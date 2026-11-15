@@ -13,10 +13,19 @@ const drive = createDrive()
 beforeEach(() => drive.start())
 afterEach(() => drive.stop())
 
-/** The Swap sides switch on the Settings screen: the fixture game has no sound, so it is the setting a visit can change. */
+/** The Swap sides switch on the Settings screen. */
 const swap = (): HTMLElement => {
   const switches = [...drive.mount.querySelectorAll<HTMLElement>('[role="switch"]')]
   return switches.find((one) => one.textContent?.trim() === es('automata.settings.swap')) as HTMLElement
+}
+
+/** The slider on the Settings screen called `label`. */
+const slider = (label: string): HTMLElement => {
+  const found = [...drive.mount.querySelectorAll<HTMLElement>('[role="slider"]')].find(
+    (one) => one.getAttribute('aria-label') === label,
+  )
+  if (found === undefined) throw new Error(`Settings has no slider called "${label}".`)
+  return found
 }
 
 test('a first-time player is led from the warning to the last door and the menu, by thumb', async () => {
@@ -86,6 +95,11 @@ test('the same player comes back: no flags, Continue is first and opens the leve
   await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
   await userEvent.click(swap())
   await expect.poll(() => swap().getAttribute('aria-checked')).toBe('true')
+  // The music is turned right down, and kept.
+  const music = es('automata.settings.music')
+  slider(music).focus()
+  await userEvent.keyboard('{Home}')
+  await expect.poll(() => slider(music).getAttribute('aria-valuenow')).toBe('0')
   drive.leave()
   // A fresh page on the same store: the splash, then the menu with Continue first.
   await drive.open({ host, game: { noWarning: true } })
@@ -98,6 +112,10 @@ test('the same player comes back: no flags, Continue is first and opens the leve
   await drive.press(es('automata.menu.settings'))
   await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
   expect(swap().getAttribute('aria-checked')).toBe('true')
+  expect(slider(music).getAttribute('aria-valuenow')).toBe('0')
+  // The speaker was told the music is off before any sound could play.
+  expect(drive.speaker.levels.music).toBe(0)
+  expect(drive.speaker.played).toHaveLength(0)
   await drive.press(es('automata.back'))
   await drive.wait(es('automata.menu.continue'))
   await drive.press(es('automata.menu.continue'))
