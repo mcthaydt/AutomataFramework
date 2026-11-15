@@ -1,0 +1,135 @@
+{
+  "format": 1,
+  "id": "hero-moves",
+  "numbers": [
+    {
+      "id": "walk-speed",
+      "about": "How fast the hero walks, in tiles a second",
+      "value": 6,
+      "min": 1,
+      "max": 20,
+      "step": 0.5
+    },
+    {
+      "id": "walk-grip",
+      "about": "How quickly the hero reaches full speed and stops on the ground, in ticks (0 is at once)",
+      "value": 3,
+      "min": 0,
+      "max": 30,
+      "step": 1
+    },
+    {
+      "id": "air-grip",
+      "about": "The same in the air",
+      "value": 6,
+      "min": 0,
+      "max": 60,
+      "step": 1
+    },
+    {
+      "id": "jump-speed",
+      "about": "How fast a jump leaves the ground, in tiles a second",
+      "value": 12,
+      "min": 4,
+      "max": 30,
+      "step": 0.5
+    },
+    {
+      "id": "jump-cut",
+      "about": "How much of a jump is kept when jump is let go early, 0 to 1 (1 means holding makes no difference)",
+      "value": 0.5,
+      "min": 0.1,
+      "max": 1,
+      "step": 0.05
+    },
+    {
+      "id": "ledge-grace",
+      "about": "How long after running off a ledge a jump still works, in ticks",
+      "value": 6,
+      "min": 0,
+      "max": 15,
+      "step": 1
+    },
+    {
+      "id": "early-press",
+      "about": "How long before landing a jump press is kept, in ticks",
+      "value": 6,
+      "min": 0,
+      "max": 15,
+      "step": 1
+    },
+    {
+      "id": "fall-speed",
+      "about": "The fastest the hero falls, in tiles a second",
+      "value": 20,
+      "min": 5,
+      "max": 40,
+      "step": 0.5
+    }
+  ],
+  "controls": [
+    {
+      "action": "left",
+      "label": "Left",
+      "keys": [
+        "ArrowLeft",
+        "KeyA"
+      ],
+      "side": "left",
+      "pad": [
+        "dpad-left",
+        "left-stick-left"
+      ],
+      "shared": [
+        [
+          "KeyA"
+        ],
+        [
+          "ArrowLeft"
+        ]
+      ]
+    },
+    {
+      "action": "right",
+      "label": "Right",
+      "keys": [
+        "ArrowRight",
+        "KeyD"
+      ],
+      "side": "left",
+      "pad": [
+        "dpad-right",
+        "left-stick-right"
+      ],
+      "shared": [
+        [
+          "KeyD"
+        ],
+        [
+          "ArrowRight"
+        ]
+      ]
+    },
+    {
+      "action": "jump",
+      "label": "Jump",
+      "keys": [
+        "Space",
+        "ArrowUp",
+        "KeyW"
+      ],
+      "side": "right",
+      "pad": [
+        "south"
+      ],
+      "shared": [
+        [
+          "KeyW"
+        ],
+        [
+          "ArrowUp"
+        ]
+      ]
+    }
+  ]
+}

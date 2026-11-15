@@ -6,15 +6,14 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, expect, test } from 'vitest'
 import { COMMAND_NAMES } from '#src/features/cli/args.ts'
 import { helpFor } from '#src/features/cli/help.ts'
-import { controlsCommand, Player } from '#src/features/commands/commands.ts'
+import { controlsCommand } from '#src/features/commands/commands.ts'
 import { CONTENT_TYPES, type ContentType, parseContent, writeContent } from '#src/features/content/content.ts'
 import { createGameSim } from '#src/features/level/level.ts'
-import { Transform } from '#src/features/physics/physics.ts'
-import type { PluginDef, Sim } from '#src/features/sim/sim.ts'
+import type { Sim } from '#src/features/sim/sim.ts'
 import * as framework from '#src/headless.ts'
 import { heroPlugin } from '../../template/src/features/hero/hero.ts'
 import { loadTemplateGame } from '../template/game.ts'
-import { doubleJumpPlugin } from './double-jump.ts'
+import { Jumps, jumpCountPlugin } from './jump-count.ts'
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url))
 const SKILLS = join(ROOT, 'skills')
@@ -98,35 +97,32 @@ afterEach(() => {
   for (const sim of made.splice(0)) sim.dispose()
 })
 
-/** How high the hero gets (the smallest y) when jump is pressed at each of `presses`, with `plugins` as the rules. */
-async function apex(plugins: readonly PluginDef[], presses: readonly number[]): Promise<number> {
-  const sim = await createGameSim({ content: await loadTemplateGame(), plugins })
+test("the worked example in automata-rules is the committed file, and it counts the hero's jumps", async () => {
+  const blocks = [...text('automata-rules').matchAll(/```ts\n([\s\S]*?)```/g)].map((m) => m[1] ?? '')
+  expect(blocks.join('\n')).toBe(readFileSync(join(ROOT, 'tests/skills/jump-count.ts'), 'utf8'))
+
+  const sim = await createGameSim({
+    content: await loadTemplateGame(),
+    plugins: [heroPlugin, jumpCountPlugin],
+  })
   made.push(sim)
   for (let i = 0; i < 30; i++) sim.step([])
-  const start = sim.tick
-  let seq = 0
-  let top = Number.POSITIVE_INFINITY
-  for (let tick = start; tick < start + 90; tick++) {
-    const at = presses.findIndex((press) => start + press === tick)
-    const release = presses.some((press) => start + press + 1 === tick)
-    const held = at >= 0 ? ['jump'] : release ? [] : undefined
-    sim.step(held === undefined ? [] : [controlsCommand(tick, 1, seq++, held)])
-    for (const entity of sim.query(Player, Transform)) top = Math.min(top, entity.get(Transform).y)
+  expect(sim.resource(Jumps)).toEqual({ jumps: 0 })
+  const press = (seq: number, held: string[]): void => {
+    sim.step([controlsCommand(sim.tick, 1, seq, held)])
+    for (let i = 0; i < 5; i++) sim.step([])
   }
-  return top
-}
-
-test('the worked example in automata-rules is the committed file, and its double jump works', async () => {
-  const blocks = [...text('automata-rules').matchAll(/```ts\n([\s\S]*?)```/g)].map((m) => m[1] ?? '')
-  expect(blocks.join('\n')).toBe(readFileSync(join(ROOT, 'tests/skills/double-jump.ts'), 'utf8'))
-
-  const single = await apex([heroPlugin], [5])
-  // The hero alone cannot jump in the air, so a second press changes nothing.
-  expect(await apex([heroPlugin], [5, 15])).toBeCloseTo(single, 6)
-  const double = await apex([heroPlugin, doubleJumpPlugin], [5, 15])
-  expect(double).toBeLessThan(single - 0.5)
-  // A third press in the air does nothing either: the extra jump was spent.
-  expect(await apex([heroPlugin, doubleJumpPlugin], [5, 15, 30])).toBeCloseTo(double, 6)
+  press(0, ['jump'])
+  expect(sim.resource(Jumps)).toEqual({ jumps: 1 })
+  // Pressed again in the air: this hero has no double jump, so nothing is counted.
+  press(1, [])
+  press(2, ['jump'])
+  expect(sim.resource(Jumps)).toEqual({ jumps: 1 })
+  // Landed, and pressed once more.
+  press(3, [])
+  for (let i = 0; i < 120; i++) sim.step([])
+  press(4, ['jump'])
+  expect(sim.resource(Jumps)).toEqual({ jumps: 2 })
 })
 
 test('the answering-an-event section names things the framework has and the template uses', () => {

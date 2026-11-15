@@ -243,15 +243,21 @@ writeFileSync(levelPath, framework.writeContent('level', level))
 step('a broken file is named, at its place')
 
 // 6. Break the rules: a game's rules may not roll their own dice.
-const movePath = join(game, 'src', 'features', 'hero', 'move.ts')
+const movePath = join(game, 'src', 'features', 'hero', 'score.ts')
 const move = readFileSync(movePath, 'utf8')
-// The rules changed the way an agent debugging them might: slower, and printing a line on every tick. What they print
-// must never reach where an answer is read: `--json`'s stdout, or `automata mcp`'s.
+// The rules changed the way an agent debugging them might: a rule of the game's own that halves the hero's speed after
+// the framework has moved it, and printing a line on every tick. What they print must never reach where an answer is
+// read: `--json`'s stdout, or `automata mcp`'s.
 const slowerAndNoisy = move
-  .replace('const RUN = 6', 'const RUN = 3')
-  .replace('run(ctx) {', "run(ctx) {\n    console.log('the rules said hello')")
-if (!slowerAndNoisy.includes('const RUN = 3') || !slowerAndNoisy.includes('the rules said hello'))
-  fail('the smoke could not change move.ts: its RUN line or its run(ctx) line has moved.')
+  .replace('import {\n  defineResource,', 'import {\n  Body,\n  defineResource,')
+  .replace('  touchEvent,\n', '  Player,\n  touchEvent,\n')
+  .replace("phase: 'gameplay',", "phase: 'gameplay',\n  after: ['level.moves'],")
+  .replace(
+    'run(ctx) {',
+    "run(ctx) {\n    console.log('the rules said hello')\n    for (const hero of ctx.query(Player, Body)) hero.set(Body, { vx: hero.get(Body).vx / 2 })",
+  )
+if (!slowerAndNoisy.includes('vx / 2') || !slowerAndNoisy.includes('the rules said hello'))
+  fail('the smoke could not change score.ts: its imports or its run(ctx) line have moved.')
 writeFileSync(movePath, `${move}\nexport const luck = Math.random()\n`)
 const brokenRun = run('npx', ['--no', 'automata', 'check', '--json'], game)
 if (brokenRun.status !== 1) fail('a broken rule: check --json did not exit with 1.', brokenRun.output)
@@ -263,7 +269,7 @@ writeFileSync(movePath, move)
 step('a clock or dice in the rules is named')
 
 // 7. An agent plays: a session's Worker, the built file the package ships, spoken to as the MCP server will speak to it.
-// The rules are changed in `move.ts` between two sessions, and the second one plays the new rules.
+// The rules are changed in `score.ts` between two sessions, and the second one plays the new rules.
 const workerFile = pathToFileURL(
   join(game, 'node_modules', '@automataframework', 'framework', 'dist', 'session-worker.js'),
 )

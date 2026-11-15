@@ -63,6 +63,8 @@ A level: the walls, the things in it and where each player starts. Put the files
 
 A kind of thing: how its body behaves, how big it is and what colour it is. The hero is one, and so is a crate. Put the files in `content/characters/`; the kind's rules are in `schemas/character.schema.json`.
 
+A hero the framework moves has a `moves` line: `"moves": { "tuning": "hero-moves" }` names the tuning file with its numbers and controls, and `"double-jump"`, `"wall-jump"` and `"dash"` (each `true` or `false`) switch the moves on. Walking and jumping are always on. A hero with `moves` needs `"body": "dynamic"` and `"upright": true`, and no `touch`.
+
 ```json
 {
   "format": 1,
