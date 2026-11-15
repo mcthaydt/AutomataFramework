@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, test } from 'vitest'
 import { frameworkWords } from '#src/features/locale/locale.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
 import { FLOW_SOUNDS } from '../../fixtures/flow/game.ts'
-import { ticks } from '../../fixtures/flow/page.ts'
+import { padPress, ticks } from '../../fixtures/flow/page.ts'
 
 const es = frameworkWords('es')
 const drive = createDrive()
@@ -38,11 +38,14 @@ test('the menu, pause and done screens each raise their cue once, in the order t
   ])
 })
 
-test('a press on a screen plays the press cue', async () => {
+test("a gamepad's press on a screen plays the press cue", async () => {
   drive.speaker.tap()
+  drive.pads.connect(0)
   await drive.toMenu({ game: { noWarning: true } })
   const before = drive.speaker.played.length
-  await drive.press(es('automata.menu.settings'))
+  // The pad walks to Settings and presses it: the focus's moves and the press are each the game's tick cue.
+  drive.frames.advance(100)
+  padPress(drive, es('automata.menu.settings'))
   await drive.wait(es('automata.back'))
   const played = drive.speaker.played.slice(before)
   const heard = played.map((one) => (one.voice.kind === 'tone' ? one.voice.from : 0))

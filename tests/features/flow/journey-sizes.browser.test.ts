@@ -30,10 +30,11 @@ async function look(size: string, name: string, mains?: number): Promise<void> {
   const root = document.scrollingElement as Element
   const fits = [root.scrollWidth <= window.innerWidth, root.scrollHeight <= window.innerHeight]
   expect(fits, `${name} fits the page`).toEqual([true, true])
-  // Nothing scrolls but a list: whatever can scroll is a `List`.
+  // Nothing scrolls but a list: whatever can scroll is a `List`, or the language picker's own box.
   for (const one of drive.mount.querySelectorAll<HTMLElement>('*')) {
     const scrolls = ['auto', 'scroll'].includes(getComputedStyle(one).overflowY)
-    if (scrolls) expect(one.classList.contains('list'), `${name}: only a list scrolls`).toBe(true)
+    const allowed = one.classList.contains('list') || one.classList.contains('automata-picker')
+    if (scrolls) expect(allowed, `${name}: only a list scrolls`).toBe(true)
   }
   for (const button of drive.mount.querySelectorAll<HTMLElement>('.automata-screen button')) {
     const box = button.getBoundingClientRect()

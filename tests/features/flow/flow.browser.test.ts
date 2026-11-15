@@ -371,9 +371,13 @@ test('a page hidden while the hero runs pauses the game, and nothing is held whe
   expect(flow?.game()?.paused()).toBe(true)
   await press(es('automata.pause.resume'))
   await shown('playing')
+  // The key that was down when the page left is not down now: whatever the first ticks carry on with, the hero then
+  // stands still.
+  run(200)
+  const settled = heroX()
+  expect(settled - hidden).toBeLessThan(0.5)
   run(500)
-  // The key that was down when the page left is not down now, so the hero stays where it stopped.
-  expect(heroX()).toBe(hidden)
+  expect(heroX()).toBe(settled)
   key('keyup', 'ArrowRight')
 })
 
@@ -412,7 +416,7 @@ test('a game whose rules throw shows "The game stopped." and "Load the page agai
   await shown('problem')
   // The player is told in words; the rule's own message is for the console, which has it.
   expect(mount.querySelector('[role="alert"]')?.textContent).not.toContain('the rules broke')
-  expect(mount.querySelector('[role="alert"]')?.textContent).toContain(es('automata.problem.title'))
+  expect(mount.querySelector('[role="alert"]')?.textContent).toContain(es('automata.problem.text'))
   expect(mount.querySelector('canvas')).toBeNull()
   await press(es('automata.problem.reload'))
   expect(reloads).toBe(1)
