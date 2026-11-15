@@ -8,6 +8,8 @@ import type { Host } from '../host/host.ts'
 import { type Controls, createInput, type Input, type PadLike } from '../input/input.ts'
 import type { Locale } from '../locale/locale.ts'
 import type { Screen, ScreenBase, ScreenMakers } from '../screens/screens.ts'
+import type { Places } from './places.ts'
+import type { Progress } from './progress.ts'
 import type { Sections } from './sections.ts'
 import type { Over } from './steps.ts'
 
@@ -26,6 +28,12 @@ export interface OverContext {
   readonly gamepads: (() => readonly (PadLike | null)[]) | undefined
   /** Two people share the keyboard. */
   readonly sharing: () => boolean
+  /** The saved games. */
+  readonly places: Places<Progress>
+  /** Starts `level`: a saved game was opened, or a new one begun. */
+  readonly play: (level: string) => void
+  /** Whatever went wrong, as the flow's problem screen. */
+  readonly fail: (error: unknown) => void
   /** The way back to the menu or the pause screen. */
   readonly back: () => void
 }
@@ -87,6 +95,37 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
     }
   }
 
+  /** The saved games: open one, begin a new game in a place, or empty a place. */
+  function saves(): Screen {
+    const { places } = context
+    const unread = places.problem()
+    // After a place is emptied the list is drawn again, unless the player has gone on to something else meanwhile.
+    const again = (): void => {
+      if (shown !== made) return
+      shown?.destroy()
+      shown = saves()
+    }
+    const made: Screen = context.makers.saves({
+      ...context.base(),
+      slots: places.slots(),
+      ...(unread === undefined ? {} : { problem: unread }),
+      onContinue: (slot) => {
+        places.open(slot).then(context.play, context.fail)
+      },
+      onNew: (slot) => {
+        places.begin(slot).then(() => context.play(context.content().project.start), context.fail)
+      },
+      onErase: (slot) => {
+        places
+          .erase(slot)
+          .then(() => places.refresh())
+          .then(again, context.fail)
+      },
+      onBack: context.back,
+    })
+    return made
+  }
+
   const close = (): void => {
     shown?.destroy()
     shown = undefined
@@ -96,6 +135,7 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
     open(over) {
       close()
       if (over === 'settings') shown = settings()
+      else if (over === 'saves') shown = saves()
     },
   }
 }

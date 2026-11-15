@@ -7,6 +7,7 @@ import { doneScreen } from './done.ts'
 import { menuScreen } from './menu.ts'
 import { pauseScreen } from './pause.ts'
 import { problemScreen } from './problem.ts'
+import { savesScreen } from './saves.ts'
 import { settingsScreen } from './settings.ts'
 import { splashScreen } from './splash.ts'
 import { warningsScreen } from './warnings.ts'
@@ -16,6 +17,8 @@ export { hud } from './hud.ts'
 export { type MenuItem, menuItems, menuScreen } from './menu.ts'
 export { type PauseItem, pauseScreen } from './pause.ts'
 export { problemScreen } from './problem.ts'
+export { type SaveAction, type SaveRow, saveRows, saveSentence } from './saves-rows.ts'
+export { savesScreen } from './saves.ts'
 export { type ControlRow, controlRows } from './settings-rows.ts'
 export { settingsScreen } from './settings.ts'
 export { show } from './show.ts'
@@ -34,6 +37,7 @@ export interface ScreenMakers {
   readonly done: typeof doneScreen
   readonly problem: typeof problemScreen
   readonly settings: typeof settingsScreen
+  readonly saves: typeof savesScreen
 }
 
 /** The framework's own screens. */
@@ -45,6 +49,7 @@ export const defaultScreens: ScreenMakers = {
   done: doneScreen,
   problem: problemScreen,
   settings: settingsScreen,
+  saves: savesScreen,
 }
 
 /** A screen on the page. `destroy` takes it off and is safe to call twice. */

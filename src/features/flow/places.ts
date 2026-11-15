@@ -4,7 +4,7 @@
 import type { Words } from '../../lib/message.ts'
 import type { GameContent } from '../content/content.ts'
 import { levelOrder } from '../content/content.ts'
-import type { SaveResult, Saves, SlotState, StoreResult } from '../saves/saves.ts'
+import type { SaveProblem, SaveResult, Saves, SlotState, StoreResult } from '../saves/saves.ts'
 import { type FlowSave, firstEmpty, newest, type Progress, progressLabel, reached } from './progress.ts'
 
 /** What the places need from the flow: the saves (once there are any), the game's save, its project and the words. */
@@ -23,6 +23,10 @@ export interface Places<S extends Progress> {
   progress(): S | undefined
   /** The place it is kept in: `undefined` when there is none to keep it in. */
   slot(): number | undefined
+  /** Why the places could not be read, when they could not. */
+  problem(): SaveProblem | undefined
+  /** Every place holds something, so a new game needs one to be written over: the player picks which. */
+  full(): boolean
   /** Reads the places again. A host that will not say leaves none. */
   refresh(): Promise<void>
   /** Starts a new game in `place` (replacing what is there), or in the first empty one. */
@@ -46,10 +50,15 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
   let slots: readonly SlotState[] = []
   let progress: S | undefined
   let slot: number | undefined
+  let unread: SaveProblem | undefined
 
   async function refresh(): Promise<void> {
     const listed = await context.saves()?.list()
     slots = listed?.ok ? listed.value : []
+    unread =
+      listed === undefined || listed.ok
+        ? undefined
+        : { kind: 'refused', refusal: listed.refusal, detail: listed.detail }
   }
 
   async function begin(place?: number): Promise<void> {
@@ -76,6 +85,8 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
 
   return {
     slots: () => slots,
+    problem: () => unread,
+    full: () => slots.length > 0 && firstEmpty(slots) === undefined,
     progress: () => progress,
     slot: () => slot,
     refresh,

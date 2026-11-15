@@ -21,7 +21,7 @@ import { followLanguage, languagePicker, webHost, webSpeaker } from '../web/web.
 import { endsLevel, putLoadingMark, startWatching, waitForTake } from './loading.ts'
 import { createOvers } from './overs.ts'
 import { createParty, type Party } from './party.ts'
-import { createPlaces } from './places.ts'
+import { createPlaces, type Places } from './places.ts'
 import { defaultSave, type FlowSave, newest, type Progress } from './progress.ts'
 import { openSections, type Sections, wireSound } from './sections.ts'
 import { advance, FLOW_START, type FlowEvent, type FlowFacts, type FlowState } from './steps.ts'
@@ -40,7 +40,7 @@ const FIX = 'Fix the file named above, then load this page again.'
  * Buttons whose screens come with later tasks of plan U (settings, saved games, add a player): they are not offered
  * until their screen exists, so no button on the menu does nothing.
  */
-const NOT_YET: ReadonlySet<MenuItem> = new Set(['saves', 'add-player'])
+const NOT_YET: ReadonlySet<MenuItem> = new Set(['add-player'])
 
 /**
  * Loads the game and walks the flow in `mount`. Never rejects: whatever goes wrong is a screen of words. It answers at
@@ -131,6 +131,9 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     audio: () => audio,
     game: () => game,
     sharing: () => (party?.members() ?? []).some((member) => member.claim === 'keyboard'),
+    places: places as unknown as Places<Progress>,
+    play: (level) => dispatch({ type: 'play', level }),
+    fail: (error) => fail(error),
     back: () => dispatch({ type: 'back' }),
   })
 
@@ -206,11 +209,16 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       await host.quit()
       return
     }
-    if (item === 'settings') {
-      dispatch({ type: 'open', over: 'settings' })
+    if (item === 'settings' || item === 'saves') {
+      dispatch({ type: 'open', over: item })
       return
     }
     if (item !== 'play' && item !== 'new' && item !== 'continue') return
+    // With every place taken, the player says which one a new game is written over.
+    if (item !== 'continue' && places.full()) {
+      dispatch({ type: 'open', over: 'saves' })
+      return
+    }
     const project = (content as GameContent).project
     let level = project.start
     if (item === 'continue') level = await places.openNewest()
