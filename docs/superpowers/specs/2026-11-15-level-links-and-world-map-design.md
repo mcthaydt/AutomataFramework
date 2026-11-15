@@ -241,14 +241,17 @@ gives its own path, so two critters of one kind walk two routes.
 
 ### Doors into other levels
 
-A door is any character with a `leads-to` value and `touch: "sense"`. When a hero touches it, the level ends the way
-`done` ends it today, and the flow opens the level the door names instead of the next in `levels`. Every hero comes out
-beside the door's `thing` in that level, spread as the starts are (player 1 nearest), or at that level's starts if it
-names none. In a game with more than one player, the first hero to go through takes everyone, as `done` does today.
+A door is any character with a `leads-to` value and `touch: "sense"`. When a hero touches it, the flow opens the level
+the door names at once, with no "level done" screen between (the Owner, 2026-11-15), instead of the next in `levels`;
+`done` still ends a level, with its screen, as it does today. Every hero comes out
+beside the door's `thing` in that level, clear of it, never inside it, spread as the starts are (player 1 nearest), or at
+that level's starts if it names none. In a game with more than one player, the first hero to go through takes everyone,
+as `done` does today.
 
 This lives in the flow, not the sim: the sim says which thing was touched (it already does), and the flow reads that
-thing's `leads-to` and loads the level. A replay is still one level. The saved game keeps the level and the thing you
-came in by, so Continue puts you back beside the right door. A level with no door keeps today's `done` and `levels`.
+thing's `leads-to` and loads the level. A replay is of what was opened: one level, or the place that level is part of
+(see "Edges between levels"). The saved game keeps the level and the thing you came in by, so Continue puts you back
+beside the right door. A level with no door keeps today's `done` and `levels`.
 
 A level that cannot be reached (not `start`, not in `levels`, and no door leads to it) is a note from `check`, not a
 failure: a team may be building it.
@@ -389,9 +392,10 @@ One optional content file per game, `type = "world"`, listed in `automata.toml` 
 
 - **As it plays:** the scene's ground, sky and backdrop, then each thing in its first pose at its place.
 - **`--what-it-is`:** the same, with the ground tinted by kind (solid, ledge, slope), and every value whose `shown` is
-  not `none` drawn on top: links as arrows, paths as lines with their points, reaches as circles, tags as small labels
-  in the source language, doors' targets as a label ("to level-2"). This is the view an agent reads to check its own
-  change, and the editor's "Show what it is".
+  not `none` drawn on top: links as arrows, paths as lines with their points, reaches as circles, tags and doors'
+  targets as small numbered badges, with a list printed beside the picture that says in the source language what each
+  number is (the Owner, 2026-11-15). This is the view an agent reads to check its own change, and the editor's "Show
+  what it is".
 - **`--world`:** one picture of the world file's sheet, each level's small picture at its `at`, with the doors' arrows
   and the edge joins' bars between them.
 
