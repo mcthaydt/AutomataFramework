@@ -58,7 +58,10 @@ export function drawnRows(canvas: HTMLCanvasElement): { top: number; bottom: num
  * The first and last columns, in CSS pixels, that hold anything but sky on one row (`cssY`): the left and right of what
  * the game drew across it. `undefined` when the row is sky alone.
  */
-export function rowSpan(canvas: HTMLCanvasElement, cssY: number): { left: number; right: number } | undefined {
+export function rowSpan(
+  canvas: HTMLCanvasElement,
+  cssY: number,
+): { left: number; right: number } | undefined {
   const { width } = canvas
   const y = Math.round(cssY * window.devicePixelRatio)
   const data = copyOf(canvas).getImageData(0, y, width, 1).data

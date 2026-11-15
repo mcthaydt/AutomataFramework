@@ -288,12 +288,13 @@ for (const engine of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
             await page.keyboard.down('Space')
             await until(page, from, 'specks')
             await page.keyboard.up('Space')
-            const covered = await page.evaluate(() =>
-              [...document.querySelectorAll<HTMLElement>('.automata-touch-button')].filter((button) => {
-                const box = button.getBoundingClientRect()
-                const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
-                return top?.closest('.automata-touch-button') !== button
-              }).length,
+            const covered = await page.evaluate(
+              () =>
+                [...document.querySelectorAll<HTMLElement>('.automata-touch-button')].filter((button) => {
+                  const box = button.getBoundingClientRect()
+                  const top = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2)
+                  return top?.closest('.automata-touch-button') !== button
+                }).length,
             )
             expect(covered, where).toBe(0)
             // A picture to look at: a long burst of dust on a paused game, so it is still there when the shot is taken.

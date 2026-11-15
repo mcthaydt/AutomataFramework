@@ -8,7 +8,12 @@ const F = 1 / 60
 const none = (): undefined => undefined
 
 /** One step of the made-up game, at a tick, then one frame of 1/60 s. */
-function stepAndFrame(feel: ReturnType<typeof newFeel>, tick: number, events: SimEvent[], seconds = F): FeelFrame {
+function stepAndFrame(
+  feel: ReturnType<typeof newFeel>,
+  tick: number,
+  events: SimEvent[],
+  seconds = F,
+): FeelFrame {
   feel.hear({ tick, events })
   return feel.frame(seconds, place)
 }
@@ -367,7 +372,12 @@ test('a file with a number that is not finite does nothing for that effect and n
 
 test('hear never throws on an event that cannot be read', () => {
   const feel = newFeel()
-  const weird = { type: 'hero.landed', get payload(): unknown { throw new Error('no') } }
+  const weird = {
+    type: 'hero.landed',
+    get payload(): unknown {
+      throw new Error('no')
+    },
+  }
   expect(() => feel.hear({ tick: 1, events: [weird as SimEvent] })).not.toThrow()
 })
 

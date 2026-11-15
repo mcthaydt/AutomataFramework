@@ -125,7 +125,9 @@ test('a shake moves the box by whole device pixels and the canvas does not move'
   expect(Math.abs((after?.left ?? 0) - (before?.left ?? 0) - 0.2123 * f.scale)).toBeLessThanOrEqual(
     1.5 / resolution,
   )
-  expect(Math.abs((drawnRows(r.canvas)?.top ?? 0) - top - 0.1 * f.scale)).toBeLessThanOrEqual(1.5 / resolution)
+  expect(Math.abs((drawnRows(r.canvas)?.top ?? 0) - top - 0.1 * f.scale)).toBeLessThanOrEqual(
+    1.5 / resolution,
+  )
   expect(r.canvas.getBoundingClientRect()).toEqual(canvas)
 })
 
@@ -227,9 +229,9 @@ test('turning the mount during a shake puts back the same specks and offset; aft
   size(PHONE)
   await vi.waitFor(() => expect(r.canvas.width).toBe(Math.round(PHONE.w * resolution)))
   const calm = where(PHONE, 4, 3)
-  expect(Math.abs((rowSpan(r.canvas, calm.y)?.left ?? 0) - (fit(PHONE).left + 3.5 * fit(PHONE).scale))).toBeLessThanOrEqual(
-    2 / resolution + 1,
-  )
+  expect(
+    Math.abs((rowSpan(r.canvas, calm.y)?.left ?? 0) - (fit(PHONE).left + 3.5 * fit(PHONE).scale)),
+  ).toBeLessThanOrEqual(2 / resolution + 1)
 })
 
 test('dust is under the sky strip kept for the thumbs', async () => {

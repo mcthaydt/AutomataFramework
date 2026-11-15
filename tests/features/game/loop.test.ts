@@ -197,7 +197,7 @@ test("draw is called in every held frame, with the same alpha and the frame's ti
   }
 })
 
-test("a frame longer than the hold steps for what is left over, and no more", () => {
+test('a frame longer than the hold steps for what is left over, and no more', () => {
   const { frames, steps } = holding(1, 2)
   frames.at(0)
   frames.at(FRAME)

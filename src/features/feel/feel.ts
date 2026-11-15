@@ -85,7 +85,9 @@ function sidOf(event: SimEvent): number | undefined {
 }
 
 /** Every file by the event that sets it off, each list in id order, each file inside the schema's limits. */
-function filesByEvent(feels: Readonly<Record<string, FeelFile>> | undefined): ReadonlyMap<string, FeelFile[]> {
+function filesByEvent(
+  feels: Readonly<Record<string, FeelFile>> | undefined,
+): ReadonlyMap<string, FeelFile[]> {
   const table = new Map<string, FeelFile[]>()
   if (feels === undefined) return table
   for (const id of Object.keys(feels).sort()) {
@@ -147,11 +149,7 @@ export function createFeel(options: FeelOptions): Feel {
   }
 
   const moving = (): boolean =>
-    specks.length > 0 ||
-    shakes.length > 0 ||
-    bursts.length > 0 ||
-    starting.length > 0 ||
-    pictureHold.left > 0
+    specks.length > 0 || shakes.length > 0 || bursts.length > 0 || starting.length > 0 || pictureHold.left > 0
 
   return {
     begin() {

@@ -14,8 +14,8 @@ import {
   Player,
   type Replay,
   startGame,
-  testHost,
   Transform,
+  testHost,
   type Watch,
   watchReplay,
   webHost,
@@ -82,10 +82,9 @@ async function record(): Promise<Replay> {
 }
 
 const host = webHost()
-const game: Game | Watch =
-  params.has('watch')
-    ? await watchReplay({ content, mount, host, replay: await record() })
-    : await startGame({ content, locale, mount, host })
+const game: Game | Watch = params.has('watch')
+  ? await watchReplay({ content, mount, host, replay: await record() })
+  : await startGame({ content, locale, mount, host })
 Object.assign(window, { automataGame: game })
 
 const watched = 'canvas, .automata-thumb-half, .automata-touch-button'
