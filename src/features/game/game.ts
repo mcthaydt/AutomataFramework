@@ -17,7 +17,7 @@ import {
 import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
-import type { Sim } from '../sim/sim.ts'
+import type { Sim, SimEvent } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
 import { createBuzzer } from './buzz.ts'
@@ -79,6 +79,12 @@ export interface GameOptions extends GameSimOptions {
   readonly locale: Locale
 }
 
+/** One step of the game, as `onStep` tells it: the tick the sim is at after it, and the events it raised in order. */
+export interface GameStep {
+  readonly tick: number
+  readonly events: readonly SimEvent[]
+}
+
 export interface Game {
   readonly sim: Sim
   /** Bindings, capture, invite, seats and hints: everything a settings or "Add a player" screen needs. */
@@ -92,6 +98,20 @@ export interface Game {
   /** Holds the game still until `resume`. The game is also still while the host says it is not on screen. */
   pause(): void
   resume(): void
+  /** True between `pause()` and `resume()`: a game still because its page is off screen is not paused by hand. */
+  paused(): boolean
+  /**
+   * Called after each step with the tick the sim is at after it and the events it raised, in order. The sound is told
+   * the same. Returns the function that stops it.
+   */
+  onStep(listener: (step: GameStep) => void): () => void
+  /**
+   * What the game's code threw in a step, or `undefined` while it is fine. A broken game never steps again, even when
+   * its page comes back on screen; the error is also thrown on, so the page's own handler has it.
+   */
+  broken(): unknown
+  /** Called once, with the error, when the game breaks. Returns the function that stops it. */
+  onBroken(listener: (error: unknown) => void): () => void
   /**
    * Every hero as its box on the canvas, in CSS pixels from the mount's top left corner, lowest player first. New after
    * each draw, so read it after one. Empty in a game whose heroes have no figure and whose levels have no view: the
@@ -100,7 +120,7 @@ export interface Game {
   heroes(): readonly HeroBox[]
   /** The player's setting: whether the device may buzz when a feel file says so. */
   setVibration(on: boolean): void
-  /** The play so far, from tick 0. Not available after `stop`, which disposes the sim. */
+  /** The play so far, from tick 0. After `stop`, the play as it was when it stopped. */
   replay(): Replay
   /** Stops the loop, removes the canvas and the controls, and disposes the sim. Safe to call twice. */
   stop(): void
@@ -183,6 +203,10 @@ export async function startGame(options: GameOptions): Promise<Game> {
       words: locale.words,
     })
     const { audio } = options
+    const stepListeners = new Set<(step: GameStep) => void>()
+    const brokenListeners = new Set<(error: unknown) => void>()
+    // Set when a step throws; a broken game is never started again.
+    let broke: { readonly error: unknown } | undefined
     const buzzer = createBuzzer({
       content: options.content,
       host,
@@ -200,20 +224,27 @@ export async function startGame(options: GameOptions): Promise<Game> {
         audio?.hear({ tick: result.tick, events: result.events })
         buzzer.hear(result)
         people.afterStep()
+        for (const listener of [...stepListeners]) listener({ tick: result.tick, events: result.events })
       },
       draw: (alpha) => renderer.draw(alpha),
       frames,
+      onError(error) {
+        broke = { error }
+        for (const listener of [...brokenListeners]) listener(error)
+      },
     })
 
     let pausedByHand = false
     // While held, nobody is holding anything: what is down when the game comes back waits for a fresh press.
     let unsilence: (() => void) | undefined
     let stopped = false
+    // The play as it was when `stop` was called, once it has been: the sim it came from is gone by then.
+    let kept: Replay | undefined
     // Still while paused by hand or off screen. Starting the loop afresh each time means the time spent still is
     // never counted, so coming back never fast-forwards.
     const sync = (): void => {
       if (stopped) return
-      if (pausedByHand || !host.visible()) loop.stop()
+      if (broke !== undefined || pausedByHand || !host.visible()) loop.stop()
       else loop.start()
     }
     const unlisten = host.onVisibility(sync)
@@ -249,12 +280,23 @@ export async function startGame(options: GameOptions): Promise<Game> {
         unsilence = undefined
         sync()
       },
+      paused: () => pausedByHand,
+      onStep(listener) {
+        stepListeners.add(listener)
+        return () => void stepListeners.delete(listener)
+      },
+      broken: () => broke?.error,
+      onBroken(listener) {
+        brokenListeners.add(listener)
+        return () => void brokenListeners.delete(listener)
+      },
       heroes: () => renderer.heroes(),
       setVibration: (on) => buzzer.setOn(on),
-      replay: () => recorder.replay(),
+      replay: () => kept ?? recorder.replay(),
       stop() {
         if (stopped) return
         stopped = true
+        kept = recorder.replay()
         loop.stop()
         unlisten()
         removeNotice?.()

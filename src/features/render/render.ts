@@ -93,6 +93,8 @@ export async function createRenderer(options: {
   const { mount, world, sky, art, view, density } = options
   const scene = createScene()
   const stage = await createStage(world, sky, art, density)
+  // Hidden until the first step puts a picture of the level on it: a screen before the game must not flash the sky.
+  stage.canvas.style.visibility = 'hidden'
   mount.append(stage.canvas)
   // `stage.resize` puts the last picture back, so a turned phone is never left blank, even when the game is paused.
   const refit = (): void => stage.resize(mount.clientWidth, mount.clientHeight)
@@ -160,6 +162,7 @@ export async function createRenderer(options: {
     apply(delta) {
       scene.apply(delta)
       step(delta.resync)
+      stage.canvas.style.visibility = ''
       if (started) return
       started = true
       show(1)
