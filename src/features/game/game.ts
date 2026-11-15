@@ -5,7 +5,7 @@
 import { type Frames, pageFrames } from '../../lib/frames.ts'
 import type { GameAudio } from '../audio/audio.ts'
 import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
-import { moveNumbersOf } from '../content/content.ts'
+import { moveNumbersOf, scoreRef } from '../content/content.ts'
 import type { Host } from '../host/host.ts'
 import {
   type Claim,
@@ -107,6 +107,11 @@ export interface Game {
   /** Holds the game still until `resume`. The game is also still while the host says it is not on screen. */
   pause(): void
   resume(): void
+  /**
+   * The project's score now (`score = "hero.score.sparks"` in automata.toml), or `undefined` when the game names none,
+   * the resource or the field is not there, or what is there is not a number. After `stop` it is `undefined`.
+   */
+  score(): number | undefined
   /** True from the start until the first press, in a game made with `waitForPress`; always false in any other. */
   waiting(): boolean
   /** True between `pause()` and `resume()`: a game still because its page is off screen is not paused by hand. */
@@ -321,6 +326,14 @@ export async function startGame(options: GameOptions): Promise<Game> {
         unsilence?.()
         unsilence = undefined
         sync()
+      },
+      score() {
+        const named = scoreRef(options.content.project)
+        if (named === undefined || stopped) return undefined
+        const resource = sim.read(named.resource)
+        if (typeof resource !== 'object' || resource === null) return undefined
+        const value = (resource as Record<string, unknown>)[named.field]
+        return typeof value === 'number' && Number.isFinite(value) ? value : undefined
       },
       waiting: () => first !== undefined && !first.pressed(),
       paused: () => pausedByHand,

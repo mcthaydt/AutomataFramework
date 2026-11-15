@@ -12,6 +12,7 @@ import { heroFigure } from '../content/art.ts'
 import { readFiles } from '../content/kind.ts'
 import { heroPlugin } from '../game/hero.ts'
 import { fixtureFiles } from '../game/read.ts'
+import { SCORE_NAMES } from './score.ts'
 
 /** The languages the game has words in. */
 export const FLOW_LANGUAGES: readonly Language[] = ['en', 'es', 'ko']
@@ -80,6 +81,12 @@ export interface FlowGameOptions {
   readonly lost?: string | null
   /** The level a new game opens: `level-1` (default), `level-2` or `level-pit`, which has a gap to fall into. */
   readonly start?: 'level-1' | 'level-2' | 'level-pit'
+  /**
+   * The game counts the sparks the hero takes (`score = ...`; see `./score.ts`): `sparks` names that number, `missing` a
+   * resource the game lacks, `words` a field that is not a number. A spark lies on the way to the door in `level-1`.
+   * Pass `scorePlugin` as the visit's plugin beside the hero.
+   */
+  readonly score?: keyof typeof SCORE_NAMES
   /** Files to replace, or `undefined` to make one missing. */
   readonly replace?: Readonly<Record<string, string | undefined>>
 }
@@ -113,7 +120,11 @@ const pit = (players = 1): string =>
 export function flowFiles(options: FlowGameOptions = {}): Record<string, string | undefined> {
   const door = { id: 'door-1', character: 'door', x: 5.5, y: 7.5 }
   const crate = { id: 'crate-1', character: 'crate', x: 5.5, y: 7.5 }
-  const things = options.crateOnDoor === true ? [door, crate] : [door]
+  const spark = { id: 'spark-1', character: 'spark', x: 4, y: 7.5 }
+  const things = [
+    ...(options.crateOnDoor === true ? [door, crate] : [door]),
+    ...(options.score === undefined ? [] : [spark]),
+  ]
   const files: Record<string, string | undefined> = {
     ...fixtureFiles,
     'content/levels/level-1.json': level('level-1', things, options.players),
@@ -130,6 +141,17 @@ export function flowFiles(options: FlowGameOptions = {}): Record<string, string 
       touch: 'sense',
     } as never),
   }
+  if (options.score !== undefined)
+    files['content/characters/spark.json'] = writeContent('character', {
+      format: 1,
+      id: 'spark',
+      body: 'fixed',
+      size: { w: 0.6, h: 0.6 },
+      color: '#f5d547',
+      upright: false,
+      kind: 'spark',
+      touch: 'take',
+    } as never)
   if (options.splash === true)
     files['content/figures/hero.json'] = writeContent('figure', heroFigure() as never)
   const sounds = new Map(Object.values(FLOW_SOUNDS).map((one) => [one.sound, one.pitch]))
@@ -145,6 +167,7 @@ export function flowFiles(options: FlowGameOptions = {}): Record<string, string 
     ...[...sounds.keys()].map((id) => ['sound', `content/sounds/${id}.json`] as const),
     ['cues', 'content/cues/cues.json'],
     ['character', 'content/characters/door.json'],
+    ...(options.score === undefined ? [] : [['character', 'content/characters/spark.json'] as const]),
     ...(options.splash === true ? [['figure', 'content/figures/hero.json'] as const] : []),
     ...FLOW_LANGUAGES.map((language) => ['messages', `content/messages/${language}.json`] as const),
   ]
@@ -168,6 +191,7 @@ export function flowFiles(options: FlowGameOptions = {}): Record<string, string 
     `levels = [${order.map((id) => `"${id}"`).join(', ')}]`,
     'done = "door.touched"',
     ...(lost === null ? [] : [`lost = "${lost}"`]),
+    ...(options.score === undefined ? [] : [`score = "${SCORE_NAMES[options.score]}"`]),
     ...(options.splash === true ? ['splash = "hero"'] : []),
     ...(options.players === undefined ? [] : [`players = ${options.players}`]),
     ...(options.noWarning === true ? [] : ['warnings = ["warning.flashing"]']),

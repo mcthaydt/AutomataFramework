@@ -23,6 +23,7 @@ import { createParty, type Party } from './party.ts'
 import { createPlaces, type Places } from './places.ts'
 import { createPlay } from './play.ts'
 import { defaultSave, type FlowSave, newest, type Progress } from './progress.ts'
+import { withScore } from './records.ts'
 import { openSections, type Sections, wireSound } from './sections.ts'
 import { advance, FLOW_START, type FlowEvent, type FlowFacts, type FlowState } from './steps.ts'
 import type { Flow, FlowOptions } from './types.ts'
@@ -216,6 +217,27 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     if (!stopped && epoch === mine) dispatch({ type: 'play', level })
   }
 
+  /**
+   * The level just ended, won or lost: its score, the best now, and the sentence for a best the store would not keep. The
+   * best is shown from the second end on, when there was one before this; the first end keeps it and says nothing of it.
+   */
+  async function recordScore(): Promise<{ score?: number; best?: number; notKept?: string }> {
+    const score = play.game()?.score()
+    if (score === undefined || sections === undefined) return {}
+    const before = sections.records.get()
+    const after = withScore(before, score)
+    let notKept: string | undefined
+    if (after !== before) {
+      const written = await sections.records.set(after)
+      if (!written.ok) notKept = (locale as Locale).words('automata.done.not-kept')
+    }
+    return {
+      score,
+      ...(before.best === undefined || after.best === undefined ? {} : { best: after.best }),
+      ...(notKept === undefined ? {} : { notKept }),
+    }
+  }
+
   /** Puts the step `next` on the page, taking what the step `before` had off it. */
   async function present(before: FlowState, next: FlowState, mine: number): Promise<void> {
     const current = (): boolean => !stopped && epoch === mine
@@ -344,16 +366,21 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       case 'done': {
         play.hold()
         dropScreen()
+        const finish = await recordScore()
         const finished = next.level ?? project.start
         const after = nextLevel(project, finished)
         let notKept: string | undefined
         if (after !== undefined) notKept = await places.reach(after, words('automata.done.not-kept'))
+        // The same sentence says it whichever of the two writes was refused.
+        notKept ??= finish.notKept
         if (!current()) return
         audio?.raise('screen.done')
         shown = makers.done({
           ...base(),
           level: levelName(words, finished),
           next: after !== undefined,
+          ...(finish.score === undefined ? {} : { score: finish.score }),
+          ...(finish.best === undefined ? {} : { best: finish.best }),
           ...(notKept === undefined ? {} : { notKept }),
           onNext: () => dispatch({ type: 'next' }),
           onMenu: () => dispatch({ type: 'leave' }),
@@ -363,9 +390,14 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       case 'lost': {
         play.hold()
         dropScreen()
+        const finish = await recordScore()
+        if (!current()) return
         audio?.raise('screen.lost')
         shown = makers.lost({
           ...base(),
+          ...(finish.score === undefined ? {} : { score: finish.score }),
+          ...(finish.best === undefined ? {} : { best: finish.best }),
+          ...(finish.notKept === undefined ? {} : { notKept: finish.notKept }),
           onAgain: () => dispatch({ type: 'again' }),
           onMenu: () => dispatch({ type: 'leave' }),
         })

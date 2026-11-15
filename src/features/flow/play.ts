@@ -122,6 +122,7 @@ export function createPlay(deps: PlayDeps): Play {
       onPause: () => deps.dispatch({ type: 'pause' }),
       heroes: () => running.heroes(),
       card: () => cardOf(running),
+      score: () => running.score(),
     })
     const draw = (ms: number): void => {
       now = ms

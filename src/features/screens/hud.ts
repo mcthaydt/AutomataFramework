@@ -20,6 +20,8 @@ export type HudProps = {
   readonly watching?: { readonly line: string; readonly ontake: () => void }
   /** The level's goal and what to press, shown at the top while the card is up. */
   readonly card?: HudCard
+  /** "Score: 3", at the top in the middle, when the game counts one. */
+  readonly score?: string
   /** Told how to give the HUD the heroes' boxes after each draw. */
   readonly register: (draw: (boxes: readonly HeroBox[]) => void) => void
 }
@@ -42,6 +44,8 @@ export function hud(
      * device does and goes when `undefined` comes back.
      */
     readonly card?: () => HudCard | undefined
+    /** The score now, or `undefined` for a game that counts none: asked each frame. */
+    readonly score?: () => number | undefined
     /** Shown in place of the pause button while the game plays itself. */
     readonly watching?: { readonly onTake: () => void }
   },
@@ -52,6 +56,7 @@ export function hud(
   const { jumpSide, onPause, heroes, watching } = options
   let card = options.card?.()
   let cardKey = JSON.stringify(card ?? null)
+  let score = options.score?.()
   let paint: ((boxes: readonly HeroBox[]) => void) | undefined
   // Where the jumping thumb was when the button was put down.
   let jumping = jumpSide()
@@ -64,6 +69,7 @@ export function hud(
       side: jumping === 'right' ? 'left' : 'right',
       onpause: onPause,
       ...(card === undefined ? {} : { card }),
+      ...(score === undefined ? {} : { score: words('automata.hud.score', { score }) }),
       ...(watching === undefined
         ? {}
         : { watching: { line: words('automata.watch.tap'), ontake: watching.onTake } }),
@@ -82,9 +88,11 @@ export function hud(
       }
       const asked = options.card?.()
       const askedKey = JSON.stringify(asked ?? null)
-      if (askedKey !== cardKey) {
+      const counted = options.score?.()
+      if (askedKey !== cardKey || counted !== score) {
         card = asked
         cardKey = askedKey
+        score = counted
         screen.update()
       }
       if (paint === undefined) return
