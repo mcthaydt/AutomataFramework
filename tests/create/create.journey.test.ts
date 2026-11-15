@@ -262,14 +262,19 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
         if (size.touch) expect(await hint.count(), `${where}: the hint on a touch screen`).toBe(0)
         else await expect.poll(() => hint.isVisible(), POLL).toBe(true)
 
-        // Holding right moves the hero right: by the arrow key, or by a finger on the Right button.
+        // Holding right moves the hero right: by the arrow key, or by a thumb slid right on the walking half.
         const start = await heroX(page)
         if (size.touch) {
           const finger = { pointerType: 'touch', pointerId: 7, isPrimary: true, bubbles: true } as const
-          const right = page.locator("[data-action='right']")
-          await right.dispatchEvent('pointerdown', finger)
+          const half = page.locator("[data-half='walk']")
+          const box = await half.boundingBox()
+          expect(box, `${where}: the walking half is on the screen`).not.toBeNull()
+          const x = (box?.x ?? 0) + (box?.width ?? 0) / 2
+          const y = (box?.y ?? 0) + (box?.height ?? 0) / 2
+          await half.dispatchEvent('pointerdown', { ...finger, clientX: x, clientY: y })
+          await half.dispatchEvent('pointermove', { ...finger, clientX: x + 80, clientY: y })
           await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
-          await right.dispatchEvent('pointerup', finger)
+          await half.dispatchEvent('pointerup', { ...finger, clientX: x + 80, clientY: y })
         } else {
           await page.keyboard.down('ArrowRight')
           await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
@@ -358,6 +363,48 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
       } finally {
         await french.close()
       }
+    } finally {
+      await browser.close()
+    }
+  }, 300_000)
+
+  test(`${name}: the new game is played with a gamepad, and has no movement code`, async () => {
+    const browser: Browser = await ENGINES[name].launch()
+    try {
+      const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'ja-JP' })
+      try {
+        // A pad the test puts in `navigator.getGamepads` before the page loads: the left stick is pushed right.
+        await context.addInitScript(() => {
+          const buttons = Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 }))
+          const axes = [0, 0, 0, 0]
+          const pad = { id: 'Test pad', index: 0, connected: true, mapping: 'standard', axes, buttons }
+          ;(window as unknown as { __stick: (x: number) => void }).__stick = (x) => {
+            axes[0] = x
+          }
+          navigator.getGamepads = () => [pad as unknown as Gamepad]
+        })
+        const page = await context.newPage()
+        await page.goto(address)
+        await page.locator('.automata-picker-go').waitFor({ state: 'visible', timeout: 30_000 })
+        await pickLanguage(page, 'ja')
+        await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+        const start = await heroX(page)
+        await page.evaluate(() => (window as unknown as { __stick: (x: number) => void }).__stick(1))
+        await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
+        await page.evaluate(() => (window as unknown as { __stick: (x: number) => void }).__stick(0))
+      } finally {
+        await context.close()
+      }
+      // The game's own source has no movement code: the framework moves the hero.
+      const source = (dir: string): string[] =>
+        readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+          entry.isDirectory()
+            ? source(join(dir, entry.name))
+            : entry.name.endsWith('.ts')
+              ? [readFileSync(join(dir, entry.name), 'utf8')]
+              : [],
+        )
+      for (const text of source(join(gameFolder, 'src'))) expect(text).not.toMatch(/\b(isHeld|wasPressed)\b/)
     } finally {
       await browser.close()
     }

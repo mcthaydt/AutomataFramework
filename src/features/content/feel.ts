@@ -25,6 +25,14 @@ export interface Freeze {
   readonly ticks: number
 }
 
+/** The device buzzing in the player's hand, where it can. */
+export interface Buzz {
+  /** 0 (none) to 1 (as strong as it goes). */
+  readonly strength: number
+  /** How long it buzzes, in ticks. */
+  readonly ticks: number
+}
+
 /** A feel file once read: what happens on screen when one event fires. One effect per file. */
 export interface FeelFile {
   readonly format: 1
@@ -33,6 +41,7 @@ export interface FeelFile {
   readonly dust?: Dust | undefined
   readonly shake?: Shake | undefined
   readonly freeze?: Freeze | undefined
+  readonly buzz?: Buzz | undefined
 }
 
 /** A shake of more than one tile or a freeze of more than half a second would make a game unreadable. */
@@ -47,6 +56,10 @@ const shake = z.strictObject({
   ticks: ticks('How long it shakes', 60),
 })
 const freeze = z.strictObject({ ticks: ticks('How long the game holds still', 30) })
+const buzz = z.strictObject({
+  strength: z.number().min(0).max(1).describe('How strong the buzz is, from 0 to 1.'),
+  ticks: ticks('How long it buzzes', 30),
+})
 
 /** The rules for a feel file; unknown keys are refused. */
 export const FeelSchema: z.ZodType<FeelFile, FeelFile> = z
@@ -57,13 +70,19 @@ export const FeelSchema: z.ZodType<FeelFile, FeelFile> = z
     dust: dust.optional().describe('A burst of dust. Left out means none.'),
     shake: shake.optional().describe('The picture shakes. Left out means no shake.'),
     freeze: freeze.optional().describe('The game holds still for a moment. Left out means no freeze.'),
+    buzz: buzz.optional().describe('The device buzzes, where it can. Left out means no buzz.'),
   })
   .superRefine((feel, ctx) => {
-    if (feel.dust === undefined && feel.shake === undefined && feel.freeze === undefined)
+    if (
+      feel.dust === undefined &&
+      feel.shake === undefined &&
+      feel.freeze === undefined &&
+      feel.buzz === undefined
+    )
       ctx.addIssue({
         code: 'custom',
         path: [],
-        message: 'Say what happens: add "dust", "shake" or "freeze".',
+        message: 'Say what happens: add "dust", "shake", "freeze" or "buzz".',
       })
   })
 
@@ -86,5 +105,7 @@ export const feelInfo: ContentTypeInfo<FeelFile, FeelFile> = {
     'shake.strength': 'Write how far the picture shakes, in tiles, like 0.1.',
     'shake.ticks': 'Write how many ticks it shakes, like 10.',
     'freeze.ticks': 'Write how many ticks the game holds still, like 4.',
+    'buzz.strength': 'Write how strong the buzz is, from 0 to 1, like 0.3.',
+    'buzz.ticks': 'Write how many ticks it buzzes, like 4.',
   },
 }

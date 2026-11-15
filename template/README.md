@@ -18,7 +18,9 @@ The game opens in your browser. Hold the left or right arrow key to move, and pr
 1. Open `content/levels/level-1.json`. The `tiles` are the level's walls, one letter for each square: `#` is a wall and
    `.` is air. Make a wall longer, or add a gap.
 2. Open `content/characters/crate.json` and change its `color`.
-3. Open `src/features/hero/move.ts` and change `RUN` or `JUMP`. A bigger `JUMP` is a higher jump.
+3. Open `content/tunings/hero-moves.json` and change a number, like `walk-speed` or `jump-speed`. A bigger
+   `jump-speed` is a higher jump. To give the hero a double jump, a wall jump or a dash, add `"double-jump": true`,
+   `"wall-jump": true` or `"dash": true` to `moves` in `content/characters/hero.json`. There is no movement code to write.
 4. Open the file of your game's language in `content/messages/` (`source` in `automata.toml` names it) and change a
    word. The game says it in six languages: write the same key in the other five files too, and `npm run check` names
    any that is missing.
@@ -48,7 +50,8 @@ recording in `replays/` no longer matches; run `npm run accept` to record the ne
 | Levels and characters | `content/` |
 | What things look like, painted by `npm run art` | `content/figures/` |
 | The words, one file for each language | `content/messages/` |
-| The rules (how things move) | `src/features/` |
+| How the hero moves: its numbers and its controls | `content/tunings/` |
+| The game's own rules (the score) | `src/features/` |
 | The page that shows the game | `src/features/page/` |
 | A recorded play, checked on every run | `replays/` |
 

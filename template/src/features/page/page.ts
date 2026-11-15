@@ -14,16 +14,15 @@ import {
   languagePicker,
   loadGame,
   openSettings,
+  playHint,
   type ReadPicture,
   startGame,
+  TOUCH_SETTINGS_DEFAULT,
+  TouchSettingsSchema,
   type Words,
   webHost,
 } from '@automataframework/framework'
 import { gamePlugins } from '../../headless.ts'
-import { CONTROLS, hintFor } from './controls.ts'
-
-/** The actions a player can press, from the controls. */
-const ACTIONS: readonly string[] = Object.keys(CONTROLS)
 
 /** The id the game's settings are saved under: the game's name. `automata create` writes the real one here. */
 const GAME_ID = 'my-game'
@@ -170,6 +169,12 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
       schema: InputSettingsSchema,
       initial: INPUT_SETTINGS_DEFAULT,
     })
+    // Which thumb walks and whether the phone may buzz: the framework reads them, and a settings screen can change them.
+    const touch = settings.section({
+      name: 'touch',
+      schema: TouchSettingsSchema,
+      initial: TOUCH_SETTINGS_DEFAULT,
+    })
 
     // The words in the player's language: the one they picked, else the host's. A player who has neither is asked, with
     // flags, before anything is said in any language.
@@ -185,11 +190,11 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
           content: loaded.value,
           plugins: gamePlugins,
           mount: root,
-          controls: CONTROLS,
           host,
           locale,
           readPicture,
           settings: controls.get(),
+          touchSettings: touch.get(),
           ...(options.frames === undefined ? {} : { frames: options.frames }),
         })
         if (stopped) {
@@ -200,18 +205,31 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
         game.input.onBindings((changed) => void controls.set(changed))
         root.dataset.state = 'playing'
 
-        // A player at a keyboard is told which keys to press, until the first time they press one of them.
+        // A player at a keyboard or a gamepad is told what to press, until the first time they press it. The framework
+        // says it in the player's words, for the device in use; a thumb has its own hints on the screen.
         if (!coarse) {
           const hint = element('p')
           const draw = (): void => {
-            hint.textContent = hintFor((action) => started.input.inputsFor(1, action)[0], locale.words)
+            hint.textContent = playHint({
+              device: started.input.device(1),
+              first: (action) => started.input.inputsFor(1, action)[0],
+              dash: false,
+              words: locale.words,
+            })
           }
           draw()
-          const unfollow = locale.onChange(draw)
+          const unfollowWords = locale.onChange(draw)
+          const unfollowDevice = started.input.onDevice(draw)
+          const unfollow = (): void => {
+            unfollowWords()
+            unfollowDevice()
+          }
           hint.className = 'hint'
           root.append(hint)
           const gone = (event: KeyboardEvent): void => {
-            const used = ACTIONS.some((action) => started.input.inputsFor(1, action).includes(event.code))
+            const used = Object.keys(started.input.controls()).some((action) =>
+              started.input.inputsFor(1, action).includes(event.code),
+            )
             if (used) forgetHint()
           }
           forgetHint = () => {

@@ -81,3 +81,18 @@ test('a game runs on it', async () => {
   expect(await saves.save(0, { level: 'level-1', doors: 2 })).toEqual({ ok: true })
   expect(await saves.load(0)).toMatchObject({ ok: true, data: { level: 'level-1', doors: 2 } })
 })
+
+test('it can buzz, and says what it was asked; with canBuzz off it answers false and keeps nothing', () => {
+  const host = testHost()
+  expect(host.canBuzz).toBe(true)
+  expect(host.buzz(0.5, 80)).toBe(true)
+  expect(host.buzz(1, 20)).toBe(true)
+  expect(host.buzzes).toEqual([
+    { strength: 0.5, ms: 80 },
+    { strength: 1, ms: 20 },
+  ])
+  const quiet = testHost({ canBuzz: false })
+  expect(quiet.canBuzz).toBe(false)
+  expect(quiet.buzz(1, 20)).toBe(false)
+  expect(quiet.buzzes).toEqual([])
+})

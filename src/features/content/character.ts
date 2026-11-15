@@ -7,14 +7,32 @@ import type { ContentTypeInfo } from './type-info.ts'
 
 /**
  * One way a character moves, as a run of poses of its figure: shown in order at `fps` pictures a second, and round
- * again when `loop` is true. The framework plays `idle`, `run`, `jump`, `fall` and `land` by how the character moves; any
- * other clip, like `push` or `talk`, plays when the game or a cutscene asks for it.
+ * again when `loop` is true. The framework plays `idle`, `run`, `jump`, `fall` and `land` by how the character moves
+ * and, for a hero with `moves`, `air-jump`, `wall` and `dash`; any other clip, like `push` or `talk`, plays when the
+ * game or a cutscene asks for it.
  */
 export interface Clip {
   readonly id: string
   readonly poses: readonly string[]
   readonly fps: number
   readonly loop: boolean
+}
+
+/** How the framework moves a hero. Walk and jump are always on. */
+export interface HeroMoves {
+  /** The tuning file with the numbers and the controls, by id. */
+  readonly tuning: string
+  readonly 'double-jump': boolean
+  readonly 'wall-jump': boolean
+  readonly dash: boolean
+}
+
+/** What a person may write for `moves`: the three switches may be left out, and are then false. */
+export interface HeroMovesInput {
+  readonly tuning: string
+  readonly 'double-jump'?: boolean | undefined
+  readonly 'wall-jump'?: boolean | undefined
+  readonly dash?: boolean | undefined
 }
 
 /** A character file once read: what one kind of thing is. Without a `figure` it is drawn as a coloured box. */
@@ -44,14 +62,33 @@ export interface Character {
    * when a hero touches it. Needs a `kind`, and a `fixed` body.
    */
   readonly touch?: 'sense' | 'take' | undefined
+  /**
+   * Set on the project's hero: the framework walks and jumps it from the numbers and controls of a tuning file, with no
+   * game code. The three switches turn on the double jump, the wall jump and the dash.
+   */
+  readonly moves?: HeroMoves | undefined
 }
 
-/** What a person may write: `upright` can be left out, and then it is false. */
-export interface CharacterInput extends Omit<Character, 'upright'> {
+/** What a person may write: `upright` can be left out, and then it is false; so can the three switches of `moves`. */
+export interface CharacterInput extends Omit<Character, 'upright' | 'moves'> {
   readonly upright?: boolean | undefined
+  readonly moves?: HeroMovesInput | undefined
 }
 
 const MAX_SIZE = 16
+
+const moves = z.strictObject({
+  tuning: Id.describe('The tuning file with the hero\'s numbers and controls, by id, like "hero-moves".'),
+  'double-jump': z
+    .boolean()
+    .default(false)
+    .describe('True to let the hero jump once more in the air. Left out means false.'),
+  'wall-jump': z
+    .boolean()
+    .default(false)
+    .describe('True to let the hero slide down a wall and jump off it. Left out means false.'),
+  dash: z.boolean().default(false).describe('True to let the hero dash. Left out means false.'),
+})
 
 const clip = z.strictObject({
   id: Id.describe('A name for this clip, used once in this character, like "run".'),
@@ -94,7 +131,7 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
       .array(clip)
       .max(32)
       .describe(
-        'The ways it moves, as runs of its figure\'s poses. "idle", "run", "jump", "fall" and "land" play by how it moves; any other, like "push" or "talk", plays when the game or a cutscene asks. Left out means the first pose.',
+        'The ways it moves, as runs of its figure\'s poses. "idle", "run", "jump", "fall" and "land" play by how it moves, and "air-jump", "wall" and "dash" by how a hero with "moves" moves; any other, like "push" or "talk", plays when the game or a cutscene asks. Left out means the first pose.',
       )
       .optional(),
     behaviour: Id.describe('The behaviour file that decides what it does, by id, like "critter".').optional(),
@@ -105,9 +142,36 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
         '"sense": things pass through it and the game is told when one touches it, like a door. "take": the same, and it is taken away when a hero touches it, like a spark.',
       )
       .optional(),
+    moves: moves
+      .describe(
+        'Set on the hero only: the framework walks and jumps it from a tuning file, with no game code. Walk and jump are always on; "double-jump", "wall-jump" and "dash" are each switched on here.',
+      )
+      .optional(),
   })
   .superRefine((character, ctx) => {
     unique(character.clips ?? [], 'id', 'clip', ['clips'], ctx)
+    if (character.moves !== undefined) {
+      if (character.body !== 'dynamic' || !character.upright)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['moves'],
+          message:
+            'A hero that walks needs a moving body that stays upright: make its body "dynamic" and "upright" true.',
+        })
+      if (character.touch !== undefined)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['moves'],
+          message: 'A hero that walks cannot also be touched: take out "touch" or "moves".',
+        })
+      // One hero, one tuning file: the older top-level field may stay, but only if it says the same thing.
+      if (character.tuning !== undefined && character.tuning !== character.moves.tuning)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['tuning'],
+          message: `This hero takes its numbers from "moves.tuning" ("${character.moves.tuning}"). Take out "tuning", or make it the same file.`,
+        })
+    }
     if (character.clips !== undefined && character.clips.length > 0 && character.figure === undefined)
       ctx.addIssue({
         code: 'custom',
@@ -146,6 +210,7 @@ export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
     'size.w': 'Write how wide it is, in tiles.',
     'size.h': 'Write how tall it is, in tiles.',
     color: 'Write the colour as # and six digits, like #e4572e.',
+    'moves.tuning': 'Write the id of the tuning file with the hero\'s numbers, like "hero-moves".',
     'clips.id': 'Give the clip a name like "run".',
     'clips.poses': 'List the poses it shows, like ["run-1", "run-2"].',
     'clips.fps': 'Write how many pictures a second it shows, like 8.',
@@ -156,6 +221,15 @@ export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
       report('behaviour', noSuch('behaviour', character.behaviour, game.ids('behaviour')))
     if (character.tuning !== undefined && !game.has('tuning', character.tuning))
       report('tuning', noSuch('tuning', character.tuning, game.ids('tuning')))
+    if (character.moves !== undefined) {
+      if (!game.has('tuning', character.moves.tuning))
+        report('moves.tuning', noSuch('tuning', character.moves.tuning, game.ids('tuning')))
+      if (game.hero !== character.id)
+        report(
+          'moves',
+          `Only the hero is moved by a player: "moves" belongs on "${game.hero}", the character automata.toml names as hero.`,
+        )
+    }
     if (character.figure === undefined) return
     if (!game.has('figure', character.figure)) {
       report('figure', noSuch('figure', character.figure, game.ids('figure')))

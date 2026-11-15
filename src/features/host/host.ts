@@ -32,4 +32,11 @@ export interface Host {
   readonly canQuit: boolean
   /** Hands the player back to wherever the game was opened from. Answers false, and does nothing, when `canQuit` is false. */
   quit(): Promise<boolean>
+  /** True where the device can buzz in the player's hand (a phone), and false where it cannot. */
+  readonly canBuzz: boolean
+  /**
+   * A short buzz: `strength` 0 (none) to 1 (as strong as it goes), for `ms` milliseconds. Answers false, and nothing
+   * happens, where the device cannot buzz. Never throws.
+   */
+  buzz(strength: number, ms: number): boolean
 }

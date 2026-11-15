@@ -280,6 +280,15 @@ type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 type Bus = 'sound' | 'music';
 ```
 
+### `Buzz` (interface)
+
+```ts
+interface Buzz {
+    readonly strength: number;
+    readonly ticks: number;
+}
+```
+
 ### `BYTES_CHANNEL` (const)
 
 ```ts
@@ -338,14 +347,16 @@ interface Character {
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
     readonly touch?: 'sense' | 'take' | undefined;
+    readonly moves?: HeroMoves | undefined;
 }
 ```
 
 ### `CharacterInput` (interface)
 
 ```ts
-interface CharacterInput extends Omit<Character, 'upright'> {
+interface CharacterInput extends Omit<Character, 'upright' | 'moves'> {
     readonly upright?: boolean | undefined;
+    readonly moves?: HeroMovesInput | undefined;
 }
 ```
 
@@ -846,6 +857,12 @@ const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
 type Def = ComponentDef | CommandDef | EventDef | ResourceDef | SystemDef;
 ```
 
+### `DEFAULT_HERO_CONTROLS` (const)
+
+```ts
+const DEFAULT_HERO_CONTROLS: readonly TuningControl[];
+```
+
 ### `DEFAULT_MAX_ROOMS` (const)
 
 ```ts
@@ -1031,6 +1048,7 @@ interface FeelFile {
     readonly dust?: Dust | undefined;
     readonly shake?: Shake | undefined;
     readonly freeze?: Freeze | undefined;
+    readonly buzz?: Buzz | undefined;
 }
 ```
 
@@ -1038,6 +1056,34 @@ interface FeelFile {
 
 ```ts
 const FeelSchema: z.ZodType<FeelFile, FeelFile>;
+```
+
+### `Felt` (interface)
+
+```ts
+interface Felt {
+    readonly below: boolean;
+    readonly left: boolean;
+    readonly right: boolean;
+}
+```
+
+### `felt` (function)
+
+```ts
+function felt(contacts: readonly FeltContact[]): Felt;
+```
+
+### `FeltContact` (interface)
+
+```ts
+interface FeltContact {
+    readonly nx: number;
+    readonly ny: number;
+    readonly dist: number;
+    readonly moves: boolean;
+    readonly corner?: -1 | 0 | 1;
+}
 ```
 
 ### `FieldRecord` (type)
@@ -1267,6 +1313,7 @@ interface Game {
     pause(): void;
     resume(): void;
     heroes(): readonly HeroBox[];
+    setVibration(on: boolean): void;
     replay(): Replay;
     stop(): void;
 }
@@ -1322,7 +1369,7 @@ interface GameContent {
 ```ts
 interface GameOptions extends GameSimOptions {
     readonly mount: HTMLElement;
-    readonly controls: Controls;
+    readonly controls?: Controls;
     readonly host: Host;
     readonly frames?: Frames;
     readonly settings?: unknown;
@@ -1330,6 +1377,7 @@ interface GameOptions extends GameSimOptions {
     readonly audio?: GameAudio;
     readonly soundNotice?: string | false;
     readonly readPicture?: ReadPicture;
+    readonly touchSettings?: unknown;
     readonly locale: Locale;
 }
 ```
@@ -1374,6 +1422,34 @@ interface HeroBox {
 }
 ```
 
+### `heroControls` (function)
+
+```ts
+function heroControls(content: GameContent, given?: Controls): Controls | undefined;
+```
+
+### `HeroMoves` (interface)
+
+```ts
+interface HeroMoves {
+    readonly tuning: string;
+    readonly 'double-jump': boolean;
+    readonly 'wall-jump': boolean;
+    readonly dash: boolean;
+}
+```
+
+### `HeroMovesInput` (interface)
+
+```ts
+interface HeroMovesInput {
+    readonly tuning: string;
+    readonly 'double-jump'?: boolean | undefined;
+    readonly 'wall-jump'?: boolean | undefined;
+    readonly dash?: boolean | undefined;
+}
+```
+
 ### `hertzOf` (function)
 
 ```ts
@@ -1393,6 +1469,8 @@ interface Host {
     openLink(url: string): Promise<LinkAnswer>;
     readonly canQuit: boolean;
     quit(): Promise<boolean>;
+    readonly canBuzz: boolean;
+    buzz(strength: number, ms: number): boolean;
 }
 ```
 
@@ -1431,6 +1509,9 @@ interface IndexedPicture {
 interface Input {
     poll(tick: number): Command[];
     inset(): number;
+    setSwapSides(on: boolean): void;
+    swapSides(): boolean;
+    thumbRoom(): number;
     onInset(listener: (px: number) => void): void;
     relabel(words: Words): void;
     setPlayers(players: readonly number[]): void;
@@ -1462,6 +1543,12 @@ interface Input {
 const INPUT_SETTINGS_DEFAULT: InputSettings;
 ```
 
+### `inputName` (function)
+
+```ts
+function inputName(input: string, words: Words): string;
+```
+
 ### `InputOptions` (interface)
 
 ```ts
@@ -1469,6 +1556,9 @@ interface InputOptions {
     readonly mount: HTMLElement;
     readonly controls: Controls;
     readonly settings?: unknown;
+    readonly thumbs?: {
+        readonly dash: boolean;
+    };
     readonly gamepads?: () => readonly (PadLike | null)[];
     readonly frames?: Frames;
     readonly sequence?: Sequence;
@@ -1796,6 +1886,12 @@ type LevelJoint = {
 function levelName(words: Words, levelId: string): string;
 ```
 
+### `levelOrder` (function)
+
+```ts
+function levelOrder(project: Project): readonly string[];
+```
+
 ### `LevelPicture` (interface)
 
 ```ts
@@ -1903,6 +1999,12 @@ interface Link {
 type LinkAnswer = 'opened' | 'blocked' | 'refused';
 ```
 
+### `listContent` (function)
+
+```ts
+function listContent(text: string, entry: ListedFile, about?: string): Parsed<string>;
+```
+
 ### `Listed` (interface)
 
 ```ts
@@ -1912,6 +2014,15 @@ interface Listed {
     readonly hero: string;
     readonly source: Language | undefined;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
+}
+```
+
+### `ListedFile` (interface)
+
+```ts
+interface ListedFile {
+    readonly type: string;
+    readonly path: string;
 }
 ```
 
@@ -2132,6 +2243,142 @@ const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 const MIN_LEAD = 1;
 ```
 
+### `MOVE_EVENTS` (const)
+
+```ts
+const MOVE_EVENTS: readonly MoveEventName[];
+```
+
+### `MOVE_NUMBERS` (const)
+
+```ts
+const MOVE_NUMBERS: readonly MoveNumberInfo[];
+```
+
+### `MOVE_START` (const)
+
+```ts
+const MOVE_START: MoveState;
+```
+
+### `MoveEvent` (interface)
+
+```ts
+interface MoveEvent {
+    readonly player: number;
+    readonly sid: number;
+}
+```
+
+### `moveEvent` (function)
+
+```ts
+function moveEvent(name: MoveEventName): EventDef<z.ZodType<MoveEvent>>;
+```
+
+### `MoveEventName` (type)
+
+```ts
+type MoveEventName = 'walked' | 'jumped' | 'landed' | 'left-ground' | 'air-jumped' | 'wall-slid' | 'wall-jumped' | 'dashed';
+```
+
+### `MoveMode` (const)
+
+```ts
+const MoveMode: {
+    readonly plain: 0;
+    readonly airJump: 1;
+    readonly wall: 2;
+    readonly dash: 3;
+};
+```
+
+### `MoveNumberInfo` (interface)
+
+```ts
+interface MoveNumberInfo {
+    readonly id: string;
+    readonly key: keyof MoveNumbers;
+    readonly about: string;
+    readonly value: number;
+    readonly min: number;
+    readonly max: number;
+    readonly step: number;
+    readonly whole: boolean;
+}
+```
+
+### `MoveNumbers` (interface)
+
+```ts
+interface MoveNumbers {
+    readonly walkSpeed: number;
+    readonly walkGrip: number;
+    readonly airGrip: number;
+    readonly jumpSpeed: number;
+    readonly jumpCut: number;
+    readonly ledgeGrace: number;
+    readonly earlyPress: number;
+    readonly fallSpeed: number;
+    readonly airJumps: number;
+    readonly airJumpSpeed: number;
+    readonly wallSlideSpeed: number;
+    readonly wallJumpOut: number;
+    readonly wallJumpUp: number;
+    readonly wallJumpLock: number;
+    readonly dashSpeed: number;
+    readonly dashTicks: number;
+    readonly dashRest: number;
+    readonly airDashes: number;
+}
+```
+
+### `moveNumbers` (function)
+
+```ts
+function moveNumbers(tuning: TuningFile | undefined): MoveNumbers;
+```
+
+### `Moves` (const)
+
+```ts
+const Moves: ComponentDef<typeof movesFields>;
+```
+
+### `movesPlugin` (function)
+
+```ts
+function movesPlugin(options: {
+    readonly gravity: {
+        readonly x: number;
+        readonly y: number;
+    };
+}): PluginDef;
+```
+
+### `MoveState` (interface)
+
+```ts
+interface MoveState {
+    face: number;
+    stood: boolean;
+    grace: number;
+    press: number;
+    rising: boolean;
+    airJumps: number;
+    sliding: boolean;
+    lock: number;
+    lockDir: number;
+    dash: number;
+    dashDir: number;
+    rest: number;
+    airDashes: number;
+    walking: boolean;
+    mode: number;
+    run: number;
+}
+```
+
 ### `MusicCue` (interface)
 
 ```ts
@@ -2172,6 +2419,12 @@ const MusicSchema: z.ZodType<MusicFile, MusicFile>;
 
 ```ts
 function needsPictures(content: GameContent, level?: string): boolean;
+```
+
+### `nextLevel` (function)
+
+```ts
+function nextLevel(project: Project, level: string): string | undefined;
 ```
 
 ### `NoiseVoice` (interface)
@@ -2216,6 +2469,7 @@ interface OnlineGame {
     readonly code: string;
     status(): OnlineStatus;
     stats(): SessionStats;
+    setVibration(on: boolean): void;
     leave(): void;
 }
 ```
@@ -2442,6 +2696,7 @@ interface PhysicsOptions {
         readonly y: number;
     };
     readonly joints?: boolean;
+    readonly touching?: boolean;
 }
 ```
 
@@ -2522,6 +2777,17 @@ function playersIn(sim: Sim): number[];
 function playersOrder(own: Language | undefined, shipped: readonly Language[]): readonly Language[];
 ```
 
+### `playHint` (function)
+
+```ts
+function playHint(options: {
+    readonly device: DeviceKind;
+    readonly first: (action: string) => string | undefined;
+    readonly dash: boolean;
+    readonly words: Words;
+}): string;
+```
+
 ### `playReplay` (function)
 
 ```ts
@@ -2594,6 +2860,10 @@ interface Project {
     readonly hero: string;
     readonly players?: number | undefined;
     readonly source?: Language | undefined;
+    readonly levels?: readonly string[] | undefined;
+    readonly done?: string | undefined;
+    readonly warnings?: readonly string[] | undefined;
+    readonly splash?: string | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -2737,6 +3007,7 @@ interface Renderer {
     apply(delta: RenderDelta): void;
     draw(alpha: number): void;
     setInset(px: number): void;
+    setThumbRoom(px: number): void;
     look(at: {
         readonly x: number;
         readonly y: number;
@@ -3600,6 +3871,12 @@ function startGame(options: GameOptions): Promise<Game>;
 function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>;
 ```
 
+### `STEEP` (const)
+
+```ts
+const STEEP = 0.7;
+```
+
 ### `StepResult` (interface)
 
 ```ts
@@ -3676,6 +3953,17 @@ interface SystemSpec {
 function tan(x: number): number;
 ```
 
+### `teachHint` (function)
+
+```ts
+function teachHint(options: {
+    readonly move: 'double-jump' | 'wall-jump' | 'dash';
+    readonly device: DeviceKind;
+    readonly first: (action: string) => string | undefined;
+    readonly words: Words;
+}): string;
+```
+
 ### `TestHost` (interface)
 
 ```ts
@@ -3685,6 +3973,10 @@ interface TestHost extends Host {
     hide(): void;
     readonly opened: readonly string[];
     readonly quits: number;
+    readonly buzzes: readonly {
+        readonly strength: number;
+        readonly ms: number;
+    }[];
 }
 ```
 
@@ -3704,6 +3996,7 @@ interface TestHostOptions {
     readonly deviceLanguages?: readonly string[];
     readonly canQuit?: boolean;
     readonly blockLinks?: boolean;
+    readonly canBuzz?: boolean;
 }
 ```
 
@@ -3863,10 +4156,28 @@ interface Touch {
 }
 ```
 
+### `TOUCH_SETTINGS_DEFAULT` (const)
+
+```ts
+const TOUCH_SETTINGS_DEFAULT: TouchSettings;
+```
+
+### `TOUCH_SLOP` (const)
+
+```ts
+const TOUCH_SLOP = 0.02;
+```
+
 ### `touchEvent` (function)
 
 ```ts
 function touchEvent(kind: string, what: 'touched' | 'left' | 'taken'): EventDef<z.ZodType<Touch>>;
+```
+
+### `Touching` (const)
+
+```ts
+const Touching: ComponentDef<typeof touchingFields>;
 ```
 
 ### `touchKinds` (function)
@@ -3885,6 +4196,28 @@ function touchPlugin(kinds: {
     readonly sense: readonly string[];
     readonly take: readonly string[];
 }): PluginDef;
+```
+
+### `TouchSettings` (interface)
+
+```ts
+interface TouchSettings {
+    readonly format: 1;
+    readonly swapSides: boolean;
+    readonly vibration: boolean;
+}
+```
+
+### `touchSettingsOf` (function)
+
+```ts
+function touchSettingsOf(saved: unknown): TouchSettings;
+```
+
+### `TouchSettingsSchema` (const)
+
+```ts
+const TouchSettingsSchema: z.ZodType<TouchSettings, TouchSettings>;
 ```
 
 ### `Transform` (const)
@@ -3979,6 +4312,12 @@ function unreadWords(content: GameContent, marks: ReadMarks | undefined): readon
 
 ```ts
 function usesJoints(content: GameContent): boolean;
+```
+
+### `usesMoves` (function)
+
+```ts
+function usesMoves(content: GameContent): boolean;
 ```
 
 ### `usesSprites` (function)
@@ -4122,7 +4461,9 @@ function webHost(seams?: Partial<WebSeams>): Host;
 ```ts
 interface WebSeams {
     readonly document: Pick<Document, 'visibilityState' | 'addEventListener' | 'removeEventListener'>;
-    readonly navigator: Pick<Navigator, 'language' | 'languages'>;
+    readonly navigator: Pick<Navigator, 'language' | 'languages'> & {
+        readonly vibrate?: ((pattern: number) => boolean) | undefined;
+    };
     readonly open: (url: string, target: string) => {
         opener: unknown;
     } | null;
@@ -4409,6 +4750,15 @@ type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 type Bus = 'sound' | 'music';
 ```
 
+### `Buzz` (interface)
+
+```ts
+interface Buzz {
+    readonly strength: number;
+    readonly ticks: number;
+}
+```
+
 ### `BYTES_CHANNEL` (const)
 
 ```ts
@@ -4446,14 +4796,16 @@ interface Character {
     readonly behaviour?: string | undefined;
     readonly tuning?: string | undefined;
     readonly touch?: 'sense' | 'take' | undefined;
+    readonly moves?: HeroMoves | undefined;
 }
 ```
 
 ### `CharacterInput` (interface)
 
 ```ts
-interface CharacterInput extends Omit<Character, 'upright'> {
+interface CharacterInput extends Omit<Character, 'upright' | 'moves'> {
     readonly upright?: boolean | undefined;
+    readonly moves?: HeroMovesInput | undefined;
 }
 ```
 
@@ -4862,6 +5214,12 @@ const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
 type Def = ComponentDef | CommandDef | EventDef | ResourceDef | SystemDef;
 ```
 
+### `DEFAULT_HERO_CONTROLS` (const)
+
+```ts
+const DEFAULT_HERO_CONTROLS: readonly TuningControl[];
+```
+
 ### `DEFAULT_MAX_ROOMS` (const)
 
 ```ts
@@ -5026,6 +5384,7 @@ interface FeelFile {
     readonly dust?: Dust | undefined;
     readonly shake?: Shake | undefined;
     readonly freeze?: Freeze | undefined;
+    readonly buzz?: Buzz | undefined;
 }
 ```
 
@@ -5033,6 +5392,34 @@ interface FeelFile {
 
 ```ts
 const FeelSchema: z.ZodType<FeelFile, FeelFile>;
+```
+
+### `Felt` (interface)
+
+```ts
+interface Felt {
+    readonly below: boolean;
+    readonly left: boolean;
+    readonly right: boolean;
+}
+```
+
+### `felt` (function)
+
+```ts
+function felt(contacts: readonly FeltContact[]): Felt;
+```
+
+### `FeltContact` (interface)
+
+```ts
+interface FeltContact {
+    readonly nx: number;
+    readonly ny: number;
+    readonly dist: number;
+    readonly moves: boolean;
+    readonly corner?: -1 | 0 | 1;
+}
 ```
 
 ### `FieldRecord` (type)
@@ -5274,6 +5661,28 @@ const groundOf: (level: Level) => number;
 const HASH_EVERY = 60;
 ```
 
+### `HeroMoves` (interface)
+
+```ts
+interface HeroMoves {
+    readonly tuning: string;
+    readonly 'double-jump': boolean;
+    readonly 'wall-jump': boolean;
+    readonly dash: boolean;
+}
+```
+
+### `HeroMovesInput` (interface)
+
+```ts
+interface HeroMovesInput {
+    readonly tuning: string;
+    readonly 'double-jump'?: boolean | undefined;
+    readonly 'wall-jump'?: boolean | undefined;
+    readonly dash?: boolean | undefined;
+}
+```
+
 ### `hertzOf` (function)
 
 ```ts
@@ -5293,6 +5702,8 @@ interface Host {
     openLink(url: string): Promise<LinkAnswer>;
     readonly canQuit: boolean;
     quit(): Promise<boolean>;
+    readonly canBuzz: boolean;
+    buzz(strength: number, ms: number): boolean;
 }
 ```
 
@@ -5323,6 +5734,12 @@ interface IndexedPicture {
     readonly palette: readonly number[];
     readonly pixels: Uint8Array;
 }
+```
+
+### `inputName` (function)
+
+```ts
+function inputName(input: string, words: Words): string;
 ```
 
 ### `isHeld` (function)
@@ -5582,6 +5999,12 @@ type LevelJoint = {
 function levelName(words: Words, levelId: string): string;
 ```
 
+### `levelOrder` (function)
+
+```ts
+function levelOrder(project: Project): readonly string[];
+```
+
 ### `levelPlugin` (const)
 
 ```ts
@@ -5667,6 +6090,12 @@ interface Link {
 type LinkAnswer = 'opened' | 'blocked' | 'refused';
 ```
 
+### `listContent` (function)
+
+```ts
+function listContent(text: string, entry: ListedFile, about?: string): Parsed<string>;
+```
+
 ### `Listed` (interface)
 
 ```ts
@@ -5676,6 +6105,15 @@ interface Listed {
     readonly hero: string;
     readonly source: Language | undefined;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
+}
+```
+
+### `ListedFile` (interface)
+
+```ts
+interface ListedFile {
+    readonly type: string;
+    readonly path: string;
 }
 ```
 
@@ -5864,6 +6302,142 @@ const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 const MIN_LEAD = 1;
 ```
 
+### `MOVE_EVENTS` (const)
+
+```ts
+const MOVE_EVENTS: readonly MoveEventName[];
+```
+
+### `MOVE_NUMBERS` (const)
+
+```ts
+const MOVE_NUMBERS: readonly MoveNumberInfo[];
+```
+
+### `MOVE_START` (const)
+
+```ts
+const MOVE_START: MoveState;
+```
+
+### `MoveEvent` (interface)
+
+```ts
+interface MoveEvent {
+    readonly player: number;
+    readonly sid: number;
+}
+```
+
+### `moveEvent` (function)
+
+```ts
+function moveEvent(name: MoveEventName): EventDef<z.ZodType<MoveEvent>>;
+```
+
+### `MoveEventName` (type)
+
+```ts
+type MoveEventName = 'walked' | 'jumped' | 'landed' | 'left-ground' | 'air-jumped' | 'wall-slid' | 'wall-jumped' | 'dashed';
+```
+
+### `MoveMode` (const)
+
+```ts
+const MoveMode: {
+    readonly plain: 0;
+    readonly airJump: 1;
+    readonly wall: 2;
+    readonly dash: 3;
+};
+```
+
+### `MoveNumberInfo` (interface)
+
+```ts
+interface MoveNumberInfo {
+    readonly id: string;
+    readonly key: keyof MoveNumbers;
+    readonly about: string;
+    readonly value: number;
+    readonly min: number;
+    readonly max: number;
+    readonly step: number;
+    readonly whole: boolean;
+}
+```
+
+### `MoveNumbers` (interface)
+
+```ts
+interface MoveNumbers {
+    readonly walkSpeed: number;
+    readonly walkGrip: number;
+    readonly airGrip: number;
+    readonly jumpSpeed: number;
+    readonly jumpCut: number;
+    readonly ledgeGrace: number;
+    readonly earlyPress: number;
+    readonly fallSpeed: number;
+    readonly airJumps: number;
+    readonly airJumpSpeed: number;
+    readonly wallSlideSpeed: number;
+    readonly wallJumpOut: number;
+    readonly wallJumpUp: number;
+    readonly wallJumpLock: number;
+    readonly dashSpeed: number;
+    readonly dashTicks: number;
+    readonly dashRest: number;
+    readonly airDashes: number;
+}
+```
+
+### `moveNumbers` (function)
+
+```ts
+function moveNumbers(tuning: TuningFile | undefined): MoveNumbers;
+```
+
+### `Moves` (const)
+
+```ts
+const Moves: ComponentDef<typeof movesFields>;
+```
+
+### `movesPlugin` (function)
+
+```ts
+function movesPlugin(options: {
+    readonly gravity: {
+        readonly x: number;
+        readonly y: number;
+    };
+}): PluginDef;
+```
+
+### `MoveState` (interface)
+
+```ts
+interface MoveState {
+    face: number;
+    stood: boolean;
+    grace: number;
+    press: number;
+    rising: boolean;
+    airJumps: number;
+    sliding: boolean;
+    lock: number;
+    lockDir: number;
+    dash: number;
+    dashDir: number;
+    rest: number;
+    airDashes: number;
+    walking: boolean;
+    mode: number;
+    run: number;
+}
+```
+
 ### `MusicCue` (interface)
 
 ```ts
@@ -5898,6 +6472,12 @@ type MusicPart = TonePart | DrumPart;
 
 ```ts
 const MusicSchema: z.ZodType<MusicFile, MusicFile>;
+```
+
+### `nextLevel` (function)
+
+```ts
+function nextLevel(project: Project, level: string): string | undefined;
 ```
 
 ### `NoiseVoice` (interface)
@@ -6100,6 +6680,7 @@ interface PhysicsOptions {
         readonly y: number;
     };
     readonly joints?: boolean;
+    readonly touching?: boolean;
 }
 ```
 
@@ -6174,6 +6755,17 @@ function playersIn(sim: Sim): number[];
 function playersOrder(own: Language | undefined, shipped: readonly Language[]): readonly Language[];
 ```
 
+### `playHint` (function)
+
+```ts
+function playHint(options: {
+    readonly device: DeviceKind;
+    readonly first: (action: string) => string | undefined;
+    readonly dash: boolean;
+    readonly words: Words;
+}): string;
+```
+
 ### `playReplay` (function)
 
 ```ts
@@ -6240,6 +6832,10 @@ interface Project {
     readonly hero: string;
     readonly players?: number | undefined;
     readonly source?: Language | undefined;
+    readonly levels?: readonly string[] | undefined;
+    readonly done?: string | undefined;
+    readonly warnings?: readonly string[] | undefined;
+    readonly splash?: string | undefined;
     readonly content: readonly ContentRef[];
 }
 ```
@@ -7091,6 +7687,12 @@ const spritesPlugin: PluginDef;
 const START_LEAD = 2;
 ```
 
+### `STEEP` (const)
+
+```ts
+const STEEP = 0.7;
+```
+
 ### `StepResult` (interface)
 
 ```ts
@@ -7167,6 +7769,17 @@ interface SystemSpec {
 function tan(x: number): number;
 ```
 
+### `teachHint` (function)
+
+```ts
+function teachHint(options: {
+    readonly move: 'double-jump' | 'wall-jump' | 'dash';
+    readonly device: DeviceKind;
+    readonly first: (action: string) => string | undefined;
+    readonly words: Words;
+}): string;
+```
+
 ### `TestHost` (interface)
 
 ```ts
@@ -7176,6 +7789,10 @@ interface TestHost extends Host {
     hide(): void;
     readonly opened: readonly string[];
     readonly quits: number;
+    readonly buzzes: readonly {
+        readonly strength: number;
+        readonly ms: number;
+    }[];
 }
 ```
 
@@ -7195,6 +7812,7 @@ interface TestHostOptions {
     readonly deviceLanguages?: readonly string[];
     readonly canQuit?: boolean;
     readonly blockLinks?: boolean;
+    readonly canBuzz?: boolean;
 }
 ```
 
@@ -7354,10 +7972,22 @@ interface Touch {
 }
 ```
 
+### `TOUCH_SLOP` (const)
+
+```ts
+const TOUCH_SLOP = 0.02;
+```
+
 ### `touchEvent` (function)
 
 ```ts
 function touchEvent(kind: string, what: 'touched' | 'left' | 'taken'): EventDef<z.ZodType<Touch>>;
+```
+
+### `Touching` (const)
+
+```ts
+const Touching: ComponentDef<typeof touchingFields>;
 ```
 
 ### `touchKinds` (function)
@@ -7470,6 +8100,12 @@ function unreadWords(content: GameContent, marks: ReadMarks | undefined): readon
 
 ```ts
 function usesJoints(content: GameContent): boolean;
+```
+
+### `usesMoves` (function)
+
+```ts
+function usesMoves(content: GameContent): boolean;
 ```
 
 ### `usesSprites` (function)

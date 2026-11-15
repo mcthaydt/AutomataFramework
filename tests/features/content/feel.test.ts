@@ -19,16 +19,22 @@ const sparkFreeze = () => ({
   on: 'spark.taken',
   freeze: { ticks: 4 },
 })
+const landBuzz = () => ({
+  format: 1 as const,
+  id: 'land-buzz',
+  on: 'hero.landed',
+  buzz: { strength: 0.3, ticks: 4 },
+})
 const file = 'content/feels/land-dust.json'
 const said = (value: unknown): string[] => problemsOf('feel', value, file)
 
 test('each effect reads, and writes back to the same bytes twice', () => {
-  for (const feel of [landDust(), crateShake(), sparkFreeze()]) expectRoundTrip('feel', feel)
+  for (const feel of [landDust(), crateShake(), sparkFreeze(), landBuzz()]) expectRoundTrip('feel', feel)
 })
 
 test('a feel that does nothing', () =>
   expect(said({ format: 1, id: 'land-dust', on: 'hero.landed' })).toEqual([
-    `${file}: Say what happens: add "dust", "shake" or "freeze".`,
+    `${file}: Say what happens: add "dust", "shake", "freeze" or "buzz".`,
   ]))
 
 test('no file can shake more than a tile or hold still for more than half a second', () => {
@@ -65,4 +71,21 @@ test('a missing field says what to write', () =>
 test('an unknown key', () =>
   expect(said({ ...landDust(), loud: true })).toEqual([
     `${file}: loud: This is not something a feel has. Remove it or check the spelling.`,
+  ]))
+
+test('a feel with only a buzz reads', () => expect(said(landBuzz())).toEqual([]))
+
+test('a buzz is held between nothing and full strength, and for half a second at most', () => {
+  expect(said({ ...landBuzz(), buzz: { strength: 0, ticks: 4 } })).toEqual([])
+  expect(said({ ...landBuzz(), buzz: { strength: 1.5, ticks: 4 } })).toEqual([
+    `${file}: buzz.strength: This must be 1 or less.`,
+  ])
+  expect(said({ ...landBuzz(), buzz: { strength: 0.3, ticks: 31 } })).toEqual([
+    `${file}: buzz.ticks: This must be 30 or less.`,
+  ])
+})
+
+test('a missing buzz number says what to write', () =>
+  expect(said({ ...landBuzz(), buzz: { ticks: 4 } })).toEqual([
+    `${file}: buzz.strength: This is missing. Write how strong the buzz is, from 0 to 1, like 0.3.`,
   ]))
