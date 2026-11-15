@@ -2,7 +2,9 @@
 // to jump." at a keyboard, "The stick to move. The bottom button to jump." on a gamepad. A touch screen says nothing
 // here: the thumbs carry their own hints. Pure functions of words, so a test needs no page.
 import type { Words } from '../../lib/message.ts'
-import type { DeviceKind } from '../input/input.ts'
+
+/** The devices a player can use: the input feature's `DeviceKind`, said again here so headless needs no page. */
+type DeviceKind = 'keyboard' | 'touch' | 'gamepad'
 
 /** The words of the keys and gamepad inputs that have some of their own. Anything else says itself. */
 const INPUT_WORDS: Readonly<Record<string, string>> = {

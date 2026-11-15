@@ -38,26 +38,27 @@ const ONE: readonly (readonly [number, Held])[] = [
   // A dash along the floor.
   [585, [R, D]],
   [586, [R]],
-  // A jump at the pit's edge, an air dash over it, and the walk on to the shaft, in at the doorway, to the far wall.
-  [649, [R, J]],
-  [650, [R]],
-  [663, [R, D]],
-  [664, [R]],
-  // At the far wall: a jump, the slide down it, then three wall jumps, one off each wall in turn.
-  [810, [R, J]],
-  [811, [R]],
-  [845, [L, J]],
-  [846, [L]],
-  [868, [R, J]],
-  [869, [R]],
-  [891, [L, J]],
-  [892, [L]],
+  // A held jump from a few tiles before the pit (it carries nearly five tiles), the air dash at the top of it, and the
+  // walk on through the doorway to the far wall.
+  [683, [R, J]],
+  [706, [R, D]],
+  [707, [R]],
+  // At the far wall: a jump held to the top, the slide down it, then three wall jumps, one off each wall in turn. Each
+  // flight takes about thirty ticks, so the next wall jump comes a few ticks after the hero meets the other wall.
+  [900, [R, J]],
+  [925, [R]],
+  [935, [L, J]],
+  [936, [L]],
+  [972, [R, J]],
+  [973, [R]],
+  [1008, [L, J]],
+  [1009, [L]],
   // Let go and stand still.
-  [925, []],
+  [1050, []],
 ]
 
 /** How long the moves run lasts, in ticks. */
-export const MOVES_TICKS = 1000
+export const MOVES_TICKS = 1100
 
 /** The commands for `tick` in the moves run: player 1 in level 1. */
 export function movesScript(tick: number): Command[] {

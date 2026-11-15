@@ -139,7 +139,7 @@ describe('touching', () => {
     expect(falling.length).toBeGreaterThan(10)
     expect(falling.filter((s) => s.below !== false).map((s) => [s.x, s.y])).toEqual([])
     expect(seen.filter((s) => s.right).length).toBeGreaterThan(10) // not vacuous: it leaned on the wall
-    expect(seen.at(-1), 'where it ended').toMatchObject({ below: true })
+    expect(seen.at(-1), `where it ended: ${JSON.stringify(seen.slice(-6))}`).toMatchObject({ below: true })
     sim.dispose()
   })
 
