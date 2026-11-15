@@ -2,7 +2,8 @@
 // focus walked to a button with the pad, and a walk to the door by any of the three. Each acts on a `Drive`, and nothing
 // here calls the flow: a journey does only what a person could.
 import { expect } from 'vitest'
-import type { PadInput } from '#src/features/commands/commands.ts'
+import { type PadInput, Player } from '#src/features/commands/commands.ts'
+import { Transform } from '#src/features/physics/physics.ts'
 import type { Drive } from './drive.ts'
 
 /** One tick of the game, in ms. */
@@ -67,6 +68,8 @@ export function untilOver(drive: Drive): void {
 
 /** Walks the hero to the door with a thumb on the Right button. */
 export function walkByThumb(drive: Drive): void {
+  // The level has been on the page for a frame: a touch that was there from the start does not begin it.
+  drive.frames.advance(TICK)
   const up = thumbDown(drive, 'Right')
   untilOver(drive)
   up()
@@ -74,6 +77,8 @@ export function walkByThumb(drive: Drive): void {
 
 /** Walks the hero to the door with the pad's d-pad. */
 export function walkByPad(drive: Drive, index = 0): void {
+  // The level has been on the page for a frame: a button that was down from the start does not begin it.
+  drive.frames.advance(TICK)
   drive.pads.press('dpad-right', index)
   untilOver(drive)
   drive.pads.release('dpad-right', index)
@@ -84,4 +89,42 @@ export function walkByKey(drive: Drive, code = 'ArrowRight'): void {
   drive.key('keydown', code)
   untilOver(drive)
   drive.key('keyup', code)
+}
+
+/** What a person's hands do on the level: hold a control down, and let it go with the function that comes back. */
+export interface Hands {
+  down(control: 'Left' | 'Right' | 'Jump'): () => void
+}
+
+/** Hands on the keys: the arrows and Space. */
+export const keyHands = (drive: Drive): Hands => ({
+  down(control) {
+    const code = control === 'Left' ? 'ArrowLeft' : control === 'Right' ? 'ArrowRight' : 'Space'
+    drive.key('keydown', code)
+    return () => drive.key('keyup', code)
+  },
+})
+
+/** Hands on the touch buttons: a thumb for each control, each its own finger. */
+export const thumbHands = (drive: Drive): Hands => ({
+  down: (control) => thumbDown(drive, control, control === 'Left' ? 1 : control === 'Right' ? 2 : 3),
+})
+
+/**
+ * Plays `level-pit` to its door as a person would: runs right, jumps near the edge of the gap with the run still held, flies
+ * over it, lands on the far floor and keeps running to the door. Reads where the hero is, as a person looks at the screen.
+ */
+export function crossThePit(drive: Drive, hands: Hands): void {
+  const heroX = (): number => drive.flow()?.game()?.sim.query(Player)[0]?.get(Transform).x ?? Number.NaN
+  const step = (): void => drive.frames.advance(TICK)
+  // The level has been on the page for a frame: a press that was there from the start does not begin it.
+  step()
+  const right = hands.down('Right')
+  // The floor ends at 6: a jump from 5.9 still has the floor under it and clears the four tiles of gap.
+  for (let tick = 0; tick < WALK_LIMIT && drive.step() === 'playing' && heroX() < 5.9; tick++) step()
+  const jump = hands.down('Jump')
+  step()
+  jump()
+  untilOver(drive)
+  right()
 }

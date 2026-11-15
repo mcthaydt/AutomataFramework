@@ -5,7 +5,7 @@
 import { type Frames, pageFrames } from '../../lib/frames.ts'
 import type { GameAudio } from '../audio/audio.ts'
 import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
-import { moveNumbersOf } from '../content/content.ts'
+import { moveNumbersOf, scoreRef } from '../content/content.ts'
 import type { Host } from '../host/host.ts'
 import {
   type Claim,
@@ -26,6 +26,7 @@ import { resolveControls } from './controls.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
+import { watchFirstPress } from './press.ts'
 import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
 export { resolveControls } from './controls.ts'
@@ -79,6 +80,12 @@ export interface GameOptions extends GameSimOptions {
    * for a tap in it, and all of them change when the player picks another.
    */
   readonly locale: Locale
+  /**
+   * The sim does not step until the first press that begins after the game is shown: a `keydown` that is not a repeat, a
+   * gamepad button that was up and goes down, or a `pointerdown`. What was already held when the level appeared never
+   * counts. Nothing is silenced once it starts. Default: the game starts at once.
+   */
+  readonly waitForPress?: boolean
 }
 
 /** One step of the game, as `onStep` tells it: the tick the sim is at after it, and the events it raised in order. */
@@ -100,6 +107,13 @@ export interface Game {
   /** Holds the game still until `resume`. The game is also still while the host says it is not on screen. */
   pause(): void
   resume(): void
+  /**
+   * The project's score now (`score = "hero.score.sparks"` in automata.toml), or `undefined` when the game names none,
+   * the resource or the field is not there, or what is there is not a number. After `stop` it is `undefined`.
+   */
+  score(): number | undefined
+  /** True from the start until the first press, in a game made with `waitForPress`; always false in any other. */
+  waiting(): boolean
   /** True between `pause()` and `resume()`: a game still because its page is off screen is not paused by hand. */
   paused(): boolean
   /**
@@ -233,9 +247,18 @@ export async function startGame(options: GameOptions): Promise<Game> {
       tickHz: sim.tickHz,
       on: touchSettingsOf(options.touchSettings).vibration,
     })
+    // A level that waits does not step until the first press; the time spent waiting is never owed.
+    const first =
+      options.waitForPress === true
+        ? watchFirstPress({
+            mount,
+            ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
+          })
+        : undefined
     const loop = createLoop({
       tickHz: sim.tickHz,
       step() {
+        if (first !== undefined && !first.pressed()) return
         const tick = sim.tick
         const tune: Command[] = waiting === undefined ? [] : [tuneCommand(tick, sequence.next(0), waiting)]
         waiting = undefined
@@ -247,7 +270,10 @@ export async function startGame(options: GameOptions): Promise<Game> {
         people.afterStep()
         for (const listener of [...stepListeners]) listener({ tick: result.tick, events: result.events })
       },
-      draw: (alpha) => renderer.draw(alpha),
+      draw(alpha) {
+        first?.frame()
+        renderer.draw(alpha)
+      },
       frames,
       onError(error) {
         broke = { error }
@@ -301,6 +327,15 @@ export async function startGame(options: GameOptions): Promise<Game> {
         unsilence = undefined
         sync()
       },
+      score() {
+        const named = scoreRef(options.content.project)
+        if (named === undefined || stopped) return undefined
+        const resource = sim.read(named.resource)
+        if (typeof resource !== 'object' || resource === null) return undefined
+        const value = (resource as Record<string, unknown>)[named.field]
+        return typeof value === 'number' && Number.isFinite(value) ? value : undefined
+      },
+      waiting: () => first !== undefined && !first.pressed(),
       paused: () => pausedByHand,
       onStep(listener) {
         stepListeners.add(listener)
@@ -327,6 +362,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         // A game that broke cannot be hashed again, so it keeps no play: `replay()` then says what broke.
         if (broke === undefined) kept = recorder.replay()
         loop.stop()
+        first?.stop()
         unlisten()
         removeNotice?.()
         cleanup()
