@@ -189,8 +189,8 @@ const heroY = (page: Page): Promise<number> =>
 const sparksTaken = (page: Page): Promise<number> =>
   page.evaluate(
     () =>
-      (window as unknown as PageWindow).automataGame?.sim.describeSnapshot().resources['hero.score']?.sparks ??
-      Number.NaN,
+      (window as unknown as PageWindow).automataGame?.sim.describeSnapshot().resources['hero.score']
+        ?.sparks ?? Number.NaN,
   )
 const tickOf = (page: Page): Promise<number> =>
   page.evaluate(() => (window as unknown as PageWindow).automataGame?.sim.tick ?? -1)

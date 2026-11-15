@@ -280,8 +280,10 @@ export function createThumbs(
 
   const insetListeners = new Set<(px: number) => void>()
   const inset = (): number => (visible && shape === 'band' ? root.offsetHeight : 0)
-  const room = (): number =>
-    visible && shape === 'over' ? (mount.clientHeight >= TALL_PX ? HINTS_ROOM_PX : ROOM_OVER_PX) : 0
+  const room = (): number => {
+    if (!visible || shape !== 'over') return 0
+    return mount.clientHeight >= TALL_PX ? HINTS_ROOM_PX : ROOM_OVER_PX
+  }
 
   const heldByButtons = (): Set<string> =>
     new Set([...fingers].filter(([id]) => !masked.has(id)).map(([, action]) => action))
@@ -364,7 +366,8 @@ export function createThumbs(
     dashHint.textContent = said('automata.thumbs.dash-hint') ?? ''
     // A chip with no words in it (a game with no words) is not drawn.
     dashHint.style.display = shownNow.dash && dashHint.textContent !== '' ? 'block' : 'none'
-    for (const text of [hints.walk.words, hints.jump.words]) text.style.display = text.textContent === '' ? 'none' : ''
+    for (const text of [hints.walk.words, hints.jump.words])
+      text.style.display = text.textContent === '' ? 'none' : ''
   }
 
   const label = (): void => {

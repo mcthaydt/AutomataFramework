@@ -231,7 +231,10 @@ test('the dash hint stays after three walks and goes after three flicks', () => 
   make({
     dash: true,
     now: () => clock,
-    words: said({ 'automata.thumbs.walk-hint': 'Slide to walk', 'automata.thumbs.dash-hint': 'Flick to dash' }),
+    words: said({
+      'automata.thumbs.walk-hint': 'Slide to walk',
+      'automata.thumbs.dash-hint': 'Flick to dash',
+    }),
   })
   for (let i = 0; i < 3; i++) {
     clock += 1000
