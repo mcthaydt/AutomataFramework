@@ -83,6 +83,7 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
     const sections = context.sections()
     const { input, release } = inputForScreen()
     const audio = context.audio()
+    const members = context.party().members()
     const screen = context.makers.settings({
       ...context.base(),
       locale: context.locale(),
@@ -93,7 +94,7 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
       canBuzz: context.host.canBuzz,
       coarse: coarse(),
       ...(sections.settings.problem === undefined ? {} : { problem: sections.settings.problem }),
-      sharing: context.party().members().some((member) => member.claim === 'keyboard'),
+      sharing: members.some((member) => member.claim === 'keyboard'),
       onBack: context.back,
     })
     return {
@@ -157,8 +158,14 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
     const join = (claim: Claim): void => {
       // A running game says yes or no for itself, in the player's words; the party follows it.
       const answer = context.game()?.addPlayer(claim)
-      if (answer !== undefined && !answer.ok) return again(answer.message)
-      if (party.join(claim) === undefined) return again(sentence(claim))
+      if (answer !== undefined && !answer.ok) {
+        again(answer.message)
+        return
+      }
+      if (party.join(claim) === undefined) {
+        again(sentence(claim))
+        return
+      }
       again()
     }
     const made = context.makers.players({

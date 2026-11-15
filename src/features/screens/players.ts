@@ -41,14 +41,18 @@ export function playersScreen(
   },
 ): Screen {
   const { players, canShare, refused, onJoin, onDone } = options
-  const screen = show(Part, { ...options, name: 'players', onBack: onDone }, (words): PlayersProps => ({
-    title: words('automata.players.title'),
-    lines: players.map((player) => words('automata.players.in', { player })),
-    hints: [words('automata.players.pad'), ...(canShare ? [words('automata.players.keyboard')] : [])],
-    ...(refused === undefined ? {} : { refused }),
-    done: words('automata.players.done'),
-    ondone: onDone,
-  }))
+  const screen = show(
+    Part,
+    { ...options, name: 'players', onBack: onDone },
+    (words): PlayersProps => ({
+      title: words('automata.players.title'),
+      lines: players.map((player) => words('automata.players.in', { player })),
+      hints: [words('automata.players.pad'), ...(canShare ? [words('automata.players.keyboard')] : [])],
+      ...(refused === undefined ? {} : { refused }),
+      done: words('automata.players.done'),
+      ondone: onDone,
+    }),
+  )
   const stopInvite = options.invite((pad) => onJoin(`pad-${pad}` as Claim))
   // Heard before the button that has the focus, which would press it.
   const onKey = (event: KeyboardEvent): void => {

@@ -130,9 +130,9 @@ test('storage refuses: Play still plays, the done screen says progress was not k
   await drive.shown('playing')
   drive.flow()?.finishLevel()
   await drive.shown('done')
-  await expect.poll(() => drive.mount.querySelector('[role="status"]')?.textContent).toBe(
-    es('automata.done.not-kept'),
-  )
+  await expect
+    .poll(() => drive.mount.querySelector('[role="status"]')?.textContent)
+    .toBe(es('automata.done.not-kept'))
   await drive.wait(es('automata.done.menu'))
   await drive.press(es('automata.done.menu'))
   await drive.shown('menu')
