@@ -82,8 +82,8 @@ export {
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'
-export { type ListedFile, listContent } from './project-write.ts'
 export { type ContentRef, PROJECT_FILE, type Project, ProjectSchema, parseProject } from './project.ts'
+export { type ListedFile, listContent } from './project-write.ts'
 export {
   emptyReadMarks,
   markRead,

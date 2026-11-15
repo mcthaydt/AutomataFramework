@@ -1,5 +1,11 @@
 import { expect, test } from 'vitest'
-import { CONTENT_TYPES, formatDiagnostic, listContent, PROJECT_FILE, parseProject } from '#src/features/content/content.ts'
+import {
+  CONTENT_TYPES,
+  formatDiagnostic,
+  listContent,
+  PROJECT_FILE,
+  parseProject,
+} from '#src/features/content/content.ts'
 import automata from '../../../template/automata.toml?raw'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
