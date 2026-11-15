@@ -6,7 +6,7 @@ import { page } from 'vitest/browser'
 import { menuKeys } from '#src/features/ui/ui.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
-import { focusOn, keyboard } from '../../fixtures/ui/keys.ts'
+import { keyboard } from '../../fixtures/ui/keys.ts'
 import { Sheet } from '../../fixtures/ui/sheet.ts'
 
 const FRAME = 1000 / 60
@@ -123,7 +123,7 @@ test('Escape goes back, and the arrow keys walk', async () => {
 test('left and right on a slider change it and do not walk', () => {
   open()
   const slider = target.querySelector<HTMLElement>('[role="slider"]') as HTMLElement
-  await focusOn(slider)
+  slider.focus()
   tap('dpad-right')
   expect(document.activeElement).toBe(slider)
   expect(log).toEqual(['change:0.55', 'release:0.55'])
