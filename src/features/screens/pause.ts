@@ -21,6 +21,8 @@ export type PauseButton = {
 /** What the pause screen draws. */
 export type PauseProps = {
   readonly title: string
+  /** The level's goal, under the title, when the game has words for it. */
+  readonly goal?: string
   readonly buttons: readonly PauseButton[]
   /** The question before leaving, while it is asked. */
   readonly asking?: {
@@ -60,6 +62,8 @@ export function pauseScreen(
     readonly items: readonly PauseItem[]
     /** Players who can be taken out (never player 1). */
     readonly removable: readonly number[]
+    /** The level's goal in the player's words, shown under "Paused" when the game has one. */
+    readonly goal?: () => string | undefined
     readonly onPick: (item: PauseItem) => void
     readonly onRemove: (player: number) => void
   },
@@ -103,8 +107,10 @@ export function pauseScreen(
           }
         }
       }
+      const goal = options.goal?.()
       return {
         title: words('automata.pause.title'),
+        ...(goal === undefined ? {} : { goal }),
         buttons,
         ...(asking === undefined
           ? {}

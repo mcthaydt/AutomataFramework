@@ -67,6 +67,8 @@ export function untilOver(drive: Drive): void {
 
 /** Walks the hero to the door with a thumb on the Right button. */
 export function walkByThumb(drive: Drive): void {
+  // The level has been on the page for a frame: a touch that was there from the start does not begin it.
+  drive.frames.advance(TICK)
   const up = thumbDown(drive, 'Right')
   untilOver(drive)
   up()
@@ -74,6 +76,8 @@ export function walkByThumb(drive: Drive): void {
 
 /** Walks the hero to the door with the pad's d-pad. */
 export function walkByPad(drive: Drive, index = 0): void {
+  // The level has been on the page for a frame: a button that was down from the start does not begin it.
+  drive.frames.advance(TICK)
   drive.pads.press('dpad-right', index)
   untilOver(drive)
   drive.pads.release('dpad-right', index)

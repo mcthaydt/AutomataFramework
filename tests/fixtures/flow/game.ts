@@ -22,18 +22,24 @@ const WORDS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     'level.level-1.name': 'Level One',
     'level.level-2.name': 'Level Two',
     'level.level-pit.name': 'The Pit',
+    'level.level-1.goal': 'Reach the door.',
+    'level.level-pit.goal': 'Jump the gap and reach the door.',
   },
   es: {
     'warning.flashing': 'Luces que parpadean.',
     'level.level-1.name': 'Nivel Uno',
     'level.level-2.name': 'Nivel Dos',
     'level.level-pit.name': 'El Pozo',
+    'level.level-1.goal': 'Llega a la puerta.',
+    'level.level-pit.goal': 'Salta el hueco y llega a la puerta.',
   },
   ko: {
     'warning.flashing': '깜박이는 빛.',
     'level.level-1.name': '레벨 하나',
     'level.level-2.name': '레벨 둘',
     'level.level-pit.name': '구덩이',
+    'level.level-1.goal': '문까지 가세요.',
+    'level.level-pit.goal': '구덩이를 뛰어넘어 문까지 가세요.',
   },
 }
 

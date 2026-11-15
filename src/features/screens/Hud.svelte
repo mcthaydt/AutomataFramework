@@ -6,7 +6,7 @@
   import { Button } from '../ui/ui.ts'
   import type { HudProps } from './hud.ts'
 
-  let { pause, side, onpause, watching, register }: HudProps = $props()
+  let { pause, side, onpause, card, watching, register }: HudProps = $props()
 
   let boxes: readonly HeroBox[] = $state([])
   // The screen's owner says where the heroes are, now and after each frame; asked for once, here.
@@ -29,6 +29,12 @@
   <div class="pause" data-side={side}>
     <Button label={pause} icon="pause" iconOnly kind="primary" onpress={onpause} />
   </div>
+  {#if card !== undefined}
+    <div class="card" role="status">
+      {#if card.goal !== undefined}<p>{card.goal}</p>{/if}
+      {#if card.hint !== undefined && card.hint !== ''}<p class="hint">{card.hint}</p>{/if}
+    </div>
+  {/if}
   {#each boxes as box (box.player)}
     <span class="number" aria-hidden="true" style:left="{box.x + box.w / 2}px" style:top="{box.y}px">{box.player}</span>
   {/each}
@@ -47,6 +53,31 @@
   }
   .pause[data-side='right'] {
     right: calc(12px + env(safe-area-inset-right));
+  }
+  /* The goal and what to press: at the top between the corners, never in the way of a touch. */
+  .card {
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top));
+    left: 50%;
+    box-sizing: border-box;
+    width: max-content;
+    max-width: calc(100% - 144px);
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    border-radius: var(--automata-ui-radius, 12px);
+    background: var(--automata-ui-background, canvas);
+    color: var(--automata-ui-color, inherit);
+    font: var(--automata-ui-font, 600 18px/1.3 system-ui, sans-serif);
+    font-size: 18px;
+    text-align: center;
+    pointer-events: none;
+  }
+  .card p {
+    margin: 0;
+  }
+  .card .hint {
+    margin-top: 4px;
+    opacity: 0.85;
   }
   .number {
     position: absolute;

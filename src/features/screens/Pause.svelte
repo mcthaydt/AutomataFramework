@@ -4,10 +4,11 @@
   import { Button, Dialog, List, ScreenFrame } from '../ui/ui.ts'
   import type { PauseProps } from './pause.ts'
 
-  let { title, buttons, asking }: PauseProps = $props()
+  let { title, goal, buttons, asking }: PauseProps = $props()
 </script>
 
 <ScreenFrame {title} scrim>
+  {#if goal !== undefined}<p class="goal">{goal}</p>{/if}
   <List label={title}>
     {#each buttons as button, at (button.id)}
       <Button
@@ -22,3 +23,11 @@
 {#if asking !== undefined}
   <Dialog title={asking.title} yes={asking.yes} no={asking.no} danger onyes={asking.onyes} onno={asking.onno} />
 {/if}
+
+<style>
+  .goal {
+    margin: 0 0 12px;
+    font-size: 20px;
+    line-height: 1.4;
+  }
+</style>

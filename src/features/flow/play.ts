@@ -6,7 +6,7 @@ import type { GameAudio } from '../audio/audio.ts'
 import type { GameContent } from '../content/content.ts'
 import { type Game, startGame } from '../game/game.ts'
 import type { Host } from '../host/host.ts'
-import type { Locale } from '../locale/locale.ts'
+import { type Locale, levelGoal, playHint } from '../locale/locale.ts'
 import { hud, type PauseItem, type Screen, type ScreenBase, type ScreenMakers } from '../screens/screens.ts'
 import { levelEnd } from './loading.ts'
 import type { Party } from './party.ts'
@@ -17,6 +17,9 @@ import type { FlowEvent } from './steps.ts'
 import type { FlowOptions } from './types.ts'
 
 /** What a level on the page needs from the visit around it. */
+/** How long the card stays after the first press, in ms on the page's frames. */
+const CARD_MS = 3000
+
 export interface PlayDeps {
   readonly options: Pick<FlowOptions, 'plugins' | 'controls' | 'readPicture' | 'gamepads'>
   readonly mount: HTMLElement
@@ -68,6 +71,11 @@ export function createPlay(deps: PlayDeps): Play {
   let overlay: ReturnType<typeof hud> | undefined
   let overlayFrame: number | undefined
   let letGoOfGame = (): void => {}
+  // The level on show, the frame that began each wait or ended it, and the latest frame: the card is up until three
+  // seconds after the first press, counted on `frames` so a test moves it by hand.
+  let current = ''
+  let freedAt: number | undefined
+  let now = 0
 
   const dropOverlay = (): void => {
     if (overlayFrame !== undefined) frames.cancel(overlayFrame)
@@ -80,8 +88,28 @@ export function createPlay(deps: PlayDeps): Play {
     letGoOfGame()
     letGoOfGame = (): void => {}
     dropOverlay()
+    delete mount.dataset.waiting
     game?.stop()
     game = undefined
+  }
+
+  /** The level's goal in the player's words, when the game has one. */
+  const goalOf = (): string | undefined => levelGoal(deps.locale().words, current)
+
+  /** What the card says now, or nothing once it is time for it to go. */
+  function cardOf(running: Game): { goal?: string; hint?: string } | undefined {
+    if (freedAt !== undefined && now - freedAt >= CARD_MS) return undefined
+    const words = deps.locale().words
+    const hero = deps.content().characters[deps.content().project.hero]
+    const goal = goalOf()
+    const hint = playHint({
+      device: running.input.device(1),
+      first: (action) => running.input.inputsFor(1, action)[0],
+      dash: hero?.moves?.dash === true,
+      words,
+    })
+    if (goal === undefined && hint === '') return undefined
+    return { ...(goal === undefined ? {} : { goal }), ...(hint === '' ? {} : { hint }) }
   }
 
   /** The hero's pause button and numbers, drawn again after each frame. */
@@ -93,8 +121,15 @@ export function createPlay(deps: PlayDeps): Play {
       jumpSide: () => (running.input.swapSides() ? 'left' : 'right'),
       onPause: () => deps.dispatch({ type: 'pause' }),
       heroes: () => running.heroes(),
+      card: () => cardOf(running),
     })
-    const draw = (): void => {
+    const draw = (ms: number): void => {
+      now = ms
+      if (running.waiting()) mount.dataset.waiting = ''
+      else {
+        freedAt ??= ms
+        delete mount.dataset.waiting
+      }
       overlay?.draw()
       overlayFrame = frames.request(draw)
     }
@@ -112,6 +147,7 @@ export function createPlay(deps: PlayDeps): Play {
       makers.pause({
         ...deps.base(),
         items,
+        goal: goalOf,
         removable: members.filter((member) => member.player !== 1).map((member) => member.player),
         onPick: (item) => {
           if (item === 'resume') deps.dispatch({ type: 'resume' })
@@ -133,6 +169,8 @@ export function createPlay(deps: PlayDeps): Play {
     const loaded = deps.content()
     const heard = deps.locale()
     stop()
+    current = level
+    freedAt = undefined
     deps.dropScreen()
     if (deps.places.progress() === undefined) {
       // A visitor who took over a watching game plays what the menu's first action would have opened: the newest saved
@@ -150,6 +188,7 @@ export function createPlay(deps: PlayDeps): Play {
         locale: heard,
         frames,
         level,
+        waitForPress: true,
         players: (deps.party()?.members() ?? [{ player: 1 }]).map((member) => member.player),
         ...(options.plugins === undefined ? {} : { plugins: options.plugins }),
         ...(options.controls === undefined ? {} : { controls: options.controls }),
