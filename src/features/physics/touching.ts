@@ -11,7 +11,16 @@ export interface FeltContact {
   readonly dist: number
   /** True when the other collider has a dynamic body: a crate, another hero. */
   readonly moves: boolean
+  /**
+   * Which bottom or top corner of the body all the contact's points are in, if they all are: -1 the left one, 1 the right
+   * one, 0 for any other contact (and for a body that is not a box). A body sliding down a wall made of stacked boxes
+   * catches the seam between two of them, and the contact that makes is at the corner and nowhere else.
+   */
+  readonly corner?: -1 | 0 | 1
 }
+
+/** A contact whose points are all this close, in tiles, to a corner of the body is a corner contact. */
+export const CORNER = 0.03
 
 /** A contact farther than this, in tiles, is a near miss and not a touch. */
 export const TOUCH_SLOP = 0.02
@@ -32,15 +41,19 @@ export interface Felt {
  * a crate and never leans on one.
  */
 export function felt(contacts: readonly FeltContact[]): Felt {
-  let below = false
   let left = false
   let right = false
   for (const c of contacts) {
-    if (c.dist > TOUCH_SLOP) continue
-    if (c.ny <= -STEEP) below = true
-    if (c.moves) continue
+    if (c.dist > TOUCH_SLOP || c.moves) continue
     if (c.nx >= STEEP) left = true
     if (c.nx <= -STEEP) right = true
+  }
+  let below = false
+  for (const c of contacts) {
+    if (c.dist > TOUCH_SLOP || c.ny > -STEEP) continue
+    // Only a corner of the body on the seam of a wall it leans on is not ground: the seam is inside the wall.
+    if ((c.corner === -1 && left) || (c.corner === 1 && right)) continue
+    below = true
   }
   return { below, left, right }
 }

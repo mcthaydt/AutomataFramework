@@ -30,6 +30,7 @@ import { createKeyboard } from './keyboard.ts'
 import { createMenu, type MenuPress } from './menu.ts'
 import { createPads, type ListedPad } from './pads.ts'
 import { type Claim as ClaimType, type Seat, seatsFor } from './seats.ts'
+import { createThumbs } from './thumbs.ts'
 import { createTouch } from './touch.ts'
 import { createUse, type DeviceKind } from './use.ts'
 
@@ -67,6 +68,8 @@ export interface InputOptions {
   readonly controls: Controls
   /** Saved bindings, as `settings()` gave them. Anything that does not fit the game is dropped, never thrown. */
   readonly settings?: unknown
+  /** Set for a game with a built-in hero: the two-thumb scheme (`thumbs.ts`), not a button for each action. */
+  readonly thumbs?: { readonly dash: boolean }
   /** Only for tests: stands in for `navigator.getGamepads`. */
   readonly gamepads?: () => readonly (PadLike | null)[]
   /** Default: the page's animation frames. Pads are read every frame, so menus work while the game is paused. */
@@ -86,6 +89,11 @@ export interface Input {
   poll(tick: number): Command[]
   /** How many CSS pixels the touch buttons take from the bottom of the mount: 0 while they are hidden. */
   inset(): number
+  /** Walking on the right thumb and jumping on the left, or back. The buttons swap their corners. */
+  setSwapSides(on: boolean): void
+  swapSides(): boolean
+  /** How many pixels at the bottom the camera should keep the heroes clear of: the thumbs' resting corners. */
+  thumbRoom(): number
   /** Calls `listener` with the new room whenever the buttons show, hide or change size. Stops on `destroy`. */
   onInset(listener: (px: number) => void): void
   /**
@@ -155,7 +163,10 @@ export function createInput(options: InputOptions): Input {
   let controls = applied.controls
   const bindingListeners = new Set<(settings: InputSettings) => void>()
   const keyboard = createKeyboard(() => boundKeys(controls))
-  const touch = createTouch(mount, controls, { words: options.words })
+  const touch = options.thumbs
+    ? createThumbs(mount, controls, { dash: options.thumbs.dash, words: options.words })
+    : createTouch(mount, controls, { words: options.words })
+  let swappedSides = false
   // The words a refusal is said in: the ones the input was given, and each new set `relabel` is given.
   let words = options.words
   const pads = createPads(options.gamepads)
@@ -255,7 +266,7 @@ export function createInput(options: InputOptions): Input {
   const api: Input = {
     poll(tick) {
       if (destroyed) return []
-      const down = { keys: keyboard.down(), touch: touch.held(), pads: pads.read() }
+      const down = { keys: keyboard.down(), touch: touch.drain(), pads: pads.read() }
       // The seats and what each seat holds come from the same look at the pads.
       const listed = pads.last()
       const now = seats(listed)
@@ -274,6 +285,12 @@ export function createInput(options: InputOptions): Input {
     },
     inset: touch.inset,
     onInset: touch.onInset,
+    setSwapSides(on) {
+      swappedSides = on
+      touch.setSwapped(on)
+    },
+    swapSides: () => swappedSides,
+    thumbRoom: touch.room,
     relabel(next) {
       words = next
       touch.relabel(next)

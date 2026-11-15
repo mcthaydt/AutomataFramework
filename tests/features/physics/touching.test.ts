@@ -3,7 +3,13 @@ import { felt, STEEP, TOUCH_SLOP } from '#src/features/physics/touching.ts'
 
 // The rule alone, on contacts as the adapter reports them: the normal points from the other collider toward the body,
 // and y points down, so a floor under the body has a normal of (0, -1).
-const contact = (nx: number, ny: number, dist = 0, moves = false) => ({ nx, ny, dist, moves })
+const contact = (nx: number, ny: number, dist = 0, moves = false, corner?: -1 | 0 | 1) => ({
+  nx,
+  ny,
+  dist,
+  moves,
+  ...(corner === undefined ? {} : { corner }),
+})
 /** The normal of a surface that rises at `degrees`, seen from above: tilted from straight up. */
 const slope = (degrees: number) => {
   const a = (degrees * Math.PI) / 180
@@ -41,6 +47,15 @@ describe('felt', () => {
 
   test('a corner in a floor and a wall is both', () =>
     expect(felt([contact(0, -1), contact(-1, 0)])).toEqual({ below: true, left: false, right: true }))
+
+  test('a corner on the seam of the wall it leans on is not ground, but a corner on a plain ledge is', () => {
+    // A hero on the left of a wall's right face is at the wall's right: the wall pushes it right, so it is `left`.
+    expect(felt([contact(1, 0), contact(0, -1, 0, false, -1)])).toEqual({ ...none, left: true })
+    expect(felt([contact(-1, 0), contact(0, -1, 0, false, 1)])).toEqual({ ...none, right: true })
+    expect(felt([contact(0, -1, 0, false, -1)])).toEqual({ ...none, below: true })
+    // The other corner is another thing: a floor under the far side is still ground beside a wall.
+    expect(felt([contact(1, 0), contact(0, -1, 0, false, 1)])).toEqual({ ...none, left: true, below: true })
+  })
 
   test('a ceiling is nothing', () => expect(felt([contact(0, 1)])).toEqual(none))
 

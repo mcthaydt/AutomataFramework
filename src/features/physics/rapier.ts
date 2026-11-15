@@ -10,7 +10,7 @@ import { CollisionEnded, CollisionStarted } from './events.ts'
 import { BodyKind, JointKind, ShapeKind } from './kinds.ts'
 import type { PhysicsAdapter } from './physics-world.ts'
 import { loadRapier } from './rapier-wasm.ts'
-import type { FeltContact } from './touching.ts'
+import { CORNER, type FeltContact } from './touching.ts'
 
 type World = RAPIER.World
 
@@ -257,7 +257,10 @@ export async function createRapier(setup: {
     contactsOf(world, handle) {
       const found: FeltContact[] = []
       const narrow = world.narrowPhase
-      if (world.getCollider(handle).isSensor()) return found
+      const mine = world.getCollider(handle)
+      if (mine.isSensor()) return found
+      // Only a box has corners.
+      const half = mine.shapeType() === (ShapeKind.cuboid as number) ? (mine.halfExtents() as RAPIER.Vector).x : undefined
       // Collected first: the manifolds are read after the enumeration has finished, never inside it.
       const others: number[] = []
       narrow.contactPairsWith(handle, (other) => {
@@ -275,7 +278,24 @@ export async function createRapier(setup: {
           // The manifold's normal runs from its first shape to its second; `flipped` says the first is `other`. This
           // is the other way round: from the other collider toward this one.
           const n = manifold.normal()
-          found.push({ nx: flipped ? n.x : -n.x, ny: flipped ? n.y : -n.y, dist, moves })
+          // Where the points are on this body: in its own frame, which is the second shape's when `flipped`.
+          let corner: -1 | 0 | 1 = 0
+          if (half !== undefined) {
+            let low = true
+            let high = true
+            for (let i = 0; i < points; i++) {
+              const p = flipped ? manifold.localContactPoint2(i) : manifold.localContactPoint1(i)
+              if (p === null || p === undefined) {
+                low = false
+                high = false
+                break
+              }
+              if (p.x > CORNER - half) low = false
+              if (p.x < half - CORNER) high = false
+            }
+            corner = low ? -1 : high ? 1 : 0
+          }
+          found.push({ nx: flipped ? n.x : -n.x, ny: flipped ? n.y : -n.y, dist, moves, corner })
         })
       }
       return found

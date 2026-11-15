@@ -25,6 +25,7 @@ import { resolveControls } from './controls.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
+import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
 export { type Frames, MAX_STEPS_PER_FRAME } from './loop.ts'
 export { type OnlineGame, type OnlineOptions, startOnlineGame } from './online.ts'
@@ -144,12 +145,14 @@ export async function startGame(options: GameOptions): Promise<Game> {
     }
     // One count of command numbers for the input's `controls` and the game's `join` and `leave`.
     const sequence = createSequence()
+    const thumbs = thumbsOf(options.content)
     const input = createInput({
       mount,
       controls,
       frames,
       sequence,
       words: locale.words,
+      ...(thumbs === undefined ? {} : { thumbs }),
       ...(options.settings === undefined ? {} : { settings: options.settings }),
       ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
     })
@@ -161,9 +164,9 @@ export async function startGame(options: GameOptions): Promise<Game> {
       renderer.destroy()
       sim.dispose()
     }
-    // The touch buttons take the bottom of the screen; the level is fitted above them, so a thumb never hides it.
-    renderer.setInset(input.inset())
-    input.onInset((px) => renderer.setInset(px))
+    // The touch controls take the bottom of the screen; the level is fitted above them, so a thumb never hides it.
+    input.setSwapSides(touchSettingsOf(options.touchSettings).swapSides)
+    wireTouchRoom(input, renderer, level.view !== undefined)
     input.setPlayers(options.players ?? [1])
     const levelId = options.level ?? options.content.project.start
     // The level and the players are written into the recording, so `automata replay` can set the same game up.

@@ -25,6 +25,7 @@ import { resolveControls } from './controls.ts'
 import type { GameOptions } from './game.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
+import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
 export interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
   /** A `ws://` or `wss://` address. */
@@ -201,11 +202,13 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       renderer.destroy()
       leaveRoom()
     }
+    const thumbs = thumbsOf(simOptions.content)
     const input = createInput({
       mount,
       controls,
       frames,
       words: locale.words,
+      ...(thumbs === undefined ? {} : { thumbs }),
       ...(settings === undefined ? {} : { settings }),
       ...(gamepads === undefined ? {} : { gamepads }),
     })
@@ -217,8 +220,8 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       renderer.destroy()
       leaveRoom()
     }
-    renderer.setInset(input.inset())
-    input.onInset((px) => renderer.setInset(px))
+    input.setSwapSides(touchSettingsOf(touchSettings).swapSides)
+    wireTouchRoom(input, renderer, levelData.view !== undefined)
     // This page plays one player. The room's other players' hands are theirs, and arrive in the room's ticks.
     input.setPlayers([seat])
 
