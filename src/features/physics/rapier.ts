@@ -23,14 +23,37 @@ const COLLISION_TYPES =
   RAPIER.ActiveCollisionTypes.KINEMATIC_FIXED |
   RAPIER.ActiveCollisionTypes.KINEMATIC_KINEMATIC
 
+/** How far above a ledge's top the lowest point of something may be, in metres, and still stand on it. */
+const LEDGE_SLOP = 0.05
+
+/** The three corners of a slope's triangle about its box's centre: its two bottom corners and its high one. */
+function slopeCorners(hx: number, hy: number, rises: 1 | -1): [number, number][] {
+  return [
+    [-hx, hy],
+    [hx, hy],
+    [rises === 1 ? hx : -hx, -hy],
+  ]
+}
+
 function colliderDesc(entity: EntityRef): RAPIER.ColliderDesc {
   const c = entity.get(Collider)
-  const desc =
-    c.shape === ShapeKind.ball
-      ? RAPIER.ColliderDesc.ball(c.hx)
-      : c.shape === ShapeKind.cuboid
-        ? RAPIER.ColliderDesc.cuboid(c.hx, c.hy)
-        : RAPIER.ColliderDesc.capsule(c.hy, c.hx)
+  let desc: RAPIER.ColliderDesc | null
+  if (c.shape === ShapeKind.ball) desc = RAPIER.ColliderDesc.ball(c.hx)
+  else if (c.shape === ShapeKind.cuboid || c.shape === ShapeKind.ledge)
+    desc = RAPIER.ColliderDesc.cuboid(c.hx, c.hy)
+  else if (c.shape === ShapeKind.capsule) desc = RAPIER.ColliderDesc.capsule(c.hy, c.hx)
+  else {
+    desc = RAPIER.ColliderDesc.convexHull(
+      new Float32Array(slopeCorners(c.hx, c.hy, c.shape === ShapeKind.slopeUp ? 1 : -1).flat()),
+    )
+    // Never a silent box: a triangle Rapier cannot make a shape of is the author's to see.
+    if (desc === null)
+      throw new Error(
+        `entity ${entity.sid}: physics.collider is a slope ${c.hx * 2} by ${c.hy * 2} that Rapier cannot shape`,
+      )
+  }
+  // A ledge is told about every contact it makes, so `passes` can say whether it holds what touches it.
+  if (c.shape === ShapeKind.ledge) desc.setActiveHooks(RAPIER.ActiveHooks.FILTER_CONTACT_PAIRS)
   return desc
     .setSensor(c.sensor)
     .setCollisionGroups(c.groups)
@@ -38,6 +61,39 @@ function colliderDesc(entity: EntityRef): RAPIER.ColliderDesc {
     .setRestitution(c.restitution)
     .setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS)
     .setActiveCollisionTypes(COLLISION_TYPES)
+}
+
+/** True when the collider carries the flag that makes Rapier ask about each of its contacts: a ledge. */
+const isLedge = (collider: RAPIER.Collider): boolean =>
+  (collider.activeHooks() & RAPIER.ActiveHooks.FILTER_CONTACT_PAIRS) !== 0
+
+/** How far a collider reaches below its centre, in metres, upright; undefined for a shape this does not measure. */
+function reachBelow(collider: RAPIER.Collider): number | undefined {
+  switch (collider.shapeType()) {
+    case RAPIER.ShapeType.Ball:
+      return collider.radius()
+    case RAPIER.ShapeType.Cuboid:
+      return (collider.halfExtents() as RAPIER.Vector).y
+    case RAPIER.ShapeType.Capsule:
+      return collider.halfHeight() + collider.radius()
+    default:
+      return undefined
+  }
+}
+
+/**
+ * Whether `ledge` holds `other` this step: only when `other` is not moving up and its lowest point is at or above the
+ * ledge's top (less `LEDGE_SLOP`). A thing rising through it, or standing below it, passes. The lowest point is read
+ * upright, so a turned box is judged by its upright one; a hero never turns, and slice 1 accepts that for the rest.
+ */
+function passes(world: World, ledge: RAPIER.Collider, other: RAPIER.Collider): boolean {
+  const parent = world.colliders.raw.coParent(other.handle)
+  const reach = reachBelow(other)
+  // Something this cannot judge (no body, a shape it does not measure) is held as any ground holds it.
+  if (parent === undefined || reach === undefined) return true
+  if (world.getRigidBody(parent).linvel().y < 0) return false
+  const top = ledge.translation().y - (ledge.halfExtents() as RAPIER.Vector).y
+  return other.translation().y + reach <= top + LEDGE_SLOP
 }
 
 export async function createRapier(setup: {
@@ -57,6 +113,20 @@ export async function createRapier(setup: {
   // case this misses is `fixedRotation` edited after the last sync-in and before the snapshot; that edit is then lost
   // for the restored sim until it is edited again.
   const rotationLocked = new Map<number, boolean>()
+  // The world being stepped, for the contact hook: Rapier hands it two collider handles and nothing else. The flag a
+  // ledge carries is in the world and its snapshot, so no handle is kept here and a restored world needs nothing.
+  let stepping: World | undefined
+  const hooks: RAPIER.PhysicsHooks = {
+    filterContactPair(first, second) {
+      if (stepping === undefined) return RAPIER.SolverFlags.COMPUTE_IMPULSE
+      const a = stepping.getCollider(first)
+      const b = stepping.getCollider(second)
+      const [ledge, other] = isLedge(a) ? [a, b] : [b, a]
+      if (!isLedge(ledge) || isLedge(other)) return RAPIER.SolverFlags.COMPUTE_IMPULSE
+      return passes(stepping, ledge, other) ? RAPIER.SolverFlags.COMPUTE_IMPULSE : RAPIER.SolverFlags.EMPTY
+    },
+    filterIntersectionPair: () => true,
+  }
   const adapter: PhysicsAdapter<World> = {
     Transform,
     RigidBody: Body,
@@ -73,7 +143,12 @@ export async function createRapier(setup: {
     restoreWorld: (bytes) => RAPIER.World.restoreSnapshot(bytes),
     takeSnapshot: (world) => world.takeSnapshot(),
     step(world, onCollision) {
-      world.step(queue)
+      stepping = world
+      try {
+        world.step(queue, hooks)
+      } finally {
+        stepping = undefined
+      }
       queue.drainCollisionEvents(onCollision)
     },
     free(world) {
@@ -202,12 +277,25 @@ export async function createRapier(setup: {
     colliderMatches(world, handle, entity) {
       const collider = world.getCollider(handle)
       const c = entity.get(Collider)
-      if (collider.shapeType() !== (c.shape as number)) return false
+      const slope = c.shape === ShapeKind.slopeUp || c.shape === ShapeKind.slopeDown
+      // Our slope and ledge codes are not Rapier's: a slope is a convex polygon, and a ledge a box that Rapier asks about.
+      const boxLike = c.shape === ShapeKind.ledge ? ShapeKind.cuboid : c.shape
+      const shape = slope ? RAPIER.ShapeType.ConvexPolygon : boxLike
+      if (collider.shapeType() !== (shape as number)) return false
+      if (isLedge(collider) !== (c.shape === ShapeKind.ledge)) return false
       let sizeMatches: boolean
       if (c.shape === ShapeKind.ball) sizeMatches = collider.radius() === c.hx
-      else if (c.shape === ShapeKind.cuboid) {
+      else if (c.shape === ShapeKind.cuboid || c.shape === ShapeKind.ledge) {
         const h = collider.halfExtents() as RAPIER.Vector
         sizeMatches = h.x === c.hx && h.y === c.hy
+      } else if (slope) {
+        // A hull may start at any of its corners, so the three are compared as a set.
+        const vertices = collider.vertices()
+        sizeMatches =
+          vertices.length === 6 &&
+          slopeCorners(c.hx, c.hy, c.shape === ShapeKind.slopeUp ? 1 : -1).every(([x, y]) =>
+            [0, 2, 4].some((i) => vertices[i] === x && vertices[i + 1] === y),
+          )
       } else sizeMatches = collider.radius() === c.hx && collider.halfHeight() === c.hy
       return (
         sizeMatches &&
@@ -270,7 +358,10 @@ export async function createRapier(setup: {
         others.push(other)
       })
       for (const other of others) {
-        if (world.getCollider(other).isSensor()) continue
+        const theirs = world.getCollider(other)
+        if (theirs.isSensor()) continue
+        // A ledge that lets this body pass makes no contact it stands on or leans on.
+        if (isLedge(theirs) && !passes(world, theirs, mine)) continue
         const parent = world.colliders.raw.coParent(other)
         // A wall is something that does not move, so a kinematic platform's side is not one: only a fixed body, or a
         // collider with no body at all, is. A body that moves (dynamic or kinematic) is still ground under a foot.
