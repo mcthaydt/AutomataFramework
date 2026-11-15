@@ -56,6 +56,7 @@ fetch an unrelated package of that name from npm.
 | `automata play` | Plays the game in your browser, and shows your changes as you make them. |
 | `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
 | `automata art` | Paints the game's pictures from its figure and backdrop files. |
+| `automata add` | Lists a new content file in the game's `automata.toml`. |
 | `automata words` | Lists the translated words nobody has read, and marks them read. |
 | `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
@@ -722,6 +723,29 @@ and names the command to run.
 - `--json`: print the answer as JSON: `ok`, the `painted` paths and the `problems` (each a `file`, a `path` and a
   `message`). A game that does not load is not painted, and says so in `sentence`.
 
+### automata add
+
+`automata add [folder] --type <kind> --path <file>` lists a content file you have just written in the game's
+`automata.toml`, so it is part of the game: a file that is not listed there is not loaded. It adds one `[[content]]`
+block at the end and leaves every other byte of the file as it was, comments and line ends included. The file must be
+there and must read as that kind, or nothing is written and its problems are printed. A file that is already listed is
+left alone and said to be. After a figure or a backdrop it says to run `automata art`. It exits `0` when the file is
+listed or was already, `1` when the file does not read as its kind and `2` when it could not do its work (no such
+file, a kind or a path the project refuses, a folder that is not a game).
+
+```sh
+npx --no automata add --type figure --path content/figures/keeper.json --about "The keeper's picture."
+```
+
+- `--type <kind>`: what kind of file it is, like `figure`, `level` or `character`.
+- `--path <file>`: where it is, from the game's folder, like `content/figures/keeper.json`.
+- `--about <words>`: one line of words to write above the block in `automata.toml`, as a `#` comment.
+- `--json`: print the answer as JSON: `ok`, `listed` (false when it was already listed) and the `problems` (each a
+  `file`, a `path` and a `message`).
+
+From code, `listContent(text, { type, path }, about?)` does the same to the text of an `automata.toml` and gives the new
+text, or the problems; the command and the editors both use it.
+
 ### automata words
 
 `automata words [folder]` lists the translated words no native speaker has read yet. A translation made by a machine is
@@ -778,6 +802,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 | `check` | `folder`, `only?`, `fix?` | `automata check <folder> --json` |
 | `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
 | `art` | `folder`, `check?` | `automata art <folder> --json` |
+| `add` | `folder`, `type`, `path`, `about?` | `automata add <folder> --type <type> --path <path> --json` |
 | `words` | `folder`, `read?`, `keys?` | `automata words <folder> --json`, and `--read <read> <keys>` when `read` is given |
 | `content_types` | none | the table of content kinds above |
 | `schema` | `type` | reading `schemas/<type>.schema.json` |
@@ -791,7 +816,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
 and `automata://skills/<name>`.
 
-The server never loads a game's rules itself. `create`, `check`, `replay`, `art` and `words` each run the command in a process of their
+The server never loads a game's rules itself. `create`, `check`, `replay`, `art`, `add` and `words` each run the command in a process of their
 own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
 keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
 goes to standard error, never into the messages.

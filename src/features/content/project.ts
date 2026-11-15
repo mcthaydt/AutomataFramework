@@ -50,7 +50,8 @@ export interface Project {
   readonly content: readonly ContentRef[]
 }
 
-const PATH_HINT = 'Use a path inside the game, like content/levels/level-1.json.'
+/** What to say for a path that does not stay inside the game. */
+export const PATH_HINT = 'Use a path inside the game, like content/levels/level-1.json.'
 
 /** Every kind in the table: `z.enum` wants a non-empty list, and the table always has rows. */
 const KINDS = Object.keys(CONTENT_TYPES) as [ContentType, ...ContentType[]]

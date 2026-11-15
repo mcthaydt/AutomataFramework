@@ -16,6 +16,7 @@ const ROOT_HELP = `automata: make a game, check it, play it.
   automata play            Play this game in your browser.
   automata replay          Play this game's recordings and check they end where they did.
   automata art             Paint this game's pictures from its figure and backdrop files.
+  automata add             List a new content file in this game's automata.toml.
   automata words           List the translated words nobody has read, and mark them read.
   automata mcp             Let an agent use these commands (an MCP server).
 

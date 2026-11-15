@@ -9,6 +9,7 @@ export const ROOT_HELP = `automata: make a game, check it, play it.
   automata play            Play this game in your browser.
   automata replay          Play this game's recordings and check they end where they did.
   automata art             Paint this game's pictures from its figure and backdrop files.
+  automata add             List a new content file in this game's automata.toml.
   automata words           List the translated words nobody has read, and mark them read.
   automata mcp             Let an agent use these commands (an MCP server).
 
@@ -64,6 +65,17 @@ change a figure or a backdrop; it paints only what is missing or old.
   --check   Paint nothing: say which pictures are missing or old, and exit 1 if any is.
   --json    Print the answer as JSON, for an agent or another tool.`
 
+const ADD_HELP = `automata add [folder] --type <kind> --path <file>
+
+Lists a content file you have just written in this game's automata.toml, so it is part of the game. The file must be
+there and must read as that kind. Everything else in automata.toml stays exactly as it was. A file that is already
+listed is left alone.
+
+  --type <kind>    What kind of file it is, like figure, level or character.
+  --path <file>    Where it is, from the game's folder, like content/figures/keeper.json.
+  --about <words>  One line of words to write above it in automata.toml.
+  --json           Print the answer as JSON, for an agent or another tool.`
+
 const WORDS_HELP = `automata words [folder]
 
 Lists the translated words no native speaker has read yet, each beside the game's own text. A translation made by
@@ -84,6 +96,7 @@ const HELP: Readonly<Record<CommandName | 'root', string>> = {
   check: CHECK_HELP,
   replay: REPLAY_HELP,
   art: ART_HELP,
+  add: ADD_HELP,
   words: WORDS_HELP,
   create: CREATE_HELP,
   play: PLAY_HELP,

@@ -38,6 +38,7 @@ test('tools/list has these tools, each with a description and an object schema',
     'check',
     'replay',
     'art',
+    'add',
     'words',
     'content_types',
     'schema',
@@ -59,7 +60,7 @@ test('tools/list has these tools, each with a description and an object schema',
 test('every tool has a command of the same name, or a file or a session the table names', () => {
   const tools = mcpTools(createSessions()).map((tool) => tool.name)
   const commands = tools.filter((name) => (COMMAND_NAMES as readonly string[]).includes(name))
-  expect(commands).toEqual(['create', 'check', 'replay', 'art', 'words'])
+  expect(commands).toEqual(['create', 'check', 'replay', 'art', 'add', 'words'])
   expect(tools.filter((name) => !commands.includes(name))).toEqual([
     'content_types',
     'schema',
@@ -129,6 +130,35 @@ test('words hands the command its folder, the language to mark and the words, an
     isError: true,
     text: 'keys needs read: name the language whose words these are.',
   })
+})
+
+test('add hands the command its folder, its kind and its path, and the note when there is one', async () => {
+  const asked: (readonly string[])[] = []
+  const memory = gameMemory()
+  const spy = Layer.succeed(Runner, {
+    command: (args) =>
+      Effect.sync(() => {
+        asked.push(args)
+        return { code: 0, json: { ok: true, listed: true, problems: [] } }
+      }),
+    worker: () => Effect.die('a worker was not asked for'),
+  })
+  const replies = await talk(Layer.merge(memory.layer, spy), [
+    call(1, 'add', { folder: 'game', type: 'figure', path: 'content/figures/keeper.json' }),
+    call(2, 'add', {
+      folder: 'game',
+      type: 'figure',
+      path: 'content/figures/keeper.json',
+      about: 'The keeper.',
+    }),
+  ])
+  expect(asked).toEqual([
+    ['add', 'game', '--type', 'figure', '--path', 'content/figures/keeper.json'],
+    ['add', 'game', '--type', 'figure', '--path', 'content/figures/keeper.json', '--about', 'The keeper.'],
+  ])
+  expect(replies.map((reply) => JSON.parse(answerOf(reply).text))).toEqual(
+    Array(2).fill({ ok: true, listed: true, problems: [] }),
+  )
 })
 
 test('the live runner adds --json and starts the package’s own cli in a child process', () => {

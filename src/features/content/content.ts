@@ -105,6 +105,7 @@ export {
   ProjectSchema,
   parseProject,
 } from './project.ts'
+export { type ListedFile, listContent } from './project-write.ts'
 export {
   emptyReadMarks,
   markRead,
