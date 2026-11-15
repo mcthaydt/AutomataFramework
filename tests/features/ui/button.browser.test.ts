@@ -1,4 +1,4 @@
-import { mount, unmount } from 'svelte'
+import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { Button, type ButtonProps, UI_PROPERTIES } from '#src/features/ui/ui.ts'
@@ -25,6 +25,7 @@ function drop(): void {
 /** A button on the page: `props` over a label and a press that does nothing. */
 function put(props: Partial<ButtonProps> = {}): HTMLButtonElement {
   part = mount(Button, { target, props: { label: 'Play', onpress: () => {}, ...props } })
+  flushSync()
   const found = target.querySelector('button')
   if (found === null) throw new Error('The button is not on the page.')
   return found
