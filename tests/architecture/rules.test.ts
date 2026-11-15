@@ -349,3 +349,36 @@ test('the list of languages, the format 1 marks, the page tag and a comment may 
   const words = "// never 'en'\nimport en from './library/en.json'\nconst L = { en: held(en) }"
   expect(rules('src/features/locale/words.ts', words)).not.toContain('no-default-language')
 })
+
+// Plan F: the feel runtime. `feel` is pure and sits between `server` and `render`: it hears events and gives plain
+// data back, and `render` draws what it says.
+test('feel may import content, sim and level, and render may import feel', () => {
+  const imports = ['content/content', 'sim/sim', 'level/level'].map((f) => `import '../${f}.ts'`)
+  expect(one({ 'src/features/feel/feel.ts': imports.join('\n') })).toEqual([])
+  expect(one({ 'src/features/render/render.ts': "import '../feel/feel.ts'" })).toEqual([])
+})
+
+test('feel may not import render, and the sim side may not import feel', () => {
+  expect(one({ 'src/features/feel/feel.ts': "import '../render/render.ts'" })).toEqual(['imports-go-down'])
+  expect(one({ 'src/features/level/level.ts': "import '../feel/feel.ts'" })).toEqual(['imports-go-down'])
+})
+
+test.each(['Date.now()', 'new Date()', 'setTimeout(() => {}, 1)'])('feel may not read a clock: %s', (call) =>
+  expect(one({ 'src/features/feel/feel.ts': `const x = ${call}` })).toEqual(['sim-is-pure']),
+)
+
+test('feel may not call Math.random', () =>
+  expect(one({ 'src/features/feel/feel.ts': 'const x = Math.random()' })).toEqual([
+    'painter-math',
+    'sim-is-pure',
+  ]))
+
+// An engine may round these its own way, and the frames of a feel are a golden in four engines (audit M6).
+test.each(['sin', 'cos', 'pow', 'atan2', 'hypot'])('feel may not use Math.%s', (name) =>
+  expect(one({ 'src/features/feel/feel.ts': `const x = Math.${name}(1, 2)` })).toEqual(['painter-math']),
+)
+
+test('feel may use the exact Math functions the plan lists', () => {
+  const text = 'const x = Math.floor(1.5) + Math.ceil(1.5) + Math.abs(-1) + Math.min(1, 2) + Math.imul(3, 4)'
+  expect(one({ 'src/features/feel/feel.ts': text })).toEqual([])
+})

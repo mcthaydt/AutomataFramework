@@ -12,6 +12,7 @@ export const LAYERS = [
   'content',
   'level',
   'server',
+  'feel',
   'render',
   'input',
   'audio',
@@ -37,17 +38,29 @@ const MAX_LINES = 600
  * The features that must run the same on every machine: no clock, no randomness, no I/O.
  * `audio` is one of them although it is not the sim: its only clock is its speaker's, so a test moves time by hand and
  * the cue log cannot depend on when anything ran.
+ * `feel` is one of them although it draws nothing itself: its only clock is the frame times it is handed, so the same
+ * events and frame times give the same frames in every engine.
  * `net` is one of them although `colyseus-link.ts` talks to a socket: that file's only I/O is the SDK it loads on
  * demand, and it reads no clock, so nothing here can change what a sim computes.
  */
-const PURE_FEATURES: ReadonlySet<string> = new Set(['sim', 'physics', 'commands', 'net', 'level', 'audio'])
+const PURE_FEATURES: ReadonlySet<string> = new Set([
+  'sim',
+  'physics',
+  'commands',
+  'net',
+  'level',
+  'feel',
+  'audio',
+])
 /**
  * The painter's files: they turn a figure or a backdrop into the bytes of a picture, and those bytes must be the same in
  * Node and in every browser, so they use whole-number work, `Math.floor`, `Math.round`, `Math.abs`, `Math.min`,
  * `Math.max` and `dmath`'s `sin` and `cos`, and no other `Math` function whose last bit an engine may choose. `content`
- * is not one of the pure features, so these files are also held to their list (no clock, no I/O) by name.
+ * is not one of the pure features, so these files are also held to their list (no clock, no I/O) by name. Every file
+ * of `feel` is held to the same `Math` list: its frames are a golden in four engines.
  */
-const PAINTER_FILES = /^src\/features\/content\/(?:paint-[^/]+|pixels|sheet|art)\.ts$|^src\/lib\/png\.ts$/
+const PAINTER_FILES =
+  /^src\/features\/content\/(?:paint-[^/]+|pixels|sheet|art)\.ts$|^src\/lib\/png\.ts$|^src\/features\/feel\//
 const PAINTER_MATH = /\bMath\.(sin|cos|tan|atan2|atan|pow|exp|log|hypot|random)\b/g
 /** Features that need a page (a DOM, a canvas): the headless entry may not reach them. */
 const PAGE_FEATURES: ReadonlySet<string> = new Set(['render', 'input', 'web', 'game'])

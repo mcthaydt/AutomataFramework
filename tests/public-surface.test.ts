@@ -109,6 +109,10 @@ test('headless exports what a game sim and an editor need', async () => {
     'hertzOf',
     'SoundSettingsSchema',
     'SOUND_SETTINGS_DEFAULT',
+    // What a game feels like (plan F).
+    'FeelSettingsSchema',
+    'feelSettingsFirst',
+    'feelSettingsOf',
     'MAX_SAME',
     'MAX_SOUNDS',
     'LOG_MAX',
