@@ -1,3 +1,3 @@
 {
-  "cueLog": ""
+  "cueLog": "[{\"do\":\"music\",\"from\":\"page\",\"id\":\"meadow\",\"on\":\"level.started\",\"tick\":0},{\"do\":\"sound\",\"from\":\"sim\",\"id\":\"theme\",\"on\":\"hero.jumped\",\"tick\":11},{\"do\":\"sound\",\"from\":\"sim\",\"id\":\"voice\",\"on\":\"hero.landed\",\"tick\":60},{\"do\":\"sound\",\"from\":\"sim\",\"id\":\"theme\",\"on\":\"hero.jumped\",\"tick\":121},{\"do\":\"sound\",\"from\":\"sim\",\"id\":\"voice\",\"on\":\"hero.landed\",\"tick\":170}]"
 }
