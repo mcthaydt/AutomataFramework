@@ -96,3 +96,12 @@ test('it can buzz, and says what it was asked; with canBuzz off it answers false
   expect(quiet.buzz(1, 20)).toBe(false)
   expect(quiet.buzzes).toEqual([])
 })
+
+test('awake follows keepAwake', () => {
+  const host = testHost()
+  expect(host.awake).toBe(false)
+  host.keepAwake(true)
+  expect(host.awake).toBe(true)
+  host.keepAwake(false)
+  expect(host.awake).toBe(false)
+})

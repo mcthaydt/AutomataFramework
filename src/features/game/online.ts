@@ -23,6 +23,7 @@ import { levelArt } from './art.ts'
 import { createBuzzer } from './buzz.ts'
 import { resolveControls } from './controls.ts'
 import type { GameOptions } from './game.ts'
+import { guardPlay } from './guard.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
@@ -259,10 +260,12 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     // While the page is out of sight the loop is still, and the room goes on without this player: so the hand lets go
     // first, or the hero would run on for everyone else. What is held on coming back waits for a fresh press.
     let unsilence: (() => void) | undefined
+    // The screen is kept lit exactly while the loop runs, as in `startGame`.
     const sync = (): void => {
       if (stopped) return
       if (host.visible()) loop.start()
       else loop.stop()
+      host.keepAwake(host.visible())
     }
     const unlisten = host.onVisibility((visible) => {
       if (stopped) return
@@ -284,6 +287,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       if (wait === undefined) {
         setStatus({ state: 'ended', problem: 'lost' })
         loop.stop()
+        host.keepAwake(false)
         return
       }
       attempt++
@@ -322,6 +326,8 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
             ...(typeof noticeOption === 'string' ? { words: noticeOption } : {}),
           })
         : undefined
+    // Last of all, like the notice: the browser's own zoom, selection, menus and pull are kept off the game.
+    const unguard = guardPlay(mount)
     sync()
     return {
       sim: session.sim,
@@ -337,6 +343,8 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
         loop.stop()
         unlisten()
         unsilence?.()
+        host.keepAwake(false)
+        unguard()
         removeNotice?.()
         cleanup()
       },
