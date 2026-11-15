@@ -15,7 +15,7 @@ import {
   type PadLike,
   touchSettingsOf,
 } from '../input/input.ts'
-import { createGameSim, type GameSimOptions, levelSize, skyOf, tuneCommand } from '../level/level.ts'
+import { createGameSim, type GameSimOptions, skyOf, tuneCommand, worldSize } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Command, Sim } from '../sim/sim.ts'
@@ -142,8 +142,8 @@ export async function startGame(options: GameOptions): Promise<Game> {
     }
     const renderer = await createRenderer({
       mount,
-      world: levelSize(level),
-      sky: skyOf(level),
+      world: worldSize(options.content, level),
+      sky: skyOf(options.content, level),
       art,
       view: level.view,
     })
