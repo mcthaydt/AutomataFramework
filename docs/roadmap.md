@@ -83,9 +83,9 @@ whole gate.
 
 1. Done: the first rounds of mockups, the check against professional tools, the harsh reviews of the shell and World,
    what World takes from LDtk, the Apple Pencil review, the plain-words audit, the design pass, the end-to-end check
-   and the second visual look (Editors #49, #51, #52, #57).
-2. **Now: the editor mockup, the shell and World's levels, until the owner says they are fine** (Editors #57, with the
-   owner reviewing).
+   and the second visual look (Editors #49, #51, #52, #57, closed and carried on in #64).
+2. **Now: the editor mockup, the shell and World's levels, until the owner says they are fine** (Editors #64, which
+   replaced #57, with the owner reviewing).
 3. Next: build in Automata what the levels editor needs. Level pictures on save, so an agent can see a level; a public
    list of format changes; what a placed thing may hold (values and links); the world map of levels, which needs the
    owner's 8 answers first (the closed #149, last commit `c449fca`, has them), and now lets levels join edge to edge
