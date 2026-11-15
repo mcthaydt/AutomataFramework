@@ -5,9 +5,10 @@ import type { GameAudio } from '../audio/audio.ts'
 import type { GameContent } from '../content/content.ts'
 import { type Game, resolveControls } from '../game/game.ts'
 import type { Host } from '../host/host.ts'
-import { type Controls, createInput, type Input, type PadLike } from '../input/input.ts'
+import { type Claim, type Controls, createInput, type Input, type PadLike } from '../input/input.ts'
 import type { Locale } from '../locale/locale.ts'
 import type { Screen, ScreenBase, ScreenMakers } from '../screens/screens.ts'
+import type { Party } from './party.ts'
 import type { Places } from './places.ts'
 import type { Progress } from './progress.ts'
 import type { Sections } from './sections.ts'
@@ -26,8 +27,8 @@ export interface OverContext {
   readonly frames: Frames
   readonly controls: Controls | undefined
   readonly gamepads: (() => readonly (PadLike | null)[]) | undefined
-  /** Two people share the keyboard. */
-  readonly sharing: () => boolean
+  /** Who is playing. */
+  readonly party: () => Party
   /** The saved games. */
   readonly places: Places<Progress>
   /** Starts `level`: a saved game was opened, or a new one begun. */
@@ -45,52 +46,60 @@ const coarse = (): boolean => window.matchMedia('(pointer: coarse)').matches
 export function createOvers(context: OverContext): { open(over: Over): void; close(): void } {
   let shown: Screen | undefined
 
-  /** The settings: on the running game's own input from pause, on one made for the screen from the main menu. */
-  function settings(): Screen {
-    const { host, sections: settingsOf } = context
-    const sections = settingsOf()
-    const locale = context.locale()
+  /**
+   * The input a screen on top uses: the running game's own (from pause), else one made for the screen (from the main
+   * menu), with the party in it. The screen's own has no touch buttons to show: its mount is a box nobody sees.
+   */
+  function inputForScreen(): { readonly input: Input; readonly release: () => void } {
     const running = context.game()
-    let own: Input | undefined
-    let stopOwn = (): void => {}
-    if (running === undefined) {
-      // The screen's own input has no touch buttons to show: its mount is a box nobody sees.
-      const made = createInput({
-        mount: document.createElement('div'),
-        controls: resolveControls('startFlow', context.content(), context.controls),
-        frames: context.frames,
-        words: locale.words,
-        settings: sections.controls.get(),
-        ...(context.gamepads === undefined ? {} : { gamepads: context.gamepads }),
-      })
-      own = made
-      const stopSaving = made.onBindings((changed) => void sections.controls.set(changed))
-      const stopWords = locale.onChange(() => made.relabel(locale.words))
-      stopOwn = () => {
+    if (running !== undefined) return { input: running.input, release: () => {} }
+    const sections = context.sections()
+    const locale = context.locale()
+    const made = createInput({
+      mount: document.createElement('div'),
+      controls: resolveControls('startFlow', context.content(), context.controls),
+      frames: context.frames,
+      words: locale.words,
+      settings: sections.controls.get(),
+      ...(context.gamepads === undefined ? {} : { gamepads: context.gamepads }),
+    })
+    const members = context.party().members()
+    made.setPlayers(members.map((member) => member.player))
+    for (const { player, claim } of members) if (claim !== undefined) made.claim(player, claim)
+    const stopSaving = made.onBindings((changed) => void sections.controls.set(changed))
+    const stopWords = locale.onChange(() => made.relabel(locale.words))
+    return {
+      input: made,
+      release: () => {
         stopSaving()
         stopWords()
         made.destroy()
-      }
+      },
     }
-    const input = running?.input ?? (own as Input)
+  }
+
+  /** The settings, on the game's own input or one made for the screen. */
+  function settings(): Screen {
+    const sections = context.sections()
+    const { input, release } = inputForScreen()
     const audio = context.audio()
     const screen = context.makers.settings({
       ...context.base(),
-      locale,
+      locale: context.locale(),
       ...(audio === undefined || audio.silent ? {} : { audio, sound: sections.sound }),
       input,
       touch: sections.touch,
       onVibration: (on) => context.game()?.setVibration(on),
-      canBuzz: host.canBuzz,
+      canBuzz: context.host.canBuzz,
       coarse: coarse(),
       ...(sections.settings.problem === undefined ? {} : { problem: sections.settings.problem }),
-      sharing: context.sharing(),
+      sharing: context.party().members().some((member) => member.claim === 'keyboard'),
       onBack: context.back,
     })
     return {
       destroy() {
         screen.destroy()
-        stopOwn()
+        release()
       },
     }
   }
@@ -126,6 +135,49 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
     return made
   }
 
+  /** Add a player: a gamepad's button or Enter, then the screen says who is in; from pause the hero comes at once. */
+  function players(refused?: string): Screen {
+    const party = context.party()
+    const { input, release } = inputForScreen()
+    const words = context.locale().words
+    const keyboardIsFree = !party.members().some((member) => member.claim === 'keyboard')
+    const canShare = keyboardIsFree && Object.values(input.controls()).every((one) => one.shared !== undefined)
+    // The screen is drawn again with who is in now, unless the player has gone on to something else meanwhile.
+    const again = (said?: string): void => {
+      if (shown !== mine) return
+      shown?.destroy()
+      shown = players(said)
+    }
+    /** The sentence for a try that was refused. */
+    const sentence = (claim: Claim): string =>
+      party.members().length >= party.room
+        ? words('automata.join.full', { count: party.room })
+        : words(`automata.join.taken.${claim === 'keyboard' ? 'keyboard' : 'gamepad'}`)
+    const join = (claim: Claim): void => {
+      // A running game says yes or no for itself, in the player's words; the party follows it.
+      const answer = context.game()?.addPlayer(claim)
+      if (answer !== undefined && !answer.ok) return again(answer.message)
+      if (party.join(claim) === undefined) return again(sentence(claim))
+      again()
+    }
+    const made = context.makers.players({
+      ...context.base(),
+      players: party.members().map((member) => member.player),
+      canShare,
+      ...(refused === undefined ? {} : { refused }),
+      invite: input.invite,
+      onJoin: join,
+      onDone: context.back,
+    })
+    const mine: Screen = {
+      destroy() {
+        made.destroy()
+        release()
+      },
+    }
+    return mine
+  }
+
   const close = (): void => {
     shown?.destroy()
     shown = undefined
@@ -136,6 +188,7 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
       close()
       if (over === 'settings') shown = settings()
       else if (over === 'saves') shown = saves()
+      else shown = players()
     },
   }
 }

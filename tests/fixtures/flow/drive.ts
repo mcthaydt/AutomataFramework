@@ -54,16 +54,19 @@ export interface Drive {
   stop(): void
 }
 
+/** What a person is told a button says: its words, or, for a picture, the name it carries. */
+const nameOf = (b: HTMLElement): string =>
+  (b.textContent ?? '').trim() || (b.getAttribute('aria-label') ?? '')
+
 export function createDrive(game = 'flow-test'): Drive {
   let mount = document.createElement('div')
   let frames = manualFrames()
   let pads = fakeGamepads()
   let flow: Flow | undefined
 
-  const buttons = (): string[] =>
-    [...mount.querySelectorAll('button')].map((b) => (b.textContent ?? '').trim())
+  const buttons = (): string[] => [...mount.querySelectorAll('button')].map(nameOf)
   const button = (label: string): HTMLButtonElement => {
-    const found = [...mount.querySelectorAll('button')].find((b) => (b.textContent ?? '').trim() === label)
+    const found = [...mount.querySelectorAll('button')].find((b) => nameOf(b) === label)
     if (found === undefined) throw new Error(`No button says "${label}". They say: ${buttons().join(' | ')}`)
     return found
   }

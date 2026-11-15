@@ -55,13 +55,13 @@ export {
   controlsFromList,
 } from './controls.ts'
 export { heroControls } from './hero-controls.ts'
+export { buttonLabel } from './touch.ts'
 export {
   TOUCH_SETTINGS_DEFAULT,
   type TouchSettings,
   TouchSettingsSchema,
   touchSettingsOf,
 } from './touch-settings.ts'
-export { buttonLabel } from './touch.ts'
 
 /** What `createInput` takes. */
 export interface InputOptions {

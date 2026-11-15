@@ -7,6 +7,7 @@ import { openSections, type Sections } from '#src/features/flow/sections.ts'
 import { testHost } from '#src/features/host/host.ts'
 import { createInput, type Input } from '#src/features/input/input.ts'
 import { createLocale, frameworkWords, type Locale } from '#src/features/locale/locale.ts'
+import { settingsKey } from '#src/features/saves/define.ts'
 import { memoryStore } from '#src/features/saves/saves.ts'
 import { settingsScreen } from '#src/features/screens/settings.ts'
 import { flowGame } from '../../fixtures/flow/game.ts'
@@ -343,7 +344,7 @@ test('a game with no sound has no Sound part, and a browser that is waiting says
 })
 
 test('settings that could not be read say so once, at the top', async () => {
-  const store = memoryStore({ [`${GAME}:settings`]: '{ not json' })
+  const store = memoryStore({ [settingsKey(GAME)]: '{ not json' })
   await open({ host: testHost({ store }) })
   const notices = [...mount.querySelectorAll('[role="status"]')].map((one) => one.textContent)
   expect(notices).toEqual([es('automata.settings.lost')])

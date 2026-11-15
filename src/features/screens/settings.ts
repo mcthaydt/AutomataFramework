@@ -8,9 +8,9 @@ import type { Language } from '../content/content.ts'
 import type { BindingSlot, Input, TouchSettings } from '../input/input.ts'
 import { LANGUAGE_NAMES, LANGUAGE_TAGS, type Locale } from '../locale/locale.ts'
 import type { SaveProblem, SettingsHandle } from '../saves/saves.ts'
-import { type ControlRow, controlRows } from './settings-rows.ts'
 import SettingsPart from './Settings.svelte'
 import type { Screen, ScreenBase } from './screens.ts'
+import { type ControlRow, controlRows } from './settings-rows.ts'
 import { show } from './show.ts'
 
 /** One flag the player can choose. */

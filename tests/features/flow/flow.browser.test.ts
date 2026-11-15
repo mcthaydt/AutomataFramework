@@ -3,7 +3,7 @@
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { testSpeaker } from '#src/features/audio/audio.ts'
-import { loadGame } from '#src/features/content/content.ts'
+import { loadGame, writeContent } from '#src/features/content/content.ts'
 import { type Flow, startFlow } from '#src/features/flow/flow.ts'
 import { testHost } from '#src/features/host/host.ts'
 import { createLocale, frameworkWords } from '#src/features/locale/locale.ts'
@@ -72,13 +72,15 @@ const step = (): string => flow?.state().step ?? ''
 const shown = async (want: string): Promise<void> => {
   await expect.poll(() => mount.dataset.state, { timeout: 10_000 }).toBe(want)
 }
+/** What a person is told a button says: its words, or, for a picture, the name it carries. */
+const nameOf = (b: HTMLElement): string =>
+  (b.textContent ?? '').trim() || (b.getAttribute('aria-label') ?? '')
 const button = (label: string): HTMLButtonElement => {
-  const found = [...mount.querySelectorAll('button')].find((b) => (b.textContent ?? '').trim() === label)
+  const found = [...mount.querySelectorAll('button')].find((b) => nameOf(b) === label)
   if (found === undefined) throw new Error(`No button says "${label}". They say: ${buttonsText()}`)
   return found
 }
-const buttonsText = (): string =>
-  [...mount.querySelectorAll('button')].map((b) => (b.textContent ?? '').trim()).join(' | ')
+const buttonsText = (): string => [...mount.querySelectorAll('button')].map(nameOf).join(' | ')
 const press = (label: string): Promise<void> => userEvent.click(button(label))
 const wait = async (label: string): Promise<void> => {
   await expect.poll(() => buttonsText().split(' | ').includes(label), { timeout: 10_000 }).toBe(true)
@@ -395,15 +397,18 @@ test("a game's own screen in screens.menu is shown in place of the framework's",
 test("a game's own word for automata.menu.play wins over the framework's", async () => {
   const host = testHost()
   await returning(host, 'es')
-  const files = flowFiles({ noWarning: true })
-  const messages = JSON.parse(files['content/messages/es.json'] ?? '{}') as {
-    messages: Record<string, string>
+  // A word is said in every language the game has, as the check of its words asks.
+  const own = { en: 'Go', es: 'Vamos', ko: '시작' }
+  const replace: Record<string, string> = {}
+  for (const [language, word] of Object.entries(own)) {
+    const file = `content/messages/${language}.json`
+    const messages = JSON.parse(flowFiles({ noWarning: true })[file] ?? '{}') as {
+      messages: Record<string, string>
+    }
+    messages.messages['automata.menu.play'] = word
+    replace[file] = writeContent('messages', messages as never)
   }
-  messages.messages['automata.menu.play'] = 'Vamos'
-  await open({
-    host,
-    read: flowRead({ noWarning: true, replace: { 'content/messages/es.json': JSON.stringify(messages) } }),
-  })
+  await open({ host, read: flowRead({ noWarning: true, replace }) })
   await shown('splash')
   frames.at(0)
   run(SPLASH_MS + 200)

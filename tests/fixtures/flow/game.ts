@@ -35,17 +35,19 @@ export interface FlowGameOptions {
   readonly noWarning?: boolean
   /** A crate sits on the door from the start, so something that is not a hero touches it. */
   readonly crateOnDoor?: boolean
+  /** How many can play at once (2 to 4); a game for one, when left out. Each level has a start for each. */
+  readonly players?: number
   /** Files to replace, or `undefined` to make one missing. */
   readonly replace?: Readonly<Record<string, string | undefined>>
 }
 
-const level = (id: string, things: readonly object[]): string =>
+const level = (id: string, things: readonly object[], players = 1): string =>
   writeContent('level', {
     format: 1,
     id,
     tiles: [...Array.from({ length: 8 }, () => '.'.repeat(16)), '#'.repeat(16)],
     things,
-    starts: [{ player: 1, x: 2.5, y: 7.5 }],
+    starts: Array.from({ length: players }, (_, i) => ({ player: i + 1, x: 2.5 + i, y: 7.5 })),
   } as never)
 
 /** The files of the flow's game. */
@@ -55,8 +57,8 @@ export function flowFiles(options: FlowGameOptions = {}): Record<string, string 
   const things = options.crateOnDoor === true ? [door, crate] : [door]
   const files: Record<string, string | undefined> = {
     ...fixtureFiles,
-    'content/levels/level-1.json': level('level-1', things),
-    'content/levels/level-2.json': level('level-2', [door]),
+    'content/levels/level-1.json': level('level-1', things, options.players),
+    'content/levels/level-2.json': level('level-2', [door], options.players),
     'content/characters/door.json': writeContent('character', {
       format: 1,
       id: 'door',
@@ -87,6 +89,7 @@ export function flowFiles(options: FlowGameOptions = {}): Record<string, string 
     'source = "en"',
     'levels = ["level-1", "level-2"]',
     'done = "door.touched"',
+    ...(options.players === undefined ? [] : [`players = ${options.players}`]),
     ...(options.noWarning === true ? [] : ['warnings = ["warning.flashing"]']),
   ].join('\n')
   const own = (fixtureFiles['automata.toml'] ?? '').replace(

@@ -4,7 +4,7 @@
 import { pageFrames } from '../../lib/frames.ts'
 import { createAudio, type GameAudio, type Speaker } from '../audio/audio.ts'
 import { formatDiagnostic, type GameContent, loadGame, nextLevel, paintedPath } from '../content/content.ts'
-import { type Game, startGame, type Watch, watchReplay } from '../game/game.ts'
+import { type Game, startGame, type Watch } from '../game/game.ts'
 import { createLocale, type Locale, levelName, type Words } from '../locale/locale.ts'
 import { createSaves, type Saves, type StoreResult } from '../saves/saves.ts'
 import {
@@ -12,6 +12,7 @@ import {
   hud,
   type MenuItem,
   menuItems,
+  type PauseItem,
   type Screen,
   type ScreenBase,
   type ScreenMakers,
@@ -35,12 +36,6 @@ export type { Flow, FlowOptions } from './types.ts'
 
 /** What a developer is told to do about a game's files: English, since there are no words to say it in yet. */
 const FIX = 'Fix the file named above, then load this page again.'
-
-/**
- * Buttons whose screens come with later tasks of plan U (settings, saved games, add a player): they are not offered
- * until their screen exists, so no button on the menu does nothing.
- */
-const NOT_YET: ReadonlySet<MenuItem> = new Set(['add-player'])
 
 /**
  * Loads the game and walks the flow in `mount`. Never rejects: whatever goes wrong is a screen of words. It answers at
@@ -130,7 +125,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     content: () => content as GameContent,
     audio: () => audio,
     game: () => game,
-    sharing: () => (party?.members() ?? []).some((member) => member.claim === 'keyboard'),
+    party: () => party as Party,
     places: places as unknown as Places<Progress>,
     play: (level) => dispatch({ type: 'play', level }),
     fail: (error) => fail(error),
@@ -209,8 +204,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       await host.quit()
       return
     }
-    if (item === 'settings' || item === 'saves') {
-      dispatch({ type: 'open', over: item })
+    if (item === 'settings' || item === 'saves' || item === 'add-player') {
+      dispatch({ type: 'open', over: item === 'add-player' ? 'players' : item })
       return
     }
     if (item !== 'play' && item !== 'new' && item !== 'continue') return
@@ -326,7 +321,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
           saved: newest(places.slots()) !== undefined,
           room: members.length < (party?.room ?? 1),
           canQuit: host.canQuit,
-        }).filter((item) => !NOT_YET.has(item))
+        })
         shown = makers.menu({
           ...base(),
           name: project.name,
@@ -354,17 +349,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
         dropOverlay()
         dropScreen()
         if (before.over === undefined) audio?.raise('screen.pause')
-        shown = makers.pause({
-          ...base(),
-          items: ['resume', 'settings', 'leave'],
-          removable: [],
-          onPick: (item) => {
-            if (item === 'resume') dispatch({ type: 'resume' })
-            else if (item === 'settings') dispatch({ type: 'open', over: 'settings' })
-            else if (item === 'leave') dispatch({ type: 'leave' })
-          },
-          onRemove: () => {},
-        })
+        showPause()
         return
       }
       case 'done': {
@@ -390,6 +375,31 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       default:
         return
     }
+  }
+
+  /** The pause screen, with who can be added or taken out; drawn again when someone is. */
+  function showPause(): void {
+    const members = party?.members() ?? []
+    const items: PauseItem[] = ['resume']
+    if (members.length < (party?.room ?? 1)) items.push('add-player')
+    items.push('settings', 'leave')
+    dropScreen()
+    shown = makers.pause({
+      ...base(),
+      items,
+      removable: members.filter((member) => member.player !== 1).map((member) => member.player),
+      onPick: (item) => {
+        if (item === 'resume') dispatch({ type: 'resume' })
+        else if (item === 'add-player') dispatch({ type: 'open', over: 'players' })
+        else if (item === 'settings') dispatch({ type: 'open', over: 'settings' })
+        else if (item === 'leave') dispatch({ type: 'leave' })
+      },
+      onRemove: (player) => {
+        game?.removePlayer(player)
+        party?.leave(player)
+        showPause()
+      },
+    })
   }
 
   /** Starts `level` and puts the game on the page. */
@@ -427,6 +437,10 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
         return
       }
       game = started
+      // Each player who brought a device keeps it from level to level.
+      for (const { player, claim } of party?.members() ?? []) {
+        if (claim !== undefined) started.input.claim(player, claim)
+      }
       const done = loaded.project.done
       const off: (() => void)[] = [
         started.input.onBindings((changed) => void sections?.controls.set(changed)),
@@ -440,12 +454,12 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       ]
       // Escape pauses, heard on the window as the game's own keys are: a tap on the canvas leaves the focus outside
       // the mount, so a key listener on the mount would never hear it.
-      const escape = (event: KeyboardEvent): void => {
+      const onEscape = (event: KeyboardEvent): void => {
         if (event.key === 'Escape' && !event.repeat) dispatch({ type: 'pause' })
       }
-      window.addEventListener('keydown', escape)
+      window.addEventListener('keydown', onEscape)
       letGoOfGame = () => {
-        window.removeEventListener('keydown', escape)
+        window.removeEventListener('keydown', onEscape)
         for (const stop of off) stop()
       }
       putOverlay()
@@ -516,7 +530,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     saves = createSaves({ def: save.def, store: host.store })
     saving = await saves.check()
     party = createParty(project.players ?? 1)
-    const speaker = options.speaker ?? (madeSpeaker = webSpeaker({ host }))
+    if (options.speaker === undefined) madeSpeaker = webSpeaker({ host })
+    const speaker = options.speaker ?? (madeSpeaker as Speaker)
     audio = createAudio({ content, speaker })
     stopSound = wireSound(audio, sections.sound)
 

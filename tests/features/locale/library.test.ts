@@ -121,18 +121,6 @@ function sourcesIn(dir: string): string[] {
   })
 }
 
-/**
- * Plan U wrote the words of all its screens at once (Task 7) and builds the screens one task at a time (Tasks 8 to 16), so
- * for a while a key is in the six files before the code that says it. The prefix of a screen's keys is listed here until its
- * task lands, and the task takes it out; the list is empty when the plan is built, and this goes with it.
- */
-const WAITING_FOR_SCREENS: readonly string[] = [
-  'automata.players.done',
-  'automata.players.keyboard',
-  'automata.players.pad',
-  'automata.players.title',
-]
-
 /** A quoted `automata.<part>.…`: a whole key, or the start of one when what follows is a `${` (a key built from a variable). */
 const KEY = /(['"`])(automata\.[a-z][a-z0-9-]*\.[a-z0-9.-]*?)(\$\{|\1)/g
 
@@ -151,11 +139,6 @@ test('every automata.* key written in src/ is in en.json, and every key of en.js
   for (const key of written) expect(keys, `${key} is written in src/ but not in en.json`).toContain(key)
   for (const key of keys) {
     const used = written.has(key) || [...stems].some((stem) => key.startsWith(stem))
-    // A key listed in `WAITING_FOR_SCREENS` is not asked for yet; one that is asked for must leave the list.
-    if (WAITING_FOR_SCREENS.some((prefix) => key.startsWith(prefix))) {
-      expect(used, `${key} is asked for now: take its prefix out of WAITING_FOR_SCREENS`).toBe(false)
-      continue
-    }
     expect(used, `${key} is in en.json but no code asks for it`).toBe(true)
   }
 })

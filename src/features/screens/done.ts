@@ -41,15 +41,19 @@ export function doneScreen(
   },
 ): Screen {
   const { level, next, notKept, onNext, onMenu } = options
-  return show(Part, { ...options, name: 'done' }, (words): DoneProps => ({
-    title: words('automata.done.title'),
-    line: next ? words('automata.done.level', { level }) : words('automata.done.game'),
-    ...(notKept === undefined ? {} : { notKept }),
-    buttons: next
-      ? [
-          { label: words('automata.done.next'), kind: 'primary', onpress: onNext },
-          { label: words('automata.done.menu'), kind: 'plain', onpress: onMenu },
-        ]
-      : [{ label: words('automata.done.menu'), kind: 'primary', onpress: onMenu }],
-  }))
+  return show(
+    Part,
+    { ...options, name: 'done' },
+    (words): DoneProps => ({
+      title: words('automata.done.title'),
+      line: next ? words('automata.done.level', { level }) : words('automata.done.game'),
+      ...(notKept === undefined ? {} : { notKept }),
+      buttons: next
+        ? [
+            { label: words('automata.done.next'), kind: 'primary', onpress: onNext },
+            { label: words('automata.done.menu'), kind: 'plain', onpress: onMenu },
+          ]
+        : [{ label: words('automata.done.menu'), kind: 'primary', onpress: onMenu }],
+    }),
+  )
 }

@@ -6,6 +6,7 @@ import type { Locale } from '../locale/locale.ts'
 import { doneScreen } from './done.ts'
 import { menuScreen } from './menu.ts'
 import { pauseScreen } from './pause.ts'
+import { playersScreen } from './players.ts'
 import { problemScreen } from './problem.ts'
 import { savesScreen } from './saves.ts'
 import { settingsScreen } from './settings.ts'
@@ -16,11 +17,12 @@ export { doneScreen } from './done.ts'
 export { hud } from './hud.ts'
 export { type MenuItem, menuItems, menuScreen } from './menu.ts'
 export { type PauseItem, pauseScreen } from './pause.ts'
+export { playersScreen } from './players.ts'
 export { problemScreen } from './problem.ts'
-export { type SaveAction, type SaveRow, saveRows, saveSentence } from './saves-rows.ts'
 export { savesScreen } from './saves.ts'
-export { type ControlRow, controlRows } from './settings-rows.ts'
+export { type SaveAction, type SaveRow, saveRows, saveSentence } from './saves-rows.ts'
 export { settingsScreen } from './settings.ts'
+export { type ControlRow, controlRows } from './settings-rows.ts'
 export { show } from './show.ts'
 export { SPLASH_MS, splashScreen } from './splash.ts'
 export { warningsFor, warningsScreen } from './warnings.ts'
@@ -38,6 +40,7 @@ export interface ScreenMakers {
   readonly problem: typeof problemScreen
   readonly settings: typeof settingsScreen
   readonly saves: typeof savesScreen
+  readonly players: typeof playersScreen
 }
 
 /** The framework's own screens. */
@@ -50,6 +53,7 @@ export const defaultScreens: ScreenMakers = {
   problem: problemScreen,
   settings: settingsScreen,
   saves: savesScreen,
+  players: playersScreen,
 }
 
 /** A screen on the page. `destroy` takes it off and is safe to call twice. */
