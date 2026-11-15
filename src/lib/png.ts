@@ -1,4 +1,4 @@
-// A PNG writer of our own. A game's pictures are painted by `automata art`, by a test in WebKit and, in the editors, by
+// A PNG writer of our own (`png-read.ts` and `inflate.ts` are its reader; they share the checksums and the tables below). A game's pictures are painted by `automata art`, by a test in WebKit and, in the editors, by
 // a page on an iPad, and each must give the same bytes: so no canvas, no `node:zlib` (whose output may change with a
 // version of Node) and no package. Every step below is whole-number work on bytes with one way to make each choice.
 //
@@ -34,14 +34,14 @@ const CRC_TABLE: Uint32Array = (() => {
 })()
 
 /** CRC-32 of `bytes`, which PNG puts after each chunk's type and data. */
-function crc32(bytes: Uint8Array): number {
+export function crc32(bytes: Uint8Array): number {
   let c = 0xffffffff
   for (const byte of bytes) c = (CRC_TABLE[(c ^ byte) & 0xff] as number) ^ (c >>> 8)
   return (c ^ 0xffffffff) >>> 0
 }
 
 /** Adler-32 of `bytes`, which ends a zlib stream. */
-function adler32(bytes: Uint8Array): number {
+export function adler32(bytes: Uint8Array): number {
   let a = 1
   let b = 0
   for (const byte of bytes) {
@@ -99,14 +99,14 @@ class BitWriter {
 
 /** The first length each length symbol (257 to 285) stands for, and how many extra bits follow it. */
 // biome-ignore format: the tables are kept in the order and width RFC 1951 prints them
-const LENGTH_BASE = [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258]
+export const LENGTH_BASE: readonly number[] = [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258]
 // biome-ignore format: see above
-const LENGTH_EXTRA = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0]
+export const LENGTH_EXTRA: readonly number[] = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0]
 /** The first distance each distance symbol (0 to 29) stands for, and how many extra bits follow it. */
 // biome-ignore format: see above
-const DISTANCE_BASE = [1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577]
+export const DISTANCE_BASE: readonly number[] = [1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577]
 // biome-ignore format: see above
-const DISTANCE_EXTRA = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13]
+export const DISTANCE_EXTRA: readonly number[] = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13]
 const MIN_MATCH = 3
 const MAX_MATCH = 258
 

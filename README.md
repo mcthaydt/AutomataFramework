@@ -55,8 +55,9 @@ fetch an unrelated package of that name from npm.
 | `automata check` | Says whether the game is sound, step by step, and what to fix if it is not. |
 | `automata play` | Plays the game in your browser, and shows your changes as you make them. |
 | `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
-| `automata art` | Paints the game's pictures from its figure and backdrop files. |
+| `automata art` | Paints the game's pictures from its figure, backdrop and scene files. |
 | `automata add` | Lists a new content file in the game's `automata.toml`. |
+| `automata scene` | Moves a level's ground onto a scene file you can paint. |
 | `automata words` | Lists the translated words nobody has read, and marks them read. |
 | `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
@@ -187,6 +188,12 @@ the thumb lands, and a quick flick of the walking thumb dashes. A keyboard and a
 the framework says what the hero did with eight events (`hero.jumped`, `hero.landed` and the rest, named with
 `moveEvent`), which a feel file (`content/feels/`) can answer with a buzz.
 
+An editor can change these numbers while the game plays: start the game with `tunable: true` and call
+`game.tune({ 'jump-speed': 13 })`, and the hero uses them from the next tick, with nothing else reset. A game never does
+that, because its numbers are its tuning file. `jumpPaths(moveNumbers(tuning), switches)` says how high and how far each
+move reaches, worked out by the hero's own move step. The editors play and draw with the framework's gravity (30), so a
+game whose code passes its own `gravity` sees its jump drawn for the default.
+
 ## Gamepads, changing keys and playing together
 
 Each control can name gamepad buttons (`pad:`) and two lists of keys for two people on one keyboard (`shared:`: the
@@ -261,6 +268,63 @@ since, the same keys lead somewhere new and that is what you see; `verifyReplay`
 changed". A recording made with another seed or tick rate is refused with a `WatchSetupError` that says which. By
 default it plays again and again, resting `restTicks` (one second) on the last picture between rounds; `rounds: 1`
 holds the last picture for good. It stands still while the page is hidden and does not catch up when it comes back.
+
+## Screens and the flow
+
+`startFlow` is the whole visit: warnings if the game has any, the language picker, the splash, the main menu, the level
+with its pause, "Well done!", and back to the menu. Settings, saved games and adding a player open from the menu and
+from pause. A game gives it its files and its rules, and nothing else:
+
+```ts
+import { startFlow } from '@automataframework/framework'
+import { heroPlugin } from './features/hero/hero.ts'
+
+const read = async (path: string): Promise<string> => (await fetch(path)).text()
+
+void startFlow({
+  mount: document.getElementById('game') as HTMLElement,
+  game: 'crate-game',
+  read,
+  plugins: [heroPlugin],
+})
+```
+
+It never rejects: whatever goes wrong shows a screen of words with a button that loads the page again. `startFlow`
+answers at once, and the object it gives back says where the visit is (`state()`, `onState`), holds the running game
+(`game()`), ends a level the way the game's event does (`finishLevel()`), lets a watching visitor take over
+(`takeOver()`), and stops everything (`stop()`). The mount carries `data-state` (`loading`, `warnings`, `picking`,
+`splash`, `menu`, `playing`, `paused`, `done`, `lost`, `watching` or `problem`), and `data-over` while settings, saved games or
+the players screen is on top. A test or an agent reads those two attributes to know where a page is.
+
+Four fields of `automata.toml` say what the screens show, and two more say how a level is lost and counted. None of them
+changes the rules of the game:
+
+```toml
+levels = ["level-1", "level-2"]   # the order the levels are played in; "Next level" follows it, Continue opens the one reached
+done = "door.touched"             # the event that ends a level (a hero, not a crate, must raise it)
+warnings = ["warning.flashing"]   # message keys read on one screen at the start of each visit
+splash = "logo"                   # a figure shown for two seconds; left out, the splash is the game's name
+lost = "hero.fell"                # the event that loses a level: "You lost." and Try again. "hero.fell" is the framework's own
+score = "hero.score.sparks"       # a resource and one of its numbers: shown as "Score: n" and kept as the best score
+```
+
+A game dresses every screen with CSS properties set on the mount or above it: `--automata-ui-background`,
+`--automata-ui-color`, `--automata-ui-accent` (the main button), `--automata-ui-accent-color` (its text),
+`--automata-ui-border`, `--automata-ui-radius`, `--automata-ui-font` and `--automata-ui-scrim` (over a paused game).
+`UI_PROPERTIES` lists them. The touch buttons keep their own properties (see "Make the touch buttons your own").
+
+Every word on a screen is a message key, and the framework has all six languages for its own. A game changes one by
+writing the same key in its own messages files, which win over the framework's: `"automata.menu.play": "Start"` in
+`content/messages/en.json` renames the main menu's first button, and a game that does it in one language must do it in
+every language it ships.
+
+A game replaces a screen by giving `startFlow` a function of the same shape in `screens`: `screens: { menu: myMenu }`.
+Each one is given the mount, the player's words, and the callbacks the framework's own calls (`onPick`, `onDone`, and so
+on), and returns `{ destroy() }`. The kit the framework's screens are made of (`Button`, `Slider`, `Toggle`, `List`,
+`ScreenFrame`, `Dialog`, `KeyRow`) is exported for a game's own screens to use.
+
+The flow raises page events on the game's sound, so a cues file can give the menu its own music and a button its own click:
+`screen.menu`, `screen.pause`, `screen.done`, `screen.lost`, `ui.move`, `ui.press` and `ui.back`. `FLOW_EVENTS` lists them.
 
 ## Saves
 
@@ -649,6 +713,108 @@ the reader above throws when the answer is not `ok`: otherwise a missing picture
 figure, no tileset and no backdrop needs no `readPicture`. `startOnlineGame` and `watchReplay` take the same
 `readPicture`, and an online game draws its pictures and follows its heroes with the camera as a game on one screen does.
 
+## Scenes
+
+A **scene file** is the ground of a place: a map of letters, what each letter is made of, and the colours it is painted in.
+(It is not the browser entry's `Scene`, which is the drawn picture of a level at one moment.) A level names its scene and
+only places what plays on it, so the ground can be painted in the editors, or drafted by an agent, apart from the things on
+it. Scene files live in `content/scenes/`, each listed in `automata.toml` as `type = "scene"`.
+
+The smallest scene file is eight tiles wide and four tall, with one kind of ground and a lip of grass along its top:
+
+```json scene
+{
+  "format": 1,
+  "id": "meadow",
+  "seed": 7,
+  "tile": 16,
+  "size": {
+    "w": 8,
+    "h": 4
+  },
+  "paints": [
+    {
+      "id": "soil",
+      "color": "#6b4a33"
+    },
+    {
+      "id": "grass",
+      "color": "#5fa04a"
+    }
+  ],
+  "materials": [
+    {
+      "id": "earth",
+      "kind": "flat",
+      "paint": "soil",
+      "top": {
+        "material": "turf",
+        "deep": 4
+      }
+    },
+    {
+      "id": "turf",
+      "kind": "flat",
+      "paint": "grass"
+    }
+  ],
+  "ground": {
+    "letters": [
+      {
+        "letter": "G",
+        "material": "earth",
+        "shape": "solid"
+      }
+    ],
+    "rows": [
+      "........",
+      "........",
+      "........",
+      "GGGGGGGG"
+    ]
+  }
+}
+```
+
+Its `ground.rows` are one string a row, top row first, one letter a tile; `.` is air. A letter's `shape` is one of nine:
+
+| Shape | What it is |
+|---|---|
+| `solid` | a whole square you stand on |
+| `slope-up`, `slope-down` | a slope across the square, rising or falling to the right |
+| `half-up-low`, `half-up-high` | the two halves of a gentle rise |
+| `half-down-high`, `half-down-low` | the two halves of a gentle fall |
+| `ledge` | the top quarter of a square: land on it from above, jump up through it from below |
+| `back` | seen and never solid, like a wall to look at |
+
+A slope stands on ground: every tile under a slope's line must be solid, and the check names the tile to fill when one is
+not. A material, the thing a letter is made of, is one of three kinds:
+
+- `flat`: one of the scene's paints, all over, with an optional `top` and `edge`.
+- `photo`: a photo turned into the scene's paints, either with a `ladder` of paints from dark to light or by keeping
+  `match` of its own colours. The photo is one of the library's 38, shipped in the package's `photos/` folder (all CC0), or
+  one of the game's own, a `photo` file listed in `automata.toml`.
+- `tiles`: one kind of tile of a tileset, drawn from its picture. It cannot be a slope.
+
+`automata art` paints a scene's picture and atlas beside its file (`content/scenes/meadow.json` makes `meadow.png` and
+`meadow.atlas.json`), the same bytes in every browser and in Node, and `automata check` says when one is missing or older
+than its file. A scene may be 256 tiles wide and tall, with a picture of about four million pixels at most.
+
+A game that already has levels written with `tiles` moves each onto a scene with one command, and the level plays as it
+did, tick for tick. Its content is not the same bytes, though, so `automata replay` says the content changed and does not
+compare the hashes; run `automata replay --accept` once to record each play again:
+
+```sh
+npx --no automata scene from-level level-1
+```
+
+From code, the headless entry has `SceneSchema` and `PhotoSchema` for the files, `paintScene` and `sceneSheet` for the
+picture, `sceneFromLevel` for the move above, `materialTile` for a swatch of a photo material, `PHOTO_LIBRARY` for the
+library's records, `photosUsed` for the photos a game's scenes need, `groundColliders`, `slopeRuns`, `covers` and
+`surfaceAt` for the shapes, and `worldSize` for how big a level is. The browser entry's `createLevelPicture(...)` draws a level
+with a scene, and `groundPages` and `placedTiles` say where its pieces go. The whole format, every photo and every knob are in
+`skills/automata-content/scenes.md`, which the package ships for an agent to read.
+
 ## The automata command
 
 `automata` is the package's command. A game's own scripts call it, so a person types `npm run check` and an agent types
@@ -712,8 +878,8 @@ recording). The first two exit with 0, the others with 1.
 
 ### automata art
 
-`automata art [folder]` paints the game's pictures: for every figure and backdrop file, one picture and the atlas that
-says where each pose is in it, written beside that file (`content/figures/hero.json` makes `hero.png` and
+`automata art [folder]` paints the game's pictures: for every figure, backdrop and scene file, one picture and the atlas
+that says where each pose or tile is in it, written beside that file (`content/figures/hero.json` makes `hero.png` and
 `hero.atlas.json`). It paints only what is missing or old and says each file it wrote. Commit the pictures with the
 file that made them. `automata create` and `automata play` paint first, so a new game has its pictures and a page never
 meets a missing one; `automata check` has an `art` step that fails for a picture that is missing or older than its file,
@@ -745,6 +911,26 @@ npx --no automata add --type figure --path content/figures/keeper.json --about "
 
 From code, `listContent(text, { type, path }, about?)` does the same to the text of an `automata.toml` and gives the new
 text, or the problems; the command and the editors both use it.
+
+### automata scene
+
+`automata scene from-level <level> [folder]` moves a level's ground onto a scene file, which holds the ground's rows and
+colours in a file a person can paint in the builder. It writes `content/scenes/<name>.json` (beside the scenes the game
+already lists), changes the level's file so that it names the scene, lists the scene in `automata.toml`, and paints the
+scene's picture. The level plays as it did: the same rows, the same colours and the same boxes, so the same world tick for tick.
+The game's content is not the same bytes, so `automata replay` says the content changed and does not compare the hashes;
+run `automata replay --accept` to record each play again. Everything is made and read back as a game before the first file is written; it
+writes nothing, and exits `1`, when the game does not load, the level is not there, the level already has a scene, or a
+file is already at the scene's path (`There is already a file at content/scenes/scene-1.json. Pick another name with
+--as.`).
+
+```sh
+npx --no automata scene from-level level-1
+```
+
+- `--as <name>`: the scene's name. Left out, `level-1` becomes `scene-1`, and an id with no `level` in it gets `-scene`.
+- `--json`: print the answer as JSON: `ok`, the files `wrote`, the pictures `painted`, the `problems` of a game that does
+  not load, and the `sentence` that says why nothing was written.
 
 ### automata words
 
@@ -803,6 +989,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 | `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
 | `art` | `folder`, `check?` | `automata art <folder> --json` |
 | `add` | `folder`, `type`, `path`, `about?` | `automata add <folder> --type <type> --path <path> --json` |
+| `scene_from_level` | `folder`, `level`, `as?` | `automata scene from-level <level> <folder> --json`, and `--as <as>` when `as` is given |
 | `words` | `folder`, `read?`, `keys?` | `automata words <folder> --json`, and `--read <read> <keys>` when `read` is given |
 | `content_types` | none | the table of content kinds above |
 | `schema` | `type` | reading `schemas/<type>.schema.json` |
@@ -816,7 +1003,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
 and `automata://skills/<name>`.
 
-The server never loads a game's rules itself. `create`, `check`, `replay`, `art`, `add` and `words` each run the command in a process of their
+The server never loads a game's rules itself. `create`, `check`, `replay`, `art`, `add`, `scene_from_level` and `words` each run the command in a process of their
 own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
 keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
 goes to standard error, never into the messages.
@@ -839,6 +1026,8 @@ Each kind has a JSON Schema, shipped in the package so an agent can read the for
 | Kind | What it holds | Folder | Schema |
 |---|---|---|---|
 | `level` | a map of tiles, the things standing on it and where each player starts | `content/levels/` | `schemas/level.schema.json` |
+| `scene` | the ground of a place: its shape in rows of letters, what each letter is made of, and the paints it is painted in | `content/scenes/` | `schemas/scene.schema.json` |
+| `photo` | one of a game's own photos, to paint a scene's ground from, and where it came from | `content/photos/` | `schemas/photo.schema.json` |
 | `character` | a body, its size and colour, and the kind, behaviour and tuning it uses | `content/characters/` | `schemas/character.schema.json` |
 | `tileset` | the letters a level's map may use, and which of them are solid | `content/tilesets/` | `schemas/tileset.schema.json` |
 | `backdrop` | what is behind a level: layers that repeat sideways, and the figures that stand on them | `content/backdrops/` | `schemas/backdrop.schema.json` |

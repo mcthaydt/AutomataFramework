@@ -119,6 +119,50 @@ The spec leaves these to the builder, or is silent. They are settled here so the
 20. **Feel files stay in what the sim is given,** as they are today, so a changed buzz is "the content changed" to a
     replay.
 
+## Notes from the build and its audit
+
+Added after PR 101 merged, from [the implementation audit](../audits/2026-11-15-built-in-hero-implementation-audit.md)
+(PR 126). These are where the build went beyond or beside the plan; each is sound, and each is written here so the next
+reader does not undo it.
+
+- **A hero rising from a jump is never "below" (audit M2).** Task 5, step 1 of a tick. Rapier fills its contacts before it
+  integrates, so on the tick after a jump the feet still touch the floor. Without the rule in `move-step.ts` ("moving
+  up is not standing") the jump would land at once and could not be cut. Do not take it out.
+- **The walk stops at a wall by the sign of `run`, not of `dir` (audit M3).** Builder's call 3. A hero gliding toward a
+  wall with nothing held also stops at it, which is what "never push into a wall" means for a body in motion.
+- **A tick with a press does not start a wall slide (audit M3).** Builder's call 4. It wall jumps, so a press and a
+  slide never fight over the same tick.
+- **The web buzz is shorter than call 18 says (audit M7).** `web.ts` scales the time by the strength instead of buzzing
+  for the feel file's full time and skipping a strength of 0, so the template's landing (strength 0.3, three ticks) is
+  a 15 ms buzz, which many Android phones do not make felt. Left as built until the Owner has tried it on an Android
+  phone (the audit's P2); the numbers or the rule move then, with the template's feel file.
+- **The walk test's tolerance is 4%, not 2% (audit M8).** `tests/features/level/moves.test.ts`. Friction on the ground
+  eats more of the first tick from rest than the plan expected (`walk-grip` 3 accounts for it). If it is ever tightened,
+  start by measuring where the extra 2% goes.
+- **The fix stage (this PR)** closed the audit's five important findings (I1 to I5) and two minors: the dash hint has its own
+  room (the walk hint's picture and words hide when only the dash is due), the template's key hint names the dash when
+  the hero has it, the `create-play` journey walks to the spark and jumps in all three ways (key or thumb, stick, and
+  the pad's bottom button) and reads the game's count, a finger on the glass is never "left alone" for the hints, a
+  press not yet read does not outlive a mask, and a turned tablet lets go of a held thumb. The Owner's two phone items
+  P1 and P2 are left for a real phone.
+- **The leftover minors (the Owner asked for them at once).** M1: `lockDir` is written and never read; it stays, with a
+  comment, because it is part of the schema hash both moved goldens hold, and goes the next time they move for another
+  reason. M4: a kinematic platform's side is no longer a wall (a wall is a fixed body or a bare collider), its top is
+  still ground, and a parity test says both. M10: one Chromium journey walks and jumps the hero with real touch input over the
+  devtools protocol. M11: a tuning number a letter or two off one the hero reads (`jump-sped`) is named, with "Did you
+  mean", instead of being taken as the game's own; a number far from every one is still the game's own. M9 is in its own pull
+  request, because it moves `tests/golden/moves.json`.
+- **The hints' words stand on a dark chip, and a tall screen keeps room for the hints (the Owner's choice, 2026-11-15).**
+  The words of the walk, jump and dash hints have the buttons' dark background behind them at full strength; only the
+  dashed circle is faint. On a screen at least 600 px tall (a tablet, a desktop window) the room under the game is 230 px,
+  so the circles and their words end under the floor instead of across its edge; a shorter one keeps 120.
+- **The turned-screen test waits for the resize itself (audit I5).** It failed once in Chromium on a busy runner because
+  it waited a fixed second for the `ResizeObserver`; the thumbs tests now resolve from an observer of their own, made
+  after the thumbs', and the hint tests drive the hints' interval by hand. No test in that file waits for a length of
+  time any more.
+- **A turn is told by the width.** The mount's width moving by more than 24 px, or the mount going from wide to tall or
+  back, lets go of every finger; a browser bar sliding in and out moves only the height and does not.
+
 ## Review Focus
 
 Each line names its test and the task that owns it.

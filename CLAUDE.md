@@ -146,6 +146,7 @@ src/features/<feature>/       <feature>.ts entry, <part>.ts one job per file, li
 scripts/                      thin CLI wrappers
 template/                     the game `automata create` writes: a real game folder; `template/replays/level-1.json` is a golden
 skills/                       the skills an agent reads to work on a game (shipped in the package)
+photos/                       the 38 CC0 photos a scene's materials are made from (shipped in the package; records in `src/features/content/library/photos.json`)
 tests/architecture.test.ts    imports go down, no cycles, no tests in src
 tests/features/<feature>/     mirrors src/features
 tests/lib/                    tests of src/lib
@@ -163,11 +164,20 @@ The networking is two features: `net` (pure: the wire, the room's rules and the 
 `commands`) and `server` (Node only, above `level`: the Colyseus room and the process; only `src/server.ts` may import it).
 The `automata` command is the last feature, `cli` (Node only, on Effect, using only what `src/headless.ts` re-exports; only
 `src/cli.ts` may import it).
-The default game flow is the feature `flow` (page, the one above `game`: the steps a visit walks as one pure function, the
-progress a game keeps and who is playing; plan U adds the screens below `game` and `startFlow` here).
+The default game flow is the feature `flow` (page, the one above `game`: the steps a visit walks as one pure function
+(`steps.ts`), the saved games (`places.ts`), the progress a game keeps and who is playing, the screens on top of the menu
+and of pause (`overs.ts`), and `startFlow`, which connects them to the page; the screens it draws are in `screens`, below
+`game`).
 Features import only from features below them. No top-level `components/`, `services/` or `utils/`.
 
+The screens are drawn with Svelte 5, in two features between `web` and `game`: `ui` (the kit: buttons, sliders, a frame)
+and `screens` (one screen per `.ts` and `.svelte` pair). Only those two features may hold a `.svelte` file or import
+`svelte` (`tests/architecture/rules.ts` fails anything else). `svelte` is a dependency left for the game's bundler, and
+`pnpm typecheck` also runs `svelte-check`, which needs TypeScript 6: `.pnpmfile.cjs` gives it the `typescript-6` copy,
+since a pnpm override does not reach a peer dependency.
+
 `biome.json` turns off a rule for two groups of files and says why here, since JSON has no comments: `noSvgWithoutTitle` for
-the drawings in `src/features/web/library/` (a flag or an icon is drawn inside a button that has the name; the page marks
-the drawing hidden from a screen reader, and a title inside it would be read twice), and `useHtmlLang` for
-`template/index.html` (no language is the default, so the page sets `lang` itself once the player has one).
+the drawings in `src/features/web/library/` and `src/features/ui/library/` (a flag or an icon is drawn inside a button that
+has the name; the page marks the drawing hidden from a screen reader, and a title inside it would be read twice), and
+`useHtmlLang` for `template/index.html` (no language is the default, so the page sets `lang` itself once the player has
+one). It also leaves `.svelte` files out: Biome does not read Svelte's runes, and `svelte-check` is their check.

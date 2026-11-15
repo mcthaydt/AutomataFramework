@@ -1,9 +1,10 @@
 import { MAX_PLAYERS } from '../commands/commands.ts'
-import type { Character, GameContent } from '../content/content.ts'
+import { type Character, type GameContent, LEDGE_DEEP } from '../content/content.ts'
 import { BodyKind, body, collider, transform } from '../physics/physics.ts'
-import type { Sim } from '../sim/sim.ts'
+import type { Sim, SpawnPart } from '../sim/sim.ts'
 import { groundOf } from './colours.ts'
 import { Look, Thing } from './components.ts'
+import { type GroundCollider, groundColliders } from './ground.ts'
 import { characterParts, heroParts } from './hero.ts'
 import { jointParts, type Placed } from './joints.ts'
 import { mindParts } from './mind.ts'
@@ -19,12 +20,30 @@ function who(numbers: readonly number[]): string {
   return numbers.length === 1 ? `player ${last}` : `players ${numbers.slice(0, -1).join(', ')} and ${last}`
 }
 
+/** The spawn parts of one fixed collider of a level's ground. A slope is not drawn as a box, so it has no `Look`. */
+function groundParts(piece: GroundCollider, color: number): SpawnPart[] {
+  if (piece.kind === 'slope')
+    return [
+      transform({ x: piece.col + piece.w / 2, y: piece.row + piece.h / 2 }),
+      body(BodyKind.fixed),
+      collider.slope(piece.w / 2, piece.h / 2, piece.rises),
+    ]
+  // A ledge is only its top, as thick as `LEDGE_DEEP`.
+  const h = piece.kind === 'ledge' ? LEDGE_DEEP : piece.h
+  return [
+    transform({ x: piece.col + piece.w / 2, y: piece.row + h / 2 }),
+    body(BodyKind.fixed),
+    piece.kind === 'ledge' ? collider.ledge(piece.w / 2, h / 2) : collider.cuboid(piece.w / 2, h / 2),
+    [Look, { w: piece.w, h, color }],
+  ]
+}
+
 /**
- * Puts a level into `sim`, in a fixed order so the same level always gives the same entity ids: the tile runs, then
- * the things in the order of the file, then the level's anchor (one fixed body with no collider, only when a joint has
- * no holder), then the joints in the order of the file, then one hero per player, lowest number first. A level's own
- * entities so get the same ids whoever plays. Throws a `LevelError` that
- * says what to fix if the level, a character or a player's start point is missing.
+ * Puts a level into `sim`, in a fixed order so the same level always gives the same entity ids: the ground (the tile
+ * runs, or a scene's colliders), then the things in the order of the file, then the level's anchor (one fixed body with
+ * no collider, only when a joint has no holder), then the joints in the order of the file, then one hero per player,
+ * lowest number first. A level's own entities so get the same ids whoever plays. Throws a `LevelError` that says what
+ * to fix if the level, its scene, a character or a player's start point is missing.
  */
 export function spawnLevel(
   sim: Sim,
@@ -52,34 +71,39 @@ export function spawnLevel(
     return found
   }
 
-  const ground = groundOf(level)
+  const ground = groundOf(content, level)
   const sprites = usesSprites(content)
-  // A level with a tileset takes "solid" from it; the content a game was loaded from always has the tileset, so it is
-  // only a hand-built content that can be missing it, and then nothing is guessed.
-  let isSolid: ((letter: string) => boolean) | undefined
-  if (level.tileset !== undefined) {
-    const tileset = content.tilesets?.[level.tileset]
-    if (tileset === undefined)
+  if (level.scene !== undefined) {
+    const scene = content.scenes?.[level.scene]
+    if (scene === undefined)
       throw new LevelError(
-        `Level "${levelId}" uses the tileset "${level.tileset}", and this game has no such tileset.`,
+        `Level "${levelId}" uses the scene "${level.scene}", and this game has no such scene.`,
       )
-    const letters = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
-    isSolid = (letter) => letters.has(letter)
+    for (const piece of groundColliders(scene.ground)) sim.spawn(groundParts(piece, ground))
+  } else {
+    // A level with a tileset takes "solid" from it; the content a game was loaded from always has the tileset, so it
+    // is only a hand-built content that can be missing it, and then nothing is guessed.
+    let isSolid: ((letter: string) => boolean) | undefined
+    if (level.tileset !== undefined) {
+      const tileset = content.tilesets?.[level.tileset]
+      if (tileset === undefined)
+        throw new LevelError(
+          `Level "${levelId}" uses the tileset "${level.tileset}", and this game has no such tileset.`,
+        )
+      const letters = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
+      isSolid = (letter) => letters.has(letter)
+    }
+    // A level with a tileset joins stacked tiles of one width into one box, so a wall has no seams, and so does a level
+    // of a game whose hero the framework moves: a hero that leans on a wall catches on a seam, and can neither jump nor
+    // slide past it. Any other level keeps one box a row, as every game recorded before the built-in hero does.
+    const tiles = level.tiles ?? []
+    const solids =
+      level.tileset === undefined && !usesMoves(content)
+        ? tileRuns(tiles, isSolid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
+        : tileBoxes(tiles, isSolid)
+    for (const box of solids)
+      sim.spawn(groundParts({ kind: 'box', col: box.col, row: box.row, w: box.w, h: box.h }, ground))
   }
-  // A level with a tileset joins stacked tiles of one width into one box, so a wall has no seams, and so does a level of
-  // a game whose hero the framework moves: a hero that leans on a wall catches on a seam, and can neither jump nor
-  // slide past it. Any other level keeps one box a row, as every game recorded before the built-in hero does.
-  const solids =
-    level.tileset === undefined && !usesMoves(content)
-      ? tileRuns(level.tiles, isSolid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
-      : tileBoxes(level.tiles, isSolid)
-  for (const box of solids)
-    sim.spawn([
-      transform({ x: box.col + box.w / 2, y: box.row + box.h / 2 }),
-      body(BodyKind.fixed),
-      collider.cuboid(box.w / 2, box.h / 2),
-      [Look, { w: box.w, h: box.h, color: ground }],
-    ])
   const placed = new Map<string, Placed>()
   for (const thing of level.things) {
     const kind = character(thing.character, `Thing "${thing.id}"`)

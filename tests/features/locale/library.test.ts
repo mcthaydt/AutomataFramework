@@ -121,8 +121,59 @@ function sourcesIn(dir: string): string[] {
   })
 }
 
-/** A quoted `automata.<part>.…`: a whole key, or the start of one when what follows is a `${` (a key built from a variable). */
-const KEY = /(['"`])(automata\.[a-z][a-z0-9-]*\.[a-z0-9.-]*?)(\$\{|\1)/g
+/**
+ * A quoted `automata.<part>.…`: a whole key, or the start of one when what follows is a `${` (a key built from a
+ * variable). `automata.back` and `automata.keep` are the two keys with no second part, shared by the screens.
+ */
+const KEY = /(['"`])(automata\.(?:back|keep|[a-z][a-z0-9-]*\.[a-z0-9.-]*?))(\$\{|\1)/g
+
+/** The words plan Q adds (Task 5): in all six files, said the same way in each. Never shortened. */
+const PLAN_Q_WORDS: readonly string[] = [
+  'automata.lost.title',
+  'automata.lost.again',
+  'automata.pause.again',
+  'automata.pause.again-ask',
+  'automata.menu.how',
+  'automata.how.walk',
+  'automata.how.jump',
+  'automata.how.double-jump',
+  'automata.how.wall-jump',
+  'automata.how.dash',
+  'automata.how.slide-left',
+  'automata.how.slide-right',
+  'automata.how.tap-left',
+  'automata.how.tap-right',
+  'automata.how.dash-button',
+  'automata.hud.score',
+  'automata.hud.best',
+  'automata.loading.slow',
+  'automata.settings.delete',
+  'automata.settings.delete-ask',
+  'automata.settings.delete-yes',
+  'automata.settings.delete-no',
+]
+
+/**
+ * The words of `PLAN_Q_WORDS` no code asks for yet. Each of plan Q's tasks 6 to 11 takes its own keys off this list in
+ * the commit that first writes them; Task 13 asserts it is empty. A key on it that code already asks for fails the
+ * second test below, so the list cannot go stale.
+ */
+const OWED: string[] = []
+
+test("plan Q's words are in all six files, none empty, none its own key, and each keeps its {placeholders}", () => {
+  const holes = (text: string): string[] => [...text.matchAll(/\{[a-z]+\}/g)].map((m) => m[0]).sort()
+  for (const key of PLAN_Q_WORDS) {
+    const english = wordsIn('en')[key]
+    expect(english, `${key} is not in en.json`).toBeDefined()
+    for (const language of LANGUAGES) {
+      const text = wordsIn(language)[key]
+      expect(text, `${key} in ${language}`).toBeDefined()
+      expect((text ?? '').trim(), `${key} in ${language} is empty`).not.toBe('')
+      expect(text, `${key} in ${language} is its own key`).not.toBe(key)
+      expect(holes(text ?? ''), `${key} in ${language}`).toEqual(holes(english ?? ''))
+    }
+  }
+})
 
 test('every automata.* key written in src/ is in en.json, and every key of en.json is written in src/', () => {
   const written = new Set<string>()
@@ -139,6 +190,8 @@ test('every automata.* key written in src/ is in en.json, and every key of en.js
   for (const key of written) expect(keys, `${key} is written in src/ but not in en.json`).toContain(key)
   for (const key of keys) {
     const used = written.has(key) || [...stems].some((stem) => key.startsWith(stem))
-    expect(used, `${key} is in en.json but no code asks for it`).toBe(true)
+    expect(used || OWED.includes(key), `${key} is in en.json but no code asks for it`).toBe(true)
+    // An owed word that code now asks for is taken off the list, so the list only ever holds what is still owed.
+    if (OWED.includes(key)) expect(used, `${key} is used now: take it off OWED`).toBe(false)
   }
 })

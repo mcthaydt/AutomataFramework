@@ -1,9 +1,9 @@
 import { deepFreeze } from '../../lib/deep-freeze.ts'
-import type { ContentType, GameContent } from '../content/content.ts'
+import type { ContentType, GameContent, SceneFile } from '../content/content.ts'
 
 /**
  * The kinds of file the sim is not given: the words a player reads (`messages`), what a game sounds like (`sound`,
- * `music`, `cues`) and how it looks and feels (`figure`, `backdrop`, `feel`). None of them says what happens, so a
+ * `music`, `cues`) and how it looks and feels (`figure`, `backdrop`, `feel`, `photo`). None of them says what happens, so a
  * word, a sound, a colour or a shake changed in a file must not move a hash, stop a replay or keep two players out of one room. (Which clip a
  * character plays is its `character` file's, and stays in.) A plan that takes another kind out of the sim adds it
  * here and to the `GameContent` maps it takes out below: a kind's maps and its files' entries in the project's list
@@ -17,13 +17,36 @@ const LEFT_OUT: ReadonlySet<ContentType> = new Set<ContentType>([
   'figure',
   'backdrop',
   'feel',
+  'photo',
 ])
 
 /**
- * The fields of the project file that tell the flow what to show (plan U): the order of the levels, what ends one, the
- * warnings and the splash. None of them says what happens in the game, so none is given to the sim.
+ * A scene as the sim is given it: only what decides what happens on the ground, which is its size and the shape and
+ * rows of its tiles (and the ground's colour, which the sim copies onto what it spawns). A paint, a material, the
+ * seed, the tile's pixels, the sky and the backdrop only change how it looks, so a change to one moves no hash. Keys
+ * the scene does not write stay absent. The sim reads nothing else of a scene, so the cut-down one stands in for it.
  */
-const FLOW_FIELDS = ['levels', 'done', 'warnings', 'splash'] as const
+function simScene(scene: SceneFile): SceneFile {
+  const { color, oneBoxPerRow, letters, rows } = scene.ground
+  return {
+    format: scene.format,
+    id: scene.id,
+    size: scene.size,
+    ground: {
+      ...(color === undefined ? {} : { color }),
+      ...(oneBoxPerRow === undefined ? {} : { oneBoxPerRow }),
+      letters: letters.map(({ letter, shape }) => ({ letter, shape })),
+      rows,
+    },
+  } as unknown as SceneFile
+}
+
+/**
+ * The fields of the project file that tell the flow what to show (plan U and plan Q): the order of the levels, what ends
+ * one, the warnings, the splash, what loses a level and the number counted. None of them says what happens in the
+ * game, so none is given to the sim.
+ */
+const FLOW_FIELDS = ['levels', 'done', 'warnings', 'splash', 'lost', 'score'] as const
 
 /**
  * The content the sim is given, and so hashes: everything but the words, the sounds, the art and the feel. Both their maps
@@ -45,7 +68,9 @@ export function simContent(content: GameContent): GameContent {
     content.cues === undefined &&
     content.figures === undefined &&
     content.backdrops === undefined &&
-    content.feels === undefined
+    content.feels === undefined &&
+    content.photos === undefined &&
+    content.scenes === undefined
   )
     return content
   // The team's language is not what happens in the game, so `source` goes with the words, and the flow's fields with it.
@@ -55,6 +80,8 @@ export function simContent(content: GameContent): GameContent {
     done: _done,
     warnings: _warnings,
     splash: _splash,
+    lost: _lost,
+    score: _score,
     ...project
   } = content.project
   const {
@@ -65,10 +92,15 @@ export function simContent(content: GameContent): GameContent {
     figures: _figures,
     backdrops: _backdrops,
     feels: _feels,
+    photos: _photos,
+    scenes,
     ...kept
   } = content
   return deepFreeze({
     ...kept,
+    ...(scenes === undefined
+      ? {}
+      : { scenes: Object.fromEntries(Object.entries(scenes).map(([id, scene]) => [id, simScene(scene)])) }),
     project: {
       ...project,
       content: project.content.filter((entry) => !LEFT_OUT.has(entry.type)),

@@ -10,10 +10,10 @@ import type { Host } from '../host/host.ts'
 import {
   createGameSim,
   type GameSimOptions,
-  levelSize,
   skyOf,
   storyOfReplay,
   usesStory,
+  worldSize,
 } from '../level/level.ts'
 import type { Words } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
@@ -88,6 +88,8 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
     ...(options.gravity === undefined ? {} : { gravity: options.gravity }),
     // Where the recorded play started: a game that continued a story, else the recording's own `meta.story`.
     ...storyOption(options.story ?? storyOfReplay(replay)),
+    // A recording made by a tunable game holds `tune` commands, which only a tunable sim reads (see `startGame`).
+    ...(replay.meta.tunable === 'true' ? { tunable: true } : {}),
   })
   // The tick rate is the sim's, not an option, so it can only be compared once the sim exists.
   const mismatch =
@@ -119,8 +121,8 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
     }
     const renderer = await createRenderer({
       mount,
-      world: levelSize(level),
-      sky: skyOf(level),
+      world: worldSize(options.content, level),
+      sky: skyOf(options.content, level),
       art,
       view: level.view,
     })

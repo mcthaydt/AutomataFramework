@@ -129,6 +129,8 @@ async function playOne(
         seed: replay.seed,
         level,
         players: playersOf(replay.meta.players),
+        // A recording made by a tunable game holds `tune` commands, which only a tunable sim reads.
+        ...(replay.meta.tunable === 'true' ? { tunable: true } : {}),
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)

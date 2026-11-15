@@ -116,3 +116,36 @@ test('add reads its kind, its path and its note as values, and the folder before
   })
   expect(parseArgs(['add', '--check'])).toMatchObject({ problem: expect.stringContaining('--check') })
 })
+
+test('scene reads its action, its level and its folder, and --as', () => {
+  expect(parseArgs(['scene', 'from-level', 'level-1'])).toEqual({
+    command: 'scene',
+    flags: {},
+    lists: {},
+    rest: [],
+    action: 'from-level',
+    level: 'level-1',
+  })
+  expect(parseArgs(['scene', 'from-level', 'level-1', 'my game', '--as', 'meadow', '--json'])).toEqual({
+    command: 'scene',
+    folder: 'my game',
+    flags: { as: 'meadow', json: true },
+    lists: {},
+    rest: [],
+    action: 'from-level',
+    level: 'level-1',
+  })
+})
+
+test('scene without an action, with one it does not know, or without a level says what to type', () => {
+  expect(parseArgs(['scene'])).toEqual({
+    problem: 'automata scene needs an action, like: automata scene from-level level-1',
+  })
+  expect(parseArgs(['scene', 'frm-level', 'level-1'])).toEqual({
+    problem:
+      'automata scene does not know "frm-level". What it can do is: from-level, like: automata scene from-level level-1',
+  })
+  expect(parseArgs(['scene', 'from-level'])).toEqual({
+    problem: 'automata scene from-level needs the level to move, like: automata scene from-level level-1',
+  })
+})

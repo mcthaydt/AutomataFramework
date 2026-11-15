@@ -409,3 +409,58 @@ describe('the state', () => {
     expect(Object.isFrozen(MOVE_START)).toBe(true)
   })
 })
+
+describe('on a slope', () => {
+  /** The normal of a slope that rises to the right at 45 degrees: it leans left and up. */
+  const UP = { nx: -Math.SQRT1_2, ny: -Math.SQRT1_2 }
+  const DOWN = { nx: Math.SQRT1_2, ny: -Math.SQRT1_2 }
+  const slopeRun = (inputs: readonly MoveInput[]): MoveResult[] => {
+    const out: MoveResult[] = []
+    let state = MOVE_START
+    for (const input of inputs) {
+      const result = stepMoves(state, input, N, OFF, HOVER)
+      out.push(result)
+      state = result.state
+    }
+    return out
+  }
+
+  test('walking right on a slope that rises to the right goes up it, as fast along it as the walk is on the floor', () => {
+    const answers = slopeRun(repeat(4, tick({ dir: 1, slope: UP })))
+    const { vx, vy } = last(answers)
+    expect(vx).toBeCloseTo(6 * Math.SQRT1_2, 5)
+    expect(vy).toBeCloseTo(-6 * Math.SQRT1_2, 5)
+    expect(Math.hypot(vx, vy)).toBeCloseTo(6, 5)
+  })
+
+  test('walking right on a slope that falls to the right goes down it', () => {
+    const { vx, vy } = last(slopeRun(repeat(4, tick({ dir: 1, slope: DOWN }))))
+    expect(vx).toBeCloseTo(6 * Math.SQRT1_2, 5)
+    expect(vy).toBeCloseTo(6 * Math.SQRT1_2, 5)
+  })
+
+  test('standing on a slope, the lift that cancels one tick of gravity is written, and nothing sideways', () => {
+    const { vx, vy } = last(slopeRun(repeat(3, tick({ slope: UP }))))
+    expect(Object.is(vx, 0)).toBe(true)
+    // HOVER is a whole tick's lift; the quarter-tick steps of the physics make five eighths of it the speed that stays.
+    expect(vy).toBe((HOVER * 5) / 8)
+  })
+
+  test('a flat slope, or none, gives what the floor gives', () => {
+    const plain = run(repeat(4, tick({ dir: 1 })))
+    expect(slopeRun(repeat(4, tick({ dir: 1, slope: { nx: 0, ny: -1 } }))).map((r) => [r.vx, r.vy])).toEqual(
+      plain.map((r) => [r.vx, r.vy]),
+    )
+    expect(slopeRun(repeat(4, tick({ dir: 1 }))).map((r) => [r.vx, r.vy])).toEqual(
+      plain.map((r) => [r.vx, r.vy]),
+    )
+  })
+
+  test('in the air a slope changes nothing, and on the tick of a jump the jump is straight up', () => {
+    const air = slopeRun(repeat(4, tick({ dir: 1, slope: UP, ...AIR })))
+    expect(air.map((r) => r.vx)).toEqual([1, 2, 3, 4])
+    const jump = slopeRun([tick({ slope: UP, jumpPressed: true, jumpHeld: true })])[0] as MoveResult
+    expect(jump.vy).toBe(-N.jumpSpeed)
+    expect(jump.events).toContain('jumped')
+  })
+})

@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "id": "meadow",
+  "image": "content/figures/meadow.png",
+  "tileSize": 16,
+  "columns": 4,
+  "tiles": [
+    {
+      "id": "grass",
+      "letter": "G",
+      "solid": true,
+      "pictures": [
+        {
+          "frame": 0
+        }
+      ]
+    },
+    {
+      "id": "stone",
+      "letter": "S",
+      "solid": true,
+      "pictures": [
+        {
+          "frame": 1
+        }
+      ]
+    }
+  ]
+}

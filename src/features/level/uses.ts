@@ -1,4 +1,4 @@
-import type { GameContent } from '../content/content.ts'
+import { type GameContent, slopeRuns } from '../content/content.ts'
 
 /**
  * Whether any level of the game lists a joint. It switches joints on for the whole game: a sim's schema hash covers
@@ -45,4 +45,21 @@ export function usesSprites(content: GameContent): boolean {
  */
 export function usesMoves(content: GameContent): boolean {
   return content.characters[content.project.hero]?.moves !== undefined
+}
+
+/**
+ * Whether any scene of the game has a slope tile. It switches what the hero is told of the ground it stands on (its
+ * slope) on for the whole game, so a game with no slope keeps exactly the sim it had.
+ */
+export function usesSlopes(content: GameContent): boolean {
+  return Object.values(content.scenes ?? {}).some((scene) => slopeRuns(scene.ground).length > 0)
+}
+
+/**
+ * Whether the project says `lost = "hero.fell"`, and nothing else. It joins the fall plugin to the sim, which gives a
+ * hero that falls out of the level an event to lose it by. A hero needs no `moves` to fall. A game with no `lost`, or
+ * one that names an event of its own rules, keeps exactly the sim it had.
+ */
+export function usesFalls(content: GameContent): boolean {
+  return content.project.lost === 'hero.fell'
 }

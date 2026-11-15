@@ -11,6 +11,16 @@ export function levelName(words: Words, levelId: string): string {
   return text === key ? levelId : text
 }
 
+/**
+ * A level's goal in the player's language: the game's `level.<id>.goal` ("Reach the door."), or `undefined` when the game
+ * has no such word. A key that comes back as itself is a word the game lacks.
+ */
+export function levelGoal(words: Words, levelId: string): string | undefined {
+  const key = `level.${levelId}.goal`
+  const text = words(key)
+  return text === key || text === '' ? undefined : text
+}
+
 /** The pieces of a text a person sees as one letter each (an emoji with its joiners is one), or code points where an engine cannot tell. */
 function pieces(text: string): readonly string[] {
   if (typeof Intl.Segmenter !== 'function') return [...text]

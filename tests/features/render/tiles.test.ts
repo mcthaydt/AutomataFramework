@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import type { Level, TilesetFile } from '#src/features/content/content.ts'
-import { tilePictures } from '#src/features/render/tiles.ts'
+import { placedTiles, tilePictures } from '#src/features/render/tiles.ts'
 
 const level = (tiles: string[]): Level =>
   ({ format: 1, id: 'a', tileset: 'meadow', tiles, things: [], starts: [] }) as unknown as Level
@@ -63,3 +63,18 @@ test('a . and a letter the tileset lacks are not drawn', () =>
     [-1, -1],
     [3, 0],
   ]))
+
+test('the squares of a grid of rows are those of a level of the same rows', () => {
+  const rows = ['.G~', 'GGG', '~G.']
+  const tileset = meadow()
+  const kinds = new Map(tileset.tiles.map((kind) => [kind.letter, kind]))
+  expect(placedTiles(rows, (letter) => kinds.get(letter))).toEqual(tilePictures(level(rows), tileset))
+})
+
+test('a letter that has no kind is not drawn, and is another letter to its neighbours', () => {
+  const kinds = new Map(meadow().tiles.map((kind) => [kind.letter, kind]))
+  // Only `G` has a kind: the `#` beside it is not drawn, but it is not `G`, so the grass shows its left edge.
+  expect(placedTiles(['#G'], (letter) => (letter === 'G' ? kinds.get('G') : undefined))).toEqual([
+    { col: 1, row: 0, frame: 1 },
+  ])
+})

@@ -5,7 +5,9 @@ import {
   backdropSheet,
   type FigureFile,
   figureSheet,
+  type SceneFile,
   SHEET_COLUMNS,
+  sceneSheet,
 } from '#src/features/content/content.ts'
 import { heroFigure, valleyBackdrop } from '../../fixtures/content/art.ts'
 
@@ -59,4 +61,21 @@ test('a layer that is a fraction of a pixel tall is one pixel tall', () => {
     layers: [{ ...valley.layers[0], height: 0.1 }],
   } as unknown as BackdropFile
   expect(backdropSheet(thin).frames[0]).toMatchObject({ h: 1 })
+})
+
+const sceneOfSize = (w: number, h: number, tile: number): SceneFile => ({ tile, size: { w, h } }) as SceneFile
+
+test('a scene that fits in one picture has one page, as tall as the scene', () => {
+  const sheet = sceneSheet(sceneOfSize(24, 12, 16))
+  expect([sheet.w, sheet.h]).toEqual([384, 192])
+  expect(sheet.frames).toEqual([{ name: 'ground/0', x: 0, y: 0, w: 384, h: 192 }])
+})
+
+test('a wide scene is cut into pages no wider than a picture may be, stacked top to bottom', () => {
+  const sheet = sceneSheet(sceneOfSize(200, 10, 16))
+  expect([sheet.w, sheet.h]).toEqual([2048, 320])
+  expect(sheet.frames).toEqual([
+    { name: 'ground/0', x: 0, y: 0, w: 2048, h: 160 },
+    { name: 'ground/1', x: 0, y: 160, w: 1152, h: 160 },
+  ])
 })

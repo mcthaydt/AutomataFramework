@@ -1,7 +1,8 @@
 // The steps of the default flow as one pure function: warnings if needed, the language picker, the splash, the main
 // menu, the game with its pause, and back to the menu (the Owner's order, 2026-11-14). It decides nothing the page
 // knows better: whether there is anything to warn about, whether a warning can be read yet and whether the player has
-// a language come in as `FlowFacts`, so a test walks a whole visit with no page.
+// a language come in as `FlowFacts`, so a test walks a whole visit with no page. A level can be lost as well as won
+// (plan Q): `lost` is a step beside `done`, not a new place in the order.
 
 /** Where a visit is. `loading` is before the game has been read; `problem` is the end of a visit that went wrong. */
 export type FlowStep =
@@ -14,22 +15,28 @@ export type FlowStep =
   | 'playing'
   | 'paused'
   | 'done'
+  | 'lost'
   | 'problem'
 
 /** A screen opened on top of the main menu or the pause screen. */
-export type Over = 'settings' | 'saves' | 'players'
+export type Over = 'settings' | 'saves' | 'players' | 'how'
 
 /** One moment of a visit. States are never changed: `advance` answers a new one, or the very same one. */
 export interface FlowState {
   readonly step: FlowStep
   /** The screen on top of `menu` or `paused`. */
   readonly over?: Over
-  /** The level being played, in `playing`, `paused` and `done`. */
+  /** The level being played, in `playing`, `paused`, `done` and `lost`. */
   readonly level?: string
   /** The warnings have been shown this visit. */
   readonly warned: boolean
   /** A watching visitor took over: the splash and the menu are skipped once. */
   readonly taken: boolean
+  /**
+   * How many times a level has been started this visit. It goes up on every fresh start (Play, Try again, Start again,
+   * Next level, Continue), never on "Keep playing", so a page can tell a fresh start from a resume.
+   */
+  readonly attempt: number
 }
 
 /** What the machine may not decide for itself. */
@@ -57,6 +64,9 @@ export type FlowEvent =
   | { readonly type: 'pause' }
   | { readonly type: 'resume' }
   | { readonly type: 'level-done' }
+  | { readonly type: 'level-lost' }
+  /** Start the level being played afresh. */
+  | { readonly type: 'again' }
   | { readonly type: 'next' }
   | { readonly type: 'leave' }
   | { readonly type: 'open'; readonly over: Over }
@@ -64,20 +74,33 @@ export type FlowEvent =
   | { readonly type: 'broke' }
 
 /** A visit that has not begun. */
-export const FLOW_START: FlowState = { step: 'loading', warned: false, taken: false }
+export const FLOW_START: FlowState = { step: 'loading', warned: false, taken: false, attempt: 0 }
 
-/** `step` with what a visit carries from step to step (what has been warned, who took over) and nothing else. */
+/**
+ * `step` with what a visit carries from step to step (what has been warned, who took over, how many levels have been
+ * started) and nothing else.
+ */
 const to = (state: FlowState, step: FlowStep, more: { readonly level?: string } = {}): FlowState => ({
   step,
   ...more,
   warned: state.warned,
   taken: state.taken,
+  attempt: state.attempt,
 })
 
-const playing = (state: FlowState, level: string): FlowState => to(state, 'playing', { level })
+/** A level started afresh: every arrow into `playing` but `resume` goes through here and counts one more. */
+const playing = (state: FlowState, level: string): FlowState => ({
+  ...to(state, 'playing', { level }),
+  attempt: state.attempt + 1,
+})
 
 /** The main menu, and the visit is no longer a taken-over watch. */
-const menu = (state: FlowState): FlowState => ({ step: 'menu', warned: state.warned, taken: false })
+const menu = (state: FlowState): FlowState => ({
+  step: 'menu',
+  warned: state.warned,
+  taken: false,
+  attempt: state.attempt,
+})
 
 /**
  * The one rule every arrow into the opening steps shares: the warnings when there are some to say and they can be
@@ -131,16 +154,22 @@ export function advance(state: FlowState, event: FlowEvent, facts: FlowFacts): F
     case 'playing': {
       const level = state.level === undefined ? {} : { level: state.level }
       if (event.type === 'pause') return to(state, 'paused', level)
-      return event.type === 'level-done' ? to(state, 'done', level) : state
+      if (event.type === 'level-done') return to(state, 'done', level)
+      return event.type === 'level-lost' ? to(state, 'lost', level) : state
     }
     case 'paused': {
       const shown = screens(state, event)
       if (shown !== undefined) return shown
       if (event.type === 'leave') return menu(state)
-      return event.type === 'resume' && state.over === undefined && state.level !== undefined
-        ? playing(state, state.level)
-        : state
+      if (state.over !== undefined || state.level === undefined) return state
+      // Keep playing is not a fresh start, so it does not count; Start again is one.
+      if (event.type === 'resume') return to(state, 'playing', { level: state.level })
+      return event.type === 'again' ? playing(state, state.level) : state
     }
+    case 'lost':
+      if (event.type === 'leave') return menu(state)
+      return event.type === 'again' && state.level !== undefined ? playing(state, state.level) : state
+
     case 'done':
       if (event.type === 'leave') return menu(state)
       if (event.type !== 'next') return state

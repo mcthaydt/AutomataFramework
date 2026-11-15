@@ -9,6 +9,7 @@ test('the JSON Schema of a level names every field, each with a description', ()
   expect(Object.keys(schema.properties)).toEqual([
     'format',
     'id',
+    'scene',
     'tileset',
     'backdrop',
     'sky',
@@ -117,3 +118,20 @@ test('a conversation node can name the cutscene that follows it, and says so in 
   expect(Object.keys(node).at(-1)).toBe('cutscene')
   expect(node.cutscene?.description).toMatch(/cutscene that plays/)
 })
+
+test('the JSON Schema of a scene', () =>
+  expectSchema('scene', 'Scene', [
+    'format',
+    'id',
+    'seed',
+    'tile',
+    'size',
+    'sky',
+    'backdrop',
+    'paints',
+    'materials',
+    'ground',
+  ]))
+
+test('the JSON Schema of a photo', () =>
+  expectSchema('photo', 'Photo', ['format', 'id', 'image', 'size', 'source', 'licence', 'credit']))

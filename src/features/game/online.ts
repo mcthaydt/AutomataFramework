@@ -5,7 +5,7 @@
 import { pageFrames } from '../../lib/frames.ts'
 import { createSequence } from '../commands/commands.ts'
 import { createInput, touchSettingsOf } from '../input/input.ts'
-import { createGameSim, levelSize, skyOf, usesStory } from '../level/level.ts'
+import { createGameSim, skyOf, usesStory, worldSize } from '../level/level.ts'
 import {
   coopSeats,
   type Joined,
@@ -29,7 +29,7 @@ import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
-export interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
+export interface OnlineOptions extends Omit<GameOptions, 'players' | 'level' | 'tunable'> {
   /** A `ws://` or `wss://` address. */
   readonly server: string
   /** A room's code: join that room. Without one, this page makes a new room. */
@@ -107,14 +107,14 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
   const players = coop === undefined ? Array.from({ length: seats }, (_, i) => i + 1) : []
   let confirmed: Sim
   try {
-    confirmed = await createGameSim({ ...simOptions, level, players })
+    confirmed = await createGameSim({ ...simOptions, level, players, tunable: false })
   } catch (error) {
     art?.destroy()
     throw error
   }
   let predicted: Sim
   try {
-    predicted = await createGameSim({ ...simOptions, level, players })
+    predicted = await createGameSim({ ...simOptions, level, players, tunable: false })
   } catch (error) {
     confirmed.dispose()
     art?.destroy()
@@ -197,8 +197,8 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
   try {
     const renderer = await createRenderer({
       mount,
-      world: levelSize(levelData),
-      sky: skyOf(levelData),
+      world: worldSize(simOptions.content, levelData),
+      sky: skyOf(simOptions.content, levelData),
       art,
       view: levelData.view,
     })

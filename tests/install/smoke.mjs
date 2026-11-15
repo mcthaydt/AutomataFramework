@@ -127,7 +127,12 @@ if (audio.log().length !== 1 || audio.log()[0].on !== 'hero.jumped' || speaker.p
 console.log('The installed package played a sound in Node.')
 
 const kinds = Object.keys(CONTENT_TYPES)
-const missing = kinds.filter((type) => Object.keys(full.value[CONTENT_TYPES[type].plural] ?? {}).length === 0)
+// A scene and a photo come with pictures of their own: the scene game (tests/fixtures/scene-game) holds them and the
+// Node tests read it, so the full game is not held to them.
+const apart = ['scene', 'photo']
+const missing = kinds
+  .filter((type) => !apart.includes(type))
+  .filter((type) => Object.keys(full.value[CONTENT_TYPES[type].plural] ?? {}).length === 0)
 if (missing.length > 0) {
   console.error(`The full game loaded but has no ${missing.join(', ')}.`)
   process.exit(1)
