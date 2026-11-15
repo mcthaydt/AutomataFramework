@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "bouncy-bass",
+  "lane": "bass",
+  "bars": 2,
+  "stepsPerBar": 8,
+  "notes": [
+    "1 - 5 - 1 - 5 -",
+    "1 - 5 - 8 - 5 -"
+  ]
+}

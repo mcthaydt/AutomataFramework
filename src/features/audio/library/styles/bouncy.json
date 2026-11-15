@@ -1,0 +1,71 @@
+{
+  "format": 2,
+  "id": "bouncy",
+  "tempo": 128,
+  "key": "G",
+  "mode": "major",
+  "bars": 4,
+  "loop": true,
+  "volume": 0.7,
+  "chords": [
+    "I",
+    "IV",
+    "V",
+    "IV"
+  ],
+  "lanes": [
+    {
+      "id": "drums",
+      "instrument": "drums",
+      "volume": 0.6,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "busy-drums",
+          "bars": 3
+        },
+        {
+          "at": 4,
+          "loop": "drum-fill",
+          "bars": 1
+        }
+      ]
+    },
+    {
+      "id": "bass",
+      "instrument": "bass",
+      "volume": 0.8,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "bouncy-bass",
+          "bars": 4
+        }
+      ]
+    },
+    {
+      "id": "chords",
+      "instrument": "keys",
+      "volume": 0.5,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "stab-chords",
+          "bars": 4
+        }
+      ]
+    },
+    {
+      "id": "melody",
+      "instrument": "pluck",
+      "volume": 0.6,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "skipping-tune",
+          "bars": 4
+        }
+      ]
+    }
+  ]
+}

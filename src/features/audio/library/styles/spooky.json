@@ -1,0 +1,71 @@
+{
+  "format": 2,
+  "id": "spooky",
+  "tempo": 96,
+  "key": "D",
+  "mode": "minor",
+  "bars": 4,
+  "loop": true,
+  "volume": 0.7,
+  "chords": [
+    "i",
+    "VI",
+    "iv",
+    "V"
+  ],
+  "lanes": [
+    {
+      "id": "drums",
+      "instrument": "drums",
+      "volume": 0.5,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "march-drums",
+          "bars": 3
+        },
+        {
+          "at": 4,
+          "loop": "tom-fill",
+          "bars": 1
+        }
+      ]
+    },
+    {
+      "id": "bass",
+      "instrument": "bass",
+      "volume": 0.7,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "walking-bass",
+          "bars": 4
+        }
+      ]
+    },
+    {
+      "id": "chords",
+      "instrument": "organ",
+      "volume": 0.6,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "long-chords",
+          "bars": 4
+        }
+      ]
+    },
+    {
+      "id": "melody",
+      "instrument": "bell",
+      "volume": 0.6,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "echo-tune",
+          "bars": 4
+        }
+      ]
+    }
+  ]
+}

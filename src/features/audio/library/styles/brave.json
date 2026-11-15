@@ -1,0 +1,71 @@
+{
+  "format": 2,
+  "id": "brave",
+  "tempo": 116,
+  "key": "D",
+  "mode": "major",
+  "bars": 4,
+  "loop": true,
+  "volume": 0.7,
+  "chords": [
+    "I",
+    "V",
+    "vi",
+    "IV"
+  ],
+  "lanes": [
+    {
+      "id": "drums",
+      "instrument": "drums",
+      "volume": 0.7,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "four-on-floor",
+          "bars": 3
+        },
+        {
+          "at": 4,
+          "loop": "drum-fill",
+          "bars": 1
+        }
+      ]
+    },
+    {
+      "id": "bass",
+      "instrument": "bass",
+      "volume": 0.8,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "octave-bass",
+          "bars": 4
+        }
+      ]
+    },
+    {
+      "id": "chords",
+      "instrument": "keys",
+      "volume": 0.5,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "pulse-chords",
+          "bars": 4
+        }
+      ]
+    },
+    {
+      "id": "melody",
+      "instrument": "lead",
+      "volume": 0.6,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "brave-tune",
+          "bars": 4
+        }
+      ]
+    }
+  ]
+}

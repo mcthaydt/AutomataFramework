@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "off-beat-chords",
+  "lane": "chords",
+  "bars": 1,
+  "stepsPerBar": 8,
+  "voicing": "close",
+  "notes": [
+    "- x - x - x - x"
+  ]
+}

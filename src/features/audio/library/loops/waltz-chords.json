@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "waltz-chords",
+  "lane": "chords",
+  "bars": 1,
+  "stepsPerBar": 12,
+  "voicing": "close",
+  "notes": [
+    "x - - - x - - x - - x -"
+  ]
+}

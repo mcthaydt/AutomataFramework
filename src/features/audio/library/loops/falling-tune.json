@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "falling-tune",
+  "lane": "melody",
+  "bars": 2,
+  "stepsPerBar": 8,
+  "notes": [
+    "8 - 7 - 5 - 3 -",
+    "3 - 2 - 1 = = ="
+  ]
+}

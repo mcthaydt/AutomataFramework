@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "pulse-chords",
+  "lane": "chords",
+  "bars": 1,
+  "stepsPerBar": 8,
+  "voicing": "open",
+  "notes": [
+    "x - x - x - x -"
+  ]
+}

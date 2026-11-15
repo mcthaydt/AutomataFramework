@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "id": "four-on-floor",
+  "lane": "drums",
+  "bars": 1,
+  "stepsPerBar": 16,
+  "notes": {
+    "kick": [
+      "x - - - x - - - x - - - x - - -"
+    ],
+    "hat": [
+      "- - x - - - x - - - x - - - x -"
+    ],
+    "clap": [
+      "- - - - x - - - - - - - x - - -"
+    ]
+  }
+}

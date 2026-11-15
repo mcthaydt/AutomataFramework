@@ -1,0 +1,66 @@
+{
+  "format": 2,
+  "id": "calm",
+  "tempo": 84,
+  "key": "C",
+  "mode": "major",
+  "bars": 4,
+  "loop": true,
+  "volume": 0.7,
+  "chords": [
+    "I",
+    "vi",
+    "IV",
+    "V"
+  ],
+  "lanes": [
+    {
+      "id": "drums",
+      "instrument": "drums",
+      "volume": 0.5,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "half-time-drums",
+          "bars": 4
+        }
+      ]
+    },
+    {
+      "id": "bass",
+      "instrument": "bass",
+      "volume": 0.7,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "slow-bass",
+          "bars": 4
+        }
+      ]
+    },
+    {
+      "id": "chords",
+      "instrument": "pad",
+      "volume": 0.6,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "soft-chords",
+          "bars": 4
+        }
+      ]
+    },
+    {
+      "id": "melody",
+      "instrument": "keys",
+      "volume": 0.6,
+      "blocks": [
+        {
+          "at": 1,
+          "loop": "calm-tune",
+          "bars": 4
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "echo-tune",
+  "lane": "melody",
+  "bars": 2,
+  "stepsPerBar": 8,
+  "notes": [
+    "5 = 3 = 5 = 3 =",
+    "5 - - - 1 = = ="
+  ]
+}

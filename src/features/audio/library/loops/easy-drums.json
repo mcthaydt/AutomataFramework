@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "id": "easy-drums",
+  "lane": "drums",
+  "bars": 1,
+  "stepsPerBar": 8,
+  "notes": {
+    "kick": [
+      "x - - - x - - -"
+    ],
+    "snare": [
+      "- - x - - - x -"
+    ],
+    "hat": [
+      "x x x x x x x x"
+    ]
+  }
+}

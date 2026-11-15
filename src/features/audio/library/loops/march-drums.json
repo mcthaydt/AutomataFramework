@@ -1,0 +1,18 @@
+{
+  "format": 1,
+  "id": "march-drums",
+  "lane": "drums",
+  "bars": 1,
+  "stepsPerBar": 8,
+  "notes": {
+    "kick": [
+      "x - - - x - - -"
+    ],
+    "snare": [
+      "- - x - - x x x"
+    ],
+    "clap": [
+      "x - - - - - - -"
+    ]
+  }
+}

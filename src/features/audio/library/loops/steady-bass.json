@@ -1,0 +1,10 @@
+{
+  "format": 1,
+  "id": "steady-bass",
+  "lane": "bass",
+  "bars": 1,
+  "stepsPerBar": 8,
+  "notes": [
+    "1 - 1 - 1 - 1 -"
+  ]
+}

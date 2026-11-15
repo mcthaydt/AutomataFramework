@@ -1,0 +1,11 @@
+{
+  "format": 1,
+  "id": "stab-chords",
+  "lane": "chords",
+  "bars": 1,
+  "stepsPerBar": 8,
+  "voicing": "close",
+  "notes": [
+    "x - - x - - x -"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "tom-fill",
+  "lane": "drums",
+  "bars": 1,
+  "stepsPerBar": 8,
+  "notes": {
+    "kick": [
+      "x - - - - - - -"
+    ],
+    "tom": [
+      "- - x x - x x x"
+    ]
+  }
+}

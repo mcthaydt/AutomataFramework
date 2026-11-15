@@ -1,0 +1,12 @@
+{
+  "format": 1,
+  "id": "long-chords",
+  "lane": "chords",
+  "bars": 2,
+  "stepsPerBar": 4,
+  "voicing": "high",
+  "notes": [
+    "x = = =",
+    "x = x ="
+  ]
+}
