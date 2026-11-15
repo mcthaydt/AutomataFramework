@@ -70,6 +70,8 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
     ...(options.level === undefined ? {} : { level: options.level }),
     ...(options.players === undefined ? {} : { players: options.players }),
     ...(options.gravity === undefined ? {} : { gravity: options.gravity }),
+    // A recording made by a tunable game holds `tune` commands, which only a tunable sim reads (see `startGame`).
+    ...(replay.meta.tunable === 'true' ? { tunable: true } : {}),
   })
   // The tick rate is the sim's, not an option, so it can only be compared once the sim exists.
   const mismatch =

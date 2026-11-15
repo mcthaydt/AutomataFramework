@@ -84,6 +84,7 @@ export {
   type MoveNumberInfo,
   type MoveNumbers,
   moveNumbers,
+  moveNumbersOf,
 } from './moves.ts'
 export {
   type DrumPart,
