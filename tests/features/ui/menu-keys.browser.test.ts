@@ -2,10 +2,11 @@
 // and nothing that was held when the screen appeared presses anything on it.
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { page, userEvent } from 'vitest/browser'
+import { page } from 'vitest/browser'
 import { menuKeys } from '#src/features/ui/ui.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
+import { focusOn, keyboard } from '../../fixtures/ui/keys.ts'
 import { Sheet } from '../../fixtures/ui/sheet.ts'
 
 const FRAME = 1000 / 60
@@ -38,8 +39,8 @@ afterEach(async () => {
   sheet = undefined
   target.remove()
   // A key a test left held must not follow the next test.
-  await userEvent.keyboard('{/Enter}')
-  await userEvent.keyboard('{/Space}')
+  await keyboard('{/Enter}')
+  await keyboard('{/Space}')
 })
 
 /** The sheet, with its keys made at the same moment, as a screen does. */
@@ -113,16 +114,16 @@ test("the pad's bottom button presses what has the focus, and its right button g
 
 test('Escape goes back, and the arrow keys walk', async () => {
   open()
-  await userEvent.keyboard('{ArrowDown}')
+  await keyboard('{ArrowDown}')
   expect(focusedName()).toBe('Erase')
-  await userEvent.keyboard('{Escape}')
+  await keyboard('{Escape}')
   expect(backs).toBe(1)
 })
 
 test('left and right on a slider change it and do not walk', () => {
   open()
   const slider = target.querySelector<HTMLElement>('[role="slider"]') as HTMLElement
-  slider.focus()
+  await focusOn(slider)
   tap('dpad-right')
   expect(document.activeElement).toBe(slider)
   expect(log).toEqual(['change:0.55', 'release:0.55'])
@@ -175,7 +176,7 @@ test('Enter held when the screen appears presses nothing, and a fresh Enter goes
   expect(send('keydown', 'Enter', false)).toEqual({ taken: false, reached: true })
   expect(send('keydown', 'Enter', true)).toEqual({ taken: false, reached: true })
   expect(send('keyup', 'Enter', false)).toEqual({ taken: false, reached: true })
-  await userEvent.keyboard('{Enter}')
+  await keyboard('{Enter}')
   expect(log).toEqual(['play'])
 })
 
@@ -185,7 +186,7 @@ test('Space held when the screen appears presses nothing, and a fresh Space goes
   expect(send('keyup', 'Space', false)).toEqual({ taken: true, reached: false })
   expect(send('keydown', 'Space', false)).toEqual({ taken: false, reached: true })
   expect(send('keyup', 'Space', false)).toEqual({ taken: false, reached: true })
-  await userEvent.keyboard(' ')
+  await keyboard(' ')
   expect(log).toEqual(['play'])
 })
 
@@ -211,6 +212,6 @@ test('after destroy the pad and the keys do nothing', async () => {
   keys?.destroy()
   tap('south')
   expect(log).toEqual([])
-  await userEvent.keyboard('{Escape}')
+  await keyboard('{Escape}')
   expect(backs).toBe(0)
 })

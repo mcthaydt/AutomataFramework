@@ -7,6 +7,7 @@ import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
 import { testLocale } from '../../fixtures/screens/locale.ts'
+import { keyboard } from '../../fixtures/ui/keys.ts'
 
 const FRAME = 1000 / 60
 
@@ -90,7 +91,7 @@ test('a key ends it at once, and a key held from the last screen does not', asyn
   // A held key repeats, as it does when the last screen was ended by it.
   window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter', key: 'Enter', repeat: true }))
   expect(done).toBe(0)
-  await userEvent.keyboard('{ArrowRight}')
+  await keyboard('{ArrowRight}')
   expect(done).toBe(1)
 })
 
@@ -170,7 +171,7 @@ test('destroy lets go of the picture and the listeners, and is safe to call twic
   screen?.destroy()
   expect(revoke).toHaveBeenCalledTimes(1)
   expect(mount.querySelector('.automata-screen')).toBeNull()
-  await userEvent.keyboard('{ArrowRight}')
+  await keyboard('{ArrowRight}')
   frames.at(0)
   expect(done).toBe(0)
 })

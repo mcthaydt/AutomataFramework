@@ -1,10 +1,11 @@
 // The desktop, 1280 by 720, a keyboard only: every screen walked with the arrows, Enter and Escape, and a key changed in
 // Settings that is then the key that walks the hero.
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { page, userEvent } from 'vitest/browser'
+import { page } from 'vitest/browser'
 import { frameworkWords } from '#src/features/locale/locale.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
 import { focusedName, ticks, walkByKey } from '../../fixtures/flow/page.ts'
+import { focusOn, keyboard } from '../../fixtures/ui/keys.ts'
 
 const es = frameworkWords('es')
 const drive = createDrive()
@@ -31,7 +32,7 @@ async function enter(label: string): Promise<void> {
   window.addEventListener('keydown', onKey, { capture: true })
   for (const arrow of ['{ArrowDown}', '{ArrowUp}', '{ArrowLeft}', '{ArrowRight}']) {
     for (let step = 0; step < 10 && focusedName() !== label; step++) {
-      await userEvent.keyboard(arrow)
+      await keyboard(arrow)
       seen.push(focusedName())
     }
     if (focusedName() === label) break
@@ -54,7 +55,7 @@ async function enter(label: string): Promise<void> {
   ]
   const went = trail.join(' | ')
   expect(focusedName(), `Arrow keys could not reach "${label}": ${went}`).toBe(label)
-  await userEvent.keyboard('{Enter}')
+  await keyboard('{Enter}')
 }
 
 /** The row of the controls for `action` (no gamepad is plugged in, so these are the keyboard's). */
@@ -74,15 +75,15 @@ test('every screen is walked with arrows, Enter and Escape; a key is changed in 
   await enter(es('automata.menu.settings'))
   await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
   // Change the key for Right to L: Enter on Change, then L.
-  changeOf('Right').focus()
-  await userEvent.keyboard('{Enter}')
+  await focusOn(changeOf('Right'))
+  await keyboard('{Enter}')
   const asked = es('automata.settings.press-key', { action: 'Right' })
   await expect.poll(() => drive.mount.textContent).toContain(asked)
   drive.key('keydown', 'KeyL')
   drive.key('keyup', 'KeyL')
   await expect.poll(() => rowSays('Right')).toBe('L')
   // Escape goes back to the menu.
-  await userEvent.keyboard('{Escape}')
+  await keyboard('{Escape}')
   await drive.wait(es('automata.menu.play'))
   expect(drive.mount.querySelector('[data-screen="settings"]')).toBeNull()
   await enter(es('automata.menu.play'))
@@ -90,10 +91,10 @@ test('every screen is walked with arrows, Enter and Escape; a key is changed in 
   drive.frames.at(0)
   ticks(drive, 30)
   // Escape pauses; Escape again keeps playing, and does not pause again.
-  await userEvent.keyboard('{Escape}')
+  await keyboard('{Escape}')
   await drive.shown('paused')
   await drive.wait(es('automata.pause.resume'))
-  await userEvent.keyboard('{Escape}')
+  await keyboard('{Escape}')
   await drive.shown('playing')
   ticks(drive, 5)
   expect(drive.step()).toBe('playing')
@@ -107,7 +108,7 @@ test('every screen is walked with arrows, Enter and Escape; a key is changed in 
   await drive.shown('playing')
   ticks(drive, 5)
   // Leaving from pause asks first; Enter on the question's "yes" leaves.
-  await userEvent.keyboard('{Escape}')
+  await keyboard('{Escape}')
   await drive.shown('paused')
   await enter(es('automata.pause.leave'))
   await expect.poll(() => drive.mount.querySelector('[role="alertdialog"]')).not.toBeNull()

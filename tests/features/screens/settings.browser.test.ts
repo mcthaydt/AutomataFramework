@@ -15,6 +15,7 @@ import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
+import { focusOn, keyboard } from '../../fixtures/ui/keys.ts'
 
 const FRAME = 1000 / 60
 const GAME = 'settings-test'
@@ -186,9 +187,9 @@ test('the parts are in the order of the device: the keyboard last for a finger, 
 test('the music slider changes what the audio is told, and letting go plays one sample', async () => {
   await open()
   const music = slider(es('automata.settings.music'))
-  music.focus()
+  await focusOn(music)
   // One press of the arrow at the focused slider, as a person with a keyboard would.
-  await userEvent.keyboard('{ArrowLeft}')
+  await keyboard('{ArrowLeft}')
   await expect.poll(() => volumes.music).toBeCloseTo(SOUND_SETTINGS_DEFAULT.music - 0.05, 5)
   expect(volumes.sound).toBe(SOUND_SETTINGS_DEFAULT.sound)
   await expect.poll(() => heard.at(-1)).toBe('music')
@@ -197,8 +198,8 @@ test('the music slider changes what the audio is told, and letting go plays one 
 test('the volume is kept: a fresh page opens with the slider where it was left', async () => {
   const host = testHost()
   await open({ host })
-  slider(es('automata.settings.music')).focus()
-  await userEvent.keyboard('{End}')
+  await focusOn(slider(es('automata.settings.music')))
+  await keyboard('{End}')
   await expect.poll(() => sections.sound.get().music).toBe(1)
   // A page that is opened afresh reads what the store holds.
   const again = await openSections({ game: GAME, host })
@@ -267,7 +268,7 @@ test('a gamepad button is changed with the gamepad alone', async () => {
   await open()
   frames.advance(FRAME)
   expect(rowSays('gamepad', 'Jump')).toBe(es('automata.pad.south'))
-  changeOf('gamepad', 'Jump').focus()
+  await focusOn(changeOf('gamepad', 'Jump'))
   tap('south')
   const press = es('automata.settings.press-button', { action: 'Jump' })
   await expect.poll(() => mount.textContent).toContain(press)
@@ -298,7 +299,7 @@ test('"Put the controls back" asks first; yes puts every row back; no changes no
 test('the phone is turned while a slider has the focus: it still has it, and nothing is cut off', async () => {
   await open()
   const music = slider(es('automata.settings.music'))
-  music.focus()
+  await focusOn(music)
   await page.viewport(844, 390)
   frames.advance(FRAME)
   expect(document.activeElement).toBe(slider(es('automata.settings.music')))

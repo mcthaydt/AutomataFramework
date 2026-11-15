@@ -8,6 +8,7 @@ import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
 import { testLocale } from '../../fixtures/screens/locale.ts'
+import { keyboard } from '../../fixtures/ui/keys.ts'
 
 const FRAME = 1000 / 60
 const words = frameworkWords('es')
@@ -105,7 +106,7 @@ test('a tap on a button never reaches the game under it', async () => {
 test("Escape, the pad's start and its right button each keep playing", async () => {
   await page.viewport(390, 844)
   open()
-  await userEvent.keyboard('{Escape}')
+  await keyboard('{Escape}')
   tap('start')
   tap('east')
   expect(picked).toEqual(['resume', 'resume', 'resume'])

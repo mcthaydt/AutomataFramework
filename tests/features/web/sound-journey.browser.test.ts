@@ -3,7 +3,7 @@
 // the sound and takes the button away; the level's music is wanted and a real jump key puts the jump in the cue log.
 // The pictures show the game on each screen with the sound on.
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { page, userEvent } from 'vitest/browser'
+import { page } from 'vitest/browser'
 import { createAudio } from '#src/features/audio/audio.ts'
 import { type Game, startGame } from '#src/features/game/game.ts'
 import { webHost, webSpeaker } from '#src/features/web/web.ts'
@@ -13,6 +13,7 @@ import { fixtureControls } from '../../fixtures/game/controls.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
 import { chosenLocale } from '../../fixtures/locale/chosen.ts'
+import { keyboard } from '../../fixtures/ui/keys.ts'
 
 const FRAME = 1000 / 60
 
@@ -64,7 +65,7 @@ for (const [name, w, h] of SCREENS) {
     expect(notice()).not.toBeNull()
 
     // A real key press is a gesture: the sound starts and the button goes. (A bare Shift is not one in Firefox.)
-    await userEvent.keyboard('a')
+    await keyboard('a')
     // Firefox on a runner with no sound card never lets its audio context run, so there the speaker rightly stays
     // waiting; what must hold everywhere is that the button is there exactly while the sound is not on.
     const hasEars = !navigator.userAgent.includes('Firefox')
@@ -76,9 +77,9 @@ for (const [name, w, h] of SCREENS) {
     if (speaker.state() === 'on') await vi.waitFor(() => expect(speaker.now()).toBeGreaterThan(0.05))
 
     // A real jump key, held for ten frames: the jump the sim raised is in the cue log, and was not skipped.
-    await userEvent.keyboard('{Space>}')
+    await keyboard('{Space>}')
     for (let i = 0; i < 10; i++) frames.advance(FRAME)
-    await userEvent.keyboard('{/Space}')
+    await keyboard('{/Space}')
     expect(audio.log()).toContainEqual(
       expect.objectContaining({ from: 'sim', on: 'hero.jumped', do: 'sound' }),
     )

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page, userEvent } from 'vitest/browser'
 import { Button, type ButtonProps, UI_PROPERTIES } from '#src/features/ui/ui.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
+import { focusOn, keyboard } from '../../fixtures/ui/keys.ts'
 
 let target: HTMLDivElement
 let part: ReturnType<typeof mount> | undefined
@@ -52,19 +53,20 @@ test('a tap, Enter and Space each press it once; a disabled one is never pressed
   const button = put({ onpress })
   await userEvent.click(button)
   expect(onpress).toHaveBeenCalledTimes(1)
-  button.focus()
-  await userEvent.keyboard('{Enter}')
-  expect(onpress).toHaveBeenCalledTimes(2)
-  await userEvent.keyboard(' ')
-  expect(onpress).toHaveBeenCalledTimes(3)
+  await focusOn(button)
+  await keyboard('{Enter}')
+  // A button presses on a key's release, which a browser may deliver a moment after the keys were sent.
+  await expect.poll(() => onpress.mock.calls.length).toBe(2)
+  await keyboard(' ')
+  await expect.poll(() => onpress.mock.calls.length).toBe(3)
 
   drop()
   const never = vi.fn()
   const off = put({ onpress: never, disabled: true })
   off.click()
   off.focus()
-  await userEvent.keyboard('{Enter}')
-  await userEvent.keyboard(' ')
+  await keyboard('{Enter}')
+  await keyboard(' ')
   expect(never).not.toHaveBeenCalled()
   expect(off.disabled).toBe(true)
 })

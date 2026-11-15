@@ -1,11 +1,12 @@
 // `show` puts any screen over a mount: a box that fills it, the screen's language in `lang`, the kit's keys, and the
 // screen made again, with the focus where it was, when the language changes.
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { page, userEvent } from 'vitest/browser'
+import { page } from 'vitest/browser'
 import { show } from '#src/features/screens/show.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
 import { testLocale } from '../../fixtures/screens/locale.ts'
+import { focusOn, keyboard } from '../../fixtures/ui/keys.ts'
 import { Sheet } from '../../fixtures/ui/sheet.ts'
 
 const FRAME = 1000 / 60
@@ -92,7 +93,7 @@ test('show() says a screen again in the new language and keeps the focus where i
   const box = mount.querySelector('.automata-screen') as HTMLElement
   // The focus is on the switch, the third of the screen's controls.
   const toggle = box.querySelector<HTMLElement>('[role="switch"]') as HTMLElement
-  toggle.focus()
+  await focusOn(toggle)
   language.set('ja')
   expect(seen).toEqual(['Antes de jugar', 'プレイする前に'])
   expect(box.lang).toBe('ja')
@@ -144,6 +145,6 @@ test('the screen tells its sounds: a press, a move and a back, named ui.*', asyn
   }
   expect(sounds).toEqual(['ui.press', 'ui.move', 'ui.back'])
   expect(backs).toBe(1)
-  await userEvent.keyboard('{Escape}')
+  await keyboard('{Escape}')
   expect(backs).toBe(2)
 })
