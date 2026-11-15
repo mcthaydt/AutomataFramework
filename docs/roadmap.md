@@ -5,16 +5,18 @@ The order we build AutomataFramework in. One page, read top to bottom.
 ## The rules
 
 **Slices are editor-driven, one editor at a time** (the owner, 2026-11-15). Each editor is one slice, and every editor
-slice runs the same four steps in order:
+slice runs the same five steps in order:
 
-1. **Build in Automata.** The runtime and formats the editor needs, in AutomataFramework, with the demo growing to use
-   them.
+1. **Build in Automata.** The runtime and formats the editor needs, in AutomataFramework.
 2. **Editor mockup.** Drawn, then put through the visual review process, until the owner says it is fine.
 3. **Build the editor.** From the approved mockup, in the editors' repo.
 4. **Test the editor.** In real browsers on iPad sizes, with the journeys, until it is green on main.
+5. **Update the website demo.** The demo on the site uses what the editor makes, so after every slice there is
+   something new to try there. The demo grows with every slice; there is no separate demo slice at the end.
 
-Then the next editor starts. The editors go in this order: **World** (levels), **Feel** (with Tuner inside it),
-**Characters**, **Sound**, **Story**. The shell is built with the first editor and every later editor reuses it, so
+Then the next editor starts. The editors go in this order: **World** (levels), **Characters**, **Feel** (with Tuner inside it),
+**Sound**, **Story**: levels first, then who is in them, then how they move, then sound, then the story that ties them
+together (the owner, 2026-11-15). The shell is built with the first editor and every later editor reuses it, so
 each later mockup also follows the design language (see the rule below).
 
 1. **One thing at a time.** There is one **Now**. Nothing else is built until it is done.
@@ -66,29 +68,22 @@ whole gate.
    owner reviewing).
 3. Next: build in Automata what the levels editor needs. Level pictures on save, so an agent can see a level; a public
    list of format changes; what a placed thing may hold (values and links); the world map of levels, which needs the
-   owner's 8 answers first (the closed #149, last commit `c449fca`, has them). Anything the demo shows of these grows
-   the demo with it.
+   owner's 8 answers first (the closed #149, last commit `c449fca`, has them).
 4. Next: build the editor: the shell (top bar, tools, panels, Help, Settings, tour, sign-in, Share) and World's
    Levels part, open a level, change it on an iPad, save it into the game.
 5. Next: test the editor, in real browsers at iPad, phone and computer sizes, with the journeys from the end-to-end
    check; green on main.
+6. Next: the website demo uses World: three levels with a door, for one or two players, and two levels joined on a
+   world map (Examples #41, closed on 2026-11-15, last commit `1defa49`; it changes five recorded plays, so the owner
+   sees them first). A new game passes the game checklist, parts 1 to 5 (#137, #139, #140, #151 are its spec, plan,
+   audit and pause note; the built parts #143, #145, #148 were taken off main by #153). Part 3 changes the starter
+   game's recorded play, so the owner sees it before and after.
 
 ---
 
 # Later: the next editors, one at a time
 
-## Slice 4: Feel, with Tuner inside it
-
-1. Done: the Feel editor's spec and plan audit (Editors #30, #40); the feel spec, plan and audit (#105, #111, #115);
-   live move numbers' plan and audits (#107, #114, #130).
-2. Later: build in Automata: the feel build and live move numbers. Pull request #120 was closed on 2026-11-15 (last
-   commit `2f82722`) and #122 was taken off main by #153; they are rebuilt from their plans. The demo gets dust when
-   the hero lands, a shake and a short freeze.
-3. Later: the Feel mockups, through the visual review process.
-4. Later: build the Feel editor, with Tuner.
-5. Later: test the Feel editor.
-
-## Slice 5: Characters
+## Slice 4: Characters
 
 1. Done: the figure builder's spec, plan and audit (Editors #29, #36, #43); the rigged figures spec, plan and audit
    (#104, #109, #117); the environment builder's spec (Editors #31); the Scenes plans, audit and implementation audit
@@ -101,42 +96,43 @@ whole gate.
 3. Later: the Characters mockups (drawn in Editors #34), reviewed the same way as slice 3.
 4. Later: build the Characters editor: the figure builder, clips and entity kinds, Schematic. The environment builder
    is part of World, and is built when World's mockups cover it.
-5. Later: test the Characters editor. An agent draws every figure and scene in the builders, the owner finishes them,
-   and the demo gets its real art.
+5. Later: test the Characters editor.
+6. Later: the website demo gets its real art: an agent draws every figure and scene in the builders, the owner
+   finishes them, and the owner plays the demo end to end and says it is fine.
+
+## Slice 5: Feel, with Tuner inside it
+
+1. Done: the Feel editor's spec and plan audit (Editors #30, #40); the feel spec, plan and audit (#105, #111, #115);
+   live move numbers' plan and audits (#107, #114, #130).
+2. Later: build in Automata: the feel build and live move numbers. Pull request #120 was closed on 2026-11-15 (last
+   commit `2f82722`) and #122 was taken off main by #153; they are rebuilt from their plans.
+3. Later: the Feel mockups, through the visual review process.
+4. Later: build the Feel editor, with Tuner.
+5. Later: test the Feel editor.
+6. Later: the website demo feels better: dust when the hero lands, a shake and a short freeze.
 
 ## Slice 6: Sound
 
 1. Done: the sound formats spec, plan and audit (#106, #112, #118); the Sound editor's spec, plan and audit
    (Editors #33, #39, #44).
 2. Later: build in Automata: the sound formats. Pull request #125 was closed on 2026-11-15 (last commit `59d3ffe`);
-   it is rebuilt from its plan, `plans/2026-11-15-sound-formats.md`. The demo gets its music and sounds.
+   it is rebuilt from its plan, `plans/2026-11-15-sound-formats.md`.
 3. Later: the Sound mockups, through the visual review process.
 4. Later: build the Sound editor.
 5. Later: test the Sound editor.
+6. Later: the website demo gets its music and sounds.
 
 ## Slice 7: Story
 
 1. Done: the story plan and audit (#58, #60); the Story editor's spec, plan audit and fixes (Editors #32, #41, #46,
    #48).
 2. Later: build in Automata: the story build. Pull request #64 was closed on 2026-11-15 (last commit `fc909a2`); it is
-   rebuilt from its plan. The demo's keeper talks and a cutscene plays.
+   rebuilt from its plan.
 3. Later: the Story mockups, through the visual review process.
 4. Later: build the Story editor.
 5. Later: test the Story editor.
-
-## Slice 8: The demo's own screens and checklist
-
-These are not an editor's work. They were slices 4, 5 and 9 before this restructure; they sit here, after the
-editors, until the owner moves them.
-
-1. Done: the game checklist's spec, plan and audit, and the pause note (#137, #139, #140, #151).
-2. Later: a new game passes the game checklist, parts 1 to 5: Try again, How to play, the goal line, the score and best
-   score, Delete all my saves, Back, the loading bar (#143, #145, #148, taken off main by #153). Part 3 changes the
-   starter game's recorded play, so the owner sees it before and after.
-3. Later: the demo plays three levels with a door, for one or two players. Examples #41 was closed on 2026-11-15 (last
-   commit `1defa49`); it is picked up from there. It changes five recorded plays, so the owner sees them first.
-4. Later: the thumbs remember what a player has learned (#142, closed on 2026-11-15, last commit `6b0a79d`), the
-   demo's screens, its saves and "What's inside".
+6. Later: the website demo's keeper talks and a cutscene plays, and the demo's screens, its saves and "What's inside"
+   come together: the thumbs remember what a player has learned (#142, closed on 2026-11-15, last commit `6b0a79d`).
 
 ## Before launch
 
@@ -155,7 +151,7 @@ The date is not set. Launch is when the owner starts the releases above.
 
 Later.
 
-1. 3D, as its own layer on top of 2D, then the same order again for 3D: each editor's 3D version runs the same four
+1. 3D, as its own layer on top of 2D, then the same order again for 3D: each editor's 3D version runs the same five
    steps.
 
 ## Not yet placed: needs the owner
