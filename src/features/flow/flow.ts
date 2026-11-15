@@ -17,8 +17,10 @@ import {
   warningsFor,
 } from '../screens/screens.ts'
 import { followLanguage, languagePicker, webHost, webSpeaker } from '../web/web.ts'
+import { backDefault, wireBack } from './back.ts'
 import { putLoadingMark, startWatching, waitForTake } from './loading.ts'
 import { createOvers } from './overs.ts'
+import { guardPage } from './page-guard.ts'
 import { createParty, type Party } from './party.ts'
 import { createPlaces, type Places } from './places.ts'
 import { createPlay } from './play.ts'
@@ -459,9 +461,17 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       mount.removeAttribute('data-attempt')
       mount.removeAttribute('data-over')
       if (mountPosition !== undefined) mount.style.position = mountPosition
+      stopBack()
+      unguard()
     },
   }
 
+  // The page holds still under the game, and Back is the game's where the page is the game's own.
+  const unguard = guardPage(mount)
+  const stopBack =
+    (options.back ?? backDefault({ top: window.top, self: window }))
+      ? wireBack({ state: () => state, dispatch, onState: flow.onState })
+      : (): void => {}
   mount.dataset.state = 'loading'
   if (mountPosition !== undefined) mount.style.position = 'relative'
   mount.replaceChildren()

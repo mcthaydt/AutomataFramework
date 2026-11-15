@@ -24,6 +24,7 @@ export interface DriveOptions {
   readonly save?: unknown
   readonly watch?: FlowOptions['watch']
   readonly reload?: () => void
+  readonly back?: boolean
   readonly readPicture?: FlowOptions['readPicture']
 }
 
@@ -103,6 +104,7 @@ export function createDrive(game = 'flow-test'): Drive {
         frames,
         gamepads: pads.getGamepads,
         reload: options.reload ?? (() => {}),
+        ...(options.back === undefined ? {} : { back: options.back }),
         ...(options.readPicture === undefined ? {} : { readPicture: options.readPicture }),
         ...(options.save === undefined ? {} : { save: options.save as never }),
         ...(options.watch === undefined ? {} : { watch: options.watch }),
