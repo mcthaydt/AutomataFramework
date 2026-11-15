@@ -1,6 +1,8 @@
-// What a hero's moves reach (plan G, task 2), worked out with no sim. The numbers in these tests are the plan's sums:
-// 12 * 12 / (2 * 30) is 2.4 tiles up before a tick's rounding, 47 ticks at 6 a second is 4.7 across, a dash of 18 tiles
-// a second for 10 ticks is 3. jump-path.parity.test.ts holds them to the real sim.
+// What a hero's moves reach (plan G, task 2), worked out with no sim. The numbers in these tests are sums: 12 * 12 /
+// (2 * 30) is 2.4 tiles up in a smooth fall, and Rapier's four substeps to a tick (jump-path.ts) take 0.025 off that
+// for 2.375; 48 ticks at 6 a second is 4.8 across; a dash of 18 tiles a second for 10 ticks is 3. The first two were
+// 2.3 and 4.7 before the parity test showed the real sim's tick: the tracker's ruling for task 2 says so.
+// jump-path.parity.test.ts holds them to the real sim.
 import { describe, expect, test } from 'vitest'
 import { MOVE_NUMBERS, type MoveNumbers, moveNumbers, moveNumbersOf } from '#src/features/content/content.ts'
 import { DEFAULT_GRAVITY, jumpPaths } from '#src/features/level/level.ts'
@@ -12,10 +14,10 @@ const ALL: MoveSwitches = { doubleJump: true, wallJump: true, dash: true }
 const of = (values: Readonly<Record<string, number>>): MoveNumbers => moveNumbersOf(values)
 
 describe('the jump', () => {
-  test('the framework numbers: a jump reaches 2.3 tiles up and lands 4.7 across', () => {
+  test('the framework numbers: a jump reaches 2.375 tiles up and lands 4.8 across', () => {
     const { jump } = jumpPaths(N, OFF)
-    expect(jump.up).toBeCloseTo(2.3, 3)
-    expect(jump.across).toBeCloseTo(4.7, 3)
+    expect(jump.up).toBeCloseTo(2.375, 3)
+    expect(jump.across).toBeCloseTo(4.8, 3)
   })
 
   test('the default pull is the sim default, 30', () => expect(DEFAULT_GRAVITY).toBe(30))
@@ -28,8 +30,8 @@ describe('the jump', () => {
     for (let i = 1; i < points.length; i++) expect(points[i]?.x).toBeGreaterThan(points[i - 1]?.x ?? 0)
   })
 
-  test('one point a tick: 48 points for the framework numbers', () =>
-    expect(jumpPaths(N, OFF).jump.points).toHaveLength(48))
+  test('one point a tick: 49 points for the framework numbers, the press and 48 ticks', () =>
+    expect(jumpPaths(N, OFF).jump.points).toHaveLength(49))
 
   test('more jump-speed reaches higher and farther; more walk-speed reaches no higher and farther', () => {
     const base = jumpPaths(N, OFF).jump

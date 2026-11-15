@@ -1,6 +1,6 @@
 // What a hero's moves reach, worked out with no physics: the hero's own move step (move-step.ts) once a tick, then one
 // tick of gravity on the speed, then the speed on the place, which is what Rapier does to a body in the air. An editor
-// draws this beside the Feel sliders ("this jump goes 2.3 tiles up and 4.7 across") and a test holds it to the real
+// draws this beside the Feel sliders ("this jump goes 2.4 tiles up and 4.8 across") and a test holds it to the real
 // sim on a flat level (jump-path.parity.test.ts), so the picture and the game cannot drift apart.
 //
 // Flat ground only, a hero that does everything right: a jump from a full-speed run with jump held, each air jump
@@ -13,6 +13,13 @@ export const DEFAULT_GRAVITY = 30
 
 /** A tick, in seconds: the sim runs at 60 Hz. */
 const DT = 1 / 60
+
+/**
+ * How much of a tick's pull Rapier counts in the place it moves a body to. Rapier steps a tick as four substeps, each
+ * moving the body by the speed it has then, so over the tick the place moves by the speed the tick began with plus
+ * (1 + 2 + 3 + 4) / 16 = 5/8 of a tick's pull times the tick. The speed itself gains the whole pull.
+ */
+const SUBSTEP_PULL = 5 / 8
 
 /** No path is run past this many ticks, so a number at its limit can never loop for long. */
 const MAX_TICKS = 1200
@@ -86,9 +93,9 @@ function flight(n: MoveNumbers, on: MoveSwitches, gravity: number, airJumps: boo
     const result = stepMoves(state, input, n, on, -pull)
     state = result.state
     vx = result.vx
-    vy = result.vy + pull
     x += vx * DT
-    y += vy * DT
+    y += result.vy * DT + SUBSTEP_PULL * pull * DT
+    vy = result.vy + pull
     if (y >= -FLOOR) {
       points.push({ x, y: 0 })
       break
@@ -126,8 +133,8 @@ function wallRise(n: MoveNumbers, on: MoveSwitches, gravity: number): number {
     const result = stepMoves(state, input, n, on, -pull)
     state = result.state
     vx = result.vx
+    y += result.vy * DT + SUBSTEP_PULL * pull * DT
     vy = result.vy + pull
-    y += vy * DT
     top = Math.min(top, y)
     if (vy >= 0) break
   }
