@@ -163,8 +163,10 @@ The networking is two features: `net` (pure: the wire, the room's rules and the 
 `commands`) and `server` (Node only, above `level`: the Colyseus room and the process; only `src/server.ts` may import it).
 The `automata` command is the last feature, `cli` (Node only, on Effect, using only what `src/headless.ts` re-exports; only
 `src/cli.ts` may import it).
-The default game flow is the feature `flow` (page, the one above `game`: the steps a visit walks as one pure function, the
-progress a game keeps and who is playing; plan U adds the screens below `game` and `startFlow` here).
+The default game flow is the feature `flow` (page, the one above `game`: the steps a visit walks as one pure function
+(`steps.ts`), the saved games (`places.ts`), the progress a game keeps and who is playing, the screens on top of the menu
+and of pause (`overs.ts`), and `startFlow`, which connects them to the page; the screens it draws are in `screens`, below
+`game`).
 Features import only from features below them. No top-level `components/`, `services/` or `utils/`.
 
 The screens are drawn with Svelte 5, in two features between `web` and `game`: `ui` (the kit: buttons, sliders, a frame)

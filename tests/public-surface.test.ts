@@ -177,6 +177,26 @@ test('the page entry loads and checks pictures, and headless does not have that'
   expect(entry).toContain("export * from './features/render/render.ts'")
 })
 
+// The screens and the flow draw on a page, so they are the browser entry's; what they read from a game's files (the order
+// of its levels) is headless, so an editor and the CLI can use it.
+test('the page entry has the flow, the kit and the screens, and headless has only what they read from the files', async () => {
+  const api = await import('#src/headless.ts')
+  for (const name of ['startFlow', 'Button', 'Slider', 'ScreenFrame', 'menuScreen'])
+    expect(api, name).not.toHaveProperty(name)
+  for (const name of ['levelOrder', 'nextLevel']) expect(api, name).toHaveProperty(name)
+  const entry = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
+  for (const name of ['startFlow', 'FLOW_EVENTS']) expect(entry, name).toContain(name)
+  for (const path of ['features/screens/screens.ts', 'features/ui/ui.ts'])
+    expect(entry, path).toContain(`export * from './${path}'`)
+  const screens = readFileSync(new URL('../src/features/screens/screens.ts', import.meta.url), 'utf8')
+  for (const name of ['settingsScreen', 'savesScreen', 'playersScreen']) expect(screens, name).toContain(name)
+  for (const name of ['menuScreen', 'pauseScreen', 'doneScreen']) expect(screens, name).toContain(name)
+  const ui = readFileSync(new URL('../src/features/ui/ui.ts', import.meta.url), 'utf8')
+  for (const name of ['Button', 'Slider', 'Toggle', 'List', 'KeyRow', 'Dialog', 'ScreenFrame'])
+    expect(ui, name).toContain(name)
+  expect(ui).toContain('UI_PROPERTIES')
+})
+
 test('the committed JSON Schemas are what the code produces', () => {
   for (const type of Object.keys(CONTENT_TYPES) as ContentType[]) {
     const committed = JSON.parse(
