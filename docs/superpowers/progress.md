@@ -26,16 +26,18 @@ Spec: the Feel editor's, in AutomataFrameworkEditors
 ([`2026-11-15-feel-editor-design.md`](https://github.com/mcthaydt/AutomataFrameworkEditors/blob/main/docs/superpowers/specs/2026-11-15-feel-editor-design.md),
 "What Feel needs from the framework", F1 to F3). F4 is plan F's.
 
-Overall: **12%** (stage 1 is the Feel spec; stage 2, this plan, is written; stage 3, its audit, is done; stages 4 to 7
-follow)
+Overall: **85%** (stage 1 is the Feel spec; stages 2 and 3, the plan and its audit, are merged; stage 4 is built and green; stage 5, the
+implementation audit, is done; stage 6, its fixes, is in pull request 122; stage 7 is the Owner's)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | The Feel spec (Editors pull request 30); the Owner answered its Q1 to Q4 (2026-11-15) | the link above |
 | 2. Plan (plan G) | Written, in review. Four tasks in one pull request (22% each, 12% for the last green run): the numbers from plain values and the names Feel reads; `jumpPaths`, what a jump reaches, as one pure function over `stepMoves`, held to the real sim by a parity test; a tune as a command and a resource, joined to a sim only when it is made with `tunable`; `game.tune`, the docs and the API report. No golden moves, none is added, no dependency. Builder's call for the audit: a tune is a command, so a tuned play still replays (plan H's handoff said a number cannot change in a running game). No Owner question is open | `plans/2026-11-15-live-tuning.md` |
 | 3. Plan audit | Done (2026-11-15): sound; three important fixes (a tuned replay now carries `meta.tunable`, so `automata replay` and watch can play it; the plain sim's check no longer reads a schema hash the moves golden does not hold; `heroControls` is page-side and left off the headless list) and seven small ones, all made in the plan. No Owner question | `audits/2026-11-15-live-tuning-plan-audit.md` |
-| 4. Execution | Not started; plan H (pull request 101) is merged, so it may start | |
-| 5 to 7 | Not started | |
+| 4. Execution | In progress, pull request 122 (branch `claude/project-thread-nhh28u`). Task 1: `moveNumbersOf`, and the names Feel reads from the headless entry (`stepMoves` and its types). Task 2: `jumpPaths`, held to the real sim by a parity test on a flat level made in the test. Task 3: `tune`, the command, the `level.tuned` resource and the `level.tune` system, in a sim made `tunable` only. Task 4: `game.tune`, `meta.tunable` read by `automata replay` and `watchReplay`, the README, the skill and the changeset. Rulings so far: an air jump is pressed after a one-tick let-go (a press is an up-to-down change, so the real sim could not otherwise press); the browser tests are in `tests/features/game/tune.browser.test.ts`, not `game.browser.test.ts` (their game is the moves fixture, built as `hero-controls.browser.test.ts` builds it). The path moves the place by Rapier's four substeps to a tick (the speed the tick began with plus 5/8 of a tick's pull), which the parity test showed: the framework jump is 2.375 tiles up and 4.8 across, not the plan's 2.3 and 4.7 (the plan's sums used a smooth fall); the unit test holds the corrected numbers The API report is taken from the `package` job's log, as the plan says (applied to `docs/api/framework.api.md` after the last source change) | branch `claude/project-thread-nhh28u`, PR 122 |
+| 5. Implementation audit | Done (2026-11-15), pull request 130: sound, ready to merge after two important fixes (I1: `meta.tunable` was read by `automata replay` and `watchReplay` with no test; I2: `jumpPaths().wallJump.up` was not held to the real sim) and four minors (M1: a tune to other numbers mid-air; M2: `airJump.rise` is every air jump together, not one, which the Feel plan is told; M3: the substep count is Rapier's default; M4: the air-jump parity case takes its press tick from the path and checks `across`) | `audits/2026-11-15-live-tuning-implementation-audit.md` |
+| 6. Fixes | In progress on pull request 122: I1 is `tests/features/cli/replay-tuned.test.ts` and a `watchReplay` case in `tune.browser.test.ts`; I2 is a wall-jump parity case beside a wall of the flat level; M1, M3 and M4 as above. M2 is a note for the Feel plan: `airJump.rise` is `airJump.up - jump.up`, every air jump the hero has together (`air-jumps` of them) | branch `claude/project-thread-nhh28u`, PR 122 |
+| 7. Owner review | Not started | |
 
 Nothing was run: this stage wrote documents.
 ## Cycle 10: sound formats (recordings, loops, chords, motifs, MIDI, content folders)
