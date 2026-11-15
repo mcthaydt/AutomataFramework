@@ -6,11 +6,13 @@
 // the same commands lead somewhere else and that is what is shown. Only a different seed or tick rate is refused,
 // because then the commands mean something else.
 import type { Replay } from '../commands/commands.ts'
+import type { FeelFrame } from '../feel/feel.ts'
 import type { Host } from '../host/host.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Command, Sim } from '../sim/sim.ts'
 import { levelArt } from './art.ts'
+import { createFeelWiring } from './feel-wiring.ts'
 import { createLoop, type Frames } from './loop.ts'
 
 export interface WatchOptions extends GameSimOptions {
@@ -26,6 +28,8 @@ export interface WatchOptions extends GameSimOptions {
   readonly restTicks?: number
   /** Fetches a picture of the game by its path; needed when the game has pictures, as for `startGame`. */
   readonly readPicture?: ReadPicture
+  /** What the player chose about feel, as `GameOptions.feelSettings`. A watched replay shakes and holds, and never buzzes. */
+  readonly feelSettings?: unknown
 }
 
 export interface Watch {
@@ -34,6 +38,8 @@ export interface Watch {
   readonly rounds: number
   /** Every hero as its box on the canvas, as `Game.heroes` gives it. */
   heroes(): readonly HeroBox[]
+  /** What the last picture drew of the game's feel, as `Game.feel` gives it. */
+  feel(): FeelFrame
   /** Stops the loop, removes the canvas and disposes the sim. Safe to call twice. */
   stop(): void
 }
@@ -111,6 +117,18 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
       sim.dispose()
     }
 
+    // A freeze holds the watched game as it holds a played one. Nothing buzzes: nobody is holding the device.
+    const wiring = createFeelWiring({
+      content: options.content,
+      host,
+      renderer,
+      tickHz: sim.tickHz,
+      seed: sim.seed,
+      feelSettings: options.feelSettings,
+      freezes: 'game',
+    })
+    wiring.begin()
+
     // Every round starts from this picture of tick 0, which is what makes the next round the same as the first.
     const start = sim.snapshot()
     const restTicks = options.restTicks ?? sim.tickHz
@@ -144,21 +162,29 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
           // The rest is over: back to tick 0. The restore makes the next delta a full one, so the picture jumps to the
           // start and nothing slides there from where the last round ended.
           sim.restore(start)
+          // A new run of the same ticks: the first step of it must be heard, and a hold of the last round is dropped.
+          wiring.begin()
           next = 0
           resting = undefined
         }
-        renderer.apply(sim.step(commandsNow()).render)
+        const result = sim.step(commandsNow())
+        renderer.apply(result.render)
+        wiring.hear(result)
         if (sim.tick < replay.ticks) return
         played++
-        if (roundLimit !== undefined && played >= roundLimit) {
-          finished = true
-          loop.stop()
-        } else {
+        // The loop goes on drawing until the last dust has settled, and `draw` stops it then.
+        if (roundLimit !== undefined && played >= roundLimit) finished = true
+        else {
           resting = restTicks
         }
       },
       // While resting or finished the last picture is held whole, not drawn part-way back to the one before it.
-      draw: (alpha) => renderer.draw(resting !== undefined || finished ? 1 : alpha),
+      draw(alpha, ms) {
+        wiring.draw(resting !== undefined || finished ? 1 : alpha, ms)
+        if (finished && wiring.idle) loop.stop()
+      },
+      hold: wiring.hold,
+      held: () => wiring.holding,
       frames,
     })
 
@@ -178,6 +204,7 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
         return played
       },
       heroes: () => renderer.heroes(),
+      feel: wiring.frame,
       stop() {
         if (stopped) return
         stopped = true

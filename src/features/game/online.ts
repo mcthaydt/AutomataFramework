@@ -3,6 +3,7 @@
 // puts the picture right when the room's answer differs. The page is only ever as late as the room is: it never
 // pauses, because the room does not wait for anyone.
 import { pageFrames } from '../../lib/frames.ts'
+import type { FeelFrame } from '../feel/feel.ts'
 import { createInput, touchSettingsOf } from '../input/input.ts'
 import { createGameSim, levelSize, skyOf } from '../level/level.ts'
 import {
@@ -20,8 +21,8 @@ import { type Art, createRenderer } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
-import { createBuzzer } from './buzz.ts'
 import { resolveControls } from './controls.ts'
+import { createFeelWiring } from './feel-wiring.ts'
 import type { GameOptions } from './game.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
@@ -56,6 +57,10 @@ export interface OnlineGame {
   stats(): SessionStats
   /** The player's setting: whether the device may buzz when a feel file says so. */
   setVibration(on: boolean): void
+  /** The player's setting: whether the picture may shake. Dust and freezes are not changed by it. */
+  setShake(on: boolean): void
+  /** What the last picture drew of the game's feel. A freeze online holds the picture only: the room's ticks go on. */
+  feel(): FeelFrame
   /** Leaves the room, removes the canvas and the controls, and disposes both sims. Safe to call twice. */
   leave(): void
 }
@@ -85,6 +90,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     locale,
     readPicture,
     touchSettings,
+    feelSettings,
     ...simOptions
   } = options
   const controls = resolveControls('startOnlineGame', simOptions.content, options.controls)
@@ -225,32 +231,40 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     // This page plays one player. The room's other players' hands are theirs, and arrive in the room's ticks.
     input.setPlayers([seat])
 
-    // The room can put this page back on its own state (a sync): ticks heard before it are not the ticks after it.
-    const buzzer = createBuzzer({
+    // A freeze online holds the picture and not the game: the room's ticks cannot wait for one page.
+    const wiring = createFeelWiring({
       content: simOptions.content,
       host,
-      device: (player) => input.device(player),
+      renderer,
       tickHz: session.sim.tickHz,
-      on: touchSettingsOf(touchSettings).vibration,
+      seed: session.sim.seed,
+      feelSettings,
+      freezes: 'picture',
+      buzz: { device: (player) => input.device(player), on: touchSettingsOf(touchSettings).vibration },
     })
+    // The room can put this page back on its own state (a sync): ticks heard before it are not the ticks after it.
     let syncsHeard = session.stats().syncs
     const step = (): void => {
       const advance = session.advance(input.poll(session.sim.tick))
       for (const delta of advance.deltas) renderer.apply(delta)
-      for (const heard of advance.steps) buzzer.hear(heard)
-      if (audio === undefined) return
+      // The sync is looked for first: its own steps can carry ticks at or below the last one heard, and heard before
+      // `begin` they would be dropped.
       const syncs = session.stats().syncs
       if (syncs !== syncsHeard) {
         syncsHeard = syncs
-        audio.begin()
+        wiring.begin()
+        audio?.begin()
       }
       // One step at a time, each on its own tick, so two jumps that reached this page together are two sounds.
-      for (const heard of advance.steps) audio.hear(heard)
+      for (const heard of advance.steps) {
+        wiring.hear(heard)
+        audio?.hear(heard)
+      }
     }
     const loop = createLoop({
       tickHz: session.sim.tickHz,
       step,
-      draw: (alpha) => renderer.draw(alpha),
+      draw: wiring.draw,
       frames,
     })
 
@@ -329,7 +343,9 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       code: joined.code,
       status: () => status,
       stats: () => session.stats(),
-      setVibration: (on) => buzzer.setOn(on),
+      setVibration: wiring.setVibration,
+      setShake: wiring.setShake,
+      feel: wiring.frame,
       leave() {
         if (stopped) return
         stopped = true
