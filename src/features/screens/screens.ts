@@ -3,6 +3,12 @@
 import type { Frames } from '../../lib/frames.ts'
 import type { PadLike } from '../input/input.ts'
 import type { Locale } from '../locale/locale.ts'
+import { doneScreen } from './done.ts'
+import { menuScreen } from './menu.ts'
+import { pauseScreen } from './pause.ts'
+import { problemScreen } from './problem.ts'
+import { splashScreen } from './splash.ts'
+import { warningsScreen } from './warnings.ts'
 
 export { doneScreen } from './done.ts'
 export { hud } from './hud.ts'
@@ -12,6 +18,29 @@ export { problemScreen } from './problem.ts'
 export { show } from './show.ts'
 export { SPLASH_MS, splashScreen } from './splash.ts'
 export { warningsFor, warningsScreen } from './warnings.ts'
+
+/**
+ * Every screen the default flow puts up, each a function a game can replace with its own of the same shape (the
+ * flow's `screens` option). Each is given what its framework one is, and calls back the same way.
+ */
+export interface ScreenMakers {
+  readonly warnings: typeof warningsScreen
+  readonly splash: typeof splashScreen
+  readonly menu: typeof menuScreen
+  readonly pause: typeof pauseScreen
+  readonly done: typeof doneScreen
+  readonly problem: typeof problemScreen
+}
+
+/** The framework's own screens. */
+export const defaultScreens: ScreenMakers = {
+  warnings: warningsScreen,
+  splash: splashScreen,
+  menu: menuScreen,
+  pause: pauseScreen,
+  done: doneScreen,
+  problem: problemScreen,
+}
 
 /** A screen on the page. `destroy` takes it off and is safe to call twice. */
 export interface Screen {
