@@ -17,6 +17,8 @@ export interface TestSpeaker extends Speaker {
   advance(seconds: number): void
   /** Every voice it was given while on, in order. */
   readonly played: readonly PlayedVoice[]
+  /** The path of every recording it was given with `keep`, in order. */
+  readonly kept: readonly string[]
   /** Every `cut`, in order. */
   readonly cuts: readonly Bus[]
   /** The last volume given for each bus; 1 until told. */
@@ -36,6 +38,7 @@ export function testSpeaker(options: { readonly state?: SpeakerState } = {}): Te
   const clockListeners = new Set<() => void>()
   const played: PlayedVoice[] = []
   const cuts: Bus[] = []
+  const kept: string[] = []
   const levels: Record<Bus, number> = { sound: 1, music: 1 }
 
   const change = (next: SpeakerState): void => {
@@ -58,6 +61,9 @@ export function testSpeaker(options: { readonly state?: SpeakerState } = {}): Te
     onClock: (listener) => listen(clockListeners, listener),
     play(bus, voice, when) {
       if (state === 'on') played.push({ bus, voice, when })
+    },
+    keep(file) {
+      kept.push(file)
     },
     volume(bus, value) {
       levels[bus] = value
@@ -86,6 +92,9 @@ export function testSpeaker(options: { readonly state?: SpeakerState } = {}): Te
     },
     get cuts() {
       return cuts
+    },
+    get kept() {
+      return kept
     },
     get levels() {
       return { ...levels }

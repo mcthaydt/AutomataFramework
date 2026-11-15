@@ -160,3 +160,32 @@ test('close removes the listeners and closes the context; twice is fine', () => 
   tap()
   expect(made).toHaveBeenCalledTimes(1)
 })
+
+test('a recording kept before the first tap gets its buffer when the context is made', () => {
+  const { fake, speaker, tap } = setup()
+  speaker.keep('a.wav', { seconds: 0.5, samples: new Float32Array(22050) })
+  expect(fake.buffers).toEqual([])
+  tap()
+  expect(fake.buffers).toEqual([{ length: 22050, sampleRate: 44100 }])
+})
+
+test('a recording kept after the context exists gets its buffer at once, and plays from it', () => {
+  const { fake, speaker, tap } = setup()
+  tap()
+  fake.set('running')
+  speaker.keep('a.wav', { seconds: 0.5, samples: new Float32Array(22050) })
+  expect(fake.buffers).toHaveLength(1)
+  const voice = { kind: 'recording', file: 'a.wav', from: 0.1, length: 0.2, speed: 2, at: 0, volume: 1 } as const
+  speaker.play('sound', voice, 1)
+  expect(fake.sources).toHaveLength(1)
+  expect(fake.sources[0]?.starts).toEqual([[1, 0.1, 0.4]])
+})
+
+test('a recording that was never kept makes no source', () => {
+  const { fake, speaker, tap } = setup()
+  tap()
+  fake.set('running')
+  const voice = { kind: 'recording', file: 'a.wav', from: 0, length: 0.2, speed: 1, at: 0, volume: 1 } as const
+  speaker.play('sound', voice, 1)
+  expect(fake.sources).toEqual([])
+})

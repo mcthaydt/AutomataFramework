@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { cueTable } from '#src/features/audio/cues.ts'
+import type { SoundFile } from '#src/features/content/content.ts'
 import { contentWithCues, loadFull } from '../../fixtures/audio/content.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 
@@ -54,4 +55,25 @@ test('a cue naming a track the content lacks throws the sentence above', async (
 
 test('a game with no cue list has an empty table', async () => {
   expect(cueTable(await loadFixtureGame(), 60).size).toBe(0)
+})
+
+test('a sound whose motif is ten notes long counts its real length, in ticks', async () => {
+  const ten: SoundFile = {
+    format: 1,
+    id: 'ten',
+    volume: 1,
+    voices: [{ kind: 'motif', motif: 'ten', instrument: 'pluck', key: 'C', tempo: 60, at: 0, volume: 1 }],
+  }
+  const content = {
+    ...(await contentWithCues([{ on: 'x', do: 'sound', sound: 'ten' }], [ten])),
+    motifs: {
+      ten: {
+        format: 1 as const,
+        id: 'ten',
+        notes: Array.from({ length: 10 }, () => ({ step: 1, beats: 1 })),
+      },
+    },
+  }
+  // Nine seconds to the last note, and the pluck rings for 0.3 of one.
+  expect(cueTable(content, 60).get('x')).toMatchObject([{ do: 'sound', ticks: 558 }])
 })

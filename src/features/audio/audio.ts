@@ -1,11 +1,13 @@
 // The audio feature's entry: what a game sounds like, played when the sim's events say so. It is handed a step's events
 // and never the sim, so it has nothing to change; it plays through a `Speaker`, which a page makes with Web Audio
 // (`webSpeaker`, in the web feature) and a test makes with `testSpeaker`.
-import type { GameContent } from '../content/content.ts'
+import { type GameContent, recordingPaths } from '../content/content.ts'
 import type { SimEvent } from '../sim/sim.ts'
 import { type CueAction, type CueLogEntry, createCueLog, createLimiter, cueTable } from './cues.ts'
 import { createMusicPlayer } from './music-player.ts'
+import type { Recordings } from './recordings.ts'
 import { SOUND_SETTINGS_DEFAULT, type SoundSettings } from './settings.ts'
+import { playSound } from './sound-voices.ts'
 import type { Bus, Speaker, SpeakerState, SpeakerVoice } from './speaker.ts'
 
 export { type CueLogEntry, LOG_MAX, MAX_SAME, MAX_SOUNDS } from './cues.ts'
@@ -23,8 +25,10 @@ export {
   TICKS_PER_BAR,
   TICKS_PER_BEAT,
 } from './plain-notes.ts'
+export { loadRecordings, RecordingError, type Recordings } from './recordings.ts'
 export { type Score, type ScoreNote, scoreOf } from './score.ts'
 export { SOUND_SETTINGS_DEFAULT, type SoundSettings, SoundSettingsSchema } from './settings.ts'
+export { playSound, soundSeconds, soundVoices } from './sound-voices.ts'
 export type { Bus, Speaker, SpeakerState, SpeakerVoice } from './speaker.ts'
 export { type PlayedVoice, type TestSpeaker, testSpeaker } from './test-speaker.ts'
 export {
@@ -84,8 +88,18 @@ export function createAudio(options: {
   readonly speaker: Speaker
   /** Ticks a second, for counting how long a sound lasts. Default 60. */
   readonly tickHz?: number
+  /** The game's recordings, from `loadRecordings`. Needed when any sound has a recording voice. */
+  readonly recordings?: Recordings
 }): GameAudio {
   const { speaker } = options
+  for (const path of recordingPaths(options.content)) {
+    const recording = options.recordings?.get(path)
+    if (recording === undefined)
+      throw new Error(
+        'This game has recorded sounds, so createAudio needs "recordings". Load them with loadRecordings.',
+      )
+    speaker.keep(path, recording)
+  }
   const table = cueTable(options.content, options.tickHz ?? 60)
   const log = createCueLog()
   const limiter = createLimiter()
@@ -110,9 +124,7 @@ export function createAudio(options: {
       log.add(entry)
       // A sound asked for while nothing can be heard is logged and not played, and is not played late.
       if (speaker.state() !== 'on') return
-      for (const voice of action.sound.voices)
-        if (voice.kind === 'tone' || voice.kind === 'noise')
-          speaker.play('sound', { ...voice, volume: voice.volume * action.sound.volume }, speaker.now())
+      playSound(speaker, 'sound', action.sound, options.content)
       return
     }
     log.add(

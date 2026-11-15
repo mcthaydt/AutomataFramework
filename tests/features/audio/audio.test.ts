@@ -1,5 +1,6 @@
 import { expect, test, vi } from 'vitest'
-import { createAudio, LOG_MAX, testSpeaker } from '#src/features/audio/audio.ts'
+import { createAudio, LOG_MAX, type Recordings, testSpeaker } from '#src/features/audio/audio.ts'
+import type { SoundFile } from '#src/features/content/content.ts'
 import { beeps, contentWithCues, events, loadFull } from '../../fixtures/audio/content.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
 
@@ -312,4 +313,41 @@ test('close twice is fine, and the speaker is not closed', async () => {
   audio.close()
   audio.close()
   expect(speaker.closed).toBe(false)
+})
+
+/** A sound of one recording voice and one of a motif ten notes long. */
+const door: SoundFile = {
+  format: 1,
+  id: 'door',
+  volume: 0.5,
+  voices: [{ kind: 'recording', file: 'door.wav', from: 0, length: 0.4, speed: 1, at: 0, volume: 1 }],
+}
+const recordings: Recordings = new Map([['door.wav', { seconds: 1, samples: new Float32Array(44100) }]])
+
+test('a cue for a sound with a recording plays one recording voice, and the speaker was given the file', async () => {
+  const speaker = tapped()
+  const content = await contentWithCues([{ do: 'sound', on: 'door.opened', sound: 'door' }], [door])
+  const audio = createAudio({ content, speaker, recordings })
+  expect(speaker.kept).toEqual(['door.wav'])
+  audio.hear({ tick: 1, events: events('door.opened') })
+  expect(speaker.played).toHaveLength(1)
+  expect(speaker.played[0]?.voice).toEqual({ ...door.voices[0], volume: 0.5 })
+})
+
+test('a game with recorded sounds and no recordings says what to do', async () => {
+  const content = await contentWithCues([{ do: 'sound', on: 'door.opened', sound: 'door' }], [door])
+  expect(() => createAudio({ content, speaker: tapped() })).toThrow(
+    'This game has recorded sounds, so createAudio needs "recordings". Load them with loadRecordings.',
+  )
+})
+
+test('a recording cue while the speaker waits is logged, not played, and not played late', async () => {
+  const speaker = testSpeaker()
+  const content = await contentWithCues([{ do: 'sound', on: 'door.opened', sound: 'door' }], [door])
+  const audio = createAudio({ content, speaker, recordings })
+  audio.hear({ tick: 1, events: events('door.opened') })
+  speaker.tap()
+  speaker.advance(1)
+  expect(audio.log()).toHaveLength(1)
+  expect(speaker.played).toEqual([])
 })

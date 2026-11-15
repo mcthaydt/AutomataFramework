@@ -84,3 +84,11 @@ test('a listener that stopped listening hears nothing more; close is safe twice'
   speaker.close()
   expect(speaker.closed).toBe(true)
 })
+
+test('keep remembers the path of every recording it is given, in order, even while waiting', () => {
+  const speaker = testSpeaker()
+  const recording = { seconds: 1, samples: new Float32Array(44100) }
+  speaker.keep('a.wav', recording)
+  speaker.keep('b.wav', recording)
+  expect(speaker.kept).toEqual(['a.wav', 'b.wav'])
+})

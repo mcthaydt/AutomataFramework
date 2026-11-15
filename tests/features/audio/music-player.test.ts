@@ -138,3 +138,22 @@ test('a track that does not loop ends and is no longer wanted', async () => {
   expect(player.wanted()).toBeUndefined()
   expect(speaker.played).toHaveLength(27)
 })
+
+/** Two notes a half second apart, to tell where the track was started from. */
+const PAIR: MusicFile = {
+  format: 1,
+  id: 'pair',
+  tempo: 120,
+  stepsPerBeat: 2,
+  volume: 1,
+  loop: false,
+  parts: [{ id: 'p', kind: 'tone', wave: 'sine', volume: 1, notes: ['A4 - C5 -'] }],
+}
+
+test('a track wanted from a time in hands over only the notes from there on, sooner by that time', () => {
+  const speaker = testSpeaker({ state: 'on' })
+  createMusicPlayer(speaker).want(PAIR, 0.5)
+  expect(speaker.played).toHaveLength(1)
+  expect(speaker.played[0]?.voice).toMatchObject({ kind: 'tone', from: 523.2512 })
+  expect(speaker.played[0]?.when).toBeCloseTo(0.05, 9)
+})

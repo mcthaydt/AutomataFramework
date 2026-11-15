@@ -2,6 +2,7 @@
 // tap or key, because a browser plays no sound before one; a browser that suspends the sound again (a phone call, a
 // tab put away) puts the speaker back to waiting, and the next tap resumes it.
 import type { Bus, Speaker, SpeakerState } from '../audio/audio.ts'
+import { RECORDING_RATE, type Recording } from '../content/content.ts'
 import type { Host } from '../host/host.ts'
 import { playVoice } from './voices.ts'
 
@@ -54,6 +55,9 @@ export function webSpeaker(
   const buses: Partial<Record<Bus, BusNodes>> = {}
   // What the player chose, kept from before the first tap so it is right when the sound starts.
   const volumes: Record<Bus, number> = { sound: 1, music: 1 }
+  // Recordings handed over with `keep`, and their buffers once there is a context to make them in.
+  const kept = new Map<string, Recording>()
+  const buffers = new Map<string, AudioBuffer>()
   const stateListeners = new Set<(state: SpeakerState) => void>()
   const clockListeners = new Set<() => void>()
 
@@ -82,6 +86,16 @@ export function webSpeaker(
     syncClock()
   }
 
+  /** Makes a buffer of every kept recording that has none yet: one channel, 44 100 samples a second. */
+  const makeBuffers = (made: BaseAudioContext): void => {
+    for (const [file, recording] of kept) {
+      if (buffers.has(file)) continue
+      const buffer = made.createBuffer(1, recording.samples.length, RECORDING_RATE)
+      buffer.getChannelData(0).set(recording.samples)
+      buffers.set(file, buffer)
+    }
+  }
+
   /** Makes the context and the buses. The squared volume makes half way along a slider sound about half as loud. */
   const build = (): AudioContext => {
     const made = seams.context()
@@ -96,6 +110,7 @@ export function webSpeaker(
       inner.connect(gain)
       buses[bus] = { gain, inner }
     }
+    makeBuffers(made)
     made.addEventListener('statechange', refresh)
     return made
   }
@@ -151,7 +166,11 @@ export function webSpeaker(
     play(bus, voice, when) {
       const nodes = buses[bus]
       if (state !== 'on' || asleep || context === undefined || nodes === undefined) return
-      playVoice(context, nodes.inner, voice, when)
+      playVoice(context, nodes.inner, voice, when, buffers)
+    },
+    keep(file, recording) {
+      kept.set(file, recording)
+      if (context !== undefined) makeBuffers(context)
     },
     volume(bus, value) {
       volumes[bus] = value

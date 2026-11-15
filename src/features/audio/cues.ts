@@ -1,4 +1,6 @@
 import type { GameContent, MusicFile, SoundFile } from '../content/content.ts'
+import type { SongParts } from './plain-notes.ts'
+import { soundSeconds } from './sound-voices.ts'
 
 /** What to do for one event, in the order to do it. */
 export type CueAction =
@@ -30,9 +32,8 @@ export const LOG_MAX = 1024
  * How many ticks a sound lasts: until its last voice ends, rounded up. The `1e-9` keeps a sum like `0.1 + 0.2`
  * (0.30000000000000004) at the 18 ticks its author meant, not 19; the number is the same in every engine either way.
  */
-function soundTicks(sound: SoundFile, tickHz: number): number {
-  const end = Math.max(...sound.voices.map((voice) => voice.at + ('length' in voice ? voice.length : 0)))
-  return Math.ceil(end * tickHz - 1e-9)
+function soundTicks(sound: SoundFile, parts: SongParts, tickHz: number): number {
+  return Math.ceil(soundSeconds(sound, parts) * tickHz - 1e-9)
 }
 
 /**
@@ -51,7 +52,7 @@ export function cueTable(content: GameContent, tickHz: number): ReadonlyMap<stri
           throw new Error(
             `The cue for "${cue.on}" names a sound called "${cue.sound}", which this game does not have.`,
           )
-        action = { do: 'sound', sound, ticks: soundTicks(sound, tickHz) }
+        action = { do: 'sound', sound, ticks: soundTicks(sound, content, tickHz) }
       } else if (cue.do === 'music') {
         const music = content.music?.[cue.music]
         if (music === undefined)
