@@ -1,6 +1,6 @@
 # Plan F plan audit: the feel runtime
 
-Stage 3 of Cycle 8. The plan audited is
+Stage 3 of Cycle 9 (Cycle 8 in the plan as written; renumbered at the merge). The plan audited is
 [`plans/2026-11-15-feel-runtime.md`](../plans/2026-11-15-feel-runtime.md) (PR 111), against its spec
 [`specs/2026-11-15-feel-runtime-design.md`](../specs/2026-11-15-feel-runtime-design.md) (PR 105, carried by PR 111),
 the M2 spec, plan H (PR 93 and 96; the build on PR 101, branch `claude/project-thread-wgynlp`, read at `fb4ad08`),

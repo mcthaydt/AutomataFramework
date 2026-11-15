@@ -49,7 +49,7 @@ framework's own drawing on an iPad) and the onboarding rule (a drawn sign beside
 - **Commits:** author and committer `McThayDT <107786093+mcthaydt@users.noreply.github.com>`; set the config before
   every commit; no AI attribution anywhere; never force-push.
 - **An Owner question is never defaulted.** Send it to the coordinator with options and a recommendation, and wait.
-- **Tracker:** after each task, update `docs/superpowers/progress.md` (Cycle 8, the feel runtime). Tasks 1 to 12 are
+- **Tracker:** after each task, update `docs/superpowers/progress.md` (Cycle 9, the feel runtime). Tasks 1 to 12 are
   7.5% each; Task 13 is 5% (when plan U's settings screen is not on `main` it stays a handoff and its 5% joins the
   last run's); the last 5% is the final green run with every check passing.
 
