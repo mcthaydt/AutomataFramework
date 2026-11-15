@@ -174,17 +174,16 @@ test('after a hold the tick count goes on one a frame: nothing is caught up', ()
 })
 
 test("a hold that starts in a step stops the rest of that frame's steps, and they are taken after it", () => {
-  // At 30 Hz a frame holds two ticks of time; the first step starts a hold, so the second waits.
+  // A frame of two ticks of time: the first step starts a hold of two ticks, so the second step waits for it.
   const { frames, steps } = holding(1, 2)
   frames.at(0)
   frames.at(2 * FRAME)
   expect(steps()).toBe(1)
   frames.at(3 * FRAME)
-  frames.at(4 * FRAME)
   expect(steps()).toBe(1)
-  frames.at(5 * FRAME)
-  // The hold is over; the step that waited is taken, with the time that has gone by since.
-  expect(steps()).toBeGreaterThanOrEqual(2)
+  // The hold ends in this frame, and the step that waited is taken.
+  frames.at(4 * FRAME)
+  expect(steps()).toBe(2)
 })
 
 test("draw is called in every held frame, with the same alpha and the frame's time", () => {
