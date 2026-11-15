@@ -162,6 +162,8 @@ session on Sonnet at xhigh effort, before the next step starts.
   Owner approves the mockups.
 - **One roadmap.** `docs/roadmap.md` in AutomataFramework is the only roadmap; update it first, and copy it
   everywhere else (the project's files, the "needs you" board).
+- **Model choice.** Use the model named for each stage or review step. For anything not explicitly mapped (bug fixes,
+  flaky tests, cleanups, one-off jobs), use Opus at medium effort (the Owner, 2026-11-15).
 - **A flaky test seen twice is fixed before other work.** Batch pushes: each push cancels the running CI.
 
 ## Fast CI
