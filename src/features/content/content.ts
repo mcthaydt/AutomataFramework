@@ -95,8 +95,10 @@ export {
 } from './music.ts'
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
+export { MissingPhotoError, paintScene } from './paint-scene.ts'
 export { type Parsed, parseContent } from './parse.ts'
 export { MAX_PHOTO_SIDE, type PhotoFile, PhotoSchema, photoPictureProblem } from './photo.ts'
+export { PHOTO_LIBRARY, type PhotoPixels, type PhotoRecord, type Photos } from './photo-library.ts'
 export {
   type ContentRef,
   levelOrder,
@@ -151,6 +153,7 @@ export {
   type Frame,
   figureSheet,
   groundPageTiles,
+  sceneSheet,
   SHEET_COLUMNS,
   type Sheet,
 } from './sheet.ts'

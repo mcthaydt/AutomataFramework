@@ -4,6 +4,7 @@
 // renderer never learn which painter ran.
 import type { BackdropFile } from './backdrop.ts'
 import type { FigureFile } from './figure.ts'
+import type { SceneFile } from './scene.ts'
 
 /** How many pictures go in a row of a figure's sheet. */
 export const SHEET_COLUMNS = 8
@@ -66,6 +67,24 @@ export function backdropSheet(backdrop: BackdropFile): Sheet {
     return frame
   })
   return { w, h: y, frames }
+}
+
+/**
+ * The frames of a scene's ground: its pages, `ground/0` first, each `size.h * tile` tall and as wide as `groundPageTiles`
+ * allows, stacked top to bottom. The last page is as wide as the tiles it has left.
+ */
+export function sceneSheet(scene: SceneFile): Sheet {
+  const perPage = groundPageTiles(scene.tile)
+  const pages = Math.ceil(scene.size.w / perPage)
+  const tall = scene.size.h * scene.tile
+  const frames = Array.from({ length: pages }, (_, page) => ({
+    name: `ground/${page}`,
+    x: 0,
+    y: page * tall,
+    w: Math.min(perPage, scene.size.w - page * perPage) * scene.tile,
+    h: tall,
+  }))
+  return { w: Math.min(perPage, scene.size.w) * scene.tile, h: pages * tall, frames }
 }
 
 /** A box in a picture, in pixels. */
