@@ -18,6 +18,8 @@ const ROOT_HELP = `automata: make a game, check it, play it.
   automata art             Paint this game's pictures from its figure and backdrop files.
   automata add             List a new content file in this game's automata.toml.
   automata words           List the translated words nobody has read, and mark them read.
+  automata music           Bring a MIDI file in as a song, or take a song out as MIDI.
+  automata sound           Make a new sound from a kind, like jump or coin.
   automata mcp             Let an agent use these commands (an MCP server).
 
 Run a command with --help to see its options. Each works on the game in this folder, or in the folder you name.`

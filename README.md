@@ -58,6 +58,8 @@ fetch an unrelated package of that name from npm.
 | `automata art` | Paints the game's pictures from its figure and backdrop files. |
 | `automata add` | Lists a new content file in the game's `automata.toml`. |
 | `automata words` | Lists the translated words nobody has read, and marks them read. |
+| `automata music` | Brings a MIDI file in as a song, or takes a song out as MIDI. |
+| `automata sound` | Makes a new sound from a kind, like jump or coin. |
 | `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
 ## Install
@@ -777,6 +779,48 @@ again. The exit code is `0` whenever the command ran: words that wait are not a 
 - `--json`: print the answer as JSON: the `source` language, the `unread` words (each a `language`, a `key`, the game's
   own `source` text and the translation's `text`) and, after `--read`, what was `marked`.
 
+### automata music
+
+`automata music import <file> [folder]` reads a MIDI file, the file any music program opens, as a song and the loops it
+is made of, and writes them into the game. `automata music export <name> <file> [folder]` writes a song, a loop or a
+motif of the game as a MIDI file. The song is named after the file (`My Song.mid` is `my-song`) unless you give it a
+name.
+
+```
+$ automata music import "My Song.mid"
+Made content/music/my-song.json and 6 loops.
+Pitch bends were dropped.
+$ automata music export meadow meadow.mid
+Wrote meadow.mid.
+```
+
+Each file goes into the first folder `automata.toml` lists for its kind (`music` for the song, `loop` for each loop).
+A game that lists none is told the lines to add, and nothing is written. Nothing already in the game is replaced: a
+song of that name is refused, and you pick another with `--id`. What a MIDI file has that a song cannot hold (pitch
+bends, a tempo that changes, more than eight instruments, more than 128 bars) is left out, and each thing is said.
+
+- `--id <name>`: for `import`, what to call the song. Lower-case words joined by dashes, up to 40 letters.
+- `--json`: print the answer as JSON: `made` (the files written, the song first) and `dropped` for an import, `wrote`
+  for an export.
+
+### automata sound
+
+`automata sound new <kind> [folder]` makes a new sound of a kind and writes it into the game's sounds folder: `jump`,
+`land`, `coin`, `hit`, `explosion`, `door`, `click`, `power-up`, `laser` or `blip`. The same kind and seed always make
+the same sound; the next seed is another take, so try a few until one sounds right.
+
+```
+$ automata sound new jump
+Made content/sounds/jump.json (jump, seed 0). Try another with --seed 1.
+```
+
+The file goes into the first folder `automata.toml` lists for `sound`; a game that lists none is told the lines to add.
+A sound of the same name is replaced, which is how a second take takes the first one's place.
+
+- `--seed <n>`: which take, a whole number from 0. Left out, 0.
+- `--id <name>`: what to call the sound. Left out, the kind's name.
+- `--json`: print the answer as JSON: `made` (the file), `kind` and `seed`.
+
 ### automata mcp
 
 `automata mcp` lets an agent use these commands as tools, over the [Model Context Protocol](https://modelcontextprotocol.io).
@@ -804,6 +848,9 @@ holds the sentence the command would have printed, so an agent reads what a pers
 | `art` | `folder`, `check?` | `automata art <folder> --json` |
 | `add` | `folder`, `type`, `path`, `about?` | `automata add <folder> --type <type> --path <path> --json` |
 | `words` | `folder`, `read?`, `keys?` | `automata words <folder> --json`, and `--read <read> <keys>` when `read` is given |
+| `music_import` | `folder`, `file`, `id?` | `automata music import <file> <folder> --json` |
+| `music_export` | `folder`, `id`, `file` | `automata music export <id> <file> <folder> --json` |
+| `sound_new` | `folder`, `kind`, `seed?`, `id?` | `automata sound new <kind> <folder> --json` |
 | `content_types` | none | the table of content kinds above |
 | `schema` | `type` | reading `schemas/<type>.schema.json` |
 | `skill` | `name?` | reading `skills/<name>/SKILL.md` |
@@ -816,7 +863,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
 and `automata://skills/<name>`.
 
-The server never loads a game's rules itself. `create`, `check`, `replay`, `art`, `add` and `words` each run the command in a process of their
+The server never loads a game's rules itself. `create`, `check`, `replay`, `art`, `add`, `words`, `music_import`, `music_export` and `sound_new` each run the command in a process of their
 own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
 keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
 goes to standard error, never into the messages.

@@ -116,3 +116,34 @@ test('add reads its kind, its path and its note as values, and the folder before
   })
   expect(parseArgs(['add', '--check'])).toMatchObject({ problem: expect.stringContaining('--check') })
 })
+
+// `automata music import song.mid game`: the verb is read as the folder, and the words after it are kept for the command.
+test('music and sound read their verb as the first word and keep the words after it', () => {
+  expect(parseArgs(['music', 'import', 'song.mid', 'game', '--id', 'tune', '--json'])).toEqual({
+    command: 'music',
+    folder: 'import',
+    flags: { id: 'tune', json: true },
+    lists: {},
+    rest: ['song.mid', 'game'],
+  })
+  expect(parseArgs(['music', 'export', 'meadow', 'meadow.mid'])).toEqual({
+    command: 'music',
+    folder: 'export',
+    flags: {},
+    lists: {},
+    rest: ['meadow', 'meadow.mid'],
+  })
+  expect(parseArgs(['sound', 'new', 'jump', 'game', '--seed=3', '--id', 'hop'])).toEqual({
+    command: 'sound',
+    folder: 'new',
+    flags: { seed: '3', id: 'hop' },
+    lists: {},
+    rest: ['jump', 'game'],
+  })
+  expect(parseArgs(['sound', 'new', '--seed'])).toEqual({
+    problem: '--seed needs a value after it, like --seed <value>.',
+  })
+  expect(parseArgs(['music', 'import', '--seed', '1'])).toMatchObject({
+    problem: expect.stringContaining('--seed'),
+  })
+})

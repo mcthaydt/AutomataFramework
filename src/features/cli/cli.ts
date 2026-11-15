@@ -12,10 +12,12 @@ import { createGame, nameOf } from './create.ts'
 import { helpFor } from './help.ts'
 import { liveLayer, stdinLines } from './live.ts'
 import { serveMcp } from './mcp.ts'
+import { describeImport, MUSIC_USAGE, runMusicExport, runMusicImport } from './music.ts'
 import { runPlay } from './play.ts'
 import { CliError, Out, type OutService, type Ports } from './ports.ts'
 import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
+import { describeSound, runSoundNew, SOUND_USAGE, seedOf } from './sound.ts'
 import { printToStderr } from './stderr.ts'
 import { describeWords, runWords } from './unread.ts'
 
@@ -113,6 +115,75 @@ const words: Command = (input) =>
     return 0
   })
 
+/** The sentence for words that came after the last one a command takes: they would be dropped, so they are a refusal. */
+const tooMany = (command: string, words: readonly string[]): CliError =>
+  new CliError(
+    `${command} takes fewer words, but these came after them: ${words.join(' ')}. A name with a space in it goes in quotes.`,
+  )
+
+/** `automata music import <file.mid> [folder]` and `automata music export <name> <file.mid> [folder]`. */
+const music: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const { id, json } = input.flags
+    if (input.folder === 'import') {
+      const [file, folder = '.', ...extra] = input.rest
+      if (file === undefined) return yield* Effect.fail(new CliError(MUSIC_USAGE.import))
+      if (extra.length > 0) return yield* Effect.fail(tooMany('automata music import', extra))
+      const report = yield* runMusicImport({ folder, file, ...(typeof id === 'string' ? { id } : {}) })
+      if (json === true) yield* out.line(JSON.stringify(report, null, 2))
+      else for (const line of describeImport(report)) yield* out.line(line)
+      return 0
+    }
+    if (input.folder === 'export') {
+      const [name, file, folder = '.', ...extra] = input.rest
+      if (name === undefined || file === undefined)
+        return yield* Effect.fail(new CliError(MUSIC_USAGE.export))
+      if (extra.length > 0) return yield* Effect.fail(tooMany('automata music export', extra))
+      if (id !== undefined)
+        return yield* Effect.fail(new CliError('--id is for music import: it names the new song.'))
+      const report = yield* runMusicExport({ folder, id: name, file })
+      yield* out.line(json === true ? JSON.stringify(report, null, 2) : `Wrote ${report.wrote}.`)
+      return 0
+    }
+    return yield* Effect.fail(
+      new CliError(
+        input.folder === undefined
+          ? MUSIC_USAGE.verb
+          : `automata music has two parts, import and export, and "${input.folder}" is neither.`,
+      ),
+    )
+  })
+
+/** `automata sound new <kind> [folder]`: a new sound written into the game's sounds folder. */
+const sound: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const { seed, id, json } = input.flags
+    if (input.folder !== 'new')
+      return yield* Effect.fail(
+        new CliError(
+          input.folder === undefined
+            ? SOUND_USAGE.verb
+            : `automata sound has one part, new, and "${input.folder}" is not it.`,
+        ),
+      )
+    const [kind, folder = '.', ...extra] = input.rest
+    if (kind === undefined) return yield* Effect.fail(new CliError(SOUND_USAGE.new))
+    if (extra.length > 0) return yield* Effect.fail(tooMany('automata sound new', extra))
+    const number = typeof seed === 'string' ? seedOf(seed) : undefined
+    if (number instanceof CliError) return yield* Effect.fail(number)
+    const report = yield* runSoundNew({
+      folder,
+      kind,
+      ...(number === undefined ? {} : { seed: number }),
+      ...(typeof id === 'string' ? { id } : {}),
+    })
+    if (json === true) yield* out.line(JSON.stringify(report, null, 2))
+    else for (const line of describeSound(report)) yield* out.line(line)
+    return 0
+  })
+
 /** A folder as a person can paste it after `cd`: in quotes when it has a space or a quote in it. */
 const shellWord = (word: string): string =>
   /^[\w@%+=:,./\\-]+$/.test(word) ? word : `"${word.replaceAll('"', '\\"')}"`
@@ -180,6 +251,8 @@ const COMMANDS: Readonly<Record<CommandName, Command>> = {
   art,
   add,
   words,
+  music,
+  sound,
   mcp,
 }
 
@@ -200,8 +273,8 @@ const run = (args: readonly string[]): Effect.Effect<number, CliError, Ports> =>
       return 0
     }
     // A word after the folder would be dropped, and the command would quietly work on another folder: a name with a
-    // space typed without quotes is the usual way to get here.
-    if (parsed.rest.length > 0) {
+    // space typed without quotes is the usual way to get here. (`music` and `sound` read their own words.)
+    if (parsed.rest.length > 0 && parsed.command !== 'music' && parsed.command !== 'sound') {
       yield* out.error(
         `automata ${parsed.command} takes one folder, but more words came after "${parsed.folder}": ${parsed.rest.join(' ')}. A folder with a space in its name goes in quotes, like "my games/first one".`,
       )

@@ -40,6 +40,9 @@ test('tools/list has these tools, each with a description and an object schema',
     'art',
     'add',
     'words',
+    'music_import',
+    'music_export',
+    'sound_new',
     'content_types',
     'schema',
     'skill',
@@ -62,6 +65,9 @@ test('every tool has a command of the same name, or a file or a session the tabl
   const commands = tools.filter((name) => (COMMAND_NAMES as readonly string[]).includes(name))
   expect(commands).toEqual(['create', 'check', 'replay', 'art', 'add', 'words'])
   expect(tools.filter((name) => !commands.includes(name))).toEqual([
+    'music_import',
+    'music_export',
+    'sound_new',
     'content_types',
     'schema',
     'skill',
@@ -332,4 +338,32 @@ test('play sentences reach the agent as results that are errors: a bad tick coun
     isError: true,
   })
   expect(answers[8]?.text).toBe("A recording's name is small letters, numbers and dashes, like level-1.")
+})
+
+test('music_import, music_export and sound_new hand the command their words', async () => {
+  const asked: (readonly string[])[] = []
+  const memory = gameMemory()
+  const spy = Layer.succeed(Runner, {
+    command: (args) =>
+      Effect.sync(() => {
+        asked.push(args)
+        return { code: 0, json: { ok: true } }
+      }),
+    worker: () => Effect.die('a worker was not asked for'),
+  })
+  const replies = await talk(Layer.merge(memory.layer, spy), [
+    call(1, 'music_import', { folder: 'game', file: 'song.mid' }),
+    call(2, 'music_import', { folder: 'game', file: 'My Song.mid', id: 'tune' }),
+    call(3, 'music_export', { folder: 'game', id: 'meadow', file: 'meadow.mid' }),
+    call(4, 'sound_new', { folder: 'game', kind: 'jump' }),
+    call(5, 'sound_new', { folder: 'game', kind: 'coin', seed: 3, id: 'pickup' }),
+  ])
+  expect(asked).toEqual([
+    ['music', 'import', 'song.mid', 'game'],
+    ['music', 'import', 'My Song.mid', 'game', '--id', 'tune'],
+    ['music', 'export', 'meadow', 'meadow.mid', 'game'],
+    ['sound', 'new', 'jump', 'game'],
+    ['sound', 'new', 'coin', 'game', '--seed', '3', '--id', 'pickup'],
+  ])
+  expect(replies.map((reply) => JSON.parse(answerOf(reply).text))).toEqual(Array(5).fill({ ok: true }))
 })

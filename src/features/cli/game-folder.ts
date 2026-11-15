@@ -4,6 +4,7 @@
 import { join, resolve } from 'node:path'
 import { Effect, Runtime } from 'effect'
 import type * as Headless from '../../headless.ts'
+import { makeSound, midiToMusic, musicToMidi, SOUND_KINDS } from '../audio/audio.ts'
 import {
   artFiles,
   artProblems,
@@ -32,11 +33,15 @@ type ContentApi = Pick<
   | 'artProblems'
   | 'languageName'
   | 'loadGame'
+  | 'makeSound'
   | 'markRead'
+  | 'midiToMusic'
+  | 'musicToMidi'
   | 'parseContent'
   | 'parseReadMarks'
   | 'READ_MARKS_FILE'
   | 'recordingProblems'
+  | 'SOUND_KINDS'
   | 'translationProblems'
   | 'unreadWords'
   | 'writeContent'
@@ -49,11 +54,15 @@ const OWN_CONTENT: ContentApi = {
   artProblems,
   languageName,
   loadGame,
+  makeSound,
   markRead,
+  midiToMusic,
+  musicToMidi,
   parseContent,
   parseReadMarks,
   READ_MARKS_FILE,
   recordingProblems,
+  SOUND_KINDS,
   translationProblems,
   unreadWords,
   writeContent,

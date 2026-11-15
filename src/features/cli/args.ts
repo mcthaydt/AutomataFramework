@@ -3,7 +3,7 @@
 // Ported in shape from AutomataFrameworkFailed@ed8592e8: packages/tools/src/app/cli.ts (one small file parses the
 // words; the work is in files a test runs with fakes).
 
-export type CommandName = 'create' | 'check' | 'play' | 'replay' | 'art' | 'add' | 'words' | 'mcp'
+export type CommandName = 'create' | 'check' | 'play' | 'replay' | 'art' | 'add' | 'words' | 'music' | 'sound' | 'mcp'
 
 /** The commands, in the order help lists them. One row per command in `cli.ts`'s table. */
 export const COMMAND_NAMES: readonly CommandName[] = [
@@ -14,13 +14,18 @@ export const COMMAND_NAMES: readonly CommandName[] = [
   'art',
   'add',
   'words',
+  'music',
+  'sound',
   'mcp',
 ]
 
 /** A command and what was typed after it. */
 export interface CommandInput {
   readonly command: CommandName
-  /** The first word after the command that is not a flag: a folder, or for `create` the new game's name. */
+  /**
+   * The first word after the command that is not a flag: a folder, or for `create` the new game's name, or for `music`
+   * and `sound` the verb (`import`, `export`, `new`).
+   */
   readonly folder?: string
   readonly flags: Readonly<Record<string, string | true>>
   /** Flags that take a value and then any more words, like `--read es keeper.hello`: every word, the value first. */
@@ -53,6 +58,8 @@ const FLAGS: Readonly<Record<CommandName, Flags>> = {
   art: { switches: ['check', 'json'], values: [], lists: [] },
   add: { switches: ['json'], values: ['type', 'path', 'about'], lists: [] },
   words: { switches: ['json'], values: [], lists: ['read'] },
+  music: { switches: ['json'], values: ['id'], lists: [] },
+  sound: { switches: ['json'], values: ['seed', 'id'], lists: [] },
   mcp: { switches: [], values: [], lists: [] },
 }
 

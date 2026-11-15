@@ -11,6 +11,8 @@ export const ROOT_HELP = `automata: make a game, check it, play it.
   automata art             Paint this game's pictures from its figure and backdrop files.
   automata add             List a new content file in this game's automata.toml.
   automata words           List the translated words nobody has read, and mark them read.
+  automata music           Bring a MIDI file in as a song, or take a song out as MIDI.
+  automata sound           Make a new sound from a kind, like jump or coin.
   automata mcp             Let an agent use these commands (an MCP server).
 
 Run a command with --help to see its options. Each works on the game in this folder, or in the folder you name.`
@@ -85,6 +87,31 @@ a machine is a first draft; this is the list of what still needs a person.
   --read <language> <key> …    Mark only those words.
   --json                       Print the answer as JSON, for an agent or another tool.`
 
+const MUSIC_HELP = `automata music import <file> [folder]
+automata music export <name> <file> [folder]
+
+Moves music between this game and a MIDI file, the file any music program opens.
+
+  import   Reads the MIDI file as a song and writes it, with the loops it is made of, into this game's music and
+           loops folders. A song is named after the file unless you give --id. Nothing is replaced.
+  export   Writes a song, a loop or a motif of this game as a MIDI file.
+
+The game must list a folder for music and one for loops in automata.toml; if it does not, this prints the lines to add.
+What a MIDI file has that a song cannot hold is left out, and each thing is said.
+
+  --id <name>   For import: what to call the song.
+  --json        Print the answer as JSON, for an agent or another tool.`
+
+const SOUND_HELP = `automata sound new <kind> [folder]
+
+Makes a new sound of a kind and writes it into this game's sounds folder. The same kind and seed always make the same
+sound; a new seed is another take, so try a few. The kinds are jump, land, coin, hit, explosion, door, click, power-up,
+laser and blip. The game must list a folder for sounds in automata.toml; if it does not, this prints the lines to add.
+
+  --seed <n>    Which take, a whole number from 0. Left out, 0.
+  --id <name>   What to call the sound. Left out, the kind's name. A sound of that name is replaced.
+  --json        Print the answer as JSON, for an agent or another tool.`
+
 const MCP_HELP = `automata mcp
 
 Lets an agent use automata's commands as tools, over the Model Context Protocol. An agent's own program starts
@@ -98,6 +125,8 @@ const HELP: Readonly<Record<CommandName | 'root', string>> = {
   art: ART_HELP,
   add: ADD_HELP,
   words: WORDS_HELP,
+  music: MUSIC_HELP,
+  sound: SOUND_HELP,
   create: CREATE_HELP,
   play: PLAY_HELP,
   mcp: MCP_HELP,

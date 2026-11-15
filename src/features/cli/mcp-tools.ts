@@ -1,4 +1,5 @@
-// The tools `automata mcp` offers an agent. `create`, `check`, `replay`, `art`, `add` and `words` are the commands themselves,
+// The tools `automata mcp` offers an agent. `create`, `check`, `replay`, `art`, `add`, `words`, `music_import`,
+// `music_export` and `sound_new` are the commands themselves,
 // run as a child process through `Runner.command` with `--json` (audit C1: this long-lived server never loads a game's
 // code, so every answer comes from the files as they are now); `content_types`, `schema` and `skill` read what the
 // package ships; the `play_` tools run a game a few ticks at a time (`session.ts`). Every description is one sentence
@@ -163,6 +164,62 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
           ...(input.read === undefined ? [] : ['--read', input.read, ...(input.keys ?? [])]),
         ])
       },
+    ),
+    tool(
+      'music_import',
+      'Bring a MIDI file in as a song and the loops it is made of: use it when you are given a .mid file for a game.',
+      z.object({
+        folder,
+        file: z.string().describe('The MIDI file, like song.mid.'),
+        id: z
+          .string()
+          .optional()
+          .describe(
+            "What to call the song; leave it out to use the file's name, like my-song for My Song.mid.",
+          ),
+      }),
+      (input) =>
+        command([
+          'music',
+          'import',
+          input.file,
+          input.folder,
+          ...(input.id === undefined ? [] : ['--id', input.id]),
+        ]),
+    ),
+    tool(
+      'music_export',
+      "Write a song, a loop or a motif of a game as a MIDI file: use it to open a game's music in a music program.",
+      z.object({
+        folder,
+        id: z.string().describe('The name of a song, a loop or a motif of the game, like meadow.'),
+        file: z.string().describe('The MIDI file to write, like meadow.mid.'),
+      }),
+      (input) => command(['music', 'export', input.id, input.file, input.folder]),
+    ),
+    tool(
+      'sound_new',
+      'Make a new sound of a kind, like jump or coin, in a game: use it to add a sound, and again with another seed for another take.',
+      z.object({
+        folder,
+        kind: z.string().describe('jump, land, coin, hit, explosion, door, click, power-up, laser or blip.'),
+        seed: z.number().optional().describe('Which take, a whole number from 0; leave it out for 0.'),
+        id: z
+          .string()
+          .optional()
+          .describe(
+            "What to call the sound; leave it out to use the kind's name. A sound of that name is replaced.",
+          ),
+      }),
+      (input) =>
+        command([
+          'sound',
+          'new',
+          input.kind,
+          input.folder,
+          ...(input.seed === undefined ? [] : ['--seed', String(input.seed)]),
+          ...(input.id === undefined ? [] : ['--id', input.id]),
+        ]),
     ),
     tool(
       'content_types',
