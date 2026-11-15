@@ -57,6 +57,9 @@ It breaks none: 2D only, nothing ported ahead of its user (the template's landin
   - `hear({ tick, events })`: one step's events. A tick already heard is ignored (as `audio.hear`), so a step heard
     twice never fires twice. `begin()` forgets the last tick, for a new sim or an online re-sync.
   - `play(feel, at)`: fires one feel file now, at a place (F4, below). Nothing in the sim is read or written.
+  - `hold(seconds)`: spends a frame's time on a freeze that holds the whole game, and says how much it spent. The
+    loop asks it before it counts that frame's steps, so held time is never owed. (Added by the plan; the plan audit
+    accepted it.)
   - `frame(seconds, place)`: advances by the frame's time and returns a `FeelFrame` of plain data: the live specks
     (position in tiles, colour, how faded), the shake offset in tiles, and `freeze` (ticks still to hold, or 0).
     `place(sid)` is how the caller says where a thing is (its box in tiles); the runtime never holds the scene.
@@ -69,8 +72,9 @@ It breaks none: 2D only, nothing ported ahead of its user (the template's landin
 ### Dust
 
 - A burst of `count` specks starts at the **bottom middle of the thing the event names** (the payload's `sid`: the
-  hero events' `{ player, sid }`, the touch events' `sid`), where it was in the last picture drawn, so a
-  thing taken away in that very step (a spark) still has its place. An event that names no thing, or a thing that was
+  hero events' `{ player, sid }`, the touch events' `sid`), where it is as of the newest step, so a landing's dust is
+  on the ground; a thing taken away in that very step (a spark) starts it where it was in the last picture drawn.
+  (The plan's wording; the plan audit accepted it.) An event that names no thing, or a thing that was
   never drawn, makes no dust; its shake and freeze still happen. *My call.*
 - Specks fly out in an upward fan at `speed` tiles a second, slow down, sink a little, and fade out over `life` ticks.
   Each is a small square in the file's `color` (about an eighth of a tile, never under two device pixels).
@@ -97,15 +101,19 @@ It breaks none: 2D only, nothing ported ahead of its user (the template's landin
 
 - **Offline** (`startGame`, `watchReplay`): the loop holds. For the file's `ticks` it takes no step and draws the same
   picture, then goes on from where it was; the time held is not owed afterwards, so the game never fast-forwards.
-  What a player presses during a hold is read on the first step after it (plan H's jump buffer catches a jump). A
-  freeze that starts during a hold extends it to the later end; no single hold runs past 30 ticks (half a second, the
+  What a player holds down when a hold ends is read on the first step after it (plan H's jump buffer catches a
+  jump), and a tap on the thumbs during it is kept; a key or pad press that starts and ends inside the hold is not
+  (the input reads what is down at each step; the plan audit, I2). A
+  freeze that starts during a hold extends it to the later end; no single hold runs past 30 ticks from its start (half a second, the
   file's own limit), so a chain of sparks can never stall the game. Pausing during a hold keeps the rest for when the
   game comes back. Every player on the same screen holds together.
 - **Online** (`startOnlineGame`): the loop does not hold, because the room's ticks cannot wait. The picture holds for
   the ticks while steps go on underneath, then the next draw shows where things are now.
 - **Why this keeps the game the same:** a recording is a list of ticks and what was held on each. A hold changes how
   long a tick takes on the wall clock, never which inputs land on which tick. `automata replay` and the Node parity
-  runs have no loop and never wait. No golden moves.
+  runs have no loop and never wait. No golden moves. A feel file is also not given to the sim, as words, sounds and
+  pictures are not (`level/sim-content.ts`), so tuning one in the Feel editor never moves a hash, stops a replay or
+  keeps two players out of one room (the plan audit, C1).
 
 ### Buzz
 

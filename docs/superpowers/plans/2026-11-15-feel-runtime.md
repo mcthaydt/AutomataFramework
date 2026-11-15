@@ -50,13 +50,20 @@ framework's own drawing on an iPad) and the onboarding rule (a drawn sign beside
   every commit; no AI attribution anywhere; never force-push.
 - **An Owner question is never defaulted.** Send it to the coordinator with options and a recommendation, and wait.
 - **Tracker:** after each task, update `docs/superpowers/progress.md` (Cycle 8, the feel runtime). Tasks 1 to 12 are
-  7.5% each; the last 10% is the final green run with every check passing.
+  7.5% each; Task 13 is 5% (when plan U's settings screen is not on `main` it stays a handoff and its 5% joins the
+  last run's); the last 5% is the final green run with every check passing.
 
 ## Before starting
 
 - **Plan H must be on `main`** (PR 101). This plan uses its `game/buzz.ts`, `Host.buzz`, the `hero.*` events with
   `{ player, sid }`, `tests/fixtures/moves/` and the template's `content/feels/land.json`. If any is missing, stop
   and report.
+- **A feel file is not the sim's content** (audit C1). `src/features/level/sim-content.ts` must have `'feel'` in
+  `LEFT_OUT` and take out the `feels` map, with a test in `tests/features/level/sim-content.parity.test.ts` like the
+  sound one: the full game with and without its three feel files has the same `contentHash`. The audit asked plan H's
+  build to add it before its Task 14 records `template/replays/level-1.json`. If it is not on `main`, Task 1 adds it;
+  if a recorded hash then moves (a golden recorded with a feel file in its content), stop and report it with the
+  before and after hashes: a golden moves only with the Owner seeing.
 - **Plan U (PR 103) may land before or after.** If its Task 2 is on `main`, `game/loop.ts` and `game/game.ts` already
   carry `onStep`, `paused` and `broken`: keep them, and add this plan's lines beside them. The feel wiring hears a step
   in the same place `onStep`'s listeners do.
@@ -172,8 +179,10 @@ README.md, skills/                      what a feel file now does on screen
 **Files:**
 - Create: `src/features/feel/feel.ts` (the re-exports only, for now), `noise.ts`, `settings.ts`,
   `tests/features/feel/noise.test.ts`, `tests/features/feel/settings.test.ts`
-- Modify: `tests/architecture/rules.ts`, `src/headless.ts`
-- Test: `tests/architecture/rules.test.ts`
+- Modify: `tests/architecture/rules.ts`, `src/headless.ts` (the export, and the feature named in its first comment),
+  `tests/public-surface.test.ts`, and `src/features/level/sim-content.ts` only if "Before starting" found `'feel'`
+  missing from `LEFT_OUT`
+- Test: `tests/architecture/rules.test.ts`, `tests/public-surface.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -197,6 +206,8 @@ export function feelSettingsOf(saved: unknown, reducedMotion: boolean): FeelSett
 // rules.test.ts
 test('feel may import content, sim and level, and render may import feel', …)      // no violation
 test('feel may not import render, and may not read a clock or Math.random', …)     // both are violations
+test('feel may not use a Math function an engine may round its own way', …)        // Math.sin, Math.pow: violations (audit M6)
+// public-surface.test.ts: the headless entry exports feelSettingsFirst, feelSettingsOf and FeelSettingsSchema
 // noise.test.ts
 test('the same four numbers give the same answer, and it is from 0 up to but not 1', …)   // 10 000 draws
 test('changing any one of the four changes the answer', …)
@@ -211,8 +222,9 @@ test('anything that does not read as the section is the first values', …)   //
 
 - [ ] **Step 2: Push; red.**
 - [ ] **Step 3: Build.** `LAYERS` gains `'feel'` between `'server'` and `'render'`; `PURE_FEATURES` gains it, with a
-  line in its comment ("its only clock is the frame times it is handed"). `src/headless.ts` exports the feature. The
-  noise, exactly:
+  line in its comment ("its only clock is the frame times it is handed"). The painter's `PAINTER_MATH` check also
+  covers every file under `src/features/feel/` (its comment says why: the frames are a golden in four engines).
+  `src/headless.ts` exports the feature. The noise, exactly:
 
 ```ts
 const mix = (h: number, k: number): number => {
@@ -333,6 +345,7 @@ test('no shake is a zero offset', () => expect(largestShake([])).toEqual({ x: 0,
 
 **Files:**
 - Modify: `src/features/feel/feel.ts`
+- Modify: `tests/public-surface.test.ts` (`createFeel`, `MAX_FREEZE_TICKS`)
 - Create: `tests/features/feel/feel.test.ts`, `tests/features/feel/feel-frames.parity.test.ts`,
   `tests/golden/feel-frames.json`, `tests/fixtures/feel/script.ts`
 
@@ -392,9 +405,13 @@ Rules the tests pin:
   no dust. A burst is never older than the frame that starts it (it starts at age 0 and is drawn in that frame).
 - Past `MAX_SPECKS`, the oldest specks go first.
 - A freeze of `n` ticks sets its hold (the game's, or the picture's for `play` and for `freezes: 'picture'`) to the
-  later of what is left and `n / tickHz`, never more than `MAX_FREEZE_TICKS / tickHz`. `hold(s)` spends `s` on the
+  later of what is left and `n / tickHz`, and a hold never ends more than `MAX_FREEZE_TICKS / tickHz` after the
+  moment it began (audit I3): extending it never moves that limit, so a stream of sparks online or of "Show me"
+  presses cannot hold the picture for good. Once a hold is over, the next freeze starts a new one. `hold(s)` spends `s` on the
   game's hold and answers `min(s, what it had left)`. `frame(s)` spends `s` on the picture's hold, except one that
-  started since the last frame. `freeze` is the larger of the two that is left, in ticks, rounded up.
+  started since the last frame. `freeze` is the larger of the two that is left, in ticks, rounded up
+  with slack: what is left under a millionth of a second is none, and `ceil(left * tickHz - 1e-6)` (audit M5, as the
+  loop's `SLACK_MS`).
 - `frame` moves dust and shakes on even while held. A negative or non-finite `seconds` counts as 0, in both.
 - With `settings.shake` false the offset is `{ x: 0, y: 0 }`; the shake still ages, so turning it on mid-shake shows
   the rest.
@@ -416,6 +433,8 @@ test('shake off in the settings is a zero offset; on again shows what is left', 
 test('a freeze reports its ticks and counts down as time is held', …)                          // 4, then 3 after hold(1/60) and a frame
 test('a hold of the picture is not spent by the frame it starts in: four ticks is four frames of 1/60 held', …)
 test('a second freeze extends the hold to the later end, and no hold is past 30 ticks', …)
+test('a picture hold extended every 20 ticks is over 30 ticks after it began, and the next frame is not held', …)  // audit I3
+test('4/60 s less 1/60 s held is 3 ticks, not 4: the rounding has slack', …)                   // audit M5
 test('with freezes "picture", hold answers 0 and the frames count the freeze down', …)
 test('play fires one file at a thing; its freeze never holds the game', …)
 test('dust keeps moving while held', …)
@@ -443,7 +462,7 @@ test('idle is true before anything, false with a speck, a shake or a hold, and t
 **Files:**
 - Modify: `src/features/host/host.ts`, `src/features/host/test.ts`, `src/features/web/web.ts`, and every hand-made
   `Host` under `tests/`
-- Test: `tests/features/host/test.test.ts`, `tests/features/web/web.browser.test.ts`
+- Test: `tests/features/host/test-host.test.ts`, `tests/features/web/web.browser.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -459,7 +478,7 @@ export interface Host {
 
 `webHost` asks `(prefers-reduced-motion: reduce)`; a page with no `matchMedia`, or one that throws, answers false.
 
-- [ ] **Step 1: Failing tests.** `test.test.ts`: false by default, true when asked. `web.browser.test.ts`: the
+- [ ] **Step 1: Failing tests.** `test-host.test.ts`: false by default, true when asked. `web.browser.test.ts`: the
   seam's answer is the host's; no `matchMedia` is false; one that throws is false.
 - [ ] **Step 2: Push; red.** **Step 3: Build.** **Step 4: Push; green.**
 - [ ] **Step 5: Commit** `feat(host): a host says when the device asked for less motion`
@@ -499,7 +518,8 @@ draw(views: readonly View[], links: readonly RopeLine[], shot?: Shot,
 - `last` keeps the feel too, so `resize`, `setInset`, `setRoom` and a density change put the same picture back.
 - The held picture (builder's call 7): `render.ts` keeps what it last gave the stage. When `feel.freeze > 0` and the
   frame before was also frozen, it gives the stage those same views, links and shot with the new feel; `drawnAt` does
-  not move. A `draw` with no `feel` is exactly as before.
+  not move. A `draw` with no `feel` is exactly as before. `heroes()` answers from the views the held picture shows
+  (audit I5), so anything placed over a hero (plan U's number over each hero) stays on the held picture.
 
 - [ ] **Step 1: Write the failing tests** (three engines; the box fixture of `render.browser.test.ts`; pixels through
   `tests/fixtures/game/pixels.ts`), each at 390x844 first:
@@ -510,6 +530,7 @@ test('a speck on a phone-size level is never under two device pixels', …)     
 test('a faded speck lets what is under it show', …)                                       // alpha 0.5: between the two colours
 test('a shake moves the box by whole device pixels and the canvas does not move', …)
 test('heroes() answers the same box with and without a shake', …)
+test('while the picture is held, heroes() answers the held box though a step moved the hero', …)   // audit I5
 test('no shake in the frame puts the box back exactly', …)
 test('while the frame says freeze, the box stays where it was drawn though a step moved it, and the dust still moves', …)
 test('the first frame of a freeze shows the newest step', …)                              // a thing removed in that step is gone
@@ -654,12 +675,13 @@ test('a jump shakes the level and not the touch controls or the mount', …)    
 test('on a host that asked for less motion a jump draws no shake and a landing still draws dust', …)
 test('setShake(false) stops the shake; setShake(true) brings it back', …)
 test('taking the spark holds the tick count for six ticks, then it goes on one a frame', …)
-test('a jump key pressed and let go during the hold still jumps on the first step after it', …)
+test('a jump key pressed during the hold and still down when it ends jumps on the first step after it', …)
+test('a tap on the thumbs during the hold still jumps on the first step after it', …)       // thumbs keep a tap
 test('pause during a hold keeps the rest: after resume the tick count waits out what was left', …)
 test('a page hidden during a hold and shown again does the same', …)
 test('two heroes on one screen hold together', …)
 test('a recording made across a freeze replays to the same hash in a headless sim', …)
-test('the same play with the three feel files taken out records the same commands', …)
+test('the same play with the three feel files taken out records the same commands and ends on the same hash', …)   // audit C1
 test.each(SIZES)('at %s the dust never covers a touch control', …)                        // elementFromPoint at each control is the control
 ```
 
@@ -667,8 +689,9 @@ test.each(SIZES)('at %s the dust never covers a touch control', …)            
   template's `replays/level-1.json`, the run with a `createFeel` hearing every step and a frame taken after each ends
   on the recorded hash.
 
-  If "a jump key pressed and let go during the hold" fails because the input does not keep a press until the next
-  poll, stop and report: that is a change to `input`, not to this plan.
+  A key pressed and let go wholly inside a hold is not seen: the keyboard and the pads are read as what is down at
+  each poll (`input/keyboard.ts`, `input/held.ts`), and latching them would change what every game records, which is
+  `input`'s to plan (audit I2). Touch keeps a tap until the next poll (`thumbs.ts`). Do not change `input` here.
 
 - [ ] **Step 2: Push; red.** **Step 3: Build.** **Step 4: Push; green on every job; look at the pictures.**
 - [ ] **Step 5: Commit** `feat(game): a game played alone draws its dust and shake and holds for a freeze`
@@ -693,9 +716,11 @@ export interface OnlineGame { setShake(on: boolean): void; feel(): FeelFrame }
 - `watchReplay`: a wiring with `freezes: 'game'` and no `buzz`; the step gives it `sim.step`'s tick and events; the
   loop gets `hold`, `held` and `draw`; `wiring.begin()` at the start and at every restore between rounds. While
   resting or finished it still draws through the wiring with alpha 1.
-- `startOnlineGame`: a wiring with `freezes: 'picture'` in place of its `createBuzzer`; each of `advance.steps` goes
-  to `wiring.hear`; `wiring.begin()` where `audio.begin()` is called on a sync, whether or not the game has audio.
-  The loop gets no `hold`: the room never waits.
+- `startOnlineGame`: a wiring with `freezes: 'picture'` in place of its `createBuzzer`. The step's order changes
+  (audit I1): after `session.advance` and the deltas, check for a sync first, before the `audio === undefined`
+  return, and on one call `wiring.begin()` and `audio?.begin()`; then each of `advance.steps` goes to `wiring.hear`
+  and, with audio, to `audio.hear`. A sync's own steps can carry ticks at or below the last one heard, and heard
+  before `begin` they would be dropped. The loop gets no `hold`: the room never waits.
 
 - [ ] **Step 1: Write the failing tests.**
 
@@ -711,6 +736,7 @@ test('a freeze online holds the picture and not the ticks', …)     // session.
 test('after the hold the picture shows where things are now', …)
 test('both pages of a room with a freeze file end on the same hash', …)
 test('after a sync the next landing still makes dust', …)                                 // Review Focus 3
+test('a landing in the very advance that syncs makes dust', …)                            // audit I1
 test('a landing online on touch is one buzz, as before', …)
 ```
 
@@ -790,15 +816,15 @@ test('firstHeroSid is the lowest player\'s hero, and undefined in an empty co-op
 **Golden impact:** none.
 
 **Files:**
-- Modify: the six `src/features/locale/library/*.json`, `src/features/locale/library/automata.translations.toml`,
-  `README.md`, `skills/automata-content/SKILL.md`, `skills/automata-api/SKILL.md`, `skills/automata-rules/SKILL.md`,
+- Modify: the six `src/features/locale/library/*.json`, `README.md`, `skills/automata-content/SKILL.md`, `skills/automata-api/SKILL.md`, `skills/automata-rules/SKILL.md`,
   `template/README.md` and `template/AGENTS.md` (one line each, inside their line limits),
   `docs/api/framework.api.md`
 - Test: `tests/features/locale/` (the library's own tests), `tests/docs/readme.test.ts`, `tests/skills/skills.test.ts`
 
 `automata.feel.shake`: "Screen shake" (English), "Temblor de pantalla" (Spanish), "화면 흔들림" (Korean),
-"画面の揺れ" (Japanese), "屏幕震动" (Chinese), "Tremor da tela" (Portuguese). The five translations are marked
-unread, like every other word waiting for a native speaker.
+"画面の揺れ" (Japanese), "屏幕震动" (Chinese), "Tremor da tela" (Portuguese). The five translations stay
+unread, like every other word waiting for a native speaker: an unread word is one with no mark, so
+`automata.translations.toml` is not touched (audit M2).
 
 The README's content table says what a feel file does on screen, and a new section, "Feel", says in this order: what
 is drawn (dust at the thing's feet, a shake of the level only, a freeze); that a freeze really pauses a game played
@@ -824,7 +850,8 @@ game's own code may emit any event (`crate.dropped`) for a feel file to answer.
   puts the game on `window.automataGame`, built the way `tests/fixtures/online/page/` is),
   `tests/journeys/feel.journey.test.ts`
 - Modify: `tests/journeys/online.journey.test.ts`, `tests/create/create.journey.test.ts`,
-  `tests/template/page.browser.test.ts`
+  `tests/template/page.browser.test.ts`, `knip.json` (the page's `main.ts` is an entry, as the online page's is;
+  audit M3)
 
 Journeys read `window.automataGame.feel()` and `.sim.tick`, and take a picture at each size for the `ci-screens`
 branch. Sizes, in this order: 390x844, 844x390, 820x1180, 1180x820, 1280x720. Touch sizes play with thumbs.
@@ -854,7 +881,32 @@ test('the template\'s landing draws dust at the hero\'s feet', …)
 - [ ] **Step 4: Push; green on every job,** `online`, `create` on three systems and `create-play` included. Look at
   every picture: the drunk-grandma test, and nothing over a control.
 - [ ] **Step 5: Commit** `test: the feel runtime in real pages, at five sizes in three browsers`. Update the tracker
-  to 90%, then to 100% once the last run is green on every check, and send the coordinator the summary.
+  to 90%.
+
+### Task 13: The switch on the settings screen (only if plan U's settings screen is on `main`)
+
+**Golden impact:** none. The Owner's answer 2 needs "Screen shake" on the settings screen (audit I4). Plan U's plan
+does not name it, so whichever of plan U and plan F lands second builds it. If plan U's settings screen
+(`src/features/screens/`, `src/features/flow/sections.ts`) is not on `main` when Task 12 is green, skip this task:
+it stays the first item of the Handoffs and its 5% joins the last run's.
+
+**Files:**
+- Modify: `src/features/flow/sections.ts`, the settings screen's file in `src/features/screens/`, and where the flow
+  starts the game (`feelSettings`)
+- Test: `tests/features/screens/settings.browser.test.ts`, the flow's sections test
+
+- [ ] **Step 1: Write the failing tests.**
+
+```ts
+test('Screen shake starts off under reduced motion, and a fresh page keeps what was chosen', …)
+test('Screen shake starts on where the device did not ask for less motion', …)
+test('turning Screen shake off stops a shake in the running game', …)                 // game.feel().shake is { x: 0, y: 0 }
+test('the switch says "Screen shake" in the player\'s language and is at least 44 px tall', …)
+```
+
+- [ ] **Step 2: Push; red.** **Step 3: Build** what the Handoffs' plan U item says. **Step 4: Push; green.**
+- [ ] **Step 5: Commit** `feat(screens): a Screen shake switch on the settings screen`. Update the tracker to 95%,
+  then to 100% once the last run is green on every check, and send the coordinator the summary.
 
 ---
 
@@ -866,9 +918,7 @@ test('the template\'s landing draws dust at the hero\'s feet', …)
   after Sound: the word `automata.feel.shake`, set through the section and `game.setShake(on)`. It is shown on every
   device. Nothing is stored until the player sets it, so the device's own wish holds until then. The hud, the pause
   button and every screen sit over the mount, not in the canvas: Task 8 and Task 12 prove such an element does not
-  move in a shake. If plan U lands first, this plan's executor adds the section and the toggle there instead, with
-  the toggle's test (`settings.browser.test.ts`: "Screen shake starts off under reduced motion, and a fresh page
-  keeps what was chosen").
+  move in a shake. If plan U's settings screen lands first, this plan's Task 13 adds the section and the toggle.
 - **Plan K, Step U (the template).** The template's page opens the `feel` section beside `touch` and passes it. Its
   `?watch` passes the same `feelSettings` to `watchReplay`.
 - **Plan D, Part 6 (the demo).** Three feel files: dust on `hero.landed`, a freeze on `spark.taken`, and a shake on
@@ -887,7 +937,8 @@ test('the template\'s landing draws dust at the hero\'s feet', …)
 - **Plan T (story).** The speech box is over the mount and does not shake. A cutscene that wants a shake raises an
   event a feel file answers.
 - **Later, when a game needs it:** `*` patterns in `on`; more kinds of effect; `showFeel` on a watched replay; a
-  framework event for "anything landed".
+  framework event for "anything landed"; keeping a key's or a pad's press that starts and ends inside a hold (an
+  `input` change, audit I2).
 - **Release 4 (Tauri).** `reducedMotion()` is that adapter's to answer from the system setting.
 
 ## Self-review
@@ -908,3 +959,5 @@ test('the template\'s landing draws dust at the hero\'s feet', …)
   `createFeel`, `createFeelWiring`, `showFeel`, `setShake`, `feel()`, `reducedMotion()` and `firstHeroSid` are spelled
   the same in every task that uses them.
 - **No Owner question is open.**
+- **The plan audit** (`audits/2026-11-15-plan-f-plan-audit.md`) accepted both deviations and changed this plan for
+  its C1, I1 to I5 and M1 to M6.
