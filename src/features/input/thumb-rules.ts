@@ -2,6 +2,7 @@
 // rules say what is held. The left half of the screen walks (a ring that appears where the thumb lands), the right half
 // jumps, and a quick flick of the walking thumb is a dash. The page (thumbs.ts) feeds it pointer events and draws what
 // `ring` says; everything a person's thumb decides is decided here, where a test can say it in numbers.
+import { type HintUses, hintUsesOf } from './thumb-hints.ts'
 
 /** A thumb must slide this far from the ring's middle before the walk is held, in CSS pixels. */
 export const DEAD_ZONE_PX = 12
@@ -34,7 +35,9 @@ export interface ThumbRules {
   /** Whether any finger is down, still or moving, for the hints: they stay away from a game being played. */
   touching(): boolean
   /** How many times each has been done, for the hints. */
-  uses(): { readonly walk: number; readonly jump: number; readonly dash: number }
+  uses(): HintUses
+  /** Starts the counts from where an earlier visit left them (made safe by `hintUsesOf`). */
+  setUses(uses: unknown): void
 }
 
 interface Sample {
@@ -157,5 +160,8 @@ export function createThumbRules(options: { readonly dash: boolean }): ThumbRule
     },
     touching: () => fingers.size > 0,
     uses: () => ({ ...counts }),
+    setUses(uses) {
+      Object.assign(counts, hintUsesOf(uses))
+    },
   }
 }

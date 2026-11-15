@@ -3,6 +3,7 @@
 // system cancels lets go, so a hero never keeps running with nothing under the thumb.
 import type { Words } from '../../lib/message.ts'
 import type { Controls } from './controls.ts'
+import type { HintUses } from './thumb-hints.ts'
 
 /** What the game holds with the screen. */
 export interface Touch {
@@ -20,6 +21,10 @@ export interface Touch {
   setSwapped(on: boolean): void
   /** How many pixels at the bottom the camera should keep the heroes clear of: the thumbs' resting corners. */
   room(): number
+  /** How many times each thumb move has been done, for the hints. The buttons have no hints: always zeros. */
+  uses(): HintUses
+  /** Starts the counts from where an earlier visit left them. The buttons have no hints: nothing happens. */
+  setUses(uses: unknown): void
   /** Says every word again in other words (a new language): what is held stays held. */
   relabel(words: Words): void
   destroy(): void
@@ -219,6 +224,8 @@ export function createTouch(
     },
     room: () => 0,
     inset,
+    uses: () => ({ walk: 0, jump: 0, dash: 0 }),
+    setUses() {},
     onInset(listener) {
       insetListeners.add(listener)
     },

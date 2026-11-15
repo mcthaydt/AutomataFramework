@@ -1775,6 +1775,16 @@ interface HeroMovesInput {
 function hertzOf(note: string): number | undefined;
 ```
 
+### `HintUses` (interface)
+
+```ts
+interface HintUses {
+    readonly walk: number;
+    readonly jump: number;
+    readonly dash: number;
+}
+```
+
 ### `Host` (interface)
 
 ```ts
@@ -1852,6 +1862,8 @@ interface Input {
     setSwapSides(on: boolean): void;
     swapSides(): boolean;
     thumbRoom(): number;
+    hints(): HintUses;
+    setHints(uses: unknown): void;
     onInset(listener: (px: number) => void): void;
     relabel(words: Words): void;
     setPlayers(players: readonly number[]): void;

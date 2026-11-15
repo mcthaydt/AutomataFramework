@@ -30,6 +30,7 @@ import { createKeyboard } from './keyboard.ts'
 import { createMenu, type MenuPress } from './menu.ts'
 import { createPads, type ListedPad } from './pads.ts'
 import { type Claim as ClaimType, type Seat, seatsFor } from './seats.ts'
+import type { HintUses } from './thumb-hints.ts'
 import { createThumbs } from './thumbs.ts'
 import { createTouch } from './touch.ts'
 import { createUse, type DeviceKind } from './use.ts'
@@ -95,6 +96,14 @@ export interface Input {
   swapSides(): boolean
   /** How many pixels at the bottom the camera should keep the heroes clear of: the thumbs' resting corners. */
   thumbRoom(): number
+  /**
+   * How many times each thumb move has been done, which is what the hints count (each stops showing once its move has
+   * been done three times). A game keeps this between visits so a player who has learned the thumbs is not taught them
+   * again. All zeros for a game without the thumbs.
+   */
+  hints(): HintUses
+  /** Starts the hint counts from what `hints()` gave an earlier visit. Anything that is not a count is 0, never thrown. */
+  setHints(uses: unknown): void
   /** Calls `listener` with the new room whenever the buttons show, hide or change size. Stops on `destroy`. */
   onInset(listener: (px: number) => void): void
   /**
@@ -150,6 +159,7 @@ export type { MenuPress } from './menu.ts'
 export { padMenu } from './pad-menu.ts'
 export type { ListedPad } from './pads.ts'
 export type { Claim, Device, Seat } from './seats.ts'
+export type { HintUses } from './thumb-hints.ts'
 export type { DeviceKind } from './use.ts'
 
 /**
@@ -292,6 +302,8 @@ export function createInput(options: InputOptions): Input {
     },
     swapSides: () => swappedSides,
     thumbRoom: touch.room,
+    hints: touch.uses,
+    setHints: touch.setUses,
     relabel(next) {
       words = next
       touch.relabel(next)

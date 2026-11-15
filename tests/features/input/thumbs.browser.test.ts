@@ -461,3 +461,36 @@ test('an element the page stacks over a half, outside the mount, takes its own t
     pause.remove()
   }
 })
+
+test('hints a player has learned stay gone on a new visit, and what is learned now can be kept', () => {
+  const t = make({ words: said({ 'automata.thumbs.walk-hint': 'Slide to walk' }) })
+  expect(t.uses()).toEqual({ walk: 0, jump: 0, dash: 0 })
+  t.setUses({ walk: 3, jump: 0, dash: 0 })
+  expect(hintBox('walk').style.display).toBe('none')
+  // The jump hint was not learned, so it is still there.
+  expect(hintBox('jump').style.display).toBe('flex')
+  finger(half('jump'), 'pointerdown', 30, 700, 300)
+  finger(half('jump'), 'pointerup', 30, 700, 300)
+  expect(t.uses()).toEqual({ walk: 3, jump: 1, dash: 0 })
+})
+
+test('the input gives the hint counts out and takes them back, and the buttons have none', () => {
+  const frames = manualFrames()
+  const moving = createInput({
+    mount,
+    controls: fixtureControls,
+    frames,
+    words: said({}),
+    thumbs: { dash: false },
+  })
+  expect(moving.hints()).toEqual({ walk: 0, jump: 0, dash: 0 })
+  moving.setHints({ walk: 1, jump: 3, dash: 0 })
+  expect(moving.hints()).toEqual({ walk: 1, jump: 3, dash: 0 })
+  moving.setHints(undefined)
+  expect(moving.hints()).toEqual({ walk: 0, jump: 0, dash: 0 })
+  moving.destroy()
+  const plain = createInput({ mount, controls: fixtureControls, frames, words: said({}) })
+  plain.setHints({ walk: 3, jump: 3, dash: 3 })
+  expect(plain.hints()).toEqual({ walk: 0, jump: 0, dash: 0 })
+  plain.destroy()
+})

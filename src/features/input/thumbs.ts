@@ -5,7 +5,7 @@
 // `Touch` interface as the buttons (touch.ts), so the input does not know which it has.
 import type { Words } from '../../lib/message.ts'
 import type { Controls } from './controls.ts'
-import { hintsShown } from './thumb-hints.ts'
+import { type HintUses, hintsShown, hintUsesOf } from './thumb-hints.ts'
 import { createThumbRules, type Half } from './thumb-rules.ts'
 import {
   BACKGROUND,
@@ -454,6 +454,11 @@ export function createThumbs(
     },
     inset,
     room,
+    uses: () => hintUsesOf(rules.uses()),
+    setUses(uses) {
+      rules.setUses(uses)
+      refreshHints()
+    },
     onInset(listener) {
       insetListeners.add(listener)
     },

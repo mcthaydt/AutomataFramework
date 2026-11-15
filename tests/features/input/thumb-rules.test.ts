@@ -214,3 +214,14 @@ test('clear lets go of everything, and the ring is gone', () => {
   expect(names(r.drain())).toEqual([])
   expect(r.ring()).toBeUndefined()
 })
+
+test('the counts can start from where an earlier visit left them, and go on from there', () => {
+  const r = rules()
+  r.setUses({ walk: 2, jump: 1, dash: 3 })
+  expect(r.uses()).toEqual({ walk: 2, jump: 1, dash: 3 })
+  r.down(1, 'jump', 700, 300, 0)
+  expect(r.uses().jump).toBe(2)
+  // What cannot be read starts the counts again at none.
+  r.setUses('nonsense')
+  expect(r.uses()).toEqual({ walk: 0, jump: 0, dash: 0 })
+})
