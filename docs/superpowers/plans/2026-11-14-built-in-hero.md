@@ -139,14 +139,21 @@ reader does not undo it.
 - **The walk test's tolerance is 4%, not 2% (audit M8).** `tests/features/level/moves.test.ts`. Friction on the ground
   eats more of the first tick from rest than the plan expected (`walk-grip` 3 accounts for it). If it is ever tightened,
   start by measuring where the extra 2% goes.
-- **The fix stage (this PR)** closed the audit's four important findings and two minors: the dash hint has its own
+- **The fix stage (this PR)** closed the audit's five important findings (I1 to I5) and two minors: the dash hint has its own
   room (the walk hint's picture and words hide when only the dash is due), the template's key hint names the dash when
   the hero has it, the `create-play` journey walks to the spark and jumps in all three ways (key or thumb, stick, and
   the pad's bottom button) and reads the game's count, a finger on the glass is never "left alone" for the hints, a
   press not yet read does not outlive a mask, and a turned tablet lets go of a held thumb. It is left to a later cycle:
   M1 (`lockDir`, kept for the hash and for a later move), M4 (kinematic bodies as walls, to decide when moving
-  platforms arrive), M9, M10, M11, the Owner's two phone items P1 and P2, and the hint colour and circle placement the
-  Owner is choosing.
+  platforms arrive), M9, M10, M11 and the Owner's two phone items P1 and P2.
+- **The hints' words stand on a dark chip, and a tall screen keeps room for the hints (the Owner's choice, 2026-11-15).**
+  The words of the walk, jump and dash hints have the buttons' dark background behind them at full strength; only the
+  dashed circle is faint. On a screen at least 600 px tall (a tablet, a desktop window) the room under the game is 230 px,
+  so the circles and their words end under the floor instead of across its edge; a shorter one keeps 120.
+- **The turned-screen test waits for the resize itself (audit I5).** It failed once in Chromium on a busy runner because
+  it waited a fixed second for the `ResizeObserver`; the thumbs tests now resolve from an observer of their own, made
+  after the thumbs', and the hint tests drive the hints' interval by hand. No test in that file waits for a length of
+  time any more.
 - **A turn is told by the width.** The mount's width moving by more than 24 px, or the mount going from wide to tall or
   back, lets go of every finger; a browser bar sliding in and out moves only the height and does not.
 

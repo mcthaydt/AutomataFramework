@@ -24,6 +24,13 @@ import {
 const BAND = 0.32
 /** Over a wider screen the thumbs sit over the game; the camera keeps the heroes this far from the bottom. */
 const ROOM_OVER_PX = 120
+/**
+ * A screen at least this tall (a tablet or a desktop window) keeps a taller room under the game: the hints' circle and
+ * their words on the dark chips stand wholly under the floor instead of across its edge. A short phone on its side
+ * cannot give that much of its height, so it keeps `ROOM_OVER_PX`.
+ */
+const TALL_PX = 600
+const HINTS_ROOM_PX = 230
 /** An upright screen narrower than this gets the band. */
 const BAND_BELOW_PX = 600
 const RING_PX = 112
@@ -40,6 +47,16 @@ const HINT_LOOK_MS = 250
 
 /** The actions the two thumbs already do; every other action is a round button. */
 const THUMB_ACTIONS: ReadonlySet<string> = new Set(['left', 'right', 'jump', 'dash'])
+
+/** The words of a hint: chalk on a dark chip (the Owner's choice), the same dark as the buttons, so they read on a pale sky. */
+const CHIP = [
+  'text-align:center',
+  'font:var(--automata-touch-font,700 18px/1.1 system-ui,sans-serif)',
+  `color:${COLOR}`,
+  `background:${BACKGROUND}`,
+  'padding:3px 8px',
+  'border-radius:var(--automata-touch-radius,16px)',
+].join(';')
 
 const NO_TOUCH = [
   'touch-action:none',
@@ -177,7 +194,6 @@ export function createThumbs(
         'flex-direction:column',
         'align-items:center',
         'pointer-events:none',
-        'opacity:0.55',
       ].join(';'),
     )
     box.dataset.hint = kind
@@ -190,21 +206,17 @@ export function createThumbs(
         'box-sizing:border-box',
         'border-radius:50%',
         'border:2px dashed currentColor',
+        // Only the picture is faint: the words stand on a dark chip at full strength, so they read on any sky.
+        'opacity:0.55',
       ].join(';'),
     )
     if (kind === 'jump') picture.append(arrowShape())
-    const text = div(
-      'automata-thumb-hint-words',
-      `margin-top:6px;text-align:center;font:var(--automata-touch-font,700 18px/1.1 system-ui,sans-serif);color:${COLOR}`,
-    )
+    const text = div('automata-thumb-hint-words', `margin-top:6px;${CHIP}`)
     box.append(picture, text)
     return { box, picture, words: text }
   }
   const hints = { walk: hint('walk'), jump: hint('jump') }
-  const dashHint = div(
-    'automata-thumb-hint',
-    `margin-top:4px;text-align:center;font:var(--automata-touch-font,700 18px/1.1 system-ui,sans-serif);color:${COLOR}`,
-  )
+  const dashHint = div('automata-thumb-hint', `margin-top:4px;${CHIP}`)
   dashHint.dataset.hint = 'dash'
   // The dash hint rides in the walk hint's box, under its words. The box stays up while either is due, and when only the
   // dash is due the walk hint's picture and words are hidden but keep their room, so the dash words stay where they were.
@@ -268,7 +280,8 @@ export function createThumbs(
 
   const insetListeners = new Set<(px: number) => void>()
   const inset = (): number => (visible && shape === 'band' ? root.offsetHeight : 0)
-  const room = (): number => (visible && shape === 'over' ? ROOM_OVER_PX : 0)
+  const room = (): number =>
+    visible && shape === 'over' ? (mount.clientHeight >= TALL_PX ? HINTS_ROOM_PX : ROOM_OVER_PX) : 0
 
   const heldByButtons = (): Set<string> =>
     new Set([...fingers].filter(([id]) => !masked.has(id)).map(([, action]) => action))
@@ -346,10 +359,12 @@ export function createThumbs(
     hints.walk.picture.style.visibility = walkShown
     hints.walk.words.style.visibility = walkShown
     hints.jump.box.style.display = visible && shownNow.jump ? 'flex' : 'none'
-    dashHint.style.display = shownNow.dash ? 'block' : 'none'
     hints.walk.words.textContent = said('automata.thumbs.walk-hint') ?? ''
     hints.jump.words.textContent = said('automata.thumbs.jump-hint') ?? ''
     dashHint.textContent = said('automata.thumbs.dash-hint') ?? ''
+    // A chip with no words in it (a game with no words) is not drawn.
+    dashHint.style.display = shownNow.dash && dashHint.textContent !== '' ? 'block' : 'none'
+    for (const text of [hints.walk.words, hints.jump.words]) text.style.display = text.textContent === '' ? 'none' : ''
   }
 
   const label = (): void => {
