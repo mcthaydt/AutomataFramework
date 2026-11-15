@@ -2,7 +2,7 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
-## Cycle 7: the feel runtime (dust, shake and freeze on screen)
+## Cycle 8: the feel runtime (dust, shake and freeze on screen)
 
 Spec: [`specs/2026-11-15-feel-runtime-design.md`](specs/2026-11-15-feel-runtime-design.md)
 
@@ -13,6 +13,19 @@ Overall: **20%** (the spec and plan F are written and in review; stages 3 to 7 f
 | 1. Spec | Written, in review, 100%. The Owner answered (2026-11-15): freeze is a real pause offline and a held picture online (A); a "Screen shake" switch in the game's settings, on by default and off first when the device asks for reduced motion (A). Also covers the Feel editor's "Show me" (Editors PR 30, F4): `showFeel` plays one feel file once in a running game, presentation only. No golden moves; no new dependency | `specs/2026-11-15-feel-runtime-design.md` |
 | 2. Plan (plan F) | Written, in review, 100%; plan F at 0% built. Twelve tasks (7.5% each, 10% for the last green run): the `feel` feature's place (pure, between `server` and `render`), its noise and the "Screen shake" setting as plain data; dust as numbers and the limits a file plays inside; shake as numbers; `createFeel` (events in, frames out) with a new golden of its frames in four engines; `Host.reducedMotion()`; the renderer draws a feel frame (a dust layer, an offset in whole device pixels, a held picture); the loop can hold without owing the time; a game played alone draws its feel and really pauses for a freeze; watched and online games (online a freeze holds only the picture; a watch never buzzes); `showFeel`, playing or paused; the word in six languages, the README and the skills; journeys at five sizes in three browsers. No golden moves (one new: `tests/golden/feel-frames.json`); no dependency is added. Two builder's calls differ from the spec's words and are named for the audit: dust starts at the thing's feet as of the newest step (the last picture only for a thing just taken away), and the runtime has `hold(seconds)` beside `frame`. Handoffs: plan U shows the switch (`automata.feel.shake`, the `feel` settings section), plan D Part 6 (three feel files and its `crate.dropped` plugin), the Feel editor's Part 3 (`showFeel`, `game.feel()`), and every hand-made `Host` gains `reducedMotion()`. No Owner question is open | `plans/2026-11-15-feel-runtime.md` |
 | 3 to 7 (plan F) | Not started; the build lands after plan H, before plan D's Part 6 | |
+## Cycle 7: the default game flow (plan U)
+
+Spec: [`specs/2026-11-14-m2-design.md`](specs/2026-11-14-m2-design.md) ("UI, screens and layouts (plan U)"), with the
+order of the flow from [`specs/2026-11-14-no-default-language-design.md`](specs/2026-11-14-no-default-language-design.md)
+and the touch settings from [`specs/2026-11-14-content-hero-controls-design.md`](specs/2026-11-14-content-hero-controls-design.md)
+
+Overall: **10%** (the plan is written and in review; three Owner questions are open; stages 3 to 7 follow)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Merged (M2's spec, PR 30; the flow's order is the Owner's, 2026-11-14: warnings if needed, the language picker, the splash, the main menu, the game with pause, back to the main menu) | `specs/2026-11-14-m2-design.md` |
+| 2. Plan (plan U) | Written, in review, 100%; plan U at 0% built. Eighteen tasks (5% each, 10% for the last green run) in three parts. Part A needs nothing and can start at once (Tasks 1 to 4): the project file's `levels`, `done`, `warnings` and `splash`, kept out of the sim so no hash moves; what a `Game` tells a screen (`onStep`, `paused`, `broken`); the flow's steps as one pure function; progress and the party. Part B (Tasks 5 to 13) is the screens and `startFlow`, and waits for the Owner's three answers and for plan H to be merged. Part C (Tasks 14 to 18) is settings, saved games, adding a player, the journeys at five sizes in three browsers, and the docs. Three new page features: `ui`, `screens`, `flow`. No golden moves. **Three Owner questions are open and none is defaulted:** Q1, three Svelte packages (`svelte` 5.57.1, and for development `@sveltejs/vite-plugin-svelte` 7.3.1 and `svelte-check` 4.7.6), which holds Tasks 5 to 16; Q2, what a warning is and what language it is in before the picker, which holds Task 8; Q3, what the splash shows, which holds Task 9 | `plans/2026-11-15-game-flow.md` |
+| 3 to 7 (plan U) | Not started | |
 
 ## Cycle 6: the built-in hero (walk, jump and more, from content)
 
