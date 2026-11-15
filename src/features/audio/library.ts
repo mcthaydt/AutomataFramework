@@ -35,7 +35,12 @@ import spookyStyle from './library/styles/spooky.json' with { type: 'json' }
 import words from './library/words.json' with { type: 'json' }
 
 /** The languages the library names things in: the six a game ships, then the three the editors add. */
-export const LIBRARY_LANGUAGES = [...LANGUAGES, 'fr', 'ru', 'de'] as const
+export const LIBRARY_LANGUAGES: readonly [...typeof LANGUAGES, 'fr', 'ru', 'de'] = [
+  ...LANGUAGES,
+  'fr',
+  'ru',
+  'de',
+]
 export type LibraryLanguage = (typeof LIBRARY_LANGUAGES)[number]
 
 export interface Library {
