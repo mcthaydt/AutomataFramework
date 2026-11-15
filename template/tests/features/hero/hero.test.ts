@@ -1,6 +1,6 @@
 // A test of the hero's rules. It plays the game with no page: it makes the game's sim, holds a key by sending the
 // command a keyboard would send, steps a few ticks and looks at where the hero is. `npm test` runs it.
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import {
   Body,
   controlsCommand,
@@ -23,7 +23,11 @@ afterEach(() => {
 
 /** A new sim of the game, with the hero standing on the floor. */
 async function newGame(): Promise<Sim> {
-  const loaded = await loadGame((path) => readFile(new URL(path, GAME), 'utf8'))
+  // The game lists folders (sounds, songs, cues), so the load is told how to see what is in one.
+  const loaded = await loadGame(
+    (path) => readFile(new URL(path, GAME), 'utf8'),
+    (folder) => readdir(new URL(`${folder}/`, GAME)),
+  )
   if (!loaded.ok) throw new Error(loaded.diagnostics.map((d) => `${d.file}: ${d.message}`).join('\n'))
   const sim = await createGameSim({ content: loaded.value, plugins: gamePlugins })
   made.push(sim)

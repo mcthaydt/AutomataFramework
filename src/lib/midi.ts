@@ -35,6 +35,8 @@ export interface MidiFile {
   /** Ticks to a quarter note. */
   readonly division: number
   readonly tracks: readonly (readonly MidiEvent[])[]
+  /** Where the longest track ends, in ticks: its end-of-track, which may come after the last note. */
+  readonly length: number
   /** What the file had that these events cannot hold, counted by sort: `{ 'pitch bends': 12, controllers: 40 }`. */
   readonly skipped: Readonly<Record<string, number>>
 }
@@ -64,7 +66,7 @@ function readTrack(
   start: number,
   end: number,
   skipped: Record<string, number>,
-): MidiEvent[] | undefined {
+): { readonly events: MidiEvent[]; readonly end: number } | undefined {
   const count = (what: string): void => {
     skipped[what] = (skipped[what] ?? 0) + 1
   }
@@ -189,7 +191,10 @@ function readTrack(
           velocity: note.velocity,
         },
       })
-  return found.sort((a, b) => a.event.tick - b.event.tick || a.order - b.order).map((entry) => entry.event)
+  const events = found
+    .sort((a, b) => a.event.tick - b.event.tick || a.order - b.order)
+    .map((entry) => entry.event)
+  return { events, end: tick }
 }
 
 /**
@@ -208,6 +213,7 @@ export function readMidi(bytes: Uint8Array): MidiFile | undefined {
   if (format > 1 || division === 0 || division >= 0x8000) return undefined
   const skipped: Record<string, number> = {}
   const tracks: MidiEvent[][] = []
+  let length = 0
   let at = 8 + headerLength
   while (at + 8 <= bytes.length && tracks.length < declared) {
     const tag = tagAt(bytes, at)
@@ -216,12 +222,13 @@ export function readMidi(bytes: Uint8Array): MidiFile | undefined {
     if (tag === 'MTrk') {
       const track = readTrack(bytes, at + 8, at + 8 + length, skipped)
       if (track === undefined) return undefined
-      tracks.push(track)
+      tracks.push(track.events)
+      length = Math.max(length, track.end)
     }
     at += 8 + length
   }
   if (tracks.length < declared || tracks.length === 0) return undefined
-  return { division, tracks, skipped }
+  return { division, tracks, length, skipped }
 }
 
 /** A variable-length number as bytes. */
@@ -280,9 +287,11 @@ function trackPieces(events: readonly MidiEvent[]): Piece[] {
 
 /**
  * Writes a format 1 file: each track's events in tick order, note-offs before note-ons at one tick, running status not
- * used, an end-of-track after the last event. The same input gives the same bytes.
+ * used, an end-of-track after the last event or at `length`, whichever is later. The same input gives the same bytes.
  */
-export function writeMidi(file: Pick<MidiFile, 'division' | 'tracks'>): Uint8Array<ArrayBuffer> {
+export function writeMidi(
+  file: Pick<MidiFile, 'division' | 'tracks'> & { readonly length?: number },
+): Uint8Array<ArrayBuffer> {
   const out: number[] = []
   const u16 = (value: number): void => void out.push((value >> 8) & 0xff, value & 0xff)
   const u32 = (value: number): void =>
@@ -299,7 +308,8 @@ export function writeMidi(file: Pick<MidiFile, 'division' | 'tracks'>): Uint8Arr
       body.push(...variableBytes(piece.tick - last), ...piece.bytes)
       last = piece.tick
     }
-    body.push(0, 0xff, 0x2f, 0)
+    // The track ends at `length` when that is later than its last event, so a song's quiet last bar is kept.
+    body.push(...variableBytes(Math.max(0, (file.length ?? 0) - last)), 0xff, 0x2f, 0)
     out.push(0x4d, 0x54, 0x72, 0x6b)
     u32(body.length)
     for (const value of body) out.push(value)

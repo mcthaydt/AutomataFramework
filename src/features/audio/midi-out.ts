@@ -9,6 +9,7 @@ import {
   type PlainNote,
   type SongParts,
   stepNotes,
+  TICKS_PER_BAR,
   TICKS_PER_BEAT,
 } from './plain-notes.ts'
 import { keySignature } from './theory.ts'
@@ -40,6 +41,8 @@ interface Song {
   readonly key: Key
   readonly mode: Mode
   readonly lanes: readonly Lane[]
+  /** How many bars it lasts, when that is more than its last note says. */
+  readonly bars?: number
 }
 
 /** The notes of a source, grouped into lanes in the order a song lists them. */
@@ -48,7 +51,14 @@ function songOf(source: MidiSource, parts: SongParts): Song {
     const notes = loopNotes(source.value)
     const instrument = notes[0]?.instrument ?? 'keys'
     const lane = { id: source.value.lane, instrument, notes }
-    return { id: source.value.id, tempo: 110, key: 'C', mode: 'major', lanes: [lane] }
+    return {
+      id: source.value.id,
+      tempo: 110,
+      key: 'C',
+      mode: 'major',
+      lanes: [lane],
+      bars: source.value.bars,
+    }
   }
   if (source.type === 'motif') {
     const use = { key: 'C', mode: 'major', instrument: 'pluck', volume: 1, lane: 'motif' } as const
@@ -71,7 +81,7 @@ function songOf(source: MidiSource, parts: SongParts): Song {
     instrument: lane.instrument,
     notes: all.filter((note) => note.lane === lane.id),
   }))
-  return { id: music.id, tempo: music.tempo, key: music.key, mode: music.mode, lanes }
+  return { id: music.id, tempo: music.tempo, key: music.key, mode: music.mode, lanes, bars: music.bars }
 }
 
 /** A lane's velocity: its volume as a number from 1 to 127. */
@@ -110,5 +120,5 @@ export function musicToMidi(source: MidiSource, parts: SongParts = {}): Uint8Arr
     }
     tracks.push(events)
   }
-  return writeMidi({ division: TICKS_PER_BEAT, tracks })
+  return writeMidi({ division: TICKS_PER_BEAT, tracks, length: (song.bars ?? 0) * TICKS_PER_BAR })
 }

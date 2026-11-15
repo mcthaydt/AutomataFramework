@@ -7,12 +7,7 @@
   "bars": 4,
   "loop": true,
   "volume": 0.7,
-  "chords": [
-    "I",
-    "V",
-    "vi",
-    "IV"
-  ],
+  "chords": ["I", "V", "vi", "IV"],
   "lanes": [
     {
       "id": "drums",

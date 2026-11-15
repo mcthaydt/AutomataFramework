@@ -4,8 +4,5 @@
   "lane": "melody",
   "bars": 2,
   "stepsPerBar": 4,
-  "notes": [
-    "3 = = =",
-    "5 = = ="
-  ]
+  "notes": ["3 = = =", "5 = = ="]
 }

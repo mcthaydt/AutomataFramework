@@ -5,11 +5,7 @@
   "bars": 1,
   "stepsPerBar": 8,
   "notes": {
-    "kick": [
-      "x - - - - - - -"
-    ],
-    "tom": [
-      "- - x x - x x x"
-    ]
+    "kick": ["x - - - - - - -"],
+    "tom": ["- - x x - x x x"]
   }
 }

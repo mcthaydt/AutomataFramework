@@ -5,14 +5,8 @@
   "bars": 1,
   "stepsPerBar": 12,
   "notes": {
-    "kick": [
-      "x - - - - - x - - - - -"
-    ],
-    "snare": [
-      "- - - x - - - - - x - -"
-    ],
-    "hat": [
-      "x - x x - x x - x x - x"
-    ]
+    "kick": ["x - - - - - x - - - - -"],
+    "snare": ["- - - x - - - - - x - -"],
+    "hat": ["x - x x - x x - x x - x"]
   }
 }

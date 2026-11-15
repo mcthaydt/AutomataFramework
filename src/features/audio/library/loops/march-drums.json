@@ -5,14 +5,8 @@
   "bars": 1,
   "stepsPerBar": 8,
   "notes": {
-    "kick": [
-      "x - - - x - - -"
-    ],
-    "snare": [
-      "- - x - - x x x"
-    ],
-    "clap": [
-      "x - - - - - - -"
-    ]
+    "kick": ["x - - - x - - -"],
+    "snare": ["- - x - - x x x"],
+    "clap": ["x - - - - - - -"]
   }
 }

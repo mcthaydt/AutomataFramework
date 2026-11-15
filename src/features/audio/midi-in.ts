@@ -357,6 +357,8 @@ export function midiToMusic(
   let last = 0
   for (const lane of lanes)
     for (const hit of lane.hits) last = Math.max(last, lane.drums ? hit.start + 1 : hit.end)
+  // A track's end-of-track counts too: a song may end on a quiet bar.
+  last = Math.max(last, Math.round(file.length / stepTicks))
   const bars = Math.max(1, Math.min(MAX_BARS, Math.ceil(last / STEPS)))
   const signature = events.find((event): event is Signature => event.kind === 'key')
   const { key, mode } =

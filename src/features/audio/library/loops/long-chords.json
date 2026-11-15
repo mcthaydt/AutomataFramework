@@ -5,8 +5,5 @@
   "bars": 2,
   "stepsPerBar": 4,
   "voicing": "high",
-  "notes": [
-    "x = = =",
-    "x = x ="
-  ]
+  "notes": ["x = = =", "x = x ="]
 }

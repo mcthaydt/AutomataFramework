@@ -35,9 +35,11 @@ test("the spec's bouncy bass follows the chords: C2 and G2, A2 and E3, F2 and C3
   for (const note of notes) expect(note).toMatchObject({ lane: 'line', instrument: 'bass', ticks: 240, volume: 1 })
 })
 
-test('the same song in Eb is every pitch three higher, and in B the roots are in octave 2 too', () => {
-  const c = pitches(bassOver())
-  expect(pitches(bassOver({ key: 'Eb' }))).toEqual(c.map((pitch) => (pitch as number) + 3))
+test('the same song in Eb has its roots in octave 2 too, and in B the first root is B2', () => {
+  // Roots always sit in octave 2 (C2 to B2), so the vi chord is C2 in Eb, not C3 three above A2.
+  expect(pitches(bassOver({ key: 'Eb' }))).toEqual([
+    39, 46, 39, 46, 36, 43, 48, 43, 44, 51, 44, 51, 46, 53, 58, 53,
+  ])
   expect(pitches(bassOver({ key: 'B' }))[0]).toBe(47)
 })
 

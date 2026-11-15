@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this motif, like \"hero-theme\". It matches the file name."
+    },
+    "notes": {
+      "minItems": 1,
+      "maxItems": 16,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 15
+              },
+              {
+                "type": "string",
+                "pattern": "^[b#]?(?:[1-9]|1[0-5])$"
+              }
+            ],
+            "description": "Which note of the key: 1 to 15, with b or # in front for the note between."
+          },
+          "beats": {
+            "type": "number",
+            "description": "How long it lasts, in beats: 0.25 to 8, in quarters."
+          }
+        },
+        "required": [
+          "step",
+          "beats"
+        ],
+        "additionalProperties": false
+      },
+      "description": "The notes in the order they play, at most 16."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "notes"
+  ],
+  "additionalProperties": false,
+  "title": "Motif"
+}

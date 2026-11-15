@@ -5,7 +5,5 @@
   "bars": 1,
   "stepsPerBar": 12,
   "voicing": "close",
-  "notes": [
-    "x - - - x - - x - - x -"
-  ]
+  "notes": ["x - - - x - - x - - x -"]
 }

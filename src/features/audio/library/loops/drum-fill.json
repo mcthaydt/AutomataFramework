@@ -5,8 +5,6 @@
   "bars": 1,
   "stepsPerBar": 8,
   "notes": {
-    "snare": [
-      "x - x - x x x x"
-    ]
+    "snare": ["x - x - x x x x"]
   }
 }

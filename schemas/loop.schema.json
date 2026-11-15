@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "number",
+          "const": 1,
+          "description": "The version of this file format. Always 1."
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "A name for this loop, like \"bouncy-bass\". It matches the file name."
+        },
+        "lane": {
+          "type": "string",
+          "const": "drums",
+          "description": "A drum part."
+        },
+        "bars": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "description": "How many bars the loop lasts, from 1 to 8."
+        },
+        "stepsPerBar": {
+          "anyOf": [
+            {
+              "type": "number",
+              "const": 4
+            },
+            {
+              "type": "number",
+              "const": 8
+            },
+            {
+              "type": "number",
+              "const": 12
+            },
+            {
+              "type": "number",
+              "const": 16
+            }
+          ],
+          "description": "How many steps make one bar: 4, 8, 12 or 16."
+        },
+        "notes": {
+          "type": "object",
+          "properties": {
+            "kick": {
+              "minItems": 1,
+              "maxItems": 8,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 256
+              },
+              "description": "One row of steps for each bar, the steps separated by one space."
+            },
+            "snare": {
+              "minItems": 1,
+              "maxItems": 8,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 256
+              },
+              "description": "One row of steps for each bar, the steps separated by one space."
+            },
+            "hat": {
+              "minItems": 1,
+              "maxItems": 8,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 256
+              },
+              "description": "One row of steps for each bar, the steps separated by one space."
+            },
+            "clap": {
+              "minItems": 1,
+              "maxItems": 8,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 256
+              },
+              "description": "One row of steps for each bar, the steps separated by one space."
+            },
+            "tom": {
+              "minItems": 1,
+              "maxItems": 8,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 256
+              },
+              "description": "One row of steps for each bar, the steps separated by one space."
+            }
+          },
+          "additionalProperties": false,
+          "description": "One row of hits for each bar, for each drum that plays: \"x\" is a hit and \"-\" a rest."
+        }
+      },
+      "required": [
+        "format",
+        "id",
+        "lane",
+        "bars",
+        "stepsPerBar",
+        "notes"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "number",
+          "const": 1,
+          "description": "The version of this file format. Always 1."
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "A name for this loop, like \"bouncy-bass\". It matches the file name."
+        },
+        "lane": {
+          "type": "string",
+          "const": "bass",
+          "description": "A bass part."
+        },
+        "bars": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "description": "How many bars the loop lasts, from 1 to 8."
+        },
+        "stepsPerBar": {
+          "anyOf": [
+            {
+              "type": "number",
+              "const": 4
+            },
+            {
+              "type": "number",
+              "const": 8
+            },
+            {
+              "type": "number",
+              "const": 12
+            },
+            {
+              "type": "number",
+              "const": 16
+            }
+          ],
+          "description": "How many steps make one bar: 4, 8, 12 or 16."
+        },
+        "notes": {
+          "minItems": 1,
+          "maxItems": 8,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "description": "One row of steps for each bar, the steps separated by one space."
+        }
+      },
+      "required": [
+        "format",
+        "id",
+        "lane",
+        "bars",
+        "stepsPerBar",
+        "notes"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "number",
+          "const": 1,
+          "description": "The version of this file format. Always 1."
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "A name for this loop, like \"bouncy-bass\". It matches the file name."
+        },
+        "lane": {
+          "type": "string",
+          "const": "melody",
+          "description": "A melody part."
+        },
+        "bars": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "description": "How many bars the loop lasts, from 1 to 8."
+        },
+        "stepsPerBar": {
+          "anyOf": [
+            {
+              "type": "number",
+              "const": 4
+            },
+            {
+              "type": "number",
+              "const": 8
+            },
+            {
+              "type": "number",
+              "const": 12
+            },
+            {
+              "type": "number",
+              "const": 16
+            }
+          ],
+          "description": "How many steps make one bar: 4, 8, 12 or 16."
+        },
+        "notes": {
+          "minItems": 1,
+          "maxItems": 8,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "description": "One row of steps for each bar, the steps separated by one space."
+        }
+      },
+      "required": [
+        "format",
+        "id",
+        "lane",
+        "bars",
+        "stepsPerBar",
+        "notes"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "number",
+          "const": 1,
+          "description": "The version of this file format. Always 1."
+        },
+        "id": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "A name for this loop, like \"bouncy-bass\". It matches the file name."
+        },
+        "lane": {
+          "type": "string",
+          "const": "chords",
+          "description": "A chord part."
+        },
+        "bars": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8,
+          "description": "How many bars the loop lasts, from 1 to 8."
+        },
+        "stepsPerBar": {
+          "anyOf": [
+            {
+              "type": "number",
+              "const": 4
+            },
+            {
+              "type": "number",
+              "const": 8
+            },
+            {
+              "type": "number",
+              "const": 12
+            },
+            {
+              "type": "number",
+              "const": 16
+            }
+          ],
+          "description": "How many steps make one bar: 4, 8, 12 or 16."
+        },
+        "voicing": {
+          "type": "string",
+          "enum": [
+            "close",
+            "open",
+            "high"
+          ],
+          "description": "How the chord is spread: \"close\", \"open\" (the third an octave up) or \"high\" (all up)."
+        },
+        "notes": {
+          "minItems": 1,
+          "maxItems": 8,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "description": "One row of steps for each bar, the steps separated by one space."
+        }
+      },
+      "required": [
+        "format",
+        "id",
+        "lane",
+        "bars",
+        "stepsPerBar",
+        "voicing",
+        "notes"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "title": "Loop"
+}

@@ -13,7 +13,9 @@ interface Layer {
 }
 
 interface Library {
-  readonly instruments: Readonly<Record<string, { readonly layers: readonly Layer[]; readonly ring?: number }>>
+  readonly instruments: Readonly<
+    Record<string, { readonly layers: readonly Layer[]; readonly ring?: number }>
+  >
   readonly drums: Readonly<Record<string, readonly (ToneVoice | NoiseVoice)[]>>
 }
 
@@ -22,7 +24,10 @@ const library = data as Library
 /** What a speaker plays for one plain note at a tempo: a few voices, each starting at 0 (a drum's own `at` kept). */
 export function instrumentVoices(note: PlainNote, tempo: number): (ToneVoice | NoiseVoice)[] {
   if (typeof note.pitch === 'string')
-    return (library.drums[note.pitch] ?? []).map((voice) => ({ ...voice, volume: voice.volume * note.volume }))
+    return (library.drums[note.pitch] ?? []).map((voice) => ({
+      ...voice,
+      volume: voice.volume * note.volume,
+    }))
   const instrument = library.instruments[note.instrument]
   if (instrument === undefined) return []
   // Seconds from ticks, once, the same in every engine.
