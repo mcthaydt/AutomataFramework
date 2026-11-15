@@ -15,7 +15,7 @@ beforeEach(async () => {
 })
 afterEach(() => drive.stop())
 
-/** Walks the focus with the down and up arrows to the button called `label`, and presses it with Enter. */
+/** Walks the focus with the arrows (a question's two buttons sit side by side) to the button called `label`, then Enter. */
 async function enter(label: string): Promise<void> {
   const seen: string[] = [focusedName()]
   // What a failure needs to say: every focus change, and whether an earlier listener had already taken each arrow.
@@ -29,7 +29,7 @@ async function enter(label: string): Promise<void> {
   }
   window.addEventListener('focusin', onFocus)
   window.addEventListener('keydown', onKey, { capture: true })
-  for (const arrow of ['{ArrowDown}', '{ArrowUp}']) {
+  for (const arrow of ['{ArrowDown}', '{ArrowUp}', '{ArrowLeft}', '{ArrowRight}']) {
     for (let step = 0; step < 10 && focusedName() !== label; step++) {
       await userEvent.keyboard(arrow)
       seen.push(focusedName())
