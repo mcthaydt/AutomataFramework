@@ -126,3 +126,15 @@ test('a layer of a level smaller than the screen stays on its bottom edge', () =
   for (const drift of [0, 0.5, 1])
     expect(layerShift(drift, fit, small, { w: 400, h: 120 })).toEqual({ x: fit.left, y: bottom })
 })
+
+test('with room for the thumbs the shot reaches further down, and with none it is as it was', () => {
+  const hero = [{ x: 20, y: 6 }]
+  expect(frameHeroes(level, view, hero, 0)).toEqual(frameHeroes(level, view, hero))
+  const roomy = frameHeroes(level, view, hero, 2)
+  expect(roomy.y + roomy.h / 2).toBeGreaterThan(6 + 2)
+  // The hero is still in the shot, with the room under it kept clear.
+  expect(roomy.y - roomy.h / 2).toBeLessThanOrEqual(6)
+  // At the level's foot the shot stops at the level, whatever room is asked for.
+  const low = frameHeroes(level, view, [{ x: 20, y: 11 }], 3)
+  expect(low.y + low.h / 2).toBeLessThanOrEqual(level.h)
+})

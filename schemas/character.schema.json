@@ -108,7 +108,7 @@
         ],
         "additionalProperties": false
       },
-      "description": "The ways it moves, as runs of its figure's poses. \"idle\", \"run\", \"jump\", \"fall\" and \"land\" play by how it moves; any other, like \"push\" or \"talk\", plays when the game or a cutscene asks. Left out means the first pose."
+      "description": "The ways it moves, as runs of its figure's poses. \"idle\", \"run\", \"jump\", \"fall\" and \"land\" play by how it moves, and \"air-jump\", \"wall\" and \"dash\" by how a hero with \"moves\" moves; any other, like \"push\" or \"talk\", plays when the game or a cutscene asks. Left out means the first pose."
     },
     "behaviour": {
       "type": "string",
@@ -141,6 +141,37 @@
       "maxLength": 64,
       "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
       "description": "The conversation a hero opens by walking up to it, by id, like \"keeper\"."
+    },
+    "moves": {
+      "type": "object",
+      "properties": {
+        "tuning": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+          "description": "The tuning file with the hero's numbers and controls, by id, like \"hero-moves\"."
+        },
+        "double-jump": {
+          "default": false,
+          "description": "True to let the hero jump once more in the air. Left out means false.",
+          "type": "boolean"
+        },
+        "wall-jump": {
+          "default": false,
+          "description": "True to let the hero slide down a wall and jump off it. Left out means false.",
+          "type": "boolean"
+        },
+        "dash": {
+          "default": false,
+          "description": "True to let the hero dash. Left out means false.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "tuning"
+      ],
+      "additionalProperties": false,
+      "description": "Set on the hero only: the framework walks and jumps it from a tuning file, with no game code. Walk and jump are always on; \"double-jump\", \"wall-jump\" and \"dash\" are each switched on here."
     }
   },
   "required": [

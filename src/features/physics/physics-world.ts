@@ -12,8 +12,10 @@ import {
   type SimContext,
   SnapshotFormatError,
 } from '../sim/sim.ts'
+import { Touching } from './components.ts'
 import { handleBits, sameHandles } from './handle-bits.ts'
 import { type JointAdapter, type JointRow, JointTable } from './joint-table.ts'
+import { type FeltContact, felt } from './touching.ts'
 
 /** Rapier, as the world code needs it. `World` is Rapier's own world. */
 export interface PhysicsAdapter<World> extends JointAdapter<World> {
@@ -59,6 +61,11 @@ export interface PhysicsAdapter<World> extends JointAdapter<World> {
   isSensor(world: World, collider: number): boolean
   /** The handle of the body the collider is attached to, or undefined for a lone collider. */
   colliderParent(world: World, collider: number): number | undefined
+  /**
+   * The contacts the collider has with other solid colliders after the last step, each as the collider feels it.
+   * Sensors give none, and neither does a pair whose bounds overlap with no contact point between them.
+   */
+  contactsOf(world: World, collider: number): FeltContact[]
 }
 
 /** What one entity owns in Rapier. A row exists only while the entity qualifies. */
@@ -105,11 +112,18 @@ export class PhysicsWorld<World> implements PluginState {
   private joints: JointTable<World> | undefined
   private disposed = false
 
-  /** `options.joints` is whether the sim has the `Joint` component; left out, there are none. */
+  /** Whether the sim has the `Touching` component to fill in. */
+  private readonly fillsTouching: boolean
+
+  /**
+   * `options.joints` is whether the sim has the `Joint` component and `options.touching` whether it has `Touching`;
+   * left out, there are none.
+   */
   constructor(
     private readonly rapier: PhysicsAdapter<World>,
-    options: { readonly joints?: boolean } = {},
+    options: { readonly joints?: boolean; readonly touching?: boolean } = {},
   ) {
+    this.fillsTouching = options.touching === true
     this.world = rapier.createWorld()
     this.joints = options.joints ? new JointTable(rapier) : undefined
   }
@@ -220,6 +234,26 @@ export class PhysicsWorld<World> implements PluginState {
       const entity = ctx.entity(sid)
       if (row.body !== undefined && entity)
         row.asleep = this.rapier.writeBack(this.world, row.body, entity, row.asleep === true)
+    }
+    if (this.fillsTouching) this.fillTouching(ctx)
+  }
+
+  /**
+   * What each entity with a `Touching` stands on and leans against, from the contacts the step just left, in ascending
+   * sid order. Written only when it changed, so a body at rest adds nothing to a render delta or a replay.
+   */
+  private fillTouching(ctx: SimContext): void {
+    for (const sid of this.sortedSids()) {
+      const row = this.rows.get(sid) as Row
+      const entity = ctx.entity(sid)
+      if (!entity?.has(Touching)) continue
+      const now =
+        row.collider === undefined
+          ? { below: false, left: false, right: false }
+          : felt(this.rapier.contactsOf(this.world, row.collider))
+      const was = entity.get(Touching)
+      if (was.below !== now.below || was.left !== now.left || was.right !== now.right)
+        entity.set(Touching, now)
     }
   }
 

@@ -20,7 +20,7 @@ test('every content file is exactly what writeContent writes', () => {
   const project = parseProject(tree['automata.toml'] ?? '')
   expect(project.ok).toBe(true)
   if (!project.ok) return
-  expect(project.value.content.length).toBe(12)
+  expect(project.value.content.length).toBe(14)
   for (const ref of project.value.content) {
     const parsed = parseContent(ref.type, tree[ref.path] ?? '', ref.path)
     expect(parsed.ok, ref.path).toBe(true)
@@ -39,6 +39,17 @@ test("the template's rules break no rule", () => {
   // `package.json` is what `create` writes from `package.template.json`; the rules read only its "imports".
   const problems = ruleProblems({ ...sources, 'package.json': tree['package.template.json'] ?? '{}' })
   expect(problems).toEqual([])
+})
+
+test("the template's hero is the framework's: no movement code, and no controls in code", () => {
+  const sources = Object.entries(tree).filter(([path]) => path.startsWith('src/') && path.endsWith('.ts'))
+  for (const [path, text] of sources) {
+    expect(text, path).not.toMatch(/\b(isHeld|wasPressed)\b/)
+    expect(text, path).not.toMatch(/export const CONTROLS\b/)
+  }
+  expect(Object.keys(tree).filter((path) => /(move|controls)\.ts$/.test(path))).toEqual([])
+  const hero = JSON.parse(tree['content/characters/hero.json'] ?? '{}') as { moves?: { tuning: string } }
+  expect(hero.moves?.tuning).toBe('hero-moves')
 })
 
 test("its tools are this repo's versions", () => {

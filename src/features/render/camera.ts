@@ -34,11 +34,13 @@ const within = (n: number, low: number, high: number): number =>
  * box round the heroes with 2 tiles to spare on every side, as wide as the wider of that and the view and as tall as
  * the taller, but never wider or taller than `view.most` (the whole level when that is left out). Its middle is the
  * box's, moved as little as it must be to stay inside the level. A hero whose place is not a number is left out.
+ * `under` more tiles are kept clear below the heroes (the thumbs' resting corners, on a phone); 0 is the box as it was.
  */
 export function frameHeroes(
   level: Size,
   view: Size & { readonly most?: Size | undefined },
   heroes: readonly { readonly x: number; readonly y: number }[],
+  under = 0,
 ): Shot {
   const lw = Math.max(0, finite(level.w))
   const lh = Math.max(0, finite(level.h))
@@ -49,7 +51,7 @@ export function frameHeroes(
   const left = Math.min(...seen.map((h) => h.x))
   const right = Math.max(...seen.map((h) => h.x))
   const top = Math.min(...seen.map((h) => h.y))
-  const bottom = Math.max(...seen.map((h) => h.y))
+  const bottom = Math.max(...seen.map((h) => h.y)) + Math.max(0, finite(under))
   const mostW = view.most === undefined ? lw : Math.max(0, finite(view.most.w))
   const mostH = view.most === undefined ? lh : Math.max(0, finite(view.most.h))
   const w = Math.min(Math.max(vw, right - left + 2 * ROOM), mostW)

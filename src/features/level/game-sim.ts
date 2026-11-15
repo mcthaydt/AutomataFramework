@@ -4,6 +4,7 @@ import { physics } from '../physics/physics.ts'
 import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
 import { behaviourPlugin, usesBehaviours } from './behaviour.ts'
 import { joinPlugin } from './join.ts'
+import { movesPlugin } from './moves.ts'
 import { levelPlugin } from './plugin.ts'
 import { simContent } from './sim-content.ts'
 import { spawnLevel } from './spawn-level.ts'
@@ -11,7 +12,7 @@ import { spritesPlugin } from './sprite.ts'
 import { storyPlugin, usesStory } from './story.ts'
 import { Story, type StoryProgress } from './story-state.ts'
 import { touchPlugin } from './touch.ts'
-import { touchKinds, usesJoints, usesSprites } from './uses.ts'
+import { touchKinds, usesJoints, usesMoves, usesSprites } from './uses.ts'
 
 /** What `createGameSim` takes. Only the content is required. */
 export interface GameSimOptions {
@@ -44,11 +45,13 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const { content } = options
   const players = content.project.players ?? 1
   const kinds = touchKinds(content)
+  const gravity = options.gravity ?? { x: 0, y: 30 }
+  const moved = usesMoves(content)
   const sim = await createSim({
     seed: options.seed ?? 1,
     content: simContent(content),
     plugins: [
-      physics({ gravity: options.gravity ?? { x: 0, y: 30 }, joints: usesJoints(content) }),
+      physics({ gravity, joints: usesJoints(content), touching: moved }),
       commandsPlugin,
       levelPlugin,
       // Only a game for two or more players can have people join and leave (see join.ts).
@@ -61,6 +64,8 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
       ...(usesBehaviours(content) ? [behaviourPlugin] : []),
       // The same for a game with a conversation or a cutscene.
       ...(usesStory(content) ? [storyPlugin] : []),
+      // Only a game whose hero has `moves` has the built-in hero, so every other game keeps the sim it had.
+      ...(moved ? [movesPlugin({ gravity })] : []),
       ...(options.plugins ?? []),
     ],
   })

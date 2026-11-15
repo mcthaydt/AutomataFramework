@@ -2,7 +2,7 @@
 // beat (see wire.ts for what a beat is). Everything is deterministic, so the room's replay is the same in every engine.
 import type { Replay } from '#src/features/commands/commands.ts'
 import { createRoomEngine, createSession, type SessionStats } from '#src/features/net/net.ts'
-import type { Sim } from '#src/features/sim/sim.ts'
+import type { Command, Sim } from '#src/features/sim/sim.ts'
 import { onlineSim } from './game.ts'
 import { ONLINE_TICKS, onlineScript } from './script.ts'
 import { createWire, type Delay } from './wire.ts'
@@ -15,16 +15,37 @@ export interface OnlineRun {
   readonly hashes: readonly string[]
 }
 
-/** Plays `ONLINE_TICKS` ticks with two players, whose lines to the room have the delays given (by seat). */
-export async function runOnline(delays: Readonly<Record<number, Delay>>): Promise<OnlineRun> {
+/** What else a run may change: the game it plays (a sim for both seats), its level, what each seat does, how long. */
+export interface OnlineGame {
+  readonly make: () => Promise<Sim>
+  readonly level: string
+  readonly script: (seat: number, tick: number) => Command[]
+  readonly ticks: number
+}
+
+const FIXTURE_GAME: OnlineGame = {
+  make: () => onlineSim(2),
+  level: 'level-1',
+  script: onlineScript,
+  ticks: ONLINE_TICKS,
+}
+
+/**
+ * Plays `game.ticks` ticks (default the fixture game's `ONLINE_TICKS`) with two players, whose lines to the room have
+ * the delays given (by seat).
+ */
+export async function runOnline(
+  delays: Readonly<Record<number, Delay>>,
+  game: OnlineGame = FIXTURE_GAME,
+): Promise<OnlineRun> {
   const sims: Sim[] = []
   const make = async (): Promise<Sim> => {
-    const s = await onlineSim(2)
+    const s = await game.make()
     sims.push(s)
     return s
   }
   try {
-    const engine = createRoomEngine({ sim: await make(), level: 'level-1', seats: 2 })
+    const engine = createRoomEngine({ sim: await make(), level: game.level, seats: 2 })
     const wire = createWire(engine)
     const players = []
     for (const seat of [1, 2]) {
@@ -33,16 +54,16 @@ export async function runOnline(delays: Readonly<Record<number, Delay>>): Promis
       const predicted = await make()
       players.push({ seat, confirmed, session: createSession({ link, confirmed, predicted }), given: 0 })
     }
-    for (let beat = 0; beat < 10 * ONLINE_TICKS; beat++) {
+    for (let beat = 0; beat < 10 * game.ticks; beat++) {
       wire.pump()
-      if (engine.tick < ONLINE_TICKS) engine.step()
+      if (engine.tick < game.ticks) engine.step()
       for (const p of players) {
         // The script is by predicted tick; a tick the session stepped several of at once is not skipped.
         const local = []
-        for (; p.given <= p.session.sim.tick; p.given++) local.push(...onlineScript(p.seat, p.given))
+        for (; p.given <= p.session.sim.tick; p.given++) local.push(...game.script(p.seat, p.given))
         p.session.advance(local)
       }
-      if (players.every((p) => p.confirmed.tick >= ONLINE_TICKS)) break
+      if (players.every((p) => p.confirmed.tick >= game.ticks)) break
     }
     return {
       room: engine.replay(),

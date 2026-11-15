@@ -4,7 +4,7 @@
 // pauses, because the room does not wait for anyone.
 import { pageFrames } from '../../lib/frames.ts'
 import { createSequence } from '../commands/commands.ts'
-import { checkControls, createInput } from '../input/input.ts'
+import { createInput, touchSettingsOf } from '../input/input.ts'
 import { createGameSim, levelSize, skyOf, usesStory } from '../level/level.ts'
 import {
   coopSeats,
@@ -22,9 +22,12 @@ import type { Sim } from '../sim/sim.ts'
 import { createStoryView } from '../story/story.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
+import { createBuzzer } from './buzz.ts'
+import { resolveControls } from './controls.ts'
 import type { GameOptions } from './game.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
+import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
 export interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
   /** A `ws://` or `wss://` address. */
@@ -53,6 +56,8 @@ export interface OnlineGame {
   readonly code: string
   status(): OnlineStatus
   stats(): SessionStats
+  /** The player's setting: whether the device may buzz when a feel file says so. */
+  setVibration(on: boolean): void
   /** Leaves the room, removes the canvas and the controls, and disposes both sims. Safe to call twice. */
   leave(): void
 }
@@ -65,7 +70,6 @@ export interface OnlineGame {
 export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGame> {
   const {
     mount,
-    controls,
     host,
     frames = pageFrames,
     settings,
@@ -84,9 +88,10 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     soundNotice: noticeOption,
     locale,
     readPicture,
+    touchSettings,
     ...simOptions
   } = options
-  checkControls(controls)
+  const controls = resolveControls('startOnlineGame', simOptions.content, options.controls)
   requireLanguage(locale)
   const level = levelOption ?? simOptions.content.project.start
   const levelData = simOptions.content.levels[level]
@@ -201,11 +206,13 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       renderer.destroy()
       leaveRoom()
     }
+    const thumbs = thumbsOf(simOptions.content)
     const input = createInput({
       mount,
       controls,
       frames,
       words: locale.words,
+      ...(thumbs === undefined ? {} : { thumbs }),
       ...(settings === undefined ? {} : { settings }),
       ...(gamepads === undefined ? {} : { gamepads }),
     })
@@ -217,8 +224,8 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       renderer.destroy()
       leaveRoom()
     }
-    renderer.setInset(input.inset())
-    input.onInset((px) => renderer.setInset(px))
+    input.setSwapSides(touchSettingsOf(touchSettings).swapSides)
+    wireTouchRoom(input, renderer, levelData.view !== undefined)
     // This page plays one player. The room's other players' hands are theirs, and arrive in the room's ticks.
     input.setPlayers([seat])
 
@@ -248,12 +255,20 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     }
 
     // The room can put this page back on its own state (a sync): ticks heard before it are not the ticks after it.
+    const buzzer = createBuzzer({
+      content: simOptions.content,
+      host,
+      device: (player) => input.device(player),
+      tickHz: session.sim.tickHz,
+      on: touchSettingsOf(touchSettings).vibration,
+    })
     let syncsHeard = session.stats().syncs
     const step = (): void => {
       const tick = session.sim.tick
       const advance = session.advance([...(story?.commands(tick) ?? []), ...input.poll(tick)])
       for (const delta of advance.deltas) renderer.apply(delta)
       story?.update()
+      for (const heard of advance.steps) buzzer.hear(heard)
       if (audio === undefined) return
       const syncs = session.stats().syncs
       if (syncs !== syncsHeard) {
@@ -345,6 +360,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
       code: joined.code,
       status: () => status,
       stats: () => session.stats(),
+      setVibration: (on) => buzzer.setOn(on),
       leave() {
         if (stopped) return
         stopped = true

@@ -56,6 +56,7 @@ fetch an unrelated package of that name from npm.
 | `automata play` | Plays the game in your browser, and shows your changes as you make them. |
 | `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
 | `automata art` | Paints the game's pictures from its figure and backdrop files. |
+| `automata add` | Lists a new content file in the game's `automata.toml`. |
 | `automata words` | Lists the translated words nobody has read, and marks them read. |
 | `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
@@ -159,8 +160,32 @@ The row of buttons has the class `automata-touch`, each button the class `automa
 #game .automata-touch-button[data-action='jump'] { text-transform: uppercase; }
 ```
 
-What a hero does with the controls (run, jump) is the game's own code, a plugin built with `definePlugin` and
-`defineSystem`; pass it to `startGame` as `plugins: [...]`.
+Unless the hero has `moves` (next section), what a hero does with the controls (run, jump) is the game's own code, a
+plugin built with `definePlugin` and `defineSystem`; pass it to `startGame` as `plugins: [...]`.
+
+### A hero with no code
+
+The framework can walk, jump and, if the game wants them, double jump, wall jump and dash a hero with no code at all.
+Two files do it. The hero's character file says so:
+
+```json
+{
+  "format": 1,
+  "id": "hero",
+  "body": "dynamic",
+  "size": { "w": 0.8, "h": 1 },
+  "color": "#e4572e",
+  "upright": true,
+  "moves": { "tuning": "hero-moves", "double-jump": true, "wall-jump": false, "dash": false }
+}
+```
+
+and the tuning file it names, `content/tunings/hero-moves.json`, holds the numbers (`walk-speed`, `jump-speed` and
+sixteen more, each with the range an editor may move it in) and the controls. Pass no `controls` to `startGame`: they
+come from the tuning file. A phone gets two thumbs, not buttons: the left half walks, the right half jumps the moment
+the thumb lands, and a quick flick of the walking thumb dashes. A keyboard and a gamepad work from the same file, and
+the framework says what the hero did with eight events (`hero.jumped`, `hero.landed` and the rest, named with
+`moveEvent`), which a feel file (`content/feels/`) can answer with a buzz.
 
 ## Gamepads, changing keys and playing together
 
@@ -698,6 +723,29 @@ and names the command to run.
 - `--json`: print the answer as JSON: `ok`, the `painted` paths and the `problems` (each a `file`, a `path` and a
   `message`). A game that does not load is not painted, and says so in `sentence`.
 
+### automata add
+
+`automata add [folder] --type <kind> --path <file>` lists a content file you have just written in the game's
+`automata.toml`, so it is part of the game: a file that is not listed there is not loaded. It adds one `[[content]]`
+block at the end and leaves every other byte of the file as it was, comments and line ends included. The file must be
+there and must read as that kind, or nothing is written and its problems are printed. A file that is already listed is
+left alone and said to be. After a figure or a backdrop it says to run `automata art`. It exits `0` when the file is
+listed or was already, `1` when the file does not read as its kind and `2` when it could not do its work (no such
+file, a kind or a path the project refuses, a folder that is not a game).
+
+```sh
+npx --no automata add --type figure --path content/figures/keeper.json --about "The keeper's picture."
+```
+
+- `--type <kind>`: what kind of file it is, like `figure`, `level` or `character`.
+- `--path <file>`: where it is, from the game's folder, like `content/figures/keeper.json`.
+- `--about <words>`: one line of words to write above the block in `automata.toml`, as a `#` comment.
+- `--json`: print the answer as JSON: `ok`, `listed` (false when it was already listed) and the `problems` (each a
+  `file`, a `path` and a `message`).
+
+From code, `listContent(text, { type, path }, about?)` does the same to the text of an `automata.toml` and gives the new
+text, or the problems; the command and the editors both use it.
+
 ### automata words
 
 `automata words [folder]` lists the translated words no native speaker has read yet. A translation made by a machine is
@@ -754,6 +802,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 | `check` | `folder`, `only?`, `fix?` | `automata check <folder> --json` |
 | `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
 | `art` | `folder`, `check?` | `automata art <folder> --json` |
+| `add` | `folder`, `type`, `path`, `about?` | `automata add <folder> --type <type> --path <path> --json` |
 | `words` | `folder`, `read?`, `keys?` | `automata words <folder> --json`, and `--read <read> <keys>` when `read` is given |
 | `content_types` | none | the table of content kinds above |
 | `schema` | `type` | reading `schemas/<type>.schema.json` |
@@ -767,7 +816,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
 and `automata://skills/<name>`.
 
-The server never loads a game's rules itself. `create`, `check`, `replay`, `art` and `words` each run the command in a process of their
+The server never loads a game's rules itself. `create`, `check`, `replay`, `art`, `add` and `words` each run the command in a process of their
 own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
 keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
 goes to standard error, never into the messages.
@@ -809,6 +858,17 @@ Each schema is at `@automataframework/framework/schemas/<kind>.schema.json`. Thr
 - One thing per file, and the file's `id` is its name: `content/sounds/door.json` holds the sound `door`.
 - `writeContent(type, value)` is the only writer, so two writers of the same value make the same bytes.
 - A game's words live in `messages` files, one per language, and `source` in `automata.toml` names the one the team writes in.
+
+Besides `format`, `name`, `start`, `hero`, `players`, `source` and the `[[content]]` blocks, `automata.toml` has four
+optional lines that say what the default game flow shows. None of them says what happens in the game, so none changes a
+hash or a recording:
+
+| Line | What it says | Left out |
+|---|---|---|
+| `levels = ["level-1", "level-2"]` | the order the levels are played in (each a listed level, `start` among them) | the game is its `start` level alone |
+| `done = "door.touched"` | the event that ends a level | a level ends only when the game's code says so |
+| `warnings = ["warning.flashing"]` | what players are told before they play: keys in the game's own words (up to eight) | nothing is said |
+| `splash = "logo"` | the figure shown first, by its id | the splash is the game's name |
 
 A file is listed in `automata.toml` with its kind and its path. This lists a sound called `door`:
 

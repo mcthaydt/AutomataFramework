@@ -14,15 +14,21 @@ export interface Touch {
   inset(): number
   /** Calls `listener` with the new room whenever the buttons show, hide or change size. Stops on `destroy`. */
   onInset(listener: (px: number) => void): void
+  /** What `held` says, and anything pressed and let go since the last drain. The buttons have none of those. */
+  drain(): Set<string>
+  /** Walking on the right and jumping on the left. The buttons swap their corners. */
+  setSwapped(on: boolean): void
+  /** How many pixels at the bottom the camera should keep the heroes clear of: the thumbs' resting corners. */
+  room(): number
   /** Says every word again in other words (a new language): what is held stays held. */
   relabel(words: Words): void
   destroy(): void
 }
 
 /** Buttons are never smaller than this, so a thumb cannot miss. The page-wide minimum is 44 px; primary actions 48. */
-const BUTTON_PX = 64
-const GAP_PX = 12
-const EDGE_PX = 16
+export const BUTTON_PX = 64
+export const GAP_PX = 12
+export const EDGE_PX = 16
 
 /**
  * The CSS custom properties a game sets (on the mount, or any element above it) to give the buttons its own look. Each
@@ -40,12 +46,12 @@ export const TOUCH_PROPERTIES: readonly string[] = [
 ]
 
 // Dark enough that white 18 px bold words reach 4.5 to 1 over the lightest thing they can sit on, the sky.
-const BACKGROUND = 'var(--automata-touch-background,rgba(20,20,30,0.55))'
-const COLOR = 'var(--automata-touch-color,#fff)'
-const PRESSED_BACKGROUND = 'var(--automata-touch-pressed-background,rgba(255,255,255,0.55))'
-const PRESSED_COLOR = 'var(--automata-touch-pressed-color,#111)'
+export const BACKGROUND = 'var(--automata-touch-background,rgba(20,20,30,0.55))'
+export const COLOR = 'var(--automata-touch-color,#fff)'
+export const PRESSED_BACKGROUND = 'var(--automata-touch-pressed-background,rgba(255,255,255,0.55))'
+export const PRESSED_COLOR = 'var(--automata-touch-pressed-color,#111)'
 
-const BUTTON_STYLE = [
+export const BUTTON_STYLE: string = [
   `min-width:${BUTTON_PX}px`,
   `min-height:${BUTTON_PX}px`,
   'padding:8px 14px',
@@ -69,7 +75,7 @@ const groupStyle = (side: 'left' | 'right'): string =>
 const OVERLAY_KEY = 'automata.touch.label'
 
 /** A button's words: the game's `controls.<action>` when `words` has it, else the control's own label, the game's. */
-function buttonLabel(words: Words, action: string, label: string): string {
+export function buttonLabel(words: Words, action: string, label: string): string {
   const key = `controls.${action}`
   const said = words(key)
   return said === key ? label : said
@@ -115,6 +121,11 @@ export function createTouch(
   // Fingers `mask` is holding back, by pointer id: still on their button, but not pressing it.
   const masked = new Set<number>()
   const buttons = new Map<string, HTMLButtonElement>()
+  let swapped = false
+  const cornerOf = (action: string): 'left' | 'right' => {
+    const side = controls[action]?.side ?? 'left'
+    return swapped ? (side === 'left' ? 'right' : 'left') : side
+  }
   const show = (visible: boolean): void => {
     overlay.hidden = !visible
     overlay.style.display = visible ? 'flex' : 'none'
@@ -177,7 +188,7 @@ export function createTouch(
     // A long press must not open the system's menu over a button.
     b.addEventListener('contextmenu', (e) => e.preventDefault())
     buttons.set(action, b)
-    groups[control.side].append(b)
+    groups[cornerOf(action)].append(b)
   }
   mount.append(overlay)
 
@@ -201,6 +212,12 @@ export function createTouch(
     mask() {
       for (const id of fingers.keys()) masked.add(id)
     },
+    drain: () => new Set([...fingers].filter(([id]) => !masked.has(id)).map(([, action]) => action)),
+    setSwapped(on) {
+      swapped = on
+      for (const [action, b] of buttons) groups[cornerOf(action)].append(b)
+    },
+    room: () => 0,
     inset,
     onInset(listener) {
       insetListeners.add(listener)

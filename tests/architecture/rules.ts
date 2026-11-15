@@ -21,6 +21,7 @@ export const LAYERS = [
   'story',
   'web',
   'game',
+  'flow',
   'cli',
 ] as const
 
@@ -51,7 +52,7 @@ const PURE_FEATURES: ReadonlySet<string> = new Set(['sim', 'physics', 'commands'
 const PAINTER_FILES = /^src\/features\/content\/(?:paint-[^/]+|pixels|sheet|art)\.ts$|^src\/lib\/png\.ts$/
 const PAINTER_MATH = /\bMath\.(sin|cos|tan|atan2|atan|pow|exp|log|hypot|random)\b/g
 /** Features that need a page (a DOM, a canvas): the headless entry may not reach them. */
-const PAGE_FEATURES: ReadonlySet<string> = new Set(['render', 'input', 'story', 'web', 'game'])
+const PAGE_FEATURES: ReadonlySet<string> = new Set(['render', 'input', 'story', 'web', 'game', 'flow'])
 
 const IMPURE: readonly { readonly pattern: RegExp; readonly what: string }[] = [
   { pattern: /\bMath\.random\b/, what: 'Math.random' },

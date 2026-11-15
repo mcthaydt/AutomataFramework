@@ -9,6 +9,7 @@ the skills below.
 |---|---|
 | The project: name, first level, which files are content | `automata.toml` |
 | Levels and characters (JSON, one thing per file) | `content/levels/`, `content/characters/` |
+| How the hero moves: eighteen numbers and the controls, and what the player feels | `content/tunings/hero-moves.json`, `content/feels/` |
 | What things look like: a figure for each character, and its painted picture | `content/figures/` |
 | Every word a player reads, one file for each language (the `source` language in `automata.toml` says what a word is for) | `content/messages/` |
 | The list of the game's rules | `src/headless.ts` |
@@ -38,6 +39,9 @@ Exit codes: 0 fine, 1 the game needs fixing, 2 the command could not do its work
 ## Rules you keep
 
 1. Only the rules change the game. The page only shows it.
+   The hero is the framework's: to change how it moves, change a number in `content/tunings/hero-moves.json`; to give
+   it a double jump, a wall jump or a dash, add the switch to `moves` in `content/characters/hero.json`. Write no
+   movement code. A rule of your own that reads the hero's moves can run `after: ['level.moves']`.
 2. The rules (`src/headless.ts` and every file it reaches) have no clock, no dice of their own and no files. Count
    ticks with `ctx.tick` and use `ctx.rng` for chance.
 3. The same keys give the same game on every machine. A recorded play proves it.

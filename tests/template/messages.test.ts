@@ -2,14 +2,11 @@
 import { expect, test } from 'vitest'
 import {
   LANGUAGES,
-  type Language,
   loadGame,
   parseReadMarks,
   translationProblems,
   unreadWords,
 } from '#src/features/content/content.ts'
-import { keyName } from '../../template/src/features/page/controls.ts'
-import { chosenLocale } from '../fixtures/locale/chosen.ts'
 import { readTemplate, templateTree } from './tree.ts'
 
 const tree = templateTree()
@@ -35,22 +32,9 @@ test('every word the template asks for is in its English file', async () => {
   const asked = new Set<string>()
   for (const [, text] of sources)
     for (const m of text.matchAll(/(?:words|say\?\.)\(\s*['`]([\w.-]+)['`]/g)) asked.add(m[1] ?? '')
-  // The names a key's code turns into: `key.arrow-left` for ArrowLeft and so on.
-  for (const code of ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'])
-    asked.add(`key.arrow-${code.slice(5).toLowerCase()}`)
   for (const key of asked) expect(Object.hasOwn(english, key), key).toBe(true)
   // And every control is on a button: `controls.<action>`.
   for (const action of ['left', 'right', 'jump']) expect(english[`controls.${action}`], action).toBeDefined()
-})
-
-test('a key says its name in the language of the player, a letter says itself', async () => {
-  const content = await loaded()
-  const say = async (language: Language, code: string): Promise<string> =>
-    keyName(code, (await chosenLocale(content, language)).words)
-  expect(await say('en', 'ArrowLeft')).toBe('Left arrow')
-  expect(await say('ja', 'ArrowLeft')).toBe('左矢印')
-  expect(await say('pt', 'Space')).toBe('Espaço')
-  expect(await say('ko', 'KeyA')).toBe('A')
 })
 
 test('the marks file is there, reads, and says no word has been read yet', async () => {

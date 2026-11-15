@@ -42,6 +42,7 @@ test('the JSON Schema of a character names every field, each with a description'
     'touch',
     'name',
     'conversation',
+    'moves',
   ])
   for (const [name, field] of Object.entries(schema.properties)) {
     expect(field.description, `${name} has a description`).toMatch(/\w{4,}/)
@@ -87,7 +88,7 @@ test('the JSON Schema of a tuning', () =>
   expectSchema('tuning', 'Tuning', ['format', 'id', 'numbers', 'controls']))
 
 test('the JSON Schema of a feel', () =>
-  expectSchema('feel', 'Feel', ['format', 'id', 'on', 'dust', 'shake', 'freeze']))
+  expectSchema('feel', 'Feel', ['format', 'id', 'on', 'dust', 'shake', 'freeze', 'buzz']))
 
 test('the JSON Schema of a sound, a track and a list of cues', () => {
   expectSchema('sound', 'Sound', ['format', 'id', 'volume', 'voices'])

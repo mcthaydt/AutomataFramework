@@ -13,6 +13,8 @@ import {
   type SystemDef,
 } from '../sim/sim.ts'
 import { motionClip, pickClip, poseAt, SIDEWAYS, STILL_TICKS, VERTICAL } from './clip.ts'
+import { Moves } from './moves.ts'
+import { usesMoves } from './uses.ts'
 
 const spriteFields = {
   character: 'string',
@@ -39,11 +41,16 @@ const spritesSystem: SystemDef = defineSystem({
   before: ['entities.flush'],
   run(ctx) {
     const content = ctx.content as GameContent
+    // The move state exists only in a game whose hero has `moves`; in any other the sim has no such component.
+    const moved = usesMoves(content)
     for (const entity of ctx.query(Sprite, Body)) {
       const sprite = entity.get(Sprite)
       const { vx, vy } = entity.get(Body)
       const change: Partial<{ face: number; still: number; clip: string; since: number; pose: string }> = {}
-      const face = vx > SIDEWAYS ? 1 : vx < -SIDEWAYS ? -1 : sprite.face
+      // A hero the framework moves knows which way it faces (a slide down a wall faces away from where it is
+      // pushed) and what it is doing; every other character faces where it goes.
+      const moves = moved && entity.has(Moves) ? entity.get(Moves) : undefined
+      const face = moves ? moves.face : vx > SIDEWAYS ? 1 : vx < -SIDEWAYS ? -1 : sprite.face
       if (face !== sprite.face) change.face = face
       const still = Math.abs(vy) <= VERTICAL ? Math.min(STILL_TICKS, sprite.still + 1) : 0
       if (still !== sprite.still) change.still = still
@@ -51,7 +58,8 @@ const spritesSystem: SystemDef = defineSystem({
       if (clips.length > 0) {
         const playing = clips.find((clip) => clip.id === sprite.clip)
         const landing = playing !== undefined && !poseAt(playing, ctx.tick - sprite.since).done
-        const wanted = sprite.by !== '' ? sprite.by : motionClip(vx, vy, sprite.clip, still, landing)
+        const wanted =
+          sprite.by !== '' ? sprite.by : motionClip(vx, vy, sprite.clip, still, landing, moves?.mode)
         const picked = pickClip(clips, wanted)
         if (picked !== undefined) {
           const since = picked.id === sprite.clip ? sprite.since : ctx.tick
