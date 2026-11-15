@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of this file format. Always 1."
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "A name for this palette, like \"meadow\". It matches the file name."
+    },
+    "ink": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$",
+      "description": "The one near-black an \"ink\" edge, eyes and brows are drawn in, as # and six digits, like #222323. Left out means the darkest shade in the palette."
+    },
+    "ramps": {
+      "minItems": 1,
+      "maxItems": 64,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+            "description": "A name for this colour, like \"tan\" or \"moss\"."
+          },
+          "colors": {
+            "minItems": 3,
+            "maxItems": 6,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "A shade, as # and six digits, like #885041."
+            },
+            "description": "The colour's shades, from dark to light. A figure is shaded with them."
+          }
+        },
+        "required": [
+          "id",
+          "colors"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Every colour this palette has, each as a ramp of shades."
+    }
+  },
+  "required": [
+    "format",
+    "id",
+    "ramps"
+  ],
+  "additionalProperties": false,
+  "title": "Palette"
+}
