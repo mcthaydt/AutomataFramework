@@ -51,7 +51,7 @@ export const COLOR = 'var(--automata-touch-color,#fff)'
 export const PRESSED_BACKGROUND = 'var(--automata-touch-pressed-background,rgba(255,255,255,0.55))'
 export const PRESSED_COLOR = 'var(--automata-touch-pressed-color,#111)'
 
-export const BUTTON_STYLE = [
+export const BUTTON_STYLE: string = [
   `min-width:${BUTTON_PX}px`,
   `min-height:${BUTTON_PX}px`,
   'padding:8px 14px',
