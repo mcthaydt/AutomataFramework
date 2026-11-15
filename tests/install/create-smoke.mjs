@@ -243,15 +243,21 @@ writeFileSync(levelPath, framework.writeContent('level', level))
 step('a broken file is named, at its place')
 
 // 6. Break the rules: a game's rules may not roll their own dice.
-const movePath = join(game, 'src', 'features', 'hero', 'move.ts')
+const movePath = join(game, 'src', 'features', 'hero', 'score.ts')
 const move = readFileSync(movePath, 'utf8')
-// The rules changed the way an agent debugging them might: slower, and printing a line on every tick. What they print
-// must never reach where an answer is read: `--json`'s stdout, or `automata mcp`'s.
+// The rules changed the way an agent debugging them might: a rule of the game's own that halves the hero's speed after
+// the framework has moved it, and printing a line on every tick. What they print must never reach where an answer is
+// read: `--json`'s stdout, or `automata mcp`'s.
 const slowerAndNoisy = move
-  .replace('const RUN = 6', 'const RUN = 3')
-  .replace('run(ctx) {', "run(ctx) {\n    console.log('the rules said hello')")
-if (!slowerAndNoisy.includes('const RUN = 3') || !slowerAndNoisy.includes('the rules said hello'))
-  fail('the smoke could not change move.ts: its RUN line or its run(ctx) line has moved.')
+  .replace('import {\n  defineResource,', 'import {\n  Body,\n  defineResource,')
+  .replace('  touchEvent,\n', '  Player,\n  touchEvent,\n')
+  .replace("phase: 'gameplay',", "phase: 'gameplay',\n  after: ['level.moves'],")
+  .replace(
+    'run(ctx) {',
+    "run(ctx) {\n    console.log('the rules said hello')\n    for (const hero of ctx.query(Player, Body)) hero.set(Body, { vx: hero.get(Body).vx / 2 })",
+  )
+if (!slowerAndNoisy.includes('vx / 2') || !slowerAndNoisy.includes('the rules said hello'))
+  fail('the smoke could not change score.ts: its imports or its run(ctx) line have moved.')
 writeFileSync(movePath, `${move}\nexport const luck = Math.random()\n`)
 const brokenRun = run('npx', ['--no', 'automata', 'check', '--json'], game)
 if (brokenRun.status !== 1) fail('a broken rule: check --json did not exit with 1.', brokenRun.output)
@@ -263,7 +269,7 @@ writeFileSync(movePath, move)
 step('a clock or dice in the rules is named')
 
 // 7. An agent plays: a session's Worker, the built file the package ships, spoken to as the MCP server will speak to it.
-// The rules are changed in `move.ts` between two sessions, and the second one plays the new rules.
+// The rules are changed in `score.ts` between two sessions, and the second one plays the new rules.
 const workerFile = pathToFileURL(
   join(game, 'node_modules', '@automataframework', 'framework', 'dist', 'session-worker.js'),
 )
@@ -314,8 +320,10 @@ try {
 } catch {
   fail('replay --json: stdout is not JSON when the rules print.', diverged.stdout)
 }
-if (divergedJson[0]?.verdict !== 'diverged')
-  fail('replay: the agent run does not say diverged after the rules changed.', diverged.output)
+// A rule of the game's own that reaches for the hero's body changes the rules' shape, which `replay` names before it
+// plays (`code-changed`); one that only changed a number inside a rule would be `diverged`. Either says the rules moved.
+if (!['diverged', 'code-changed'].includes(divergedJson[0]?.verdict))
+  fail('replay: the agent run does not say the rules changed after they did.', diverged.output)
 writeFileSync(movePath, move)
 rmSync(join(game, 'replays', 'agent-run.json'))
 step('an agent plays a session, saves it, and sees the rules change')
@@ -391,7 +399,7 @@ if (hello.result?.serverInfo?.name !== 'automata')
   fail('automata mcp did not say its name.', JSON.stringify(hello))
 mcp.send({ method: 'notifications/initialized' })
 const listed = (await mcp.request('tools/list')).result.tools.map((one) => one.name)
-if (listed.length !== 13 || !listed.includes('play_step') || !listed.includes('check'))
+if (listed.length !== 14 || !listed.includes('play_step') || !listed.includes('check'))
   fail(`automata mcp lists ${listed.join(', ')}.`)
 const sound = await mcp.tool('check', { folder: '.' })
 if (sound.isError || JSON.parse(sound.text).ok !== true)
@@ -433,8 +441,8 @@ try {
 } catch {
   fail('mcp replay: the answer is not JSON when the rules print.', changed.text)
 }
-if (!changed.isError || changedJson[0]?.verdict !== 'diverged')
-  fail('mcp replay: the saved play does not say diverged after the rules changed.', changed.text)
+if (!changed.isError || !['diverged', 'code-changed'].includes(changedJson[0]?.verdict))
+  fail('mcp replay: the saved play does not say the rules changed after they did.', changed.text)
 writeFileSync(movePath, move)
 const again = await mcp.tool('replay', { folder: '.', file: 'mcp-run' })
 if (again.isError || JSON.parse(again.text)[0].verdict !== 'ok')

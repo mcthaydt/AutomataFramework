@@ -3,8 +3,8 @@ import type { ContentType, GameContent } from '../content/content.ts'
 
 /**
  * The kinds of file the sim is not given: the words a player reads (`messages`), what a game sounds like (`sound`,
- * `music`, `cues`) and how it looks (`figure`, `backdrop`). None of them says what happens, so a word, a sound or a
- * colour changed in a file must not move a hash, stop a replay or keep two players out of one room. (Which clip a
+ * `music`, `cues`) and how it looks and feels (`figure`, `backdrop`, `feel`). None of them says what happens, so a
+ * word, a sound, a colour or a shake changed in a file must not move a hash, stop a replay or keep two players out of one room. (Which clip a
  * character plays is its `character` file's, and stays in.) A plan that takes another kind out of the sim adds it
  * here and to the `GameContent` maps it takes out below: a kind's maps and its files' entries in the project's list
  * always leave together.
@@ -16,10 +16,17 @@ const LEFT_OUT: ReadonlySet<ContentType> = new Set<ContentType>([
   'cues',
   'figure',
   'backdrop',
+  'feel',
 ])
 
 /**
- * The content the sim is given, and so hashes: everything but the words, the sounds and the art. Both their maps
+ * The fields of the project file that tell the flow what to show (plan U): the order of the levels, what ends one, the
+ * warnings and the splash. None of them says what happens in the game, so none is given to the sim.
+ */
+const FLOW_FIELDS = ['levels', 'done', 'warnings', 'splash'] as const
+
+/**
+ * The content the sim is given, and so hashes: everything but the words, the sounds, the art and the feel. Both their maps
  * and their files' entries in `project.content` leave, because that list names every file by path and is hashed:
  * keeping it would move every hash when a language or a sound is added or dropped (the spec's "sound never moves a
  * hash"). The very same object comes back when the game lists none of these kinds, so a game that has none hashes as
@@ -30,16 +37,26 @@ export function simContent(content: GameContent): GameContent {
   if (
     !listed &&
     content.project.source === undefined &&
+    // Audit M7: a game that writes only one of the flow's fields is not "the very same object" either.
+    !FLOW_FIELDS.some((field) => Object.hasOwn(content.project, field)) &&
     content.messages === undefined &&
     content.sounds === undefined &&
     content.music === undefined &&
     content.cues === undefined &&
     content.figures === undefined &&
-    content.backdrops === undefined
+    content.backdrops === undefined &&
+    content.feels === undefined
   )
     return content
-  // The team's language is not what happens in the game, so `source` goes with the words.
-  const { source: _source, ...project } = content.project
+  // The team's language is not what happens in the game, so `source` goes with the words, and the flow's fields with it.
+  const {
+    source: _source,
+    levels: _levels,
+    done: _done,
+    warnings: _warnings,
+    splash: _splash,
+    ...project
+  } = content.project
   const {
     messages: _words,
     sounds: _sounds,
@@ -47,6 +64,7 @@ export function simContent(content: GameContent): GameContent {
     cues: _cues,
     figures: _figures,
     backdrops: _backdrops,
+    feels: _feels,
     ...kept
   } = content
   return deepFreeze({

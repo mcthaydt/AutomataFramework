@@ -7,7 +7,7 @@ import { Look, Thing } from './components.ts'
 import { characterParts, heroParts } from './hero.ts'
 import { jointParts, type Placed } from './joints.ts'
 import { tileBoxes, tileRuns } from './tile-runs.ts'
-import { usesSprites } from './uses.ts'
+import { usesMoves, usesSprites } from './uses.ts'
 
 /** The level cannot be spawned as asked: an unknown level, or a player the level has no start point for. */
 export class LevelError extends Error {}
@@ -65,10 +65,11 @@ export function spawnLevel(
     const letters = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
     isSolid = (letter) => letters.has(letter)
   }
-  // A level with a tileset joins stacked tiles of one width into one box, so a wall has no seams; a level without one
-  // keeps one box a row, as every game recorded before tilesets does.
+  // A level with a tileset joins stacked tiles of one width into one box, so a wall has no seams, and so does a level of
+  // a game whose hero the framework moves: a hero that leans on a wall catches on a seam, and can neither jump nor
+  // slide past it. Any other level keeps one box a row, as every game recorded before the built-in hero does.
   const solids =
-    level.tileset === undefined
+    level.tileset === undefined && !usesMoves(content)
       ? tileRuns(level.tiles, isSolid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
       : tileBoxes(level.tiles, isSolid)
   for (const box of solids)

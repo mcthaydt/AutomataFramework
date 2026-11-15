@@ -93,6 +93,29 @@
         "ticks"
       ],
       "additionalProperties": false
+    },
+    "buzz": {
+      "description": "The device buzzes, where it can. Left out means no buzz.",
+      "type": "object",
+      "properties": {
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How strong the buzz is, from 0 to 1."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "description": "How long it buzzes, in ticks. 60 ticks is one second."
+        }
+      },
+      "required": [
+        "strength",
+        "ticks"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [

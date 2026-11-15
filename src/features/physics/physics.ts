@@ -1,15 +1,16 @@
 // Lifted from AutomataFrameworkFailed@ed8592e8: extensions/physics/src/features/2d/physics-2d.ts
 // The physics feature's entry: the plugin, and everything another feature may use of it. Game code never imports Rapier.
 import { definePlugin, type PluginDef } from '../sim/sim.ts'
-import { Body, Collider, Joint, Transform } from './components.ts'
+import { Body, Collider, Joint, Touching, Transform } from './components.ts'
 import { CollisionEnded, CollisionStarted } from './events.ts'
 import { PhysicsWorld } from './physics-world.ts'
 import { eventsSystem, stepSystem, syncInSystem, syncOutSystem } from './systems.ts'
 
-export { Body, Collider, Joint, Transform } from './components.ts'
+export { Body, Collider, Joint, Touching, Transform } from './components.ts'
 export { CollisionEnded, CollisionStarted } from './events.ts'
 export { BodyKind, type ColliderOptions, JointKind, ShapeKind } from './kinds.ts'
 export { body, collider, joint, transform } from './spawn.ts'
+export { type Felt, type FeltContact, felt, STEEP, TOUCH_SLOP } from './touching.ts'
 
 /**
  * The options of `physics`. Gravity is part of the sim's schema hash, so a different gravity is a different sim.
@@ -22,6 +23,11 @@ export interface PhysicsOptions {
    * before joints existed: the component, like every component, is part of the schema hash.
    */
   readonly joints?: boolean
+  /**
+   * Adds the `Touching` component, filled after every step with what a body stands on and leans against, for each
+   * entity that has one. Left out, the sim is exactly as it was before the component existed.
+   */
+  readonly touching?: boolean
 }
 
 /**
@@ -36,13 +42,26 @@ export function physics(options: PhysicsOptions = {}): PluginDef {
   return definePlugin({
     name: 'physics',
     // Gravity changes what the plugin simulates, so it is part of the schema hash.
-    config: options.joints ? { gravity, joints: true } : { gravity },
-    components: options.joints ? [Transform, Body, Collider, Joint] : [Transform, Body, Collider],
+    config: {
+      gravity,
+      ...(options.joints ? { joints: true } : {}),
+      ...(options.touching ? { touching: true } : {}),
+    },
+    components: [
+      Transform,
+      Body,
+      Collider,
+      ...(options.joints ? [Joint] : []),
+      ...(options.touching ? [Touching] : []),
+    ],
     events: [CollisionStarted, CollisionEnded],
     systems: [syncInSystem, stepSystem, syncOutSystem, eventsSystem],
     state: async ({ dt }) => {
       const { createRapier } = await import('./rapier.ts')
-      return new PhysicsWorld(await createRapier({ gravity, dt }), { joints: options.joints === true })
+      return new PhysicsWorld(await createRapier({ gravity, dt }), {
+        joints: options.joints === true,
+        touching: options.touching === true,
+      })
     },
   })
 }

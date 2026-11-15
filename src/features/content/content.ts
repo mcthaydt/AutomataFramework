@@ -16,7 +16,14 @@ export {
   BehaviourSchema,
   type Sense,
 } from './behaviour.ts'
-export { type Character, type CharacterInput, CharacterSchema, type Clip } from './character.ts'
+export {
+  type Character,
+  type CharacterInput,
+  CharacterSchema,
+  type Clip,
+  type HeroMoves,
+  type HeroMovesInput,
+} from './character.ts'
 export { CONTENT_TYPES, type ContentType, type ContentValue } from './content-types.ts'
 export {
   type Choice as ConversationChoice,
@@ -41,7 +48,7 @@ export {
   type Ease,
 } from './cutscene.ts'
 export { type Diagnostic, formatDiagnostic } from './diagnostics.ts'
-export { type Dust, type FeelFile, FeelSchema, type Freeze, type Shake } from './feel.ts'
+export { type Buzz, type Dust, type FeelFile, FeelSchema, type Freeze, type Shake } from './feel.ts'
 export {
   type FigureFile,
   type FigureMove,
@@ -72,6 +79,13 @@ export {
   placeholdersOf,
 } from './messages.ts'
 export {
+  DEFAULT_HERO_CONTROLS,
+  MOVE_NUMBERS,
+  type MoveNumberInfo,
+  type MoveNumbers,
+  moveNumbers,
+} from './moves.ts'
+export {
   type DrumPart,
   MAX_STEPS,
   type MusicFile,
@@ -82,7 +96,16 @@ export {
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'
-export { type ContentRef, PROJECT_FILE, type Project, ProjectSchema, parseProject } from './project.ts'
+export {
+  type ContentRef,
+  levelOrder,
+  nextLevel,
+  PROJECT_FILE,
+  type Project,
+  ProjectSchema,
+  parseProject,
+} from './project.ts'
+export { type ListedFile, listContent } from './project-write.ts'
 export {
   emptyReadMarks,
   markRead,

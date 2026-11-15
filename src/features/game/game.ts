@@ -9,10 +9,10 @@ import type { Host } from '../host/host.ts'
 import {
   type Claim,
   type Controls,
-  checkControls,
   createInput,
   type Input,
   type PadLike,
+  touchSettingsOf,
 } from '../input/input.ts'
 import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
@@ -20,9 +20,12 @@ import { createRenderer, type HeroBox, type ReadPicture } from '../render/render
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
+import { createBuzzer } from './buzz.ts'
+import { resolveControls } from './controls.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
+import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
 export { type Frames, MAX_STEPS_PER_FRAME } from './loop.ts'
 export { type OnlineGame, type OnlineOptions, startOnlineGame } from './online.ts'
@@ -32,7 +35,11 @@ export { type Watch, type WatchOptions, WatchSetupError, watchReplay } from './w
 export interface GameOptions extends GameSimOptions {
   /** The element the game fills: a canvas, and the touch buttons on top of it. */
   readonly mount: HTMLElement
-  readonly controls: Controls
+  /**
+   * The game's controls. Optional for a game whose hero has `moves`: its tuning file lists them (or the framework's four
+   * stand in), and a list in the file wins over this.
+   */
+  readonly controls?: Controls
   readonly host: Host
   /** Default: the page's animation frames. */
   readonly frames?: Frames
@@ -58,6 +65,11 @@ export interface GameOptions extends GameSimOptions {
    * needs none.
    */
   readonly readPicture?: ReadPicture
+  /**
+   * What the player chose about touch (`TouchSettings`, as the settings file kept it). Anything that does not read as
+   * that is the default: swapSides off and vibration on.
+   */
+  readonly touchSettings?: unknown
   /**
    * The player's language, which the game cannot start without: `startGame` throws if the player has not chosen one
    * (`locale.asked()` is false), so show the language picker first. The touch buttons say `controls.<action>` and
@@ -86,6 +98,8 @@ export interface Game {
    * renderer tells a hero from a crate by the sprite, which such a game does not have.
    */
   heroes(): readonly HeroBox[]
+  /** The player's setting: whether the device may buzz when a feel file says so. */
+  setVibration(on: boolean): void
   /** The play so far, from tick 0. Not available after `stop`, which disposes the sim. */
   replay(): Replay
   /** Stops the loop, removes the canvas and the controls, and disposes the sim. Safe to call twice. */
@@ -97,9 +111,9 @@ export interface Game {
  * the controls are wrong; if the level cannot be loaded or drawn, nothing is left behind.
  */
 export async function startGame(options: GameOptions): Promise<Game> {
-  const { mount, controls, host, locale, frames = pageFrames } = options
+  const { mount, host, locale, frames = pageFrames } = options
   // First, so a mistake in the controls costs nothing: no sim, no canvas.
-  checkControls(controls)
+  const controls = resolveControls('startGame', options.content, options.controls)
   requireLanguage(locale)
   const sim = await createGameSim(options)
   // What to undo if a later step fails; it grows as things are made.
@@ -131,12 +145,14 @@ export async function startGame(options: GameOptions): Promise<Game> {
     }
     // One count of command numbers for the input's `controls` and the game's `join` and `leave`.
     const sequence = createSequence()
+    const thumbs = thumbsOf(options.content)
     const input = createInput({
       mount,
       controls,
       frames,
       sequence,
       words: locale.words,
+      ...(thumbs === undefined ? {} : { thumbs }),
       ...(options.settings === undefined ? {} : { settings: options.settings }),
       ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
     })
@@ -148,9 +164,9 @@ export async function startGame(options: GameOptions): Promise<Game> {
       renderer.destroy()
       sim.dispose()
     }
-    // The touch buttons take the bottom of the screen; the level is fitted above them, so a thumb never hides it.
-    renderer.setInset(input.inset())
-    input.onInset((px) => renderer.setInset(px))
+    // The touch controls take the bottom of the screen; the level is fitted above them, so a thumb never hides it.
+    input.setSwapSides(touchSettingsOf(options.touchSettings).swapSides)
+    wireTouchRoom(input, renderer, level.view !== undefined)
     input.setPlayers(options.players ?? [1])
     const levelId = options.level ?? options.content.project.start
     // The level and the players are written into the recording, so `automata replay` can set the same game up.
@@ -167,6 +183,13 @@ export async function startGame(options: GameOptions): Promise<Game> {
       words: locale.words,
     })
     const { audio } = options
+    const buzzer = createBuzzer({
+      content: options.content,
+      host,
+      device: (player) => input.device(player),
+      tickHz: sim.tickHz,
+      on: touchSettingsOf(options.touchSettings).vibration,
+    })
     const loop = createLoop({
       tickHz: sim.tickHz,
       step() {
@@ -175,6 +198,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         renderer.apply(result.render)
         // Only the tick and the events: the audio is never handed the sim, the render delta or the commands.
         audio?.hear({ tick: result.tick, events: result.events })
+        buzzer.hear(result)
         people.afterStep()
       },
       draw: (alpha) => renderer.draw(alpha),
@@ -226,6 +250,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
         sync()
       },
       heroes: () => renderer.heroes(),
+      setVibration: (on) => buzzer.setOn(on),
       replay: () => recorder.replay(),
       stop() {
         if (stopped) return

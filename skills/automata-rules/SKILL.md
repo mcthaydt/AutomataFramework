@@ -19,7 +19,8 @@ with no page, no clock and no files. Skill `automata` says why. Skill `automata-
    `render: false` for what is for the rules only.
 4. **A command** is what a player does (`controls` is the framework's own: what is held this tick). Read it with
    `isHeld(entity, 'jump')` and `wasPressed(entity, 'jump')`. An **event** says what happened, for sound and the page to
-   hear. Neither needs a new definition for a move that only reads what is held.
+   hear. Neither needs a new definition for a move that only reads what is held. The hero's own moves are the
+   framework's; see below.
 5. **A test** steps the sim and looks at the answer. Copy `tests/features/hero/hero.test.ts`.
 6. **Check, then the recording.** Run `npx --no automata check`. If the play changed on purpose, the replays step says the
    recording no longer ends where it did: run `npx --no automata replay --accept`, and say why it moved.
@@ -38,65 +39,65 @@ it hears them. A plugin that answers a touch lists `level` and `touch` in `depen
 can be touched has no `touch`, so add one before you depend on it. Test it by stepping a sim and reading the resource
 with `sim.resource(Score)`, as `tests/features/hero/hero.test.ts` does for the sparks.
 
-## A whole example: a double jump
+## The hero is the framework's
 
-The hero jumps once from the ground. This plugin lets it jump once more in the air, and not a third time. It runs
-before `hero.move`, so on the tick of a press it sees the hero as it was, and `hero.move` does the first jump as usual.
+A game whose hero's character file has `moves` has no movement code: the framework walks and jumps it, and the game
+writes no rule for it. `moves` names the tuning file (`"tuning": "hero-moves"`) and switches on `"double-jump"`,
+`"wall-jump"` and `"dash"`. The numbers are in that tuning file, each with its range: `walk-speed`, `walk-grip`,
+`air-grip`, `jump-speed`, `jump-cut`, `ledge-grace`, `early-press`, `fall-speed`, `air-jumps`, `air-jump-speed`,
+`wall-slide-speed`, `wall-jump-out`, `wall-jump-up`, `wall-jump-lock`, `dash-speed`, `dash-ticks`, `dash-rest` and
+`air-dashes`. The controls are in the same file. To change how the hero moves, change a number; do not copy movement
+into code.
+
+The framework says what the hero did with eight events: `hero.walked`, `hero.jumped`, `hero.landed`,
+`hero.left-ground`, `hero.air-jumped`, `hero.wall-slid`, `hero.wall-jumped` and `hero.dashed`. Name one with
+`moveEvent('jumped')`. A rule of your own that answers one, or reads the hero's body after it moved, runs
+`after: ['level.moves']`.
+
+## A whole example: a jump counter
+
+The hero jumps by itself. This plugin counts the jumps, in the air as well as from the ground, by answering the
+`hero.jumped` event. It runs after the framework's moves, so it hears the jump of the tick it happened in.
 
 ```ts
 import {
-  Body,
-  type ComponentDef,
-  defineComponent,
   definePlugin,
+  defineResource,
   defineSystem,
-  Player,
+  moveEvent,
   type PluginDef,
-  wasPressed,
+  type ResourceDef,
+  z,
 } from '@automataframework/framework/headless'
 
-/** How fast a jump leaves the ground, in tiles a second. */
-const JUMP = 12
-/** How many ticks in a row without moving up or down count as standing on something. */
-const STANDING = 2
+const countSchema: z.ZodObject<{ jumps: z.ZodNumber }> = z.object({ jumps: z.number().int() })
 
-/** Jumps left in the air, and how long the hero has been standing still. */
-export const AirJumps: ComponentDef<{ left: 'u32'; still: 'u32' }> = defineComponent(
-  'air-jumps',
-  { left: 'u32', still: 'u32' },
-  { render: false },
-)
+/** How many times the hero has jumped, from the ground or in the air. */
+export const Jumps: ResourceDef<typeof countSchema> = defineResource('hero.jumps', countSchema, () => ({
+  jumps: 0,
+}))
 
-const doubleJump = defineSystem({
-  name: 'hero.double-jump',
+/** Adds the jumps of this tick. It runs after the framework's moves, so it hears what they said this tick. */
+const countJumps = defineSystem({
+  name: 'hero.count-jumps',
   phase: 'gameplay',
-  before: ['hero.move'],
+  after: ['level.moves'],
   run(ctx) {
-    for (const hero of ctx.query(Player, Body)) {
-      if (!hero.has(AirJumps)) hero.add(AirJumps)
-      const { left, still } = hero.get(AirJumps)
-      const standing = Math.abs(hero.get(Body).vy) < 0.01 ? Math.min(still + 1, STANDING) : 0
-      // On the ground the second jump is back. In the air a press spends it, once.
-      if (standing >= STANDING) hero.set(AirJumps, { left: 1, still: standing })
-      else if (wasPressed(hero, 'jump') && left > 0) {
-        hero.set(Body, { vy: -JUMP })
-        hero.set(AirJumps, { left: 0, still: 0 })
-      } else hero.set(AirJumps, { still: standing })
-    }
+    ctx.resource(Jumps).jumps += ctx.events.of(moveEvent('jumped')).length
   },
 })
 
-/** The double jump's plugin: list it in `gamePlugins` after the hero's. */
-export const doubleJumpPlugin: PluginDef = definePlugin({
-  name: 'double-jump',
-  dependsOn: ['physics', 'commands'],
-  components: [AirJumps],
-  systems: [doubleJump],
+/** The jump counter's plugin: list it in `gamePlugins` after the hero's. */
+export const jumpCountPlugin: PluginDef = definePlugin({
+  name: 'jump-count',
+  dependsOn: ['level'],
+  resources: [Jumps],
+  systems: [countJumps],
 })
 ```
 
-Then add `doubleJumpPlugin` to the list in `src/headless.ts`, after the hero's: `gamePlugins = [heroPlugin, doubleJumpPlugin]`.
+Then add `jumpCountPlugin` to the list in `src/headless.ts`, after the hero's: `gamePlugins = [heroPlugin, jumpCountPlugin]`.
 
-The test steps a sim with both plugins: press jump on the ground, press again in the air (it rises again), press a third
-time (nothing happens). When it passes, `replay` will show the recording has not moved, since the recorded play never
-pressed jump in the air. A recording that did would move, and you would accept it.
+The test steps a sim with both plugins: press jump on the ground (the count is 1), press again in the air (still 1, since
+this hero has no double jump), land and press once more (2). When it passes, `replay` will show the recording has not
+moved, since the plugin only reads. A rule that changed what the hero does would move it, and you would accept it.

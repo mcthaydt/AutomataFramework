@@ -5,6 +5,7 @@ import automata from '../../template/automata.toml?raw'
 import crate from '../../template/content/characters/crate.json?raw'
 import hero from '../../template/content/characters/hero.json?raw'
 import spark from '../../template/content/characters/spark.json?raw'
+import landFeel from '../../template/content/feels/land.json?raw'
 import crateFigure from '../../template/content/figures/crate.json?raw'
 import heroFigure from '../../template/content/figures/hero.json?raw'
 import level1 from '../../template/content/levels/level-1.json?raw'
@@ -14,6 +15,7 @@ import jaWords from '../../template/content/messages/ja.json?raw'
 import koWords from '../../template/content/messages/ko.json?raw'
 import ptWords from '../../template/content/messages/pt.json?raw'
 import zhWords from '../../template/content/messages/zh.json?raw'
+import heroMoves from '../../template/content/tunings/hero-moves.json?raw'
 
 /** Every content file of the template, by its path from the game's root. */
 export const templateFiles: Readonly<Record<string, string>> = {
@@ -24,6 +26,8 @@ export const templateFiles: Readonly<Record<string, string>> = {
   'content/characters/spark.json': spark,
   'content/figures/hero.json': heroFigure,
   'content/figures/crate.json': crateFigure,
+  'content/tunings/hero-moves.json': heroMoves,
+  'content/feels/land.json': landFeel,
   'content/messages/en.json': enWords,
   'content/messages/es.json': esWords,
   'content/messages/ko.json': koWords,

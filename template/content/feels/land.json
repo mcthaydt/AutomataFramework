@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "land",
+  "on": "hero.landed",
+  "dust": {
+    "count": 6,
+    "color": "#e8dcc0",
+    "speed": 2,
+    "life": 18
+  },
+  "buzz": {
+    "strength": 0.3,
+    "ticks": 3
+  }
+}

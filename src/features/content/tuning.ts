@@ -9,6 +9,7 @@ import {
   RESERVED_PAD,
 } from '../commands/commands.ts'
 import { Id } from './ids.ts'
+import { heroTuningProblems } from './moves.ts'
 import { unique } from './shared.ts'
 import type { ContentTypeInfo } from './type-info.ts'
 
@@ -270,5 +271,8 @@ export const tuningInfo: ContentTypeInfo<TuningFile, TuningFile> = {
     'controls.label': 'Write the word on the touch button, like "Jump".',
     'controls.keys': 'Write the keys as a list, like ["Space"]. Use [] for none.',
     'controls.side': 'Write "left" or "right": which thumb the touch button sits under.',
+  },
+  check(tuning, game, report) {
+    heroTuningProblems(tuning, game, report)
   },
 }

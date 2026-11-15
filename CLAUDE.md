@@ -163,6 +163,8 @@ The networking is two features: `net` (pure: the wire, the room's rules and the 
 `commands`) and `server` (Node only, above `level`: the Colyseus room and the process; only `src/server.ts` may import it).
 The `automata` command is the last feature, `cli` (Node only, on Effect, using only what `src/headless.ts` re-exports; only
 `src/cli.ts` may import it).
+The default game flow is the feature `flow` (page, the one above `game`: the steps a visit walks as one pure function, the
+progress a game keeps and who is playing; plan U adds the screens below `game` and `startFlow` here).
 Features import only from features below them. No top-level `components/`, `services/` or `utils/`.
 
 `biome.json` turns off a rule for two groups of files and says why here, since JSON has no comments: `noSvgWithoutTitle` for

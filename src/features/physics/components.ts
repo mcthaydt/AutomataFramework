@@ -65,3 +65,15 @@ const jointFields = {
  * has it.
  */
 export const Joint: ComponentDef<typeof jointFields> = defineComponent('physics.joint', jointFields)
+
+const touchingFields = { below: 'bool', left: 'bool', right: 'bool' } as const
+/**
+ * What the body touched after the last step. `below`: something solid under it. `left` and `right`: something that
+ * does not move (a tile, a fixed body) against that side. All false for an entity with no collider. Not drawn. Only a
+ * sim made with `physics({ touching: true })` has it, and only an entity given it is filled in, in sync-out.
+ */
+export const Touching: ComponentDef<typeof touchingFields> = defineComponent(
+  'physics.touching',
+  touchingFields,
+  { render: false },
+)
