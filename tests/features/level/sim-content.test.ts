@@ -278,7 +278,8 @@ test("a scene's paint, material, seed, sky and tile move no hash, and a row or a
   ).toBe(base)
   expect(
     await same((scene) => {
-      scene.paints[0].color = '#010203'
+      const [paint] = scene.paints
+      if (paint !== undefined) paint.color = '#010203'
     }),
   ).toBe(base)
   expect(
@@ -294,7 +295,8 @@ test("a scene's paint, material, seed, sky and tile move no hash, and a row or a
   ).not.toBe(base)
   expect(
     await same((scene) => {
-      scene.ground.letters[0].shape = scene.ground.letters[0].shape === 'solid' ? 'back' : 'solid'
+      const [letter] = scene.ground.letters
+      if (letter !== undefined) letter.shape = letter.shape === 'solid' ? 'back' : 'solid'
     }),
   ).not.toBe(base)
 })

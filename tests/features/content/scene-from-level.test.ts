@@ -120,7 +120,7 @@ test('a tileset of more kinds than a scene holds materials is told so, not cut s
     id: `t${i}`,
     letter: String.fromCharCode(48 + i),
   }))
-  const crowded = { ...game, tilesets: { meadow: { ...tileset, tiles: kinds } } } as GameContent
+  const crowded = { ...game, tilesets: { meadow: { ...tileset, tiles: kinds } } } as unknown as GameContent
   expect(() => sceneFromLevel(crowded, 'level-1', 'meadow-scene')).toThrow(
     'The tileset "meadow" has 33 kinds of tile, and a scene holds 32 materials at most.',
   )
