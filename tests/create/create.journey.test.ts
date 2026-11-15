@@ -198,8 +198,8 @@ const tickOf = (page: Page): Promise<number> =>
 const POLL = { timeout: 30_000, intervals: [50, 100, 250] }
 
 /** A touch screen as the game's own question sees it: every page of the context says its pointer is coarse. */
-const markCoarse = (context: BrowserContext): Promise<void> =>
-  context.addInitScript(() => {
+async function markCoarse(context: BrowserContext): Promise<void> {
+  await context.addInitScript(() => {
     const real = window.matchMedia.bind(window)
     const coarse = {
       matches: true,
@@ -209,6 +209,7 @@ const markCoarse = (context: BrowserContext): Promise<void> =>
     } as unknown as MediaQueryList
     window.matchMedia = (media: string) => (media.includes('pointer: coarse') ? coarse : real(media))
   })
+}
 
 /** A new game asks the player's language first, and plays nothing until Go is pressed: one flag, then Go. */
 async function pickLanguage(page: Page, flag: string): Promise<void> {
