@@ -24,11 +24,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # How much this run tests, from the event and the files the pull request changes. Everything is `true` except on a
-  # draft without the `full-tests` label whose change leaves the build and the test setup alone:
+  # How much this run tests, from the event and the files the pull request changes. Everything but `docs` is `true`
+  # except on a draft without the `full-tests` label whose change leaves the build and the test setup alone:
   #   full     false: the Node and browser tests the change reaches (Vitest's `--changed`), stopping at the first failure
-  #   quick    `quick ` on a draft and empty otherwise: the start of every check's name, so a draft's quick run never
-  #            has the name of a check main requires, and only a full run can let a pull request merge
+  #   docs     true when only Markdown that people read changed: `docs` passes every check main requires,
+  #            under its own name, and every job that tests is left out
+  #   quick    `quick ` on a draft, `skipped ` on a docs-only run, and empty otherwise: the start of every
+  #            check's name, so a quick run never has the name of a check main requires, and only a full run (or
+  #            `docs`) can let a pull request merge
   #   online   false when the networking and its journeys are untouched: the `online` job is left out
   #   package  false when the command, the template, the skills, the install checks and the README are untouched: the
   #            jobs that pack the package and make a new game from it are left out
@@ -41,7 +44,8 @@ jobs:
       full: ${{ steps.plan.outputs.full }}
       online: ${{ steps.plan.outputs.online }}
       package: ${{ steps.plan.outputs.package }}
-      quick: ${{ steps.plan.outputs.full != 'true' && 'quick ' || '' }}
+      docs: ${{ steps.plan.outputs.docs }}
+      quick: ${{ steps.plan.outputs.docs == 'true' && 'skipped ' || steps.plan.outputs.full != 'true' && 'quick ' || '' }}
     steps:
       - id: plan
         env:
@@ -52,12 +56,17 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          full=true online=true package=true
-          if [ "$EVENT" = pull_request ] && [ "$DRAFT" = true ] && [[ " $LABELS " != *" full-tests "* ]] &&
-            changed="$(gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only)"; then
-            printf 'This draft changes:\n%s\n' "$changed"
+          full=true online=true package=true docs=false
+          if [ "$EVENT" = pull_request ] && [[ " $LABELS " != *" full-tests "* ]] &&
+            changed="$(gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only)" && [ -n "$changed" ]; then
+            printf 'This pull request changes:\n%s\n' "$changed"
+            # Only Markdown that people read (CLAUDE.md and the notes under docs/, never the README or a page a test
+            # reads): there is nothing to test, so `docs` passes every check main requires at once, draft or not.
+            others="$(grep -vE '^(CLAUDE\.md|docs/.+\.md)$' <<<"$changed" || true)$(grep -E '^docs/api/' <<<"$changed" || true)"
+            if [ -z "$others" ]; then
+              docs=true
             # A change to how things are installed, built or tested, or to the shared test files, reaches every test.
-            if ! grep -qE '^(tests/fixtures/|package\.json|pnpm-lock\.yaml|\.pnpmfile\.cjs|[^/]*\.config\.(ts|js)|vite-rapier-wasm\.ts|tsconfig[^/]*\.json|\.github/)' <<<"$changed"; then
+            elif [ "$DRAFT" = true ] && ! grep -qE '^(tests/fixtures/|package\.json|pnpm-lock\.yaml|\.pnpmfile\.cjs|[^/]*\.config\.(ts|js)|vite-rapier-wasm\.ts|tsconfig[^/]*\.json|\.github/)' <<<"$changed"; then
               full=false
               # The `screenshots` label asks for the online journeys, which take the pictures, on any draft.
               grep -qE '^(src/server\.ts|src/features/(net|server)/|tests/journeys/)' <<<"$changed" ||
@@ -65,11 +74,39 @@ jobs:
               grep -qE '^(src/(cli|headless|index|server)\.ts|src/features/cli/|template/|skills/|scripts/|tests/install/|tests/create/|tests/golden/|README\.md)' <<<"$changed" || package=false
             fi
           fi
-          echo "full=$full online=$online package=$package"
-          { echo "full=$full"; echo "online=$online"; echo "package=$package"; } >> "$GITHUB_OUTPUT"
+          echo "docs=$docs full=$full online=$online package=$package"
+          { echo "docs=$docs"; echo "full=$full"; echo "online=$online"; echo "package=$package"; } >> "$GITHUB_OUTPUT"
+
+  # A pull request that changes only Markdown that people read has nothing to test (the Owner, 2026-11-15). This job
+  # stands in for every check main requires, under its exact name, and passes at once. Every job that tests is left out
+  # and has `skipped ` at the start of its name, so a skipped job never wears a required name, and on any other run this
+  # job's own names start with `docs only `.
+  docs:
+    needs: plan
+    if: needs.plan.outputs.docs == 'true'
+    name: ${{ needs.plan.outputs.docs == 'true' && matrix.check || format('docs only {0}', matrix.check) }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        check:
+          - 'check'
+          - 'package'
+          - 'engines (chromium)'
+          - 'engines (webkit)'
+          - 'engines (firefox)'
+          - 'online'
+          - 'create (ubuntu-latest)'
+          - 'create (windows-latest)'
+          - 'create (macos-latest)'
+          - 'create-play'
+    env:
+      CHECK: ${{ matrix.check }}
+    steps:
+      - run: echo "Only Markdown that people read changed, so there is nothing to test, and $CHECK passes."
 
   check:
     needs: plan
+    if: needs.plan.outputs.docs != 'true'
     name: ${{ needs.plan.outputs.quick }}check
     runs-on: ubuntu-latest
     env:
@@ -96,6 +133,7 @@ jobs:
   # Each browser in two shards that run side by side, so a full run takes about half as long (the Owner, 2026-11-15).
   browsers:
     needs: plan
+    if: needs.plan.outputs.docs != 'true'
     name: browsers (${{ matrix.engine }} ${{ matrix.shard }}/2)
     runs-on: ubuntu-latest
     strategy:
@@ -143,7 +181,7 @@ jobs:
     needs: [plan, browsers]
     name: ${{ needs.plan.outputs.quick }}engines (${{ matrix.engine }})
     # Also on a run a newer one cancelled, so that run shows red: a skipped check would count as passed.
-    if: always()
+    if: always() && needs.plan.outputs.docs != 'true'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -167,7 +205,7 @@ jobs:
   online:
     needs: plan
     name: ${{ needs.plan.outputs.quick }}online
-    if: needs.plan.outputs.online == 'true'
+    if: needs.plan.outputs.docs != 'true' && needs.plan.outputs.online == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -202,7 +240,7 @@ jobs:
   package:
     needs: plan
     name: ${{ needs.plan.outputs.quick }}package
-    if: needs.plan.outputs.package == 'true'
+    if: needs.plan.outputs.docs != 'true' && needs.plan.outputs.package == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -239,7 +277,7 @@ jobs:
   create-pack:
     needs: plan
     name: ${{ needs.plan.outputs.quick }}create-pack
-    if: needs.plan.outputs.package == 'true'
+    if: needs.plan.outputs.docs != 'true' && needs.plan.outputs.package == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
