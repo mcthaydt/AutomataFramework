@@ -174,7 +174,8 @@ function checkMotifs(file: SoundFile, game: Listed, report: Report): void {
     if (v.kind !== 'motif') return
     const motif = game.get('motif', v.motif)
     if (motif === undefined) {
-      if (!game.has('motif', v.motif)) report(`voices[${i}].motif`, noSuch('motif', v.motif, game.ids('motif')))
+      if (!game.has('motif', v.motif))
+        report(`voices[${i}].motif`, noSuch('motif', v.motif, game.ids('motif')))
       return
     }
     if (v.at + (motifBeats(motif, v) * 60) / v.tempo > MAX_SECONDS + 1e-9)

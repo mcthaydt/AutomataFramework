@@ -68,6 +68,23 @@ function applySettings(defaults: Controls, saved: unknown): {
 };
 ```
 
+### `ArrangedMusic` (interface)
+
+```ts
+interface ArrangedMusic {
+    readonly format: 2;
+    readonly id: string;
+    readonly tempo: number;
+    readonly key: Key;
+    readonly mode: Mode;
+    readonly bars: number;
+    readonly loop: boolean;
+    readonly volume: number;
+    readonly chords: readonly string[];
+    readonly lanes: readonly MusicLane[];
+}
+```
+
 ### `Art` (interface)
 
 ```ts
@@ -243,6 +260,12 @@ type BindingSlot = 'keys' | 'shared-1' | 'shared-2' | 'pad';
 function bindParaglide(runtime: ParaglideRuntime, locale: Locale): void;
 ```
 
+### `blockBars` (function)
+
+```ts
+function blockBars(entry: MusicBlock, motif: MotifFile | undefined): number;
+```
+
 ### `Body` (const)
 
 ```ts
@@ -370,6 +393,50 @@ const CharacterSchema: z.ZodType<Character, CharacterInput>;
 
 ```ts
 function checkControls(controls: Controls): void;
+```
+
+### `CHORD` (const)
+
+```ts
+const CHORD: RegExp;
+```
+
+### `Chord` (const)
+
+```ts
+const Chord: z.ZodString;
+```
+
+### `ChordLoop` (interface)
+
+```ts
+interface ChordLoop extends LoopBase {
+    readonly lane: 'chords';
+    readonly voicing: Voicing;
+    readonly notes: readonly string[];
+}
+```
+
+### `chordName` (function)
+
+```ts
+function chordName(numeral: string, key: Key, mode: Mode): string;
+```
+
+### `ChordNotes` (interface)
+
+```ts
+interface ChordNotes {
+    readonly root: number;
+    readonly scale: readonly number[];
+    readonly tones: readonly number[];
+}
+```
+
+### `chordOf` (function)
+
+```ts
+function chordOf(numeral: string, key: Key, mode: Mode): ChordNotes;
 ```
 
 ### `Claim` (type)
@@ -507,6 +574,8 @@ const CONTENT_TYPES: {
     readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
     readonly sound: ContentTypeInfo<SoundFile, SoundFile>;
     readonly music: ContentTypeInfo<MusicFile, MusicFile>;
+    readonly loop: ContentTypeInfo<LoopFile, LoopFile>;
+    readonly motif: ContentTypeInfo<MotifFile, MotifFile>;
     readonly cues: ContentTypeInfo<CuesFile, CuesFile>;
     readonly conversation: ContentTypeInfo<ConversationFile, ConversationFile>;
     readonly cutscene: ContentTypeInfo<CutsceneFile, CutsceneFile>;
@@ -654,6 +723,7 @@ function createAudio(options: {
     readonly content: GameContent;
     readonly speaker: Speaker;
     readonly tickHz?: number;
+    readonly recordings?: Recordings;
 }): GameAudio;
 ```
 
@@ -691,6 +761,12 @@ function createLocale(options: {
     readonly settings: Settings;
     readonly watching?: boolean;
 }): Locale;
+```
+
+### `createMusicPlayer` (function)
+
+```ts
+function createMusicPlayer(speaker: Speaker, parts?: SongParts): MusicPlayer;
 ```
 
 ### `createPicker` (function)
@@ -851,6 +927,12 @@ interface CutsceneLine {
 const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
 ```
 
+### `decodeWav` (function)
+
+```ts
+function decodeWav(bytes: Uint8Array): Wav | undefined;
+```
+
 ### `Def` (type)
 
 ```ts
@@ -963,6 +1045,21 @@ interface Diagnostic {
 }
 ```
 
+### `Drum` (type)
+
+```ts
+type Drum = (typeof DRUMS)[number];
+```
+
+### `DrumLoop` (interface)
+
+```ts
+interface DrumLoop extends LoopBase {
+    readonly lane: 'drums';
+    readonly notes: DrumRows;
+}
+```
+
 ### `DrumPart` (interface)
 
 ```ts
@@ -972,6 +1069,20 @@ interface DrumPart {
     readonly volume: number;
     readonly notes: readonly string[];
 }
+```
+
+### `DrumRows` (type)
+
+```ts
+type DrumRows = {
+    readonly [D in Drum]?: readonly string[] | undefined;
+};
+```
+
+### `DRUMS` (const)
+
+```ts
+const DRUMS: readonly ["kick", "snare", "hat", "clap", "tom"];
 ```
 
 ### `Dust` (interface)
@@ -1007,6 +1118,12 @@ function emptyReadMarks(source: Language): ReadMarks;
 
 ```ts
 function encodePng(picture: IndexedPicture): Uint8Array<ArrayBuffer>;
+```
+
+### `encodeWav` (function)
+
+```ts
+function encodeWav(samples: Float32Array, sampleRate: number): Uint8Array<ArrayBuffer>;
 ```
 
 ### `EntityRef` (interface)
@@ -1202,6 +1319,12 @@ interface FigureVariant {
 }
 ```
 
+### `filesIn` (function)
+
+```ts
+function filesIn(names: readonly string[]): string[];
+```
+
 ### `fill` (function)
 
 ```ts
@@ -1246,6 +1369,27 @@ function fitWorld(box: {
     w: number;
     h: number;
 }): Fit;
+```
+
+### `folderManifest` (function)
+
+```ts
+function folderManifest(folders: Readonly<Record<string, readonly string[]>>): string;
+```
+
+### `FolderRef` (interface)
+
+```ts
+interface FolderRef {
+    readonly type: ContentType;
+    readonly folder: string;
+}
+```
+
+### `FOLDERS_FILE` (const)
+
+```ts
+const FOLDERS_FILE = "automata.folders.json";
 ```
 
 ### `followLanguage` (function)
@@ -1357,6 +1501,8 @@ interface GameContent {
     readonly feels?: Readonly<Record<string, FeelFile>>;
     readonly sounds?: Readonly<Record<string, SoundFile>>;
     readonly music?: Readonly<Record<string, MusicFile>>;
+    readonly loops?: Readonly<Record<string, LoopFile>>;
+    readonly motifs?: Readonly<Record<string, MotifFile>>;
     readonly cues?: Readonly<Record<string, CuesFile>>;
     readonly conversations?: Readonly<Record<string, ConversationFile>>;
     readonly cutscenes?: Readonly<Record<string, CutsceneFile>>;
@@ -1454,6 +1600,12 @@ interface HeroMovesInput {
 
 ```ts
 function hertzOf(note: string): number | undefined;
+```
+
+### `hertzOfPitch` (function)
+
+```ts
+function hertzOfPitch(pitch: number): number;
 ```
 
 ### `Host` (interface)
@@ -1581,6 +1733,24 @@ interface InputSettings {
 const InputSettingsSchema: z.ZodType<InputSettings, InputSettings>;
 ```
 
+### `Instrument` (type)
+
+```ts
+type Instrument = (typeof INSTRUMENTS)[number];
+```
+
+### `INSTRUMENTS` (const)
+
+```ts
+const INSTRUMENTS: readonly ["drums", "bass", "keys", "pluck", "lead", "pad", "bell", "organ"];
+```
+
+### `instrumentVoices` (function)
+
+```ts
+function instrumentVoices(note: PlainNote, tempo: number): (ToneVoice | NoiseVoice)[];
+```
+
 ### `isHeld` (function)
 
 ```ts
@@ -1694,6 +1864,25 @@ type JointKind = (typeof JointKind)[keyof typeof JointKind];
 
 ```ts
 function jsonSchemaFor(type: ContentType): object;
+```
+
+### `Key` (type)
+
+```ts
+type Key = (typeof KEYS)[number];
+const Key: z.ZodType<Key, Key>;
+```
+
+### `keyRoot` (function)
+
+```ts
+function keyRoot(key: Key): number;
+```
+
+### `KEYS` (const)
+
+```ts
+const KEYS: readonly ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
 ```
 
 ### `Language` (type)
@@ -1978,6 +2167,54 @@ function levelViews(content: GameContent, level: Level): {
 };
 ```
 
+### `LIBRARY` (const)
+
+```ts
+const LIBRARY: Library;
+```
+
+### `Library` (interface)
+
+```ts
+interface Library {
+    readonly loops: readonly LoopFile[];
+    readonly styles: readonly ArrangedMusic[];
+}
+```
+
+### `LIBRARY_LANGUAGES` (const)
+
+```ts
+const LIBRARY_LANGUAGES: readonly [...typeof LANGUAGES, 'fr', 'ru', 'de'];
+```
+
+### `LibraryFile` (interface)
+
+```ts
+interface LibraryFile {
+    readonly type: 'loop' | 'music';
+    readonly value: LoopFile | ArrangedMusic;
+}
+```
+
+### `libraryFiles` (function)
+
+```ts
+function libraryFiles(id: string, as?: string): LibraryFile[];
+```
+
+### `LibraryLanguage` (type)
+
+```ts
+type LibraryLanguage = (typeof LIBRARY_LANGUAGES)[number];
+```
+
+### `libraryName` (function)
+
+```ts
+function libraryName(id: string, language: LibraryLanguage): string;
+```
+
 ### `Link` (interface)
 
 ```ts
@@ -2036,6 +2273,18 @@ interface ListedPad {
 }
 ```
 
+### `ListFolder` (type)
+
+```ts
+type ListFolder = (folder: string) => Promise<readonly string[]>;
+```
+
+### `listFromManifest` (function)
+
+```ts
+function listFromManifest(read: (path: string) => Promise<string>): ListFolder;
+```
+
 ### `loadArt` (function)
 
 ```ts
@@ -2049,7 +2298,13 @@ function loadArt(options: {
 ### `loadGame` (function)
 
 ```ts
-function loadGame(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>>;
+function loadGame(read: (path: string) => Promise<string>, list?: ListFolder): Promise<Parsed<GameContent>>;
+```
+
+### `loadRecordings` (function)
+
+```ts
+function loadRecordings(content: GameContent, read: (path: string) => Promise<Uint8Array | undefined>): Promise<Recordings>;
 ```
 
 ### `LoadResult` (type)
@@ -2099,6 +2354,59 @@ const LOG_MAX = 1024;
 
 ```ts
 const Look: ComponentDef<typeof lookFields>;
+```
+
+### `LoopBlock` (interface)
+
+```ts
+interface LoopBlock {
+    readonly at: number;
+    readonly loop: string;
+    readonly bars: number;
+}
+```
+
+### `LoopFile` (type)
+
+```ts
+type LoopFile = DrumLoop | NoteLoop | ChordLoop;
+```
+
+### `LoopLane` (type)
+
+```ts
+type LoopLane = 'drums' | 'bass' | 'chords' | 'melody';
+```
+
+### `loopNotes` (function)
+
+```ts
+function loopNotes(loop: LoopFile, options?: LoopOptions): PlainNote[];
+```
+
+### `LoopOptions` (interface)
+
+```ts
+interface LoopOptions {
+    readonly chords?: readonly string[];
+    readonly key?: Key;
+    readonly mode?: Mode;
+    readonly instrument?: Instrument;
+    readonly volume?: number;
+    readonly bars?: number;
+}
+```
+
+### `LoopSchema` (const)
+
+```ts
+const LoopSchema: z.ZodType<LoopFile, LoopFile>;
+```
+
+### `makeSound` (function)
+
+```ts
+function makeSound(kind: SoundKind, seed: number, id?: string): SoundFile;
 ```
 
 ### `markRead` (function)
@@ -2237,10 +2545,153 @@ interface MessagesFile {
 const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 ```
 
+### `MidiDropped` (interface)
+
+```ts
+interface MidiDropped {
+    readonly what: 'moved' | 'tempo' | 'bends' | 'controllers' | 'time' | 'lanes' | 'bars' | 'together' | 'cut';
+    readonly count?: number;
+    readonly tempo?: number;
+    readonly beats?: number;
+    readonly sentence: string;
+}
+```
+
+### `MidiImport` (interface)
+
+```ts
+interface MidiImport {
+    readonly music: ArrangedMusic;
+    readonly loops: readonly LoopFile[];
+    readonly dropped: readonly MidiDropped[];
+    readonly lanes: number;
+    readonly bars: number;
+    readonly tempo: number;
+}
+```
+
+### `MidiSource` (type)
+
+```ts
+type MidiSource = {
+    readonly type: 'music';
+    readonly value: MusicFile;
+} | {
+    readonly type: 'loop';
+    readonly value: LoopFile;
+} | {
+    readonly type: 'motif';
+    readonly value: MotifFile;
+};
+```
+
+### `midiToMusic` (function)
+
+```ts
+function midiToMusic(bytes: Uint8Array, id: string): {
+    readonly ok: true;
+    readonly value: MidiImport;
+} | {
+    readonly ok: false;
+    readonly why: 'not-midi' | 'no-notes';
+    readonly message: string;
+};
+```
+
 ### `MIN_LEAD` (const)
 
 ```ts
 const MIN_LEAD = 1;
+```
+
+### `Mode` (type)
+
+```ts
+type Mode = 'major' | 'minor';
+const Mode: z.ZodType<Mode, Mode>;
+```
+
+### `motifBeats` (function)
+
+```ts
+function motifBeats(motif: MotifFile, changes: MotifChanges): number;
+```
+
+### `MotifBlock` (interface)
+
+```ts
+interface MotifBlock extends MotifChanges {
+    readonly at: number;
+    readonly motif: string;
+}
+```
+
+### `MotifChanges` (interface)
+
+```ts
+interface MotifChanges {
+    readonly shift?: number | undefined;
+    readonly speed?: Speed | undefined;
+    readonly mode?: Mode | undefined;
+    readonly backwards?: boolean | undefined;
+}
+```
+
+### `MotifFile` (interface)
+
+```ts
+interface MotifFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly notes: readonly MotifNote[];
+}
+```
+
+### `MotifNote` (interface)
+
+```ts
+interface MotifNote {
+    readonly step: number | string;
+    readonly beats: number;
+}
+```
+
+### `motifNotes` (function)
+
+```ts
+function motifNotes(motif: MotifFile, use: MotifUse): PlainNote[];
+```
+
+### `MotifSchema` (const)
+
+```ts
+const MotifSchema: z.ZodType<MotifFile, MotifFile>;
+```
+
+### `MotifUse` (type)
+
+```ts
+type MotifUse = MotifChanges & {
+    readonly key: Key;
+    readonly mode: Mode;
+    readonly instrument: Instrument;
+    readonly volume: number;
+    readonly lane?: string;
+};
+```
+
+### `MotifVoice` (interface)
+
+```ts
+interface MotifVoice extends MotifChanges {
+    readonly kind: 'motif';
+    readonly motif: string;
+    readonly instrument: Exclude<Instrument, 'drums'>;
+    readonly key: Key;
+    readonly tempo: number;
+    readonly at: number;
+    readonly volume: number;
+}
 ```
 
 ### `MOVE_EVENTS` (const)
@@ -2379,6 +2830,12 @@ interface MoveState {
 }
 ```
 
+### `MusicBlock` (type)
+
+```ts
+type MusicBlock = LoopBlock | MotifBlock;
+```
+
 ### `MusicCue` (interface)
 
 ```ts
@@ -2389,17 +2846,20 @@ interface MusicCue {
 }
 ```
 
-### `MusicFile` (interface)
+### `MusicFile` (type)
 
 ```ts
-interface MusicFile {
-    readonly format: 1;
+type MusicFile = StepMusic | ArrangedMusic;
+```
+
+### `MusicLane` (interface)
+
+```ts
+interface MusicLane {
     readonly id: string;
-    readonly tempo: number;
-    readonly stepsPerBeat: number;
+    readonly instrument: Instrument;
     readonly volume: number;
-    readonly loop: boolean;
-    readonly parts: readonly MusicPart[];
+    readonly blocks: readonly MusicBlock[];
 }
 ```
 
@@ -2409,10 +2869,27 @@ interface MusicFile {
 type MusicPart = TonePart | DrumPart;
 ```
 
+### `MusicPlayer` (interface)
+
+```ts
+interface MusicPlayer {
+    want(music: MusicFile, from?: number): void;
+    stop(): void;
+    wanted(): string | undefined;
+    close(): void;
+}
+```
+
 ### `MusicSchema` (const)
 
 ```ts
 const MusicSchema: z.ZodType<MusicFile, MusicFile>;
+```
+
+### `musicToMidi` (function)
+
+```ts
+function musicToMidi(source: MidiSource, parts?: SongParts): Uint8Array<ArrayBuffer>;
 ```
 
 ### `needsPictures` (function)
@@ -2437,6 +2914,27 @@ interface NoiseVoice {
     readonly length: number;
     readonly volume: number;
 }
+```
+
+### `NoteLoop` (interface)
+
+```ts
+interface NoteLoop extends LoopBase {
+    readonly lane: 'bass' | 'melody';
+    readonly notes: readonly string[];
+}
+```
+
+### `noteName` (function)
+
+```ts
+function noteName(pitch: number): string;
+```
+
+### `notesOf` (function)
+
+```ts
+function notesOf(music: ArrangedMusic, parts: SongParts): PlainNote[];
 ```
 
 ### `NOTICE_PROPERTIES` (const)
@@ -2734,10 +3232,29 @@ function pickLanguage(options: {
 }): LanguagePick;
 ```
 
+### `pitchOf` (function)
+
+```ts
+function pitchOf(note: string): number | undefined;
+```
+
 ### `placeholdersOf` (function)
 
 ```ts
 function placeholdersOf(text: string): readonly string[];
+```
+
+### `PlainNote` (interface)
+
+```ts
+interface PlainNote {
+    readonly lane: string;
+    readonly instrument: Instrument;
+    readonly pitch: number | Drum;
+    readonly at: number;
+    readonly ticks: number;
+    readonly volume: number;
+}
 ```
 
 ### `Played` (interface)
@@ -2754,7 +3271,7 @@ interface Played {
 ```ts
 interface PlayedVoice {
     readonly bus: Bus;
-    readonly voice: SoundVoice;
+    readonly voice: SpeakerVoice;
     readonly when: number;
 }
 ```
@@ -2794,10 +3311,16 @@ function playHint(options: {
 function playReplay(sim: Sim, replay: Replay): Played;
 ```
 
+### `playSound` (function)
+
+```ts
+function playSound(speaker: Speaker, bus: Bus, sound: SoundFile, parts: SongParts): void;
+```
+
 ### `playVoice` (function)
 
 ```ts
-function playVoice(context: BaseAudioContext, out: AudioNode, voice: SoundVoice, when: number): void;
+function playVoice(context: BaseAudioContext, out: AudioNode, voice: SpeakerVoice, when: number, recordings?: ReadonlyMap<string, AudioBuffer>): void;
 ```
 
 ### `PluginDef` (interface)
@@ -2865,6 +3388,7 @@ interface Project {
     readonly warnings?: readonly string[] | undefined;
     readonly splash?: string | undefined;
     readonly content: readonly ContentRef[];
+    readonly folders?: readonly FolderRef[] | undefined;
 }
 ```
 
@@ -2877,7 +3401,7 @@ const PROJECT_FILE = "automata.toml";
 ### `ProjectSchema` (const)
 
 ```ts
-const ProjectSchema: z.ZodType<Project, Project>;
+const ProjectSchema: z.ZodType<Project, ProjectInput>;
 ```
 
 ### `PROTOCOL_VERSION` (const)
@@ -2911,6 +3435,18 @@ interface ReadMarks {
 
 ```ts
 type ReadPicture = (path: string) => Promise<Blob>;
+```
+
+### `readRecording` (function)
+
+```ts
+function readRecording(bytes: Uint8Array, name: string): {
+    readonly ok: true;
+    readonly value: Recording;
+} | {
+    readonly ok: false;
+    readonly message: string;
+};
 ```
 
 ### `rebind` (function)
@@ -2958,6 +3494,80 @@ const RECONNECT_GRACE_SECONDS = 30;
 interface Recorder {
     step(commands: readonly Command[]): StepResult;
     replay(): Replay;
+}
+```
+
+### `Recording` (interface)
+
+```ts
+interface Recording {
+    readonly seconds: number;
+    readonly samples: Float32Array;
+}
+```
+
+### `RECORDING_MAX_BYTES` (const)
+
+```ts
+const RECORDING_MAX_BYTES = 1048576;
+```
+
+### `RECORDING_MAX_SECONDS` (const)
+
+```ts
+const RECORDING_MAX_SECONDS = 10;
+```
+
+### `RECORDING_RATE` (const)
+
+```ts
+const RECORDING_RATE = 44100;
+```
+
+### `RecordingError` (class)
+
+```ts
+class RecordingError extends Error {
+    readonly diagnostics: readonly Diagnostic[];
+    constructor(diagnostics: readonly Diagnostic[]);
+}
+```
+
+### `recordingPaths` (function)
+
+```ts
+function recordingPaths(content: GameContent): string[];
+```
+
+### `recordingProblems` (function)
+
+```ts
+function recordingProblems(content: GameContent, read: (path: string) => Promise<Uint8Array | undefined>): Promise<Diagnostic[]>;
+```
+
+### `Recordings` (type)
+
+```ts
+type Recordings = ReadonlyMap<string, Recording>;
+```
+
+### `RECORDINGS_MAX_BYTES` (const)
+
+```ts
+const RECORDINGS_MAX_BYTES = 20971520;
+```
+
+### `RecordingVoice` (interface)
+
+```ts
+interface RecordingVoice {
+    readonly kind: 'recording';
+    readonly file: string;
+    readonly from: number;
+    readonly length: number;
+    readonly speed: number;
+    readonly at: number;
+    readonly volume: number;
 }
 ```
 
@@ -3281,6 +3891,12 @@ interface SaveStore {
 }
 ```
 
+### `scaleOf` (function)
+
+```ts
+function scaleOf(mode: Mode): readonly number[];
+```
+
 ### `Scene` (interface)
 
 ```ts
@@ -3308,14 +3924,14 @@ interface Score {
 interface ScoreNote {
     readonly part: string;
     readonly at: number;
-    readonly voice: SoundVoice;
+    readonly voice: SpeakerVoice;
 }
 ```
 
 ### `scoreOf` (function)
 
 ```ts
-function scoreOf(music: MusicFile): Score;
+function scoreOf(music: MusicFile, parts?: SongParts): Score;
 ```
 
 ### `Seat` (interface)
@@ -3732,6 +4348,18 @@ interface SnapshotView {
 }
 ```
 
+### `SongParts` (type)
+
+```ts
+type SongParts = Pick<GameContent, 'loops' | 'motifs'>;
+```
+
+### `SOUND_KINDS` (const)
+
+```ts
+const SOUND_KINDS: readonly ["jump", "land", "coin", "hit", "explosion", "door", "click", "power-up", "laser", "blip"];
+```
+
 ### `SOUND_SETTINGS_DEFAULT` (const)
 
 ```ts
@@ -3759,6 +4387,12 @@ interface SoundFile {
 }
 ```
 
+### `SoundKind` (type)
+
+```ts
+type SoundKind = (typeof SOUND_KINDS)[number];
+```
+
 ### `soundNotice` (function)
 
 ```ts
@@ -3774,6 +4408,12 @@ function soundNotice(options: {
 
 ```ts
 const SoundSchema: z.ZodType<SoundFile, SoundFile>;
+```
+
+### `soundSeconds` (function)
+
+```ts
+function soundSeconds(sound: SoundFile, parts: SongParts): number;
 ```
 
 ### `SoundSettings` (interface)
@@ -3795,7 +4435,13 @@ const SoundSettingsSchema: z.ZodType<SoundSettings, SoundSettings>;
 ### `SoundVoice` (type)
 
 ```ts
-type SoundVoice = ToneVoice | NoiseVoice;
+type SoundVoice = ToneVoice | NoiseVoice | RecordingVoice | MotifVoice;
+```
+
+### `soundVoices` (function)
+
+```ts
+function soundVoices(sound: SoundFile, parts: SongParts): SpeakerVoice[];
 ```
 
 ### `spawnLevel` (function)
@@ -3818,7 +4464,8 @@ interface Speaker {
     onState(listener: (state: SpeakerState) => void): () => void;
     now(): number;
     onClock(listener: () => void): () => void;
-    play(bus: Bus, voice: SoundVoice, when: number): void;
+    play(bus: Bus, voice: SpeakerVoice, when: number): void;
+    keep(file: string, recording: Recording): void;
     volume(bus: Bus, value: number): void;
     cut(bus: Bus): void;
     close(): void;
@@ -3839,6 +4486,18 @@ interface SpeakerSeams {
 
 ```ts
 type SpeakerState = 'waiting' | 'on' | 'unavailable';
+```
+
+### `SpeakerVoice` (type)
+
+```ts
+type SpeakerVoice = ToneVoice | NoiseVoice | RecordingVoice;
+```
+
+### `Speed` (type)
+
+```ts
+type Speed = 0.25 | 0.5 | 1 | 2 | 4;
 ```
 
 ### `Sprite` (const)
@@ -3877,6 +4536,38 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>;
 const STEEP = 0.7;
 ```
 
+### `STEP` (const)
+
+```ts
+const STEP: RegExp;
+```
+
+### `StepMusic` (interface)
+
+```ts
+interface StepMusic {
+    readonly format: 1;
+    readonly id: string;
+    readonly tempo: number;
+    readonly stepsPerBeat: number;
+    readonly volume: number;
+    readonly loop: boolean;
+    readonly parts: readonly MusicPart[];
+}
+```
+
+### `stepNotes` (function)
+
+```ts
+function stepNotes(music: StepMusic): PlainNote[];
+```
+
+### `stepOffset` (function)
+
+```ts
+function stepOffset(scale: readonly number[], step: number | string): number;
+```
+
 ### `StepResult` (interface)
 
 ```ts
@@ -3886,6 +4577,12 @@ interface StepResult {
     readonly render: RenderDelta;
     readonly rejected: readonly RejectedCommand[];
 }
+```
+
+### `StepsPerBar` (type)
+
+```ts
+type StepsPerBar = 4 | 8 | 12 | 16;
 ```
 
 ### `StopMusicCue` (interface)
@@ -4008,6 +4705,7 @@ interface TestSpeaker extends Speaker {
     interrupt(): void;
     advance(seconds: number): void;
     readonly played: readonly PlayedVoice[];
+    readonly kept: readonly string[];
     readonly cuts: readonly Bus[];
     readonly levels: Readonly<Record<Bus, number>>;
     readonly closed: boolean;
@@ -4026,6 +4724,18 @@ function testSpeaker(options?: {
 
 ```ts
 const Thing: ComponentDef<typeof thingFields>;
+```
+
+### `TICKS_PER_BAR` (const)
+
+```ts
+const TICKS_PER_BAR: number;
+```
+
+### `TICKS_PER_BEAT` (const)
+
+```ts
+const TICKS_PER_BEAT = 480;
 ```
 
 ### `TILE_COLOR` (const)
@@ -4399,6 +5109,12 @@ interface ViewSprite {
 }
 ```
 
+### `Voicing` (type)
+
+```ts
+type Voicing = 'close' | 'open' | 'high';
+```
+
 ### `wasPressed` (function)
 
 ```ts
@@ -4444,6 +5160,17 @@ class WatchSetupError extends Error {
 }
 ```
 
+### `Wav` (interface)
+
+```ts
+interface Wav {
+    readonly sampleRate: number;
+    readonly channels: number;
+    readonly bits: number;
+    readonly samples: Float32Array;
+}
+```
+
 ### `Wave` (type)
 
 ```ts
@@ -4480,6 +5207,12 @@ function webSpeaker(options?: {
 }): Speaker;
 ```
 
+### `withFolders` (function)
+
+```ts
+function withFolders(text: string, refs: readonly FolderRef[]): string;
+```
+
 ### `Words` (type)
 
 ```ts
@@ -4502,6 +5235,12 @@ function writeContent<T extends ContentType>(type: T, value: z.input<(typeof CON
 
 ```ts
 function writeReadMarks(marks: ReadMarks): string;
+```
+
+### `writeRecording` (function)
+
+```ts
+function writeRecording(channels: readonly Float32Array[], sampleRate: number): Uint8Array<ArrayBuffer>;
 ```
 
 ### `writeReplay` (function)
@@ -4570,6 +5309,23 @@ interface Advance {
         readonly tick: number;
         readonly events: readonly SimEvent[];
     }[];
+}
+```
+
+### `ArrangedMusic` (interface)
+
+```ts
+interface ArrangedMusic {
+    readonly format: 2;
+    readonly id: string;
+    readonly tempo: number;
+    readonly key: Key;
+    readonly mode: Mode;
+    readonly bars: number;
+    readonly loop: boolean;
+    readonly volume: number;
+    readonly chords: readonly string[];
+    readonly lanes: readonly MusicLane[];
 }
 ```
 
@@ -4713,6 +5469,12 @@ const BehaviourSchema: z.ZodType<BehaviourFile, BehaviourFile>;
 function bindParaglide(runtime: ParaglideRuntime, locale: Locale): void;
 ```
 
+### `blockBars` (function)
+
+```ts
+function blockBars(entry: MusicBlock, motif: MotifFile | undefined): number;
+```
+
 ### `Body` (const)
 
 ```ts
@@ -4813,6 +5575,50 @@ interface CharacterInput extends Omit<Character, 'upright' | 'moves'> {
 
 ```ts
 const CharacterSchema: z.ZodType<Character, CharacterInput>;
+```
+
+### `CHORD` (const)
+
+```ts
+const CHORD: RegExp;
+```
+
+### `Chord` (const)
+
+```ts
+const Chord: z.ZodString;
+```
+
+### `ChordLoop` (interface)
+
+```ts
+interface ChordLoop extends LoopBase {
+    readonly lane: 'chords';
+    readonly voicing: Voicing;
+    readonly notes: readonly string[];
+}
+```
+
+### `chordName` (function)
+
+```ts
+function chordName(numeral: string, key: Key, mode: Mode): string;
+```
+
+### `ChordNotes` (interface)
+
+```ts
+interface ChordNotes {
+    readonly root: number;
+    readonly scale: readonly number[];
+    readonly tones: readonly number[];
+}
+```
+
+### `chordOf` (function)
+
+```ts
+function chordOf(numeral: string, key: Key, mode: Mode): ChordNotes;
 ```
 
 ### `ClientMessage` (type)
@@ -4944,6 +5750,8 @@ const CONTENT_TYPES: {
     readonly feel: ContentTypeInfo<FeelFile, FeelFile>;
     readonly sound: ContentTypeInfo<SoundFile, SoundFile>;
     readonly music: ContentTypeInfo<MusicFile, MusicFile>;
+    readonly loop: ContentTypeInfo<LoopFile, LoopFile>;
+    readonly motif: ContentTypeInfo<MotifFile, MotifFile>;
     readonly cues: ContentTypeInfo<CuesFile, CuesFile>;
     readonly conversation: ContentTypeInfo<ConversationFile, ConversationFile>;
     readonly cutscene: ContentTypeInfo<CutsceneFile, CutsceneFile>;
@@ -5059,6 +5867,7 @@ function createAudio(options: {
     readonly content: GameContent;
     readonly speaker: Speaker;
     readonly tickHz?: number;
+    readonly recordings?: Recordings;
 }): GameAudio;
 ```
 
@@ -5077,6 +5886,12 @@ function createLocale(options: {
     readonly settings: Settings;
     readonly watching?: boolean;
 }): Locale;
+```
+
+### `createMusicPlayer` (function)
+
+```ts
+function createMusicPlayer(speaker: Speaker, parts?: SongParts): MusicPlayer;
 ```
 
 ### `createPicker` (function)
@@ -5208,6 +6023,12 @@ interface CutsceneLine {
 const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
 ```
 
+### `decodeWav` (function)
+
+```ts
+function decodeWav(bytes: Uint8Array): Wav | undefined;
+```
+
 ### `Def` (type)
 
 ```ts
@@ -5299,6 +6120,21 @@ interface Diagnostic {
 }
 ```
 
+### `Drum` (type)
+
+```ts
+type Drum = (typeof DRUMS)[number];
+```
+
+### `DrumLoop` (interface)
+
+```ts
+interface DrumLoop extends LoopBase {
+    readonly lane: 'drums';
+    readonly notes: DrumRows;
+}
+```
+
 ### `DrumPart` (interface)
 
 ```ts
@@ -5308,6 +6144,20 @@ interface DrumPart {
     readonly volume: number;
     readonly notes: readonly string[];
 }
+```
+
+### `DrumRows` (type)
+
+```ts
+type DrumRows = {
+    readonly [D in Drum]?: readonly string[] | undefined;
+};
+```
+
+### `DRUMS` (const)
+
+```ts
+const DRUMS: readonly ["kick", "snare", "hat", "clap", "tom"];
 ```
 
 ### `Dust` (interface)
@@ -5343,6 +6193,12 @@ function emptyReadMarks(source: Language): ReadMarks;
 
 ```ts
 function encodePng(picture: IndexedPicture): Uint8Array<ArrayBuffer>;
+```
+
+### `encodeWav` (function)
+
+```ts
+function encodeWav(samples: Float32Array, sampleRate: number): Uint8Array<ArrayBuffer>;
 ```
 
 ### `EntityRef` (interface)
@@ -5538,6 +6394,12 @@ interface FigureVariant {
 }
 ```
 
+### `filesIn` (function)
+
+```ts
+function filesIn(names: readonly string[]): string[];
+```
+
 ### `fill` (function)
 
 ```ts
@@ -5548,6 +6410,27 @@ function fill(text: string, values: Values | undefined, language: Language): str
 
 ```ts
 function fitLabel(label: string): string;
+```
+
+### `folderManifest` (function)
+
+```ts
+function folderManifest(folders: Readonly<Record<string, readonly string[]>>): string;
+```
+
+### `FolderRef` (interface)
+
+```ts
+interface FolderRef {
+    readonly type: ContentType;
+    readonly folder: string;
+}
+```
+
+### `FOLDERS_FILE` (const)
+
+```ts
+const FOLDERS_FILE = "automata.folders.json";
 ```
 
 ### `formatDiagnostic` (function)
@@ -5626,6 +6509,8 @@ interface GameContent {
     readonly feels?: Readonly<Record<string, FeelFile>>;
     readonly sounds?: Readonly<Record<string, SoundFile>>;
     readonly music?: Readonly<Record<string, MusicFile>>;
+    readonly loops?: Readonly<Record<string, LoopFile>>;
+    readonly motifs?: Readonly<Record<string, MotifFile>>;
     readonly cues?: Readonly<Record<string, CuesFile>>;
     readonly conversations?: Readonly<Record<string, ConversationFile>>;
     readonly cutscenes?: Readonly<Record<string, CutsceneFile>>;
@@ -5689,6 +6574,12 @@ interface HeroMovesInput {
 function hertzOf(note: string): number | undefined;
 ```
 
+### `hertzOfPitch` (function)
+
+```ts
+function hertzOfPitch(pitch: number): number;
+```
+
 ### `Host` (interface)
 
 ```ts
@@ -5740,6 +6631,24 @@ interface IndexedPicture {
 
 ```ts
 function inputName(input: string, words: Words): string;
+```
+
+### `Instrument` (type)
+
+```ts
+type Instrument = (typeof INSTRUMENTS)[number];
+```
+
+### `INSTRUMENTS` (const)
+
+```ts
+const INSTRUMENTS: readonly ["drums", "bass", "keys", "pluck", "lead", "pad", "bell", "organ"];
+```
+
+### `instrumentVoices` (function)
+
+```ts
+function instrumentVoices(note: PlainNote, tempo: number): (ToneVoice | NoiseVoice)[];
 ```
 
 ### `isHeld` (function)
@@ -5842,6 +6751,25 @@ type JointKind = (typeof JointKind)[keyof typeof JointKind];
 
 ```ts
 function jsonSchemaFor(type: ContentType): object;
+```
+
+### `Key` (type)
+
+```ts
+type Key = (typeof KEYS)[number];
+const Key: z.ZodType<Key, Key>;
+```
+
+### `keyRoot` (function)
+
+```ts
+function keyRoot(key: Key): number;
+```
+
+### `KEYS` (const)
+
+```ts
+const KEYS: readonly ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
 ```
 
 ### `Language` (type)
@@ -6069,6 +6997,54 @@ interface LevelView {
 }
 ```
 
+### `LIBRARY` (const)
+
+```ts
+const LIBRARY: Library;
+```
+
+### `Library` (interface)
+
+```ts
+interface Library {
+    readonly loops: readonly LoopFile[];
+    readonly styles: readonly ArrangedMusic[];
+}
+```
+
+### `LIBRARY_LANGUAGES` (const)
+
+```ts
+const LIBRARY_LANGUAGES: readonly [...typeof LANGUAGES, 'fr', 'ru', 'de'];
+```
+
+### `LibraryFile` (interface)
+
+```ts
+interface LibraryFile {
+    readonly type: 'loop' | 'music';
+    readonly value: LoopFile | ArrangedMusic;
+}
+```
+
+### `libraryFiles` (function)
+
+```ts
+function libraryFiles(id: string, as?: string): LibraryFile[];
+```
+
+### `LibraryLanguage` (type)
+
+```ts
+type LibraryLanguage = (typeof LIBRARY_LANGUAGES)[number];
+```
+
+### `libraryName` (function)
+
+```ts
+function libraryName(id: string, language: LibraryLanguage): string;
+```
+
 ### `Link` (interface)
 
 ```ts
@@ -6117,10 +7093,28 @@ interface ListedFile {
 }
 ```
 
+### `ListFolder` (type)
+
+```ts
+type ListFolder = (folder: string) => Promise<readonly string[]>;
+```
+
+### `listFromManifest` (function)
+
+```ts
+function listFromManifest(read: (path: string) => Promise<string>): ListFolder;
+```
+
 ### `loadGame` (function)
 
 ```ts
-function loadGame(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>>;
+function loadGame(read: (path: string) => Promise<string>, list?: ListFolder): Promise<Parsed<GameContent>>;
+```
+
+### `loadRecordings` (function)
+
+```ts
+function loadRecordings(content: GameContent, read: (path: string) => Promise<Uint8Array | undefined>): Promise<Recordings>;
 ```
 
 ### `LoadResult` (type)
@@ -6170,6 +7164,59 @@ const LOG_MAX = 1024;
 
 ```ts
 const Look: ComponentDef<typeof lookFields>;
+```
+
+### `LoopBlock` (interface)
+
+```ts
+interface LoopBlock {
+    readonly at: number;
+    readonly loop: string;
+    readonly bars: number;
+}
+```
+
+### `LoopFile` (type)
+
+```ts
+type LoopFile = DrumLoop | NoteLoop | ChordLoop;
+```
+
+### `LoopLane` (type)
+
+```ts
+type LoopLane = 'drums' | 'bass' | 'chords' | 'melody';
+```
+
+### `loopNotes` (function)
+
+```ts
+function loopNotes(loop: LoopFile, options?: LoopOptions): PlainNote[];
+```
+
+### `LoopOptions` (interface)
+
+```ts
+interface LoopOptions {
+    readonly chords?: readonly string[];
+    readonly key?: Key;
+    readonly mode?: Mode;
+    readonly instrument?: Instrument;
+    readonly volume?: number;
+    readonly bars?: number;
+}
+```
+
+### `LoopSchema` (const)
+
+```ts
+const LoopSchema: z.ZodType<LoopFile, LoopFile>;
+```
+
+### `makeSound` (function)
+
+```ts
+function makeSound(kind: SoundKind, seed: number, id?: string): SoundFile;
 ```
 
 ### `markRead` (function)
@@ -6296,10 +7343,153 @@ interface MessagesFile {
 const MessagesSchema: z.ZodType<MessagesFile, MessagesFile>;
 ```
 
+### `MidiDropped` (interface)
+
+```ts
+interface MidiDropped {
+    readonly what: 'moved' | 'tempo' | 'bends' | 'controllers' | 'time' | 'lanes' | 'bars' | 'together' | 'cut';
+    readonly count?: number;
+    readonly tempo?: number;
+    readonly beats?: number;
+    readonly sentence: string;
+}
+```
+
+### `MidiImport` (interface)
+
+```ts
+interface MidiImport {
+    readonly music: ArrangedMusic;
+    readonly loops: readonly LoopFile[];
+    readonly dropped: readonly MidiDropped[];
+    readonly lanes: number;
+    readonly bars: number;
+    readonly tempo: number;
+}
+```
+
+### `MidiSource` (type)
+
+```ts
+type MidiSource = {
+    readonly type: 'music';
+    readonly value: MusicFile;
+} | {
+    readonly type: 'loop';
+    readonly value: LoopFile;
+} | {
+    readonly type: 'motif';
+    readonly value: MotifFile;
+};
+```
+
+### `midiToMusic` (function)
+
+```ts
+function midiToMusic(bytes: Uint8Array, id: string): {
+    readonly ok: true;
+    readonly value: MidiImport;
+} | {
+    readonly ok: false;
+    readonly why: 'not-midi' | 'no-notes';
+    readonly message: string;
+};
+```
+
 ### `MIN_LEAD` (const)
 
 ```ts
 const MIN_LEAD = 1;
+```
+
+### `Mode` (type)
+
+```ts
+type Mode = 'major' | 'minor';
+const Mode: z.ZodType<Mode, Mode>;
+```
+
+### `motifBeats` (function)
+
+```ts
+function motifBeats(motif: MotifFile, changes: MotifChanges): number;
+```
+
+### `MotifBlock` (interface)
+
+```ts
+interface MotifBlock extends MotifChanges {
+    readonly at: number;
+    readonly motif: string;
+}
+```
+
+### `MotifChanges` (interface)
+
+```ts
+interface MotifChanges {
+    readonly shift?: number | undefined;
+    readonly speed?: Speed | undefined;
+    readonly mode?: Mode | undefined;
+    readonly backwards?: boolean | undefined;
+}
+```
+
+### `MotifFile` (interface)
+
+```ts
+interface MotifFile {
+    readonly format: 1;
+    readonly id: string;
+    readonly notes: readonly MotifNote[];
+}
+```
+
+### `MotifNote` (interface)
+
+```ts
+interface MotifNote {
+    readonly step: number | string;
+    readonly beats: number;
+}
+```
+
+### `motifNotes` (function)
+
+```ts
+function motifNotes(motif: MotifFile, use: MotifUse): PlainNote[];
+```
+
+### `MotifSchema` (const)
+
+```ts
+const MotifSchema: z.ZodType<MotifFile, MotifFile>;
+```
+
+### `MotifUse` (type)
+
+```ts
+type MotifUse = MotifChanges & {
+    readonly key: Key;
+    readonly mode: Mode;
+    readonly instrument: Instrument;
+    readonly volume: number;
+    readonly lane?: string;
+};
+```
+
+### `MotifVoice` (interface)
+
+```ts
+interface MotifVoice extends MotifChanges {
+    readonly kind: 'motif';
+    readonly motif: string;
+    readonly instrument: Exclude<Instrument, 'drums'>;
+    readonly key: Key;
+    readonly tempo: number;
+    readonly at: number;
+    readonly volume: number;
+}
 ```
 
 ### `MOVE_EVENTS` (const)
@@ -6438,6 +7628,12 @@ interface MoveState {
 }
 ```
 
+### `MusicBlock` (type)
+
+```ts
+type MusicBlock = LoopBlock | MotifBlock;
+```
+
 ### `MusicCue` (interface)
 
 ```ts
@@ -6448,17 +7644,20 @@ interface MusicCue {
 }
 ```
 
-### `MusicFile` (interface)
+### `MusicFile` (type)
 
 ```ts
-interface MusicFile {
-    readonly format: 1;
+type MusicFile = StepMusic | ArrangedMusic;
+```
+
+### `MusicLane` (interface)
+
+```ts
+interface MusicLane {
     readonly id: string;
-    readonly tempo: number;
-    readonly stepsPerBeat: number;
+    readonly instrument: Instrument;
     readonly volume: number;
-    readonly loop: boolean;
-    readonly parts: readonly MusicPart[];
+    readonly blocks: readonly MusicBlock[];
 }
 ```
 
@@ -6468,10 +7667,27 @@ interface MusicFile {
 type MusicPart = TonePart | DrumPart;
 ```
 
+### `MusicPlayer` (interface)
+
+```ts
+interface MusicPlayer {
+    want(music: MusicFile, from?: number): void;
+    stop(): void;
+    wanted(): string | undefined;
+    close(): void;
+}
+```
+
 ### `MusicSchema` (const)
 
 ```ts
 const MusicSchema: z.ZodType<MusicFile, MusicFile>;
+```
+
+### `musicToMidi` (function)
+
+```ts
+function musicToMidi(source: MidiSource, parts?: SongParts): Uint8Array<ArrayBuffer>;
 ```
 
 ### `nextLevel` (function)
@@ -6490,6 +7706,27 @@ interface NoiseVoice {
     readonly length: number;
     readonly volume: number;
 }
+```
+
+### `NoteLoop` (interface)
+
+```ts
+interface NoteLoop extends LoopBase {
+    readonly lane: 'bass' | 'melody';
+    readonly notes: readonly string[];
+}
+```
+
+### `noteName` (function)
+
+```ts
+function noteName(pitch: number): string;
+```
+
+### `notesOf` (function)
+
+```ts
+function notesOf(music: ArrangedMusic, parts: SongParts): PlainNote[];
 ```
 
 ### `ONLINE_PROBLEMS` (const)
@@ -6712,10 +7949,29 @@ function pickLanguage(options: {
 }): LanguagePick;
 ```
 
+### `pitchOf` (function)
+
+```ts
+function pitchOf(note: string): number | undefined;
+```
+
 ### `placeholdersOf` (function)
 
 ```ts
 function placeholdersOf(text: string): readonly string[];
+```
+
+### `PlainNote` (interface)
+
+```ts
+interface PlainNote {
+    readonly lane: string;
+    readonly instrument: Instrument;
+    readonly pitch: number | Drum;
+    readonly at: number;
+    readonly ticks: number;
+    readonly volume: number;
+}
 ```
 
 ### `Played` (interface)
@@ -6732,7 +7988,7 @@ interface Played {
 ```ts
 interface PlayedVoice {
     readonly bus: Bus;
-    readonly voice: SoundVoice;
+    readonly voice: SpeakerVoice;
     readonly when: number;
 }
 ```
@@ -6770,6 +8026,12 @@ function playHint(options: {
 
 ```ts
 function playReplay(sim: Sim, replay: Replay): Played;
+```
+
+### `playSound` (function)
+
+```ts
+function playSound(speaker: Speaker, bus: Bus, sound: SoundFile, parts: SongParts): void;
 ```
 
 ### `PluginDef` (interface)
@@ -6837,6 +8099,7 @@ interface Project {
     readonly warnings?: readonly string[] | undefined;
     readonly splash?: string | undefined;
     readonly content: readonly ContentRef[];
+    readonly folders?: readonly FolderRef[] | undefined;
 }
 ```
 
@@ -6849,7 +8112,7 @@ const PROJECT_FILE = "automata.toml";
 ### `ProjectSchema` (const)
 
 ```ts
-const ProjectSchema: z.ZodType<Project, Project>;
+const ProjectSchema: z.ZodType<Project, ProjectInput>;
 ```
 
 ### `PROTOCOL_VERSION` (const)
@@ -6879,6 +8142,18 @@ interface ReadMarks {
 }
 ```
 
+### `readRecording` (function)
+
+```ts
+function readRecording(bytes: Uint8Array, name: string): {
+    readonly ok: true;
+    readonly value: Recording;
+} | {
+    readonly ok: false;
+    readonly message: string;
+};
+```
+
 ### `RECONNECT_DELAYS_MS` (const)
 
 ```ts
@@ -6897,6 +8172,80 @@ const RECONNECT_GRACE_SECONDS = 30;
 interface Recorder {
     step(commands: readonly Command[]): StepResult;
     replay(): Replay;
+}
+```
+
+### `Recording` (interface)
+
+```ts
+interface Recording {
+    readonly seconds: number;
+    readonly samples: Float32Array;
+}
+```
+
+### `RECORDING_MAX_BYTES` (const)
+
+```ts
+const RECORDING_MAX_BYTES = 1048576;
+```
+
+### `RECORDING_MAX_SECONDS` (const)
+
+```ts
+const RECORDING_MAX_SECONDS = 10;
+```
+
+### `RECORDING_RATE` (const)
+
+```ts
+const RECORDING_RATE = 44100;
+```
+
+### `RecordingError` (class)
+
+```ts
+class RecordingError extends Error {
+    readonly diagnostics: readonly Diagnostic[];
+    constructor(diagnostics: readonly Diagnostic[]);
+}
+```
+
+### `recordingPaths` (function)
+
+```ts
+function recordingPaths(content: GameContent): string[];
+```
+
+### `recordingProblems` (function)
+
+```ts
+function recordingProblems(content: GameContent, read: (path: string) => Promise<Uint8Array | undefined>): Promise<Diagnostic[]>;
+```
+
+### `Recordings` (type)
+
+```ts
+type Recordings = ReadonlyMap<string, Recording>;
+```
+
+### `RECORDINGS_MAX_BYTES` (const)
+
+```ts
+const RECORDINGS_MAX_BYTES = 20971520;
+```
+
+### `RecordingVoice` (interface)
+
+```ts
+interface RecordingVoice {
+    readonly kind: 'recording';
+    readonly file: string;
+    readonly from: number;
+    readonly length: number;
+    readonly speed: number;
+    readonly at: number;
+    readonly volume: number;
 }
 ```
 
@@ -7167,6 +8516,12 @@ interface SaveStore {
 }
 ```
 
+### `scaleOf` (function)
+
+```ts
+function scaleOf(mode: Mode): readonly number[];
+```
+
 ### `Score` (interface)
 
 ```ts
@@ -7184,14 +8539,14 @@ interface Score {
 interface ScoreNote {
     readonly part: string;
     readonly at: number;
-    readonly voice: SoundVoice;
+    readonly voice: SpeakerVoice;
 }
 ```
 
 ### `scoreOf` (function)
 
 ```ts
-function scoreOf(music: MusicFile): Score;
+function scoreOf(music: MusicFile, parts?: SongParts): Score;
 ```
 
 ### `Sense` (type)
@@ -7581,6 +8936,18 @@ interface SnapshotView {
 }
 ```
 
+### `SongParts` (type)
+
+```ts
+type SongParts = Pick<GameContent, 'loops' | 'motifs'>;
+```
+
+### `SOUND_KINDS` (const)
+
+```ts
+const SOUND_KINDS: readonly ["jump", "land", "coin", "hit", "explosion", "door", "click", "power-up", "laser", "blip"];
+```
+
 ### `SOUND_SETTINGS_DEFAULT` (const)
 
 ```ts
@@ -7608,10 +8975,22 @@ interface SoundFile {
 }
 ```
 
+### `SoundKind` (type)
+
+```ts
+type SoundKind = (typeof SOUND_KINDS)[number];
+```
+
 ### `SoundSchema` (const)
 
 ```ts
 const SoundSchema: z.ZodType<SoundFile, SoundFile>;
+```
+
+### `soundSeconds` (function)
+
+```ts
+function soundSeconds(sound: SoundFile, parts: SongParts): number;
 ```
 
 ### `SoundSettings` (interface)
@@ -7633,7 +9012,13 @@ const SoundSettingsSchema: z.ZodType<SoundSettings, SoundSettings>;
 ### `SoundVoice` (type)
 
 ```ts
-type SoundVoice = ToneVoice | NoiseVoice;
+type SoundVoice = ToneVoice | NoiseVoice | RecordingVoice | MotifVoice;
+```
+
+### `soundVoices` (function)
+
+```ts
+function soundVoices(sound: SoundFile, parts: SongParts): SpeakerVoice[];
 ```
 
 ### `spawnLevel` (function)
@@ -7656,7 +9041,8 @@ interface Speaker {
     onState(listener: (state: SpeakerState) => void): () => void;
     now(): number;
     onClock(listener: () => void): () => void;
-    play(bus: Bus, voice: SoundVoice, when: number): void;
+    play(bus: Bus, voice: SpeakerVoice, when: number): void;
+    keep(file: string, recording: Recording): void;
     volume(bus: Bus, value: number): void;
     cut(bus: Bus): void;
     close(): void;
@@ -7667,6 +9053,18 @@ interface Speaker {
 
 ```ts
 type SpeakerState = 'waiting' | 'on' | 'unavailable';
+```
+
+### `SpeakerVoice` (type)
+
+```ts
+type SpeakerVoice = ToneVoice | NoiseVoice | RecordingVoice;
+```
+
+### `Speed` (type)
+
+```ts
+type Speed = 0.25 | 0.5 | 1 | 2 | 4;
 ```
 
 ### `Sprite` (const)
@@ -7693,6 +9091,38 @@ const START_LEAD = 2;
 const STEEP = 0.7;
 ```
 
+### `STEP` (const)
+
+```ts
+const STEP: RegExp;
+```
+
+### `StepMusic` (interface)
+
+```ts
+interface StepMusic {
+    readonly format: 1;
+    readonly id: string;
+    readonly tempo: number;
+    readonly stepsPerBeat: number;
+    readonly volume: number;
+    readonly loop: boolean;
+    readonly parts: readonly MusicPart[];
+}
+```
+
+### `stepNotes` (function)
+
+```ts
+function stepNotes(music: StepMusic): PlainNote[];
+```
+
+### `stepOffset` (function)
+
+```ts
+function stepOffset(scale: readonly number[], step: number | string): number;
+```
+
 ### `StepResult` (interface)
 
 ```ts
@@ -7702,6 +9132,12 @@ interface StepResult {
     readonly render: RenderDelta;
     readonly rejected: readonly RejectedCommand[];
 }
+```
+
+### `StepsPerBar` (type)
+
+```ts
+type StepsPerBar = 4 | 8 | 12 | 16;
 ```
 
 ### `StopMusicCue` (interface)
@@ -7824,6 +9260,7 @@ interface TestSpeaker extends Speaker {
     interrupt(): void;
     advance(seconds: number): void;
     readonly played: readonly PlayedVoice[];
+    readonly kept: readonly string[];
     readonly cuts: readonly Bus[];
     readonly levels: Readonly<Record<Bus, number>>;
     readonly closed: boolean;
@@ -7842,6 +9279,18 @@ function testSpeaker(options?: {
 
 ```ts
 const Thing: ComponentDef<typeof thingFields>;
+```
+
+### `TICKS_PER_BAR` (const)
+
+```ts
+const TICKS_PER_BAR: number;
+```
+
+### `TICKS_PER_BEAT` (const)
+
+```ts
+const TICKS_PER_BEAT = 480;
 ```
 
 ### `TILE_COLOR` (const)
@@ -8161,16 +9610,39 @@ type Verdict = {
 function verifyReplay(sim: Sim, replay: Replay): Verdict;
 ```
 
+### `Voicing` (type)
+
+```ts
+type Voicing = 'close' | 'open' | 'high';
+```
+
 ### `wasPressed` (function)
 
 ```ts
 function wasPressed(player: EntityRef, action: string): boolean;
 ```
 
+### `Wav` (interface)
+
+```ts
+interface Wav {
+    readonly sampleRate: number;
+    readonly channels: number;
+    readonly bits: number;
+    readonly samples: Float32Array;
+}
+```
+
 ### `Wave` (type)
 
 ```ts
 type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
+```
+
+### `withFolders` (function)
+
+```ts
+function withFolders(text: string, refs: readonly FolderRef[]): string;
 ```
 
 ### `Words` (type)
@@ -8195,6 +9667,12 @@ function writeContent<T extends ContentType>(type: T, value: z.input<(typeof CON
 
 ```ts
 function writeReadMarks(marks: ReadMarks): string;
+```
+
+### `writeRecording` (function)
+
+```ts
+function writeRecording(channels: readonly Float32Array[], sampleRate: number): Uint8Array<ArrayBuffer>;
 ```
 
 ### `writeReplay` (function)

@@ -1,11 +1,6 @@
 import { z } from '../../lib/zod.ts'
 import { Id } from './ids.ts'
-import {
-  type ArrangedMusic,
-  checkArranged,
-  checkArrangement,
-  MusicLaneSchema,
-} from './music2.ts'
+import { type ArrangedMusic, checkArranged, checkArrangement, MusicLaneSchema } from './music2.ts'
 import { Chord, Key, Mode, unique, variants } from './shared.ts'
 import type { ContentTypeInfo } from './type-info.ts'
 
@@ -200,7 +195,8 @@ export const musicInfo: ContentTypeInfo<MusicFile, MusicFile> = {
     mode: 'Write "major" or "minor".',
     bars: 'Write how many bars the track lasts, from 1 to 128, like 8.',
     chords: 'Write one chord for each bar, like ["I", "V", "vi", "IV"].',
-    lanes: 'List the lanes that play, each with an instrument and its blocks. An empty list is a silent track.',
+    lanes:
+      'List the lanes that play, each with an instrument and its blocks. An empty list is a silent track.',
     'lanes.id': 'Give the lane a name like "bass".',
     'lanes.instrument': 'Write what plays it: drums, bass, keys, pluck, lead, pad, bell or organ.',
     'lanes.volume': 'Write how loud the lane is, from 0 to 1, like 0.5.',

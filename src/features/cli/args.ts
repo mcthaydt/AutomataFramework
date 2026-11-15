@@ -3,7 +3,17 @@
 // Ported in shape from AutomataFrameworkFailed@ed8592e8: packages/tools/src/app/cli.ts (one small file parses the
 // words; the work is in files a test runs with fakes).
 
-export type CommandName = 'create' | 'check' | 'play' | 'replay' | 'art' | 'add' | 'words' | 'music' | 'sound' | 'mcp'
+export type CommandName =
+  | 'create'
+  | 'check'
+  | 'play'
+  | 'replay'
+  | 'art'
+  | 'add'
+  | 'words'
+  | 'music'
+  | 'sound'
+  | 'mcp'
 
 /** The commands, in the order help lists them. One row per command in `cli.ts`'s table. */
 export const COMMAND_NAMES: readonly CommandName[] = [

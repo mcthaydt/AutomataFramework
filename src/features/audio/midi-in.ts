@@ -152,7 +152,8 @@ function chordOfBar(hits: readonly Hit[], bar: number, key: Key, mode: Mode): st
 function tokenOf(pitch: number, chord: string, key: Key, mode: Mode, lane: 'bass' | 'melody'): string {
   const notes = chordOf(chord, key, mode)
   const base = 12 * (OCTAVE[lane] + 1) + notes.root
-  for (let step = 1; step <= 15; step++) if (base + stepOffset(notes.scale, step) === pitch) return String(step)
+  for (let step = 1; step <= 15; step++)
+    if (base + stepOffset(notes.scale, step) === pitch) return String(step)
   return noteName(pitch)
 }
 

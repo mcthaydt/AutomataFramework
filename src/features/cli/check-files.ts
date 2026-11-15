@@ -72,12 +72,7 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
     const painted = paintedPaths(game)
     for (const name of yield* files.list(join(game.folder, 'content'))) {
       const path = `content/${name}`
-      if (
-        name.endsWith('.json') &&
-        !listed.has(path) &&
-        !painted.has(path) &&
-        !inListedFolder(path, folders)
-      )
+      if (name.endsWith('.json') && !listed.has(path) && !painted.has(path) && !inListedFolder(path, folders))
         problems.push({
           file: path,
           path: '',

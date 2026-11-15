@@ -82,7 +82,13 @@ export function createMusicPlayer(speaker: Speaker, parts: SongParts = {}): Musi
       const begin = Math.min(Math.max(from, 0), score.seconds)
       // The notes before `begin` are not handed over: the track starts at the first one from there on.
       const next = score.notes.findIndex((note) => note.at >= begin)
-      playing = { score, from: begin, start: undefined, pass: 0, next: next === -1 ? score.notes.length : next }
+      playing = {
+        score,
+        from: begin,
+        start: undefined,
+        pass: 0,
+        next: next === -1 ? score.notes.length : next,
+      }
       handOver()
     },
     stop() {
