@@ -1,6 +1,5 @@
 // The example rigged figures (plan R): a person as an agent writes it, and a way to change one. Files here are values, as
 // a test builds them; a game that lists them is made with `gameFiles` from `../content/kind.ts`.
-import { writeContent } from '#src/features/content/content.ts'
 
 /** A rigged figure as written: the same keys in any order, since `writeContent` puts them in the schema's. */
 export type RiggedWritten = { format: 2; id: string } & Record<string, unknown>
@@ -59,6 +58,3 @@ export const plainPerson = (): RiggedWritten => ({
   frame: { w: 32, h: 40 },
   paints: { skin: 'tan' },
 })
-
-/** The keeper's file as `writeContent` writes it. */
-export const keeperPersonText = (): string => writeContent('figure', keeperPerson() as never)
