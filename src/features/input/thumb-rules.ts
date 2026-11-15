@@ -23,7 +23,7 @@ export interface ThumbRules {
   up(id: number): void
   /** Lets go of everything: the window lost focus, or the screen turned. */
   clear(): void
-  /** Fingers down now do nothing until they lift: a press that ended a screen. */
+  /** Fingers down now do nothing until they lift, and a press not yet drained is dropped: a press that ended a screen. */
   mask(): void
   /** What is held now: any of 'left', 'right', 'jump'. */
   held(): Set<string>
@@ -31,6 +31,8 @@ export interface ThumbRules {
   drain(): Set<string>
   /** Where to draw the ring: its middle and the thumb, or `undefined` with no walking thumb. */
   ring(): { readonly cx: number; readonly cy: number; readonly x: number; readonly y: number } | undefined
+  /** Whether any finger is down, still or moving, for the hints: they stay away from a game being played. */
+  touching(): boolean
   /** How many times each has been done, for the hints. */
   uses(): { readonly walk: number; readonly jump: number; readonly dash: number }
 }
@@ -137,6 +139,8 @@ export function createThumbRules(options: { readonly dash: boolean }): ThumbRule
     },
     mask() {
       for (const id of fingers) masked.add(id)
+      // A press that landed just before the mask would otherwise be drained on the first poll after it.
+      pending.clear()
       walker = undefined
       jumper = undefined
     },
@@ -151,6 +155,7 @@ export function createThumbRules(options: { readonly dash: boolean }): ThumbRule
       if (walker === undefined) return undefined
       return { cx: walker.cx, cy: walker.cy, x: walker.x, y: walker.y }
     },
+    touching: () => fingers.size > 0,
     uses: () => ({ ...counts }),
   }
 }

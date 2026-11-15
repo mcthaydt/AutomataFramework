@@ -251,12 +251,15 @@ export async function startPage(root: HTMLElement, options: PageOptions = {}): P
         // A player at a keyboard or a gamepad is told what to press, until the first time they press it. The framework
         // says it in the player's words, for the device in use; a thumb has its own hints on the screen.
         if (!coarse) {
+          // The hint names the dash when this hero has it, so a developer who switches it on in hero.json is not told
+          // less than the game does.
+          const dash = loaded.value.characters[loaded.value.project.hero]?.moves?.dash === true
           const hint = element('p')
           const draw = (): void => {
             hint.textContent = playHint({
               device: started.input.device(1),
               first: (action) => started.input.inputsFor(1, action)[0],
-              dash: false,
+              dash,
               words: locale.words,
             })
           }
