@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { blockBars, type MusicBlock, writeContent } from '#src/features/content/content.ts'
-import { bouncyBass, heroTheme, meadow, SONG_PATHS, songFiles } from '../../fixtures/audio/song.ts'
+import { heroTheme, meadow, SONG_PATHS, songFiles } from '../../fixtures/audio/song.ts'
 import { expectRoundTrip, gameProblems, problemsOf } from '../../fixtures/content/kind.ts'
 
 // biome-ignore lint/suspicious/noExplicitAny: a test changes a song by the path to the part it changes
@@ -147,7 +147,7 @@ test('blocks that touch do not overlap', async () =>
 
 test('the bars a block takes', () => {
   const loop: MusicBlock = { at: 1, loop: 'bouncy-bass', bars: 5 }
-  expect(blockBars(loop, bouncyBass())).toBe(5)
+  expect(blockBars(loop, undefined)).toBe(5)
   const motif: MusicBlock = { at: 1, motif: 'hero-theme' }
   expect(blockBars(motif, heroTheme())).toBe(1)
   expect(blockBars({ ...motif, speed: 0.25 }, heroTheme())).toBe(4)

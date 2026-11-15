@@ -12,7 +12,9 @@ test.each(SOUND_KINDS)('%s, at seeds 0 to 19, is a sound file that ends inside t
     const sound = makeSound(kind, seed)
     const read = SoundSchema.safeParse(sound)
     expect(read.success, `${kind} ${seed}: ${JSON.stringify(read.error?.issues)}`).toBe(true)
-    for (const voice of sound.voices) expect(voice.at + voice.length).toBeLessThanOrEqual(10)
+    for (const voice of sound.voices) {
+      if ('length' in voice) expect(voice.at + voice.length).toBeLessThanOrEqual(10)
+    }
   }
 })
 
