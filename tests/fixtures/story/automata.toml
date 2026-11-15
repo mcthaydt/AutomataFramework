@@ -2,6 +2,7 @@ format = 1
 name = "Story Game"
 start = "glade"
 hero = "hero"
+source = "en"
 players = 2
 
 [[content]]

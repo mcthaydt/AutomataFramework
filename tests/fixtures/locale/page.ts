@@ -23,6 +23,7 @@ import { Transform } from '#src/features/physics/physics.ts'
 import { openSettings } from '#src/features/saves/saves.ts'
 import { followLanguage, languagePicker, languageRow, webHost } from '#src/features/web/web.ts'
 import { withSource } from '../content/kind.ts'
+import { OPENING_PATH, withoutOpening } from '../full-game/no-opening.ts'
 import { readFullGamePicture } from '../full-game/pictures.ts'
 import { fullGameFiles } from '../full-game/read.ts'
 import { fixtureControls } from '../game/controls.ts'
@@ -155,7 +156,7 @@ const host = webHost({
 
 /** The full game, with the language its words are written in and a word one language lacks, as the address says. */
 async function loadContent(): Promise<GameContent> {
-  const files: Record<string, string> = { ...fullGameFiles }
+  const files: Record<string, string> = { ...fullGameFiles, [OPENING_PATH]: withoutOpening() }
   const source = params.get('source')
   if (source !== null) files['automata.toml'] = withSource(files['automata.toml'] ?? '', source as Language)
   const drop = params.get('drop')
