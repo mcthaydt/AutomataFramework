@@ -57,7 +57,7 @@ jobs:
             changed="$(gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only)"; then
             printf 'This draft changes:\n%s\n' "$changed"
             # A change to how things are installed, built or tested, or to the shared test files, reaches every test.
-            if ! grep -qE '^(tests/fixtures/|package\.json|pnpm-lock\.yaml|\.pnpmfile\.cjs|[^/]*\.config\.(ts|js)|vite-rapier-wasm\.ts|tsconfig[^/]*\.json|\.github/)' <<<"$changed"; then
+            if ! grep -qE '^(tests/fixtures/|package\.json|pnpm-lock\.yaml|\.pnpmfile\.cjs|[^/]*\.config\.(ts|js)|vite-rapier-wasm\.ts|tsconfig[^/]*\.json)' <<<"$changed"; then
               full=false
               # The `screenshots` label asks for the online journeys, which take the pictures, on any draft.
               grep -qE '^(src/server\.ts|src/features/(net|server)/|tests/journeys/)' <<<"$changed" ||
