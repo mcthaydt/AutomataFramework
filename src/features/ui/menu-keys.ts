@@ -137,7 +137,8 @@ export function menuKeys(options: {
     const direction = ARROWS[event.key]
     // Up and down always walk; left and right are the slider's own when one has the focus.
     if (direction === undefined) return
-    if (focused()?.getAttribute('role') === 'slider' && (direction === 'left' || direction === 'right')) return
+    if (focused()?.getAttribute('role') === 'slider' && (direction === 'left' || direction === 'right'))
+      return
     event.preventDefault()
     walk(direction)
   }

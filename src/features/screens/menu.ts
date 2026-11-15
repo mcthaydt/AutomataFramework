@@ -3,8 +3,8 @@
 import type { Component } from 'svelte'
 import type { Words } from '../../lib/message.ts'
 import type { IconName } from '../ui/ui.ts'
-import type { MenuItem } from './menu-items.ts'
 import MenuPart from './Menu.svelte'
+import type { MenuItem } from './menu-items.ts'
 import type { Screen, ScreenBase } from './screens.ts'
 import { show } from './show.ts'
 

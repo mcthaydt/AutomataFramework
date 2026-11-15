@@ -65,11 +65,9 @@ test('a mount that is not positioned is made so while the screen is there, and a
 test('destroy takes the screen off, stops its keys, and is safe to call twice', () => {
   const log: string[] = []
   const { locale } = testLocale('es')
-  screen = show(
-    Sheet,
-    { mount, locale, name: 'sheet', frames, gamepads: fake.getGamepads },
-    () => ({ log: (what) => log.push(what) }),
-  )
+  screen = show(Sheet, { mount, locale, name: 'sheet', frames, gamepads: fake.getGamepads }, () => ({
+    log: (what) => log.push(what),
+  }))
   frames.at(0)
   screen.destroy()
   screen.destroy()

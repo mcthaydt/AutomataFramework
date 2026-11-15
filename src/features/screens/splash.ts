@@ -3,9 +3,9 @@
 import type { Component } from 'svelte'
 import { pageFrames } from '../../lib/frames.ts'
 import { padMenu } from '../input/input.ts'
+import SplashPart from './Splash.svelte'
 import type { Screen, ScreenBase } from './screens.ts'
 import { show } from './show.ts'
-import SplashPart from './Splash.svelte'
 
 /** How long the splash stays when nobody presses anything. */
 export const SPLASH_MS = 2000

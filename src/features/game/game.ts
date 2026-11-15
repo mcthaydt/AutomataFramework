@@ -120,7 +120,10 @@ export interface Game {
   heroes(): readonly HeroBox[]
   /** The player's setting: whether the device may buzz when a feel file says so. */
   setVibration(on: boolean): void
-  /** The play so far, from tick 0. After `stop`, the play as it was when it stopped. */
+  /**
+   * The play so far, from tick 0. After `stop`, the play as it was when it stopped. Throws what the game's code threw
+   * for a game that broke: its sim is not asked for a hash again.
+   */
   replay(): Replay
   /** Stops the loop, removes the canvas and the controls, and disposes the sim. Safe to call twice. */
   stop(): void
@@ -296,7 +299,8 @@ export async function startGame(options: GameOptions): Promise<Game> {
       stop() {
         if (stopped) return
         stopped = true
-        kept = recorder.replay()
+        // A game that broke cannot be hashed again, so it keeps no play: `replay()` then says what broke.
+        if (broke === undefined) kept = recorder.replay()
         loop.stop()
         unlisten()
         removeNotice?.()

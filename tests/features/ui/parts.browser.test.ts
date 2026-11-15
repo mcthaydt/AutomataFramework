@@ -164,6 +164,7 @@ test('a dialog holds the focus: Tab and Shift+Tab go round its two buttons and n
   expect(names()).toBe('Keep')
   await userEvent.tab({ shift: true })
   expect(names()).toBe('Erase')
-  await userEvent.click(page.getByRole('button', { name: 'Erase' }).last())
+  // The dialog's own Erase comes before the one under it in the page.
+  await userEvent.click(page.getByRole('button', { name: 'Erase' }).first())
   expect(log).toEqual(['yes'])
 })

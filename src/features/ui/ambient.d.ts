@@ -3,6 +3,7 @@
 // real types.
 declare module '*.svelte' {
   import type { Component } from 'svelte'
+
   const part: Component<Record<string, never>>
   export default part
 }

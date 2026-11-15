@@ -145,25 +145,46 @@ test('a held gamepad button that opened the screen presses nothing until it is l
   expect(log).toEqual(['play'])
 })
 
-test('Enter held when the screen appears presses nothing, and a fresh Enter presses once', async () => {
-  await userEvent.keyboard('{Enter>}')
+/** Whether the screen took a key event (kept the browser from acting on it), and whether anything after it heard it. */
+interface Heard {
+  readonly taken: boolean
+  readonly reached: boolean
+}
+
+/** Sends a key event the way a held key sends it. */
+function send(type: 'keydown' | 'keyup', code: string, repeat: boolean): Heard {
+  let reached = false
+  const listener = (): void => {
+    reached = true
+  }
+  window.addEventListener(type, listener)
+  const event = new KeyboardEvent(type, { code, key: code, repeat, bubbles: true, cancelable: true })
+  window.dispatchEvent(event)
+  window.removeEventListener(type, listener)
+  return { taken: event.defaultPrevented, reached }
+}
+
+test('Enter held when the screen appears presses nothing, and a fresh Enter goes to the browser', async () => {
   open()
   expect(focusedName()).toBe('Play')
-  // The held key repeats on the new screen's focused button, as a held key does.
-  await userEvent.keyboard('{Enter>}')
-  await userEvent.keyboard('{Enter>}')
-  await userEvent.keyboard('{/Enter}')
-  expect(log).toEqual([])
+  // The held key repeats on the new screen: its repeats and its release are taken, so nothing is pressed.
+  expect(send('keydown', 'Enter', true)).toEqual({ taken: true, reached: false })
+  expect(send('keydown', 'Enter', true)).toEqual({ taken: true, reached: false })
+  expect(send('keyup', 'Enter', false)).toEqual({ taken: true, reached: false })
+  // A fresh press goes through to the browser, which presses the focused button once.
+  expect(send('keydown', 'Enter', false)).toEqual({ taken: false, reached: true })
+  expect(send('keydown', 'Enter', true)).toEqual({ taken: false, reached: true })
+  expect(send('keyup', 'Enter', false)).toEqual({ taken: false, reached: true })
   await userEvent.keyboard('{Enter}')
   expect(log).toEqual(['play'])
 })
 
-test('Space held when the screen appears presses nothing, and a fresh Space presses once', async () => {
-  await userEvent.keyboard('{Space>}')
+test('Space held when the screen appears presses nothing, and a fresh Space goes to the browser', async () => {
   open()
-  await userEvent.keyboard('{Space>}')
-  await userEvent.keyboard('{/Space}')
-  expect(log).toEqual([])
+  expect(send('keydown', 'Space', true)).toEqual({ taken: true, reached: false })
+  expect(send('keyup', 'Space', false)).toEqual({ taken: true, reached: false })
+  expect(send('keydown', 'Space', false)).toEqual({ taken: false, reached: true })
+  expect(send('keyup', 'Space', false)).toEqual({ taken: false, reached: true })
   await userEvent.keyboard(' ')
   expect(log).toEqual(['play'])
 })
@@ -173,7 +194,7 @@ test('with a dialog open, the pad walks only its buttons and its right button sa
   tap('dpad-down')
   expect(focusedName()).toBe('Erase')
   tap('south')
-  expect(target.querySelector('[role="alertdialog"]')).not.toBeNull()
+  await expect.poll(() => target.querySelector('[role="alertdialog"]')).not.toBeNull()
   await expect.poll(focusedName).toBe('Keep')
   tap('dpad-up')
   expect(focusedName()).toBe('Erase')
