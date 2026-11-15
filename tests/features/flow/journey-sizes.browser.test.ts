@@ -11,6 +11,7 @@ import { SPLASH_MS } from '#src/features/screens/screens.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
 import { focusedName, ticks } from '../../fixtures/flow/page.ts'
 import { SCREENS } from '../../fixtures/game/screens.ts'
+import { keepDrawing } from '../../fixtures/ui/drawing.ts'
 
 const es = frameworkWords('es')
 const drive = createDrive()
@@ -143,20 +144,16 @@ async function turnTo(w: number, h: number): Promise<void> {
   const want = `${w < 600 ? 'narrow' : 'wide'}/${h < 480 ? 'short' : 'tall'}`
   // What the poll answers is what a failure prints: the frames, each with the box it says it measured and its real one,
   // and how many frames the page drew meanwhile, which settles the cause if this is ever seen again.
-  let drawn = 0
-  let next = requestAnimationFrame(function draw() {
-    drawn += 1
-    next = requestAnimationFrame(draw)
-  })
+  const drawing = keepDrawing()
   const measured = (): string => {
     const says = framesSay()
     if (says.every((one) => one.startsWith(`${want} in `))) return 'measured'
-    return `want ${want}, ${drawn} frames drawn, ${document.visibilityState}: ${says.join(' | ')}`
+    return `want ${want}, ${drawing.count()} frames drawn, ${document.visibilityState}: ${says.join(' | ')}`
   }
   try {
     await expect.poll(measured, { timeout: 10_000 }).toBe('measured')
   } finally {
-    cancelAnimationFrame(next)
+    drawing.stop()
   }
 }
 const turnSideways = (): Promise<void> => turnTo(844, 390)

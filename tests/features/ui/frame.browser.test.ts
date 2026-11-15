@@ -3,6 +3,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { page } from 'vitest/browser'
 import { SCREENS } from '../../fixtures/game/screens.ts'
+import { keepDrawing } from '../../fixtures/ui/drawing.ts'
 import { Sheet } from '../../fixtures/ui/sheet.ts'
 
 let target: HTMLDivElement
@@ -18,6 +19,26 @@ afterEach(() => {
   sheet = undefined
   target.remove()
 })
+
+/**
+ * Waits until `frame` says it measured a box of this width and height. A frame hears its box change when the page
+ * draws, so the page is kept drawing while this waits; a failure says what the frame said, in what box, and how many
+ * frames the page drew.
+ */
+async function measures(frame: HTMLElement, want: readonly [string, string]): Promise<void> {
+  const drawing = keepDrawing()
+  const says = (): string => {
+    const have = [frame.dataset.width, frame.dataset.height]
+    if (have[0] === want[0] && have[1] === want[1]) return 'measured'
+    const box = `${frame.clientWidth}x${frame.clientHeight}`
+    return `want ${want.join('/')}, has ${have.join('/')} in ${box}, ${drawing.count()} frames drawn`
+  }
+  try {
+    await expect.poll(says, { timeout: 10_000 }).toBe('measured')
+  } finally {
+    drawing.stop()
+  }
+}
 
 function open(): HTMLElement {
   sheet = mount(Sheet, { target, props: { log: () => {} } })
@@ -38,7 +59,7 @@ test.each(SCREENS.map((screen, index) => [...screen, SAYS[index] ?? SAYS[0]] as 
   async (_name, w, h, [width, height]) => {
     await page.viewport(w, h)
     const frame = open()
-    await expect.poll(() => [frame.dataset.width, frame.dataset.height]).toEqual([width, height])
+    await measures(frame, [width, height])
   },
 )
 
@@ -46,17 +67,17 @@ test('the frame measures its own box, not the window: a small box on a big page 
   await page.viewport(1280, 720)
   target.style.cssText = 'position:fixed;left:0;top:0;width:360px;height:400px'
   const frame = open()
-  await expect.poll(() => [frame.dataset.width, frame.dataset.height]).toEqual(['narrow', 'short'])
+  await measures(frame, ['narrow', 'short'])
 })
 
 test('a box that is resized by its style, with no window change, is measured again', async () => {
   await page.viewport(1280, 900)
   target.style.cssText = 'position:fixed;left:0;top:0;width:360px;height:800px'
   const frame = open()
-  await expect.poll(() => [frame.dataset.width, frame.dataset.height]).toEqual(['narrow', 'tall'])
+  await measures(frame, ['narrow', 'tall'])
   target.style.width = '900px'
   target.style.height = '400px'
-  await expect.poll(() => [frame.dataset.width, frame.dataset.height]).toEqual(['wide', 'short'])
+  await measures(frame, ['wide', 'short'])
 })
 
 test('the frame keeps everything inside the box it is given', async () => {
@@ -71,12 +92,12 @@ test('the frame keeps everything inside the box it is given', async () => {
 test('the frame is turned from 390x844 to 844x390: the focused control still has the focus', async () => {
   await page.viewport(390, 844)
   const frame = open()
-  await expect.poll(() => [frame.dataset.width, frame.dataset.height]).toEqual(['narrow', 'tall'])
+  await measures(frame, ['narrow', 'tall'])
   const focused = document.activeElement as HTMLElement
   expect(focused.textContent?.trim()).toBe('Play')
   const before = focused.getBoundingClientRect()
   await page.viewport(844, 390)
-  await expect.poll(() => [frame.dataset.width, frame.dataset.height]).toEqual(['wide', 'short'])
+  await measures(frame, ['wide', 'short'])
   expect(document.activeElement).toBe(focused)
   expect(focused.isConnected).toBe(true)
   // The buttons that were one under the other are side by side now.

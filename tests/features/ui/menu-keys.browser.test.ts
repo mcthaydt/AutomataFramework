@@ -6,6 +6,7 @@ import { page } from 'vitest/browser'
 import { menuKeys } from '#src/features/ui/ui.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
+import { keepDrawing } from '../../fixtures/ui/drawing.ts'
 import { keyboard } from '../../fixtures/ui/keys.ts'
 import { Sheet } from '../../fixtures/ui/sheet.ts'
 
@@ -92,7 +93,15 @@ test('the pad walks down a column, up it again, and stops at the ends', () => {
 test('the pad walks across a row when the screen is wide and short', async () => {
   await page.viewport(844, 390)
   open()
-  await expect.poll(() => target.querySelector('[data-width]')?.getAttribute('data-height')).toBe('short')
+  // The frame hears its box when the page draws, so the page is kept drawing while this waits.
+  const drawing = keepDrawing()
+  try {
+    await expect
+      .poll(() => target.querySelector('[data-width]')?.getAttribute('data-height'), { timeout: 10_000 })
+      .toBe('short')
+  } finally {
+    drawing.stop()
+  }
   expect(focusedName()).toBe('Play')
   tap('dpad-right')
   expect(focusedName()).toBe('Erase')
