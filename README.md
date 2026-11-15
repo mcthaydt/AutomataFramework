@@ -55,8 +55,9 @@ fetch an unrelated package of that name from npm.
 | `automata check` | Says whether the game is sound, step by step, and what to fix if it is not. |
 | `automata play` | Plays the game in your browser, and shows your changes as you make them. |
 | `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
-| `automata art` | Paints the game's pictures from its figure and backdrop files. |
+| `automata art` | Paints the game's pictures from its figure, backdrop and scene files. |
 | `automata add` | Lists a new content file in the game's `automata.toml`. |
+| `automata scene` | Moves a level's ground onto a scene file you can paint. |
 | `automata words` | Lists the translated words nobody has read, and marks them read. |
 | `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
@@ -772,8 +773,8 @@ recording). The first two exit with 0, the others with 1.
 
 ### automata art
 
-`automata art [folder]` paints the game's pictures: for every figure and backdrop file, one picture and the atlas that
-says where each pose is in it, written beside that file (`content/figures/hero.json` makes `hero.png` and
+`automata art [folder]` paints the game's pictures: for every figure, backdrop and scene file, one picture and the atlas
+that says where each pose or tile is in it, written beside that file (`content/figures/hero.json` makes `hero.png` and
 `hero.atlas.json`). It paints only what is missing or old and says each file it wrote. Commit the pictures with the
 file that made them. `automata create` and `automata play` paint first, so a new game has its pictures and a page never
 meets a missing one; `automata check` has an `art` step that fails for a picture that is missing or older than its file,
@@ -805,6 +806,25 @@ npx --no automata add --type figure --path content/figures/keeper.json --about "
 
 From code, `listContent(text, { type, path }, about?)` does the same to the text of an `automata.toml` and gives the new
 text, or the problems; the command and the editors both use it.
+
+### automata scene
+
+`automata scene from-level <level> [folder]` moves a level's ground onto a scene file, which holds the ground's rows and
+colours in a file a person can paint in the builder. It writes `content/scenes/<name>.json` (beside the scenes the game
+already lists), changes the level's file so that it names the scene, lists the scene in `automata.toml`, and paints the
+scene's picture. The level plays and hashes as it did: the same rows, the same colours and the same boxes, so a recorded
+play of it still ends where it did. Everything is made and read back as a game before the first file is written; it
+writes nothing, and exits `1`, when the game does not load, the level is not there, the level already has a scene, or a
+file is already at the scene's path (`There is already a file at content/scenes/scene-1.json. Pick another name with
+--as.`).
+
+```sh
+npx --no automata scene from-level level-1
+```
+
+- `--as <name>`: the scene's name. Left out, `level-1` becomes `scene-1`, and an id with no `level` in it gets `-scene`.
+- `--json`: print the answer as JSON: `ok`, the files `wrote`, the pictures `painted`, the `problems` of a game that does
+  not load, and the `sentence` that says why nothing was written.
 
 ### automata words
 
@@ -863,6 +883,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 | `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
 | `art` | `folder`, `check?` | `automata art <folder> --json` |
 | `add` | `folder`, `type`, `path`, `about?` | `automata add <folder> --type <type> --path <path> --json` |
+| `scene_from_level` | `folder`, `level`, `as?` | `automata scene from-level <level> <folder> --json`, and `--as <as>` when `as` is given |
 | `words` | `folder`, `read?`, `keys?` | `automata words <folder> --json`, and `--read <read> <keys>` when `read` is given |
 | `content_types` | none | the table of content kinds above |
 | `schema` | `type` | reading `schemas/<type>.schema.json` |
@@ -876,7 +897,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
 and `automata://skills/<name>`.
 
-The server never loads a game's rules itself. `create`, `check`, `replay`, `art`, `add` and `words` each run the command in a process of their
+The server never loads a game's rules itself. `create`, `check`, `replay`, `art`, `add`, `scene_from_level` and `words` each run the command in a process of their
 own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
 keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
 goes to standard error, never into the messages.

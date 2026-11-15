@@ -16,6 +16,7 @@ import { runPlay } from './play.ts'
 import { CliError, Out, type OutService, type Ports } from './ports.ts'
 import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
+import { describeScene, runSceneFromLevel } from './scene.ts'
 import { printToStderr } from './stderr.ts'
 import { describeWords, runWords } from './unread.ts'
 
@@ -93,6 +94,26 @@ const add: Command = (input) =>
     if (json === true) yield* out.line(JSON.stringify(report, null, 2))
     else {
       const said = describeAdd(report, options)
+      for (const line of said.out) yield* out.line(line)
+      for (const line of said.err) yield* out.error(line)
+    }
+    return report.ok ? 0 : 1
+  })
+
+/** `automata scene from-level`: a level's ground moved onto a scene file, as words or as JSON. */
+const scene: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const { as, json } = input.flags
+    const options = {
+      folder: input.folder ?? '.',
+      level: input.level ?? '',
+      ...(typeof as === 'string' ? { as } : {}),
+    }
+    const report = yield* runSceneFromLevel(options)
+    if (json === true) yield* out.line(JSON.stringify(report, null, 2))
+    else {
+      const said = describeScene(report, options)
       for (const line of said.out) yield* out.line(line)
       for (const line of said.err) yield* out.error(line)
     }
@@ -179,6 +200,7 @@ const COMMANDS: Readonly<Record<CommandName, Command>> = {
   replay,
   art,
   add,
+  scene,
   words,
   mcp,
 }

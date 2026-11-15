@@ -39,6 +39,7 @@ test('tools/list has these tools, each with a description and an object schema',
     'replay',
     'art',
     'add',
+    'scene_from_level',
     'words',
     'content_types',
     'schema',
@@ -62,6 +63,7 @@ test('every tool has a command of the same name, or a file or a session the tabl
   const commands = tools.filter((name) => (COMMAND_NAMES as readonly string[]).includes(name))
   expect(commands).toEqual(['create', 'check', 'replay', 'art', 'add', 'words'])
   expect(tools.filter((name) => !commands.includes(name))).toEqual([
+    'scene_from_level',
     'content_types',
     'schema',
     'skill',
@@ -159,6 +161,27 @@ test('add hands the command its folder, its kind and its path, and the note when
   expect(replies.map((reply) => JSON.parse(answerOf(reply).text))).toEqual(
     Array(2).fill({ ok: true, listed: true, problems: [] }),
   )
+})
+
+test('scene_from_level hands the command its level, its folder and the name when there is one', async () => {
+  const asked: (readonly string[])[] = []
+  const memory = gameMemory()
+  const spy = Layer.succeed(Runner, {
+    command: (args) =>
+      Effect.sync(() => {
+        asked.push(args)
+        return { code: 0, json: { ok: true } }
+      }),
+    worker: () => Effect.die('a worker was not asked for'),
+  })
+  await talk(Layer.merge(memory.layer, spy), [
+    call(1, 'scene_from_level', { folder: 'game', level: 'level-1' }),
+    call(2, 'scene_from_level', { folder: 'game', level: 'level-1', as: 'meadow' }),
+  ])
+  expect(asked).toEqual([
+    ['scene', 'from-level', 'level-1', 'game'],
+    ['scene', 'from-level', 'level-1', 'game', '--as', 'meadow'],
+  ])
 })
 
 test('the live runner adds --json and starts the package’s own cli in a child process', () => {

@@ -270,6 +270,12 @@ test('the README names every command and every flag its help has, and no other',
   expect(readme).toContain('--help')
 })
 
+test('the README names automata scene from-level and its two flags', () => {
+  const ref = section('## The automata command')
+  expect(ref).toContain('automata scene from-level <level> [folder]')
+  for (const flag of ['--as', '--json']) expect(ref, flag).toContain(`- \`${flag}`)
+})
+
 test('the README gives the exit codes, and every verdict of a replay', () => {
   const ref = section('## The automata command')
   for (const word of ['`0`', '`1`', '`2`']) expect(ref, word).toContain(word)
