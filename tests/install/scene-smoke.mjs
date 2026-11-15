@@ -41,7 +41,11 @@ try {
   said('the new game', automata('check', ['check', 'g', '--only', 'files'], work), 'Everything passed.')
 
   const moved = automata('scene from-level', ['scene', 'from-level', 'level-1', 'g'], work)
-  said('scene from-level', moved, 'Level "level-1" now takes its ground from the scene "scene-1". It plays as it did.')
+  said(
+    'scene from-level',
+    moved,
+    'Level "level-1" now takes its ground from the scene "scene-1". It plays as it did.',
+  )
   for (const file of ['scenes/scene-1.json', 'scenes/scene-1.png', 'scenes/scene-1.atlas.json'])
     if (!existsSync(join(game, 'content', file))) fail(`scene from-level did not write content/${file}.`)
   if (!readFileSync(join(game, 'automata.toml'), 'utf8').includes('path = "content/scenes/scene-1.json"'))
@@ -56,7 +60,7 @@ try {
   )
   // The content changed, so the recording's hashes are not compared; the play still ends where it was recorded to.
   const replayed = automata('replay', ['replay', 'g'], work)
-  said('replay', replayed, 'The game\'s content has changed since this was recorded')
+  said('replay', replayed, "The game's content has changed since this was recorded")
   said('replay', replayed, `ended on ${recorded}`)
   console.log(`ok  a game moved onto a scene still plays to ${recorded}`)
 } finally {

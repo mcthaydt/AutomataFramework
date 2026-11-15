@@ -85,7 +85,9 @@ export function runSceneFromLevel(options: SceneOptions): Effect.Effect<SceneRep
     const sibling = listed.find((entry) => entry.type === 'scene')?.path ?? 'content/scenes/x.json'
     const sceneFolder = sibling.slice(0, sibling.lastIndexOf('/'))
     const scenePath = `${sceneFolder}/${sceneId}.json`
-    const levelPath = listed.find((entry) => entry.type === 'level' && idOf(entry.path) === options.level)?.path
+    const levelPath = listed.find(
+      (entry) => entry.type === 'level' && idOf(entry.path) === options.level,
+    )?.path
     if (levelPath === undefined)
       return refused(`The level "${options.level}" is not listed in ${PROJECT}, so it cannot be moved.`)
     const taken = (yield* files.readText(join(options.folder, scenePath))) !== undefined

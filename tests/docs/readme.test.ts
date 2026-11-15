@@ -278,9 +278,23 @@ test("the README has a Scenes section whose scene file is a whole one, and whose
   const parsed = framework.parseContent('scene', file, 'content/scenes/meadow.json')
   expect(parsed.ok ? [] : parsed.diagnostics.map(framework.formatDiagnostic)).toEqual([])
   for (const shape of framework.GROUND_SHAPES) expect(scenes, shape).toContain(`\`${shape}\``)
-  for (const word of ['scene file', 'automata scene from-level', 'photos/', 'scenes.md', 'groundPages', 'placedTiles'])
+  for (const word of [
+    'scene file',
+    'automata scene from-level',
+    'photos/',
+    'scenes.md',
+    'groundPages',
+    'placedTiles',
+  ])
     expect(scenes, word).toContain(word)
-  for (const name of ['SceneSchema', 'PhotoSchema', 'paintScene', 'sceneFromLevel', 'materialTile', 'PHOTO_LIBRARY'])
+  for (const name of [
+    'SceneSchema',
+    'PhotoSchema',
+    'paintScene',
+    'sceneFromLevel',
+    'materialTile',
+    'PHOTO_LIBRARY',
+  ])
     expect(framework, name).toHaveProperty(name)
 })
 

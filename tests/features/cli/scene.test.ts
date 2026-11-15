@@ -5,7 +5,8 @@ import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, memoryLayer } from '../../fixtures/cli/memory.ts'
 
 /** The small game (one level of `#` and `.`) in the folder `game`. */
-const game = (more: Record<string, string> = {}): Memory => memoryLayer(under('game', { ...smallGame(), ...more }))
+const game = (more: Record<string, string> = {}): Memory =>
+  memoryLayer(under('game', { ...smallGame(), ...more }))
 
 /** Runs `automata scene <args>` on a memory and gives what it said and its exit code. */
 async function run(
