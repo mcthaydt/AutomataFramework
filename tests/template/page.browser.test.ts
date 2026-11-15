@@ -150,11 +150,19 @@ test('a keyboard player is told the keys, until they move', async () => {
 
 test('a hero with the dash switched on is told its key too', async () => {
   await page.viewport(1280, 720)
-  // What the README tells a developer to do: `"dash": true` in the hero's file, and a key for it in the tuning's list.
+  // What the README tells a developer to do: `"dash": true` in the hero's file, and the dash in the tuning's list of
+  // controls, with its keys for one player and for two on a shared keyboard (every action has both, or none does).
   const heroFile = JSON.parse(templateFiles['content/characters/hero.json'] as string)
   heroFile.moves.dash = true
   const tuning = JSON.parse(templateFiles['content/tunings/hero-moves.json'] as string)
-  tuning.controls.push({ action: 'dash', label: 'Dash', keys: ['ShiftLeft'] })
+  tuning.controls.push({
+    action: 'dash',
+    label: 'Dash',
+    keys: ['ShiftLeft'],
+    side: 'right',
+    pad: ['west'],
+    shared: [['ShiftLeft'], ['ShiftRight']],
+  })
   await open({
     language: 'en',
     files: {
