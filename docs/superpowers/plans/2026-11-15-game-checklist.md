@@ -32,6 +32,143 @@ message key); the drunk-grandma test (the words table in Task 5); 6, the stack c
 dependency). It breaks none: 2D only, one package, no editor code, nothing built ahead of its user (the template uses
 every part).
 
+## Return note: building plan Q again after plan W (2026-11-15)
+
+**Where plan Q stands.** Pull requests 1, 2a and 2b were built and merged (AF 143, AF 145, AF 148), then taken off
+`main` with the rest of the work after slice 3 (AF 153). The tag `archive/before-slice-cut` (`0d21168`) keeps them.
+Pull requests 3, 4 and 5 were never started. Plan Q is built again **only after plan W's pull request 4 (doors and what
+is remembered) is merged**, because it stands on what plan W adds: `heroLevels`, a door's `leads-to` value, the flow's
+`door` step and `arrive`, the save's `last` and `facts`, and the last lines left in `flow/flow.ts`. Nothing in this
+note has been built or run.
+
+Where this note and the rest of the plan differ, this note wins. Everything it does not name stands as written.
+
+### What comes back, and how
+
+| Pull request | Tasks | How it comes back |
+|---|---|---|
+| 1 | 1 to 5 | From the tag: the code and tests of merge `ce7524bd` (not its docs, which are on `main`), then changes 3 and 7 below. |
+| 2a | 6 to 9 | From the tag: merge `66726259`, then changes 1, 2, 4, 5, 6 and 7. |
+| 2b | 10 to 13 | From the tag: merge `3ead0001`, without `flow/page-guard.ts` (change 8), then changes 9 and 13. |
+| 3 | 14 to 17 | Written fresh, as the plan says, with change 12. |
+| 4 | 18 to 20 | Written fresh, as the plan says, with changes 10 and 11. |
+| 5 | 21, 22 | Written fresh, as the plan says, with change 14. |
+
+- **How a part comes back.** On a branch from `main`: `git diff <merge>^1 <merge> -- src tests | git apply -3`, then
+  settle each clash with plan W by hand, keeping plan W's lines. These merges' tests were green on the tag, so they go
+  in with their code and are not pushed red first; the new tests this note adds are pushed red before their code, as
+  the plan says. Every other rule stands: nothing runs locally, a draft pull request, batched pushes, the McThayDT
+  identity.
+- **What was built wins over the plan's words.** The rulings in the progress tracker's handoff for cycle 12 are what
+  comes back: the speaker's limiter is a WaveShaper curve, not a compressor (Task 12); no fade-out, only a fade-in
+  (Task 12); `onDeleteSaves` answers `{ ok }`; no `libraryWords`; the Back entry is pushed again after each Back; the
+  `backMeans` and `drop` seam; the fixture's `press.ts` was dropped; the fixture pit's gap is 4 tiles wide;
+  `recordScore` lives in `records.ts`.
+- **Goldens.** `tests/golden/fall.json` comes back byte for byte. If its hash, or any golden plan W left alone, differs
+  in CI, stop and report: a game with one level and no doors must play as it did before plan W. The one golden move
+  (`template/replays/level-1.json`, Task 15) is unchanged: once, in pull request 3, shown to the Owner first.
+- **Tracker.** Stage 4 restarts at 0% on `main`: "done" means merged to `main`. Each pull request is weighed as the
+  Global Constraints say (4% a task, 2% each for 7a and 7b, 12% for the last green run and the Owner's yes).
+
+### What plan W changes under plan Q
+
+Each change names the task it lands in and the test that proves it. Plan W's own task numbers are in brackets.
+
+1. **`flow.ts` has no room left.** Plan W [Task 12] may take `flow.ts` from 589 to 599 lines and adds `flow/ways.ts`.
+   Task 6's first step (the move into `play.ts`) now moves plan W's lines too: `startLevel`, with its `watchWays` call,
+   goes to `play.ts`, and `ways.ts` stays where plan W put it. Count `flow.ts` before the move; after it, it is under
+   460 lines. The tag's `flow.ts` was at exactly 600, so from here on no task adds a line to `flow.ts`: new flow code
+   goes in `play.ts`, `back.ts`, `ways.ts` or a new file.
+2. **"The level" is the one player 1 is in.** In a place (levels joined edge to edge, run as one sim), the level the
+   flow opened is not always the level the player is in. `Game` gains `levelNow(): string`, player 1's level from
+   `heroLevels(sim)` [Task 9], read after each step as `score()` is. It names the level on the pause, Well done and
+   Try again screens, and picks the goal line (`level.<id>.goal`). When player 1 crosses into a level whose goal line
+   differs, the line shows again for three seconds; nothing waits. Lands in Tasks 7a and 8. Test, in
+   `start-card.browser.test.ts`, on plan W's links game: crossing from `room-2` into `room-3` shows `room-3`'s goal
+   line and pause names `room-3`.
+3. **A fall in a place.** "More than two tiles below the level's lowest row" becomes "more than two tiles below the
+   bottom of what the sim holds": a lone level's lowest row, as built (so `fall.json` does not move), or the bottom of
+   the place's outline (`placeSize` [Task 8]). `createGameSim` works the bottom out from `levelsOf` and gives it to
+   `fallPlugin`. Lands in Task 2. Test, in `fall.test.ts`: in the place of `room-2` and `room-3`, a hero dropped
+   through a hole in `room-3`'s floor says `hero.fell` once, and none is said while it is still above the outline.
+4. **Try again and Start again, with doors and edges.** Plan W [Task 11] gives the flow's state an `arrive` and a
+   `door` step, and [Task 12] the save a `last` and `facts`. Losing keeps both. **Try again and Start again bring the
+   player in where Continue would**: where they last came in during this visit (a door, an edge crossing, or the
+   level's starts), with the save's `facts`, so a gate opened for good stays open. So quitting and pressing Continue
+   never puts a player further on than Try again does. The flow keeps the last place it was told by `cameIn` in
+   memory as well, so a save that could not be kept changes nothing. The other way, back to where this attempt was
+   opened, was weighed and left: in a long place it throws away a crossing that Continue keeps. Lands in Task 6.
+   **One rule for starting a level:** a door counts as a fresh start too, so `door` raises `attempt` by one, and the
+   flow starts a level exactly when `attempt` changes; plan W's own fix (stop listening for doors on the first one and
+   pause the game, from its plan audit, M1) keeps a second door from starting it twice. Tests, in
+   `lost.browser.test.ts` on the links game: through the door, fall, Try again: the hero stands beside `door-in` and
+   `attempt` went up by one; cross into `room-3`, fall, Try again: the hero is in `room-3` near where it crossed.
+5. **A level waits for the first press, but not through a door.** A level opened by a door is opened mid-move (plan
+   W's call 5), so it does not wait, and a direction held through the door keeps walking. A level waits when it is
+   opened from the menu, Continue, Try again, Start again or Next level; watch mode still never waits. **Facts and
+   the first picture:** plan W sends the save's facts as a command on tick 0 (source 0, tick 0 only, from its plan
+   audit, H2). A level that waits has stepped no tick, so its first picture would show a gate shut that pops open on
+   the press. So when `GameOptions.facts` is not empty, the game steps tick 0 with the facts and no player's input
+   before it waits, and the first press lands on tick 1. With no facts nothing changes, so no recording moves. Lands in
+   Task 7a. Tests, in `start-card.browser.test.ts`: a level entered through a door has no `data-waiting`; Continue
+   into `room-2` with `facts: ['room-2.gate-1.open']` shows `gate-1` open while it waits.
+6. **Well done, doors and the score.** A door is not `done` (plan W's call 5). **The Owner settled it (2026-11-15, plan
+   W's plan audit, question 2: "a"):** through a door the player goes straight into the next level, with no "level
+   done" screen. So Well done shows only when what `done` names is raised, and nothing here changes for a door.
+   **A score is one sim's**: a lone level's, or a whole place's. A door starts a new sim, and so a new count. A game
+   that wants a running total across doors is a later plan's, when a game needs one. Lands in Task 8.
+7. **Delete all my saves takes the doors' memory too.** Plan W keeps `last` and `facts` in the saved games
+   (`progressDef` version 2), so deleting them takes both, with the best score. The language, keys and volumes stay.
+   Lands in Task 9. Test, in `delete.browser.test.ts` on the links game: after Delete all my saves, there is no
+   Continue, and a new game opens `room-2` with `gate-1` shut. Task 4's `records.ts` is unchanged: the best score is
+   still a settings section, beside plan W's save, not in it.
+8. **The page holds still: mostly done already.** `guardPlay` (`src/features/game/guard.ts`, AF 155, merged after
+   the cut) is on every game, flow or not: `touch-action`, `user-select` and the callout off on the mount, no tap
+   flash, no overscroll on the page, no right-click menu; `web/awake.ts` keeps the screen lit. So `flow/page-guard.ts`
+   does not come back. The one rule it had that `guardPlay` lacks, no page scroll while the mount fills the window's
+   height, goes into `guardPlay`, so every game has it. Its tests move from `page-guard.browser.test.ts` into
+   `tests/features/game/guard.browser.test.ts`. Call 12 now means that. Lands in Task 10.
+9. **Back.** No change of shape. A door goes from `playing` to `playing`, so the entry is still held and nothing is
+   pushed; Back after a door pauses, as in any level. Lands in Task 10. Test, in `back.browser.test.ts`: through a
+   door, Back pauses, and Back again goes to the menu with one entry spent.
+10. **"A game that can end" follows doors and joins** (Task 19's ends rule). From `start`, the levels a player can
+    reach are those through `leads-to` values and joins (plan W's loaded `places`, never worked out again). The game
+    can end when one of them can raise `done`. A level a player can reach that has no way on (no `done` it can raise,
+    no door with a `to`, no join) is a note, and a problem under `--ship`: "content/levels/<id>.json: a player who
+    reaches this level cannot leave it or finish the game. Give it a door with `to`, join it to another level, or put
+    what `done` names in it." `lost` and `score` keep their rules. Tests, in `check-ends.test.ts`: the links game can
+    end (its goal is in `room-3`, reached through the door and the join); with `room-3`'s goal taken out it cannot.
+11. **Recordings carry two notes now.** Plan W [Task 9] writes `meta.arrive`; Task 20 adds `meta.save`. Both are in
+    `cli/replay.ts` and neither reads the other. Test: a recording with both round-trips through `automata replay`.
+12. **The template keeps one level** (Task 15). Plan W's handoff says the template's door would use a `leads-to` value
+    in place of `done`. A `leads-to` needs a level to lead to, and the starter has one. So this plan keeps the door as
+    the `done` touch (`done = "door.touched"`, a door with no `to`): `doorTaken` reads nothing, and the recording moves
+    once, as planned. **The Owner chose one level (2026-11-15).** Doors are shown in the test game, not
+    the starter.
+13. **The whole visit on the links game** (Task 13). Beside `level-pit`, the fixture `tests/fixtures/flow/links.ts`
+    (plan W's) is played with `lost = "hero.fell"` and a hole cut in `room-2`'s floor by an override: Play, push the
+    crate onto the plate, through the gate and the door, fall, Try again, cross into `room-3`, touch the goal, Well
+    done with the score. Its words reach every screen in the three languages of the fixture.
+14. **The docs** (Task 22). The skills and `template/AGENTS.md` say that the goal line and the level name follow the
+    level the player is in, and that a level opened through a door does not wait.
+
+### Not changed by plan W
+
+Part B1's project fields (`lost`, `score`), the words (Task 5, with no new word from plan W), How to play, the sound
+switch, the loading bar, the limiter and the fade-in, the template on `startFlow` (Task 14), the play test in every
+game's CI (Task 16), the `page` part (Task 18), `--ship` (Task 20, apart from change 11) and the journeys (Task 21).
+
+### Conflicts with plan W, for its fix round and audit
+
+- **Facts on a waiting level** (change 5): plan W's facts command lands on the first step, which a waiting level has
+  not taken. This plan steps tick 0 alone when there are facts. If plan W's fix round puts the facts in place another
+  way (at spawn, say), change 5's tick-0 step goes, and its test stays.
+- **`attempt` and doors** (change 4): plan W's flow starts a level on a new `playing` state from `playing`; this plan's
+  rule is "when `attempt` changes". Whichever lands second makes a door raise `attempt`.
+- **The template's door** (change 12): settled by the Owner (one level); plan W's handoff line about it no longer holds.
+- **`flow.ts`** (change 1): plan W may use the last ten lines. Plan W's Task 12 already says to move `startLevel`'s
+  listeners into `ways.ts` if it would not fit; if it does that, Task 6 moves less, and the 460-line aim stands.
+
 ## The Owner's questions
 
 - **Q1 (answered, 2026-11-15): A.** Every new game gets Playwright and a short play test in its own CI. Task 16.
@@ -71,7 +208,8 @@ every part).
   order.
 - **A game changes the flow through files, not code.** `automata.toml` for what shows, messages for the words, CSS
   custom properties for the look; code replaces a whole screen (`FlowOptions.screens`) and nothing smaller.
-- **No file over 600 lines.** `src/features/flow/flow.ts` is at 589: Task 6 splits it before adding to it.
+- **No file over 600 lines.** `src/features/flow/flow.ts` was at 589 and plan W may take it to 599: Task 6 splits it
+  before anything is added, and no task adds a line to it after that (the return note, change 1).
 - **No `.svelte` file outside `src/features/ui/` and `src/features/screens/`.** Features import only from features
   below them (`tests/architecture/rules.ts`).
 - **The editors are not touched** (they are on hold), and nothing they call changes shape: `startGame`, `loadGame`,
@@ -95,8 +233,8 @@ before the next starts, with one exception: Part C does not wait for the Owner's
 
 | Pull request | Part | Tasks | Waits for |
 |---|---|---|---|
-| 1 | B1, what needs no page | 1 to 5 | The spec merged (AF 137). |
-| 2a | B2, losing, the start of a level, How to play, the score, the switches | 6 to 9 | Pull request 1. Plan U's audit fixes (AF 136) on `main`: if they are not, merge `main` when they land and keep going. |
+| 1 | B1, what needs no page | 1 to 5 | Plan W's pull request 4 merged (the return note). The spec is on `main`. |
+| 2a | B2, losing, the start of a level, How to play, the score, the switches | 6 to 9 | Pull request 1. |
 | 2b | B2, the page, loading, sound, the whole visit | 10 to 13 | Pull request 2a. |
 | 3 | A, the template on the flow | 14 to 17 | Pull request 2b. **The Owner's yes to the moved recording, before merge.** |
 | 4 | C, the checks | 18 to 20 | Pull request 2b on `main`, and pull request 3 green (merged, or waiting only for the Owner). |
@@ -157,7 +295,7 @@ audit should weigh each.
     `FlowOptions.back` is on by default only when the page is not framed (`window.top === window.self`, which a frame
     of another origin may read): a `pushState` in a frame joins the top page's history, so a framed game leaves Back
     to the page that frames it. `back: true` or `false` overrides the default.
-12. **The page-wide defaults** are set by `startFlow` on the document (`overscroll-behavior: none`, no scrolling of the
+12. **(Now `guardPlay`, the return note, change 8.)** **The page-wide defaults** are set by `startFlow` on the document (`overscroll-behavior: none`, no scrolling of the
     page while a game is mounted full-height) and on the mount (`touch-action: none`, `user-select: none`,
     `-webkit-touch-callout: none`), and put back by `stop()`. The screens' own lists still scroll inside themselves.
 13. **Loading:** a bar in place of the ring, filled as files arrive (one for `automata.toml`, then one for each file it
@@ -1465,6 +1603,9 @@ test('automata check --ship on the untouched game passes and prints the list to 
 - **Plan F (the feel runtime).** The start card and the score are in the HUD, over the mount: a shake must not move
   them. The template's `take` and `fall` feels are drawn once plan F draws feels; their buzz works now.
 - **Plan N (online).** `startOnlineGame` keeps its own page, and nothing here puts `lost` into a room.
+- **Plan W (level links and the world map).** Plan Q is built after its pull request 4 and stands on it; the return
+  note at the top says what it changes and where the two plans meet. The `level.<id>.goal` words its test game adds
+  show once plan Q's pull request 2a is in that game's pin.
 - **Plan W's `automata words --compile`.** Step U was to wire it. Nothing in the checklist needs it, so this plan does
   not: it has no owner again, and the coordinator should give it one.
 - **A Ruken export target, later** (the Owner, 2026-11-15: "We'll eventually add Rukin as an export target. And when
