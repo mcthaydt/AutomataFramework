@@ -3,6 +3,7 @@ import type { GameContent } from '../content/content.ts'
 import { physics } from '../physics/physics.ts'
 import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
 import { joinPlugin } from './join.ts'
+import { DEFAULT_GRAVITY } from './jump-path.ts'
 import { movesPlugin } from './moves.ts'
 import { levelPlugin } from './plugin.ts'
 import { simContent } from './sim-content.ts'
@@ -24,6 +25,11 @@ export interface GameSimOptions {
   readonly players?: readonly number[]
   /** Default `{ x: 0, y: 30 }`: y points down, so this pulls things down the screen, a little harder than Earth. */
   readonly gravity?: { readonly x: number; readonly y: number }
+  /**
+   * For an editor: lets the hero's built-in numbers change while the game plays, by the `tune` command (tune.ts). Only a
+   * game whose hero has `moves` can be tuned. Left out, the sim is exactly the one a game ships.
+   */
+  readonly tunable?: boolean
 }
 
 /**
@@ -37,8 +43,10 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const { content } = options
   const players = content.project.players ?? 1
   const kinds = touchKinds(content)
-  const gravity = options.gravity ?? { x: 0, y: 30 }
+  const gravity = options.gravity ?? { x: 0, y: DEFAULT_GRAVITY }
   const moved = usesMoves(content)
+  if (options.tunable === true && !moved)
+    throw new Error('Only a game whose hero has "moves" can be tuned while it plays.')
   const sim = await createSim({
     seed: options.seed ?? 1,
     content: simContent(content),
@@ -53,7 +61,7 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
       // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
       ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
       // Only a game whose hero has `moves` has the built-in hero, so every other game keeps the sim it had.
-      ...(moved ? [movesPlugin({ gravity })] : []),
+      ...(moved ? [movesPlugin({ gravity, tunable: options.tunable === true })] : []),
       ...(options.plugins ?? []),
     ],
   })

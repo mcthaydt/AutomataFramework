@@ -857,6 +857,12 @@ const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
 type Def = ComponentDef | CommandDef | EventDef | ResourceDef | SystemDef;
 ```
 
+### `DEFAULT_GRAVITY` (const)
+
+```ts
+const DEFAULT_GRAVITY = 30;
+```
+
 ### `DEFAULT_HERO_CONTROLS` (const)
 
 ```ts
@@ -1248,6 +1254,16 @@ function fitWorld(box: {
 }): Fit;
 ```
 
+### `Flight` (interface)
+
+```ts
+interface Flight {
+    readonly points: readonly PathPoint[];
+    readonly up: number;
+    readonly across: number;
+}
+```
+
 ### `followLanguage` (function)
 
 ```ts
@@ -1314,6 +1330,7 @@ interface Game {
     resume(): void;
     heroes(): readonly HeroBox[];
     setVibration(on: boolean): void;
+    tune(values: Readonly<Record<string, number>>): void;
     replay(): Replay;
     stop(): void;
 }
@@ -1395,6 +1412,7 @@ interface GameSimOptions {
         readonly x: number;
         readonly y: number;
     };
+    readonly tunable?: boolean;
 }
 ```
 
@@ -1694,6 +1712,29 @@ type JointKind = (typeof JointKind)[keyof typeof JointKind];
 
 ```ts
 function jsonSchemaFor(type: ContentType): object;
+```
+
+### `JumpPaths` (interface)
+
+```ts
+interface JumpPaths {
+    readonly jump: Flight;
+    readonly airJump?: Flight & {
+        readonly rise: number;
+    };
+    readonly wallJump?: {
+        readonly up: number;
+    };
+    readonly dash?: {
+        readonly across: number;
+    };
+}
+```
+
+### `jumpPaths` (function)
+
+```ts
+function jumpPaths(numbers: MoveNumbers, on: MoveSwitches, gravity?: number): JumpPaths;
 ```
 
 ### `Language` (type)
@@ -2282,6 +2323,21 @@ function moveEvent(name: MoveEventName): EventDef<z.ZodType<MoveEvent>>;
 type MoveEventName = 'walked' | 'jumped' | 'landed' | 'left-ground' | 'air-jumped' | 'wall-slid' | 'wall-jumped' | 'dashed';
 ```
 
+### `MoveInput` (interface)
+
+```ts
+interface MoveInput {
+    readonly dir: -1 | 0 | 1;
+    readonly jumpPressed: boolean;
+    readonly jumpHeld: boolean;
+    readonly dashPressed: boolean;
+    readonly below: boolean;
+    readonly wall: -1 | 0 | 1;
+    readonly vx: number;
+    readonly vy: number;
+}
+```
+
 ### `MoveMode` (const)
 
 ```ts
@@ -2339,6 +2395,23 @@ interface MoveNumbers {
 function moveNumbers(tuning: TuningFile | undefined): MoveNumbers;
 ```
 
+### `moveNumbersOf` (function)
+
+```ts
+function moveNumbersOf(values: Readonly<Record<string, number>>): MoveNumbers;
+```
+
+### `MoveResult` (interface)
+
+```ts
+interface MoveResult {
+    readonly state: MoveState;
+    readonly vx: number;
+    readonly vy: number;
+    readonly events: readonly MoveEventName[];
+}
+```
+
 ### `Moves` (const)
 
 ```ts
@@ -2353,6 +2426,7 @@ function movesPlugin(options: {
         readonly x: number;
         readonly y: number;
     };
+    readonly tunable?: boolean;
 }): PluginDef;
 ```
 
@@ -2376,6 +2450,16 @@ interface MoveState {
     walking: boolean;
     mode: number;
     run: number;
+}
+```
+
+### `MoveSwitches` (interface)
+
+```ts
+interface MoveSwitches {
+    readonly doubleJump: boolean;
+    readonly wallJump: boolean;
+    readonly dash: boolean;
 }
 ```
 
@@ -2483,7 +2567,7 @@ function onlineMessage(status: OnlineStatus): Message | undefined;
 ### `OnlineOptions` (interface)
 
 ```ts
-interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
+interface OnlineOptions extends Omit<GameOptions, 'players' | 'level' | 'tunable'> {
     readonly server: string;
     readonly room?: string;
     readonly level?: string;
@@ -2667,6 +2751,15 @@ function parseRoomOptions(raw: unknown): RoomOptions | undefined;
 
 ```ts
 function parseServerMessage(raw: unknown): ServerMessage | undefined;
+```
+
+### `PathPoint` (interface)
+
+```ts
+interface PathPoint {
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `Phase` (type)
@@ -3877,6 +3970,12 @@ function startOnlineGame(options: OnlineOptions): Promise<OnlineGame>;
 const STEEP = 0.7;
 ```
 
+### `stepMoves` (function)
+
+```ts
+function stepMoves(state: MoveState, input: MoveInput, n: MoveNumbers, on: MoveSwitches, hover: number): MoveResult;
+```
+
 ### `StepResult` (interface)
 
 ```ts
@@ -4240,6 +4339,30 @@ function transform(at?: {
 
 ```ts
 function translationProblems(content: GameContent): readonly Diagnostic[];
+```
+
+### `TuneCommand` (const)
+
+```ts
+const TuneCommand: CommandDef<typeof tunePayload>;
+```
+
+### `tuneCommand` (function)
+
+```ts
+function tuneCommand(tick: number, seq: number, numbers: MoveNumbers): Command;
+```
+
+### `Tuned` (const)
+
+```ts
+const Tuned: ResourceDef<typeof tunedSchema>;
+```
+
+### `tunedNumbers` (function)
+
+```ts
+function tunedNumbers(ctx: SimContext): MoveNumbers | undefined;
 ```
 
 ### `TuningControl` (interface)
@@ -5214,6 +5337,12 @@ const CutsceneSchema: z.ZodType<CutsceneFile, CutsceneFile>;
 type Def = ComponentDef | CommandDef | EventDef | ResourceDef | SystemDef;
 ```
 
+### `DEFAULT_GRAVITY` (const)
+
+```ts
+const DEFAULT_GRAVITY = 30;
+```
+
 ### `DEFAULT_HERO_CONTROLS` (const)
 
 ```ts
@@ -5550,6 +5679,16 @@ function fill(text: string, values: Values | undefined, language: Language): str
 function fitLabel(label: string): string;
 ```
 
+### `Flight` (interface)
+
+```ts
+interface Flight {
+    readonly points: readonly PathPoint[];
+    readonly up: number;
+    readonly across: number;
+}
+```
+
 ### `formatDiagnostic` (function)
 
 ```ts
@@ -5646,6 +5785,7 @@ interface GameSimOptions {
         readonly x: number;
         readonly y: number;
     };
+    readonly tunable?: boolean;
 }
 ```
 
@@ -5842,6 +5982,29 @@ type JointKind = (typeof JointKind)[keyof typeof JointKind];
 
 ```ts
 function jsonSchemaFor(type: ContentType): object;
+```
+
+### `JumpPaths` (interface)
+
+```ts
+interface JumpPaths {
+    readonly jump: Flight;
+    readonly airJump?: Flight & {
+        readonly rise: number;
+    };
+    readonly wallJump?: {
+        readonly up: number;
+    };
+    readonly dash?: {
+        readonly across: number;
+    };
+}
+```
+
+### `jumpPaths` (function)
+
+```ts
+function jumpPaths(numbers: MoveNumbers, on: MoveSwitches, gravity?: number): JumpPaths;
 ```
 
 ### `Language` (type)
@@ -6341,6 +6504,21 @@ function moveEvent(name: MoveEventName): EventDef<z.ZodType<MoveEvent>>;
 type MoveEventName = 'walked' | 'jumped' | 'landed' | 'left-ground' | 'air-jumped' | 'wall-slid' | 'wall-jumped' | 'dashed';
 ```
 
+### `MoveInput` (interface)
+
+```ts
+interface MoveInput {
+    readonly dir: -1 | 0 | 1;
+    readonly jumpPressed: boolean;
+    readonly jumpHeld: boolean;
+    readonly dashPressed: boolean;
+    readonly below: boolean;
+    readonly wall: -1 | 0 | 1;
+    readonly vx: number;
+    readonly vy: number;
+}
+```
+
 ### `MoveMode` (const)
 
 ```ts
@@ -6398,6 +6576,23 @@ interface MoveNumbers {
 function moveNumbers(tuning: TuningFile | undefined): MoveNumbers;
 ```
 
+### `moveNumbersOf` (function)
+
+```ts
+function moveNumbersOf(values: Readonly<Record<string, number>>): MoveNumbers;
+```
+
+### `MoveResult` (interface)
+
+```ts
+interface MoveResult {
+    readonly state: MoveState;
+    readonly vx: number;
+    readonly vy: number;
+    readonly events: readonly MoveEventName[];
+}
+```
+
 ### `Moves` (const)
 
 ```ts
@@ -6412,6 +6607,7 @@ function movesPlugin(options: {
         readonly x: number;
         readonly y: number;
     };
+    readonly tunable?: boolean;
 }): PluginDef;
 ```
 
@@ -6435,6 +6631,16 @@ interface MoveState {
     walking: boolean;
     mode: number;
     run: number;
+}
+```
+
+### `MoveSwitches` (interface)
+
+```ts
+interface MoveSwitches {
+    readonly doubleJump: boolean;
+    readonly wallJump: boolean;
+    readonly dash: boolean;
 }
 ```
 
@@ -6651,6 +6857,15 @@ function parseRoomOptions(raw: unknown): RoomOptions | undefined;
 
 ```ts
 function parseServerMessage(raw: unknown): ServerMessage | undefined;
+```
+
+### `PathPoint` (interface)
+
+```ts
+interface PathPoint {
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `Phase` (type)
@@ -7693,6 +7908,12 @@ const START_LEAD = 2;
 const STEEP = 0.7;
 ```
 
+### `stepMoves` (function)
+
+```ts
+function stepMoves(state: MoveState, input: MoveInput, n: MoveNumbers, on: MoveSwitches, hover: number): MoveResult;
+```
+
 ### `StepResult` (interface)
 
 ```ts
@@ -8028,6 +8249,30 @@ function transform(at?: {
 
 ```ts
 function translationProblems(content: GameContent): readonly Diagnostic[];
+```
+
+### `TuneCommand` (const)
+
+```ts
+const TuneCommand: CommandDef<typeof tunePayload>;
+```
+
+### `tuneCommand` (function)
+
+```ts
+function tuneCommand(tick: number, seq: number, numbers: MoveNumbers): Command;
+```
+
+### `Tuned` (const)
+
+```ts
+const Tuned: ResourceDef<typeof tunedSchema>;
+```
+
+### `tunedNumbers` (function)
+
+```ts
+function tunedNumbers(ctx: SimContext): MoveNumbers | undefined;
 ```
 
 ### `TuningControl` (interface)

@@ -102,6 +102,16 @@ test('the README has a host section that names every member of the port and both
     expect(host, word).toContain(word)
 })
 
+// An editor tunes a playing hero; a game never needs to, and the README says so where it names the one option.
+test('the README names `tunable` once, in the paragraph that says what the editors use it for', () => {
+  expect(readme.split('`tunable').length - 1).toBe(1)
+  const at = readme.indexOf('`tunable')
+  const paragraph = readme.slice(readme.lastIndexOf('\n\n', at), readme.indexOf('\n\n', at))
+  for (const word of ['An editor', 'game.tune', 'tuning file', 'jumpPaths', 'gravity'])
+    expect(paragraph, word).toContain(word)
+  for (const name of ['jumpPaths', 'moveNumbers']) expect(framework, name).toHaveProperty(name)
+})
+
 // A game finds out how to speak in the player's language from here, and copies an example that uses only what headless exports.
 test('the README has a Languages section: the files, the values, the pick, the two checks and the native read', () => {
   const languages = section('## Languages')
