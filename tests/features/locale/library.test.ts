@@ -127,15 +127,17 @@ function sourcesIn(dir: string): string[] {
  * task lands, and the task takes it out; the list is empty when the plan is built, and this goes with it.
  */
 const WAITING_FOR_SCREENS: readonly string[] = [
-  'automata.pause.',
   'automata.done.',
   'automata.problem.',
-  'automata.watch.',
   'automata.back',
   'automata.keep',
   'automata.settings.',
   'automata.saves.',
-  'automata.players.',
+  'automata.players.done',
+  'automata.players.keyboard',
+  'automata.players.name',
+  'automata.players.pad',
+  'automata.players.title',
 ]
 
 /** A quoted `automata.<part>.…`: a whole key, or the start of one when what follows is a `${` (a key built from a variable). */

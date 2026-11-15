@@ -67,6 +67,8 @@ export interface DialogProps {
 
 export interface FrameProps {
   readonly title?: string
+  /** A see-through background (`--automata-ui-scrim`), for a screen over a game that stays in sight. */
+  readonly scrim?: boolean
   readonly back?: { readonly label: string; readonly onpress: () => void }
   /** The body. */
   readonly children: Snippet

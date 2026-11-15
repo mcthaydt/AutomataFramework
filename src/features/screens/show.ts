@@ -15,7 +15,17 @@ const CONTROLS = 'button:enabled, [role="slider"], [role="switch"]'
  */
 export function show<P extends Record<string, unknown>>(
   component: Component<P>,
-  base: ScreenBase & { readonly name: string; readonly onBack?: () => void },
+  base: ScreenBase & {
+    readonly name: string
+    readonly onBack?: () => void
+    /** The gamepad's start button. */
+    readonly onPause?: () => void
+    /**
+     * A screen drawn over the game that takes no keys and lets every touch through but its own buttons': the pause
+     * button and the numbers over the heroes.
+     */
+    readonly overlay?: boolean
+  },
   props: (words: Words) => P,
 ): Screen & {
   /** Makes the props again, after something the screen shows has changed. */
@@ -29,6 +39,7 @@ export function show<P extends Record<string, unknown>>(
   box.className = 'automata-screen'
   box.dataset.screen = base.name
   box.style.cssText = 'position:absolute;inset:0;overflow:hidden'
+  if (base.overlay === true) box.style.pointerEvents = 'none'
   mount.append(box)
 
   let drawn: ReturnType<typeof render> | undefined
@@ -46,24 +57,36 @@ export function show<P extends Record<string, unknown>>(
   }
   say()
   draw()
-  const keys = menuKeys({
-    root: box,
-    ...(base.frames === undefined ? {} : { frames: base.frames }),
-    ...(base.gamepads === undefined ? {} : { gamepads: base.gamepads }),
-    ...(base.onBack === undefined ? {} : { onBack: base.onBack }),
-    onSound: (what) => base.onSound?.(`ui.${what}`),
-  })
+  const keys =
+    base.overlay === true
+      ? undefined
+      : menuKeys({
+          root: box,
+          ...(base.frames === undefined ? {} : { frames: base.frames }),
+          ...(base.gamepads === undefined ? {} : { gamepads: base.gamepads }),
+          ...(base.onBack === undefined ? {} : { onBack: base.onBack }),
+          ...(base.onPause === undefined ? {} : { onPause: base.onPause }),
+          onSound: (what) => base.onSound?.(`ui.${what}`),
+        })
 
-  /** Draws the screen again where it stands: what had the focus has it still, by its place among the controls. */
+  /**
+   * Draws the screen again where it stands: what had the focus has it still, by its place among the controls. A dialog
+   * takes the focus itself when it opens; when it closes the focus goes to the first control.
+   */
   const update = (): void => {
     if (drawn === undefined) return
     const all = (): HTMLElement[] => [...box.querySelectorAll<HTMLElement>(CONTROLS)]
-    const held = box.contains(document.activeElement) ? all().indexOf(document.activeElement as HTMLElement) : -1
+    const dialog = (): Element | null => box.querySelector('[role="alertdialog"]')
+    const active = document.activeElement
+    const inDialog = dialog()?.contains(active) ?? false
+    const held = box.contains(active) ? all().indexOf(active as HTMLElement) : -1
     void unmount(drawn)
     drawn = undefined
     box.replaceChildren()
     draw()
-    if (held >= 0) all()[held]?.focus()
+    if (dialog() !== null) return
+    if (inDialog) all()[0]?.focus()
+    else if (held >= 0) all()[held]?.focus()
   }
   const unfollow = locale.onChange(() => {
     say()
@@ -77,7 +100,7 @@ export function show<P extends Record<string, unknown>>(
       if (destroyed) return
       destroyed = true
       unfollow()
-      keys.destroy()
+      keys?.destroy()
       if (drawn !== undefined) void unmount(drawn)
       drawn = undefined
       box.remove()

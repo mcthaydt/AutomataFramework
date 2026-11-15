@@ -8,7 +8,7 @@
   import type { FrameProps } from './props.ts'
   import { sizeOf } from './size.ts'
 
-  let { title, back, children, actions }: FrameProps = $props()
+  let { title, scrim = false, back, children, actions }: FrameProps = $props()
 
   let frame: HTMLDivElement | undefined = $state()
   let size = $state(sizeOf(0, 0))
@@ -32,7 +32,13 @@
   })
 </script>
 
-<div bind:this={frame} class="frame" data-width={size.width} data-height={size.height}>
+<div
+  bind:this={frame}
+  class="frame"
+  data-scrim={scrim ? '' : undefined}
+  data-width={size.width}
+  data-height={size.height}
+>
   {#if back !== undefined}
     <div class="top"><Button label={back.label} icon="back" onpress={back.onpress} /></div>
   {/if}
@@ -56,6 +62,9 @@
     background: var(--automata-ui-background, canvas);
     color: var(--automata-ui-color, canvastext);
     font: var(--automata-ui-font, 600 18px/1.3 system-ui, sans-serif);
+  }
+  .frame[data-scrim] {
+    background: var(--automata-ui-scrim, rgb(0 0 0 / 0.65));
   }
   .top {
     display: flex;

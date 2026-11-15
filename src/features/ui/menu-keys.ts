@@ -51,6 +51,8 @@ export function menuKeys(options: {
   readonly gamepads?: () => readonly (PadLike | null)[]
   /** Escape, or the gamepad's right button. */
   readonly onBack?: () => void
+  /** The gamepad's start button. Nothing, unless a screen says what it does. */
+  readonly onPause?: () => void
   /** Called on each move and press, for the screen's sounds. */
   readonly onSound?: (what: 'move' | 'press' | 'back') => void
 }): { destroy(): void } {
@@ -109,6 +111,7 @@ export function menuKeys(options: {
       onSound?.('press')
       now.click()
     } else if (press === 'back') goBack()
+    else if (press === 'pause') options.onPause?.()
   })
 
   // Keys whose first press this screen saw, so a repeat of one it did not see is known to be held over.
