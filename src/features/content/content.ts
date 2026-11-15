@@ -58,6 +58,7 @@ export {
   FigureSchema,
   type FigureVariant,
 } from './figure.ts'
+export { FOLDERS_FILE, filesIn, folderManifest, type ListFolder, listFromManifest } from './folders.ts'
 export { Id } from './ids.ts'
 export { jsonSchemaFor } from './json-schema.ts'
 export {
@@ -98,6 +99,7 @@ export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'
 export {
   type ContentRef,
+  type FolderRef,
   levelOrder,
   nextLevel,
   PROJECT_FILE,
@@ -105,7 +107,7 @@ export {
   ProjectSchema,
   parseProject,
 } from './project.ts'
-export { type ListedFile, listContent } from './project-write.ts'
+export { type ListedFile, listContent, withFolders } from './project-write.ts'
 export {
   emptyReadMarks,
   markRead,

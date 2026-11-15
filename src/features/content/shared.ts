@@ -38,6 +38,16 @@ export function isGamePath(path: string, ending: '.json' | '.png'): boolean {
   return path.split('/').every((part) => part !== '' && part !== '.' && part !== '..')
 }
 
+/**
+ * A place in the game that holds files: relative, with `/`, no `.` or `..` part and no ending slash. A name that ends
+ * like a file (`.json`, `.png`, `.wav`) is a file, not a folder.
+ */
+export function isGameFolder(folder: string): boolean {
+  if (folder.includes('\\') || folder.includes(':')) return false
+  if (/\.(?:json|png|wav)$/.test(folder)) return false
+  return folder.split('/').every((part) => part !== '' && part !== '.' && part !== '..')
+}
+
 /** The path of a picture inside the game. */
 export function picturePath(what: string): z.ZodString {
   return z

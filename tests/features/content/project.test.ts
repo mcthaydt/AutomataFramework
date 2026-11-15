@@ -207,3 +207,48 @@ test('nextLevel is the level after, and nothing after the last or for an unknown
   expect(nextLevel(project, 'level-9')).toBeUndefined()
   expect(nextLevel(projectOf(FIXTURE), 'level-1')).toBeUndefined()
 })
+
+const SOUNDS = '\n[[content]]\ntype = "sound"\nfolder = "content/sounds"\n'
+
+test('a block with a folder reads into folders, and content keeps only the paths', () => {
+  const project = projectOf(`${FIXTURE}${SOUNDS}`)
+  expect(project.folders).toEqual([{ type: 'sound', folder: 'content/sounds' }])
+  expect(project.content).toHaveLength(3)
+  expect(project.content.every((entry) => entry.type !== 'sound')).toBe(true)
+})
+
+test('a project with no folder block has no folders key', () => {
+  expect('folders' in projectOf(FIXTURE)).toBe(false)
+})
+
+test('a block with both a path and a folder is refused', () =>
+  expect(
+    problems(
+      `${FIXTURE}\n[[content]]\ntype = "sound"\npath = "content/sounds/a.json"\nfolder = "content/sounds"\n`,
+    ),
+  ).toEqual(['automata.toml: content[3]: Write a path or a folder, not both.']))
+
+test('a block with neither is refused', () =>
+  expect(problems(`${FIXTURE}\n[[content]]\ntype = "sound"\n`)).toEqual([
+    'automata.toml: content[3]: Write where the file is, like path = "content/levels/level-1.json", or a folder, like folder = "content/sounds".',
+  ]))
+
+test('a folder that ends in a slash, climbs out, or names a file is refused', () => {
+  const use = 'Use a folder inside the game, like content/sounds.'
+  for (const folder of ['content/sounds/', '../sounds', '/sounds', 'content/a.json'])
+    expect(problems(`${FIXTURE}\n[[content]]\ntype = "sound"\nfolder = "${folder}"\n`)).toEqual([
+      `automata.toml: content[3].folder: ${use}`,
+    ])
+})
+
+test('the same folder listed twice for one kind is refused', () =>
+  expect(problems(`${FIXTURE}${SOUNDS}${SOUNDS}`)).toEqual([
+    'automata.toml: content[4].folder: This folder is already listed.',
+  ]))
+
+test('one folder listed for two kinds is refused', () =>
+  expect(
+    problems(`${FIXTURE}${SOUNDS}\n[[content]]\ntype = "music"\nfolder = "content/sounds"\n`),
+  ).toEqual([
+    'automata.toml: content[4].folder: This folder is already listed for sounds. A folder holds one kind of file.',
+  ]))

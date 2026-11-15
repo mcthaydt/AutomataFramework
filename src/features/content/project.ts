@@ -5,7 +5,7 @@ import type { Voice } from './diagnostics.ts'
 import { Id } from './ids.ts'
 import { LANGUAGES, type Language, languageCodes } from './messages.ts'
 import { checkData, type Parsed, withoutMark } from './parse.ts'
-import { isGamePath, MessageKey, WORDS_PATTERN } from './shared.ts'
+import { isGameFolder, isGamePath, MessageKey, WORDS_PATTERN } from './shared.ts'
 
 /** The project file's name: it sits at the top of a game's repository and lists everything else. */
 export const PROJECT_FILE = 'automata.toml'
@@ -14,6 +14,13 @@ export const PROJECT_FILE = 'automata.toml'
 export interface ContentRef {
   readonly type: ContentType
   readonly path: string
+}
+
+/** A folder the project lists: every file of this kind directly inside it is part of the game. */
+export interface FolderRef {
+  readonly type: ContentType
+  /** The folder from the game's root, with `/` and no ending one: `content/sounds`. */
+  readonly folder: string
 }
 
 /** The project file once read. */
@@ -47,7 +54,25 @@ export interface Project {
   readonly warnings?: readonly string[] | undefined
   /** The figure shown on the splash, by its id. Left out, the splash is the game's name. */
   readonly splash?: string | undefined
+  /** The files the project lists one by one, each by path. */
   readonly content: readonly ContentRef[]
+  /**
+   * The folders the project lists, in file order; there only when the file has a folder block at all, so a game that
+   * lists none (and its hash) is what it always was.
+   */
+  readonly folders?: readonly FolderRef[] | undefined
+}
+
+/** One `[[content]]` block as it is written: a kind and exactly one of a path and a folder. */
+export interface ContentBlock {
+  readonly type: ContentType
+  readonly path?: string | undefined
+  readonly folder?: string | undefined
+}
+
+/** The project file as it is written, before its blocks are sorted into `content` and `folders`. */
+export interface ProjectInput extends Omit<Project, 'content' | 'folders'> {
+  readonly content: readonly ContentBlock[]
 }
 
 /** What to say for a path that does not stay inside the game. */
@@ -63,13 +88,46 @@ const SOURCE_HINT = `Write one of ${languageCodes}, like source = "es".`
 
 const DONE_HINT = 'Write the event that ends a level, like done = "door.touched".'
 
-const ref = z.strictObject({
-  type: z.enum(KINDS),
-  path: z.string().refine((path) => isGamePath(path, '.json'), PATH_HINT),
-})
+/** What to say for a folder that is not a place inside the game. */
+export const FOLDER_HINT = 'Use a folder inside the game, like content/sounds.'
+
+const BOTH_HINT = 'Write a path or a folder, not both.'
+const NEITHER_HINT =
+  'Write where the file is, like path = "content/levels/level-1.json", or a folder, like folder = "content/sounds".'
+
+const block = z
+  .strictObject({
+    type: z.enum(KINDS),
+    path: z
+      .string()
+      .refine((path) => isGamePath(path, '.json'), PATH_HINT)
+      .optional(),
+    folder: z
+      .string()
+      .refine((folder) => isGameFolder(folder), FOLDER_HINT)
+      .optional(),
+  })
+  .superRefine((entry, ctx) => {
+    if (entry.path !== undefined && entry.folder !== undefined)
+      ctx.addIssue({ code: 'custom', path: [], message: BOTH_HINT })
+    else if (entry.path === undefined && entry.folder === undefined)
+      ctx.addIssue({ code: 'custom', path: [], message: NEITHER_HINT })
+  })
+
+/** Sorts the blocks into the files listed one by one and the folders, each in file order. */
+function sorted(input: ProjectInput): Project {
+  const { content: blocks, ...rest } = input
+  const content: ContentRef[] = []
+  const folders: FolderRef[] = []
+  for (const entry of blocks) {
+    if (entry.path !== undefined) content.push({ type: entry.type, path: entry.path })
+    else if (entry.folder !== undefined) folders.push({ type: entry.type, folder: entry.folder })
+  }
+  return folders.length === 0 ? { ...rest, content } : { ...rest, content, folders }
+}
 
 /** The rules for the project file; unknown keys are refused, and a file may be listed only once. */
-export const ProjectSchema: z.ZodType<Project, Project> = z
+export const ProjectSchema: z.ZodType<Project, ProjectInput> = z
   .strictObject({
     format: z.literal(1),
     name: z.string().min(1).max(80),
@@ -90,7 +148,7 @@ export const ProjectSchema: z.ZodType<Project, Project> = z
       .optional(),
     warnings: z.array(MessageKey).min(1).max(8).optional(),
     splash: Id.optional(),
-    content: z.array(ref).max(1024),
+    content: z.array(block).max(1024),
   })
   .superRefine((project, ctx) => {
     for (const [field, noun] of [
@@ -109,16 +167,35 @@ export const ProjectSchema: z.ZodType<Project, Project> = z
       })
     }
     const seen = new Set<string>()
+    const folderKinds = new Map<string, ContentType>()
     ;(project.content ?? []).forEach((entry, i) => {
-      if (seen.has(entry.path))
+      if (entry.path !== undefined) {
+        if (seen.has(entry.path))
+          ctx.addIssue({
+            code: 'custom',
+            path: ['content', i, 'path'],
+            message: 'This file is already listed.',
+          })
+        seen.add(entry.path)
+      }
+      if (entry.folder === undefined) return
+      const earlier = folderKinds.get(entry.folder)
+      if (earlier === entry.type)
         ctx.addIssue({
           code: 'custom',
-          path: ['content', i, 'path'],
-          message: 'This file is already listed.',
+          path: ['content', i, 'folder'],
+          message: 'This folder is already listed.',
         })
-      seen.add(entry.path)
+      else if (earlier !== undefined)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['content', i, 'folder'],
+          message: `This folder is already listed for ${CONTENT_TYPES[earlier].plural}. A folder holds one kind of file.`,
+        })
+      else folderKinds.set(entry.folder, entry.type)
     })
   })
+  .transform(sorted)
 
 /** The levels in the order they are played: `levels`, else the start level alone. */
 export function levelOrder(project: Project): readonly string[] {
@@ -142,6 +219,7 @@ const VOICE: Voice = {
     content: 'List every content file with a [[content]] block holding a type and a path.',
     'content.type': 'Write the kind of file, like type = "level".',
     'content.path': 'Write where the file is, like path = "content/levels/level-1.json".',
+    'content.folder': 'Write the folder, like folder = "content/sounds".',
   },
 }
 

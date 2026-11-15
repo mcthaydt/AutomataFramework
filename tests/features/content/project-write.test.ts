@@ -5,6 +5,7 @@ import {
   listContent,
   PROJECT_FILE,
   parseProject,
+  withFolders,
 } from '#src/features/content/content.ts'
 import automata from '../../../template/automata.toml?raw'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
@@ -148,4 +149,49 @@ test('ten entries added one after another read back as those ten, in order', () 
   }
   expect(entriesOf(text).slice(-10)).toEqual(added)
   expect(text.startsWith(FIXTURE)).toBe(true)
+})
+
+const SOUNDS = { type: 'sound', folder: 'content/sounds' } as const
+const MUSIC = { type: 'music', folder: 'content/music' } as const
+
+test('withFolders adds one block per new folder at the end, and parseProject reads them back', () => {
+  const next = withFolders(FIXTURE, [SOUNDS, MUSIC])
+  expect(next).toBe(
+    `${FIXTURE}\n[[content]]\ntype = "sound"\nfolder = "content/sounds"\n\n[[content]]\ntype = "music"\nfolder = "content/music"\n`,
+  )
+  const parsed = parseProject(next)
+  expect(parsed.ok && parsed.value.folders).toEqual([SOUNDS, MUSIC])
+})
+
+test('withFolders does not add a folder that is already listed, and gives the same string', () => {
+  const once = withFolders(FIXTURE, [SOUNDS])
+  expect(withFolders(once, [SOUNDS])).toBe(once)
+  expect(withFolders(FIXTURE, [])).toBe(FIXTURE)
+  expect(withFolders(FIXTURE, [SOUNDS, SOUNDS])).toBe(once)
+})
+
+test('withFolders keeps comments, blank lines and a missing last newline', () => {
+  const text = `# My game\n${FIXTURE.trimEnd()}`
+  const next = withFolders(text, [SOUNDS])
+  expect(next.startsWith(text)).toBe(true)
+  expect(next).toBe(`${text}\n\n[[content]]\ntype = "sound"\nfolder = "content/sounds"\n`)
+})
+
+test('withFolders on a file that uses Windows line ends writes Windows line ends', () => {
+  const next = withFolders(FIXTURE.replaceAll('\n', '\r\n'), [SOUNDS])
+  expect(next.endsWith('folder = "content/sounds"\r\n')).toBe(true)
+  expect(next.replaceAll('\r\n', '')).not.toContain('\n')
+})
+
+test('withFolders gives back a text that is not valid TOML, unchanged', () => {
+  expect(withFolders('name = ', [SOUNDS])).toBe('name = ')
+})
+
+test('a file directly inside a listed folder of its kind is already listed', () => {
+  const text = withFolders(FIXTURE, [SOUNDS])
+  expect(listed(text, { type: 'sound', path: 'content/sounds/jump.json' })).toBe(text)
+  // Another kind, or one level down, is not in the folder.
+  expect(typeof listed(text, { type: 'music', path: 'content/sounds/jump.json' })).toBe('string')
+  expect(listed(text, { type: 'music', path: 'content/sounds/jump.json' })).not.toBe(text)
+  expect(listed(text, { type: 'sound', path: 'content/sounds/more/jump.json' })).not.toBe(text)
 })
