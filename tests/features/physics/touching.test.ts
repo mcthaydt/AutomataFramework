@@ -58,18 +58,17 @@ describe('felt', () => {
   })
 
   test('a slope of 45 degrees is ground and no wall, and its normal is what the body stands on', () => {
-    const rises = contact(0.7071, -0.7071)
-    expect(felt([rises])).toEqual({ below: true, left: false, right: false, gx: 0.7071, gy: -0.7071 })
-    const falls = contact(-0.7071, -0.7071)
-    expect(felt([falls])).toEqual({ below: true, left: false, right: false, gx: -0.7071, gy: -0.7071 })
+    const R = Math.SQRT1_2
+    expect(felt([contact(R, -R)])).toEqual({ ...none, below: true, gx: R, gy: -R })
+    expect(felt([contact(-R, -R)])).toEqual({ ...none, below: true, gx: -R, gy: -R })
   })
 
   test('on two grounds the most upright one is what is stood on', () => {
-    expect(felt([contact(0.7071, -0.7071), contact(0, -1)])).toMatchObject({ gx: 0, gy: -1 })
-    expect(felt([contact(0, -1), contact(0.7071, -0.7071)])).toMatchObject({ gx: 0, gy: -1 })
+    expect(felt([contact(Math.SQRT1_2, -Math.SQRT1_2), contact(0, -1)])).toMatchObject({ gx: 0, gy: -1 })
+    expect(felt([contact(0, -1), contact(Math.SQRT1_2, -Math.SQRT1_2)])).toMatchObject({ gx: 0, gy: -1 })
     // A steeper one that is not ground (a 46 degree face) is not counted, and nor is a near miss.
     expect(felt([slope(46), contact(0, -1)])).toMatchObject({ gx: 0, gy: -1 })
-    expect(felt([contact(0.7071, -0.7071, TOUCH_SLOP + 0.01)])).toEqual(none)
+    expect(felt([contact(Math.SQRT1_2, -Math.SQRT1_2, TOUCH_SLOP + 0.01)])).toEqual(none)
   })
 
   test('a ceiling is nothing', () => expect(felt([contact(0, 1)])).toEqual(none))

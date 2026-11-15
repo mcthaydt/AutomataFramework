@@ -12,7 +12,9 @@ test('a code that is not a ShapeKind is refused with the sentence that names the
   expect(() => checkCollider(7, 'physics.collider', 3, 1, 1)).toThrow(
     'entity 7: physics.collider.shape is 3; expected a ShapeKind (0..2)',
   )
-  expect(() => checkCollider(7, 'physics.collider', 19, 1, 1)).toThrow('entity 7: physics.collider.shape is 19')
+  expect(() => checkCollider(7, 'physics.collider', 19, 1, 1)).toThrow(
+    'entity 7: physics.collider.shape is 19',
+  )
 })
 
 test('a slope and a ledge need both sizes positive, as a box does', () => {

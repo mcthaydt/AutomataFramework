@@ -26,6 +26,8 @@ export async function loadSceneMovesGame(start: Start): Promise<GameContent> {
   }
   const loaded = await loadGame(readSceneGame(files))
   if (!loaded.ok)
-    throw new Error(`The scene moves game did not load:\n${loaded.diagnostics.map((d) => d.message).join('\n')}`)
+    throw new Error(
+      `The scene moves game did not load:\n${loaded.diagnostics.map((d) => d.message).join('\n')}`,
+    )
   return loaded.value
 }

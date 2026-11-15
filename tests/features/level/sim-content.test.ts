@@ -10,9 +10,9 @@ import { artGame } from '../../fixtures/content/art.ts'
 import { readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
+import { fixtureFiles } from '../../fixtures/game/read.ts'
 import { loadSceneGame } from '../../fixtures/scene-game/game.ts'
 import { readSceneGame } from '../../fixtures/scene-game/read.ts'
-import { fixtureFiles } from '../../fixtures/game/read.ts'
 import golden from '../../golden/push-crate.json' with { type: 'json' }
 
 // Koota allows 16 live worlds in a process, so every sim a test makes is disposed when it ends.
