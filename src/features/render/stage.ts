@@ -3,6 +3,7 @@
 // thread: its worker probe fetches a `data:` URL, which those CSPs refuse.
 import 'pixi.js/unsafe-eval'
 import { Application, Container, Graphics, loadTextures, Sprite as PixiSprite } from 'pixi.js'
+import type { FeelSpeck } from '../feel/feel.ts'
 import { SKY_COLOR } from '../level/level.ts'
 import type { Art, BackdropArt } from './art.ts'
 import { layerShift, placeCamera, type Shot } from './camera.ts'
@@ -25,6 +26,15 @@ const PIN_RADIUS = 0.1
 /** On a phone a tile is a few pixels, so the dot never goes below this many CSS pixels across its radius. */
 const PIN_MIN_PX = 4
 const ROPE_WIDTH = 2
+/** A speck is never narrower than this many device pixels, so dust on a phone is a dot and not a smear. */
+const SPECK_MIN_DEVICE_PX = 2
+
+/** What the renderer draws of a game's feel: the dust over the level, and how far the level's picture is moved. */
+export interface StageFeel {
+  readonly specks: readonly FeelSpeck[]
+  /** In tiles. The offset is rounded to whole device pixels when it is drawn. */
+  readonly shake: { readonly x: number; readonly y: number }
+}
 
 /** What the renderer needs of the Pixi stage. */
 export interface Stage {
@@ -62,9 +72,10 @@ export interface Stage {
   /**
    * Draws these views, placed by the shot (the whole level when there is none) in the current size, and the links over
    * them: a rope as a dark line two CSS pixels wide, a pin as a dark dot. Until the stage has a size they are kept and
-   * drawn on its first.
+   * drawn on its first. `feel` adds the dust over them, and moves the level, its things, the ropes and the dust by the
+   * shake in whole device pixels; the backdrop, the strip kept free and `fit` do not move.
    */
-  draw(views: readonly View[], links: readonly RopeLine[], shot?: Shot): void
+  draw(views: readonly View[], links: readonly RopeLine[], shot?: Shot, feel?: StageFeel): void
   destroy(): void
 }
 
@@ -146,10 +157,14 @@ export async function createStage(
   const linkLayer = new Container()
   const linkShape = new Graphics()
   linkLayer.addChild(linkShape)
+  // The dust is over the things and the ropes and under the cover, so a speck never reaches the strip kept for the thumbs.
+  const dustLayer = new Container()
+  const dustShape = new Graphics()
+  dustLayer.addChild(dustShape)
   // A camera can show more of the level than fits above the strip kept free at the bottom, so that strip is covered with
   // sky, over everything.
   const cover = new Graphics()
-  app.stage.addChild(backdropLayer, root, linkLayer, cover)
+  app.stage.addChild(backdropLayer, root, linkLayer, dustLayer, cover)
   const backdropLayers = art?.backdrop === undefined ? [] : buildBackdrop(art.backdrop, backdropLayer)
   // The tiles are placed once: the level's tiles do not move. When they are drawn, the boxes that make the same ground
   // are not.
@@ -178,7 +193,7 @@ export async function createStage(
   const stopWatching = density.onChange(() => {
     if (destroyed) return
     app.renderer.resize(Math.max(1, box.w), Math.max(1, box.h), sane(density.now()))
-    if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
+    if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot, last.feel)
   })
   // The last views asked for. A resize wipes the canvas, and a game paused by hand asks for no more frames, so the
   // stage puts this picture back itself.
@@ -187,6 +202,7 @@ export async function createStage(
         readonly views: readonly View[]
         readonly links: readonly RopeLine[]
         readonly shot: Shot | undefined
+        readonly feel: StageFeel | undefined
       }
     | undefined
 
@@ -242,17 +258,28 @@ export async function createStage(
     })
   }
 
-  const paint = (views: readonly View[], links: readonly RopeLine[], shot: Shot | undefined): void => {
+  const paint = (
+    views: readonly View[],
+    links: readonly RopeLine[],
+    shot: Shot | undefined,
+    feel: StageFeel | undefined,
+  ): void => {
     const fit = fitFor(shot)
     // The strip is covered with sky, over everything, so a camera's view cannot show the level through the buttons. A room
     // given on four sides is for a level drawn still, where nothing reaches into it and the backdrop must show there.
     cover.clear()
     if (given === undefined && view === undefined) cover.rect(0, room().h, box.w, box.h - room().h).fill(sky)
     if (art?.backdrop !== undefined) paintBackdrop(art.backdrop, fit, shot !== undefined)
+    // A shake moves the level's picture by whole device pixels, so its edges stay crisp. `fit` stays where it was.
+    const shaken = (tiles: number): number => (Number.isFinite(tiles) ? snap(tiles * fit.scale) : 0)
+    const left = fit.left + shaken(feel?.shake.x ?? 0)
+    const top = fit.top + shaken(feel?.shake.y ?? 0)
     root.scale.set(fit.scale)
-    root.position.set(fit.left, fit.top)
+    root.position.set(left, top)
     linkLayer.scale.set(fit.scale)
-    linkLayer.position.set(fit.left, fit.top)
+    linkLayer.position.set(left, top)
+    dustLayer.scale.set(fit.scale)
+    dustLayer.position.set(left, top)
     const live = new Set<number>()
     for (const v of views) {
       // A ground box the tiles are drawn over is not drawn itself.
@@ -319,6 +346,15 @@ export async function createStage(
           .lineTo(l.x2, l.y2)
           .stroke({ width: ROPE_WIDTH / fit.scale, color: OUTLINE_COLOR })
     }
+    dustShape.clear()
+    // Two device pixels across, at least, in tiles.
+    const least = SPECK_MIN_DEVICE_PX / (fit.scale * app.renderer.resolution)
+    for (const speck of feel?.specks ?? []) {
+      const side = Math.max(speck.size, least)
+      dustShape
+        .rect(speck.x - side / 2, speck.y - side / 2, side, side)
+        .fill({ color: speck.color, alpha: speck.alpha })
+    }
     app.render()
   }
 
@@ -328,14 +364,14 @@ export async function createStage(
       if (destroyed || !(w > 0 && h > 0)) return
       box = { w, h }
       app.renderer.resize(w, h)
-      if (last !== undefined) paint(last.views, last.links, last.shot)
+      if (last !== undefined) paint(last.views, last.links, last.shot, last.feel)
     },
     setInset(px) {
       if (destroyed) return
       // Not above zero, or not a number, is no room at all.
       inset = px > 0 ? px : 0
       given = undefined
-      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
+      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot, last.feel)
     },
     setRoom(next) {
       if (destroyed) return
@@ -346,20 +382,20 @@ export async function createStage(
         bottom: side(next.bottom),
         left: side(next.left),
       }
-      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
+      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot, last.feel)
     },
     setView(next) {
       if (destroyed) return
       const usable =
         next !== undefined && next.scale > 0 && Number.isFinite(next.left + next.top + next.scale)
       view = usable ? next : undefined
-      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
+      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot, last.feel)
     },
     fit: fitFor,
-    draw(views, links, shot) {
+    draw(views, links, shot, feel) {
       if (destroyed) return
-      last = { views, links, shot }
-      if (box.w > 0) paint(views, links, shot)
+      last = { views, links, shot, feel }
+      if (box.w > 0) paint(views, links, shot, feel)
     },
     destroy() {
       if (destroyed) return

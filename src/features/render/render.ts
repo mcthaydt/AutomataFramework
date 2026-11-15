@@ -1,10 +1,11 @@
 // The render feature's entry: the scene drawn from the sim's deltas with Pixi. The scene and the fit are plain
 // functions of numbers; only `createRenderer` needs a page.
+import type { FeelFrame, FeelPlace } from '../feel/feel.ts'
 import type { RenderDelta } from '../sim/sim.ts'
 import type { Art } from './art.ts'
 import { blendShot, easeShot, frameHeroes, type Shot } from './camera.ts'
 import type { Density } from './density.ts'
-import { createScene } from './scene.ts'
+import { createScene, type RopeLine, type View } from './scene.ts'
 import { createStage } from './stage.ts'
 
 /**
@@ -30,13 +31,30 @@ export interface HeroBox {
   readonly h: number
 }
 
+/** What the stage was given for one picture: its views and links, and the camera's shot. */
+interface Picture {
+  readonly views: readonly View[]
+  readonly links: readonly RopeLine[]
+  readonly shot: Shot | undefined
+}
+
 /** What `createRenderer` gives back. */
 export interface Renderer {
   readonly canvas: HTMLCanvasElement
   /** Takes the render delta of one sim step. Call once per step. The first one is drawn at once. */
   apply(delta: RenderDelta): void
-  /** Draws the world posed between the last two steps: `alpha` 0 is the earlier, 1 the latest. */
-  draw(alpha: number): void
+  /**
+   * Draws the world posed between the last two steps: `alpha` 0 is the earlier, 1 the latest. `feel` adds the dust and
+   * the shake of a game's feel (`createFeel`'s frame). While `feel.freeze` is above 0 the picture is held: after the
+   * first frame of a freeze, which shows the newest step, the same views are drawn again with the new dust, however
+   * many steps the sim takes meanwhile.
+   */
+  draw(alpha: number, feel?: FeelFrame): void
+  /**
+   * A thing's box in tiles: as of the newest step when the scene has it, else as of the last picture drawn (a thing
+   * taken away in the newest step). `undefined` for a thing that was never drawn.
+   */
+  place(sid: number): FeelPlace | undefined
   /**
    * Keeps this many CSS pixels at the bottom free of the world, so the touch buttons never sit on the play area. The
    * world is fitted into what is left above. Default 0.
@@ -49,7 +67,7 @@ export interface Renderer {
   look(at: { readonly x: number; readonly y: number; readonly zoom: number } | undefined): void
   /**
    * Every hero (a thing whose sprite names a player above 0) as its box on the canvas in CSS pixels, `x` and `y` being
-   * its top left, lowest player first. As of the last picture drawn.
+   * its top left, lowest player first. As of the last picture drawn, a held one included, without any shake.
    */
   heroes(): readonly HeroBox[]
   /** Removes the canvas, stops watching the mount and frees Pixi. Safe to call twice. */
@@ -103,6 +121,10 @@ export async function createRenderer(options: {
   // Where the camera was going at the last step, so a resync can tell a restore from a small correction.
   let aim: Shot | undefined
   let drawnAt = 1
+  // What the stage was last given when the picture moved on, and whether the last picture drawn was a held one: while a
+  // freeze lasts the stage is given these again, so the picture holds and only the dust moves.
+  let held: Picture | undefined
+  let holding = false
   const watcher = new ResizeObserver(refit)
   watcher.observe(mount)
 
@@ -142,9 +164,18 @@ export async function createRenderer(options: {
     current = next
   }
 
-  const show = (alpha: number): void => {
-    drawnAt = alpha
-    stage.draw(scene.views(alpha), scene.links(alpha), shotAt(alpha))
+  const show = (alpha: number, feel?: FeelFrame): void => {
+    const frozen = feel !== undefined && feel.freeze > 0
+    // After the first frame of a freeze the same picture is drawn again. The first frame is drawn from the sim as it is
+    // (a spark taken in that step is already gone) and becomes the held picture; `drawnAt` is the moment it was posed.
+    let picture = frozen && holding ? held : undefined
+    if (picture === undefined) {
+      drawnAt = alpha
+      held = { views: scene.views(alpha), links: scene.links(alpha), shot: shotAt(alpha) }
+      picture = held
+    }
+    holding = frozen
+    stage.draw(picture.views, picture.links, picture.shot, feel)
   }
   return {
     canvas: stage.canvas,
@@ -155,18 +186,23 @@ export async function createRenderer(options: {
       started = true
       show(1)
     },
-    draw(alpha) {
+    draw(alpha, feel) {
       started = true
-      show(alpha)
+      show(alpha, feel)
+    },
+    place(sid) {
+      const now = scene.views(1).find((v) => v.sid === sid) ?? held?.views.find((v) => v.sid === sid)
+      return now === undefined ? undefined : { x: now.x, y: now.y, w: now.w, h: now.h }
     },
     setInset: (px) => stage.setInset(px),
     look(at) {
       looking = at
     },
     heroes() {
-      const fit = stage.fit(shotAt(drawnAt))
-      return scene
-        .views(drawnAt)
+      // While a freeze holds the picture, the heroes are where the held picture shows them.
+      const picture = holding ? held : undefined
+      const fit = stage.fit(picture === undefined ? shotAt(drawnAt) : picture.shot)
+      return (picture === undefined ? scene.views(drawnAt) : picture.views)
         .flatMap((v) =>
           v.sprite !== undefined && v.sprite.player > 0 ? [{ v, player: v.sprite.player }] : [],
         )
