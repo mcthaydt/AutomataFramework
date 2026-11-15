@@ -76,12 +76,12 @@ package.
 
 Each stage is a fresh session on its own branch; the handoff is committed docs.
 
-1. **Spec**: coordinator and Owner, superpowers brainstorming, written to `docs/superpowers/specs/<date>-<topic>-design.md`.
+1. **Spec**: Opus, medium effort, superpowers brainstorming, with the Owner, written to `docs/superpowers/specs/<date>-<topic>-design.md`.
 2. **Plan**: Fable 5.2, medium effort, writing-plans, written to `docs/superpowers/plans/<date>-<topic>.md`.
 3. **Plan audit**: Opus, medium effort, the audit prompt, written to `docs/superpowers/audits/<date>-<cycle>-plan-audit.md`.
 4. **Execution**: Sonnet, high effort, executing-plans, the implementation prompt.
 5. **Implementation audit**: Opus, medium effort, written to `docs/superpowers/audits/<date>-<cycle>-implementation-audit.md`.
-6. **Fixes**: Sonnet, high effort.
+6. **Fixes**: Sonnet, xhigh effort.
 7. **Owner review.**
 
 Every stage reads the spec, the plan, the audits and [`docs/superpowers/progress.md`](docs/superpowers/progress.md),
@@ -104,8 +104,9 @@ session on Sonnet at xhigh effort, before the next step starts.
 
 1. **Plain-words check** (Opus, medium effort): every word passes the drunk-grandma test.
 2. **Design pass** (Fable, medium effort): every screen, device and orientation, for layout, touch size and polish.
-3. **End-to-end check**: walk every real user journey from first open to playing the result; fully usable, nothing
-   missing, no dead ends.
+3. **End-to-end check** (Opus, medium effort): walk every real user journey from first open to playing the result, and
+   check that every action has its opposite and a visible way back (open/close, hide/show, undo/redo, cancel, leave and
+   return) at every size; fully usable, nothing missing, no dead ends.
 4. **Second visual look** (Opus, xhigh effort): a fresh, harsh look after all the fixes.
 5. **Owner review.**
 
@@ -147,6 +148,16 @@ session on Sonnet at xhigh effort, before the next step starts.
 - Branches: `main` plus branches with CI running, five at most.
 - **Tests run only in GitHub-hosted CI, never locally.** Verify through the pull request's CI runs.
 - **Fast CI.** See the section below.
+- **Fix every finding.** A fix round fixes all findings from its report, low ones included, in one round. Never fix
+  only the high and medium ones and leave the rest for the Owner to ask about. The one exception is a finding that needs
+  an Owner choice: ask, with options, and fix everything else meanwhile.
+- **Owner questions that block work** go to the Owner right away, in plain words, with options and a recommendation.
+  Never default an Owner decision.
+- **Roadmap: editor-driven slices** (`docs/roadmap.md` in AutomataFramework). Each slice is one editor, in this order:
+  World, Characters, Feel, Sound, Story. Per slice: build what it needs in AutomataFramework, mockups (visual review),
+  the editor, its tests, then the website demo. **Mockups first is a hard stop:** no editor code until the Owner
+  approves the mockups.
+- **A flaky test seen twice is fixed before other work.** Batch pushes: each push cancels the running CI.
 
 ## Fast CI
 
