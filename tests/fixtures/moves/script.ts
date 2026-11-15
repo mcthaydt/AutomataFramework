@@ -16,7 +16,7 @@ const ONE: readonly (readonly [number, Held])[] = [
   [60, []],
   [100, [J]],
   [101, []],
-  // A tapped jump, and a press four ticks before it lands: the jump comes on the landing.
+  // A tapped jump, and a press as it comes down: the air jump is still there to spend, so it is a double jump.
   [130, [J]],
   [131, []],
   [150, [J]],
@@ -30,7 +30,7 @@ const ONE: readonly (readonly [number, Held])[] = [
   [300, [R]],
   [404, [R, J]],
   [405, [R]],
-  // A jump onto the crate, and a jump from it.
+  // A jump toward the crate, and a second press in the air above it: another double jump.
   [479, [R, J]],
   [480, [R]],
   [526, [R, J]],

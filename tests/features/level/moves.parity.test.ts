@@ -79,7 +79,10 @@ test('the moves game plays as its script says, and matches its golden', async ()
     trace,
   ).toEqual(MOVE_EVENTS.map((name) => `${name}:true`))
   expect(n('jumped'), trace).toBeGreaterThanOrEqual(5)
-  expect(n('air-jumped'), trace).toBe(1)
+  // Three presses come with the air jump to spend: the double jump at tick 226, and the two that follow a tapped jump
+  // or a jump off the crate (150, 526) while the hero is still in the air. A press just before a landing, with no air
+  // jump left to spend, jumps on the landing: move-step's own tests hold that.
+  expect(n('air-jumped'), trace).toBe(3)
   expect(n('wall-jumped'), trace).toBe(3)
   expect(n('dashed'), trace).toBe(2)
   expect(n('wall-slid'), trace).toBeGreaterThanOrEqual(1)

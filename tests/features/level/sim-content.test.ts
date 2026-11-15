@@ -76,8 +76,24 @@ test('the list of words files is not hashed either', async () => {
   const given = simContent(full)
   expect(given.project.content.some((entry) => entry.type === 'messages')).toBe(false)
   // Every other entry stays, in its order; the sound, music, cue and art files leave with the words (plans S and A).
-  const left = new Set(['messages', 'sound', 'music', 'cues', 'figure', 'backdrop'])
+  const left = new Set(['messages', 'sound', 'music', 'cues', 'figure', 'backdrop', 'feel'])
   expect(given.project.content).toEqual(full.project.content.filter((entry) => !left.has(entry.type)))
+})
+
+test('changing a feel file moves no hash, and the sim is given none', async () => {
+  const full = await loadFull()
+  expect(Object.keys(full.feels ?? {}).length).toBeGreaterThan(0) // not vacuous: the game has feel files
+  const given = simContent(full)
+  expect(given.feels).toBeUndefined()
+  expect(given.project.content.some((entry) => entry.type === 'feel')).toBe(false)
+  const before = await simOf(full)
+  const shake = JSON.parse(fullGameFiles['content/feels/crate-shake.json'] ?? '') as {
+    shake: { strength: number }
+  }
+  shake.shake.strength = 0.3
+  const after = await simOf(await loadFull({ 'content/feels/crate-shake.json': JSON.stringify(shake) }))
+  expect(after.contentHash).toBe(before.contentHash)
+  expect(after.hash()).toBe(before.hash())
 })
 
 test('changing a level still moves the content hash', async () => {

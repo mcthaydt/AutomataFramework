@@ -3,8 +3,8 @@ import type { ContentType, GameContent } from '../content/content.ts'
 
 /**
  * The kinds of file the sim is not given: the words a player reads (`messages`), what a game sounds like (`sound`,
- * `music`, `cues`) and how it looks (`figure`, `backdrop`). None of them says what happens, so a word, a sound or a
- * colour changed in a file must not move a hash, stop a replay or keep two players out of one room. (Which clip a
+ * `music`, `cues`) and how it looks and feels (`figure`, `backdrop`, `feel`). None of them says what happens, so a
+ * word, a sound, a colour or a shake changed in a file must not move a hash, stop a replay or keep two players out of one room. (Which clip a
  * character plays is its `character` file's, and stays in.) A plan that takes another kind out of the sim adds it
  * here and to the `GameContent` maps it takes out below: a kind's maps and its files' entries in the project's list
  * always leave together.
@@ -16,10 +16,11 @@ const LEFT_OUT: ReadonlySet<ContentType> = new Set<ContentType>([
   'cues',
   'figure',
   'backdrop',
+  'feel',
 ])
 
 /**
- * The content the sim is given, and so hashes: everything but the words, the sounds and the art. Both their maps
+ * The content the sim is given, and so hashes: everything but the words, the sounds, the art and the feel. Both their maps
  * and their files' entries in `project.content` leave, because that list names every file by path and is hashed:
  * keeping it would move every hash when a language or a sound is added or dropped (the spec's "sound never moves a
  * hash"). The very same object comes back when the game lists none of these kinds, so a game that has none hashes as
@@ -35,7 +36,8 @@ export function simContent(content: GameContent): GameContent {
     content.music === undefined &&
     content.cues === undefined &&
     content.figures === undefined &&
-    content.backdrops === undefined
+    content.backdrops === undefined &&
+    content.feels === undefined
   )
     return content
   // The team's language is not what happens in the game, so `source` goes with the words.
@@ -47,6 +49,7 @@ export function simContent(content: GameContent): GameContent {
     cues: _cues,
     figures: _figures,
     backdrops: _backdrops,
+    feels: _feels,
     ...kept
   } = content
   return deepFreeze({
