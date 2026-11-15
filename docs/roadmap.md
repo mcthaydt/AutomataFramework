@@ -4,8 +4,9 @@ The order we build AutomataFramework in. One page, read top to bottom.
 
 ## The rules
 
-**We finish slice 3, and only slice 3.** (Proposed, for the owner to confirm: slice 3 is the shell and World editor
-mockups, approved.) Everything below slice 3 is marked **Later**. Nothing marked Later starts until slice 3 is done
+**We finish slice 3, and only slice 3.** The owner, 2026-11-15: slice 3, the shell and World editor mockups, approved,
+is the one slice; everything after it is tagged and taken off main until its turn (AutomataFramework #153, Editors
+#54). Everything below slice 3 is marked **Later**. Nothing marked Later starts until slice 3 is done
 and the owner says go.
 
 1. **One thing at a time.** There is one **Now**. Nothing else is built until it is done.
@@ -58,21 +59,24 @@ order. **Waiting** is approved, but its turn has not come. **Later** is after sl
 
 ## Slice 4: A new game passes the game checklist
 
-1. Done: the spec, the plan and its audit, parts 1, 2a and 2b: Try again, How to play, the goal line, the score and
-   best score, Delete all my saves, Back, the loading bar (#137 to #148), and the pause note (#151).
-2. Later: part 3, the starter game on the new game flow. It changes the starter game's recorded play, so the owner
+1. Done: the spec, the plan and its audit, and the pause note (#137, #139, #140, #151).
+2. Later: parts 1, 2a and 2b: Try again, How to play, the goal line, the score and best score, Delete all my saves,
+   Back, the loading bar (#143, #145, #148). Built, then taken off main by #153; the tag keeps them.
+3. Later: part 3, the starter game on the new game flow. It changes the starter game's recorded play, so the owner
    sees it before and after.
-3. Later: parts 4 and 5, then the audit and its fixes.
+4. Later: parts 4 and 5, then the audit and its fixes.
 
 ## Slice 5: The demo plays three levels with a door, for one or two players
 
-1. Later: the levels and rules (Examples #41, open). It changes five recorded plays, so the owner sees them first.
+1. Later: the levels and rules. Examples #41 was closed on 2026-11-15 (last commit `1defa49`); it is picked up from
+   there when its turn comes. It changes five recorded plays, so the owner sees them first.
 2. Later: the page half: changing level, the teaching steps, the journeys.
 
 ## Slice 6: The demo's feel and story
 
 1. Done: the feel spec, plan and audit (#105, #111, #115); the story plan and audit (#58, #60).
-2. Later: the feel build (#120, open) and the story build (#64, open), then their audits and fixes.
+2. Later: the feel build and the story build. Pull requests #120 and #64 were closed on 2026-11-15 (last commits
+   `2f82722` and `fc909a2`); they are rebuilt from their plans when their turn comes, then audited and fixed.
 3. Later: in the demo, dust when the hero lands, a shake and a short freeze; the keeper talks and a cutscene plays.
 
 ## Slice 7: The demo's sound
@@ -96,36 +100,39 @@ order. **Waiting** is approved, but its turn has not come. **Later** is after sl
 
 ## Slice 10: The editor shell, built
 
-1. Done: a level drawn still, at a view (#95, #102); the editors' colours, fonts and words, levels in the game's own
-   art, Approve kept still (Editors #21, #25, #27).
-2. Done, being taken back: every level change, and the room with its panels (Editors #28, #45). Editors #50 (open)
-   takes them back until the mockups are approved.
+1. Done: the redesign's spec, plan and audits (Editors #15 to #17, #20, #23).
+2. Later: a level drawn still, at a view (#95, #102), and the editors' colours, fonts and words, levels in the game's
+   own art, Approve kept still (Editors #18, #21, #25 to #27). Built, then taken off main by #153 and Editors #54; the
+   tag keeps them. Every level change and the room with its panels (Editors #28, #45) were taken off by Editors #50.
 3. Later: the editors' old look. Editors #12 was closed on 2026-11-15 (last commit `e0648b0`); it is not rebuilt, the
    approved mockups replace it.
 4. Later: the editor plans redone from the approved mockups, audited, then the shell built.
 
 ## Slice 11: The demo's real art, made in the builders
 
-1. Done: the figure builder's spec, plan and audit (Editors #29, #36, #43); the rigged figures spec, plan, audit and
-   part 0 (#104, #109, #117, #119).
-2. Done: the environment builder's spec (Editors #31); Scenes, ground painted with photo materials: plans, parts A
-   to D, the audit and its fixes (Editors #37, #42; #113, #116, #128 to #147).
+1. Done: the figure builder's spec, plan and audit (Editors #29, #36, #43); the rigged figures spec, plan and audit
+   (#104, #109, #117).
+2. Done: the environment builder's spec (Editors #31); the Scenes plans, audit and implementation audit (Editors #37,
+   #42; #113, #116, #146).
 3. Waiting: the Characters mockups, drawn in Editors #34, reviewed the same way as slice 3.
-4. Later: rigged figures part 1. Pull request #124 was closed on 2026-11-15 (last commit `150260a`); it is rebuilt from
+4. Later: rigged figures part 0, `automata add` (#119), and Scenes, ground painted with photo materials, parts A to D
+   and the audit's fixes (#128, #134, #138, #141, #147). Built, then taken off main by #153; the tag keeps them.
+5. Later: rigged figures part 1. Pull request #124 was closed on 2026-11-15 (last commit `150260a`); it is rebuilt from
    its plan, `plans/2026-11-15-rigged-figures.md`, when its turn comes. Then parts 2 to 5.
-5. Later: Scenes fix I1. It changes the scene pictures' record, so the owner sees it first.
-6. Later: the figure builder and the environment builder.
-7. Later: an agent draws every figure and scene in the builders, the owner finishes them, and the owner plays the demo
+6. Later: Scenes fix I1. It changes the scene pictures' record, so the owner sees it first.
+7. Later: the figure builder and the environment builder.
+8. Later: an agent draws every figure and scene in the builders, the owner finishes them, and the owner plays the demo
    end to end and says it is fine.
 
 ## Slice 12: The rest of the editors
 
-1. Done: the Feel editor's spec and plan audit (Editors #30, #40), and live move numbers for it (#107, #114, #122,
+1. Done: the Feel editor's spec and plan audit (Editors #30, #40); live move numbers' plan and audits (#107, #114,
    #130).
 2. Done: the Sound editor's spec, plan and audit (Editors #33, #39, #44); the Story editor's spec, plan audit and fixes
    (Editors #32, #41, #46, #48).
-3. Later: World: open a level, change it on an iPad, save it into the game.
-4. Later: Feel with Tuner, then Sound, then Story, each with its mockups approved first.
+3. Later: live move numbers (#122). Built, then taken off main by #153; the tag keeps it.
+4. Later: World: open a level, change it on an iPad, save it into the game.
+5. Later: Feel with Tuner, then Sound, then Story, each with its mockups approved first.
 
 ## Before launch
 
@@ -150,4 +157,4 @@ Later.
 
 Later. Nothing here is built until the owner says where it goes.
 
-1. The feel and story builds (#120, #64) are open: finish merging them now, or pause them until slice 6?
+1. Nothing yet.
