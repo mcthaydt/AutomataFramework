@@ -5,6 +5,7 @@ import type { PadLike } from '../input/input.ts'
 import type { Locale } from '../locale/locale.ts'
 
 export { show } from './show.ts'
+export { SPLASH_MS, splashScreen } from './splash.ts'
 export { warningsFor, warningsScreen } from './warnings.ts'
 
 /** A screen on the page. `destroy` takes it off and is safe to call twice. */
