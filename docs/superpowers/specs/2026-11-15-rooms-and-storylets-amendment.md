@@ -21,6 +21,10 @@ Owner says this page is fine, it is a proposal.
 
 ## 1. Rooms that join edge to edge
 
+**Replaced (2026-11-15)** by the level links and world map spec's second version
+(`specs/2026-11-15-level-links-and-world-map-design.md`), which takes this part in with the Owner's answers: joins
+come from where levels sit on the map, and a joined place plays as one seamless world. Read that spec, not this part.
+
 The world map spec joins levels by doors only and lists "levels that touch edge to edge" as a non-goal. The Owner:
 levels can join edge to edge. That non-goal is removed, and the spec gains these.
 

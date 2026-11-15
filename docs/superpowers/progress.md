@@ -2,6 +2,24 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 13: level links and the world map (values on things, doors and edges between levels, level pictures)
+
+Spec: [`specs/2026-11-15-level-links-and-world-map-design.md`](specs/2026-11-15-level-links-and-world-map-design.md),
+second version. From the LDtk report (picks 3, 4, 8 and 10). The Owner (2026-11-15): values and links on things, the
+world map, doors between levels, level pictures and a public list of format changes; then levels that also join edge to
+edge (for rooms put together from a seed later) and all story as facts and conditions
+(`specs/2026-11-15-rooms-and-storylets-amendment.md`). The first version was closed pull request #149 (`c449fca`).
+
+Overall: **10%** (stage 1 done, the Owner's five answers taken in; stages 2 to 7 follow)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Second version done (2026-11-15), 100%. The Owner's answers: edge joins come from where levels sit on the map (LDtk's way); a joined place plays as one seamless world, everything crossing, the whole place running at once (streaming later); what was done for good is remembered, as facts the story can read; the test game gets a third level joined by an edge; all twelve calls fine | the spec |
+| 2. Plan | Next: Fable 5.2, medium, from this spec | |
+| 3 to 7 | Not started | |
+
+Nothing was run: this stage wrote a document.
+
 ## Cycle 12: the game checklist in every game (plan Q)
 
 Spec: [`specs/2026-11-15-game-checklist-design.md`](specs/2026-11-15-game-checklist-design.md). The Owner (2026-11-15):
