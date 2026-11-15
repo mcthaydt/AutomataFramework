@@ -6,7 +6,7 @@ import { expect, test } from 'vitest'
 const ci = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8')
 const jobs = ci.slice(ci.indexOf('\njobs:'))
 const start = jobs.indexOf('\n  online:')
-const online = jobs.slice(start, jobs.indexOf('\n  # The same pictures', start))
+const online = jobs.slice(start, jobs.indexOf('\n  # The package', start))
 
 test('the online job builds the package, installs all three browsers and runs the journeys', () => {
   expect(online).toContain('pnpm exec playwright install --with-deps chromium webkit firefox')
@@ -18,11 +18,8 @@ test('the online job never writes to the repository', () => {
   expect(online).not.toContain('contents: write')
 })
 
-test('its pictures are kept as screens-online, which the screens job waits for and copies', () => {
+test('its pictures are kept as the screens-online artifact', () => {
   expect(online).toContain('name: screens-online')
-  expect(jobs.slice(jobs.indexOf('\n  screens:'), jobs.indexOf('\n  package:'))).toContain(
-    'needs: [engines, online, create-play]',
-  )
 })
 
 test('the journeys have a project of their own, which the fast Node one leaves out', () => {
