@@ -146,11 +146,27 @@ session on Sonnet at xhigh effort, before the next step starts.
 - Refresh sessions after 90 minutes.
 - Branches: `main` plus branches with CI running, five at most.
 - **Tests run only in GitHub-hosted CI, never locally.** Verify through the pull request's CI runs.
-- **Affected tests while working, the full suite before merge** (the Owner, 2026-11-15). Open the pull request as a
-  draft: while it is a draft, CI runs only the Node and browser tests the change reaches, leaves out the `online` and
-  packing jobs unless the change touches them, and stops at the first failure, so a round takes minutes. Mark it ready
-  for review when the work is done; that run is the whole suite, the browsers in six shards, and only a green full run
-  is merged. The `full-tests` label asks for the whole suite on a draft.
+- **Fast CI.** See the section below.
+
+## Fast CI
+
+Two speeds (the Owner, 2026-11-15), set up in `.github/workflows/ci.yml`; its `plan` job reads the pull request's
+changed files and decides.
+
+- **A draft gets the quick run.** Only the Node and browser tests the change reaches (Vitest
+  `--changed=origin/main --bail=1`, so it stops at the first failure); the `online` job only when the networking or its
+  journeys changed, or the pull request has the `screenshots` label (those journeys take the pictures); the packing and
+  `create` jobs only when the command, the template, the skills or the install checks changed. Every job's name starts
+  with `quick ` on a draft, so a quick run never counts as a required check.
+- **The full run gates merge.** Marking the pull request ready for review, every push to `main`, the `full-tests` label,
+  or a change to the build or test setup (`package.json`, the lockfile, `.pnpmfile.cjs`, any `*.config.*`,
+  `tsconfig*.json`, `tests/fixtures/`, `.github/`) runs everything, the browsers in six shards (`browsers (<engine>
+  <n>/2)`), each engine's `engines (<engine>)` check green only when both its shards passed. Only that run's checks
+  have the required names.
+- **Always:** checkout with `fetch-depth: 0` (so `origin/main` is there to compare with), installs and Playwright
+  browsers cached, and a new push cancels the run it replaces.
+- **How to use it:** open the pull request as a draft, push as often as you like, and mark it ready for review when the
+  work is done. Only a green full run is merged.
 
 ## Structure
 
