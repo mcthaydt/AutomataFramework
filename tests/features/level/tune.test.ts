@@ -96,6 +96,26 @@ describe('a tune', () => {
     }
   })
 
+  test('a tune to other numbers in mid-air leaves the hero and what it carries as they were', async () => {
+    const tuned = await plain(true)
+    const other = await plain(true)
+    const carried = (sim: Sim) => {
+      const m = hero(sim)?.get(Moves)
+      return { face: m?.face, airJumps: m?.airJumps, dash: m?.dash, lock: m?.lock, rest: m?.rest }
+    }
+    for (let t = 0; t < 60; t++) {
+      // The jump was pressed on tick 40 and the hero is still rising on tick 50, where the numbers change.
+      const over = { 'jump-speed': 16, 'dash-ticks': 20, 'walk-speed': 9 }
+      tuned.step([...jumpAt(t), ...(t === 50 ? [tune(t, 1, over)] : [])])
+      other.step(jumpAt(t))
+      if (t === 50) {
+        expect(hero(tuned)?.get(Body).vy, 'in the air').toBeLessThan(0)
+        expect(hero(tuned)?.get(Transform)).toEqual(hero(other)?.get(Transform))
+        expect(carried(tuned)).toEqual(carried(other))
+      }
+    }
+  })
+
   test('on the tick jump is pressed: the hero leaves at the new speed, and jumped is said once', async () => {
     const sim = await plain(true)
     for (let i = 0; i < 40; i++) sim.step([])

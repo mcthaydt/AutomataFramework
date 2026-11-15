@@ -17,7 +17,8 @@ const DT = 1 / 60
 /**
  * How much of a tick's pull Rapier counts in the place it moves a body to. Rapier steps a tick as four substeps, each
  * moving the body by the speed it has then, so over the tick the place moves by the speed the tick began with plus
- * (1 + 2 + 3 + 4) / 16 = 5/8 of a tick's pull times the tick. The speed itself gains the whole pull.
+ * (1 + 2 + 3 + 4) / 16 = 5/8 of a tick's pull times the tick. The speed itself gains the whole pull. Four is Rapier's own
+ * default (`numSolverIterations`), which the sim never sets: if it ever does, this number and the parity test move with it.
  */
 const SUBSTEP_PULL = 5 / 8
 

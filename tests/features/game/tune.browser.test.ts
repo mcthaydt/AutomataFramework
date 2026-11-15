@@ -1,11 +1,18 @@
 // An editor tunes a playing game (plan G, task 4): `game.tune` changes the hero's built-in numbers from the next tick,
 // as one `tune` command in the recording. In each real browser, with real key events and hand-driven frames.
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { Player, verifyReplay } from '#src/features/commands/commands.ts'
-import { MOVE_NUMBERS } from '#src/features/content/content.ts'
+import {
+  controlsCommand,
+  createRecorder,
+  Player,
+  type Replay,
+  verifyReplay,
+} from '#src/features/commands/commands.ts'
+import { MOVE_NUMBERS, moveNumbersOf } from '#src/features/content/content.ts'
 import { type Game, startGame } from '#src/features/game/game.ts'
+import { watchReplay } from '#src/features/game/watch.ts'
 import { testHost } from '#src/features/host/host.ts'
-import { createGameSim } from '#src/features/level/level.ts'
+import { createGameSim, tuneCommand } from '#src/features/level/level.ts'
 import { Transform } from '#src/features/physics/physics.ts'
 import { manualFrames } from '../../fixtures/game/frames.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
@@ -144,4 +151,49 @@ test('a game not started with tunable writes no tunable key into its replay', as
   const { frames, g } = await start(false)
   run(frames, 5)
   expect(g.replay().meta.tunable).toBeUndefined()
+})
+
+/** A play of a tunable game as the framework records it: a tune at tick 5, then a held jump from tick 10 to tick 40. */
+async function recordedTunedPlay(): Promise<Replay> {
+  const content = await loadFixtureGame(movesFiles({}))
+  const sim = await createGameSim({ content, tunable: true })
+  try {
+    const recorder = createRecorder(sim, { meta: { level: 'level-1', players: '1', tunable: 'true' } })
+    for (let t = 0; t < 120; t++) {
+      recorder.step(
+        t === 5
+          ? [tuneCommand(t, 0, moveNumbersOf({ 'jump-speed': 20 }))]
+          : t === 10
+            ? [controlsCommand(t, 1, 1, ['jump', 'right'])]
+            : t === 40
+              ? [controlsCommand(t, 1, 2, [])]
+              : [],
+      )
+    }
+    return recorder.replay()
+  } finally {
+    sim.dispose()
+  }
+}
+
+test('watchReplay plays a tuned recording to its last hash, because its meta says tunable', async () => {
+  const replay = await recordedTunedPlay()
+  expect(replay.meta.tunable).toBe('true')
+  const frames = manualFrames()
+  const watch = await watchReplay({
+    content: await loadFixtureGame(movesFiles({})),
+    mount,
+    host: testHost(),
+    frames,
+    replay,
+    rounds: 1,
+  })
+  try {
+    frames.at(0)
+    run(frames, 120)
+    expect(watch.sim.tick).toBe(120)
+    expect(watch.sim.hash()).toBe(replay.finalHash)
+  } finally {
+    watch.stop()
+  }
 })
