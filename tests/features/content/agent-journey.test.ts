@@ -124,7 +124,9 @@ test('every kind of file is in the full game, so nothing is untested', async () 
   const loaded = await loadGame(readFullGame())
   expect(loaded.ok).toBe(true)
   if (loaded.ok)
-    for (const info of Object.values(CONTENT_TYPES))
+    // The palette is the one kind this game has none of: the full game's figures are free ones, painted in their own
+    // colours, so the palette's own game is `tests/fixtures/figures` (plan R, Task 5).
+    for (const info of Object.values(CONTENT_TYPES).filter((one) => one.plural !== 'palettes'))
       expect(
         Object.keys(loaded.value[info.plural as keyof GameContent] ?? {}).length,
         info.plural,

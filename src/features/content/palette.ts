@@ -55,6 +55,8 @@ const ramp = z.strictObject({
     .describe("The colour's shades, from dark to light. A figure is shaded with them."),
 })
 
+const HEX = /^#[0-9a-fA-F]{6}$/
+
 /** Each shade of a ramp must be lighter than the one before it, so a figure is lit from dark to light. */
 function checkPalette(palette: Partial<PaletteFile>, ctx: z.core.$RefinementCtx): void {
   const ramps = palette.ramps ?? []
@@ -62,7 +64,9 @@ function checkPalette(palette: Partial<PaletteFile>, ctx: z.core.$RefinementCtx)
   ramps.forEach((one, i) => {
     one.colors.forEach((shade, j) => {
       const before = one.colors[j - 1]
-      if (before !== undefined && lightness(shade) <= lightness(before))
+      // A shade that is not a colour is said once, by the colour's own rule; it has no lightness to compare.
+      if (before === undefined || !HEX.test(shade) || !HEX.test(before)) return
+      if (lightness(shade) <= lightness(before))
         ctx.addIssue({
           code: 'custom',
           path: ['ramps', i, 'colors', j],
