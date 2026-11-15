@@ -26,7 +26,7 @@ import {
   warningsFor,
 } from '../screens/screens.ts'
 import { followLanguage, languagePicker, webHost, webSpeaker } from '../web/web.ts'
-import { putLoadingMark, startWatching } from './loading.ts'
+import { endsLevel, putLoadingMark, startWatching } from './loading.ts'
 import { createParty, type Party } from './party.ts'
 import {
   defaultSave,
@@ -457,8 +457,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       const off: (() => void)[] = [
         started.input.onBindings((changed) => void sections?.controls.set(changed)),
         started.onStep((step) => {
-          if (done !== undefined && step.events.some((event) => event.type === done))
-            dispatch({ type: 'level-done' })
+          if (endsLevel(done, step.events)) dispatch({ type: 'level-done' })
         }),
         started.onBroken((error) => fail(error)),
         started.input.onMenu((press) => {

@@ -63,3 +63,20 @@ export async function startWatching(options: {
     return undefined
   }
 }
+
+/**
+ * Whether one step's events end the level: the project's `done` event happened, and when it is a touch (a door), it was
+ * a hero that touched it and not a crate pushed into it.
+ */
+export function endsLevel(
+  done: string | undefined,
+  events: readonly { readonly type: string; readonly payload: unknown }[],
+): boolean {
+  if (done === undefined) return false
+  return events.some((event) => {
+    if (event.type !== done) return false
+    const { payload } = event
+    if (typeof payload !== 'object' || payload === null || !('player' in payload)) return true
+    return Number(payload.player) > 0
+  })
+}
