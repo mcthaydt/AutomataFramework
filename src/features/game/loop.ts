@@ -23,16 +23,18 @@ export interface Loop {
 }
 
 /**
- * Calls `step` at `tickHz` on average and `draw(alpha)` once per frame. If `step` throws, the loop stops and the
- * error goes on to the page's error handler, so a broken game does not look like a frozen one.
+ * Calls `step` at `tickHz` on average and `draw(alpha)` once per frame. If `step` throws, `onError` is told, the loop
+ * stops and the error goes on to the page's error handler, so a broken game does not look like a frozen one.
  */
 export function createLoop(options: {
   tickHz: number
   step: () => void
   draw: (alpha: number) => void
   frames: Frames
+  /** Told what a frame threw, before the loop stops and the error is thrown again. */
+  onError?: (error: unknown) => void
 }): Loop {
-  const { tickHz, step, draw, frames } = options
+  const { tickHz, step, draw, frames, onError } = options
   const period = 1000 / tickHz
   let running = false
   let pending: number | undefined
@@ -80,6 +82,7 @@ export function createLoop(options: {
       run(ms)
     } catch (error) {
       loop.stop()
+      onError?.(error)
       throw error
     }
     // `step` or `draw` may have stopped the loop.

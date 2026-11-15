@@ -6,13 +6,17 @@ import { createMenu, type MenuPress } from './menu.ts'
 import { createPads } from './pads.ts'
 
 /**
- * Presses of the pads' menu buttons (up, down, left, right, accept, back, pause), stepped on `frames`. Whatever is held
+ * Presses of the pads' menu buttons (up, down, left, right, accept, back, pause), each with the pad it came from (the
+ * main menu lets a second player join with their own pad), stepped on `frames`. Whatever is held
  * when it is made does nothing until it is let go, so the button that closed the screen before this one is not heard
  * again. Stops asking for frames on `destroy`.
  */
 export function padMenu(
   options: { readonly frames?: Frames; readonly gamepads?: () => readonly (PadLike | null)[] } = {},
-): { on(listener: (press: MenuPress) => void): () => void; destroy(): void } {
+): {
+  on(listener: (press: MenuPress, pad: number) => void): () => void
+  destroy(): void
+} {
   const frames = options.frames ?? pageFrames
   const pads = createPads(options.gamepads)
   const menu = createMenu()
@@ -27,7 +31,7 @@ export function padMenu(
   }
   frame = frames.request(onFrame)
   return {
-    on: (listener) => menu.on((press) => listener(press)),
+    on: (listener) => menu.on(listener),
     destroy() {
       stopped = true
       if (frame !== undefined) frames.cancel(frame)

@@ -390,3 +390,65 @@ test('headless reaches nothing of the flow, which needs a page', () =>
   expect(one({ 'src/headless.ts': "export * from './features/flow/flow.ts'" })).toEqual([
     'headless-is-headless',
   ]))
+
+// Plan U: the kit (`ui`) and the screens sit between `web` and `game`. Svelte is read by those two features only.
+test('ui and screens sit between web and game, in that order', () => {
+  expect(one({ 'src/features/ui/ui.ts': "import '../web/web.ts'" })).toEqual([])
+  expect(one({ 'src/features/screens/screens.ts': "import '../ui/ui.ts'" })).toEqual([])
+  expect(one({ 'src/features/ui/ui.ts': "import '../screens/screens.ts'" })).toEqual(['imports-go-down'])
+  expect(one({ 'src/features/screens/screens.ts': "import '../game/game.ts'" })).toEqual(['imports-go-down'])
+  expect(one({ 'src/features/web/web.ts': "import '../ui/ui.ts'" })).toEqual(['imports-go-down'])
+  expect(one({ 'src/features/game/game.ts': "import '../screens/screens.ts'" })).toEqual([])
+})
+
+test('headless reaches nothing of the kit or the screens, which need a page', () => {
+  expect(one({ 'src/headless.ts': "export * from './features/ui/ui.ts'" })).toEqual(['headless-is-headless'])
+  expect(one({ 'src/headless.ts': "export * from './features/screens/screens.ts'" })).toEqual([
+    'headless-is-headless',
+  ])
+})
+
+test('a .svelte file is only for the kit and the screens', () => {
+  expect(
+    one({ 'src/features/ui/ui.ts': '', 'src/features/ui/Button.svelte': '<script lang="ts"></script>' }),
+  ).toEqual([])
+  expect(
+    one({ 'src/features/screens/screens.ts': '', 'src/features/screens/Title.svelte': '<p>hi</p>' }),
+  ).toEqual([])
+  expect(one({ 'src/features/game/game.ts': '', 'src/features/game/Hud.svelte': '<p>hi</p>' })).toEqual([
+    'svelte-in-its-place',
+  ])
+  expect(one({ 'src/lib/Part.svelte': '<p>hi</p>' })).toEqual(['svelte-in-its-place'])
+})
+
+test('svelte is imported only by the kit and the screens', () => {
+  expect(one({ 'src/features/ui/ui.ts': "import type { Snippet } from 'svelte'" })).toEqual([])
+  expect(one({ 'src/features/ui/ui.ts': "import { mount } from 'svelte'" })).toEqual([])
+  expect(one({ 'src/features/screens/screens.ts': "import { flip } from 'svelte/animate'" })).toEqual([])
+  expect(one({ 'src/features/web/web.ts': "import { mount } from 'svelte'" })).toEqual(['package-confined'])
+  expect(one({ 'src/features/game/game.ts': "import { mount } from 'svelte'" })).toEqual(['package-confined'])
+})
+
+test('a .svelte file has at most 600 lines', () =>
+  expect(
+    one({ 'src/features/ui/ui.ts': '', 'src/features/ui/Big.svelte': '<p>x</p>\n'.repeat(601) }),
+  ).toEqual(['at-most-600-lines']))
+
+test('the imports of a .svelte script are held to the layers, the entries and the packages', () => {
+  const part = (script: string): SourceFiles => ({
+    'src/features/ui/ui.ts': '',
+    'src/features/ui/Part.svelte': `<script lang="ts">\n${script}\n</script>\n<p>hi</p>`,
+  })
+  expect(one(part("import { mount } from 'svelte'"))).toEqual([])
+  expect(one(part("import { startGame } from '../game/game.ts'"))).toEqual(['imports-go-down'])
+  expect(one(part("import { Pad } from '../input/pad.ts'"))).toEqual(['through-the-entry'])
+  expect(one(part("import { Application } from 'pixi.js'"))).toEqual(['package-confined'])
+})
+
+test('a .svelte file that imports its own importer is a cycle', () =>
+  expect(
+    one({
+      'src/features/ui/ui.ts': "import Part from './Part.svelte'",
+      'src/features/ui/Part.svelte': '<script lang="ts">import { thing } from "./ui.ts"</script>',
+    }),
+  ).toEqual(['no-cycles']))

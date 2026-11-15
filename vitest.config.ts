@@ -6,6 +6,7 @@
 //                      tests/create/ are their own project, run from the packed package
 // Node is the fourth engine of the determinism proof; the browsers are real Chromium, WebKit and Firefox.
 import { fileURLToPath } from 'node:url'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { playwright } from '@vitest/browser-playwright'
 import { defineConfig, type ViteUserConfig } from 'vitest/config'
 import { rapierWasm } from './vite-rapier-wasm.ts'
@@ -74,7 +75,7 @@ const RAPIER = '@dimforge/rapier2d-deterministic'
 // The template game imports the package by its published names; here they are this repo's own entries.
 const here = (path: string): string => fileURLToPath(new URL(path, import.meta.url))
 const config: ViteUserConfig = defineConfig({
-  plugins: [rapierWasm()],
+  plugins: [rapierWasm(), svelte()],
   resolve: {
     alias: [
       { find: /^@automataframework\/framework\/headless$/, replacement: here('./src/headless.ts') },

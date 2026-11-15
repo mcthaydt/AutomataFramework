@@ -18,6 +18,7 @@ files. Read this page, then the skill for the kind of change you are making.
 | One feature's rules: a plugin and its systems | `src/features/<name>/` |
 | Every word a player reads, one file for each language | `content/messages/` |
 | The page: loading, controls, and how it looks | `src/features/page/` |
+| The screens around the game (warnings, menu, pause, settings, saved games, add a player, "Well done!") | the framework's `startFlow`; a game sets four `automata.toml` lines, CSS properties and words |
 | Tests of the rules | `tests/features/<name>/` |
 | A recorded play, replayed on every check | `replays/` |
 | How to run, change and check the game, for a person | `README.md` |
@@ -44,6 +45,8 @@ files. Read this page, then the skill for the kind of change you are making.
   translations no native speaker has read, beside the game's own text. Mark a language read (`--read <language>`) only
   once a native speaker has read it.
 - How the game looks on the page: `src/features/page/` and `src/style.css`.
+- A level to play after another, a warning before play, the splash or the event that ends a level: `levels`, `warnings`, `splash` and `done` in `automata.toml` (skill `automata-content`). The screens are never edited: their colours and font are the `--automata-ui-*` properties, and a word on one is a message key of the game's own, which wins over the framework's.
+- Where a visit to a running page is: the element the game fills carries `data-state` (`loading`, `warnings`, `picking`, `splash`, `menu`, `playing`, `paused`, `done`, `watching` or `problem`) and `data-over` (`settings`, `saves` or `players`) while a screen is on top.
 - A new kind of file: see `automata-content` for the kinds there are. A kind that is not there is not built yet.
 
 ## Verify in this order

@@ -7,8 +7,10 @@ import { mcpTools } from '#src/features/cli/mcp-tools.ts'
 import { createSessions } from '#src/features/cli/session.ts'
 import { LANGUAGES } from '#src/features/content/content.ts'
 import { CONTENT_TYPES } from '#src/features/content/content-types.ts'
+import { FLOW_EVENTS } from '#src/features/flow/events.ts'
 import { TOUCH_PROPERTIES } from '#src/features/input/touch.ts'
 import { FRAMEWORK_VERSION } from '#src/features/sim/sim.ts'
+import { UI_PROPERTIES } from '#src/features/ui/ui.ts'
 import * as framework from '#src/headless.ts'
 import { GAME_FOLDER, PACKAGE_NAME, START_HERE } from '../install/create-commands.ts'
 
@@ -312,4 +314,31 @@ test('the README names every tool automata mcp has, the protocol versions it spe
   for (const version of PROTOCOL_VERSIONS) expect(mcp, version).toContain(`\`${version}\``)
   const config = readFileSync(new URL('../../template/.mcp.json', import.meta.url), 'utf8')
   expect(JSON.parse(/```json\n([\s\S]*?)```/.exec(mcp)?.[1] ?? '')).toEqual(JSON.parse(config))
+})
+
+// A game finds out how to put the whole visit on a page from this section: its first example is a page that calls
+// `startFlow` and nothing else, and the rest names what a game can change.
+test('the README has a "Screens and the flow" section: a page of a few lines, the four fields, the CSS, the words and the events', () => {
+  const start = readme.indexOf('## Screens and the flow')
+  expect(start).toBeGreaterThan(-1)
+  const section = readme.slice(start, readme.indexOf('\n## ', start + 1))
+  const page = /```ts\n([\s\S]*?)```/.exec(section)?.[1] ?? ''
+  expect(page.trim().split('\n').length).toBeLessThanOrEqual(15)
+  expect(page).toContain('startFlow')
+  // The page starts the flow and does nothing else: no game, no screen and no input of its own.
+  for (const word of ['startGame', 'createInput', 'createLocale', 'languagePicker'])
+    expect(page, word).not.toContain(word)
+  for (const field of ['levels = [', 'done = "', 'warnings = [', 'splash = "'])
+    expect(section, field).toContain(field)
+  for (const property of UI_PROPERTIES) expect(section, property).toContain(property)
+  for (const event of FLOW_EVENTS) expect(section, event).toContain(event)
+  for (const word of [
+    'FLOW_EVENTS',
+    'UI_PROPERTIES',
+    'data-state',
+    'data-over',
+    'screens: {',
+    'content/messages/',
+  ])
+    expect(section, word).toContain(word)
 })

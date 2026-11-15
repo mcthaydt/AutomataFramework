@@ -286,6 +286,31 @@ type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 type Bus = 'sound' | 'music';
 ```
 
+### `Button` (const)
+
+```ts
+const Button: Component<ButtonProps>;
+```
+
+### `buttonLabel` (function)
+
+```ts
+function buttonLabel(words: Words, action: string, label: string): string;
+```
+
+### `ButtonProps` (interface)
+
+```ts
+interface ButtonProps {
+    readonly label: string;
+    readonly kind?: 'primary' | 'plain' | 'danger';
+    readonly icon?: IconName;
+    readonly iconOnly?: boolean;
+    readonly disabled?: boolean;
+    readonly onpress: () => void;
+}
+```
+
 ### `Buzz` (interface)
 
 ```ts
@@ -577,6 +602,26 @@ interface Control {
 interface ControlEntry extends Control {
     readonly action: string;
 }
+```
+
+### `ControlRow` (interface)
+
+```ts
+interface ControlRow {
+    readonly action: string;
+    readonly slot: BindingSlot;
+    readonly label: string;
+    readonly input: string;
+}
+```
+
+### `controlRows` (function)
+
+```ts
+function controlRows(input: Pick<Input, 'controls'>, words: Words, sharing: boolean): {
+    readonly keyboard: readonly ControlRow[];
+    readonly gamepad: readonly ControlRow[];
+};
 ```
 
 ### `Controls` (type)
@@ -897,6 +942,18 @@ const DEFAULT_HERO_CONTROLS: readonly TuningControl[];
 const DEFAULT_MAX_ROOMS = 8;
 ```
 
+### `defaultSave` (function)
+
+```ts
+function defaultSave(game: string): FlowSave<Progress>;
+```
+
+### `defaultScreens` (const)
+
+```ts
+const defaultScreens: ScreenMakers;
+```
+
 ### `defineCommand` (function)
 
 ```ts
@@ -989,6 +1046,38 @@ interface Diagnostic {
     readonly path: string;
     readonly message: string;
 }
+```
+
+### `Dialog` (const)
+
+```ts
+const Dialog: Component<DialogProps>;
+```
+
+### `DialogProps` (interface)
+
+```ts
+interface DialogProps {
+    readonly title: string;
+    readonly text?: string;
+    readonly yes: string;
+    readonly no: string;
+    readonly danger?: boolean;
+    readonly onyes: () => void;
+    readonly onno: () => void;
+}
+```
+
+### `doneScreen` (function)
+
+```ts
+function doneScreen(options: ScreenBase & {
+    readonly level: string;
+    readonly next: boolean;
+    readonly notKept?: string;
+    readonly onNext: () => void;
+    readonly onMenu: () => void;
+}): Screen;
 ```
 
 ### `DrumPart` (interface)
@@ -1300,6 +1389,76 @@ interface Flight {
 }
 ```
 
+### `Flow` (interface)
+
+```ts
+interface Flow<S extends Progress = Progress> {
+    state(): FlowState;
+    onState(listener: (state: FlowState) => void): () => void;
+    game(): Game | undefined;
+    locale(): Locale | undefined;
+    progress(): S | undefined;
+    keep(data: S): Promise<SaveResult>;
+    takeOver(): void;
+    finishLevel(): void;
+    stop(): void;
+}
+```
+
+### `FLOW_EVENTS` (const)
+
+```ts
+const FLOW_EVENTS: readonly ["screen.menu", "screen.pause", "screen.done", "ui.move", "ui.press", "ui.back"];
+```
+
+### `FlowOptions` (interface)
+
+```ts
+interface FlowOptions<S extends Progress = Progress> {
+    readonly mount: HTMLElement;
+    readonly game: string;
+    readonly read: (path: string) => Promise<string>;
+    readonly readPicture?: ReadPicture;
+    readonly plugins?: readonly PluginDef[];
+    readonly controls?: Controls;
+    readonly host?: Host;
+    readonly save?: FlowSave<S>;
+    readonly screens?: Partial<ScreenMakers>;
+    readonly watch?: Replay | (() => Promise<Replay>);
+    readonly speaker?: Speaker;
+    readonly frames?: Frames;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+    readonly reload?: () => void;
+}
+```
+
+### `FlowSave` (interface)
+
+```ts
+interface FlowSave<S extends Progress> {
+    readonly def: SaveDef<S>;
+    fresh(level: string): S;
+}
+```
+
+### `FlowState` (interface)
+
+```ts
+interface FlowState {
+    readonly step: FlowStep;
+    readonly over?: Over;
+    readonly level?: string;
+    readonly warned: boolean;
+    readonly taken: boolean;
+}
+```
+
+### `FlowStep` (type)
+
+```ts
+type FlowStep = 'loading' | 'watching' | 'warnings' | 'picking' | 'splash' | 'menu' | 'playing' | 'paused' | 'done' | 'problem';
+```
+
 ### `followLanguage` (function)
 
 ```ts
@@ -1321,6 +1480,21 @@ interface Frame {
     readonly y: number;
     readonly w: number;
     readonly h: number;
+}
+```
+
+### `FrameProps` (interface)
+
+```ts
+interface FrameProps {
+    readonly title?: string;
+    readonly scrim?: boolean;
+    readonly back?: {
+        readonly label: string;
+        readonly onpress: () => void;
+    };
+    readonly children: Snippet;
+    readonly actions?: Snippet;
 }
 ```
 
@@ -1364,6 +1538,10 @@ interface Game {
     removePlayer(player: number): boolean;
     pause(): void;
     resume(): void;
+    paused(): boolean;
+    onStep(listener: (step: GameStep) => void): () => void;
+    broken(): unknown;
+    onBroken(listener: (error: unknown) => void): () => void;
     heroes(): readonly HeroBox[];
     setVibration(on: boolean): void;
     tune(values: Readonly<Record<string, number>>): void;
@@ -1451,6 +1629,15 @@ interface GameSimOptions {
         readonly y: number;
     };
     readonly tunable?: boolean;
+}
+```
+
+### `GameStep` (interface)
+
+```ts
+interface GameStep {
+    readonly tick: number;
+    readonly events: readonly SimEvent[];
 }
 ```
 
@@ -1611,10 +1798,31 @@ interface Host {
 type HostTarget = 'web' | 'test';
 ```
 
+### `hud` (function)
+
+```ts
+function hud(options: ScreenBase & {
+    readonly jumpSide: () => 'left' | 'right';
+    readonly onPause: () => void;
+    readonly heroes?: () => readonly HeroBox[];
+    readonly watching?: {
+        readonly onTake: () => void;
+    };
+}): Screen & {
+    draw(): void;
+};
+```
+
 ### `hypot` (function)
 
 ```ts
 function hypot(x: number, y: number): number;
+```
+
+### `IconName` (type)
+
+```ts
+type IconName = 'pause' | 'play' | 'back' | 'gear' | 'plus' | 'check' | 'reload';
 ```
 
 ### `Id` (const)
@@ -1848,6 +2056,26 @@ interface JumpPaths {
 
 ```ts
 function jumpPaths(numbers: MoveNumbers, on: MoveSwitches, gravity?: number): JumpPaths;
+```
+
+### `KeyRow` (const)
+
+```ts
+const KeyRow: Component<KeyRowProps>;
+```
+
+### `KeyRowProps` (interface)
+
+```ts
+interface KeyRowProps {
+    readonly action: string;
+    readonly input: string;
+    readonly change: string;
+    readonly waiting?: string;
+    readonly cancel?: string;
+    readonly onchange: () => void;
+    readonly oncancel?: () => void;
+}
 ```
 
 ### `Language` (type)
@@ -2166,6 +2394,12 @@ interface Link {
 type LinkAnswer = 'opened' | 'blocked' | 'refused';
 ```
 
+### `List` (const)
+
+```ts
+const List: Component<ListProps>;
+```
+
 ### `listContent` (function)
 
 ```ts
@@ -2200,6 +2434,15 @@ interface ListedPad {
     readonly index: number;
     readonly id: string;
     readonly usable: boolean;
+}
+```
+
+### `ListProps` (interface)
+
+```ts
+interface ListProps {
+    readonly label: string;
+    readonly children: Snippet;
 }
 ```
 
@@ -2382,10 +2625,53 @@ interface MemoryStore extends SaveStore {
 function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
 ```
 
+### `MenuItem` (type)
+
+```ts
+type MenuItem = 'continue' | 'play' | 'new' | 'saves' | 'add-player' | 'settings' | 'quit';
+```
+
+### `menuItems` (function)
+
+```ts
+function menuItems(facts: {
+    readonly saved: boolean;
+    readonly room: boolean;
+    readonly canQuit: boolean;
+}): readonly MenuItem[];
+```
+
+### `menuKeys` (function)
+
+```ts
+function menuKeys(options: {
+    readonly root: HTMLElement;
+    readonly frames?: Frames;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+    readonly onBack?: () => void;
+    readonly onPause?: () => void;
+    readonly onSound?: (what: 'move' | 'press' | 'back') => void;
+}): {
+    destroy(): void;
+};
+```
+
 ### `MenuPress` (type)
 
 ```ts
 type MenuPress = 'up' | 'down' | 'left' | 'right' | 'accept' | 'back' | 'pause';
+```
+
+### `menuScreen` (function)
+
+```ts
+function menuScreen(options: ScreenBase & {
+    readonly name: string;
+    readonly picture?: Blob;
+    readonly items: readonly MenuItem[];
+    readonly players?: readonly number[];
+    readonly onPick: (item: MenuItem) => void;
+}): Screen;
 ```
 
 ### `Message` (interface)
@@ -2812,7 +3098,7 @@ function padMenu(options?: {
     readonly frames?: Frames;
     readonly gamepads?: () => readonly (PadLike | null)[];
 }): {
-    on(listener: (press: MenuPress) => void): () => void;
+    on(listener: (press: MenuPress, pad: number) => void): () => void;
     destroy(): void;
 };
 ```
@@ -2919,6 +3205,23 @@ interface PathPoint {
     readonly x: number;
     readonly y: number;
 }
+```
+
+### `PauseItem` (type)
+
+```ts
+type PauseItem = 'resume' | 'add-player' | 'settings' | 'leave';
+```
+
+### `pauseScreen` (function)
+
+```ts
+function pauseScreen(options: ScreenBase & {
+    readonly items: readonly PauseItem[];
+    readonly removable: readonly number[];
+    readonly onPick: (item: PauseItem) => void;
+    readonly onRemove: (player: number) => void;
+}): Screen;
 ```
 
 ### `Phase` (type)
@@ -3127,6 +3430,19 @@ function playersIn(sim: Sim): number[];
 function playersOrder(own: Language | undefined, shipped: readonly Language[]): readonly Language[];
 ```
 
+### `playersScreen` (function)
+
+```ts
+function playersScreen(options: ScreenBase & {
+    readonly players: readonly number[];
+    readonly canShare: boolean;
+    readonly refused?: string;
+    readonly invite: (onPad: (pad: number) => void) => () => void;
+    readonly onJoin: (claim: Claim) => void;
+    readonly onDone: () => void;
+}): Screen;
+```
+
 ### `playHint` (function)
 
 ```ts
@@ -3204,6 +3520,25 @@ function pow(x: number, y: number): number;
 interface PreparedRestore {
     commit(): void;
     discard(): void;
+}
+```
+
+### `problemScreen` (function)
+
+```ts
+function problemScreen(options: Omit<ScreenBase, 'locale'> & {
+    readonly locale?: ScreenBase['locale'];
+    readonly lines?: readonly string[];
+    readonly fix?: string;
+    readonly onReload: () => void;
+}): Screen;
+```
+
+### `Progress` (interface)
+
+```ts
+interface Progress {
+    readonly level: string;
 }
 ```
 
@@ -3443,6 +3778,12 @@ const RESERVED_KEYS: readonly string[];
 const RESERVED_PAD: readonly PadInput[];
 ```
 
+### `resolveControls` (function)
+
+```ts
+function resolveControls(caller: 'startGame' | 'startOnlineGame' | 'startFlow', content: GameContent, given?: Controls): Controls;
+```
+
 ### `ResourceDef` (interface)
 
 ```ts
@@ -3592,6 +3933,12 @@ type SaidRebound = Extract<Rebound, {
 });
 ```
 
+### `SaveAction` (type)
+
+```ts
+type SaveAction = 'continue' | 'new' | 'erase';
+```
+
 ### `SaveDef` (interface)
 
 ```ts
@@ -3634,6 +3981,24 @@ type SaveResult = {
 };
 ```
 
+### `SaveRow` (interface)
+
+```ts
+interface SaveRow {
+    readonly slot: number;
+    readonly name: string;
+    readonly says: string;
+    readonly empty: boolean;
+    readonly can: readonly SaveAction[];
+}
+```
+
+### `saveRows` (function)
+
+```ts
+function saveRows(slots: readonly SlotState[], words: Words): readonly SaveRow[];
+```
+
 ### `Saves` (interface)
 
 ```ts
@@ -3647,6 +4012,25 @@ interface Saves<S> {
     }): Promise<SaveResult>;
     erase(slot: number): Promise<StoreResult<void>>;
 }
+```
+
+### `saveSentence` (function)
+
+```ts
+function saveSentence(problem: SaveProblem, words: Words): string;
+```
+
+### `savesScreen` (function)
+
+```ts
+function savesScreen(options: ScreenBase & {
+    readonly slots: readonly SlotState[];
+    readonly problem?: SaveProblem;
+    readonly onContinue: (slot: number) => void;
+    readonly onNew: (slot: number) => void;
+    readonly onErase: (slot: number) => void;
+    readonly onBack: () => void;
+}): Screen;
 ```
 
 ### `SaveStore` (interface)
@@ -3772,6 +4156,48 @@ interface ScoreNote {
 
 ```ts
 function scoreOf(music: MusicFile): Score;
+```
+
+### `Screen` (interface)
+
+```ts
+interface Screen {
+    destroy(): void;
+}
+```
+
+### `ScreenBase` (interface)
+
+```ts
+interface ScreenBase {
+    readonly mount: HTMLElement;
+    readonly locale: Pick<Locale, 'words' | 'onChange' | 'language'>;
+    readonly frames?: Frames;
+    readonly gamepads?: () => readonly (PadLike | null)[];
+    readonly onSound?: (event: string) => void;
+}
+```
+
+### `ScreenFrame` (const)
+
+```ts
+const ScreenFrame: Component<FrameProps>;
+```
+
+### `ScreenMakers` (interface)
+
+```ts
+interface ScreenMakers {
+    readonly warnings: typeof warningsScreen;
+    readonly splash: typeof splashScreen;
+    readonly menu: typeof menuScreen;
+    readonly pause: typeof pauseScreen;
+    readonly done: typeof doneScreen;
+    readonly problem: typeof problemScreen;
+    readonly settings: typeof settingsScreen;
+    readonly saves: typeof savesScreen;
+    readonly players: typeof playersScreen;
+}
 ```
 
 ### `Seat` (interface)
@@ -3942,6 +4368,24 @@ interface SettingsHandle<T> {
 function settingsOf(defaults: Controls, current: Controls): InputSettings;
 ```
 
+### `settingsScreen` (function)
+
+```ts
+function settingsScreen(options: ScreenBase & {
+    readonly locale: Locale;
+    readonly audio?: Pick<GameAudio, 'volumes' | 'setVolumes' | 'sample' | 'state' | 'onState'>;
+    readonly sound?: SettingsHandle<SoundSettings>;
+    readonly input: Pick<Input, 'capture' | 'rebind' | 'resetBindings' | 'controls' | 'dropped' | 'setSwapSides' | 'swapSides' | 'pads' | 'onPads'>;
+    readonly touch: SettingsHandle<TouchSettings>;
+    readonly onVibration?: (on: boolean) => void;
+    readonly canBuzz: boolean;
+    readonly coarse: boolean;
+    readonly problem?: SaveProblem;
+    readonly sharing: boolean;
+    readonly onBack: () => void;
+}): Screen;
+```
+
 ### `SettingsSection` (interface)
 
 ```ts
@@ -4012,6 +4456,19 @@ interface Shot {
     readonly w: number;
     readonly h: number;
 }
+```
+
+### `show` (function)
+
+```ts
+function show<P extends Record<string, unknown>>(component: Component<P>, base: ScreenBase & {
+    readonly name: string;
+    readonly onBack?: () => void;
+    readonly onPause?: () => void;
+    readonly overlay?: boolean;
+}, props: (words: Words) => P): Screen & {
+    update(): void;
+};
 ```
 
 ### `Sim` (interface)
@@ -4117,6 +4574,21 @@ interface SimOptions {
 function sin(x: number): number;
 ```
 
+### `Size` (interface)
+
+```ts
+interface Size {
+    readonly width: 'narrow' | 'wide';
+    readonly height: 'short' | 'tall';
+}
+```
+
+### `sizeOf` (function)
+
+```ts
+function sizeOf(width: number, height: number): Size;
+```
+
 ### `SKY_COLOR` (const)
 
 ```ts
@@ -4127,6 +4599,24 @@ const SKY_COLOR = 10474480;
 
 ```ts
 function skyOf(content: GameContent, level: Level): number;
+```
+
+### `Slider` (const)
+
+```ts
+const Slider: Component<SliderProps>;
+```
+
+### `SliderProps` (interface)
+
+```ts
+interface SliderProps {
+    readonly label: string;
+    readonly value: number;
+    readonly step?: number;
+    readonly onchange: (value: number) => void;
+    readonly onrelease?: (value: number) => void;
+}
 ```
 
 ### `SlopeRun` (interface)
@@ -4324,6 +4814,22 @@ interface SpeakerSeams {
 type SpeakerState = 'waiting' | 'on' | 'unavailable';
 ```
 
+### `SPLASH_MS` (const)
+
+```ts
+const SPLASH_MS = 2000;
+```
+
+### `splashScreen` (function)
+
+```ts
+function splashScreen(options: ScreenBase & {
+    readonly name: string;
+    readonly picture?: Blob;
+    readonly onDone: () => void;
+}): Screen;
+```
+
 ### `Sprite` (const)
 
 ```ts
@@ -4340,6 +4846,12 @@ const spritesPlugin: PluginDef;
 
 ```ts
 const START_LEAD = 2;
+```
+
+### `startFlow` (function)
+
+```ts
+function startFlow<S extends Progress = Progress>(options: FlowOptions<S>): Promise<Flow<S>>;
 ```
 
 ### `startGame` (function)
@@ -4632,6 +5144,22 @@ interface TileWhen {
 }
 ```
 
+### `Toggle` (const)
+
+```ts
+const Toggle: Component<ToggleProps>;
+```
+
+### `ToggleProps` (interface)
+
+```ts
+interface ToggleProps {
+    readonly label: string;
+    readonly on: boolean;
+    readonly onchange: (on: boolean) => void;
+}
+```
+
 ### `TonePart` (interface)
 
 ```ts
@@ -4838,6 +5366,12 @@ function typed<M extends Readonly<Record<string, string>>>(_file: {
 }, words: Words): (key: Extract<keyof M, string>, values?: Values) => string;
 ```
 
+### `UI_PROPERTIES` (const)
+
+```ts
+const UI_PROPERTIES: readonly string[];
+```
+
 ### `unreadWords` (function)
 
 ```ts
@@ -4942,6 +5476,27 @@ interface ViewSprite {
     readonly face: number;
     readonly player: number;
 }
+```
+
+### `warningsFor` (function)
+
+```ts
+function warningsFor(options: {
+    readonly project: Pick<Project, 'warnings'>;
+    readonly saving: StoreResult<void>;
+    readonly words: Words;
+}): readonly string[];
+```
+
+### `warningsScreen` (function)
+
+```ts
+function warningsScreen(options: ScreenBase & {
+    readonly words: Words;
+    readonly language?: Language;
+    readonly lines: readonly string[];
+    readonly onOk: () => void;
+}): Screen;
 ```
 
 ### `wasPressed` (function)

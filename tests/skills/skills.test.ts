@@ -150,6 +150,18 @@ test('automata sends a change to a word to content/messages/, in every language,
   expect(automata).not.toContain('words on the screen | `src/features/page/`')
 })
 
+// An agent that is asked for a second level, a warning or a splash must find where it goes, and one that is asked where a
+// running page is must find what to read.
+test('automata says where the flow lives and what to read on a page; automata-content names the four flow lines', () => {
+  const automata = text('automata')
+  for (const word of ['startFlow', 'data-state', 'data-over', '--automata-ui-*'])
+    expect(automata, word).toContain(word)
+  const content = text('automata-content')
+  const intro = content.slice(0, content.indexOf('\n## '))
+  for (const line of ['levels = [', 'done = "', 'warnings = [', 'splash = "'])
+    expect(intro, line).toContain(line)
+})
+
 test('no skill says npx automata without --no', () => {
   for (const skill of all) expect(skill.text, skill.name).not.toMatch(/npx\s+(?!--no\s+automata\b)/)
 })

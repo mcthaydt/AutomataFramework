@@ -9,5 +9,5 @@
     "lib": ["ES2023", "DOM"],
     "types": []
   },
-  "files": ["consumer.ts"]
+  "files": ["consumer.ts", "screens.ts"]
 }

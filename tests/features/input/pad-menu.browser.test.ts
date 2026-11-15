@@ -91,3 +91,15 @@ test('a listener that is taken away hears nothing more', () => {
   expect(extra).toEqual(['left'])
   expect(heard).toEqual(['left', 'up'])
 })
+
+// Plan U, Task 2: the main menu lets a second player join with their own pad, so a press says which pad it came from.
+test('the pad that pressed is named', () => {
+  fake.connect(2)
+  menu = padMenu({ frames, gamepads: fake.getGamepads })
+  const named: [MenuPress, number][] = []
+  menu.on((press, pad) => named.push([press, pad]))
+  frames.at(0)
+  fake.press('south', 2)
+  frames.advance(FRAME)
+  expect(named).toEqual([['accept', 2]])
+})

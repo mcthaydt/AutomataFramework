@@ -20,6 +20,15 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src", "tests", "scripts", "*.ts", "template/src", "template/tests", "template/vite.config.ts"],
+  "include": [
+    "src",
+    "src/**/*.svelte",
+    "tests",
+    "scripts",
+    "*.ts",
+    "template/src",
+    "template/tests",
+    "template/vite.config.ts"
+  ],
   "exclude": ["tests/install"]
 }

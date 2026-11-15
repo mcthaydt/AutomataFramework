@@ -9,7 +9,7 @@ import { type Controls, checkControls, heroControls } from '../input/input.ts'
  * and the console is told once. Throws, before anything is made, in words, when there are none or they cannot be played.
  */
 export function resolveControls(
-  caller: 'startGame' | 'startOnlineGame',
+  caller: 'startGame' | 'startOnlineGame' | 'startFlow',
   content: GameContent,
   given?: Controls,
 ): Controls {
