@@ -1903,6 +1903,12 @@ interface Link {
 type LinkAnswer = 'opened' | 'blocked' | 'refused';
 ```
 
+### `listContent` (function)
+
+```ts
+function listContent(text: string, entry: ListedFile, about?: string): Parsed<string>;
+```
+
 ### `Listed` (interface)
 
 ```ts
@@ -1912,6 +1918,15 @@ interface Listed {
     readonly hero: string;
     readonly source: Language | undefined;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
+}
+```
+
+### `ListedFile` (interface)
+
+```ts
+interface ListedFile {
+    readonly type: string;
+    readonly path: string;
 }
 ```
 
@@ -5667,6 +5682,12 @@ interface Link {
 type LinkAnswer = 'opened' | 'blocked' | 'refused';
 ```
 
+### `listContent` (function)
+
+```ts
+function listContent(text: string, entry: ListedFile, about?: string): Parsed<string>;
+```
+
 ### `Listed` (interface)
 
 ```ts
@@ -5676,6 +5697,15 @@ interface Listed {
     readonly hero: string;
     readonly source: Language | undefined;
     get<T extends ContentType>(type: T, id: string): ContentValue<T> | undefined;
+}
+```
+
+### `ListedFile` (interface)
+
+```ts
+interface ListedFile {
+    readonly type: string;
+    readonly path: string;
 }
 ```
 
