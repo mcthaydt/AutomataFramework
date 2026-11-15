@@ -6,7 +6,7 @@ import type { PadInput } from '#src/features/commands/commands.ts'
 import type { Drive } from './drive.ts'
 
 /** One tick of the game, in ms. */
-export const TICK = 1000 / 60
+export const TICK: number = 1000 / 60
 
 /** The most ticks a walk to the door may take before the journey says it never got there. */
 const WALK_LIMIT = 400

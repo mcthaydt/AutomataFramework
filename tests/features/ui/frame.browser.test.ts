@@ -33,7 +33,7 @@ const SAYS = [
   ['wide', 'tall'],
 ] as const
 
-test.each(SCREENS.map((screen, index) => [...screen, SAYS[index]] as const))(
+test.each(SCREENS.map((screen, index) => [...screen, SAYS[index] ?? SAYS[0]] as const))(
   'at %s the frame says how much room it has',
   async (_name, w, h, [width, height]) => {
     await page.viewport(w, h)
