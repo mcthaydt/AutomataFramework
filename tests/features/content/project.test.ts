@@ -247,8 +247,6 @@ test('the same folder listed twice for one kind is refused', () =>
   ]))
 
 test('one folder listed for two kinds is refused', () =>
-  expect(
-    problems(`${FIXTURE}${SOUNDS}\n[[content]]\ntype = "music"\nfolder = "content/sounds"\n`),
-  ).toEqual([
+  expect(problems(`${FIXTURE}${SOUNDS}\n[[content]]\ntype = "music"\nfolder = "content/sounds"\n`)).toEqual([
     'automata.toml: content[4].folder: This folder is already listed for sounds. A folder holds one kind of file.',
   ]))

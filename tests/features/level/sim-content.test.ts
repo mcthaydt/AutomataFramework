@@ -7,10 +7,10 @@ import { createGameSim } from '#src/features/level/level.ts'
 import { simContent } from '#src/features/level/sim-content.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
 import { artGame } from '../../fixtures/content/art.ts'
+import { listOver, soundText, withFolderBlocks } from '../../fixtures/content/folders.ts'
 import { readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { loadFixtureGame } from '../../fixtures/game/game.ts'
-import { listOver, soundText, withFolderBlocks } from '../../fixtures/content/folders.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 import golden from '../../golden/push-crate.json' with { type: 'json' }
 

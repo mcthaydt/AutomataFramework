@@ -72,6 +72,19 @@ export {
 } from './level.ts'
 export { type GameContent, loadGame } from './load.ts'
 export {
+  type ChordLoop,
+  DRUMS,
+  type Drum,
+  type DrumLoop,
+  type DrumRows,
+  type LoopFile,
+  type LoopLane,
+  LoopSchema,
+  type NoteLoop,
+  type StepsPerBar,
+  type Voicing,
+} from './loop.ts'
+export {
   LANGUAGES,
   type Language,
   languageName,
@@ -79,6 +92,7 @@ export {
   MessagesSchema,
   placeholdersOf,
 } from './messages.ts'
+export { type MotifFile, type MotifNote, MotifSchema, motifBeats } from './motif.ts'
 export {
   DEFAULT_HERO_CONTROLS,
   MOVE_NUMBERS,
@@ -92,8 +106,17 @@ export {
   type MusicFile,
   type MusicPart,
   MusicSchema,
+  type StepMusic,
   type TonePart,
 } from './music.ts'
+export {
+  type ArrangedMusic,
+  blockBars,
+  type LoopBlock,
+  type MotifBlock,
+  type MusicBlock,
+  type MusicLane,
+} from './music2.ts'
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
 export { type Parsed, parseContent } from './parse.ts'
@@ -119,6 +142,17 @@ export {
   writeReadMarks,
 } from './read-marks.ts'
 export {
+  RECORDINGS_MAX_BYTES,
+  RECORDING_MAX_BYTES,
+  RECORDING_MAX_SECONDS,
+  RECORDING_RATE,
+  type Recording,
+  readRecording,
+  recordingPaths,
+  recordingProblems,
+  writeRecording,
+} from './recording.ts'
+export {
   type Atlas,
   atlasOf,
   backdropSheet,
@@ -128,7 +162,9 @@ export {
   type Sheet,
 } from './sheet.ts'
 export {
+  type MotifVoice,
   type NoiseVoice,
+  type RecordingVoice,
   type SoundFile,
   SoundSchema,
   type SoundVoice,

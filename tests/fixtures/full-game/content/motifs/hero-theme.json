@@ -1,0 +1,22 @@
+{
+  "format": 1,
+  "id": "hero-theme",
+  "notes": [
+    {
+      "step": 1,
+      "beats": 1
+    },
+    {
+      "step": 3,
+      "beats": 0.5
+    },
+    {
+      "step": 5,
+      "beats": 0.5
+    },
+    {
+      "step": 8,
+      "beats": 2
+    }
+  ]
+}

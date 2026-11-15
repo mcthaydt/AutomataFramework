@@ -1,4 +1,7 @@
-import type { SoundVoice } from '../content/content.ts'
+import type { NoiseVoice, ToneVoice } from '../content/content.ts'
+
+/** What a speaker is handed: a tone or a hiss. (A recording joins them when the speaker can play one.) */
+export type SpeakerVoice = ToneVoice | NoiseVoice
 
 /** Where a voice plays: sound effects or the music. Each has its own volume. */
 export type Bus = 'sound' | 'music'
@@ -22,7 +25,7 @@ export interface Speaker {
   /** Called several times a second while the speaker is on and awake, so music can be handed over a little ahead. */
   onClock(listener: () => void): () => void
   /** Plays one voice on a bus. `voice.at` counts from `when` (speaker seconds). Does nothing unless the state is 'on'. */
-  play(bus: Bus, voice: SoundVoice, when: number): void
+  play(bus: Bus, voice: SpeakerVoice, when: number): void
   /** A bus's volume as the player set it, 0 to 1. Kept while waiting, so it is right when sound starts. */
   volume(bus: Bus, value: number): void
   /** Fades out everything on a bus, voices handed over for later included. */

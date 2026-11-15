@@ -11,7 +11,9 @@ import type { FeelFile } from './feel.ts'
 import type { FigureFile } from './figure.ts'
 import { folderFiles, type ListFolder } from './folders.ts'
 import type { Level } from './level.ts'
+import type { LoopFile } from './loop.ts'
 import { languageName, type MessagesFile } from './messages.ts'
+import type { MotifFile } from './motif.ts'
 import type { MusicFile } from './music.ts'
 import { type Parsed, parseContent } from './parse.ts'
 import type { ContentRef } from './project.ts'
@@ -40,6 +42,8 @@ export interface GameContent {
   readonly feels?: Readonly<Record<string, FeelFile>>
   readonly sounds?: Readonly<Record<string, SoundFile>>
   readonly music?: Readonly<Record<string, MusicFile>>
+  readonly loops?: Readonly<Record<string, LoopFile>>
+  readonly motifs?: Readonly<Record<string, MotifFile>>
   readonly cues?: Readonly<Record<string, CuesFile>>
   readonly conversations?: Readonly<Record<string, ConversationFile>>
   readonly cutscenes?: Readonly<Record<string, CutsceneFile>>
@@ -156,10 +160,9 @@ async function load(
   // Ids that files will have, taken from the file names, so one broken file does not make every reference to it
   // look wrong as well.
   const named = (type: ContentType): string[] =>
-    [
-      ...refs.filter((r) => r.type === type),
-      ...readsAs.filter((a) => a.kind === type).map((a) => a.ref),
-    ].map((r) => fileId(r.path))
+    [...refs.filter((r) => r.type === type), ...readsAs.filter((a) => a.kind === type).map((a) => a.ref)].map(
+      (r) => fileId(r.path),
+    )
 
   const texts = await Promise.all(refs.map((r) => readText(read, r.path)))
   const values = new Map<string, unknown>()
@@ -279,9 +282,7 @@ async function load(
     })
   const { source } = project
   const sourceFile =
-    source === undefined
-      ? undefined
-      : refs.find((r) => r.type === 'messages' && fileId(r.path) === source)
+    source === undefined ? undefined : refs.find((r) => r.type === 'messages' && fileId(r.path) === source)
   const sourceWords =
     source === undefined ? undefined : (values.get(`messages:${source}`) as MessagesFile | undefined)
   if (sourceFile !== undefined && sourceWords !== undefined)

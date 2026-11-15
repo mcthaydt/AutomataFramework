@@ -8,7 +8,9 @@ import { type CutsceneFile, cutsceneInfo } from './cutscene.ts'
 import { type FeelFile, feelInfo } from './feel.ts'
 import { type FigureFile, figureInfo } from './figure.ts'
 import { type Level, levelInfo } from './level.ts'
+import { type LoopFile, loopInfo } from './loop.ts'
 import { type MessagesFile, messagesInfo } from './messages.ts'
+import { type MotifFile, motifInfo } from './motif.ts'
 import { type MusicFile, musicInfo } from './music.ts'
 import { type SoundFile, soundInfo } from './sound.ts'
 import { type TilesetFile, tilesetInfo } from './tileset.ts'
@@ -30,6 +32,8 @@ export const CONTENT_TYPES: {
   readonly feel: ContentTypeInfo<FeelFile, FeelFile>
   readonly sound: ContentTypeInfo<SoundFile, SoundFile>
   readonly music: ContentTypeInfo<MusicFile, MusicFile>
+  readonly loop: ContentTypeInfo<LoopFile, LoopFile>
+  readonly motif: ContentTypeInfo<MotifFile, MotifFile>
   readonly cues: ContentTypeInfo<CuesFile, CuesFile>
   readonly conversation: ContentTypeInfo<ConversationFile, ConversationFile>
   readonly cutscene: ContentTypeInfo<CutsceneFile, CutsceneFile>
@@ -45,6 +49,8 @@ export const CONTENT_TYPES: {
   feel: feelInfo,
   sound: soundInfo,
   music: musicInfo,
+  loop: loopInfo,
+  motif: motifInfo,
   cues: cuesInfo,
   conversation: conversationInfo,
   cutscene: cutsceneInfo,

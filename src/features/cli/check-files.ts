@@ -1,7 +1,7 @@
 // The `files` step: every content file reads, is listed in `automata.toml`, and is written the standard way (the bytes
 // `writeContent` makes), so that a person, an editor and an agent editing the same file make the same change.
 import { join } from 'node:path'
-import { Effect } from 'effect'
+import { Effect, Runtime } from 'effect'
 import {
   type Diagnostic,
   type FolderRef,
@@ -90,10 +90,30 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
       const words = yield* translationStep(game, game.loaded.value, files)
       problems.push(...words.problems)
       notes.push(...words.notes)
+      problems.push(...(yield* recordingStep(game, game.loaded.value, files)))
     }
 
     const state = problems.length > 0 ? 'failed' : 'passed'
     return { step: 'files', state, problems, notes } satisfies StepReport
+  })
+}
+
+/**
+ * The recordings of a game: each one a sound names is there, can be played, and is short enough, and together they are
+ * not too big. A game's own copy of the framework does the judging, so an older one that has no such check is left alone.
+ */
+function recordingStep(
+  game: GameFolder,
+  content: GameContent,
+  files: FilesService,
+): Effect.Effect<readonly Diagnostic[]> {
+  return Effect.gen(function* () {
+    const api = game.content
+    if (typeof api.recordingProblems !== 'function') return []
+    const runtime = yield* Effect.runtime<never>()
+    const read = (path: string): Promise<Uint8Array | undefined> =>
+      Runtime.runPromise(runtime)(files.readBytes(join(game.folder, path)))
+    return yield* Effect.promise(() => api.recordingProblems(content, read))
   })
 }
 

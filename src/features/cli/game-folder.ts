@@ -9,14 +9,15 @@ import {
   artProblems,
   type Diagnostic,
   type GameContent,
-  languageName,
   type ListFolder,
+  languageName,
   loadGame,
   markRead,
   type Parsed,
   parseContent,
   parseReadMarks,
   READ_MARKS_FILE,
+  recordingProblems,
   translationProblems,
   unreadWords,
   writeContent,
@@ -35,6 +36,7 @@ type ContentApi = Pick<
   | 'parseContent'
   | 'parseReadMarks'
   | 'READ_MARKS_FILE'
+  | 'recordingProblems'
   | 'translationProblems'
   | 'unreadWords'
   | 'writeContent'

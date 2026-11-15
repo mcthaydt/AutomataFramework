@@ -1,18 +1,18 @@
 // The audio feature's entry: what a game sounds like, played when the sim's events say so. It is handed a step's events
 // and never the sim, so it has nothing to change; it plays through a `Speaker`, which a page makes with Web Audio
 // (`webSpeaker`, in the web feature) and a test makes with `testSpeaker`.
-import type { GameContent, SoundVoice } from '../content/content.ts'
+import type { GameContent } from '../content/content.ts'
 import type { SimEvent } from '../sim/sim.ts'
 import { type CueAction, type CueLogEntry, createCueLog, createLimiter, cueTable } from './cues.ts'
 import { createMusicPlayer } from './music-player.ts'
 import { SOUND_SETTINGS_DEFAULT, type SoundSettings } from './settings.ts'
-import type { Bus, Speaker, SpeakerState } from './speaker.ts'
+import type { Bus, Speaker, SpeakerState, SpeakerVoice } from './speaker.ts'
 
 export { type CueLogEntry, LOG_MAX, MAX_SAME, MAX_SOUNDS } from './cues.ts'
 export { hertzOf } from './notes.ts'
 export { type Score, type ScoreNote, scoreOf } from './score.ts'
 export { SOUND_SETTINGS_DEFAULT, type SoundSettings, SoundSettingsSchema } from './settings.ts'
-export type { Bus, Speaker, SpeakerState } from './speaker.ts'
+export type { Bus, Speaker, SpeakerState, SpeakerVoice } from './speaker.ts'
 export { type PlayedVoice, type TestSpeaker, testSpeaker } from './test-speaker.ts'
 
 export interface GameAudio {
@@ -42,7 +42,7 @@ export interface GameAudio {
 }
 
 /** What a slider plays when it is let go: a short tone at a pitch that is easy on the ear. */
-const SAMPLE: SoundVoice = {
+const SAMPLE: SpeakerVoice = {
   kind: 'tone',
   wave: 'sine',
   from: 660,
@@ -88,7 +88,8 @@ export function createAudio(options: {
       // A sound asked for while nothing can be heard is logged and not played, and is not played late.
       if (speaker.state() !== 'on') return
       for (const voice of action.sound.voices)
-        speaker.play('sound', { ...voice, volume: voice.volume * action.sound.volume }, speaker.now())
+        if (voice.kind === 'tone' || voice.kind === 'noise')
+          speaker.play('sound', { ...voice, volume: voice.volume * action.sound.volume }, speaker.now())
       return
     }
     log.add(

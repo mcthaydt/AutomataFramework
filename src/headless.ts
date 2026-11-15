@@ -18,6 +18,8 @@ export * from './features/saves/saves.ts'
 export * from './features/sim/sim.ts'
 // The PNG writer: a figure or a backdrop is painted into one, and a game or an editor may write a picture of its own.
 export { encodePng, type IndexedPicture } from './lib/png.ts'
+// The WAV reader and writer: a recorded sound is a WAV file, and an editor decodes and encodes the ones it records.
+export { decodeWav, encodeWav, type Wav } from './lib/wav.ts'
 // The framework's own Zod: a game writes its save's, commands' and settings' schemas with it, so it needs no Zod of its
 // own, and there is one copy of the library to check them all (AutomataFrameworkExamples may import only the framework).
 export { z } from './lib/zod.ts'

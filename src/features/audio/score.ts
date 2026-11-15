@@ -1,5 +1,6 @@
-import type { MusicFile, SoundVoice } from '../content/content.ts'
+import type { MusicFile } from '../content/content.ts'
 import { hertzOf } from './notes.ts'
+import type { SpeakerVoice } from './speaker.ts'
 
 /** One note of a track, timed. */
 export interface ScoreNote {
@@ -7,7 +8,7 @@ export interface ScoreNote {
   /** Seconds from the track's start. */
   readonly at: number
   /** What a speaker plays: `at` is 0 and `volume` is the part's times the track's. */
-  readonly voice: SoundVoice
+  readonly voice: SpeakerVoice
 }
 
 /** A track as timed notes, in the order they start. */
@@ -34,6 +35,8 @@ const stepsOf = (rows: readonly string[]): string[] =>
  * start together are in the parts' order.
  */
 export function scoreOf(music: MusicFile): Score {
+  if (music.format === 2)
+    throw new Error(`The track "${music.id}" is a song of loops, which cannot be played yet.`)
   const stepSeconds = 60 / (music.tempo * music.stepsPerBeat)
   const notes: ScoreNote[] = []
   let count = 0

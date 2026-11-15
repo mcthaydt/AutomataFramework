@@ -3,7 +3,7 @@ import type { ContentType, GameContent } from '../content/content.ts'
 
 /**
  * The kinds of file the sim is not given: the words a player reads (`messages`), what a game sounds like (`sound`,
- * `music`, `cues`) and how it looks and feels (`figure`, `backdrop`, `feel`). None of them says what happens, so a
+ * `music`, `loop`, `motif`, `cues`) and how it looks and feels (`figure`, `backdrop`, `feel`). None of them says what happens, so a
  * word, a sound, a colour or a shake changed in a file must not move a hash, stop a replay or keep two players out of one room. (Which clip a
  * character plays is its `character` file's, and stays in.) A plan that takes another kind out of the sim adds it
  * here and to the `GameContent` maps it takes out below: a kind's maps and its files' entries in the project's list
@@ -13,6 +13,8 @@ const LEFT_OUT: ReadonlySet<ContentType> = new Set<ContentType>([
   'messages',
   'sound',
   'music',
+  'loop',
+  'motif',
   'cues',
   'figure',
   'backdrop',
@@ -44,6 +46,8 @@ export function simContent(content: GameContent): GameContent {
     content.messages === undefined &&
     content.sounds === undefined &&
     content.music === undefined &&
+    content.loops === undefined &&
+    content.motifs === undefined &&
     content.cues === undefined &&
     content.figures === undefined &&
     content.backdrops === undefined &&
@@ -65,6 +69,8 @@ export function simContent(content: GameContent): GameContent {
     messages: _words,
     sounds: _sounds,
     music: _music,
+    loops: _loops,
+    motifs: _motifs,
     cues: _cues,
     figures: _figures,
     backdrops: _backdrops,

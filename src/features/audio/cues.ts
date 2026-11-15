@@ -31,7 +31,7 @@ export const LOG_MAX = 1024
  * (0.30000000000000004) at the 18 ticks its author meant, not 19; the number is the same in every engine either way.
  */
 function soundTicks(sound: SoundFile, tickHz: number): number {
-  const end = Math.max(...sound.voices.map((voice) => voice.at + voice.length))
+  const end = Math.max(...sound.voices.map((voice) => voice.at + ('length' in voice ? voice.length : 0)))
   return Math.ceil(end * tickHz - 1e-9)
 }
 

@@ -29,7 +29,8 @@ async function readManifest(read: (path: string) => Promise<string>): Promise<Re
     const data: unknown = JSON.parse(await read(FOLDERS_FILE))
     if (typeof data !== 'object' || data === null || Array.isArray(data)) return found
     for (const [folder, names] of Object.entries(data))
-      if (Array.isArray(names)) found[folder] = names.filter((name): name is string => typeof name === 'string')
+      if (Array.isArray(names))
+        found[folder] = names.filter((name): name is string => typeof name === 'string')
   } catch {
     // A page with no manifest has no folders to list, which `loadGame` then reports as empty folders.
   }

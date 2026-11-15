@@ -290,6 +290,8 @@ One sound, made from tones. Put the files in `content/sounds/`; the kind's rules
 }
 ```
 
+Besides `tone` and `noise`, a voice can be `recording` (`file`, a `.wav` kept in the game: one channel, 16-bit, 44100 samples a second, at most 10 seconds and 1 MB; `from`, `length`, `speed` from 0.5 to 2) or `motif` (`motif`, `instrument`, `key`, `tempo`, and the changes a motif use carries).
+
 ## music
 
 A tune that can loop, made of parts. Put the files in `content/music/`; the kind's rules are in `schemas/music.schema.json`.
@@ -325,6 +327,59 @@ A tune that can loop, made of parts. Put the files in `content/music/`; the kind
   ]
 }
 ```
+
+A music file of `"format": 2` is a song arranged from loops and motifs: `key`, `mode`, `bars` (four beats each), one chord per bar in `chords` (Roman numerals of the key, like `"I"`, `"vi"`, `"V7"`) and up to eight `lanes`. A lane has an `instrument` (`drums`, `bass`, `keys`, `pluck`, `lead`, `pad`, `bell` or `organ`), a `volume` and `blocks`: `{ "at": 1, "loop": "easy-drums", "bars": 6 }` plays a loop from bar 1, repeated to fill six bars, and `{ "at": 2, "motif": "hero-theme" }` plays a motif once. Blocks in one lane may not overlap, and a drum loop goes only in a drum lane.
+
+## loop
+
+A few bars of one instrument's part, written in steps of the key so it fits any key and any chord. Put the files in `content/loops/`; the kind's rules are in `schemas/loop.schema.json`.
+
+```json
+{
+  "format": 1,
+  "id": "bouncy-bass",
+  "lane": "bass",
+  "bars": 2,
+  "stepsPerBar": 8,
+  "notes": [
+    "1 - 5 - 1 - 5 -",
+    "1 - 5 - 8 - 5 -"
+  ]
+}
+```
+
+`lane` is what the loop suits: `drums`, `bass`, `chords` or `melody`. One row of `notes` is one bar, with `stepsPerBar` steps (4, 8, 12 or 16) separated by one space. In a bass or melody loop a step is a step of the bar's chord counted from its root (`1`, `3`, `5`, `8` for the octave, `b7`), a fixed note like `C4`, `-` for a rest or `=` to hold. A chord loop has a `voicing` (`close`, `open` or `high`) and each row is `x` (play the chord), `-` or `=`. A drum loop's `notes` is an object with a row of `x` and `-` per bar for each drum it hits (`kick`, `snare`, `hat`, `clap`, `tom`).
+
+## motif
+
+A short tune in steps of the key and beats, so it can be moved, slowed and turned sad without being rewritten. Put the files in `content/motifs/`; the kind's rules are in `schemas/motif.schema.json`.
+
+```json
+{
+  "format": 1,
+  "id": "hero-theme",
+  "notes": [
+    {
+      "step": 1,
+      "beats": 1
+    },
+    {
+      "step": 3,
+      "beats": 0.5
+    },
+    {
+      "step": 5,
+      "beats": 0.5
+    },
+    {
+      "step": 8,
+      "beats": 2
+    }
+  ]
+}
+```
+
+A `step` counts the key's notes from its first (1 to 15, or a string like `"b3"` for the note between). `beats` is from 0.25 to 8, in quarters. A song's block or a sound's motif voice plays a motif and may carry `shift` (whole steps of the key, -14 to 14), `speed` (0.25, 0.5, 1, 2 or 4), `mode` (`major` or `minor`) and `backwards`.
 
 ## cues
 

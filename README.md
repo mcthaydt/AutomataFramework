@@ -846,8 +846,10 @@ Each kind has a JSON Schema, shipped in the package so an agent can read the for
 | `behaviour` | rules for what a character does: flee, follow, wander, jump | `content/behaviours/` | `schemas/behaviour.schema.json` |
 | `tuning` | numbers that decide how something plays, each with its range, and the controls | `content/tunings/` | `schemas/tuning.schema.json` |
 | `feel` | a burst of dust, a shake or a freeze for a moment in the game | `content/feels/` | `schemas/feel.schema.json` |
-| `sound` | a sound made of tones and noise | `content/sounds/` | `schemas/sound.schema.json` |
-| `music` | a track of notes and drums | `content/music/` | `schemas/music.schema.json` |
+| `sound` | a sound made of tones, noise, a recording or a motif | `content/sounds/` | `schemas/sound.schema.json` |
+| `loop` | a few bars of drums, bass, chords or melody that fit any key | `content/loops/` | `schemas/loop.schema.json` |
+| `motif` | a short tune that can be moved, slowed and turned sad | `content/motifs/` | `schemas/motif.schema.json` |
+| `music` | a track of notes and drums, or a song arranged from loops and motifs | `content/music/` | `schemas/music.schema.json` |
 | `cues` | which sound or music plays when something happens | `content/cues/` | `schemas/cues.schema.json` |
 | `conversation` | what a character says, and the choices a player has | `content/conversations/` | `schemas/conversation.schema.json` |
 | `cutscene` | a camera move and the lines said during it | `content/cutscenes/` | `schemas/cutscene.schema.json` |

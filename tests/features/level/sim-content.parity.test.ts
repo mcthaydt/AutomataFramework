@@ -11,6 +11,19 @@ import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { expectRecorded } from '../../fixtures/golden.ts'
 import golden from '../../golden/push-crate.json' with { type: 'json' }
 
+/** The maps of the full game the sim is not given. */
+const LEFT_OUT = [
+  'sounds',
+  'music',
+  'loops',
+  'motifs',
+  'cues',
+  'messages',
+  'figures',
+  'feels',
+  'backdrops',
+]
+
 const made: Sim[] = []
 afterEach(() => {
   for (const sim of made.splice(0)) sim.dispose()
@@ -40,10 +53,10 @@ const quieterJump = (): Record<string, string> =>
     sound.volume = 0.2
   })
 
-test('simContent drops sounds, music, cues, words, figures, feels and backdrops and keeps every other map', async () => {
+test('simContent drops the sound, the music, the words and the art, and keeps every other map', async () => {
   const full = await loadFull()
   const kept = Object.keys(full)
-    .filter((key) => !['sounds', 'music', 'cues', 'messages', 'figures', 'feels', 'backdrops'].includes(key))
+    .filter((key) => !LEFT_OUT.includes(key))
     .sort()
   expect(Object.keys(simContent(full)).sort()).toEqual(kept)
   expect(simContent(full).levels).toBe(full.levels)

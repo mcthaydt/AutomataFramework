@@ -1,6 +1,6 @@
 // One voice of a sound, built from the page's own audio: an oscillator, or a hiss through a band-pass filter, each
 // through a gain that falls away to silence. Ported from the first attempt's synth, without its beds and drones.
-import type { SoundVoice } from '../content/content.ts'
+import type { SpeakerVoice } from '../audio/audio.ts'
 
 /** The gain a voice falls to: silent to the ear, and above zero because an exponential ramp cannot reach zero. */
 const SILENCE = 0.0001
@@ -34,7 +34,7 @@ function noiseBuffer(context: BaseAudioContext): AudioBuffer {
  * Builds one voice on any audio context, starting `voice.at` seconds after `when` and ending into `out`. The page's
  * speaker and the tests that measure a voice share it.
  */
-export function playVoice(context: BaseAudioContext, out: AudioNode, voice: SoundVoice, when: number): void {
+export function playVoice(context: BaseAudioContext, out: AudioNode, voice: SpeakerVoice, when: number): void {
   const start = when + voice.at
   const end = start + voice.length
   const gain = context.createGain()

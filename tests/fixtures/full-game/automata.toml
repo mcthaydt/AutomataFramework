@@ -81,6 +81,14 @@ type = "music"
 path = "content/music/meadow.json"
 
 [[content]]
+type = "loop"
+path = "content/loops/easy-drums.json"
+
+[[content]]
+type = "motif"
+path = "content/motifs/hero-theme.json"
+
+[[content]]
 type = "cues"
 path = "content/cues/cues.json"
 

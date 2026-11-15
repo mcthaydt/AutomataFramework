@@ -20,12 +20,14 @@ import figuresKeeper from './content/figures/keeper.json?raw'
 import figuresMeadow from './content/figures/meadow.json?raw'
 import figuresTree from './content/figures/tree.json?raw'
 import levelsLevel1 from './content/levels/level-1.json?raw'
+import loopsEasyDrums from './content/loops/easy-drums.json?raw'
 import messagesEn from './content/messages/en.json?raw'
 import messagesEs from './content/messages/es.json?raw'
 import messagesJa from './content/messages/ja.json?raw'
 import messagesKo from './content/messages/ko.json?raw'
 import messagesPt from './content/messages/pt.json?raw'
 import messagesZh from './content/messages/zh.json?raw'
+import motifsHeroTheme from './content/motifs/hero-theme.json?raw'
 import musicMeadow from './content/music/meadow.json?raw'
 import soundsJump from './content/sounds/jump.json?raw'
 import soundsLand from './content/sounds/land.json?raw'
@@ -54,6 +56,8 @@ export const fullGameFiles: Record<string, string> = {
   'content/sounds/jump.json': soundsJump,
   'content/sounds/land.json': soundsLand,
   'content/music/meadow.json': musicMeadow,
+  'content/loops/easy-drums.json': loopsEasyDrums,
+  'content/motifs/hero-theme.json': motifsHeroTheme,
   'content/cues/cues.json': cuesCues,
   'content/conversations/keeper.json': conversationsKeeper,
   'content/cutscenes/level-1-intro.json': cutscenesLevel1Intro,

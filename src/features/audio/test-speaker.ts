@@ -1,10 +1,9 @@
-import type { SoundVoice } from '../content/content.ts'
-import type { Bus, Speaker, SpeakerState } from './speaker.ts'
+import type { Bus, Speaker, SpeakerState, SpeakerVoice } from './speaker.ts'
 
 /** One voice a speaker was given, as the test speaker remembers it. */
 export interface PlayedVoice {
   readonly bus: Bus
-  readonly voice: SoundVoice
+  readonly voice: SpeakerVoice
   readonly when: number
 }
 
