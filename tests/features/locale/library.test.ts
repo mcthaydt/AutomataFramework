@@ -123,9 +123,9 @@ function sourcesIn(dir: string): string[] {
 
 /**
  * A quoted `automata.<part>.…`: a whole key, or the start of one when what follows is a `${` (a key built from a
- * variable). `automata.back` is the one key with no second part, written beside the screens' own.
+ * variable). `automata.back` and `automata.keep` are the two keys with no second part, shared by the screens.
  */
-const KEY = /(['"`])(automata\.(?:back|[a-z][a-z0-9-]*\.[a-z0-9.-]*?))(\$\{|\1)/g
+const KEY = /(['"`])(automata\.(?:back|keep|[a-z][a-z0-9-]*\.[a-z0-9.-]*?))(\$\{|\1)/g
 
 test('every automata.* key written in src/ is in en.json, and every key of en.json is written in src/', () => {
   const written = new Set<string>()
