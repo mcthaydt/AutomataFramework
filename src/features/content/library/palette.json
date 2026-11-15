@@ -1,6 +1,7 @@
 {
   "format": 1,
   "id": "automata",
+  "ink": "#002219",
   "ramps": [
     {
       "id": "slate",
@@ -283,7 +284,7 @@
       ]
     },
     {
-      "id": "ink",
+      "id": "amethyst",
       "colors": [
         "#3c3151",
         "#584a7f",

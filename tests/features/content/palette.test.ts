@@ -120,7 +120,7 @@ test('the library’s palette reads through the schema, with 32 ramps of 5 and t
   expect(LIBRARY_PALETTE.ramps).toHaveLength(32)
   for (const ramp of LIBRARY_PALETTE.ramps) expect(ramp.colors, ramp.id).toHaveLength(5)
   expect(LIBRARY_PALETTE.ramps.map((ramp) => ramp.id)).toEqual(
-    'slate cream brown sea ember lilac moss navy sage rose steel clay bark plum teal sand tan violet crimson russet olive gold dusk leaf umber mint cobalt sunset ink indigo mauve flame'.split(
+    'slate cream brown sea ember lilac moss navy sage rose steel clay bark plum teal sand tan violet crimson russet olive gold dusk leaf umber mint cobalt sunset amethyst indigo mauve flame'.split(
       ' ',
     ),
   )
@@ -137,6 +137,9 @@ test('every colour of the library, its ink included, is in Lospec’s DUEL palet
   for (const ramp of LIBRARY_PALETTE.ramps)
     for (const colour of ramp.colors) expect(duel.has(colour), `${ramp.id} ${colour}`).toBe(true)
   expect(duel.has(inkOf(LIBRARY_PALETTE))).toBe(true)
+  // The edge colour is the old painter's outline, never a ramp's lilac, and no ramp is called ink (audit I5).
+  expect(LIBRARY_PALETTE.ink).toBe('#002219')
+  expect(LIBRARY_PALETTE.ramps.map((ramp) => ramp.id)).not.toContain('ink')
 })
 
 test('DUEL starts and ends where Lospec lists it', () => {

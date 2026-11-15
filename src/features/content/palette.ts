@@ -5,7 +5,8 @@
 // The library's own palette (`library/palette.json`) is the first builder's DUEL ramps ported once, from
 // AutomataFrameworkFailed@ed8592e8 `extensions/figures/src/shared/paint/duel-ramps.ts`: that file's rows 0 to 31, each
 // ramp the row's steps 1, 2, 3, 5 and 6 (counted from 0), named in row order. Every row's five steps already get
-// lighter each time, so none was moved. JSON has no comments, so the port is recorded here.
+// lighter each time, so none was moved. Row 28 is `amethyst`, not `ink`: it is purple, and the library's `ink` is the old
+// painter's outline colour, `RAMP_OUTLINE` (`#002219`, row 6's step 0). JSON has no comments, so the port is recorded here.
 import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { Id } from './ids.ts'
