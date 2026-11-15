@@ -1,5 +1,6 @@
 // Lifted from AutomataFrameworkFailed@ed8592e8: extensions/physics/src/shared/kinds.ts
-// Codes stored in Body.kind and Collider.shape. They equal Rapier's own RigidBodyType and ShapeType values.
+// Codes stored in Body.kind and Collider.shape. A body's kind and the first three shapes equal Rapier's own RigidBodyType
+// and ShapeType values; the shapes from 16 up are ours, and the adapter says what Rapier shape each is.
 
 /**
  * The codes a rigid body's `kind` field holds: `dynamic` (moved by gravity and contacts), `fixed` (never
@@ -15,13 +16,25 @@ export const BodyKind: {
 export type BodyKind = (typeof BodyKind)[keyof typeof BodyKind]
 
 /**
- * The codes a collider's `shape` field holds: `ball`, `cuboid` and `capsule`. `ShapeKind` is also the type of
- * those values.
+ * The codes a collider's `shape` field holds: `ball`, `cuboid` and `capsule`, which equal Rapier's own ShapeType
+ * values, and three of ours that the adapter maps: `slopeUp` and `slopeDown` (a right triangle filling half its box,
+ * rising to the right or to the left) and `ledge` (a box that only holds what comes from above). `ShapeKind` is also
+ * the type of those values.
  */
-export const ShapeKind: { readonly ball: 0; readonly cuboid: 1; readonly capsule: 2 } = {
+export const ShapeKind: {
+  readonly ball: 0
+  readonly cuboid: 1
+  readonly capsule: 2
+  readonly slopeUp: 16
+  readonly slopeDown: 17
+  readonly ledge: 18
+} = {
   ball: 0,
   cuboid: 1,
   capsule: 2,
+  slopeUp: 16,
+  slopeDown: 17,
+  ledge: 18,
 }
 export type ShapeKind = (typeof ShapeKind)[keyof typeof ShapeKind]
 

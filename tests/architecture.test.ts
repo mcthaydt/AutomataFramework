@@ -5,12 +5,12 @@ import { checkArchitecture, type SourceFiles } from './architecture/rules.ts'
 
 const ROOT = join(import.meta.dirname, '..')
 
-/** Every `.ts` file under `dir`, keyed by its path from the repo root with `/`. */
+/** Every `.ts` and `.svelte` file under `dir`, keyed by its path from the repo root with `/`. */
 function readTree(dir: string, into: Record<string, string> = {}): SourceFiles {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name)
     if (entry.isDirectory()) readTree(path, into)
-    else if (entry.name.endsWith('.ts'))
+    else if (entry.name.endsWith('.ts') || entry.name.endsWith('.svelte'))
       into[relative(ROOT, path).split('\\').join('/')] = readFileSync(path, 'utf8')
   }
   return into

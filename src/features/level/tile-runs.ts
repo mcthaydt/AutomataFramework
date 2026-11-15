@@ -1,4 +1,4 @@
-import type { Level } from '../content/content.ts'
+import type { GameContent, Level } from '../content/content.ts'
 
 /** A row's unbroken stretch of solid tiles: where it starts and how many tiles long it is. */
 export interface TileRun {
@@ -58,7 +58,15 @@ export function tileBoxes(tiles: readonly string[], isSolid?: (letter: string) =
   return boxes
 }
 
-/** The level's width and height in tiles. */
+/** The level's width and height in tiles, from its own rows. A level with a scene has none: see `worldSize`. */
 export function levelSize(level: Level): { readonly w: number; readonly h: number } {
-  return { w: level.tiles[0]?.length ?? 0, h: level.tiles.length }
+  const tiles = level.tiles ?? []
+  return { w: tiles[0]?.length ?? 0, h: tiles.length }
+}
+
+/** A level's width and height in tiles: its scene's size, or its own rows'. 0 by 0 for a scene the game lacks. */
+export function worldSize(content: GameContent, level: Level): { readonly w: number; readonly h: number } {
+  if (level.scene === undefined) return levelSize(level)
+  const scene = content.scenes?.[level.scene]
+  return scene === undefined ? { w: 0, h: 0 } : { w: scene.size.w, h: scene.size.h }
 }

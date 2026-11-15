@@ -183,6 +183,27 @@ test('mask holds back what is down until it lifts', () => {
   expect(names(r.held())).toEqual(['jump'])
 })
 
+test('mask drops a press that has not been drained, so a pause does not swallow a jump for later', () => {
+  const r = rules()
+  r.down(1, 'jump', 300, 300, 0)
+  r.up(1)
+  r.mask()
+  expect(names(r.drain())).toEqual([])
+  r.down(2, 'jump', 300, 300, 100)
+  expect(names(r.drain())).toEqual(['jump'])
+})
+
+test('touching is true for as long as a finger is down, moving or not, and masked or not', () => {
+  const r = rules()
+  expect(r.touching()).toBe(false)
+  r.down(1, 'walk', 100, 300, 0)
+  expect(r.touching()).toBe(true)
+  r.mask()
+  expect(r.touching()).toBe(true)
+  r.up(1)
+  expect(r.touching()).toBe(false)
+})
+
 test('clear lets go of everything, and the ring is gone', () => {
   const r = rules()
   r.down(1, 'walk', 100, 300, 0)

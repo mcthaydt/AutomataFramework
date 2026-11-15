@@ -1,5 +1,6 @@
 // The library build: five ES module entries (the browser one, the headless one, the Node server one, the `automata`
 // command and the Worker a play session runs in), every dependency left for the game's own bundler. Declarations come from `tsc -p tsconfig.build.json`, not from here.
+import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { defineConfig, type UserConfig } from 'vite'
 import manifest from './package.json' with { type: 'json' }
 import { rapierWasm } from './vite-rapier-wasm.ts'
@@ -7,6 +8,7 @@ import { rapierWasm } from './vite-rapier-wasm.ts'
 // Rapier is a development dependency: its code is built into the framework's own files (its plain package cannot be
 // loaded by a game's bundler, which would need a plugin for the binary) and its binary comes out beside them. Every
 // package in `dependencies` is left for the game.
+// Svelte is one of them: the kit's compiled parts import it from the game's own copy.
 const dependencies = Object.keys(manifest.dependencies)
 // `pixi.js/unsafe-eval` is a path inside a dependency, so a prefix match, not an exact one.
 // The server entry runs on Node, so its `node:` modules stay imports too.
@@ -14,7 +16,7 @@ const external = (id: string): boolean =>
   id.startsWith('node:') || dependencies.some((name) => id === name || id.startsWith(`${name}/`))
 
 const config: UserConfig = defineConfig({
-  plugins: [rapierWasm()],
+  plugins: [rapierWasm(), svelte()],
   build: {
     lib: {
       entry: {

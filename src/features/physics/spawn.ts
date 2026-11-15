@@ -35,13 +35,17 @@ export function body(
 
 /**
  * The spawn parts that give an entity a collider: `ball(radius)`, `cuboid(hx, hy)` with half extents, and
- * `capsule(halfHeight, radius)`. Each takes `ColliderOptions`, whose defaults are Rapier's (every group,
- * friction 0.5, no bounce, not a sensor).
+ * `capsule(halfHeight, radius)`; and two for ground: `slope(hx, hy, rises)`, a right triangle that fills half its box
+ * (`rises` 1: its high side is on the right; -1: on the left), and `ledge(hx, hy)`, a box that holds only what comes
+ * from above and lets what comes from below pass up through. Each takes `ColliderOptions`, whose defaults are
+ * Rapier's (every group, friction 0.5, no bounce, not a sensor).
  */
 export const collider: {
   ball(radius: number, opts?: ColliderOptions): SpawnPart
   cuboid(hx: number, hy: number, opts?: ColliderOptions): SpawnPart
   capsule(halfHeight: number, radius: number, opts?: ColliderOptions): SpawnPart
+  slope(hx: number, hy: number, rises: 1 | -1, opts?: ColliderOptions): SpawnPart
+  ledge(hx: number, hy: number, opts?: ColliderOptions): SpawnPart
 } = {
   ball: (radius, opts = {}) => [
     Collider,
@@ -52,6 +56,11 @@ export const collider: {
     Collider,
     { shape: ShapeKind.capsule, hx: radius, hy: halfHeight, ...colliderDefaults(opts) },
   ],
+  slope: (hx, hy, rises, opts = {}) => [
+    Collider,
+    { shape: rises === 1 ? ShapeKind.slopeUp : ShapeKind.slopeDown, hx, hy, ...colliderDefaults(opts) },
+  ],
+  ledge: (hx, hy, opts = {}) => [Collider, { shape: ShapeKind.ledge, hx, hy, ...colliderDefaults(opts) }],
 }
 
 /** The two ends of a joint: where it holds `a` (`ax`, `ay`) and `b` (`bx`, `by`), in metres from each one's centre. */

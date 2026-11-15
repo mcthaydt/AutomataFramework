@@ -8,8 +8,9 @@ export const ROOT_HELP = `automata: make a game, check it, play it.
   automata check           Say whether this game is sound, and what to fix if it is not.
   automata play            Play this game in your browser.
   automata replay          Play this game's recordings and check they end where they did.
-  automata art             Paint this game's pictures from its figure and backdrop files.
+  automata art             Paint this game's pictures from its figure, backdrop and scene files.
   automata add             List a new content file in this game's automata.toml.
+  automata scene           Move a level's ground onto a scene file you can paint.
   automata words           List the translated words nobody has read, and mark them read.
   automata mcp             Let an agent use these commands (an MCP server).
 
@@ -20,7 +21,7 @@ const CHECK_HELP = `automata check [folder]
 Says whether the game is sound, one step after another, and what to fix if it is not.
 
   files     every content file reads, is listed, and is written the standard way; every language has every word
-  art       every picture is painted, and none is older than the figure or backdrop file it comes from
+  art       every picture is painted, and none is older than the figure, backdrop or scene file it comes from
   rules     the game's rules can be replayed: no clock, no dice of their own, no files
   lint      the code's style (Biome)
   types     the code's types (TypeScript)
@@ -58,8 +59,8 @@ Plays the game in your browser. It stays running and shows your changes as you m
 
 const ART_HELP = `automata art [folder]
 
-Paints this game's pictures: one picture, and an atlas that says where each pose is in it, for every figure and
-backdrop file. They are written beside the file that makes them, and you commit them with it. Run it after you
+Paints this game's pictures: one picture, and an atlas that says where each pose or tile is in it, for every figure,
+backdrop and scene file. They are written beside the file that makes them, and you commit them with it. Run it after you
 change a figure or a backdrop; it paints only what is missing or old.
 
   --check   Paint nothing: say which pictures are missing or old, and exit 1 if any is.
@@ -75,6 +76,15 @@ listed is left alone.
   --path <file>    Where it is, from the game's folder, like content/figures/keeper.json.
   --about <words>  One line of words to write above it in automata.toml.
   --json           Print the answer as JSON, for an agent or another tool.`
+
+const SCENE_HELP = `automata scene from-level <level> [folder]
+
+Moves a level's ground onto a scene file: a file of its own that holds the ground's rows and colours, and that you can
+paint in the editor. The level keeps its things and its starts and now names the scene; it plays exactly as it did.
+Writes content/scenes/<name>.json, changes the level's file, lists the scene in automata.toml and paints its picture.
+
+  --as <name>  The scene's name. Left out, level-1 becomes scene-1.
+  --json       Print the answer as JSON, for an agent or another tool.`
 
 const WORDS_HELP = `automata words [folder]
 
@@ -97,6 +107,7 @@ const HELP: Readonly<Record<CommandName | 'root', string>> = {
   replay: REPLAY_HELP,
   art: ART_HELP,
   add: ADD_HELP,
+  scene: SCENE_HELP,
   words: WORDS_HELP,
   create: CREATE_HELP,
   play: PLAY_HELP,

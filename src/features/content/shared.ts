@@ -57,6 +57,33 @@ export function variants<
   return z.discriminatedUnion(key, options)
 }
 
+/** One repeat of an id: where it is, and the sentence that says so. */
+export interface Repeat {
+  readonly path: readonly PropertyKey[]
+  readonly message: string
+}
+
+/** Every item whose `field` an earlier item already used, as `"<id>" is used twice. Each <noun> needs its own id.` */
+export function repeats<T extends object>(
+  items: readonly T[],
+  field: keyof T & string,
+  noun: string,
+  path: readonly PropertyKey[],
+): Repeat[] {
+  const seen = new Set<string>()
+  const found: Repeat[] = []
+  items.forEach((item, i) => {
+    const id = String(item[field])
+    if (seen.has(id))
+      found.push({
+        path: [...path, i, field],
+        message: `"${id}" is used twice. Each ${noun} needs its own id.`,
+      })
+    seen.add(id)
+  })
+  return found
+}
+
 /** Says `"<id>" is used twice. Each <noun> needs its own id.` at `[...path, i, field]` of every repeat. */
 export function unique<T extends object>(
   items: readonly T[],
@@ -65,15 +92,6 @@ export function unique<T extends object>(
   path: readonly PropertyKey[],
   ctx: z.core.$RefinementCtx,
 ): void {
-  const seen = new Set<string>()
-  items.forEach((item, i) => {
-    const id = String(item[field])
-    if (seen.has(id))
-      ctx.addIssue({
-        code: 'custom',
-        path: [...path, i, field],
-        message: `"${id}" is used twice. Each ${noun} needs its own id.`,
-      })
-    seen.add(id)
-  })
+  for (const repeat of repeats(items, field, noun, path))
+    ctx.addIssue({ code: 'custom', path: [...repeat.path], message: repeat.message })
 }

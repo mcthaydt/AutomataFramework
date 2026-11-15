@@ -6,6 +6,7 @@
 //                      tests/create/ are their own project, run from the packed package
 // Node is the fourth engine of the determinism proof; the browsers are real Chromium, WebKit and Firefox.
 import { fileURLToPath } from 'node:url'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { playwright } from '@vitest/browser-playwright'
 import { defineConfig, type ViteUserConfig } from 'vitest/config'
 import { rapierWasm } from './vite-rapier-wasm.ts'
@@ -54,6 +55,11 @@ const inBrowser = (engine: (typeof ENGINES)[number]) => ({
   test: {
     name: engine,
     include: ['tests/**/*.parity.test.ts', 'tests/**/*.browser.test.ts'],
+    // One test file at a time. Vitest runs the files of a browser project side by side in frames of one page, and a page has
+    // one focus, one keyboard and one frame that is drawn at full speed: a key sent by a test in one frame went to another
+    // (a Space lost, `document.hasFocus()` false with the element focused), and a frame that was not the one in view
+    // stopped drawing, so a box that changed size was not heard (a frame saying "tall" in a box turned sideways).
+    fileParallelism: false,
     // A shared runner can be slow to start a page; a hang is still caught.
     testTimeout: 60_000,
     hookTimeout: 90_000,
@@ -61,7 +67,7 @@ const inBrowser = (engine: (typeof ENGINES)[number]) => ({
       enabled: true,
       headless: true,
       provider: playwright(),
-      instances: [{ browser: engine }],
+      instances: [{ browser: engine, fileParallelism: false }],
     },
   },
 })
@@ -74,7 +80,7 @@ const RAPIER = '@dimforge/rapier2d-deterministic'
 // The template game imports the package by its published names; here they are this repo's own entries.
 const here = (path: string): string => fileURLToPath(new URL(path, import.meta.url))
 const config: ViteUserConfig = defineConfig({
-  plugins: [rapierWasm()],
+  plugins: [rapierWasm(), svelte()],
   resolve: {
     alias: [
       { find: /^@automataframework\/framework\/headless$/, replacement: here('./src/headless.ts') },

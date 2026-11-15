@@ -5,10 +5,12 @@
     "includes": [
       "**",
       "!**/dist",
+      "!**/*.svelte",
       "!pnpm-lock.yaml",
       "!schemas",
       "!docs/api",
       "!tests/fixtures/full-game/content",
+      "!tests/fixtures/scene-game/content",
       "!template/content",
       "!template/replays"
     ]
@@ -18,7 +20,7 @@
   "linter": { "enabled": true, "rules": { "preset": "recommended" } },
   "overrides": [
     {
-      "includes": ["src/features/web/library/**/*.svg"],
+      "includes": ["src/features/web/library/**/*.svg", "src/features/ui/library/**/*.svg"],
       "linter": { "rules": { "a11y": { "noSvgWithoutTitle": "off" } } }
     },
     {

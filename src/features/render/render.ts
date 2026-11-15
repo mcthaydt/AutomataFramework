@@ -15,12 +15,22 @@ import { createStage } from './stage.ts'
  */
 const JUMP = 1
 
-export { type Art, ArtError, loadArt, needsPictures, type ReadPicture } from './art.ts'
+export {
+  type Art,
+  ArtError,
+  type GroundPageArt,
+  loadArt,
+  needsPictures,
+  type ReadPicture,
+  type TileSprite,
+} from './art.ts'
 export type { Shot } from './camera.ts'
 export { type Density, pageDensity } from './density.ts'
 export { type Fit, fitInRoom, fitWorld, type Room } from './fit.ts'
+export { type GroundPage, groundPages } from './ground.ts'
 export { createScene, type RopeLine, type Scene, type View, type ViewSprite } from './scene.ts'
 export { createLevelPicture, type LevelPicture, levelViews } from './still.ts'
+export { type PlacedTile, placedTiles } from './tiles.ts'
 
 /** A hero's box on the canvas, in CSS pixels. */
 export interface HeroBox {
@@ -111,6 +121,8 @@ export async function createRenderer(options: {
   const { mount, world, sky, art, view, density } = options
   const scene = createScene()
   const stage = await createStage(world, sky, art, density)
+  // Hidden until the first step puts a picture of the level on it: a screen before the game must not flash the sky.
+  stage.canvas.style.visibility = 'hidden'
   mount.append(stage.canvas)
   // `stage.resize` puts the last picture back, so a turned phone is never left blank, even when the game is paused.
   const refit = (): void => stage.resize(mount.clientWidth, mount.clientHeight)
@@ -191,6 +203,7 @@ export async function createRenderer(options: {
     apply(delta) {
       scene.apply(delta)
       step(delta.resync)
+      stage.canvas.style.visibility = ''
       if (started) return
       started = true
       show(1)

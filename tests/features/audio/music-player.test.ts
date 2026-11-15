@@ -138,3 +138,21 @@ test('a track that does not loop ends and is no longer wanted', async () => {
   expect(player.wanted()).toBeUndefined()
   expect(speaker.played).toHaveLength(27)
 })
+
+test('a looped track: the last note of one pass and the first of the next are one step apart, to the sample', async () => {
+  const speaker = testSpeaker({ state: 'on' })
+  createMusicPlayer(speaker).want(BELL)
+  // BELL is four steps of a quarter beat each at 120 bpm, 2 steps a beat: a step is 0.25 s and a pass is 1 s.
+  for (let i = 0; i < 40; i++) speaker.advance(0.1)
+  const times = speaker.played.map((one) => one.when)
+  expect(times.length).toBeGreaterThan(6)
+  const step = 0.25
+  // Notes are on steps 0 and 2 of each pass (A4 - A4 -): within a pass two steps apart; from the last of one pass to the
+  // first of the next, also two steps apart. Every gap is exactly the same as the first, never a hair off.
+  const gaps = times.slice(1).map((time, at) => time - (times[at] as number))
+  for (const gap of gaps) expect(gap).toBeCloseTo(2 * step, 9)
+  // And every note is on the grid the track began on: no pass drifts from the one before.
+  const first = times[0] as number
+  for (const time of times)
+    expect((time - first) / (2 * step)).toBeCloseTo(Math.round((time - first) / (2 * step)), 9)
+})

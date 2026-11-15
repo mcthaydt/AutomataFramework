@@ -19,8 +19,16 @@ you edit one: it writes the file in its standard form, which is what the editors
 format content by hand or with a formatter. `npx --no automata check --only files` says what is wrong with a file, with its
 place in it.
 
+Four more lines of `automata.toml` say what the screens around the game show, and never what happens in it: `levels = ["level-1",
+"level-2"]` is the order the levels are played in (add a level to this list, after its file is listed, and "Next level" and Continue
+reach it), `done = "door.touched"` is the event that ends a level, `warnings = ["warning.flashing"]` lists message keys the player
+reads before they play (each key needs a word in every language), and `splash = "logo"` names the figure shown first. `automata check`
+says which one is wrong.
+
 Each kind has a JSON Schema in the package, `schemas/<kind>.schema.json`, that lists every field and what it means. Read
 it for what the file may hold. The smallest whole file of each kind is below, to copy.
+
+A scene (the ground of a place, in rows of letters, made of photos, tiles or paints) has a page of its own, `skills/automata-content/scenes.md` in the package: every shape, every material, the photo library and the commands. Read it before you draft one.
 
 ## level
 
@@ -56,6 +64,83 @@ A level: the walls, the things in it and where each player starts. Put the files
       "y": 7.5
     }
   ]
+}
+```
+
+## scene
+
+A scene: the ground of a place, drawn in rows of letters, with what each letter is made of and the paints it is painted in. A level names its scene and only places what plays on it. Put the files in `content/scenes/`; the kind's rules are in `schemas/scene.schema.json`. A material is one paint (`flat`), a tileset's tile (`tiles`) or a photo turned into the scene's paints (`photo`, with a `ladder` of paints from dark to light).
+
+```json
+{
+  "format": 1,
+  "id": "meadow",
+  "seed": 7,
+  "tile": 16,
+  "size": {
+    "w": 8,
+    "h": 4
+  },
+  "paints": [
+    {
+      "id": "soil",
+      "color": "#6b4a33"
+    },
+    {
+      "id": "grass",
+      "color": "#5fa04a"
+    }
+  ],
+  "materials": [
+    {
+      "id": "earth",
+      "kind": "flat",
+      "paint": "soil",
+      "top": {
+        "material": "turf",
+        "deep": 4
+      }
+    },
+    {
+      "id": "turf",
+      "kind": "flat",
+      "paint": "grass"
+    }
+  ],
+  "ground": {
+    "letters": [
+      {
+        "letter": "G",
+        "material": "earth",
+        "shape": "solid"
+      }
+    ],
+    "rows": [
+      "........",
+      "........",
+      "........",
+      "GGGGGGGG"
+    ]
+  }
+}
+```
+
+## photo
+
+One of a game's own photos, to turn into a scene's paints. Put the files in `content/photos/`; the kind's rules are in `schemas/photo.schema.json`. The picture is a PNG beside the file, at most 256 pixels a side, and the record says where it came from. A scene's `photo` material names a photo by id: the game's own come before the framework's library.
+
+```json
+{
+  "format": 1,
+  "id": "moss",
+  "image": "content/photos/moss.png",
+  "size": {
+    "w": 1,
+    "h": 1
+  },
+  "source": "my own photo",
+  "licence": "CC0",
+  "credit": "Dana, taken in the garden"
 }
 ```
 

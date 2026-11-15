@@ -20,6 +20,8 @@ export const LAYERS = [
   'host',
   'locale',
   'web',
+  'ui',
+  'screens',
   'game',
   'flow',
   'cli',
@@ -35,6 +37,8 @@ export interface Violation {
 }
 
 const MAX_LINES = 600
+/** The features that hold `.svelte` files: the kit and the screens. */
+const SVELTE_FEATURES: readonly string[] = ['ui', 'screens']
 /**
  * The features that must run the same on every machine: no clock, no randomness, no I/O.
  * `audio` is one of them although it is not the sim: its only clock is its speaker's, so a test moves time by hand and
@@ -61,10 +65,24 @@ const PURE_FEATURES: ReadonlySet<string> = new Set([
  * of `feel` is held to the same `Math` list: its frames are a golden in four engines.
  */
 const PAINTER_FILES =
-  /^src\/features\/content\/(?:paint-[^/]+|pixels|sheet|art)\.ts$|^src\/lib\/png\.ts$|^src\/features\/feel\//
-const PAINTER_MATH = /\bMath\.(sin|cos|tan|atan2|atan|pow|exp|log|hypot|random)\b/g
+  /^src\/features\/content\/(?:paint-[^/]+|pixels|sheet|art|scene-ground|photo-library|lab|photo-tile|scene-from-level)\.ts$|^src\/lib\/(?:png|inflate|png-read)\.ts$|^src\/features\/feel\//
+const PAINTER_MATH = /\bMath\.(sin|cos|tan|atan2|atan|pow|exp|log|hypot|random|cbrt)\b/g
+/** What else the painter may not use: each gives its last bit, or its order, by the engine's own rule. */
+const PAINTER_OTHER: readonly { readonly pattern: RegExp; readonly what: string }[] = [
+  { pattern: /\*\*/g, what: '`**`' },
+  { pattern: /\bFloat32Array\b/g, what: 'Float32Array' },
+  { pattern: /\.sort\(\s*\)/g, what: '.sort() with no comparator' },
+]
 /** Features that need a page (a DOM, a canvas): the headless entry may not reach them. */
-const PAGE_FEATURES: ReadonlySet<string> = new Set(['render', 'input', 'web', 'game', 'flow'])
+const PAGE_FEATURES: ReadonlySet<string> = new Set([
+  'render',
+  'input',
+  'web',
+  'ui',
+  'screens',
+  'game',
+  'flow',
+])
 
 const IMPURE: readonly { readonly pattern: RegExp; readonly what: string }[] = [
   { pattern: /\bMath\.random\b/, what: 'Math.random' },
@@ -111,6 +129,11 @@ const CONFINED: readonly {
     why: "Effect is only for the server's process and the command",
   },
   {
+    package: /^svelte(\/|$)/,
+    only: ['src/features/ui/', 'src/features/screens/'],
+    why: 'Svelte draws the kit and the screens, and nothing else',
+  },
+  {
     package: /^@inlang\//,
     only: ['src/features/cli/words.ts'],
     why: 'Paraglide is named by the words compiler alone, which loads it only when words are compiled',
@@ -152,8 +175,13 @@ interface Source {
   readonly packages: readonly string[]
 }
 
+/** What a `.svelte` file's code is: its `<script>` blocks. Its markup holds no imports, and comments in it are text. */
+function scriptsOf(text: string): string {
+  return [...text.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1] ?? '').join('\n')
+}
+
 function read(file: string, text: string): Source {
-  const code = withoutComments(text)
+  const code = withoutComments(file.endsWith('.svelte') ? scriptsOf(text) : text)
   const local: string[] = []
   const runtime: string[] = []
   const packages: string[] = []
@@ -244,6 +272,9 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
     if (file.startsWith('src/') && file.endsWith('.test.ts')) {
       add(file, 'no-tests-in-src', 'Tests live in tests/, mirroring src/.')
     }
+    if (file.endsWith('.svelte') && (feature === undefined || !SVELTE_FEATURES.includes(feature))) {
+      add(file, 'svelte-in-its-place', `A .svelte file belongs to ${SVELTE_FEATURES.join(' or ')}.`)
+    }
 
     if (feature !== undefined && layerOf(feature) < 0) {
       add(file, 'unknown-feature', `"${feature}" is not one of: ${LAYERS.join(', ')}.`)
@@ -306,12 +337,21 @@ export function checkArchitecture(files: SourceFiles): Violation[] {
     }
     const painter = PAINTER_FILES.test(file)
     if (painter) {
+      const lineOf = (index: number | undefined): number =>
+        source.text.slice(0, index ?? 0).split('\n').length
       for (const call of source.text.matchAll(PAINTER_MATH))
         add(
           file,
           'painter-math',
-          `Math.${call[1]} is not allowed in the painter: its last bit may differ between engines. Use dmath's sin and cos, or whole numbers.`,
+          `Math.${call[1]} is not allowed in the painter (line ${lineOf(call.index)}): its last bit may differ between engines. Use dmath's functions, or whole numbers.`,
         )
+      for (const { pattern, what } of PAINTER_OTHER)
+        for (const found of source.text.matchAll(pattern))
+          add(
+            file,
+            'painter-math',
+            `${what} is not allowed in the painter (line ${lineOf(found.index)}): its result may differ between engines. Use dmath's pow, a Float64Array and a comparator.`,
+          )
     }
     const pure =
       painter || file.startsWith('src/lib/') || (feature !== undefined && PURE_FEATURES.has(feature))

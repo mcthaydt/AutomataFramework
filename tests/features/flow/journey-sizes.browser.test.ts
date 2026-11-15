@@ -1,0 +1,278 @@
+// Every screen of the flow at the five sizes: nothing is cut off, nothing but a list scrolls, every control is big enough
+// to touch, the screen's one main button is bigger still, and a picture is taken (the screens job keeps them). Then the
+// phone is turned on the screens that matter, and the focus and the state stay where they were.
+import { afterEach, beforeEach, expect, test } from 'vitest'
+import { page, userEvent } from 'vitest/browser'
+import { defaultSave } from '#src/features/flow/flow.ts'
+import { type TestHost, testHost } from '#src/features/host/host.ts'
+import { frameworkWords } from '#src/features/locale/locale.ts'
+import { createSaves } from '#src/features/saves/saves.ts'
+import { SPLASH_MS } from '#src/features/screens/screens.ts'
+import { createDrive } from '../../fixtures/flow/drive.ts'
+import { focusedName, ticks, walkByKey } from '../../fixtures/flow/page.ts'
+import { SCREENS } from '../../fixtures/game/screens.ts'
+import { keepDrawing } from '../../fixtures/ui/drawing.ts'
+
+const es = frameworkWords('es')
+const drive = createDrive()
+
+beforeEach(() => drive.start())
+afterEach(() => drive.stop())
+
+/** Two games saved, so the menu offers Continue and Saved games. */
+async function twoGames(host: TestHost): Promise<void> {
+  const saves = createSaves({ def: defaultSave(drive.game).def, store: host.store })
+  await saves.save(0, { level: 'level-1' }, { label: 'Nivel Uno' })
+  await saves.save(1, { level: 'level-2' }, { label: 'Nivel Dos' })
+}
+
+/** What every screen must be: whole on the page, with controls a thumb can press, and a picture of it. */
+async function look(size: string, name: string, mains?: number): Promise<void> {
+  const root = document.scrollingElement as Element
+  const fits = [root.scrollWidth <= window.innerWidth, root.scrollHeight <= window.innerHeight]
+  expect(fits, `${name} fits the page`).toEqual([true, true])
+  // Nothing scrolls but a list: whatever can scroll is a `List`, or the language picker's own box.
+  for (const one of drive.mount.querySelectorAll<HTMLElement>('*')) {
+    const scrolls = ['auto', 'scroll'].includes(getComputedStyle(one).overflowY)
+    const allowed = one.classList.contains('list') || one.classList.contains('automata-picker')
+    if (scrolls) expect(allowed, `${name}: only a list scrolls`).toBe(true)
+  }
+  for (const button of drive.mount.querySelectorAll<HTMLElement>('.automata-screen button')) {
+    const box = button.getBoundingClientRect()
+    const says = button.textContent?.trim() || button.getAttribute('aria-label')
+    expect(box.height, `${name}: "${says}" is tall enough`).toBeGreaterThanOrEqual(44)
+    expect(box.width, `${name}: "${says}" is wide enough`).toBeGreaterThanOrEqual(44)
+  }
+  const primaries = [...drive.mount.querySelectorAll<HTMLElement>('.automata-screen [data-kind="primary"]')]
+  // A screen with one thing to do names it once; Settings and the splash have none, and the level has its own.
+  if (mains !== undefined) expect(primaries, `${name} names its one main button`).toHaveLength(mains)
+  for (const main of primaries) {
+    const height = main.getBoundingClientRect().height
+    expect(height, `${name}: the main button is tall enough`).toBeGreaterThanOrEqual(48)
+  }
+  await page.screenshot({ element: drive.mount, path: `__screenshots__/flow-${size}-${name}.png` })
+}
+
+test.each(SCREENS)(
+  'at %s: every screen of the flow is opened once, nothing is cut off, every control is big enough',
+  async (size, w, h) => {
+    await page.viewport(w, h)
+    const host = testHost({ deviceLanguages: ['es-MX'] })
+    await twoGames(host)
+    await drive.open({ host, game: { players: 2 } })
+    await drive.shown('warnings')
+    await drive.wait('OK')
+    await look(size, 'warnings', 1)
+    await drive.press('OK')
+    await drive.shown('picking')
+    await expect.poll(() => drive.mount.querySelector('.automata-picker-go')).not.toBeNull()
+    await look(size, 'language')
+    ;(drive.mount.querySelector('.automata-flag') as HTMLElement).click()
+    ;(drive.mount.querySelector('.automata-picker-go') as HTMLElement).click()
+    await drive.shown('splash')
+    await look(size, 'splash', 0)
+    drive.frames.at(0)
+    drive.run(SPLASH_MS + 200)
+    await drive.shown('menu')
+    await drive.wait(es('automata.menu.continue'))
+    await look(size, 'menu', 1)
+    // Settings, the saved games and the players are each opened from the menu and left by Back or Done.
+    await drive.press(es('automata.menu.settings'))
+    await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
+    await look(size, 'settings', 0)
+    await drive.press(es('automata.back'))
+    await drive.wait(es('automata.menu.saves'))
+    await drive.press(es('automata.menu.saves'))
+    await expect.poll(() => drive.mount.querySelector('[data-screen="saves"]')).not.toBeNull()
+    await look(size, 'saves', 1)
+    await drive.press(es('automata.back'))
+    await drive.wait(es('automata.menu.add-player'))
+    await drive.press(es('automata.menu.add-player'))
+    await expect.poll(() => drive.mount.querySelector('[data-screen="players"]')).not.toBeNull()
+    await look(size, 'players', 1)
+    await drive.press(es('automata.players.done'))
+    await drive.wait(es('automata.menu.continue'))
+    // The level, with its pause button and numbers, then pause and "Well done!".
+    await drive.press(es('automata.menu.continue'))
+    await drive.shown('playing')
+    drive.frames.at(0)
+    ticks(drive, 30)
+    await look(size, 'playing')
+    await drive.press(es('automata.pause.button'))
+    await drive.shown('paused')
+    await drive.wait(es('automata.pause.resume'))
+    await look(size, 'pause', 1)
+    await drive.press(es('automata.menu.how'))
+    await expect.poll(() => drive.mount.querySelector('[data-screen="how"]')).not.toBeNull()
+    await look(size, 'how', 1)
+    await drive.press(es('automata.back'))
+    await drive.wait(es('automata.pause.resume'))
+    await drive.press(es('automata.pause.resume'))
+    await drive.shown('playing')
+    drive.flow()?.finishLevel()
+    await drive.shown('done')
+    // Continue opened the last level, so there is no next one: "Well done" offers only the way back to the menu.
+    await drive.wait(es('automata.done.menu'))
+    await look(size, 'done', 1)
+  },
+)
+
+test('the loading bar, the start card and the lost screen are whole at every size', async () => {
+  for (const [size, w, h] of SCREENS) {
+    await page.viewport(w, h)
+    // Loading: a read that never answers, so the bar is what is on the page.
+    await drive.open({ read: () => new Promise<string>(() => {}) })
+    expect(drive.mount.querySelector('[role="progressbar"]')).not.toBeNull()
+    await look(size, 'loading')
+    drive.leave()
+    // The start card over a level that is waiting, then the lost screen.
+    await drive.toMenu({ game: { noWarning: true, start: 'level-pit' } })
+    await drive.press(es('automata.menu.play'))
+    await drive.shown('playing')
+    drive.frames.at(0)
+    ticks(drive, 5)
+    await expect.poll(() => drive.mount.querySelector('.card')).not.toBeNull()
+    await look(size, 'start-card')
+    walkByKey(drive)
+    await drive.shown('lost')
+    await drive.wait(es('automata.lost.again'))
+    await look(size, 'lost', 1)
+    drive.leave()
+  }
+})
+
+test('a game that cannot be read shows its problem whole at every size', async () => {
+  for (const [size, w, h] of SCREENS) {
+    await page.viewport(w, h)
+    await drive.open({ game: { replace: { 'content/levels/level-2.json': '{ not json' } } })
+    await drive.shown('problem')
+    await look(size, 'problem', 1)
+    drive.leave()
+  }
+})
+
+/**
+ * What every kit frame on the page says it measured, and how big its box really is: "narrow/tall in 390x844". A frame
+ * that says one thing in a box of another has not heard its box change; a failure prints this, so it names which.
+ */
+const framesSay = (): string[] =>
+  [...drive.mount.querySelectorAll<HTMLElement>('[data-height]')].map(
+    (one) => `${one.dataset.width}/${one.dataset.height} in ${one.clientWidth}x${one.clientHeight}`,
+  )
+
+/**
+ * The phone is turned to `w` by `h`: the page is that size, and then every frame has measured it (a screen with no
+ * frame, like the menu, has nothing to wait for). A frame hears its box change from the browser only when the page
+ * draws a frame, and a page in the test browser that has just been resized, with nothing animating, can wait a long
+ * time for its next one (the turning journey failed in Chromium alone, with the box turned and the frame still
+ * saying "tall"). So the page is kept drawing while it waits, and the wait is as long as the flow's own.
+ */
+async function turnTo(w: number, h: number): Promise<void> {
+  await page.viewport(w, h)
+  await expect.poll(() => [window.innerWidth, window.innerHeight], { timeout: 10_000 }).toEqual([w, h])
+  const want = `${w < 600 ? 'narrow' : 'wide'}/${h < 480 ? 'short' : 'tall'}`
+  // What the poll answers is what a failure prints: the frames, each with the box it says it measured and its real one,
+  // and how many frames the page drew meanwhile, which settles the cause if this is ever seen again.
+  const drawing = keepDrawing()
+  const measured = (): string => {
+    const says = framesSay()
+    if (says.every((one) => one.startsWith(`${want} in `))) return 'measured'
+    return `want ${want}, ${drawing.count()} frames drawn, ${document.visibilityState}: ${says.join(' | ')}`
+  }
+  try {
+    await expect.poll(measured, { timeout: 10_000 }).toBe('measured')
+  } finally {
+    drawing.stop()
+  }
+}
+const turnSideways = (): Promise<void> => turnTo(844, 390)
+const turnUpright = (): Promise<void> => turnTo(390, 844)
+
+test('turning the phone on the menu, in Settings and on pause keeps the focus and the state', async () => {
+  await page.viewport(390, 844)
+  const host = testHost()
+  await twoGames(host)
+  await drive.toMenu({ host, game: { noWarning: true } })
+  // The menu: the same button is in focus on its side.
+  await drive.wait(es('automata.menu.continue'))
+  const first = focusedName()
+  await turnSideways()
+  expect(focusedName()).toBe(first)
+  expect(drive.step()).toBe('menu')
+  await turnUpright()
+  // Settings: Swap sides is left on, and it is still the control in focus.
+  await drive.press(es('automata.menu.settings'))
+  await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
+  const swap = (): HTMLElement => {
+    const switches = [...drive.mount.querySelectorAll<HTMLElement>('[role="switch"]')]
+    return switches.find((one) => one.textContent?.trim() === es('automata.settings.swap')) as HTMLElement
+  }
+  await userEvent.click(swap())
+  await expect.poll(() => swap().getAttribute('aria-checked')).toBe('true')
+  swap().focus()
+  await turnSideways()
+  expect(swap().getAttribute('aria-checked')).toBe('true')
+  expect(document.activeElement).toBe(swap())
+  await drive.press(es('automata.back'))
+  await turnUpright()
+  // Pause: still paused, with the same button in focus.
+  await drive.wait(es('automata.menu.continue'))
+  await drive.press(es('automata.menu.continue'))
+  await drive.shown('playing')
+  drive.frames.at(0)
+  ticks(drive, 30)
+  await drive.press(es('automata.pause.button'))
+  await drive.shown('paused')
+  await drive.wait(es('automata.pause.resume'))
+  const paused = focusedName()
+  await turnSideways()
+  expect(drive.step()).toBe('paused')
+  expect(focusedName()).toBe(paused)
+})
+
+test('turning the phone on the warnings, the saved games, the players and the done screen keeps the state and the focus', async () => {
+  await page.viewport(390, 844)
+  const host = testHost({ deviceLanguages: ['es-MX'] })
+  await twoGames(host)
+  await drive.open({ host, game: { players: 2 } })
+  await drive.shown('warnings')
+  await drive.wait('OK')
+  const warning = focusedName()
+  await turnSideways()
+  expect(drive.step()).toBe('warnings')
+  expect(focusedName()).toBe(warning)
+  await turnUpright()
+  await drive.press('OK')
+  await drive.shown('picking')
+  await expect.poll(() => drive.mount.querySelector('.automata-picker-go')).not.toBeNull()
+  ;(drive.mount.querySelector('.automata-flag') as HTMLElement).click()
+  ;(drive.mount.querySelector('.automata-picker-go') as HTMLElement).click()
+  await drive.shown('splash')
+  drive.frames.at(0)
+  drive.run(SPLASH_MS + 200)
+  await drive.shown('menu')
+  await drive.wait(es('automata.menu.saves'))
+  for (const [button, screen] of [
+    [es('automata.menu.saves'), 'saves'],
+    [es('automata.menu.add-player'), 'players'],
+  ] as const) {
+    await drive.press(button)
+    await expect.poll(() => drive.mount.querySelector(`[data-screen="${screen}"]`)).not.toBeNull()
+    const focused = focusedName()
+    await turnSideways()
+    expect(drive.mount.querySelector(`[data-screen="${screen}"]`)).not.toBeNull()
+    expect(focusedName()).toBe(focused)
+    await turnUpright()
+    await drive.press(screen === 'saves' ? es('automata.back') : es('automata.players.done'))
+    await drive.wait(es('automata.menu.continue'))
+  }
+  await drive.press(es('automata.menu.continue'))
+  await drive.shown('playing')
+  drive.flow()?.finishLevel()
+  await drive.shown('done')
+  await drive.wait(es('automata.done.menu'))
+  const done = focusedName()
+  await turnSideways()
+  expect(drive.step()).toBe('done')
+  expect(focusedName()).toBe(done)
+})

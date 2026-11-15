@@ -3,7 +3,9 @@ import {
   DEFAULT_HERO_CONTROLS,
   MOVE_NUMBERS,
   moveNumbers,
+  moveNumbersOf,
   type TuningFile,
+  tuningNumbers,
   writeContent,
 } from '#src/features/content/content.ts'
 import { gameFiles, gameProblems, problemsOf } from '../../fixtures/content/kind.ts'
@@ -88,6 +90,50 @@ describe('the numbers', () => {
   })
 })
 
+describe('the numbers from plain values', () => {
+  test('nothing gives every framework value, frozen', () => {
+    const none = moveNumbersOf({})
+    expect(none).toEqual(moveNumbers(undefined))
+    expect(Object.keys(none)).toHaveLength(18)
+    expect(Object.isFrozen(none)).toBe(true)
+  })
+
+  test('a value is taken by its id; the rest stay the framework value', () => {
+    const got = moveNumbersOf({ 'jump-speed': 15 })
+    expect(got.jumpSpeed).toBe(15)
+    expect(got.walkSpeed).toBe(6)
+  })
+
+  test('a value is held at the framework limit', () => {
+    expect(moveNumbersOf({ 'jump-speed': 99 }).jumpSpeed).toBe(30)
+    expect(moveNumbersOf({ 'jump-speed': 1 }).jumpSpeed).toBe(4)
+  })
+
+  test('a counted number with a fraction is floored', () =>
+    expect(moveNumbersOf({ 'dash-ticks': 10.5 }).dashTicks).toBe(10))
+
+  test('NaN and Infinity give the framework value, and an id nobody knows is ignored', () => {
+    const got = moveNumbersOf({
+      'jump-speed': Number.NaN,
+      'walk-speed': Number.POSITIVE_INFINITY,
+      nonsense: 3,
+    })
+    expect(got.jumpSpeed).toBe(12)
+    expect(got.walkSpeed).toBe(6)
+    expect(got).toEqual(moveNumbers(undefined))
+  })
+
+  test('the numbers of a tuning file, taken as plain values, are the numbers of the file', () => {
+    const file = tuning([
+      ['walk-speed', 8.5],
+      ['jump-speed', 50, 0, 100],
+      ['dash-ticks', 10.5, 0, 100],
+      ['air-jumps', 2, 1, 3],
+    ])
+    expect(moveNumbersOf(tuningNumbers(file))).toEqual(moveNumbers(file))
+  })
+})
+
 describe('the controls', () => {
   test('the framework controls are left, right, jump and dash, in that order', () =>
     expect(DEFAULT_HERO_CONTROLS.map((c) => c.action)).toEqual(['left', 'right', 'jump', 'dash']))
@@ -147,6 +193,20 @@ describe('the checks, in a game', () => {
         ),
       ),
     ).toEqual([]))
+
+  test("a number a letter off one the hero reads is named, and one far from them is the game's own", async () => {
+    expect(await gameProblems(game(tuning([['jump-sped', 12, 4, 30]])))).toEqual([
+      `${path}: numbers[0].id: "jump-sped" is not a number the hero reads. Did you mean "jump-speed"? If it is a number of your own, give it a name that is not so close to "jump-speed".`,
+    ])
+    // Two letters off is a typo in a long name only.
+    expect(await gameProblems(game(tuning([['wall-jump-uupp', 11, 4, 30]])))).toEqual([
+      `${path}: numbers[0].id: "wall-jump-uupp" is not a number the hero reads. Did you mean "wall-jump-up"? If it is a number of your own, give it a name that is not so close to "wall-jump-up".`,
+    ])
+    expect(await gameProblems(game(tuning([['air-gri', 6, 0, 60]])))).toEqual([
+      `${path}: numbers[0].id: "air-gri" is not a number the hero reads. Did you mean "air-grip"? If it is a number of your own, give it a name that is not so close to "air-grip".`,
+    ])
+    expect(await gameProblems(game(tuning([['air-xxip', 6, 0, 60]])))).toEqual([])
+  })
 
   test('a controls list without jump is named', async () =>
     expect(

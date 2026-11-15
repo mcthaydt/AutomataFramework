@@ -154,6 +154,7 @@ jobs:
           npm install --no-audit --no-fund "$RUNNER_TEMP"/pack/*.tgz
           node smoke.mjs
           node server-smoke.mjs
+          node scene-smoke.mjs
           "$GITHUB_WORKSPACE/node_modules/.bin/tsc" -p .
           # The same file again with the older TypeScript and NodeNext resolution, the way a game on either would read it.
           node "$GITHUB_WORKSPACE/node_modules/typescript-6/bin/tsc" -p tsconfig.ts6.json

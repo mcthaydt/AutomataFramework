@@ -11,7 +11,7 @@ import type { Bus, Speaker, SpeakerState } from './speaker.ts'
 export { type CueLogEntry, LOG_MAX, MAX_SAME, MAX_SOUNDS } from './cues.ts'
 export { hertzOf } from './notes.ts'
 export { type Score, type ScoreNote, scoreOf } from './score.ts'
-export { SOUND_SETTINGS_DEFAULT, type SoundSettings, SoundSettingsSchema } from './settings.ts'
+export { heardVolumes, SOUND_SETTINGS_DEFAULT, type SoundSettings, SoundSettingsSchema } from './settings.ts'
 export type { Bus, Speaker, SpeakerState } from './speaker.ts'
 export { type PlayedVoice, type TestSpeaker, testSpeaker } from './test-speaker.ts'
 

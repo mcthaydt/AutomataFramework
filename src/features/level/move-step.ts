@@ -26,6 +26,11 @@ export interface MoveState {
   sliding: boolean
   /** Wall-jump-lock ticks left. */
   lock: number
+  /**
+   * Which way the last wall jump pushed (-1 or 1). Written and not read today. It stays because it is part of the
+   * component, so of the schema hash and of both goldens that moved with it (`moves.json` and the template's replay);
+   * take it out the next time those move for another reason, or when a move comes that needs it.
+   */
   lockDir: number
   /** Dash ticks left. */
   dash: number
@@ -80,6 +85,12 @@ export interface MoveInput {
   /** The speed physics left the body with, in tiles a second. y points down: up is negative. */
   readonly vx: number
   readonly vy: number
+  /**
+   * The normal of the ground under the hero (y points down, so flat ground is (0, -1)). Given only in a game with a
+   * slope. On the ground, a walk then runs along it, and a hero left alone is held on it. Left out, or flat, nothing
+   * here differs from a game with no slope.
+   */
+  readonly slope?: { readonly nx: number; readonly ny: number } | undefined
 }
 
 /** Which of the optional moves the hero's character file switched on. */
@@ -107,6 +118,9 @@ export interface MoveResult {
   readonly vy: number
   readonly events: readonly MoveEventName[]
 }
+
+/** A ground whose normal leans this little sideways is flat. */
+const FLAT = 1e-3
 
 /** A speed this near its target is on it: sums of a step's size, held as f32, land a hair short of a whole count. */
 const ARRIVED = 1e-4
@@ -218,8 +232,10 @@ export function stepMoves(
 
   // 7. The jump: the ground (or its grace), else a wall, else the air. The first that fits.
   let airJumped = false
+  let jumped = false
   if (s.press > 0) {
     if (canStand) {
+      jumped = true
       vy = -n.jumpSpeed
       s.grace = 0
       s.stood = false
@@ -256,6 +272,26 @@ export function stepMoves(
 
   // 9. The cap.
   vy = Math.min(vy, n.fallSpeed)
+
+  // 9b. A slope. On the ground, and not on the tick of a jump, the walk's speed runs along the slope and not along the
+  // floor: `tx, ty` is the slope's direction, pointing right. A hero that holds nothing is given the lift that cancels
+  // one tick of gravity, so it is neither pulled down the slope nor pressed into it, and so, whatever the slope's angle
+  // and friction, it stands where it is. That lift is `5/8` of `hover`, not all of it as a dash takes: Rapier moves a
+  // body in four steps of a quarter tick, and the speed whose four steps come back to where the body began is `5/8` of
+  // the tick's pull. A dash is in the air and asks for a speed that gravity brings to nothing by the tick's end, so
+  // it holds its height and may rise a little; a hero on the ground must not rise at all, or it would leave the slope.
+  // The slope parity test pins the second.
+  const { slope } = input
+  if (below && !jumped && slope !== undefined && Math.abs(slope.nx) > FLAT) {
+    if (dir === 0 && s.run === 0) {
+      vx = 0
+      vy = (hover * 5) / 8
+    } else {
+      // `+ 0` turns a minus nought into a nought, as the sim's numbers want.
+      vx = s.run * -slope.ny + 0
+      vy = s.run * slope.nx + 0
+    }
+  }
 
   // 10. The mode, for the clip.
   s.mode = s.sliding

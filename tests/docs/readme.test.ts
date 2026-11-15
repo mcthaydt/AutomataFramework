@@ -7,8 +7,10 @@ import { mcpTools } from '#src/features/cli/mcp-tools.ts'
 import { createSessions } from '#src/features/cli/session.ts'
 import { LANGUAGES } from '#src/features/content/content.ts'
 import { CONTENT_TYPES } from '#src/features/content/content-types.ts'
+import { FLOW_EVENTS } from '#src/features/flow/events.ts'
 import { TOUCH_PROPERTIES } from '#src/features/input/touch.ts'
 import { FRAMEWORK_VERSION } from '#src/features/sim/sim.ts'
+import { UI_PROPERTIES } from '#src/features/ui/ui.ts'
 import * as framework from '#src/headless.ts'
 import { GAME_FOLDER, PACKAGE_NAME, START_HERE } from '../install/create-commands.ts'
 
@@ -100,6 +102,16 @@ test('the README has a host section that names every member of the port and both
     'testHost()',
   ])
     expect(host, word).toContain(word)
+})
+
+// An editor tunes a playing hero; a game never needs to, and the README says so where it names the one option.
+test('the README names `tunable` once, in the paragraph that says what the editors use it for', () => {
+  expect(readme.split('`tunable').length - 1).toBe(1)
+  const at = readme.indexOf('`tunable')
+  const paragraph = readme.slice(readme.lastIndexOf('\n\n', at), readme.indexOf('\n\n', at))
+  for (const word of ['An editor', 'game.tune', 'tuning file', 'jumpPaths', 'gravity'])
+    expect(paragraph, word).toContain(word)
+  for (const name of ['jumpPaths', 'moveNumbers']) expect(framework, name).toHaveProperty(name)
 })
 
 // A game finds out how to speak in the player's language from here, and copies an example that uses only what headless exports.
@@ -288,6 +300,49 @@ test('the README names every command and every flag its help has, and no other',
   expect(readme).toContain('--help')
 })
 
+test("the README has a Scenes section whose scene file is a whole one, and whose names are the package's", () => {
+  const start = readme.indexOf('## Scenes')
+  expect(start).toBeGreaterThan(-1)
+  const scenes = readme.slice(start, readme.indexOf('\n## ', start + 1))
+  const file = /```json scene\n([\s\S]*?)```/.exec(scenes)?.[1] ?? ''
+  const parsed = framework.parseContent('scene', file, 'content/scenes/meadow.json')
+  expect(parsed.ok ? [] : parsed.diagnostics.map(framework.formatDiagnostic)).toEqual([])
+  for (const shape of framework.GROUND_SHAPES) expect(scenes, shape).toContain(`\`${shape}\``)
+  for (const word of [
+    'scene file',
+    'automata scene from-level',
+    'photos/',
+    'scenes.md',
+    'groundPages',
+    'placedTiles',
+  ])
+    expect(scenes, word).toContain(word)
+  for (const name of [
+    'SceneSchema',
+    'PhotoSchema',
+    'paintScene',
+    'sceneFromLevel',
+    'materialTile',
+    'PHOTO_LIBRARY',
+  ])
+    expect(framework, name).toHaveProperty(name)
+})
+
+// A moved level's content is not the same bytes, so a replay says "the content changed"; the README must not promise
+// that its recordings still end where they did.
+test('the README says a moved level plays as it did but its recordings must be made again', () => {
+  expect(readme).not.toContain('hashes as it did')
+  expect(readme).not.toContain('recordings still end where they did')
+  expect(readme).not.toContain('play of it still ends where it did')
+  expect(readme).toContain('automata replay --accept')
+})
+
+test('the README names automata scene from-level and its two flags', () => {
+  const ref = section('## The automata command')
+  expect(ref).toContain('automata scene from-level <level> [folder]')
+  for (const flag of ['--as', '--json']) expect(ref, flag).toContain(`- \`${flag}`)
+})
+
 test('the README gives the exit codes, and every verdict of a replay', () => {
   const ref = section('## The automata command')
   for (const word of ['`0`', '`1`', '`2`']) expect(ref, word).toContain(word)
@@ -332,4 +387,31 @@ test('the README names every tool automata mcp has, the protocol versions it spe
   for (const version of PROTOCOL_VERSIONS) expect(mcp, version).toContain(`\`${version}\``)
   const config = readFileSync(new URL('../../template/.mcp.json', import.meta.url), 'utf8')
   expect(JSON.parse(/```json\n([\s\S]*?)```/.exec(mcp)?.[1] ?? '')).toEqual(JSON.parse(config))
+})
+
+// A game finds out how to put the whole visit on a page from this section: its first example is a page that calls
+// `startFlow` and nothing else, and the rest names what a game can change.
+test('the README has a "Screens and the flow" section: a page of a few lines, the four fields, the CSS, the words and the events', () => {
+  const start = readme.indexOf('## Screens and the flow')
+  expect(start).toBeGreaterThan(-1)
+  const section = readme.slice(start, readme.indexOf('\n## ', start + 1))
+  const page = /```ts\n([\s\S]*?)```/.exec(section)?.[1] ?? ''
+  expect(page.trim().split('\n').length).toBeLessThanOrEqual(15)
+  expect(page).toContain('startFlow')
+  // The page starts the flow and does nothing else: no game, no screen and no input of its own.
+  for (const word of ['startGame', 'createInput', 'createLocale', 'languagePicker'])
+    expect(page, word).not.toContain(word)
+  for (const field of ['levels = [', 'done = "', 'warnings = [', 'splash = "'])
+    expect(section, field).toContain(field)
+  for (const property of UI_PROPERTIES) expect(section, property).toContain(property)
+  for (const event of FLOW_EVENTS) expect(section, event).toContain(event)
+  for (const word of [
+    'FLOW_EVENTS',
+    'UI_PROPERTIES',
+    'data-state',
+    'data-over',
+    'screens: {',
+    'content/messages/',
+  ])
+    expect(section, word).toContain(word)
 })
