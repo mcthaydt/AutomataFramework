@@ -6,6 +6,7 @@ export const FLOW_EVENTS = [
   'screen.menu',
   'screen.pause',
   'screen.done',
+  'screen.lost',
   'ui.move',
   'ui.press',
   'ui.back',

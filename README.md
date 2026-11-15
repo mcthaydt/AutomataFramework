@@ -293,16 +293,19 @@ It never rejects: whatever goes wrong shows a screen of words with a button that
 answers at once, and the object it gives back says where the visit is (`state()`, `onState`), holds the running game
 (`game()`), ends a level the way the game's event does (`finishLevel()`), lets a watching visitor take over
 (`takeOver()`), and stops everything (`stop()`). The mount carries `data-state` (`loading`, `warnings`, `picking`,
-`splash`, `menu`, `playing`, `paused`, `done`, `watching` or `problem`), and `data-over` while settings, saved games or
+`splash`, `menu`, `playing`, `paused`, `done`, `lost`, `watching` or `problem`), and `data-over` while settings, saved games or
 the players screen is on top. A test or an agent reads those two attributes to know where a page is.
 
-Four fields of `automata.toml` say what the screens show. None of them changes the rules of the game:
+Four fields of `automata.toml` say what the screens show, and two more say how a level is lost and counted. None of them
+changes the rules of the game:
 
 ```toml
 levels = ["level-1", "level-2"]   # the order the levels are played in; "Next level" follows it, Continue opens the one reached
 done = "door.touched"             # the event that ends a level (a hero, not a crate, must raise it)
 warnings = ["warning.flashing"]   # message keys read on one screen at the start of each visit
 splash = "logo"                   # a figure shown for two seconds; left out, the splash is the game's name
+lost = "hero.fell"                # the event that loses a level: "You lost." and Try again. "hero.fell" is the framework's own
+score = "hero.score.sparks"       # a resource and one of its numbers: shown as "Score: n" and kept as the best score
 ```
 
 A game dresses every screen with CSS properties set on the mount or above it: `--automata-ui-background`,
@@ -321,7 +324,7 @@ on), and returns `{ destroy() }`. The kit the framework's screens are made of (`
 `ScreenFrame`, `Dialog`, `KeyRow`) is exported for a game's own screens to use.
 
 The flow raises page events on the game's sound, so a cues file can give the menu its own music and a button its own click:
-`screen.menu`, `screen.pause`, `screen.done`, `ui.move`, `ui.press` and `ui.back`. `FLOW_EVENTS` lists them.
+`screen.menu`, `screen.pause`, `screen.done`, `screen.lost`, `ui.move`, `ui.press` and `ui.back`. `FLOW_EVENTS` lists them.
 
 ## Saves
 

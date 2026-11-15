@@ -411,6 +411,8 @@ test('a game whose rules throw shows "The game stopped." and "Load the page agai
   await press(es('automata.menu.play'))
   await shown('playing')
   frames.at(0)
+  // The level waits for the first press, so the rules do not run until one comes.
+  key('keydown', 'Space')
   // The error still goes on to the page's handler; the flow has shown its screen by then.
   expect(() => run(500)).toThrow('the rules broke')
   await shown('problem')
