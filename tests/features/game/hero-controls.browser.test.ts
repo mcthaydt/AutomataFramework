@@ -106,7 +106,8 @@ test('controls in the file and in code: the file wins, and the console is told o
   run(frames, 30)
   key('keyup', 'KeyL')
   expect(heroX(g)).toBeGreaterThan(from + 1)
-  // The code's key for `right` does nothing: the file did not list it.
+  // The code's key for `right` does nothing: the file did not list it. The hero first comes to a stop.
+  run(frames, 10)
   const there = heroX(g)
   key('keydown', 'KeyD')
   run(frames, 30)
@@ -122,7 +123,7 @@ test('a file with no list and controls in code: the code plays, and nothing is s
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
   const { frames, g } = await start(await content(), {
     ...fixtureControls,
-    right: { label: 'Right', keys: ['KeyL'], side: 'left' },
+    right: { label: 'Right', keys: ['KeyL'], side: 'left', shared: [['KeyD'], ['ArrowRight']] },
   })
   run(frames, 20)
   const from = heroX(g)

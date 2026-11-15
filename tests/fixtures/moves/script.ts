@@ -39,10 +39,10 @@ const ONE: readonly (readonly [number, Held])[] = [
   [585, [R, D]],
   [586, [R]],
   // A jump at the pit's edge, an air dash over it, and the walk on to the shaft, in at the doorway, to the far wall.
-  [643, [R, J]],
-  [644, [R]],
-  [657, [R, D]],
-  [658, [R]],
+  [649, [R, J]],
+  [650, [R]],
+  [663, [R, D]],
+  [664, [R]],
   // At the far wall: a jump, the slide down it, then three wall jumps, one off each wall in turn.
   [810, [R, J]],
   [811, [R]],

@@ -260,7 +260,10 @@ export async function createRapier(setup: {
       const mine = world.getCollider(handle)
       if (mine.isSensor()) return found
       // Only a box has corners.
-      const half = mine.shapeType() === (ShapeKind.cuboid as number) ? (mine.halfExtents() as RAPIER.Vector).x : undefined
+      const half =
+        mine.shapeType() === (ShapeKind.cuboid as number)
+          ? (mine.halfExtents() as RAPIER.Vector).x
+          : undefined
       // Collected first: the manifolds are read after the enumeration has finished, never inside it.
       const others: number[] = []
       narrow.contactPairsWith(handle, (other) => {

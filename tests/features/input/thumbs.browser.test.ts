@@ -2,6 +2,7 @@
 // what a thumb holds the moment it lands, the ring that follows it, and everything a thumb must not do (scroll, zoom,
 // open a menu).
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { page } from 'vitest/browser'
 import { type Controls, createInput } from '#src/features/input/input.ts'
 import { createThumbs } from '#src/features/input/thumbs.ts'
 import type { Touch } from '#src/features/input/touch.ts'
@@ -21,7 +22,9 @@ let touch: Touch | undefined
 const sideways = (): void => {
   mount.style.cssText = 'position:fixed;left:0;top:0;width:844px;height:390px;overflow:hidden'
 }
-beforeEach(() => {
+beforeEach(async () => {
+  // The page is as big as a phone on its side, so every point of the mount can be touched.
+  await page.viewport(844, 390)
   mount = document.createElement('div')
   sideways()
   document.body.append(mount)
@@ -221,7 +224,7 @@ test('a game with dash has the dash mark, 64 px, and a tap on it is a dash', () 
   expect(sorted(t.held())).toEqual([])
 })
 
-test("a game without dash has no dash mark, and its own action is a 64 px button above the jump half", () => {
+test('a game without dash has no dash mark, and its own action is a 64 px button above the jump half', () => {
   const t = make()
   expect(mount.querySelector('[data-action="dash"]')).toBeNull()
   const own = button('throw')
@@ -263,11 +266,17 @@ test('nothing scrolls, zooms or opens a menu under a thumb', () => {
 
 test('a game whose hero has no moves still gets the buttons, and one with moves gets the thumbs', () => {
   const frames = manualFrames()
-  const plain = createInput({ mount, controls, frames, words: said({}) })
+  const plain = createInput({ mount, controls: fixtureControls, frames, words: said({}) })
   expect(mount.querySelector('.automata-touch')).not.toBeNull()
   expect(mount.querySelector('.automata-thumbs')).toBeNull()
   plain.destroy()
-  const moving = createInput({ mount, controls, frames, words: said({}), thumbs: { dash: false } })
+  const moving = createInput({
+    mount,
+    controls: fixtureControls,
+    frames,
+    words: said({}),
+    thumbs: { dash: false },
+  })
   expect(mount.querySelector('.automata-touch')).toBeNull()
   expect(mount.querySelector('.automata-thumbs')).not.toBeNull()
   expect(moving.thumbRoom()).toBe(120)

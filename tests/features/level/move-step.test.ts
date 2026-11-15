@@ -141,6 +141,18 @@ describe('jumping', () => {
     expect(run([tick({ jumpPressed: true })])[0]?.vy).toBe(-6)
   })
 
+  test('the tick after a jump, the feet still touch (a contact is one step old), and that is not a landing', () => {
+    const jump = run([
+      tick(),
+      tick({ jumpPressed: true, jumpHeld: true }),
+      // Still touching, going up at 11.5 now, and the thumb has lifted: no landing, and the jump is cut.
+      tick({ vy: -11.5 }),
+    ])
+    expect(saw(jump, 'landed')).toBe(1)
+    expect(saw(jump, 'left-ground')).toBe(0)
+    expect(last(jump).vy).toBe(-5.75)
+  })
+
   test('falling never passes 20', () => {
     expect(run([tick({ ...AIR, vy: 25 })])[0]?.vy).toBe(20)
     expect(run([tick({ ...AIR, vy: 19 })])[0]?.vy).toBe(19)

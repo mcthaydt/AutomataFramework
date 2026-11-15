@@ -131,9 +131,12 @@ export function stepMoves(
 ): MoveResult {
   const s: MoveState = { ...state }
   const events: MoveEventName[] = []
-  const { dir, below, wall } = input
+  const { dir, wall } = input
   let vx = input.vx
   let vy = input.vy
+  // A contact is one physics step old, so on the tick after a jump the feet still say they touch. A hero moving up
+  // from a jump is in the air: the jump must not land at once, and letting go must still cut it.
+  const below = input.below && !(state.rising && vy < 0)
 
   // 1. Ground. Landing gives the air moves back; the ledge grace is how long after the ground a jump still works.
   if (below && !s.stood) {

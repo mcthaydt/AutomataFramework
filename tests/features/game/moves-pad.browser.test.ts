@@ -8,7 +8,7 @@ import { Body, Transform } from '#src/features/physics/physics.ts'
 import { type ManualFrames, manualFrames } from '../../fixtures/game/frames.ts'
 import { type FakeGamepads, fakeGamepads } from '../../fixtures/input/fake-gamepads.ts'
 import { chosenLocale } from '../../fixtures/locale/chosen.ts'
-import { movesScreenContent } from '../../fixtures/moves/screen.ts'
+import { movesScreenContent, paintedPictures } from '../../fixtures/moves/screen.ts'
 
 const FRAME = 1000 / 60
 
@@ -40,9 +40,7 @@ async function begin(): Promise<{ g: Game; frames: ManualFrames; pads: FakeGamep
     host: testHost(),
     frames,
     gamepads: pads.getGamepads,
-    readPicture: async (path) => {
-      throw new Error(`${path}: this test paints nothing`)
-    },
+    readPicture: paintedPictures(content),
   })
   game = g
   frames.at(0)
