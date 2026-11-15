@@ -101,3 +101,18 @@ test('--read with no language is a problem, and so is a list flag on a command t
 test('every command has a lists table, empty unless it has a list flag', () => {
   expect(parseArgs(['check'])).toMatchObject({ lists: {} })
 })
+
+test('add reads its kind, its path and its note as values, and the folder before them', () => {
+  const words = ['add', 'game', '--type', 'figure', '--path=content/figures/keeper.json']
+  expect(parseArgs([...words, '--about', 'The keeper.', '--json'])).toEqual({
+    command: 'add',
+    folder: 'game',
+    flags: { type: 'figure', path: 'content/figures/keeper.json', about: 'The keeper.', json: true },
+    lists: {},
+    rest: [],
+  })
+  expect(parseArgs(['add', '--type'])).toEqual({
+    problem: '--type needs a value after it, like --type <value>.',
+  })
+  expect(parseArgs(['add', '--check'])).toMatchObject({ problem: expect.stringContaining('--check') })
+})
