@@ -68,6 +68,7 @@ export {
   type LevelStart,
   type LevelThing,
   type LevelView,
+  type ThingValue,
 } from './level.ts'
 export { type GameContent, loadGame } from './load.ts'
 export {
@@ -143,4 +144,12 @@ export {
   tuningNumbers,
 } from './tuning.ts'
 export type { ContentTypeInfo, EditorName, Listed, Report } from './type-info.ts'
+export {
+  SHOWN_FOR,
+  shownOf,
+  type ValueDeclaration,
+  type ValueShown,
+  valueDeclaration,
+  withDefaults,
+} from './values.ts'
 export { writeContent } from './write.ts'
