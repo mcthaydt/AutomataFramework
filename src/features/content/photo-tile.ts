@@ -110,7 +110,7 @@ function flatten(src: Lab, radius: number, amount: number): Lab {
   if (amount <= 0 || radius <= 0) return src
   const { width, height, lab } = src
   const n = width * height
-  let light = new Float64Array(n)
+  let light: Float64Array = new Float64Array(n)
   let mean = 0
   for (let i = 0; i < n; i++) {
     light[i] = lab[i * 3] ?? 0
