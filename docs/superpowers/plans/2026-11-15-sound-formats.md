@@ -674,6 +674,10 @@ export function instrumentVoices(note: PlainNote, tempo: number): (ToneVoice | N
 export function scoreOf(music: MusicFile, parts?: SongParts): Score
 ```
 
+`createMusicPlayer` and `MusicPlayer` are exported from `audio.ts` (the Sound editor plays a song with the game's
+own player), and `want` gains a second argument: `want(music: MusicFile, from?: number)`, seconds into the track to
+begin at (default 0, held inside the track; `createAudio` never passes it).
+
 `scoreOf` on format 2 without the loops and motifs it names throws `'The track "meadow" uses a loop called
 "easy-drums", which this game does not have.'` (and the same for a motif). `createMusicPlayer(speaker, parts)` and
 `cueTable` hand the content through; `createAudio` passes `options.content`.
@@ -770,6 +774,13 @@ export function loadRecordings(content: GameContent,
 export function createAudio(options: { content; speaker; tickHz?; readonly recordings?: Recordings }): GameAudio
 ```
 
+```ts
+// sound-voices.ts
+/** Plays a sound once, now, on a bus: every voice of `soundVoices`, handed to the speaker. What `createAudio` does
+ *  for a cue, and what an editor does for a Play button. Does nothing unless the speaker is on. */
+export function playSound(speaker: Speaker, bus: Bus, sound: SoundFile, parts: SongParts): void
+```
+
 `createAudio` gives every recording to `speaker.keep` at once, and throws `'This game has recorded sounds, so
 createAudio needs "recordings". Load them with loadRecordings.'` when a sound names a file `recordings` does not
 have. `cueTable` works out a sound's ticks from `soundSeconds`, and `run` plays `soundVoices`.
@@ -780,7 +791,10 @@ have. `cueTable` works out a sound's ticks from `soundSeconds`, and `run` plays 
   naming one file reads it once; a long file rejects with the sentence of Task 3; no recordings never reads.
   `audio.test.ts`: a cue for a sound with a recording plays one recording voice on the test speaker, and `kept` has
   its path; the missing-`recordings` sentence; a recording cue while the speaker waits is logged and not played
-  (Review Focus 5); a sound whose motif is ten notes counts its real length against `MAX_SAME` in ticks.
+  (Review Focus 5); a sound whose motif is ten notes counts its real length against `MAX_SAME` in ticks;
+  `playSound` hands over the same voices a cue does, and nothing while the speaker waits. In `music-player.test.ts`
+  (Task 8's change, tested here with it): `want(track, 2)` hands over only notes from two seconds in, each two
+  seconds sooner.
 - [ ] **Step 2: Push; red. Step 3: Implement. Step 4: Push; green.**
 - [ ] **Step 5: Commit** `feat(audio): motif voices and recordings play through the speaker`
 
@@ -1182,7 +1196,8 @@ proof. If it moves, stop and report.
 - **AutomataFrameworkEditors:** after this merges, the Editors' pin moves to it in its own pull request. The Sound
   editor's plan (`docs/superpowers/plans/2026-11-15-sound-editor.md` there) names every export it uses: `withFolders`,
   `loadGame`'s `list`, `makeSound`, `SOUND_KINDS`, `LIBRARY`, `libraryName`, `libraryFiles`, `writeRecording`,
-  `readRecording`, the limits, `soundVoices`, `scoreOf`, `notesOf`, `chordName`, `chordOf`, `midiToMusic`,
+  `readRecording`, the limits, `soundVoices`, `playSound`, `createMusicPlayer`, `scoreOf`, `notesOf`, `loopNotes`,
+  `motifNotes`, `chordName`, `chordOf`, `midiToMusic`,
   `musicToMidi`, `webSpeaker`'s `keep`. Changing one of those names after this plan is audited means changing that
   plan too.
 - **The Feel editor's plan** lists its effects' folder with `withFolders` (Tasks 1 and 2), not one block a file.
