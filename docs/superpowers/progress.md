@@ -6,12 +6,13 @@ The tracker every stage reads first and updates last. One section per cycle; new
 
 Spec: [`specs/2026-11-15-feel-runtime-design.md`](specs/2026-11-15-feel-runtime-design.md)
 
-Overall: **10%** (the spec is written and in review; stages 2 to 7 follow, after plan H)
+Overall: **20%** (the spec and plan F are written and in review; stages 3 to 7 follow; the build waits for plan H)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Written, in review, 100%. The Owner answered (2026-11-15): freeze is a real pause offline and a held picture online (A); a "Screen shake" switch in the game's settings, on by default and off first when the device asks for reduced motion (A). Also covers the Feel editor's "Show me" (Editors PR 30, F4): `showFeel` plays one feel file once in a running game, presentation only. No golden moves; no new dependency | `specs/2026-11-15-feel-runtime-design.md` |
-| 2 to 7 (plan F) | Not started; plan F lands after plan H, before plan D's Part 6 | |
+| 2. Plan (plan F) | Written, in review, 100%; plan F at 0% built. Twelve tasks (7.5% each, 10% for the last green run): the `feel` feature's place (pure, between `server` and `render`), its noise and the "Screen shake" setting as plain data; dust as numbers and the limits a file plays inside; shake as numbers; `createFeel` (events in, frames out) with a new golden of its frames in four engines; `Host.reducedMotion()`; the renderer draws a feel frame (a dust layer, an offset in whole device pixels, a held picture); the loop can hold without owing the time; a game played alone draws its feel and really pauses for a freeze; watched and online games (online a freeze holds only the picture; a watch never buzzes); `showFeel`, playing or paused; the word in six languages, the README and the skills; journeys at five sizes in three browsers. No golden moves (one new: `tests/golden/feel-frames.json`); no dependency is added. Two builder's calls differ from the spec's words and are named for the audit: dust starts at the thing's feet as of the newest step (the last picture only for a thing just taken away), and the runtime has `hold(seconds)` beside `frame`. Handoffs: plan U shows the switch (`automata.feel.shake`, the `feel` settings section), plan D Part 6 (three feel files and its `crate.dropped` plugin), the Feel editor's Part 3 (`showFeel`, `game.feel()`), and every hand-made `Host` gains `reducedMotion()`. No Owner question is open | `plans/2026-11-15-feel-runtime.md` |
+| 3 to 7 (plan F) | Not started; the build lands after plan H, before plan D's Part 6 | |
 
 ## Cycle 6: the built-in hero (walk, jump and more, from content)
 
