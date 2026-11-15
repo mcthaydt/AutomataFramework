@@ -112,10 +112,9 @@ Each change names the task it lands in and the test that proves it. Plan W's own
    before it waits, and the first press lands on tick 1. With no facts nothing changes, so no recording moves. Lands in
    Task 7a. Tests, in `start-card.browser.test.ts`: a level entered through a door has no `data-waiting`; Continue
    into `room-2` with `facts: ['room-2.gate-1.open']` shows `gate-1` open while it waits.
-6. **Well done, doors and the score.** A door is not `done` (plan W's call 5). **This waits on the Owner's open
-   question on plan W** (from its plan audit: through a door, straight into the next level, or a "level done" screen
-   first). Straight in (recommended there): nothing here changes. A "level done" screen first: Well done shows at
-   each door with its score and best, and its Next opens the door's level beside its `thing`; Task 8 gains that test.
+6. **Well done, doors and the score.** A door is not `done` (plan W's call 5). **The Owner settled it (2026-11-15, plan
+   W's plan audit, question 2: "a"):** through a door the player goes straight into the next level, with no "level
+   done" screen. So Well done shows only when what `done` names is raised, and nothing here changes for a door.
    **A score is one sim's**: a lone level's, or a whole place's. A door starts a new sim, and so a new count. A game
    that wants a running total across doors is a later plan's, when a game needs one. Lands in Task 8.
 7. **Delete all my saves takes the doors' memory too.** Plan W keeps `last` and `facts` in the saved games
