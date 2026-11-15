@@ -35,7 +35,7 @@ never defaulted). Added by this plan:
   golden keep their hashes: nothing here joins a sim that did not ask for it. If one differs in CI, stop and report.
 - **Offline only.** `startOnlineGame` never makes a tunable sim.
 - **One pull request,** four tasks, 22% each; the last 12% is the final green run. Tracker: `docs/superpowers/progress.md`,
-  a new "Cycle 7: live move numbers and the jump's path".
+  a new "Cycle 8: live move numbers and the jump's path" (the sound formats took Cycle 7).
 - **A `patch` changeset** and the API report (`docs/api/framework.api.md`, from the `package` job's log), as every
   change to the public surface has.
 

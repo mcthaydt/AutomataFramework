@@ -2,7 +2,7 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
-## Cycle 7: live move numbers and the jump's path (for the editors' Feel)
+## Cycle 8: live move numbers and the jump's path (for the editors' Feel)
 
 Spec: the Feel editor's, in AutomataFrameworkEditors
 ([`2026-11-15-feel-editor-design.md`](https://github.com/mcthaydt/AutomataFrameworkEditors/blob/main/docs/superpowers/specs/2026-11-15-feel-editor-design.md),
