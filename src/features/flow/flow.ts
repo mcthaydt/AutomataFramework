@@ -453,13 +453,14 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
         }),
       ]
       // Escape pauses, heard on the window as the game's own keys are: a tap on the canvas leaves the focus outside
-      // the mount, so a key listener on the mount would never hear it.
+      // the mount, so a key listener on the mount would never hear it. It is heard first (capturing, and before the
+      // screens made later), so on the pause screen the same Escape that keeps playing does not pause again.
       const onEscape = (event: KeyboardEvent): void => {
         if (event.key === 'Escape' && !event.repeat) dispatch({ type: 'pause' })
       }
-      window.addEventListener('keydown', onEscape)
+      window.addEventListener('keydown', onEscape, { capture: true })
       letGoOfGame = () => {
-        window.removeEventListener('keydown', onEscape)
+        window.removeEventListener('keydown', onEscape, { capture: true })
         for (const stop of off) stop()
       }
       putOverlay()

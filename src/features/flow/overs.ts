@@ -141,7 +141,8 @@ export function createOvers(context: OverContext): { open(over: Over): void; clo
     const { input, release } = inputForScreen()
     const words = context.locale().words
     const keyboardIsFree = !party.members().some((member) => member.claim === 'keyboard')
-    const canShare = keyboardIsFree && Object.values(input.controls()).every((one) => one.shared !== undefined)
+    const canShare =
+      keyboardIsFree && Object.values(input.controls()).every((one) => one.shared !== undefined)
     // The screen is drawn again with who is in now, unless the player has gone on to something else meanwhile.
     const again = (said?: string): void => {
       if (shown !== mine) return

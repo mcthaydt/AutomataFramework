@@ -1,0 +1,85 @@
+// The desktop, 1280 by 720, a keyboard only: every screen walked with the arrows, Enter and Escape, and a key changed in
+// Settings that is then the key that walks the hero.
+import { afterEach, beforeEach, expect, test } from 'vitest'
+import { page, userEvent } from 'vitest/browser'
+import { frameworkWords } from '#src/features/locale/locale.ts'
+import { createDrive } from '../../fixtures/flow/drive.ts'
+import { focusedName, ticks, walkByKey } from '../../fixtures/flow/page.ts'
+
+const es = frameworkWords('es')
+const drive = createDrive()
+
+beforeEach(async () => {
+  await drive.start()
+  await page.viewport(1280, 720)
+})
+afterEach(() => drive.stop())
+
+/** Walks the focus with the down and up arrows to the button called `label`, and presses it with Enter. */
+async function enter(label: string): Promise<void> {
+  for (const arrow of ['{ArrowDown}', '{ArrowUp}']) {
+    for (let step = 0; step < 10 && focusedName() !== label; step++) await userEvent.keyboard(arrow)
+    if (focusedName() === label) break
+  }
+  expect(focusedName(), `Arrow keys could not reach "${label}".`).toBe(label)
+  await userEvent.keyboard('{Enter}')
+}
+
+/** The row of the controls for `action` (no gamepad is plugged in, so these are the keyboard's). */
+function rowOf(action: string): HTMLElement {
+  const rows = [...drive.mount.querySelectorAll<HTMLElement>('.key')]
+  const row = rows.find((one) => one.querySelector('.action')?.textContent === action)
+  if (row === undefined) throw new Error(`The controls have no row for "${action}".`)
+  return row
+}
+function changeOf(action: string): HTMLButtonElement {
+  return rowOf(action).querySelector('button') as HTMLButtonElement
+}
+const rowSays = (action: string): string => rowOf(action).querySelector('.input')?.textContent ?? ''
+
+test('every screen is walked with arrows, Enter and Escape; a key is changed in Settings and used in the level', async () => {
+  await drive.toMenu({ game: { noWarning: true } })
+  await enter(es('automata.menu.settings'))
+  await expect.poll(() => drive.mount.querySelector('[data-screen="settings"]')).not.toBeNull()
+  // Change the key for Right to L: Enter on Change, then L.
+  changeOf('Right').focus()
+  await userEvent.keyboard('{Enter}')
+  const asked = es('automata.settings.press-key', { action: 'Right' })
+  await expect.poll(() => drive.mount.textContent).toContain(asked)
+  drive.key('keydown', 'KeyL')
+  drive.key('keyup', 'KeyL')
+  await expect.poll(() => rowSays('Right')).toBe('L')
+  // Escape goes back to the menu.
+  await userEvent.keyboard('{Escape}')
+  await drive.wait(es('automata.menu.play'))
+  expect(drive.mount.querySelector('[data-screen="settings"]')).toBeNull()
+  await enter(es('automata.menu.play'))
+  await drive.shown('playing')
+  drive.frames.at(0)
+  ticks(drive, 30)
+  // Escape pauses; Escape again keeps playing, and does not pause again.
+  await userEvent.keyboard('{Escape}')
+  await drive.shown('paused')
+  await drive.wait(es('automata.pause.resume'))
+  await userEvent.keyboard('{Escape}')
+  await drive.shown('playing')
+  ticks(drive, 5)
+  expect(drive.step()).toBe('playing')
+  // The old key does nothing; the new one walks to the door.
+  walkByKey(drive, 'ArrowRight')
+  expect(drive.step()).toBe('playing')
+  walkByKey(drive, 'KeyL')
+  await drive.shown('done')
+  await drive.wait(es('automata.done.next'))
+  await enter(es('automata.done.next'))
+  await drive.shown('playing')
+  ticks(drive, 5)
+  // Leaving from pause asks first; Enter on the question's "yes" leaves.
+  await userEvent.keyboard('{Escape}')
+  await drive.shown('paused')
+  await enter(es('automata.pause.leave'))
+  await expect.poll(() => drive.mount.querySelector('[role="alertdialog"]')).not.toBeNull()
+  await enter(es('automata.pause.leave-yes'))
+  await drive.shown('menu')
+  await drive.wait(es('automata.menu.play'))
+})
