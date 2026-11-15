@@ -118,6 +118,18 @@ export {
   writeReadMarks,
 } from './read-marks.ts'
 export {
+  type FlatMaterial,
+  type MaterialTop,
+  type PhotoMaterial,
+  type SceneFile,
+  type SceneGround,
+  type SceneLetter,
+  type SceneMaterial,
+  type ScenePaint,
+  SceneSchema,
+  type TilesMaterial,
+} from './scene.ts'
+export {
   covers,
   GROUND_SHAPES,
   type GroundGrid,
@@ -132,18 +144,6 @@ export {
   slopeRuns,
   surfaceAt,
 } from './scene-ground.ts'
-export {
-  type FlatMaterial,
-  type MaterialTop,
-  type PhotoMaterial,
-  type SceneFile,
-  type SceneGround,
-  type SceneLetter,
-  type SceneMaterial,
-  type ScenePaint,
-  SceneSchema,
-  type TilesMaterial,
-} from './scene.ts'
 export {
   type Atlas,
   atlasOf,

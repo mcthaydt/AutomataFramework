@@ -1,8 +1,8 @@
 // The PNG reader, in Node. It reads what our own writer writes and the five row filters, and it answers with a sentence a
 // person can act on for a file it will not take.
 import { expect, test } from 'vitest'
-import { decodePng, PngError } from '#src/lib/png-read.ts'
 import { encodePng } from '#src/lib/png.ts'
+import { decodePng, PngError } from '#src/lib/png-read.ts'
 import { chunk, FILTER_SAMPLES, samplePng } from '../fixtures/content/png-samples.ts'
 
 test('what our writer writes reads back as the same pixels, a clear one included', () => {

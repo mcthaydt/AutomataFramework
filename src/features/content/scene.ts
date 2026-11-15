@@ -4,8 +4,8 @@
 import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { Id } from './ids.ts'
-import { PHOTO_LIBRARY } from './photo-library.ts'
 import { PHOTO_NAME } from './photo.ts'
+import { PHOTO_LIBRARY } from './photo-library.ts'
 import { GROUND_SHAPES, type GroundShape, gapsUnder, slopeRuns } from './scene-ground.ts'
 import { list, noSuch, unique, variants } from './shared.ts'
 import { groundPageTiles, MAX_PICTURE_SIDE } from './sheet.ts'
@@ -96,7 +96,7 @@ export interface SceneFile {
 /** The letters a scene's rows may use: `!` to `~`, less the `.` that always means empty air. */
 const LETTER = /^[!-~]$/
 
-const paintId = Id.describe("One of the scene's paints, by id, like \"grass\".")
+const paintId = Id.describe('One of the scene\'s paints, by id, like "grass".')
 
 const top = z.strictObject({
   material: Id.describe(
@@ -118,19 +118,19 @@ const photoMaterial = z.strictObject({
     .min(2)
     .max(6)
     .optional()
-    .describe("The photo's light as steps on these paints, dark to light. Write this or \"match\"."),
+    .describe('The photo\'s light as steps on these paints, dark to light. Write this or "match".'),
   accent: z
     .array(paintId)
     .min(2)
     .max(6)
     .optional()
-    .describe('A second ladder, as long as the first, for where the photo\'s colour parts from the rest.'),
+    .describe("A second ladder, as long as the first, for where the photo's colour parts from the rest."),
   match: z
     .int()
     .min(2)
     .max(8)
     .optional()
-    .describe("Instead of \"ladder\": keep this many of the photo's own colours, each as the nearest paint."),
+    .describe('Instead of "ladder": keep this many of the photo\'s own colours, each as the nearest paint.'),
   top: top.optional().describe('Another material along the top of the ground.'),
   edge: paintId.optional().describe('A one-pixel line in this paint where the ground meets air.'),
   scale: z.number().min(0.25).max(8).optional().describe('How many times bigger the photo is. Left out: 1.'),
@@ -173,7 +173,7 @@ const tilesMaterial = z.strictObject({
   id: Id.describe('A name for this material, like "stone".'),
   kind: z.literal('tiles').describe('"tiles": one kind of tile of a tileset, drawn from its picture.'),
   tileset: Id.describe('The tileset, by id, like "meadow".'),
-  tile: Id.describe("The tileset's kind of tile, by id, like \"stone\"."),
+  tile: Id.describe('The tileset\'s kind of tile, by id, like "stone".'),
 })
 
 const flatMaterial = z.strictObject({
@@ -250,8 +250,12 @@ function checkScene(scene: Partial<SceneFile>, ctx: z.core.$RefinementCtx): void
         ['materials', i],
         'Write "ladder" (a list of paints, dark to light) or "match" (a number of colors), not both.',
       )
-    m.ladder?.forEach((id, j) => paintAt(['materials', i, 'ladder', j], id))
-    m.accent?.forEach((id, j) => paintAt(['materials', i, 'accent', j], id))
+    m.ladder?.forEach((id, j) => {
+      paintAt(['materials', i, 'ladder', j], id)
+    })
+    m.accent?.forEach((id, j) => {
+      paintAt(['materials', i, 'accent', j], id)
+    })
     if (m.accent !== undefined && m.ladder === undefined)
       add(
         ['materials', i, 'accent'],
@@ -373,7 +377,7 @@ export const SceneSchema: z.ZodType<SceneFile, SceneFile> = z
       .array(variants('kind', [photoMaterial, tilesMaterial, flatMaterial]))
       .min(1)
       .max(32)
-      .describe('What the ground can be made of: a photo, a tileset\'s tile, or one paint.'),
+      .describe("What the ground can be made of: a photo, a tileset's tile, or one paint."),
     ground: z
       .strictObject({
         color: colour('The colour of the ground when no picture is drawn', '#3b4a5a').optional(),

@@ -128,7 +128,9 @@ test('an accent must be as long as the ladder, and goes only with a ladder', () 
 })
 
 test('a slope cannot be a tileset tile', () => {
-  expect(said(edit((s) => Object.assign(list(ground(s), 'letters')[1] as Json, { material: 'stone' })))).toEqual([
+  expect(
+    said(edit((s) => Object.assign(list(ground(s), 'letters')[1] as Json, { material: 'stone' }))),
+  ).toEqual([
     `${file}: ground.letters[1].shape: A slope needs a photo or a flat material: a tileset's tile is a whole square.`,
   ])
 })

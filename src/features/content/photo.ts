@@ -42,7 +42,7 @@ export const PhotoSchema: z.ZodType<PhotoFile, PhotoFile> = z.strictObject({
     .max(200)
     .regex(IMAGE, 'Write the picture\'s path in the game, ending in .png, like "content/photos/moss.png".')
     .refine((path) => !path.split('/').includes('..'), 'The path may not go up a folder: remove "..".')
-    .describe("The photo's PNG, as a path from the game's root, like \"content/photos/moss.png\"."),
+    .describe('The photo\'s PNG, as a path from the game\'s root, like "content/photos/moss.png".'),
   size: z
     .strictObject({
       w: z.number().gt(0).max(16).describe('How many tiles wide the photo looks, like 1.'),
