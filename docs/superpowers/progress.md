@@ -64,8 +64,8 @@ Continue would, and a door raises `attempt`; a level opened by a door does not w
 tick 0 before it waits; a score is one sim's; Delete all my saves takes `last` and `facts`; `flow/page-guard.ts` does
 not come back, since `guardPlay` (AF 155) covers it, and gains only the no-scroll rule; the ends check follows doors
 and joins; recordings carry `meta.arrive` and `meta.save`. The Owner answered plan W's door question (2026-11-15: straight through,
-no "level done" screen). One thing waits on the Owner: whether the template keeps one level (recommended) or gets two
-with a door between. The handoff below is history: where it differs from the return note, the note wins.
+no "level done" screen). The Owner also chose one level for the template (2026-11-15). Nothing waits on the
+Owner before the build. The handoff below is history: where it differs from the return note, the note wins.
 
 **Handoff (2026-11-15, paused at the coordinator's word: the Owner wants one thing at a time and picked the shell and World mockups).** Pull requests 1, 2a and 2b are merged into `main` (`3ead000`). Pull request 3 (Tasks 14 to 17, the template on `startFlow`) is NOT started: no template file is changed and no branch or pull request exists for it. A fresh session resumes at Task 14, from `main`:
 

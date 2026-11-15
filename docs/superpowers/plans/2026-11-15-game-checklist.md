@@ -143,10 +143,8 @@ Each change names the task it lands in and the test that proves it. Plan W's own
 12. **The template keeps one level** (Task 15). Plan W's handoff says the template's door would use a `leads-to` value
     in place of `done`. A `leads-to` needs a level to lead to, and the starter has one. So this plan keeps the door as
     the `done` touch (`done = "door.touched"`, a door with no `to`): `doorTaken` reads nothing, and the recording moves
-    once, as planned. **Asked of the Owner (2026-11-15):** keep one level (recommended), or two levels with a door
-    between them. If two: Task 15 gains `level-2`, the door gets `to: { level: "level-2", thing: "door-in" }`, the
-    goal moves into `level-2`, `template/replays/level-2.json` is a new golden, and `level-1.json` still moves once.
-    Until the Owner answers, pull request 3 does not start.
+    once, as planned. **The Owner chose one level (2026-11-15).** Doors are shown in the test game, not
+    the starter.
 13. **The whole visit on the links game** (Task 13). Beside `level-pit`, the fixture `tests/fixtures/flow/links.ts`
     (plan W's) is played with `lost = "hero.fell"` and a hole cut in `room-2`'s floor by an override: Play, push the
     crate onto the plate, through the gate and the door, fall, Try again, cross into `room-3`, touch the goal, Well
@@ -167,7 +165,7 @@ game's CI (Task 16), the `page` part (Task 18), `--ship` (Task 20, apart from ch
   way (at spawn, say), change 5's tick-0 step goes, and its test stays.
 - **`attempt` and doors** (change 4): plan W's flow starts a level on a new `playing` state from `playing`; this plan's
   rule is "when `attempt` changes". Whichever lands second makes a door raise `attempt`.
-- **The template's door** (change 12): plan W's handoff and this plan differ until the Owner answers.
+- **The template's door** (change 12): settled by the Owner (one level); plan W's handoff line about it no longer holds.
 - **`flow.ts`** (change 1): plan W may use the last ten lines. Plan W's Task 12 already says to move `startLevel`'s
   listeners into `ways.ts` if it would not fit; if it does that, Task 6 moves less, and the 460-line aim stands.
 
@@ -238,7 +236,7 @@ before the next starts, with one exception: Part C does not wait for the Owner's
 | 1 | B1, what needs no page | 1 to 5 | Plan W's pull request 4 merged (the return note). The spec is on `main`. |
 | 2a | B2, losing, the start of a level, How to play, the score, the switches | 6 to 9 | Pull request 1. |
 | 2b | B2, the page, loading, sound, the whole visit | 10 to 13 | Pull request 2a. |
-| 3 | A, the template on the flow | 14 to 17 | Pull request 2b, and the Owner's answer on the template's levels (the return note, change 12). **The Owner's yes to the moved recording, before merge.** |
+| 3 | A, the template on the flow | 14 to 17 | Pull request 2b. **The Owner's yes to the moved recording, before merge.** |
 | 4 | C, the checks | 18 to 20 | Pull request 2b on `main`, and pull request 3 green (merged, or waiting only for the Owner). |
 | 5 | D, the journeys and the docs | 21, 22 | Pull requests 3 and 4, both merged. |
 
