@@ -3,7 +3,7 @@ import { colour } from './colour.ts'
 import { noPose } from './figure.ts'
 import { Id } from './ids.ts'
 import { list, noSuch, unique } from './shared.ts'
-import type { ContentTypeInfo } from './type-info.ts'
+import type { ContentTypeInfo, Listed, Report } from './type-info.ts'
 import { checkDeclarations, type ValueDeclaration, valueDeclaration } from './values.ts'
 
 /**
@@ -267,6 +267,22 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
       })
   })
 
+/** A behaviour that walks a path may name only a path this character's values declare. */
+function checkWalks(character: Character, game: Listed, report: Report): void {
+  const behaviour = character.behaviour === undefined ? undefined : game.get('behaviour', character.behaviour)
+  if (behaviour === undefined) return
+  const paths = (character.values ?? []).filter((value) => value.type === 'path').map((value) => value.id)
+  const reported = new Set<string>()
+  for (const rule of behaviour.rules) {
+    if (rule.do.act !== 'walk-path' || paths.includes(rule.do.path) || reported.has(rule.do.path)) continue
+    reported.add(rule.do.path)
+    report(
+      'behaviour',
+      `The behaviour "${behaviour.id}" walks the path "${rule.do.path}", and this character has no "path" value called "${rule.do.path}". It has: ${list(paths)}.`,
+    )
+  }
+}
+
 /** The character's row of the content table. */
 export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
   schema: CharacterSchema,
@@ -303,6 +319,7 @@ export const characterInfo: ContentTypeInfo<Character, CharacterInput> = {
       report('behaviour', noSuch('behaviour', character.behaviour, game.ids('behaviour')))
     if (character.tuning !== undefined && !game.has('tuning', character.tuning))
       report('tuning', noSuch('tuning', character.tuning, game.ids('tuning')))
+    checkWalks(character, game, report)
     if (character.moves !== undefined) {
       if (!game.has('tuning', character.moves.tuning))
         report('moves.tuning', noSuch('tuning', character.moves.tuning, game.ids('tuning')))

@@ -1,8 +1,22 @@
 import { z } from '../../lib/zod.ts'
 import { colour } from './colour.ts'
 import { Id } from './ids.ts'
+import { outsideOf } from './outside.ts'
 import { list, noSuch, unique, variants } from './shared.ts'
 import type { ContentTypeInfo } from './type-info.ts'
+import { checkThingValues } from './value-checks.ts'
+
+/**
+ * One value a thing holds, of the kind its character declares: a number, a switch (true or false), a choice or a
+ * message key (text), the id of a linked thing or a list of them, a path of places, or a way into another level.
+ */
+export type ThingValue =
+  | number
+  | boolean
+  | string
+  | readonly string[]
+  | readonly LevelPoint[]
+  | { readonly level: string; readonly thing?: string | undefined }
 
 /** A thing standing in a level: one placed copy of a character. `x` and `y` are its centre, in tiles. */
 export interface LevelThing {
@@ -10,6 +24,8 @@ export interface LevelThing {
   readonly character: string
   readonly x: number
   readonly y: number
+  /** What it holds, by the ids its character declares. Left out, it holds only its character's defaults. */
+  readonly values?: Readonly<Record<string, ThingValue>> | undefined
 }
 
 /** Where a player's hero begins. `player` (1 to 4) is the number its commands carry as their source. */
@@ -88,11 +104,45 @@ export interface Level {
 
 const MAX_SIDE = 256
 
+const point = (what: string) =>
+  z.strictObject({
+    x: z.number().describe(`${what}, in tiles from the left edge.`),
+    y: z.number().describe(`${what}, in tiles from the top edge.`),
+  })
+
+/**
+ * One value of a thing. Which of these a value must be is its character's to say, so `checkThingValues` holds the
+ * value to the character; this only reads the shapes, and says in one sentence what they are when none fits.
+ */
+const thingValue = z.union(
+  [
+    z.number(),
+    z.boolean(),
+    z.string().max(96),
+    z.array(Id).max(16),
+    z.array(point('A place on the path')).max(64),
+    z.strictObject({
+      level: Id.describe('The level to go into, by its id, like "level-2".'),
+      thing: Id.describe('The thing in that level to come out beside, by its id, like "door-in".').optional(),
+    }),
+  ],
+  {
+    error:
+      'A value is a number, true or false, text, a list of ids like ["gate-1"], a list of places like [{ "x": 4, "y": 7.5 }], or a way into a level like { "level": "level-2" }.',
+  },
+)
+
 const thing = z.strictObject({
   id: Id.describe('A name for this thing, used once in this level, like "crate-1".'),
   character: Id.describe('Which character this thing is, by the id in its character file, like "crate".'),
   x: z.number().describe('Where the middle of the thing is, in tiles from the left edge.'),
   y: z.number().describe('Where the middle of the thing is, in tiles from the top edge.'),
+  values: z
+    .record(Id, thingValue)
+    .describe(
+      'What this thing holds, by the ids its character declares, like { "opens": ["gate-1"] }. Left out means only its character\'s defaults.',
+    )
+    .optional(),
 })
 
 const start = z.strictObject({
@@ -100,12 +150,6 @@ const start = z.strictObject({
   x: z.number().describe('Where the hero starts, in tiles from the left edge.'),
   y: z.number().describe('Where the hero starts, in tiles from the top edge.'),
 })
-
-const point = (what: string) =>
-  z.strictObject({
-    x: z.number().describe(`${what}, in tiles from the left edge.`),
-    y: z.number().describe(`${what}, in tiles from the top edge.`),
-  })
 
 const heldBy = {
   id: Id.describe('A name for this joint, used once in this level, like "seesaw".'),
@@ -222,18 +266,8 @@ function checkLevel(level: Partial<Level>, ctx: z.core.$RefinementCtx): void {
   })
 
   const outside = (path: readonly (string | number)[], at: { x: number; y: number }): void => {
-    if (at.x < 0 || at.x > width)
-      ctx.addIssue({
-        code: 'custom',
-        path: [...path, 'x'],
-        message: `${at.x} is outside the level, which is ${width} tiles wide.`,
-      })
-    if (at.y < 0 || at.y > height)
-      ctx.addIssue({
-        code: 'custom',
-        path: [...path, 'y'],
-        message: `${at.y} is outside the level, which is ${height} tiles tall.`,
-      })
+    for (const { axis, message } of outsideOf(at, width, height))
+      ctx.addIssue({ code: 'custom', path: [...path, axis], message })
   }
 
   if (level.view !== undefined) checkView(level.view, width, height, ctx)
@@ -404,6 +438,7 @@ export const levelInfo: ContentTypeInfo<Level, Level> = {
       if (!game.has('character', thing.character))
         report(`things[${i}].character`, noSuch('character', thing.character, game.ids('character')))
     })
+    checkThingValues(level, game, report)
     // A fixed thing never moves, so a joint that holds it to the level, or to another fixed thing, holds nothing.
     const fixedCharacter = (id: string | undefined): string | undefined => {
       const character = level.things.find((t) => t.id === id)?.character
