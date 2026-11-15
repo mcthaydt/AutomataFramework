@@ -3,7 +3,15 @@
 // page. It owns no rule: `advance` decides what comes next, the screens draw, and this file only connects them.
 import { pageFrames } from '../../lib/frames.ts'
 import { createAudio, type GameAudio, type Speaker } from '../audio/audio.ts'
-import { formatDiagnostic, type GameContent, loadGame, nextLevel, paintedPath } from '../content/content.ts'
+import {
+  formatDiagnostic,
+  type GameContent,
+  loadGame,
+  nextLevel,
+  PROJECT_FILE,
+  paintedPath,
+  parseProject,
+} from '../content/content.ts'
 import type { Watch } from '../game/game.ts'
 import { createLocale, type Locale, levelName, type Words } from '../locale/locale.ts'
 import { createSaves, type Saves, type StoreResult } from '../saves/saves.ts'
@@ -18,7 +26,17 @@ import {
 } from '../screens/screens.ts'
 import { followLanguage, languagePicker, webHost, webSpeaker } from '../web/web.ts'
 import { backDefault, wireBack } from './back.ts'
-import { putLoadingMark, startWatching, waitForTake } from './loading.ts'
+import {
+  type LoadingBar,
+  putLoadingBar,
+  RETRY_MS,
+  retrying,
+  SLOW_MS,
+  slowLineFor,
+  startWatching,
+  waitForTake,
+  waitOn,
+} from './loading.ts'
 import { createOvers } from './overs.ts'
 import { guardPage } from './page-guard.ts'
 import { createParty, type Party } from './party.ts'
@@ -44,10 +62,16 @@ const FIX = 'Fix the file named above, then load this page again.'
  * Loads the game and walks the flow in `mount`. Never rejects: whatever goes wrong is a screen of words. It answers at
  * once, with the page showing "loading"; `state()` and `onState` say where the visit is.
  */
-export async function startFlow<S extends Progress = Progress>(options: FlowOptions<S>): Promise<Flow<S>> {
-  const { mount, read } = options
-  const host = options.host ?? webHost()
-  const frames = options.frames ?? pageFrames
+export async function startFlow<S extends Progress = Progress>(given: FlowOptions<S>): Promise<Flow<S>> {
+  const { mount } = given
+  const host = given.host ?? webHost()
+  const frames = given.frames ?? pageFrames
+  // A file that fails to arrive is asked for once more, a second later: a phone on a train drops a request now and then.
+  const wait = (): Promise<void> => waitOn(frames, RETRY_MS)
+  const options: FlowOptions<S> = {
+    ...given,
+    ...(given.readPicture === undefined ? {} : { readPicture: retrying(given.readPicture, { wait }) }),
+  }
   const makers: ScreenMakers = { ...defaultScreens, ...options.screens }
   const save = (options.save ?? defaultSave(options.game)) as unknown as FlowSave<S>
   const reload = options.reload ?? ((): void => location.reload())
@@ -75,7 +99,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
   let stopSound = (): void => {}
 
   // What is on the page.
-  let loadingMark: HTMLElement | undefined
+  let loadingBar: LoadingBar | undefined
+  let slowFrame: number | undefined
   let shown: Screen | undefined
   let watcher: Watch | undefined
   let letGoOfWatch = (): void => {}
@@ -172,8 +197,10 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     watcher = undefined
   }
   const dropLoading = (): void => {
-    loadingMark?.remove()
-    loadingMark = undefined
+    if (slowFrame !== undefined) frames.cancel(slowFrame)
+    slowFrame = undefined
+    loadingBar?.remove()
+    loadingBar = undefined
   }
 
   const fail = (error: unknown, lines?: readonly string[]): void => {
@@ -251,11 +278,22 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     }
   }
 
-  /** Puts the step `next` on the page, taking what the step `before` had off it. */
+  /**
+   * Puts the step `next` on the page. The loading bar stays until the step has put something of its own there, so the
+   * mount is never without a child from the first frame to the menu.
+   */
   async function present(before: FlowState, next: FlowState, mine: number): Promise<void> {
+    try {
+      await show(before, next, mine)
+    } finally {
+      dropLoading()
+    }
+  }
+
+  /** Puts the step `next` on the page, taking what the step `before` had off it. */
+  async function show(before: FlowState, next: FlowState, mine: number): Promise<void> {
     const current = (): boolean => !stopped && epoch === mine
     const project = content?.project
-    dropLoading()
     overs.close()
     if (next.step === 'problem') {
       dropScreen()
@@ -475,7 +513,44 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
   mount.dataset.state = 'loading'
   if (mountPosition !== undefined) mount.style.position = 'relative'
   mount.replaceChildren()
-  loadingMark = putLoadingMark(mount)
+  loadingBar = putLoadingBar(mount)
+  const slowLine = slowLineFor(host.deviceLanguages())
+  // The bar counts the project file, then each file it lists. The slow line shows when no file has come for ten seconds
+  // of the page's frames, and goes when one does.
+  let arrivals = 0
+  let expected = 1
+  let quietSince: number | undefined
+  let slowShown = false
+  const watchQuiet = (ms: number): void => {
+    quietSince ??= ms
+    if (!slowShown && slowLine !== undefined && ms - quietSince >= SLOW_MS) {
+      slowShown = true
+      loadingBar?.slow(slowLine)
+    }
+    slowFrame = frames.request(watchQuiet)
+  }
+  slowFrame = frames.request(watchQuiet)
+  const read = retrying(
+    async (path: string): Promise<string> => {
+      const text = await given.read(path)
+      if (path === PROJECT_FILE) {
+        const parsed = parseProject(text)
+        if (parsed.ok) expected = 1 + parsed.value.content.length
+      }
+      return text
+    },
+    {
+      wait,
+      arrived: () => {
+        arrivals += 1
+        // The clock starts again at the next frame.
+        quietSince = undefined
+        if (slowShown) loadingBar?.slow(undefined)
+        slowShown = false
+        loadingBar?.progress(arrivals, expected)
+      },
+    },
+  )
 
   const boot = async (): Promise<void> => {
     const loaded = await loadGame(read)
