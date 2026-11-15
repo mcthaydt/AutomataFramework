@@ -10,15 +10,34 @@ world map, doors between levels, level pictures and a public list of format chan
 edge (for rooms put together from a seed later) and all story as facts and conditions
 (`specs/2026-11-15-rooms-and-storylets-amendment.md`). The first version was closed pull request #149 (`c449fca`).
 
-Overall: **10%** (stage 1 done, the Owner's five answers taken in; stages 2 to 7 follow)
+Overall: **20%** (stages 1 and 2 done; stage 3, the plan audit, is next; stages 4 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Second version done (2026-11-15), 100%. The Owner's answers: edge joins come from where levels sit on the map (LDtk's way); a joined place plays as one seamless world, everything crossing, the whole place running at once (streaming later); what was done for good is remembered, as facts the story can read; the test game gets a third level joined by an edge; all twelve calls fine | the spec |
-| 2. Plan | Next: Fable 5.2, medium, from this spec | |
-| 3 to 7 | Not started | |
+| 2. Plan (plan W) | Written, in review (2026-11-15), 100%; plan W at 0% built. Fifteen framework tasks in five pull requests (formats and checks; switches and gates; a place; doors and what is remembered; the commands and the docs), then three tasks in AutomataFrameworkExamples in two pull requests (the pin; three levels, a door and an edge). Three new goldens (`switch.json`, `place.json`, `level-picture.json`), none moved in this repo; in Examples `replays/level-1.json` moves once (the Owner sees it first) and `replays/level-2.json` is new. The World editor's five tasks are listed and gated behind the mockups. No new dependency | `plans/2026-11-15-level-links-and-world-map.md` |
+| 3. Plan audit | Next: Opus, medium | |
+| 4 to 7 | Not started | |
 
-Nothing was run: this stage wrote a document.
+What the plan found, for every later stage:
+
+- **Paths wait for Characters (the Owner, 2026-11-15, "B, one thing at a time").** Nothing on `main` runs a character's
+  behaviour rules (the runner was built with the story work, #64, and parked). A `path` value and the `walk-path` act
+  are written, checked and drawn in this cycle; no critter walks until the Characters slice. The plan's last section
+  lists what that slice lifts.
+- **The spec was written before the slice cut.** Scenes, ledges, slopes, falls, the goal line and the PNG reader are
+  off `main`, so an open edge is read from the tiles alone, and a level's picture has flat ground and no backdrop. The
+  plan's table "What is on main and what is not" says what each returning plan widens.
+- **The test game's page calls `startGame`, not `startFlow`,** so a door is read by one pure function (`doorTaken`)
+  that the flow and that page both call.
+- **Twelve calls of the plan's own** are listed in it for the audit and the Owner to overrule: the main ones are a
+  press worked out from boxes and not from Rapier's events, a place's ground as one grid, pictures with numbered badges
+  and a list in the source language, and no "level done" screen at a door.
+
+Stage 4's weights, when it starts: 14% for each of the five framework pull requests, 5% for the pin, 15% for the test
+game, 10% for the last green run and the Owner's yes to the moved recording.
+
+Nothing was run: these stages wrote documents.
 
 ## Cycle 12: the game checklist in every game (plan Q)
 
