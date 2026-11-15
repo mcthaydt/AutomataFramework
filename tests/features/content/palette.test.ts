@@ -64,7 +64,9 @@ test('a ramp has three to six shades, each a colour', () => {
     id: 'tan',
     colors: ['#111111', '#222222', '#333333', '#444444', '#555555', '#666666', '#777777'],
   }
-  expect(said(many)).toEqual([`${file}: ramps[1].colors: This has more than 6 items, which is the most allowed.`])
+  expect(said(many)).toEqual([
+    `${file}: ramps[1].colors: This has more than 6 items, which is the most allowed.`,
+  ])
   const wrong = meadow()
   wrong.ramps[1] = { id: 'tan', colors: ['#885041', 'tan', '#ad6e51'] }
   expect(said(wrong)).toEqual([
@@ -84,7 +86,9 @@ test('a palette has at least one ramp and at most 64', () => {
     id: `c${i}`,
     colors: ['#111111', '#222222', '#333333'],
   }))
-  expect(said({ ...meadow(), ramps: sixtyFive })).toEqual([`${file}: ramps: This has more than 64 items, which is the most allowed.`])
+  expect(said({ ...meadow(), ramps: sixtyFive })).toEqual([
+    `${file}: ramps: This has more than 64 items, which is the most allowed.`,
+  ])
 })
 
 test('a missing field says what to write', () => {
@@ -171,7 +175,7 @@ test('a palette listed in the game is loaded under palettes, with its id the fil
     { type: 'palette', path: file, text: writeContent('palette', meadow()) },
   ])
   expect(await gameProblems(files)).toEqual([])
-  expect(await gameProblems({ ...files, [file]: writeContent('palette', { ...meadow(), id: 'other' }) })).toEqual([
-    `${file}: id: This must be "meadow", the same as the file name.`,
-  ])
+  expect(
+    await gameProblems({ ...files, [file]: writeContent('palette', { ...meadow(), id: 'other' }) }),
+  ).toEqual([`${file}: id: This must be "meadow", the same as the file name.`])
 })

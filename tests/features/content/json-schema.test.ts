@@ -85,7 +85,8 @@ test('the JSON Schema of a figure, a free one and a rigged one, and of a backdro
   expectSchema('backdrop', 'Backdrop', ['format', 'id', 'seed', 'tile', 'width', 'layers', 'props'])
 })
 
-test('the JSON Schema of a palette', () => expectSchema('palette', 'Palette', ['format', 'id', 'ink', 'ramps']))
+test('the JSON Schema of a palette', () =>
+  expectSchema('palette', 'Palette', ['format', 'id', 'ink', 'ramps']))
 
 test('the JSON Schema of a behaviour', () =>
   expectSchema('behaviour', 'Behaviour', ['format', 'id', 'rules']))

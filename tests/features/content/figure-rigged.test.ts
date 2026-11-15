@@ -86,9 +86,7 @@ test('a number out of range says its end', () => {
   expect(said(given({ sliders: { headTilt: 31 } }))).toEqual([
     `${file}: sliders.headTilt: This must be 30 or less.`,
   ])
-  expect(said(given({ face: { eyeSize: 1.1 } }))).toEqual([
-    `${file}: face.eyeSize: This must be 1 or less.`,
-  ])
+  expect(said(given({ face: { eyeSize: 1.1 } }))).toEqual([`${file}: face.eyeSize: This must be 1 or less.`])
 })
 
 test('a slider that is not a slider, and a face choice that is not one', () => {
@@ -142,14 +140,10 @@ test('two variants with one id, and more than eight', () => {
 })
 
 test('an outline is "dark" or "ink"', () =>
-  expect(said(given({ outline: 'light' }))).toEqual([
-    `${file}: outline: This must be one of: dark, ink.`,
-  ]))
+  expect(said(given({ outline: 'light' }))).toEqual([`${file}: outline: This must be one of: dark, ink.`]))
 
 test('a figure of a format that does not exist', () =>
-  expect(said(given({ format: 3 }))).toEqual([
-    `${file}: format: This must be one of: 1, 2.`,
-  ]))
+  expect(said(given({ format: 3 }))).toEqual([`${file}: format: This must be one of: 1, 2.`]))
 
 // Review Focus 1: a file between the two formats gets one sentence that says which format has the key.
 test('a format 1 file with "body" gets one sentence', () =>
@@ -196,7 +190,8 @@ const keeperGame = (palettes: Record<string, unknown> = {}, change: (v: Json) =>
   return gameFiles(fixtureFiles, extra)
 }
 
-test('a figure on the framework palette loads', async () => expect(await gameProblems(keeperGame())).toEqual([]))
+test('a figure on the framework palette loads', async () =>
+  expect(await gameProblems(keeperGame())).toEqual([]))
 
 test('a colour that is not in the palette lists the colours it has', async () => {
   const problems = await gameProblems(
@@ -213,7 +208,9 @@ test('a variant is held to the palette too', async () => {
     keeperGame({}, (v) => Object.assign(v, { variants: [{ id: 'two', paints: { hair: 'goldd' } }] })),
   )
   expect(problems).toHaveLength(1)
-  expect(problems[0]).toContain('variants[0].paints.hair: There is no colour called "goldd" in the palette "automata".')
+  expect(problems[0]).toContain(
+    'variants[0].paints.hair: There is no colour called "goldd" in the palette "automata".',
+  )
 })
 
 test('a palette that is not there lists the ones that are', async () => {
