@@ -1,7 +1,7 @@
 // The content feature: every kind of content file, read into values with plain problems and written one way.
 // Nothing here touches a file; callers hand in text and take text back.
 
-export { type ArtFile, artFiles, artProblems, paintedPath, photosUsed } from './art.ts'
+export { type ArtFile, artFiles, artProblems, paintedFiles, paintedPath, photosUsed } from './art.ts'
 export {
   type BackdropFile,
   type BackdropLayer,

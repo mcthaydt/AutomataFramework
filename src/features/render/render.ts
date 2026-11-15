@@ -14,7 +14,15 @@ import { createStage } from './stage.ts'
  */
 const JUMP = 1
 
-export { type Art, ArtError, loadArt, needsPictures, type ReadPicture } from './art.ts'
+export {
+  type Art,
+  ArtError,
+  type GroundPageArt,
+  loadArt,
+  needsPictures,
+  type ReadPicture,
+  type TileSprite,
+} from './art.ts'
 export type { Shot } from './camera.ts'
 export { type Density, pageDensity } from './density.ts'
 export { type Fit, fitInRoom, fitWorld, type Room } from './fit.ts'

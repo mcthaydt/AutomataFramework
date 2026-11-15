@@ -4,7 +4,7 @@
 // `art` step, `play` and `create` call the same pieces.
 import { join } from 'node:path'
 import { Effect } from 'effect'
-import { type ArtFile, type Diagnostic, formatDiagnostic } from '../content/content.ts'
+import { type ArtFile, type Diagnostic, formatDiagnostic, paintedFiles } from '../content/content.ts'
 import { type GameFolder, readGame } from './game-folder.ts'
 import { missingPhotos, photoProblems, readPhotos } from './photos.ts'
 import { type CliError, Files, type FilesService, type Ports } from './ports.ts'
@@ -45,15 +45,8 @@ function wanted(game: GameFolder): Effect.Effect<readonly ArtFile[], never, File
  * game. Worked out from the project's list, with nothing painted: a picture, and the atlas beside it.
  */
 export function paintedPaths(game: GameFolder): ReadonlySet<string> {
-  const paths = new Set<string>()
-  if (!game.loaded.ok || typeof game.content.artFiles !== 'function') return paths
-  for (const entry of game.loaded.value.project.content) {
-    if (entry.type !== 'figure' && entry.type !== 'backdrop' && entry.type !== 'scene') continue
-    const picture = `${entry.path.slice(0, -'.json'.length)}.png`
-    paths.add(picture)
-    paths.add(`${picture.slice(0, -'.png'.length)}.atlas.json`)
-  }
-  return paths
+  if (!game.loaded.ok || typeof game.content.artFiles !== 'function') return new Set()
+  return new Set(paintedFiles(game.loaded.value))
 }
 
 /** Writes every picture that is missing or different, and answers the paths it wrote. Never touches one that is right. */

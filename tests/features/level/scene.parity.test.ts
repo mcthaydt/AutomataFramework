@@ -11,6 +11,8 @@ import { loadFixtureGame } from '../../fixtures/game/game.ts'
 import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { PUSH_TICKS, pushScript } from '../../fixtures/game/script.ts'
 import { expectGolden, runGolden } from '../../fixtures/golden.ts'
+import { loadMovesGame } from '../../fixtures/moves/game.ts'
+import { MOVES_TICKS, movesScript } from '../../fixtures/moves/script.ts'
 import { loadSceneGame } from '../../fixtures/scene-game/game.ts'
 import golden from '../../golden/scene.json' with { type: 'json' }
 
@@ -73,6 +75,18 @@ test("the Examples game's level, with its ground in a scene, plays as it did", a
   const content = await loadFixtureGame({ 'content/levels/level-1.json': examplesLevel })
   const before = await worldsEvery60(content, PUSH_TICKS, pushScript, true)
   const after = await worldsEvery60(withScene(content, 'level-1'), PUSH_TICKS, pushScript, true)
+  expect(after).toEqual(before)
+})
+
+test('a `#` level with a hero the framework moves, the case of a game made with `automata create`, plays as it did', async () => {
+  // The moves game's first level is `#` rows with no tileset and its hero has `moves`, so `sceneFromLevel` leaves
+  // `oneBoxPerRow` out and the scene's boxes join as the level's did. The script walks into walls and jumps, doubles,
+  // dashes and clings, so a seam between two boxes would show.
+  const content = await loadMovesGame()
+  const before = await worldsEvery60(content, MOVES_TICKS, movesScript, false)
+  const moved = withScene(content, 'level-1')
+  expect(moved.scenes?.ground?.ground?.oneBoxPerRow).toBeUndefined()
+  const after = await worldsEvery60(moved, MOVES_TICKS, movesScript, false)
   expect(after).toEqual(before)
 })
 

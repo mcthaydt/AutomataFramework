@@ -1,8 +1,8 @@
 // `automata scene from-level`: moves a level's ground onto a scene file. The level keeps its things and starts and
-// names the scene; the scene holds the rows, the colours and the boxes the level had, so the level plays and hashes as
-// it did and a person can then paint the ground in the builder. The conversion is the framework's own (`sceneFromLevel`);
-// this checks the result loads before it writes anything, lists the new file in `automata.toml` with `listContent`, and
-// paints the scene's picture.
+// names the scene; the scene holds the rows, the colours and the boxes the level had, so the level plays as it did (its
+// content is not the same bytes, so a replay says it changed) and a person can then paint the ground in the builder.
+// The conversion is the framework's own (`sceneFromLevel`); this checks the result loads before it writes anything,
+// lists the new file in `automata.toml` with `listContent`, and paints the scene's picture.
 import { join } from 'node:path'
 import { Effect } from 'effect'
 import {
@@ -124,7 +124,7 @@ export function runSceneFromLevel(options: SceneOptions): Effect.Effect<SceneRep
     const result = yield* Effect.promise(() => loadGame(read))
     if (!result.ok)
       return refused(
-        `The scene made from "${options.level}" does not load, so nothing was written. Say what is wrong, or write the scene by hand.`,
+        `The scene made from "${options.level}" does not load, so nothing was written. The problems are listed above. Fix them in the level, or write the scene by hand.`,
         result.diagnostics,
       )
 

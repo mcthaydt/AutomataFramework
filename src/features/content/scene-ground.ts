@@ -212,10 +212,27 @@ export function tilesUnder(run: SlopeRun): { col: number; row: number }[] {
 }
 
 /**
- * The tiles under a run's line, wholly inside its triangle, that are not `solid`: what a slope asks to be filled so a
- * foot never catches between two tiles. Reading order, top row first.
+ * The tiles a run's triangle reaches into without holding whole, in the row its foot is half way down: a half slope
+ * whose foot is a `high` tile ends half way down that tile, so the triangle's lowest half-row runs on under every
+ * other tile of that row the line crosses. The foot tile itself is left out: the slope's own box (`groundColliders`)
+ * covers the half under it. Empty when the foot is on a tile's edge, since `tilesUnder` asks for that row whole.
+ */
+function footRowTiles(run: SlopeRun): { col: number; row: number }[] {
+  const bottom = runBottom(run)
+  if (bottom % 1 === 0) return []
+  const foot = run.rise > 0 ? run.col : run.col + run.w - 1
+  const tiles: { col: number; row: number }[] = []
+  for (let col = run.col; col < run.col + run.w; col++)
+    if (col !== foot) tiles.push({ col, row: Math.floor(bottom) })
+  return tiles
+}
+
+/**
+ * The tiles under a run's line that are not `solid`: what a slope asks to be filled so a foot never catches between
+ * two tiles, or so no ground is solid that nobody can see. Those wholly inside its triangle (`tilesUnder`, reading
+ * order, top row first), then the tiles its half-high foot runs on over (`footRowTiles`), left to right.
  */
 export function gapsUnder(ground: GroundGrid, run: SlopeRun): { col: number; row: number }[] {
   const shapeAt = shapesOf(ground)
-  return tilesUnder(run).filter(({ col, row }) => shapeAt(col, row) !== 'solid')
+  return [...tilesUnder(run), ...footRowTiles(run)].filter(({ col, row }) => shapeAt(col, row) !== 'solid')
 }

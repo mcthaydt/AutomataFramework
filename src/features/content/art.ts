@@ -18,7 +18,8 @@ export interface ArtFile {
 }
 
 /** The kinds of file that paint a picture. */
-type Painted = 'figure' | 'backdrop' | 'scene'
+const PAINTED = ['figure', 'backdrop', 'scene'] as const
+type Painted = (typeof PAINTED)[number]
 
 /** What the painter is given when a game says nothing: no photo, so a scene with a photo material cannot be painted. */
 const NO_PHOTOS: Photos = () => undefined
@@ -37,6 +38,18 @@ function idOf(path: string): string {
 export function paintedPath(content: GameContent, type: Painted, id: string): string | undefined {
   const ref = content.project.content.find((entry) => entry.type === type && idOf(entry.path) === id)
   return ref === undefined ? undefined : `${ref.path.slice(0, -'.json'.length)}.png`
+}
+
+/**
+ * The path of every picture and atlas the game's figures, backdrops and scenes paint, worked out from the project's list
+ * with nothing painted: the one place the rule for where a painted file goes is written.
+ */
+export function paintedFiles(content: GameContent): string[] {
+  return content.project.content.flatMap((entry) => {
+    if (!PAINTED.some((type) => type === entry.type)) return []
+    const picture = `${entry.path.slice(0, -'.json'.length)}.png`
+    return [picture, atlasPath(picture)]
+  })
 }
 
 /** The atlas file that goes beside a picture: `hero.png` has `hero.atlas.json`. */

@@ -10,7 +10,7 @@ test('every ShapeKind is accepted', () => {
 
 test('a code that is not a ShapeKind is refused with the sentence that names the entity and the field', () => {
   expect(() => checkCollider(7, 'physics.collider', 3, 1, 1)).toThrow(
-    'entity 7: physics.collider.shape is 3; expected a ShapeKind (0..2)',
+    'entity 7: physics.collider.shape is 3; expected a ShapeKind (0, 1, 2, 16, 17 or 18)',
   )
   expect(() => checkCollider(7, 'physics.collider', 19, 1, 1)).toThrow(
     'entity 7: physics.collider.shape is 19',

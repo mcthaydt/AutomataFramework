@@ -298,6 +298,15 @@ test("the README has a Scenes section whose scene file is a whole one, and whose
     expect(framework, name).toHaveProperty(name)
 })
 
+// A moved level's content is not the same bytes, so a replay says "the content changed"; the README must not promise
+// that its recordings still end where they did.
+test('the README says a moved level plays as it did but its recordings must be made again', () => {
+  expect(readme).not.toContain('hashes as it did')
+  expect(readme).not.toContain('still end where they did')
+  expect(readme).not.toContain('still ends where it did')
+  expect(readme).toContain('automata replay --accept')
+})
+
 test('the README names automata scene from-level and its two flags', () => {
   const ref = section('## The automata command')
   expect(ref).toContain('automata scene from-level <level> [folder]')
