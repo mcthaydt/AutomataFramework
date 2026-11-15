@@ -8,15 +8,16 @@ Spec: [`specs/2026-11-15-game-checklist-design.md`](specs/2026-11-15-game-checkl
 every "Must have" box of the Owner's game checklist is met by every game by default, plus the "Good to have" boxes that
 make sense; only the boxes about the game itself, not about sending it to a host.
 
-Overall: **10%** (the spec and the plan are written and in review; stages 3 to 7 follow)
+Overall: **15%** (the spec and the plan are written and in review, and the plan is audited; stages 4 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Written, in review, 100%. Every box mapped to done (with proof), framework, template, check or the game maker; new: losing (`lost` and Try again), How to play, the goal line, `score` and best, a `page` part of the `rules` step, `automata check --ship`; Part A takes over plan K's Step U (the template on `startFlow`) and moves the template's recording once, for the Owner to see. The Owner answered Q1 (2026-11-15): A, Playwright and a play test in every game's own CI. The Owner cut the boxes that are Ruken's rules (no ads, money, tracking and the lockdown, the unchanged starter, the device and gamepad checks); the Ruken target, later, enforces the full list | `specs/2026-11-15-game-checklist-design.md` |
 | 2. Plan (plan Q) | Written, in review (2026-11-15), 100%; plan Q at 0% built. Twenty-two tasks in five pull requests (4% each, 12% for the last green run and the Owner's yes to the moved recording), built B1, B2, A, C, D so the template's recording moves once: B1 what needs no page (`lost` and `score` in the project file; `hero.fell` as a plugin joined only to a game that names it; the `lost` step; the best score; the words in six languages); B2 the screens (Try again, Start again, the goal line, a level that waits for the first press, How to play, the score, the sound switch, Delete all my saves, the page-wide defaults, Back, the loading bar, a compressor, fades); A the template on `startFlow`, a level with a gap and a door for two players, and Playwright in every game's own CI (plan K's Step U); C the checks (`page`, words, ends, `--ship`); D the made game's journeys and the docs. One golden moves, once (`template/replays/level-1.json`, Task 15, shown to the Owner before merge); one is new (`fall.json`). No framework dependency; the template gains `playwright` 1.63.0 (Q1, A). Cut by the Owner as one host's rules, and not in the plan: no ads, money, tracking and the outside-site lockdown (no content security policy, no `[network] allow`), a `--ship` that fails an unchanged starter, and the device and gamepad checks; a later Ruken export target holds a game to the whole list (the plan's Handoffs). Five of the plan's calls are now the spec's too (records, `muted`, `level.<id>.goal`, `hero.fell` joined only by `lost`, "Load the page again"); the rest are listed in the plan's self-review | `plans/2026-11-15-game-checklist.md` |
-| 3 to 7 | Not started | |
+| 3. Plan audit | Done (2026-11-15), 100%. Sound, ready for stage 4 once the plan takes the fixes: no critical, seven important (whether a falling hero needs `moves`; where the ends check gets the event ids; Back after the first return to the menu; the press that chose Play starting a waiting level; Back in a framed game; the compressor's make-up gain; `gameSave` not loaded), eleven minor. Every kept Must have box is covered, nothing the Owner cut is left, the one golden move is held for the Owner | `audits/2026-11-15-plan-q-plan-audit.md` |
+| 4 to 7 | Not started | |
 
-Nothing was run: this stage wrote a document.
+Nothing was run: these stages wrote documents.
 
 ## The Scenes cycle (the framework's side of the 2D environment builder)
 
