@@ -1111,10 +1111,12 @@ part as these parts land, each stage only what the pinned framework paints.
 - **Examples (plan D):** the demo's hero, keeper and critter are format 2 files in Examples, drafted by an agent from
   `STARTERS` and finished in the builder (the Owner: "the real art comes from the builders"). Examples moves its pin
   after each part. Its palette is its own file with the Owner's No. 276 colours as ramps. Its goldens are plan D's.
-  **Open (audit Q1, the Owner's):** No. 276 has four colours, and a ramp needs three to six that get lighter each
-  time, so by lightness the four make one ramp (`#111314`, `#f37f94`, `#afd472`, `#fdd4bd`): every part of every
-  figure would be shaded through black, pink, green and cream. How the demo's figures are shaded under the palette
-  rule is the Owner's to say before plan D's Part 9 drafts them. Also for Part 9's art list: a rigged figure's walk and
+  **The Owner's answer to audit Q1 (2026-11-15): shades mixed from the four.** No. 276 has four colours (`#111314`,
+  `#f37f94`, `#afd472`, `#fdd4bd`), and a ramp needs three to six that get lighter each time. The demo's ramps are
+  made of those four and of even mixes of two of them (each channel the mean of the two, rounded half up), the way
+  the Site mixes its shades from its own palette; every ramp still gets lighter step by step, which plan R's palette
+  check already holds. Examples' palette check (plan D) accepts the four and the six even mixes, and fails any other
+  colour. Nothing in plan R's code changes. Also for Part 9's art list: a rigged figure's walk and
   run come from its gait (`walk-1` …, `run-1` …), and those names are refused as its own poses, so the hero's "run
   (2)" becomes its gait's run.
 - **The template** stays on its two free figures; `automata create` is unchanged.
@@ -1140,5 +1142,6 @@ fixes are in this page: the writer is Part 0 and built first (I1); `BodyPlan` an
 exported as it is made (I2); `paint-figure.ts`'s one-line type import (I3); a palette's `ink`, row 28 renamed, and no
 default naming a library ramp (I5); even walk pictures, the stride's crouch and the walk's bob (I6); an animal's trunk
 measured from forward (I7); places in units from the hips (I8); Part 4 after plans H and T (I9); advice for missing
-keys that fits each format (I10); the sheet's numbers (I11); and the minor ones. Two Owner questions are open (Q1 the
-demo's shading under palette No. 276, Q2 a behaviour that sets a view); neither stops Parts 0 to 3.
+keys that fits each format (I10); the sheet's numbers (I11); and the minor ones. The Owner answered Q1 (the demo's
+shades are even mixes of palette No. 276's four colours; see the plan D handoff). Q2 (a behaviour that sets a view) is
+open and does not stop Parts 0 to 3.
