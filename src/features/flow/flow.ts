@@ -3,18 +3,10 @@
 // page. It owns no rule: `advance` decides what comes next, the screens draw, and this file only connects them.
 import { pageFrames } from '../../lib/frames.ts'
 import { createAudio, type GameAudio, type Speaker } from '../audio/audio.ts'
-import {
-  formatDiagnostic,
-  type GameContent,
-  levelOrder,
-  loadGame,
-  nextLevel,
-  paintedPath,
-} from '../content/content.ts'
+import { formatDiagnostic, type GameContent, loadGame, nextLevel, paintedPath } from '../content/content.ts'
 import { type Game, startGame, type Watch, watchReplay } from '../game/game.ts'
-import { padMenu } from '../input/input.ts'
 import { createLocale, type Locale, levelName, type Words } from '../locale/locale.ts'
-import { createSaves, type Saves, type SlotState, type StoreResult } from '../saves/saves.ts'
+import { createSaves, type Saves, type StoreResult } from '../saves/saves.ts'
 import {
   defaultScreens,
   hud,
@@ -26,17 +18,11 @@ import {
   warningsFor,
 } from '../screens/screens.ts'
 import { followLanguage, languagePicker, webHost, webSpeaker } from '../web/web.ts'
-import { endsLevel, putLoadingMark, startWatching } from './loading.ts'
+import { endsLevel, putLoadingMark, startWatching, waitForTake } from './loading.ts'
+import { createOvers } from './overs.ts'
 import { createParty, type Party } from './party.ts'
-import {
-  defaultSave,
-  type FlowSave,
-  firstEmpty,
-  newest,
-  type Progress,
-  progressLabel,
-  reached,
-} from './progress.ts'
+import { createPlaces } from './places.ts'
+import { defaultSave, type FlowSave, newest, type Progress } from './progress.ts'
 import { openSections, type Sections, wireSound } from './sections.ts'
 import { advance, FLOW_START, type FlowEvent, type FlowFacts, type FlowState } from './steps.ts'
 import type { Flow, FlowOptions } from './types.ts'
@@ -54,7 +40,7 @@ const FIX = 'Fix the file named above, then load this page again.'
  * Buttons whose screens come with later tasks of plan U (settings, saved games, add a player): they are not offered
  * until their screen exists, so no button on the menu does nothing.
  */
-const NOT_YET: ReadonlySet<MenuItem> = new Set(['saves', 'settings', 'add-player'])
+const NOT_YET: ReadonlySet<MenuItem> = new Set(['saves', 'add-player'])
 
 /**
  * Loads the game and walks the flow in `mount`. Never rejects: whatever goes wrong is a screen of words. It answers at
@@ -84,7 +70,6 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
   let party: Party | undefined
   let saving: StoreResult<void> = { ok: true, value: undefined }
   let splashPicture: Blob | undefined
-  let slots: readonly SlotState[] = []
   let problem: { readonly lines: readonly string[]; readonly fix?: string } = { lines: [] }
   let stopFollowing = (): void => {}
   let stopSound = (): void => {}
@@ -98,12 +83,16 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
   let watcher: Watch | undefined
   let letGoOfGame = (): void => {}
   let letGoOfWatch = (): void => {}
-  // The saved game being played.
-  let progress: S | undefined
-  let slot: number | undefined
   const mountPosition = getComputedStyle(mount).position === 'static' ? '' : undefined
 
   const words: Words = (key, values) => (locale === undefined ? key : locale.words(key, values))
+  // The saved games, and the one being played.
+  const places = createPlaces<S>({
+    saves: () => saves,
+    save,
+    project: () => (content as GameContent).project,
+    words,
+  })
 
   const base = (): ScreenBase => ({
     mount,
@@ -127,6 +116,23 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       next: state.level === undefined ? undefined : nextLevel(project, state.level),
     }
   }
+
+  // The screens on top of the menu and of pause.
+  const overs = createOvers({
+    makers,
+    base,
+    host,
+    frames,
+    controls: options.controls,
+    gamepads: options.gamepads,
+    locale: () => locale as Locale,
+    sections: () => sections as Sections,
+    content: () => content as GameContent,
+    audio: () => audio,
+    game: () => game,
+    sharing: () => (party?.members() ?? []).some((member) => member.claim === 'keyboard'),
+    back: () => dispatch({ type: 'back' }),
+  })
 
   const dropOverlay = (): void => {
     if (overlayFrame !== undefined) frames.cancel(overlayFrame)
@@ -194,47 +200,21 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     overlayFrame = frames.request(draw)
   }
 
-  /** Reads the places a game is saved in, for the menu's buttons. */
-  async function readSlots(): Promise<void> {
-    const listed = await saves?.list()
-    slots = listed?.ok ? listed.value : []
-  }
-
-  /** Makes a new game: the first empty place, with the first level in it. */
-  async function begin(): Promise<void> {
-    const project = (content as GameContent).project
-    progress = save.fresh(project.start)
-    slot = firstEmpty(slots)
-    if (slot !== undefined && saves !== undefined)
-      await saves.save(slot, progress, { label: progressLabel(words, project.start) })
-  }
-
-  /** Opens the saved game that was saved last, and answers the level it reached. */
-  async function continueGame(): Promise<string> {
-    const project = (content as GameContent).project
-    const at = newest(slots)
-    const loaded = at === undefined ? undefined : await saves?.load(at)
-    if (at === undefined || loaded === undefined || !loaded.ok || loaded.data === null) {
-      await begin()
-      return project.start
-    }
-    progress = loaded.data
-    slot = at
-    // A level the game no longer has opens the first.
-    return levelOrder(project).includes(loaded.data.level) ? loaded.data.level : project.start
-  }
-
   /** What the player pressed on the main menu. */
   async function pick(item: MenuItem, mine: number): Promise<void> {
     if (item === 'quit') {
       await host.quit()
       return
     }
+    if (item === 'settings') {
+      dispatch({ type: 'open', over: 'settings' })
+      return
+    }
     if (item !== 'play' && item !== 'new' && item !== 'continue') return
     const project = (content as GameContent).project
     let level = project.start
-    if (item === 'continue') level = await continueGame()
-    else await begin()
+    if (item === 'continue') level = await places.openNewest()
+    else await places.begin()
     if (!stopped && epoch === mine) dispatch({ type: 'play', level })
   }
 
@@ -243,6 +223,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     const current = (): boolean => !stopped && epoch === mine
     const project = content?.project
     dropLoading()
+    overs.close()
     if (next.step === 'problem') {
       dropScreen()
       stopWatching()
@@ -261,27 +242,22 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       return
     }
     if (project === undefined || locale === undefined) return
-    // A screen on top of the menu or pause (settings, saved games, players) comes with its own task.
-    if (next.over !== undefined) return
+    // A screen on top of the menu or of pause takes its place; the one under it is drawn again when it closes.
+    if (next.over !== undefined) {
+      dropScreen()
+      overs.open(next.over)
+      return
+    }
 
     switch (next.step) {
       case 'watching': {
         // The recording is already playing; the page tells the player how to take over.
         const take = (): void => takeOver()
-        const key = (event: KeyboardEvent): void => {
-          if (!event.repeat) take()
-        }
-        const pads = padMenu({
+        letGoOfWatch = waitForTake({
           frames,
+          take,
           ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
         })
-        const stopPads = pads.on(take)
-        window.addEventListener('keydown', key)
-        letGoOfWatch = () => {
-          window.removeEventListener('keydown', key)
-          stopPads()
-          pads.destroy()
-        }
         overlay = hud({
           ...base(),
           jumpSide: () => 'right',
@@ -332,14 +308,13 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       case 'menu': {
         stopGame()
         dropScreen()
-        progress = undefined
-        slot = undefined
-        await readSlots()
+        places.forget()
+        await places.refresh()
         if (!current()) return
         audio?.raise('screen.menu')
         const members = party?.members() ?? []
         const items = menuItems({
-          saved: newest(slots) !== undefined,
+          saved: newest(places.slots()) !== undefined,
           room: members.length < (party?.room ?? 1),
           canQuit: host.canQuit,
         }).filter((item) => !NOT_YET.has(item))
@@ -369,13 +344,14 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
         game?.pause()
         dropOverlay()
         dropScreen()
-        audio?.raise('screen.pause')
+        if (before.over === undefined) audio?.raise('screen.pause')
         shown = makers.pause({
           ...base(),
-          items: ['resume', 'leave'],
+          items: ['resume', 'settings', 'leave'],
           removable: [],
           onPick: (item) => {
             if (item === 'resume') dispatch({ type: 'resume' })
+            else if (item === 'settings') dispatch({ type: 'open', over: 'settings' })
             else if (item === 'leave') dispatch({ type: 'leave' })
           },
           onRemove: () => {},
@@ -389,7 +365,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
         const finished = next.level ?? project.start
         const after = nextLevel(project, finished)
         let notKept: string | undefined
-        if (after !== undefined) notKept = await keepReached(after)
+        if (after !== undefined) notKept = await places.reach(after, words('automata.done.not-kept'))
         if (!current()) return
         audio?.raise('screen.done')
         shown = makers.done({
@@ -407,27 +383,16 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     }
   }
 
-  /** Writes that the player has reached `level`; the sentence for a player when it could not be kept. */
-  async function keepReached(level: string): Promise<string | undefined> {
-    const project = (content as GameContent).project
-    if (progress === undefined) return undefined
-    progress = reached(progress, level, levelOrder(project))
-    const notKept = words('automata.done.not-kept')
-    if (slot === undefined || saves === undefined) return notKept
-    const written = await saves.save(slot, progress, { label: progressLabel(words, level) })
-    return written.ok ? undefined : notKept
-  }
-
   /** Starts `level` and puts the game on the page. */
   async function startLevel(level: string, mine: number): Promise<void> {
     const loaded = content as GameContent
     const heard = locale as Locale
     stopGame()
     dropScreen()
-    if (progress === undefined) {
+    if (places.progress() === undefined) {
       // A visitor who took over a watching game plays from the start without having chosen Play.
-      await readSlots()
-      await begin()
+      await places.refresh()
+      await places.begin()
     }
     try {
       const started = await startGame({
@@ -498,16 +463,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     },
     game: () => game,
     locale: () => locale,
-    progress: () => progress,
-    async keep(data) {
-      progress = data
-      if (slot === undefined || saves === undefined)
-        return {
-          ok: false,
-          problem: { kind: 'refused', refusal: 'unavailable', detail: 'There is no place to keep it.' },
-        }
-      return saves.save(slot, data)
-    },
+    progress: () => places.progress(),
+    keep: (data) => places.keep(data),
     takeOver,
     finishLevel: () => dispatch({ type: 'level-done' }),
     stop() {
@@ -518,6 +475,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       stopWatching()
       stopGame()
       dropLoading()
+      overs.close()
       stopSound()
       stopFollowing()
       audio?.close()

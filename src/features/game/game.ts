@@ -27,6 +27,7 @@ import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
 import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
+export { resolveControls } from './controls.ts'
 export { type Frames, MAX_STEPS_PER_FRAME } from './loop.ts'
 export { type OnlineGame, type OnlineOptions, startOnlineGame } from './online.ts'
 export type { JoinAnswer } from './players.ts'

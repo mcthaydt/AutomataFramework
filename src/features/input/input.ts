@@ -61,6 +61,7 @@ export {
   TouchSettingsSchema,
   touchSettingsOf,
 } from './touch-settings.ts'
+export { buttonLabel } from './touch.ts'
 
 /** What `createInput` takes. */
 export interface InputOptions {

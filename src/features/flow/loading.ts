@@ -5,6 +5,7 @@ import type { Replay } from '../commands/commands.ts'
 import type { GameContent } from '../content/content.ts'
 import { type Watch, watchReplay } from '../game/game.ts'
 import type { Host } from '../host/host.ts'
+import { type PadLike, padMenu } from '../input/input.ts'
 import type { ReadPicture } from '../render/render.ts'
 import type { PluginDef } from '../sim/sim.ts'
 
@@ -79,4 +80,30 @@ export function endsLevel(
     if (typeof payload !== 'object' || payload === null || !('player' in payload)) return true
     return Number(payload.player) > 0
   })
+}
+
+/**
+ * Waits for the player to take over a game that is watching: a key (not one held down) or a gamepad button calls `take`.
+ * Returns the function that stops waiting.
+ */
+export function waitForTake(options: {
+  readonly frames: Frames
+  readonly gamepads?: () => readonly (PadLike | null)[]
+  readonly take: () => void
+}): () => void {
+  const { take } = options
+  const key = (event: KeyboardEvent): void => {
+    if (!event.repeat) take()
+  }
+  const pads = padMenu({
+    frames: options.frames,
+    ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
+  })
+  const stopPads = pads.on(take)
+  window.addEventListener('keydown', key)
+  return () => {
+    window.removeEventListener('keydown', key)
+    stopPads()
+    pads.destroy()
+  }
 }
