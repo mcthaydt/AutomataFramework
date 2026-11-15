@@ -35,14 +35,23 @@ of this plan lists what that builder takes from here. Principles served: 5, 1, 3
   that adds pictures commits their keys with `""` and takes the hashes from CI's "GOLDEN NOT RECORDED" message, as
   `art.parity.test.ts` does. Before recording, look at the contact sheet on `ci-screens` (Task 5 makes it). A hash
   recorded in an earlier task of this plan may move in a later one only when the commit names it and says why.
-- **Free figures are not touched.** `paint-figure.ts` keeps its code; `figure.ts` keeps the format 1 schema, types and
-  words as they are. The template and the full-game fixture are not changed by this plan.
-- **Painter rule.** Every file that paints or works out a pose (`paint-*.ts`, `rig-*.ts`, `motion-*.ts`) uses `+ - * /`,
+- **Free figures are not touched.** `paint-figure.ts` keeps its code but for one line: its type import becomes
+  `import type { FreeFigure as FigureFile, FigurePart, FigurePose } from './figure.ts'`, because once `FigureFile` is the
+  union its `figure.parts` no longer types (audit I3). Its function keeps its name; `paint.ts` imports it as
+  `paintFigure as paintFree`. `figure.ts` keeps the format 1 schema, types and words as they are. The template and the
+  full-game fixture are not changed by this plan.
+- **Public names.** Every name this plan adds reaches `src/headless.ts` and `src/index.ts` through `export *`, beside
+  physics' `Body` and render's `View`: a second `Body` or `View` is a TS2308 error there (audit I2). A body plan is
+  `BodyPlan` and a figure's view is `FigureView`; check every new exported name against `tests/public-surface.test.ts`
+  and the API report before using it. Each task exports what it makes from `content.ts` when it makes it, and adds
+  those names to the public-surface test, so the editors can use a part as soon as it is on `main`.
+- **Painter rule.** Every file that paints or works out a pose (`paint*.ts`, `rig-*.ts`, `motion-*.ts`, `figure-poses.ts`) uses `+ - * /`,
   comparisons, `Math.min`, `Math.max`, `Math.abs`, `Math.floor`, `Math.ceil`, `Math.sqrt` (every engine rounds it
   the same way), and `sim/dmath.ts` for `sin`, `cos`, `atan2` and `hypot`. No other `Math` function, no clock, no
   I/O, no canvas. `asin(s)` is `atan2(s, Math.sqrt(1 - s·s))`; nothing is added to `dmath`. Widen `PAINTER_FILES` in
-  `tests/architecture/rules.ts` to cover `rig-` and `motion-` in Task 3, and let the rule pass `Math.sqrt` there if
-  it does not already, with that reason beside it.
+  `tests/architecture/rules.ts` to cover `paint.ts`, `rig-`, `motion-` and `figure-poses.ts` in Task 3 (today's
+  pattern, `paint-[^/]+`, does not match `paint.ts`). `Math.sqrt` already passes the rule (it is not in
+  `PAINTER_MATH`, and `dmath.hypot` uses it).
 - **Angles are degrees in files and in code; whole or one decimal.** Lengths in files are pixels of the picture.
 - **No 3D maths:** no matrices, no quaternions, no camera. A bone's direction is two angles (below).
 - **A picture is at most 2048 pixels a side** and has at most 255 colours.
@@ -63,18 +72,24 @@ of this plan lists what that builder takes from here. Principles served: 5, 1, 3
 
 ## How the work is cut
 
-Six parts, each its own branch and pull request, merged in order, each leaving `main` green and each ending with
+Seven parts, each its own branch and pull request, merged in order, each leaving `main` green and each ending with
 something Examples can use once it moves its pin. A part is a fresh session (the 90-minute rule); the tracker says
 where the last one stopped.
 
+**Part 0 comes first** (audit I1). `listContent` and `automata add` need nothing from the rig, and three plans each
+planned their own `project-write.ts` (this one, the scenes plan's slice 1 in pull request 113, and the sound plan M's
+`withFolders` in pull request 112), while the editors' plan G needs the writer in its first pull request. Part 0 is
+the one writer; the others take it. Its tasks keep their numbers (17 and 18) so every reference below still holds.
+
 | Part | Tasks | After it, a game can |
 |---|---|---|
+| 0. The way in for a new file | 17 and 18 | be given any new content file by `listContent` or `automata add` |
 | 1. A person from the side | 1 to 5 | list a palette and a format 2 person, and paint it standing, shaded, with players' colours |
 | 2. Pieces | 6 to 8 | dress it from the library and its own piece files |
 | 3. Motion | 9 to 12 | pose it by bends or by hands and feet, and give it a walk, a run and an idle for clips to play |
-| 4. Views | 13 to 14 | paint front and back views and show them in play |
+| 4. Views | 13 to 14 | paint front and back views and show them in play (starts after plan H, pull request 101, and plan T, pull request 64, are on `main`: Task 14 changes `hero.ts`, which plan H rewrites, and the cutscene player is plan T's) |
 | 5. Animals | 15 to 16 | do all of that for a four-legged animal |
-| 6. New files and the way in | 17 to 20 | be given a new figure by `automata add`, start from a starter, and read how in the README and skills |
+| 6. Starters and the docs | 19 to 20 | start from a starter, and read how in the README and skills, end to end |
 
 ## Review Focus
 
@@ -106,8 +121,12 @@ forward = sin(b) · cos(o)      sideways = sin(o)      down = cos(b) · cos(o)
 The side view draws `(forward, down)`, facing right. The front view draws `(sideways, down)`, with the figure's own
 left on the picture's right; the back view draws `(-sideways, down)`. In the front and back views `forward` only
 orders what is in front of what. This is the spec's "a rule, not a camera", and the whole of the figure's third
-direction. Trunk bones (hips, spine, chest, neck, head, tail, jaw, ears) are measured from "pointing straight up" the
-same way, so a standing figure is all zeros.
+direction. A person's trunk bones (hips, spine, chest, neck, head) are measured from "pointing straight up" the
+same way, so a standing person is all zeros. An animal's are not (audit I7): its `hips`, `spine` and `chest` are
+measured from "pointing forward, along the ground", its `tail-1` from "pointing back, along the ground", and its
+`neck`, `head`, `jaw` and ears from "pointing forward" too, so `bend` raises them (more is up) and a standing animal
+is all zeros under the rest bends Task 15 gives (the neck's 40 up, the ears' droop, the tail's curl). Its legs hang
+from "straight down" as a person's do.
 
 ### Where it stands
 
@@ -149,7 +168,9 @@ always `idle-1`. A frame is named `<pose>` in the side view, `front/<pose>` and 
 `<variant>/…` before any of those for a variant. A rigged figure's sheet has `min(32, floor(2048 / frame.w))` pictures
 in a row (a free figure keeps 8), in the order: the figure then each variant; in each, side then front then back; in
 each, the poses. A sheet taller than 2048 is refused with the numbers; it never spills into a second picture (the
-spec left this open: 32 across holds 1,600 pictures of 32 by 40, which is more than any figure the limits allow).
+spec left this open: 32 across and 51 rows hold 1,632 pictures of 32 by 40, enough for the demo's figures several
+times over. A figure at every limit at once, 72 poses in three views for itself and eight variants, is 1,944 pictures
+and is refused with the numbers, which is the right answer for a figure that big).
 
 ## File structure
 
@@ -199,17 +220,20 @@ tests/golden/figures.json
 
 **Files:** Create `palette.ts`, `library/palette.json`; modify `content-types.ts` (the row goes after `figure`),
 `load.ts` (`GameContent.palettes?`), `content.ts`. Tests: `palette.test.ts`, `content-types.test.ts`,
-`json-schema.test.ts`.
+`json-schema.test.ts`, `tests/features/cli/mcp.test.ts` (it counts the schema resources, 15 today; each new kind in
+Tasks 1, 6, 11 and 12 adds one, so 19 by Task 12).
 
 **Interfaces:**
 - Produces: `interface Ramp { id: string; colors: readonly string[] }`,
-  `interface PaletteFile { format: 1; id: string; ramps: readonly Ramp[] }`, `PaletteSchema`, `paletteInfo` (title
+  `interface PaletteFile { format: 1; id: string; ink?: string; ramps: readonly Ramp[] }`, `PaletteSchema`, `paletteInfo` (title
   "Palette", plural `palettes`, editor `characters`, part `palette`, noun "palette"),
-  `LIBRARY_PALETTE: PaletteFile` (id `automata`), `lightness(colour: string): number`.
+  `LIBRARY_PALETTE: PaletteFile` (id `automata`), `lightness(colour: string): number`,
+  `inkOf(palette: PaletteFile): string` (its `ink`, else the darkest step of its darkest ramp).
 
 | Field | Rule |
 |---|---|
 | `format`, `id` | as every kind |
+| `ink` | opt, a colour: "The one near-black an "ink" edge, eyes and brows are drawn in. Left out means the darkest shade in the palette." (audit I5) |
 | `ramps` | 1 to 64 of `{ id, colors }` |
 | `ramps.id` | `Id`: "A name for this colour, like "tan" or "moss"." |
 | `ramps.colors` | 3 to 6 colours: "The colour's shades, from dark to light. A figure is shaded with them." |
@@ -222,7 +246,10 @@ Checks: `unique` on ramp ids (noun "colour"). `lightness` is `2126·r + 7152·g 
 (`AutomataFrameworkFailed@ed8592e8:extensions/figures/src/shared/paint/duel-ramps.ts`, rows 0 to 31 in order), each
 ramp the row's steps 1, 2, 3, 5 and 6, named in row order: `slate`, `cream`, `brown`, `sea`, `ember`, `lilac`, `moss`,
 `navy`, `sage`, `rose`, `steel`, `clay`, `bark`, `plum`, `teal`, `sand`, `tan`, `violet`, `crimson`, `russet`, `olive`,
-`gold`, `dusk`, `leaf`, `umber`, `mint`, `cobalt`, `sunset`, `ink`, `indigo`, `mauve`, `flame`. Where a row's five
+`gold`, `dusk`, `leaf`, `umber`, `mint`, `cobalt`, `sunset`, `amethyst`, `indigo`, `mauve`, `flame`. Row 28 is not
+called `ink`: its kept steps run from `#3c3151` to `#baabf7`, a purple, and a ramp called `ink` would put purple eyes
+on every figure that left `eyes` out (audit I5). The library's `ink` is the old painter's outline colour,
+`RAMP_OUTLINE` (`#002219`, row 6's step 0), so an "ink" edge looks as the old builder's did. Where a row's five
 steps do not get lighter each time, take the nearest step that does and say so in the commit. The file opens with the
 row it came from in no field: JSON has no comments, so the port is recorded in `palette.ts`'s header comment.
 
@@ -251,11 +278,18 @@ row it came from in no field: JSON has no comments, so the port is recorded in `
     `{ eyes: readonly string[]; brows: readonly string[]; mouth: readonly string[] }`).
   - `posesOf(figure: FigureFile): readonly string[]` in `figure.ts`: a free figure's pose ids; for a rigged one, for
     now, `['idle-1']`. `noPose` takes the list. `character.ts` and `backdrop.ts` call `posesOf`, so later tasks widen
-    one function.
+    one function. When Task 5 widens it to take the kit, move it to `figure-poses.ts` and have `character.ts` and
+    `backdrop.ts` import it there: `figure-poses.ts` needs `isRigged` from `figure.ts`, so `posesOf` left in
+    `figure.ts` would make a file cycle, which `tests/architecture.test.ts` refuses.
   - `FigureSchema` reads both: told apart by `format` (the `variants` helper in `shared.ts`; if Zod refuses refined
     options there, keep two schemas and choose by `format` in one `z.custom` that runs the right one and passes its
-    issues through). `figureInfo.missing` gains format 2's keys; `figureInfo.check` is `checkRigged` from
-    `figure-check.ts` for a rigged figure and nothing for a free one.
+    issues through). `figureInfo.check` is `checkRigged` from `figure-check.ts` for a rigged figure and nothing for a
+    free one.
+  - `figureInfo.missing` is one map for both formats (`Voice.missing`, keyed by the path without list numbers), and
+    today's advice for `paints`, `outline`, `variants.paints` and `poses.moves` is format 1's ("each with an id and a
+    color"), which is wrong for a format 2 file (audit I10). Write every key both formats share in words true of
+    both, give format 2's own keys their own advice (`body`, `sliders`, `paints.skin`, `palette`, `pieces.piece`,
+    `poses.bends`, …), and keep each format 1 sentence word for word where it already fits.
 
 The file, in key order (this task's keys; later tasks add `pieces`, `shapes`, `gait`, `stand`, `poses`, `views` where
 the table says):
@@ -270,7 +304,7 @@ the table says):
 | `views` | Task 13 |
 | `sliders` | opt, the table below; a slider left out is at its normal |
 | `face` | opt: `eyes`, `brows`, `mouth` (each one of `FACE_STYLES`) and the face sliders |
-| `paints` | `{ skin, hair?, eyes? }`, each a ramp's id; `hair` left out is `bark`, `eyes` left out is `ink` |
+| `paints` | `{ skin, hair?, eyes? }`, each a ramp's id; `hair` left out means no cap of hair is drawn (a hair piece or a hat still may be); `eyes` left out are drawn in the palette's `inkOf`. No default names a library ramp, because a game's own palette need not have it (audit I5) |
 | `pieces`, `shapes` | Tasks 6 and 7 |
 | `gait`, `stand`, `poses` | Tasks 9 to 12 |
 | `palette` | opt, `Id`: "The palette its colours are named in. Left out means the framework's own." |
@@ -318,7 +352,10 @@ sentence (owner "This game and the framework"); each paint's ramp is in that pal
   byte for byte; a slider at its normal still writes when written (the file is kept as written); each rule and
   sentence; every slider and style has a sentence, a group and a normal inside its range; Review Focus 1's three
   files, each giving exactly one problem; every format 1 fixture and the template's two figures read to the value
-  they read to on `main` (compare `JSON.stringify` of the parse with the file's own text); `posesOf`.
+  they read to on `main` (compare `JSON.stringify` of the parse with the file's own text); `posesOf`; a format 2
+  file missing `paints`, and one with a variant missing `paints`, each give advice that is true of format 2, and the
+  same keys on a format 1 file give today's words; a figure on a game palette with no `bark` and no `ink` ramp,
+  leaving `hair` and `eyes` out, has no problem.
 - [ ] **Step 2: Push; red.** **Step 3: Implement.**
 - [ ] **Step 4: Push; take `schemas/figure.schema.json` and the API report from the `package` job's log; green; no
   golden moved.**
@@ -332,19 +369,19 @@ Tests: `rig.test.ts`, `rig-person.test.ts`, `rig-pose.test.ts`.
 **Interfaces:**
 - Consumes: `RiggedFigure`, `PERSON_SLIDERS`.
 - Produces:
-  - `type Body = 'person' | 'animal'`, `type View = 'side' | 'front' | 'back'`,
-    `BONES: Record<Body, readonly { id: string; parent: string | undefined; trunk: boolean; side: -1 | 0 | 1 }[]>`,
-    `PLACES: Record<Body, readonly string[]>`,
-    `LIMITS: Record<Body, Record<string, { bend: readonly [number, number]; out: readonly [number, number] }>>`
+  - `type BodyPlan = 'person' | 'animal'`, `type FigureView = 'side' | 'front' | 'back'`,
+    `BONES: Record<BodyPlan, readonly { id: string; parent: string | undefined; trunk: boolean; side: -1 | 0 | 1 }[]>`,
+    `PLACES: Record<BodyPlan, readonly string[]>`,
+    `LIMITS: Record<BodyPlan, Record<string, { bend: readonly [number, number]; out: readonly [number, number] }>>`
     (the table in "The model"; a sided bone is looked up without its side).
   - `interface Bone { id: string; length: number; near: number; far: number; offset: { forward: number; sideways: number; down: number } }`
     (`near` and `far` are its half-width at each end; `offset` is where it starts from its parent's end),
-    `interface Skeleton { body: Body; bones: readonly Bone[]; ground: number; middle: number }`,
+    `interface Skeleton { body: BodyPlan; bones: readonly Bone[]; ground: number; middle: number }`,
     `skeletonOf(figure: RiggedFigure): Skeleton`.
   - `type Bends = Readonly<Record<string, { bend?: number; out?: number }>>`,
     `interface Placed { id: string; ax: number; ay: number; bx: number; by: number; depth: number; near: number; far: number; shown: number }`
     (a bone's two ends in the frame's pixels in one view, how near the eye it is, and how much of its length shows),
-    `placeBones(skeleton: Skeleton, bends: Bends, view: View, hips?: { x: number; y: number }): readonly Placed[]`,
+    `placeBones(skeleton: Skeleton, bends: Bends, view: FigureView, hips?: { x: number; y: number }): readonly Placed[]`,
     sorted back to front.
 
 **A person's measures**, with `H = height`, `lerp(a, b, t) = a + (b - a)·t`, and `c = chunk`:
@@ -435,9 +472,22 @@ modify `sheet.ts`, `art.ts`, `content.ts`, `src/features/render/art.ts`, `src/fe
     `figurePoses(figure: RiggedFigure, kit: FigureKit): readonly NamedPose[]` (for now one, `idle-1`, all zeros);
     `posesOf(figure, kit?)` uses it.
   - `figureSheet(figure: FigureFile, kit: FigureKit = LIBRARY_KIT): Sheet`; `paintFigure(figure: FigureFile, kit: FigureKit = LIBRARY_KIT): IndexedPicture`;
-    `paintFrame(figure: RiggedFigure, kit: FigureKit, pose: NamedPose, view: View, variant?: string): IndexedPicture`
+    `paintFrame(figure: RiggedFigure, kit: FigureKit, pose: NamedPose, view: FigureView, variant?: string): IndexedPicture`
     (one picture, for an editor that repaints on every change).
-  - `artFiles`, `artProblems` and `loadArt` pass `figureKit(content)`.
+  - `pictureColours(figure: RiggedFigure, kit: FigureKit): readonly number[]`: the picture's colour table, in the
+    order the next paragraph gives, worked out from the file and the kit with no painting (the editors' API checks
+    a saved picture's table against it, since it does not paint; audit G-I4). `paintFigure` uses it, so the two
+    cannot differ.
+  - `frameName(pose: string, view: FigureView, variant?: string): string` (moved here from Task 13, audit G-I1, so
+    the editors' second pull request has it; until Task 13 only `side` is painted, and it gives `<pose>` and
+    `<variant>/<pose>`).
+  - `artFiles`, `artProblems` and `loadArt` pass `figureKit(content)`. In `render/art.ts`, the fallback for an empty
+    or unknown pose (today `figure.poses[0]?.id`) becomes `posesOf(figure, kit)[0]`, so a rigged figure falls back to
+    `idle-1`; `paint.ts` holds `paintFigure` (the dispatcher) and imports the free painter as
+    `paintFigure as paintFree` from `paint-figure.ts`.
+  - The kit's library reaches every game's page through `render/art.ts` (`figureSheet` needs the gait's and the
+    stand's picture counts). Report the built page's size before and after this part, and again after Parts 2 and 3,
+    in the pull request (the Site says the demo is about 1.2 MB).
 
 **Painting a person** in one view, back to front by `Placed.depth`, each bone its own part number: limbs as
 `fillLimb` in `skin`, far ones `dim`; `hips`, `spine` and `chest` as limbs whose half-widths are the trunk's depth
@@ -448,7 +498,8 @@ is drawn in the `eyes` ramp's darkest step for eyes and brows and the skin's dar
 by `eyeSpacing`, `eyeSize` (1 or 2 pixels when the head is under 10 pixels, up to 3 above) and `eyeTilt`; `cheeks`
 above 0.6 adds one pixel of the skin's lightest step under each eye. Hair with no hair piece is a cap of the `hair`
 ramp over the top third of the head (Task 8's hair pieces replace it). Then `edge`. The palette of the PNG is clear,
-then each ramp the figure uses in the order `skin`, `hair`, `eyes`, then pieces' in file order, then the ink, then
+then each ramp the figure uses in the order `skin`, `hair`, `eyes`, then pieces' in file order, then the palette's
+`inkOf` (when the edge is `ink` or `eyes` is left out), then
 each variant's new ramps; more than 255 is refused in `checkRigged`:
 `This figure uses 260 colours, and a picture can hold 255. Use fewer colours or fewer variants.`
 
@@ -483,7 +534,7 @@ each picture has painted pixels. It is how a session that can run nothing looks 
 
 **Interfaces:**
 - Produces: `PieceFile`, `PieceShape`, `PieceSchema`, `pieceInfo` (plural `pieces`, editor `characters`, part
-  `figure`, noun "piece"), `PIECE_KINDS: Record<Body, readonly string[]>`, `GameContent.pieces?`,
+  `figure`, noun "piece"), `PIECE_KINDS: Record<BodyPlan, readonly string[]>`, `GameContent.pieces?`,
   `FigureKit.pieces: Readonly<Record<string, PieceFile>>`; on `RiggedFigure`:
   `pieces?: readonly { piece: string; paint?: string; trim?: string; hand?: 'left' | 'right'; choices?: Record<string, string> }[]`
   and `variants[].pieces?: Record<string, { paint?: string; trim?: string }>` (by the piece's id).
@@ -528,7 +579,7 @@ written for a `held` piece and only for one, at most one piece a hand; `choices`
 
 **Interfaces:**
 - Produces: on `RiggedFigure`,
-  `shapes?: readonly { id: string; on: string; shape: 'block' | 'round'; x: number; y: number; w: number; h: number; turn?: number; paint: string; views?: readonly View[] }[]`
+  `shapes?: readonly { id: string; on: string; shape: 'block' | 'round'; x: number; y: number; w: number; h: number; turn?: number; paint: string; views?: readonly FigureView[] }[]`
   (at most 16; `x`, `y`, `w`, `h` in pixels from the bone's middle; `paint` a ramp id).
 
 A piece's shape is painted straight after the bone it is on (before it when `behind`), as a part of its own, in the
@@ -592,7 +643,7 @@ the reference for what each is and where its trim goes; none of their code or nu
 **Interfaces:**
 - Produces: on `RiggedFigure`, `poses?: readonly FigurePoseR[]` (at most 48) with
   `interface FigurePoseR { id: string; bends?: Bends; place?: Places }` (`place` is Task 10's);
-  `limitProblem(body: Body, bone: string, bends: { bend?: number; out?: number }): string | undefined`;
+  `limitProblem(body: BodyPlan, bone: string, bends: { bend?: number; out?: number }): string | undefined`;
   `figurePoses` gives `idle-1` then the figure's own; `posesOf` follows.
 
 Checks: unique pose ids; a bone the body has (the bone sentence of Task 6); a bend inside the table:
@@ -614,8 +665,12 @@ a pose with neither `bends` nor `place`: `Say how the figure stands: add "bends"
 **Interfaces:**
 - Produces:
   - `type Places = Readonly<Record<string, { x?: number; y?: number; out?: number; turn?: number }>>` (keys are the
-    body's `PLACES`; `x`, `y` are pixels in the side view's frame; `out` is pixels to its own side; `turn` is the end
-    bone's own bend, in degrees),
+    body's `PLACES`; `x`, `y` are in **units** (a unit is `height / 24` pixels, as a piece's are) from the point the
+    hips stand at in the side view, `x` forward and `y` down; `out` is units to its own side; `turn` is the end
+    bone's own bend, in degrees. Not frame pixels (audit I8): a pose written in pixels breaks when Look changes
+    `height`, `legs` or `arms`, or Surprise me runs, and a figure that saved fine would then fail `automata check`.
+    In units from the hips, the spec's `wave` (`x 6, y -14`: the hand above the head) is a wave at any size. The solve
+    multiplies by the unit and adds the hips' point before step 1),
   - `solvePose(skeleton: Skeleton, pose: { bends?: Bends; place?: Places }): { ok: true; bends: Bends; hips: { x: number; y: number } } | { ok: false; problems: readonly { path: string; message: string }[] }`,
   - `reachOf(skeleton: Skeleton, place: string): number` (how far that hand or foot can be from its root, in pixels).
 
@@ -648,7 +703,7 @@ Problems are reported at `poses[i].place.<name>`, by the schema's own check (the
   hand's end (through `placeBones`) is within one pixel of the point in the side view, and with `out` within one in
   the front view; the elbow never bends backwards and the knee never forwards; hips lowered by 3 keeps both feet on
   the ground row and bends both knees; each sentence above; a point exactly at full reach solves with a straight
-  arm; the spec's `wave` pose solves.
+  arm; the spec's `wave` pose solves, and still solves on the same figure with `height` 16 and with `height` 60.
 - [ ] **Step 2: Push; red.** **Step 3: Implement.**
 - [ ] **Step 4: Push; green in four engines.**
 - [ ] **Step 5: Commit** `feat(content): poses placed by hands, feet, head and hips`
@@ -669,7 +724,7 @@ step's numbers (the old gait's numbers that show in a flat figure, in shares of 
 
 | Number | Range | Sentence |
 |---|---|---|
-| `pictures` | 4 to 8, whole | How many pictures one cycle of two steps has. |
+| `pictures` | 4, 6 or 8 | How many pictures one cycle of two steps has. (Even only, audit I6: the left foot is the right half a cycle on, so picture `k + n/2` must exist.) |
 | `stride` | 0 to 1.5 | How long a step is, as a share of the leg. |
 | `lift` | 0 to 0.5 | How high the feet lift. |
 | `bob` | 0 to 0.2 | How much the body rises and falls. |
@@ -686,10 +741,17 @@ the right `p`, the left `p + 0.5` (an animal: `hind-left` `p`, `front-right` `p`
 and the other pair half a cycle on). With `φ` the phase's part after the point: on the ground while `φ < 0.5`, at
 `x = S · (1 - 4φ)`, its `turn` `-heel` while `φ < 0.1` and `push` while `φ > 0.4`; in the air after, at
 `x = -S + 4S · (φ - 0.5)`, raised by `lift · L · sin(2π · (φ - 0.5))`, and by a further `bounce · lift · L` for both
-feet at once in a run. The hips are lowered by `bob · L · (0.5 - 0.5 · cos(4π · p))` and moved `sway · L · sin(2π · p)`
-to the side; `spine.bend` gains `lean`; each `upper-arm` bends `armSwing · sin(2π · p)`, against the leg on its side;
-each `forearm` bends `elbow`. The feet are placed and the legs solved with Task 10's rule (a foot too far is brought
-to full reach, never refused: a gait must always walk). `age` shortens the stride by `lerp(1, 0.7, age)`.
+feet at once in a run. **The hips are lowered** (audit I6) first by the crouch the stride needs, `L - √(L² - S²)`
+for the whole cycle (a foot planted `S` ahead of the hips cannot touch the ground under straight legs: at the
+starting numbers that is 7% of the leg for `brisk`'s walk and 20% for its run), and then by the bob: for a walk
+`bob · L · (0.5 + 0.5 · cos(4π · p))`, lowest when both feet are down (`p` 0 and 0.5) and highest over the standing
+foot, as a walk goes; for a run `bob · L · (0.5 - 0.5 · cos(4π · p))`, lowest over the standing foot. They are moved
+`sway · L · sin(2π · p)` to the side; `spine.bend` gains `lean`; each `upper-arm` bends `armSwing · sin(2π · p)`,
+against the leg on its side; each `forearm` bends `elbow`. The feet are placed and the legs solved with Task 10's rule
+(a foot too far is brought to full reach, never refused: a gait must always walk). `age` shortens the stride by
+`lerp(1, 0.7, age)`. At `φ = 0.5` both branches put the foot on the ground row, so in a walk each foot is down for
+`n/2 + 1` pictures and both are down at pictures 1 and `n/2 + 1`; in a run with `bounce` above 0 those two pictures
+raise both feet instead.
 
 A figure with `gait` gets `walk-1` to `walk-n` and the run or trot if the gait has one; with none, no walk. Checks:
 the gait is in the kit and for the figure's body; then the sheet's height with every picture counted (the sentence of
@@ -703,9 +765,11 @@ run `pictures 6, stride 1.2, lift 0.3, bob 0.08, sway 0.03, lean 14, armSwing 50
 `strut`: more `sway` and `armSwing`, a backward `lean` of -2. `loose`: longer `pictures`-for-stride feel, low `lift`,
 `elbow` 5. `bounce`: `bob` 0.12, `bounce` 0.5. `shuffle`: `stride` 0.3, `lift` 0.03, `armSwing` 8.
 
-- [ ] **Step 1: Write the failing tests:** each rule and sentence; over one cycle each foot is on the ground row for
-  `n / 2` pictures in a row and off it for the rest (a run with `bounce` above 0 has a picture with neither on it);
-  the right arm is forward when the right leg is back; the hips' lowest row is at mid-step; picture `k` and `k + n/2`
+- [ ] **Step 1: Write the failing tests:** each rule and sentence; over one walk cycle each foot is on the ground row
+  for `n / 2 + 1` pictures in a row and off it for the rest, and at `brisk`'s numbers and at `stride` 1.5 no planted
+  foot is lifted by the reach (a run with `bounce` above 0 has a picture with neither on it); `pictures` 5 is refused;
+  the right arm is forward when the right leg is back; a walk's hips are lowest when both feet are down and a run's
+  over the standing foot; picture `k` and `k + n/2`
   are each other with left and right swapped; the figure's poses are `idle-1`, `walk-1` … `run-n`, then its own; a
   character's `run` clip may name them; every library gait reads; the fixture person gains `"gait": "brisk"` and its
   hashes are `""`.
@@ -729,12 +793,20 @@ pixels sideways with the feet kept where they are. A figure's `stand` left out i
 
 **The library's stands** (the old builder's, `games/base-3d/content/figure-stands/` and
 `packages/3d/tests/fixtures/content/figure-stands/` at `ed8592e8`, laid flat): a person's `easy` (arms at the sides,
-`pictures 4, breath 0.6, shift 0.3`), `hand-on-hip`, `arms-crossed`, `thumbs-in-pockets`, `hands-behind`; an
-animal's `four-square`, `sit` and `alert` (Task 16 sets theirs).
+`pictures 4, breath 0.6, shift 0.3`), `hand-on-hip`, `arms-crossed`, `thumbs-in-pockets`, `hand-in-pocket` and
+`hip-and-pocket` (the old builder's, which read from the side), and `hands-behind`, which is **new** (the spec's
+example names it, but the old builder had no such stand: its seven were hand on hip, arms crossed, thumbs in
+pockets, hand in pocket, hand in jacket pocket, hip and pocket, kangaroo pocket; audit M3). The two jacket and
+kangaroo pockets need a garment with a pocket and are left out, said in `stand.ts`'s header. An animal's
+`four-square`, `sit` and `alert` (Task 16 sets theirs).
+
+A stand a figure cannot reach is a **problem** from `checkRigged`, which fails `automata check` (audit M4); the
+painter still paints that figure's idle with `easy`'s arms, only so `paintFrame` has something to show beside the
+problem in an editor. It is never a silent fallback.
 
 - [ ] **Step 1: Write the failing tests:** each rule; `hand-on-hip` puts the right hand within a pixel of the hip's
-  side; `arms-crossed` solves on the normal person and on sliders at both ends (a stand that cannot be reached on a
-  figure falls back to `easy`'s arms and `checkRigged` says so:
+  side; `arms-crossed` solves on the normal person and on sliders at both ends (a stand that cannot be reached is
+  `checkRigged`'s problem:
   `This figure's arms are too short to stand "arms-crossed". Choose another stand, or make "arms" longer.`); `idle-1`
   is the first pose and what a character with no clips shows; `breath` 0 and `shift` 0 make every idle picture the
   same; the fixture's hashes.
@@ -752,10 +824,11 @@ animal's `four-square`, `sit` and `alert` (Task 16 sets theirs).
 Tests: `paint-rigged.test.ts`, `sheet.test.ts`, `figures.parity.test.ts`.
 
 **Interfaces:**
-- Produces: on `RiggedFigure`, `views?: readonly View[]` (1 to 3, no repeat, `side` always in it:
+- Produces: on `RiggedFigure`, `views?: readonly FigureView[]` (1 to 3, no repeat, `side` always in it:
   `Every figure paints the side view. Add "side" to "views".`; left out means `["side"]`: "The views it is painted
   in. "front" and "back" are for a game seen from above, or a cutscene where someone faces you.");
-  `figureSheet` names and orders frames as "Names of pictures" says; `frameName(pose: string, view: View, variant?: string): string`.
+  `figureSheet` names and orders frames as "Names of pictures" says; `frameName` (Task 5) gains the `front/` and
+  `back/` names.
 
 Front and back use the same parts with the front measures (Task 3) and `Placed.shown` shortening a limb bent toward
 the eye; a limb with `shown` under 0.25 is drawn as a round of its near half-width (a fist or a knee coming at you).
@@ -773,8 +846,10 @@ shapes last, in front of the body (a cape seen from behind covers the back).
 ### Task 14: Show a view in play
 
 **Files:** Create `src/features/level/side.ts`; modify `level/uses.ts`, `level/level.ts`, `level/game-sim.ts`,
-`level/hero.ts` and `level/spawn-level.ts` (the parts a character gets), `content/cutscene.ts`, the cutscene player
-that applies `face` today, `render/scene.ts`, `render/art.ts`, `render/stage.ts`, `render/still.ts`, `src/index.ts`
+`level/hero.ts` and `level/spawn-level.ts` (the parts a character gets), `content/cutscene.ts`, plan T's cutscene
+player (audit I9: on `main` today `cutscene.ts` is only the file's schema and nothing applies `face`; the player is in
+pull request 64, open, so this task starts after it merges, and after plan H's pull request 101, which rewrites
+`hero.ts`; if either is still open when Parts 1 to 3 are done, Part 5 may go before Part 4), `render/scene.ts`, `render/art.ts`, `render/stage.ts`, `render/still.ts`, `src/index.ts`
 and `src/headless.ts`. Tests: `tests/features/level/side.test.ts`, `side.parity.test.ts`, `render/scene.test.ts`,
 `render/art.browser.test.ts`, `content/cutscene.test.ts`, `tests/golden/sides.json`.
 
@@ -789,11 +864,14 @@ and `src/headless.ts`. Tests: `tests/features/level/side.test.ts`, `side.parity.
   - cutscene `ActorKey.view?: 'side' | 'front' | 'back'` after `face` ("Which way it is seen from here on. Left out
     means no change."); checked across files: the actor's figure paints that view, else
     `The figure "keeper" is not painted from the front. Add "front" to its "views".`,
-  - `ViewSprite.view: View`; `Art.figure(character, pose, player, view)` falls back to the side view when the figure
+  - `ViewSprite.view: FigureView`; `Art.figure(character, pose, player, view)` falls back to the side view when the figure
     has no such view, then to today's fallbacks.
 
-A behaviour file sets no view: no act of a behaviour sets which way a thing faces today, so there is nothing to hang
-it on. The spec's "or a behaviour" waits for the act that needs it; record this as a deviation in the tracker.
+A behaviour file sets no view: no act of a behaviour sets which way a thing faces today (the acts are `stay`,
+`wander`, `flee`, `follow` and `jump`; facing follows the speed in `level.sprites`), so there is nothing to hang it on.
+The spec's "or a behaviour" waits for the act that needs it; record this as a deviation in the tracker. **The audit
+checked this reading and holds it, but it narrows a line of the spec the Owner read, so it is the Owner's to confirm
+(audit Q2).** Until the answer, build Task 14 as written; the answer can only add, never take away from it.
 
 - [ ] **Step 1: Write the failing tests:** `usesSides` is false for the template, the full game and Part 1 to 3's
   fixture as it was before Task 13, and true once a named figure has `front`; a sim of the template has no `side`
@@ -892,7 +970,14 @@ and blocks along `spine` and `chest`.
 
 ## Part 6: new files and the way in
 
-### Task 17: List a new file in `automata.toml`
+### Task 17: List a new file in `automata.toml` (Part 0: built first)
+
+**Part 0 is built before Part 1, as its own pull request** (audit I1). It is the one `automata.toml` writer for every
+plan: the scenes plan's slice 1 (AutomataFramework pull request 113, its Task 14, `listContent(projectText, ref):
+string`) already says "if another plan has landed one first, use it and report", and takes this one; the sound plan
+M (pull request 112) adds its `withFolders` beside it in this same file, and when its folder blocks land,
+`listContent` counts a path inside a listed folder of that kind as already listed. If either of those lands first,
+take its file and add `listContent` beside what is there, with this signature, and say so in the tracker.
 
 **Files:** Create `project-write.ts`; modify `content.ts`. Test: `project-write.test.ts`.
 
@@ -961,7 +1046,10 @@ Tests: `library.test.ts`, `tests/public-surface.test.ts`.
   `villager` (shirt, long skirt, shoes, a bun, a scarf), `keeper` (the spec's example: robe, hood, long beard, a
   lantern, `hands-behind`), `child` (`height` 16, `head` 0.9, shorts, cap), `dog` (collar, `pale-belly`, `pad`) and
   `deer` (long legs and neck, `spots`, `prance`). Their ids are placeholders a game renames.
-- The public surface (`src/headless.ts`, and so `src/index.ts`) gains, for the editors and any agent's tools:
+- The public surface (`src/headless.ts`, and so `src/index.ts`) has, by the end of this task, for the editors and any
+  agent's tools (each name is exported from `content.ts` by the task that makes it, under Global Constraints'
+  "Public names", so the editors' plan G can take Parts 0 to 3 before this task; this task adds `STARTERS` and checks
+  the whole list):
   `PaletteFile`, `PieceFile`, `GaitFile`, `StandFile`, `FreeFigure`, `RiggedFigure`, `isRigged`, `PERSON_SLIDERS`,
   `ANIMAL_SLIDERS`, `FACE_SLIDERS`, `FACE_STYLES`, `ANIMAL_FACE_STYLES`, `GAIT_NUMBERS`, `BONES`, `PLACES`, `LIMITS`,
   `PIECE_KINDS`, `LIBRARY_KIT`, `LIBRARY_PALETTE`, `STARTERS`, `figureKit`, `figurePoses`, `posesOf`, `skeletonOf`,
@@ -1023,6 +1111,12 @@ part as these parts land, each stage only what the pinned framework paints.
 - **Examples (plan D):** the demo's hero, keeper and critter are format 2 files in Examples, drafted by an agent from
   `STARTERS` and finished in the builder (the Owner: "the real art comes from the builders"). Examples moves its pin
   after each part. Its palette is its own file with the Owner's No. 276 colours as ramps. Its goldens are plan D's.
+  **Open (audit Q1, the Owner's):** No. 276 has four colours, and a ramp needs three to six that get lighter each
+  time, so by lightness the four make one ramp (`#111314`, `#f37f94`, `#afd472`, `#fdd4bd`): every part of every
+  figure would be shaded through black, pink, green and cream. How the demo's figures are shaded under the palette
+  rule is the Owner's to say before plan D's Part 9 drafts them. Also for Part 9's art list: a rigged figure's walk and
+  run come from its gait (`walk-1` …, `run-1` …), and those names are refused as its own poses, so the hero's "run
+  (2)" becomes its gait's run.
 - **The template** stays on its two free figures; `automata create` is unchanged.
 - **Lamps, swaying cloth and hair, a behaviour that sets a view, a second picture for a big sheet:** not built; the
   spec's non-goals and this plan's recorded readings.
@@ -1038,3 +1132,13 @@ part as these parts land, each stage only what the pinned framework paints.
   Task 10; the gait Task 11; the writer Task 17; end to end Task 20).
 - **Readings of the spec recorded here:** face styles are a list in code; a behaviour sets no view; a sheet never
   spills; `stand` left out is `easy` and `gait` left out is no walk; starters are added for the builder's New figure.
+
+## Plan audit (2026-11-15)
+
+Audited in [`audits/2026-11-15-rigged-figures-plan-audit.md`](../audits/2026-11-15-rigged-figures-plan-audit.md). The
+fixes are in this page: the writer is Part 0 and built first (I1); `BodyPlan` and `FigureView`, and every new name
+exported as it is made (I2); `paint-figure.ts`'s one-line type import (I3); a palette's `ink`, row 28 renamed, and no
+default naming a library ramp (I5); even walk pictures, the stride's crouch and the walk's bob (I6); an animal's trunk
+measured from forward (I7); places in units from the hips (I8); Part 4 after plans H and T (I9); advice for missing
+keys that fits each format (I10); the sheet's numbers (I11); and the minor ones. Two Owner questions are open (Q1 the
+demo's shading under palette No. 276, Q2 a behaviour that sets a view); neither stops Parts 0 to 3.
