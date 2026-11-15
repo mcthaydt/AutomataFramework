@@ -384,8 +384,9 @@ test('Sound is a switch above the sliders: off, the speaker is given 0 and 0 and
   await userEvent.click(on as HTMLElement)
   await expect.poll(() => volumes).toMatchObject({ music: 0, sound: 0 })
   expect(sections.sound.get().muted).toBe(true)
+  // The slider says its number as a percent.
   expect(slider(es('automata.settings.music')).getAttribute('aria-valuenow')).toBe(
-    String(SOUND_SETTINGS_DEFAULT.music),
+    String(Math.round(SOUND_SETTINGS_DEFAULT.music * 100)),
   )
   await userEvent.click(switchOf(es('automata.settings.sound')) as HTMLElement)
   await expect

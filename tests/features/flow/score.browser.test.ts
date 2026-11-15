@@ -19,15 +19,26 @@ afterEach(() => drive.stop())
 const score = (n: number): string => es('automata.hud.score', { score: n })
 const best = (n: number): string => es('automata.hud.best', { best: n })
 const scoreLine = (): string | undefined => drive.mount.querySelector('.score')?.textContent?.trim()
+/** What the screen of Well done or You lost says, once it is on the page. */
+const screenText = async (name: 'done' | 'lost'): Promise<string> => {
+  await expect.poll(() => drive.mount.querySelector(`[data-screen="${name}"]`)).not.toBeNull()
+  return drive.mount.querySelector(`[data-screen="${name}"]`)?.textContent ?? ''
+}
 
 /** The menu of a game that counts sparks (or names a score wrongly), then Play, and the game on the page. */
-async function intoLevel(score: 'sparks' | 'missing' | 'words' | undefined, more: DriveOptions = {}) {
+async function intoLevel(
+  score: 'sparks' | 'missing' | 'words' | undefined,
+  more: DriveOptions = {},
+  saved = false,
+) {
+  // The score's plugin reads the spark's event, which only a game that has a spark knows: a game with no score has no plugin.
   await drive.toMenu({
-    plugins: [heroPlugin, scorePlugin],
+    plugins: score === undefined ? [heroPlugin] : [heroPlugin, scorePlugin],
     ...more,
     game: { noWarning: true, ...(score === undefined ? {} : { score }), ...more.game },
   })
-  await drive.press(es('automata.menu.play'))
+  // A visit that has already saved a game is offered Continue, not Play.
+  await drive.press(es(saved ? 'automata.menu.continue' : 'automata.menu.play'))
   await drive.shown('playing')
   drive.frames.at(0)
 }
@@ -38,7 +49,7 @@ test('a game with score shows "Score: 0", and "Score: 1" after the spark is take
   expect(scoreLine()).toBe(score(0))
   walkByKey(drive)
   await drive.shown('done')
-  expect(drive.mount.querySelector('[data-screen="done"]')?.textContent).toContain(score(1))
+  expect(await screenText('done')).toContain(score(1))
 })
 
 test('the score is on the page while the spark is taken, before the level ends', async () => {
@@ -82,7 +93,7 @@ test('Well done and You lost both show the score; the best shows from the second
   await intoLevel('sparks', { host })
   walkByKey(drive)
   await drive.shown('done')
-  const first = drive.mount.querySelector('[data-screen="done"]')?.textContent ?? ''
+  const first = await screenText('done')
   expect(first).toContain(score(1))
   expect(first).not.toContain(es('automata.hud.best', { best: 1 }))
   // Level two has no spark: the second level-end has a score of 0 and a best of 1.
@@ -91,7 +102,7 @@ test('Well done and You lost both show the score; the best shows from the second
   drive.frames.at(0)
   walkByKey(drive)
   await drive.shown('done')
-  const second = drive.mount.querySelector('[data-screen="done"]')?.textContent ?? ''
+  const second = await screenText('done')
   expect(second).toContain(score(0))
   expect(second).toContain(best(1))
 })
@@ -103,7 +114,7 @@ test('You lost shows the score and the best too', async () => {
   await intoLevel('sparks', { host, game: { start: 'level-pit' } })
   walkByKey(drive)
   await drive.shown('lost')
-  const text = drive.mount.querySelector('[data-screen="lost"]')?.textContent ?? ''
+  const text = await screenText('lost')
   expect(text).toContain(score(0))
   expect(text).toContain(best(5))
   expect(focusedName()).toBe(es('automata.lost.again'))
@@ -115,13 +126,12 @@ test('the best is still there after a reload', async () => {
   walkByKey(drive)
   await drive.shown('done')
   drive.leave()
-  drive.mount.remove()
   // A new visit to the same host: the first level-end of this visit already has the best of the last.
   await drive.start()
-  await intoLevel('sparks', { host })
+  await intoLevel('sparks', { host }, true)
   walkByKey(drive)
   await drive.shown('done')
-  expect(drive.mount.querySelector('[data-screen="done"]')?.textContent).toContain(best(1))
+  expect(await screenText('done')).toContain(best(1))
 })
 
 test('storage refuses: the score still counts, and the screen says once that it was not kept', async () => {
@@ -142,8 +152,8 @@ test('storage refuses: the score still counts, and the screen says once that it 
   expect(text.split(es('automata.done.not-kept'))).toHaveLength(2)
 })
 
-test("at 390x844 the score does not cover the pause button or the hero's number", async () => {
-  await intoLevel('sparks')
+test("at 390x844 the score does not cover the pause button or the heroes' numbers", async () => {
+  await intoLevel('sparks', { game: { players: 2 } })
   drive.frames.advance(16)
   ticks(drive, 2)
   const rect = (selector: string): DOMRect => {
@@ -155,7 +165,9 @@ test("at 390x844 the score does not cover the pause button or the hero's number"
     a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top
   const line = rect('.score')
   expect(apart(line, rect('.pause button'))).toBe(true)
-  expect(apart(line, rect('.number'))).toBe(true)
+  const numbers = [...drive.mount.querySelectorAll('.number')]
+  expect(numbers.length).toBe(2)
+  for (const one of numbers) expect(apart(line, one.getBoundingClientRect())).toBe(true)
   const goal = drive.mount.querySelector('.card')
   if (goal !== null) expect(apart(line, goal.getBoundingClientRect())).toBe(true)
   untilOver(drive)

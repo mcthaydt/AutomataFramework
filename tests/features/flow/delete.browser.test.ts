@@ -74,7 +74,8 @@ test('Sound off is still off after a reload, and the switch in Settings agrees',
   await drive.start()
   await drive.toMenu({ host })
   expect(heard()).toEqual({ music: 0, sound: 0 })
-  await drive.press(es('automata.menu.play'))
+  // The first visit saved a game, so the menu offers Continue now.
+  await drive.press(es('automata.menu.continue'))
   await drive.shown('playing')
   drive.frames.at(0)
   drive.key('keydown', 'Escape')

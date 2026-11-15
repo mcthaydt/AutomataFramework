@@ -21,8 +21,9 @@ test('How to play from the menu: the goal, the rows, Back has the focus and retu
   await expect.poll(() => drive.mount.querySelector('[data-screen="how"]')).not.toBeNull()
   expect(drive.mount.dataset.over).toBe('how')
   expect(onScreen()).toContain('Llega a la puerta.')
-  expect(onScreen()).toContain(es('automata.how.walk'))
-  expect(onScreen()).toContain(es('automata.how.jump'))
+  // The fixture hero moves by the game's own controls, so the rows are those: each by its name and its key.
+  expect(onScreen()).toContain('Left')
+  expect(onScreen()).toContain('Jump')
   expect(onScreen()).toContain(es('automata.pause.button'))
   expect(focusedName()).toBe(es('automata.back'))
   await drive.press(es('automata.back'))

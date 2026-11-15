@@ -144,11 +144,12 @@ test('Try again and Next level wait the same way', async () => {
 
 test('three seconds after the first press the card is gone; before that it is there', async () => {
   await intoLevel()
-  drive.key('keydown', 'ArrowRight')
+  // A jump is a first press that does not walk to the door, so the level is still on when the card goes.
+  drive.key('keydown', 'Space')
   drive.run(2000)
   expect(card()).not.toBeNull()
   drive.run(1200)
-  drive.key('keyup', 'ArrowRight')
+  drive.key('keyup', 'Space')
   expect(card()).toBeNull()
 })
 

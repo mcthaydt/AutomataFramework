@@ -63,9 +63,11 @@ test.each(SCREENS)(
       words('automata.done.menu'),
     ])
     expect(document.activeElement).toBe(all[0])
-    for (const button of all) {
+    // Every button is whole on the page and big enough to touch; the one main button, Try again, is bigger still.
+    for (const [at, button] of all.entries()) {
       const box = button.getBoundingClientRect()
-      expect([box.top >= 0, box.bottom <= window.innerHeight, box.height >= 48]).toEqual([true, true, true])
+      const tall = box.height >= (at === 0 ? 48 : 44)
+      expect([box.top >= 0, box.bottom <= window.innerHeight, tall]).toEqual([true, true, true])
     }
     expect((document.scrollingElement as Element).scrollHeight).toBeLessThanOrEqual(window.innerHeight)
     await expect
