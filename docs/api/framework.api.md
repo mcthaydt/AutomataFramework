@@ -4363,7 +4363,7 @@ const STEEP = 0.7;
 ### `stepMoves` (function)
 
 ```ts
-function stepMoves(state: MoveState, input: MoveInput, n: MoveNumbers, on: MoveSwitches, hover: number, pull?: number): MoveResult;
+function stepMoves(state: MoveState, input: MoveInput, n: MoveNumbers, on: MoveSwitches, hover: number): MoveResult;
 ```
 
 ### `StepResult` (interface)
@@ -8732,7 +8732,7 @@ const STEEP = 0.7;
 ### `stepMoves` (function)
 
 ```ts
-function stepMoves(state: MoveState, input: MoveInput, n: MoveNumbers, on: MoveSwitches, hover: number, pull?: number): MoveResult;
+function stepMoves(state: MoveState, input: MoveInput, n: MoveNumbers, on: MoveSwitches, hover: number): MoveResult;
 ```
 
 ### `StepResult` (interface)
