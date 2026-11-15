@@ -13,7 +13,7 @@ export function noSuch(noun: string, id: string, known: readonly string[], owner
 }
 
 /** Lower-case words joined by dots or dashes: the shape of a message key and of an event name. */
-const WORDS_PATTERN = /^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$/
+export const WORDS_PATTERN = /^[a-z][a-z0-9]*(?:[-.][a-z0-9]+)*$/
 
 /** The key of one message, like `keeper.hello`. */
 export const MessageKey: z.ZodString = z
