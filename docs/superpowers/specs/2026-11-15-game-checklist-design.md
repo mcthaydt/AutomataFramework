@@ -62,7 +62,7 @@ Most boxes get more than one. "Proof" names where it is held today; the plan wri
 
 | Box | How | Proof today, and what is added |
 |---|---|---|
-| In five seconds it is clear what you do | Framework + Template + Game maker | Plan H's hints show the keys or the thumbs until each is used (`input/thumb-hints.ts`). Added: the level's **goal line**, the optional message `level.<id>.goal` (the template's: "Get to the door."), so no level file changes shape (plan Q), shown for three seconds when a level starts and on the pause screen. Whether it is *clear* is the maker's |
+| In five seconds it is clear what you do | Framework + Template + Game maker | Plan H's hints show the keys or the thumbs until each is used (`input/thumb-hints.ts`). Added: the level's **goal line**, the optional message `level.<id>.goal` (the template's: "Get to the door."), so no level file changes shape (plan Q), shown for three seconds when a level starts and on the pause screen. `--ship` notes (never fails) a level with no goal line. Whether it is *clear* is the maker's |
 | You can win or lose, or have something to aim for | Framework + Template + Check | `done` (win) exists; `lost` (above) is added. The template has both. `automata check` warns when a game has neither `done` nor `lost`, and says what to add |
 | A new player works it out alone | Framework + Game maker | The hints, the goal line and How to play (below). The rest is the maker's (and "hand it to someone" in the list to try) |
 | Enough to do: a few minutes or a reason to replay | Game maker + Framework | The maker's. The framework helps with the best score (below), which is a reason to play again |
@@ -79,7 +79,7 @@ Most boxes get more than one. "Proof" names where it is held today; the plan wri
 |---|---|---|
 | No stand-in pictures | Done | A picture that is missing is a problem screen (`ArtError`); `automata art` paints every figure |
 | No test words or numbers on screen | Check | Added: a `words` rule in the `files` step: a message that is empty, equals its key, or holds `TODO`, `FIXME`, `lorem`, `xxx` or `test` as a word is a problem, in every language. `--ship` fails on it; plain `check` notes it |
-| No half-made menus | Done + Framework | The framework's screens are whole and tested; a game that replaces one (`screens`) owns it. Added: `--ship` fails a game whose `screens` option names a screen with no file |
+| No half-made menus | Done + Game maker | The framework's screens are whole and tested; a game that replaces one (`screens`) owns it. A replaced screen whose file is missing already fails the `types` step (an import that does not resolve), and `--ship` lists the box to try by hand (plan Q's audit, M4) |
 | No hidden spots that do something when tapped | Game maker | A game's own page is its makers'. The framework's screens have none, and every button has a name (see "Easy for everyone") |
 | No sloppy pictures or words | Game maker | Judged by looking. `--ship` lists it |
 
@@ -101,7 +101,7 @@ Most boxes get more than one. "Proof" names where it is held today; the plan wri
 ### `automata check --ship`
 
 Plain `automata check` stays what a game passes every day. `--ship` is what a game passes before it goes anywhere:
-every step, with the notes above turned into problems (placeholder words, a replaced screen with no file), and at the end the boxes only the makers can judge, as a short list in plain words (the "Game maker" rows
+every step, with the notes above turned into problems (placeholder words), and at the end the boxes only the makers can judge, as a short list in plain words (the "Game maker" rows
 and the "Check these yourself" list). The template's CI runs `automata check`; `--ship` is run by hand, by an agent
 before a release, or by a publish step later (Release 4).
 
@@ -114,7 +114,7 @@ for free and that cannot be wrong for a kind of game; it leaves the ones that ar
 |---|---|---|
 | Playing | Pausing and carrying on (done, plan U). The score goes up when it should: `automata.toml` gains an optional `score = "<resource>.<field>"`, which the HUD shows and the flow keeps the best of (below) | It gets harder bit by bit |
 | Touch | Thumb controls and big buttons (done: plan H's thumbs, plan U's kit at 44 and 48 px). Nothing against the edge (done: safe-area insets in `input/thumbs.ts`, `ui/Frame.svelte`). Double tap doesn't zoom and holding doesn't select (framework: `startFlow` sets `touch-action: none`, `user-select: none` and no callout over the game; today only the touch buttons have them). Two fingers at once (done: thumbs track each pointer). Reacts at once (done: input is read each frame, no click delay). Left and right hands (done: "Swap sides", plan U) | — |
-| Phone browser | Fits as the address bar moves (done: `100dvh`; added to the journey). Sideways or asks to turn (done: every screen and the thumbs at both turns). Clear of the notch (done: safe areas). **Back does something sensible** (framework: the flow adds one history entry when play starts, so Back pauses the game, Back on pause goes to the menu, and Back on the menu leaves) | — |
+| Phone browser | Fits as the address bar moves (done: `100dvh`; added to the journey). Sideways or asks to turn (done: every screen and the thumbs at both turns). Clear of the notch (done: safe areas). **Back does something sensible** (framework: the flow adds one history entry when play starts, so Back pauses the game, Back on pause goes to the menu, and Back on the menu leaves; when the game is framed inside another page, Back is left alone) | — |
 | Tablets and computers | Upright and sideways (done, 820×1180 and 1180×820 journeys). Keyboard and mouse (done). Big screen not blurry (done: `resolution` follows the device's density, whole-pixel camera in `render/stage.ts`) | — |
 | Speed | Same speed everywhere (done: a fixed tick, the determinism rule). No slow-down over time or restarts (check: the 50-restart journey compares the sim's entity count and the page's canvas count before and after). Small files (check: the build's total and each picture over 512 KB is a `--ship` note). Loading shown on slow internet (framework, above). The next level's files are read before it is needed (done: `loadGame` reads every file up front) | Smooth on an ordinary or older phone; flashy effects (the maker's art) |
 | How it feels | No lag and no lost taps (done: every press is a command for the next tick; plan H). Buttons show they were pressed (done: the kit's pressed state). Hits land the same every time (done: determinism). Same speed on fast and slow (done). No tiny words (check: the kit's words are 18 px or more; a `--ship` note for a game's CSS under 14 px). Important things not shown with a faint flicker (framework: plan F's shake and freeze honour reduced motion) | — |
