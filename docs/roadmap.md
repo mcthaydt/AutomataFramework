@@ -35,6 +35,20 @@ each later mockup also follows the design language (see the rule below).
 How to read each list: **Done** is merged and green. **Now** is the one thing being built. **Next** is in line, in
 order. **Waiting** is approved, but its turn has not come. **Later** is after the current slice: not worked on now.
 
+## The four phases
+
+The whole road, in four phases (the owner, 2026-11-15). The slices below are phase 1.
+
+1. **The 2D editors, with a 2D test game.** The game in AutomataFrameworkExamples, and the one on the website, is a
+   test game. It is not the real demo. Its job is to prove each editor and to find out what the editors must do to
+   support a real game. The website keeps playing it until the real 2D demo game exists.
+2. **A real 2D demo game,** made with the finished 2D editors. It starts only when phase 1 is done, and lives in
+   AutomataFrameworkExamples under `demos/`.
+3. **The 3D layer, with a 3D test game,** which proves the 3D editors the same way.
+4. **A real 3D demo game,** made with the finished 3D editors.
+
+The real demo games are named and planned elsewhere; nothing about them is worked on until their phase comes.
+
 ## Slice 0: Start
 
 1. Done: the design, the workflow, the four repos, the tests that run on every change, the check on who wrote each
@@ -151,8 +165,11 @@ The date is not set. Launch is when the owner starts the releases above.
 
 Later.
 
-1. 3D, as its own layer on top of 2D, then the same order again for 3D: each editor's 3D version runs the same five
-   steps.
+1. Phase 2: a real 2D demo game, made with the finished 2D editors. Which release it goes in is a question for the
+   owner.
+2. Phase 3: 3D, as its own layer on top of 2D, with a 3D test game, then the same order again for 3D: each editor's 3D
+   version runs the same five steps.
+3. Phase 4: a real 3D demo game, made with the finished 3D editors.
 
 ## Not yet placed: needs the owner
 
