@@ -3,8 +3,8 @@ import { formatDiagnostic, parseContent, writeContent } from '#src/features/cont
 import { artGame } from '../../fixtures/content/art.ts'
 import { gameFiles, gameProblems } from '../../fixtures/content/kind.ts'
 import { english, keeperTalk, storyGame } from '../../fixtures/content/story.ts'
-import { fixtureFiles } from '../../fixtures/game/read.ts'
 import { fullGameFiles } from '../../fixtures/full-game/read.ts'
+import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const hero = () => ({
   format: 1,
