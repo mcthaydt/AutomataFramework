@@ -76,8 +76,9 @@ test('the list of words files is not hashed either', async () => {
   const full = await loadFull()
   const given = simContent(full)
   expect(given.project.content.some((entry) => entry.type === 'messages')).toBe(false)
-  // Every other entry stays, in its order; the sound, music, cue and art files leave with the words (plans S and A).
-  const left = new Set(['messages', 'sound', 'music', 'cues', 'figure', 'backdrop', 'feel'])
+  // Every other entry stays, in its order; the sound, music, cue and art files leave with the words (plans S and A),
+  // and the world file leaves too, since where levels sit on the map changes no play (plan W).
+  const left = new Set(['messages', 'sound', 'music', 'cues', 'figure', 'backdrop', 'feel', 'world'])
   expect(given.project.content).toEqual(full.project.content.filter((entry) => !left.has(entry.type)))
 })
 
