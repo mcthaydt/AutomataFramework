@@ -12,6 +12,7 @@ import type { Bus, Speaker, SpeakerState, SpeakerVoice } from './speaker.ts'
 
 export { type CueLogEntry, LOG_MAX, MAX_SAME, MAX_SOUNDS } from './cues.ts'
 export { instrumentVoices } from './instruments.ts'
+export { makeSound, SOUND_KINDS, type SoundKind } from './kinds.ts'
 export { createMusicPlayer, type MusicPlayer } from './music-player.ts'
 export { hertzOf, hertzOfPitch } from './notes.ts'
 export {

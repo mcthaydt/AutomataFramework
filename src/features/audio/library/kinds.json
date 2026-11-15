@@ -1,0 +1,167 @@
+{
+  "jump": {
+    "volume": 0.8,
+    "voices": [
+      {
+        "kind": "tone",
+        "wave": ["square", "triangle"],
+        "from": [260, 420],
+        "to": [520, 900],
+        "at": 0,
+        "length": [0.12, 0.22],
+        "volume": [0.6, 0.8]
+      }
+    ]
+  },
+  "land": {
+    "volume": 0.8,
+    "voices": [
+      { "kind": "noise", "pitch": [180, 400], "at": 0, "length": [0.06, 0.12], "volume": [0.6, 0.9] },
+      {
+        "kind": "tone",
+        "wave": "sine",
+        "from": [140, 200],
+        "to": [60, 90],
+        "at": 0,
+        "length": [0.08, 0.14],
+        "volume": [0.5, 0.8]
+      }
+    ]
+  },
+  "coin": {
+    "volume": 0.8,
+    "voices": [
+      {
+        "kind": "tone",
+        "wave": ["square", "sine"],
+        "from": [880, 1320],
+        "at": 0,
+        "length": [0.05, 0.08],
+        "volume": [0.5, 0.7]
+      },
+      {
+        "kind": "tone",
+        "wave": ["square", "sine"],
+        "from": { "times": [1.33, 1.5], "of": 0 },
+        "at": { "after": 0 },
+        "length": [0.15, 0.3],
+        "volume": [0.5, 0.7]
+      }
+    ]
+  },
+  "hit": {
+    "volume": 0.8,
+    "voices": [
+      { "kind": "noise", "pitch": [600, 1600], "at": 0, "length": [0.05, 0.12], "volume": [0.8, 1] },
+      {
+        "kind": "tone",
+        "wave": "sawtooth",
+        "from": [300, 500],
+        "to": [80, 140],
+        "at": 0,
+        "length": [0.08, 0.15],
+        "volume": [0.5, 0.7]
+      }
+    ]
+  },
+  "explosion": {
+    "volume": 0.8,
+    "voices": [
+      { "kind": "noise", "pitch": [200, 600], "at": 0, "length": [0.5, 1.1], "volume": [0.9, 1] },
+      { "kind": "noise", "pitch": [60, 140], "at": 0, "length": [0.6, 1.3], "volume": [0.7, 0.9] },
+      {
+        "kind": "tone",
+        "wave": "sine",
+        "from": [120, 180],
+        "to": [30, 50],
+        "at": 0,
+        "length": [0.4, 0.8],
+        "volume": [0.6, 0.8]
+      }
+    ]
+  },
+  "door": {
+    "volume": 0.8,
+    "voices": [
+      {
+        "kind": "tone",
+        "wave": "triangle",
+        "from": [180, 260],
+        "to": [120, 180],
+        "at": 0,
+        "length": [0.15, 0.3],
+        "volume": [0.6, 0.8]
+      },
+      { "kind": "noise", "pitch": [300, 700], "at": [0.1, 0.2], "length": [0.08, 0.15], "volume": [0.4, 0.6] }
+    ]
+  },
+  "click": {
+    "volume": 0.8,
+    "voices": [
+      {
+        "kind": "tone",
+        "wave": "square",
+        "from": [900, 1600],
+        "at": 0,
+        "length": [0.02, 0.04],
+        "volume": [0.5, 0.7]
+      }
+    ]
+  },
+  "power-up": {
+    "volume": 0.8,
+    "voices": [
+      {
+        "kind": "tone",
+        "wave": ["square", "triangle"],
+        "from": [330, 520],
+        "at": 0,
+        "length": [0.08, 0.12],
+        "volume": [0.5, 0.7]
+      },
+      {
+        "kind": "tone",
+        "wave": ["square", "triangle"],
+        "from": { "times": [1.2, 1.35], "of": 0 },
+        "at": { "after": 0 },
+        "length": [0.08, 0.12],
+        "volume": [0.5, 0.7]
+      },
+      {
+        "kind": "tone",
+        "wave": ["square", "triangle"],
+        "from": { "times": [1.2, 1.35], "of": 1 },
+        "at": { "after": 1 },
+        "length": [0.08, 0.12],
+        "volume": [0.5, 0.7]
+      }
+    ]
+  },
+  "laser": {
+    "volume": 0.8,
+    "voices": [
+      {
+        "kind": "tone",
+        "wave": ["sawtooth", "square"],
+        "from": [1200, 2200],
+        "to": [200, 500],
+        "at": 0,
+        "length": [0.15, 0.35],
+        "volume": [0.5, 0.7]
+      }
+    ]
+  },
+  "blip": {
+    "volume": 0.8,
+    "voices": [
+      {
+        "kind": "tone",
+        "wave": ["sine", "square"],
+        "from": [500, 1000],
+        "at": 0,
+        "length": [0.04, 0.09],
+        "volume": [0.5, 0.7]
+      }
+    ]
+  }
+}
