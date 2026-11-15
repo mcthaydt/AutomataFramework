@@ -1,60 +1,99 @@
-# Roadmap
+# AutomataFramework roadmap
 
-**Draft for the Owner's review.** One ordered list of everything in flight across the four public repos, so work
-happens one thing at a time. Written 2026-11-15 from each repo's `docs/superpowers/progress.md`, the open pull
-requests and the Owner's decisions so far. Where this page and a tracker disagree, the tracker has the detail and this
-page has the order.
+The order we build AutomataFramework in. One page, read top to bottom.
 
-## How the queue works
+## The rules
 
-1. **One item is worked at a time:** the top one. The next starts only when the top one is done, or is parked waiting
-   on the Owner.
-2. **Waiting on the Owner parks an item; it does not open a second one.** While an item waits for the Owner's answer,
-   the next item may start, but no more than one item is ever waiting at once.
-3. **Anything new goes to the bottom,** unless the Owner moves it up. A new idea found along the way is written under
-   "Later", never started.
-4. **"Done" is merged to `main` and green there,** plus the Owner's word where the item says so.
-5. **Branches stay at five or fewer** per repo (the rule in `CLAUDE.md`). A paused item keeps no open pull request.
-6. **Framework and demo come before the editors,** except the mockups, which the Owner put first (2026-11-15). No
-   editor code is written until the Owner approves the mockups.
+**We finish Release 1, 2D finished, and only Release 1.** (Proposed. The owner has not yet named the one release to
+finish.) Release 1 is the framework in full and the demo game. Everything after it is marked **Later**. Nothing marked
+Later starts until Release 1 is done and the owner says go.
 
-## The queue
+1. **One thing at a time.** There is one **Now**. Nothing else is built until it is done.
+2. **One design track.** Beside the Now, one design can be worked on: today, the shell and World mockups. Only one
+   editor is designed at a time, and no editor is built until the owner approves its design.
+3. **Releases go in order.** A release starts only when the one before it is merged and green.
+4. **New ideas wait.** A new idea goes in "Not yet placed" at the bottom. It moves up only when the owner says where it
+   goes.
+5. **Designs can wait in line.** An approved design sits under its release until that release comes up. Approved is not
+   the same as building.
+6. "Done" means merged to main and green there. Nothing else counts as done.
 
-| # | Item | Repo | Stage now | Done means | Who decides |
-|---|---|---|---|---|---|
-| 0 | **Clear the desk** | all | — | AF 147 (Scenes fixes I2 to I4 and nine minors, green, no golden) merged; Editors 50 (the revert of Editors 28 and 45) merged; AF 142 (the input's hint counts, from plan U's audit) green and merged; the stale drafts decided (see "Waiting on the Owner", 3) | merge session; Owner for 3 |
-| 1 | **Shell and World mockups** | Editors (PR 34) | Grill round 1 written (33 findings, 12 High; Pencil 13 more); fixes next | Round 1 fixes in, then the review gate: an Opus plain-words audit and two Fable design loops with fixes after each, then a re-grill, then the Owner. Repeat until the Owner says the shell and World are **satisfied** | Owner |
-| 2 | **Plan Q: the game checklist in every game** | AF | Stage 4 at 52%; PRs 1, 2a, 2b merged | Resume at Task 14 (PR 3, the template on `startFlow`), then PRs 4 and 5, then the implementation audit and its fixes. PR 3 moves `template/replays/level-1.json`: held until the Owner sees before and after | Owner (the golden) |
-| 3 | **Demo Part 4: three levels, the door, playing together** | Examples (PR 41) | PR A up; re-records five replays | Owner says yes to the moved replays, PR A merges, then PR B (the page: level changes, teaching steps, journeys) after its short plan addendum | Owner (the goldens) |
-| 4 | **Scenes fix I1: photo materials** | AF | Not started; diagnosis in the tracker's stage 6 handoff | One PR from `main`; moves `tests/golden/scene-art.json`, so the Owner sees before and after first | Owner (the golden) |
-| 5 | **Links on things and the world map** | AF (PR 149, draft) | Spec written, paused, 8 questions withdrawn | The 8 questions answered, the spec merged, then plan, plan audit, build, audit, fixes. The demo then uses it (a button opens a door; two levels joined by a door) | Owner (the 8 answers) |
-| 6 | **Finish the framework's paused builds**, one at a time: story (plan T, AF 64), sound formats (plan M, AF 125), feel runtime (plan F, AF 120), rigged figures (plan R, AF 124) | AF | Each in stage 4, part built, paused | Each restarted from `main`, built, audited, fixed and merged in that order; each one's demo part (below) follows it before the next starts | coordinator |
-| 7 | **Demo Parts 5 to 8**, each right after the framework work it uses: sound (5), feel (6), story (7), screens, saves and "What's inside" (8) | Examples | Not started | Each part merged with its goldens seen by the Owner | Owner (the goldens) |
-| 8 | **Mockups for Characters, Feel, Sound and Story**, one editor per round, the same gate as item 1 | Editors | Waiting for item 1 | Owner satisfied with each, in that order. Characters and World's Scenes come first because the demo's real art needs the builders | Owner |
-| 9 | **The 2D figure and environment builders** (the first editor code, after the mockups) | Editors, AF | Specs written; build stopped by the hard stop | Editor specs and plans updated from the approved mockups, audited, then the shell first, then the builders | Owner |
-| 10 | **Demo Part 9 (real art) and Part 10 (the close)** | Examples | Waits for item 9 | An agent drafts every figure and scene in the builders; the Owner finishes them; the M2 "Done means" list is true on `main`; the Owner plays the demo and says it is fine | Owner |
-| 11 | **Release 1: 2D finished** (the framework in full and the demo game) | AF, Examples | — | The Owner starts `release.yml` by hand | Owner |
-| 12 | **Release 2: the 2D editors** | Editors | — | The rest of the five editors, in the Owner's order (World's Levels, then Feel with Tuner, then the rest), each through every stage | Owner |
-| 13 | **Release 3: the website** | Site | The sales site's spec is done (Site cycle 4) | Planned and built once the demo has landed; live on Cloudflare Pages | Owner |
-| 14 | **Release 4: distribution** | all | — | Games ship to web, itch.io, Wavedash (if its rules fit) and desktop; the editor app ships as a Tauri app | Owner |
-| 15 | **Release 5: 3D** | new repos | — | 3D as its own layer on top, then the loop repeats | Owner |
+How to read each list: **Done** is merged and green. **Now** is the one thing being built. **Next** is in line, in
+order. **Waiting** is approved, but its turn has not come. **Later** is after Release 1: not worked on now.
 
-## Waiting on the Owner
+## Release 1: 2D finished
 
-1. **Mockups:** the shell and World are next to show you, once item 1's gate has run. Nothing to answer tonight.
-2. **Goldens to see before they merge:** demo Part 4's five replays (Examples 41); plan Q's template recording (PR 3,
-   not built yet); Scenes I1's `scene-art.json` (not built yet).
-3. **The old drafts:** AF 64 (story), 120 (feel runtime), 124 (rigged figures), 125 (sound formats) and Editors 12 (the old Blueprint build). Suggested: tag each branch so nothing is lost, close the
-   pull requests, and restart each from `main` when its turn in the queue comes. That brings AutomataFramework back
-   under five branches.
-4. **The world map spec's 8 questions** (AF 149), asked again when item 5 starts: value labels stay untranslated; a
-   plate and a button are one `switch` part; levels join only through doors; a door takes every player; level
-   pictures are never committed; the template stays one level; moving platforms come later; `one-per-level`.
-5. **Owner reviews still owed** (stage 7 of finished cycles): the built-in hero, no default language, live move
-   numbers, the default game flow, and the Site and Examples cycles near 90%. Suggested: one review sitting after
-   item 3, from one screenshot page.
-6. **This page:** is this the order you want? Move anything, and it becomes the order.
+1. Done: the first thin slice: the framework, the demo game, the editors' first screen and the site, each with its
+   tests on every change.
+2. Done: content files, saves, input with gamepads and new keys, playing together online, physics joints and touch,
+   art, sound, languages, the `automata` command for agents.
+3. Done: the built-in hero (walk, jump, double jump, wall jump, dash), no default language, the default game flow
+   (warnings, language picker, splash, menu, pause), live move numbers.
+4. Done: Scenes part 1 (painted ground and photo materials), its audit and its fixes (#147), except fix I1.
+5. Done: the game checklist, parts 1, 2a and 2b (#143, #145, #148).
+6. Done: the demo game's words in six languages, its room server and the built-in hero (Examples #37, #39, #40), and
+   the demo playing itself.
+7. **Now: the feel runtime and the story (plans F and T, #120 and #64), being merged.**
+8. Next: the game checklist, the rest: the starter game on the new game flow (part 3), the checks (part 4), the last
+   part (part 5), then its audit and fixes. Part 3 changes the starter game's recorded play, so the owner sees it
+   before and after.
+9. Next: the demo's three levels, the door and playing together (Examples #41, then the page). It changes five
+   recorded plays, so the owner sees them first.
+10. Next: Scenes fix I1 (photo materials). It changes the scene pictures' record, so the owner sees it first.
+11. Next: the sound formats (plan M) and the rigged figures (plan R), restarted from main, one at a time.
+12. Next: links on things and the world map: the 8 questions asked again, then the spec, plan, build and audit. The
+    demo then uses it: a button opens a door, and two levels are joined by a door.
+13. Next: the demo's sound, feel, story, and screens, saves and "What's inside" (Parts 5 to 8), each right after the
+    framework work it uses.
+14. Next: the 2D figure and environment builders. Their designs come first (see the design track), because the demo's
+    real art is made in them.
+15. Next: the demo's real art and the close (Parts 9 and 10): an agent drafts every figure and scene, the owner
+    finishes them, and the owner plays the demo and says it is fine.
+16. Next: the owner's reviews still owed on finished work: the built-in hero, no default language, live move numbers,
+    the game flow, and the site's and demo's earlier rounds.
+17. Next: the owner starts Release 1 by hand.
 
-## Later
+### The design track: the editor mockups
 
-New ideas land here and wait until the Owner moves one into the queue.
+1. Done: three rounds of mockups of all five editors (Editors #34), the plain-words audit, two design checks, the
+   first harsh review of the shell and World, what World takes from LDtk, and the Apple Pencil review.
+2. **Now: the shell and World: the fixes from the harsh review, then the plain-words audit, two design checks, a second
+   harsh review, then the owner. Again until the owner is satisfied.**
+3. Waiting: Characters, Feel, Sound and Story, one at a time, the same way. Characters goes first, for the demo's art.
+
+---
+
+# Later: after Release 1
+
+## Release 2: the 2D editors
+
+1. Done: the plans for the figure builder, the environment builder, Feel, Sound and Story.
+2. Waiting: taking back the two editor builds made too early (Editors #50; the owner said yes).
+3. Later: the editor specs and plans brought in line with the approved mockups, then audited.
+4. Later: the shell first, then World's Levels, then Feel with Tuner, then the rest of the five editors.
+5. Later: the editors as an app for iPad, Android and computers.
+
+## Release 3: the website
+
+1. Done: the home page, its look, and the demo playing itself on it.
+2. Later: the sales site (spec done), built once the demo has landed.
+3. Later: the site live on its Cloudflare address.
+
+## Release 4: distribution
+
+Later. Games ship to the web, itch.io, Wavedash (if its rules fit) and computers. The editor app ships.
+
+## Release 5: 3D
+
+Later. 3D as its own layer on top of 2D, then the same loop again for 3D.
+
+## Not yet placed: needs the owner
+
+Later. Nothing here moves until the owner says.
+
+1. This page: is Release 1 the one release to finish, and is this the order?
+2. The old unfinished work: the sound formats (#125) and rigged figures (#124) were closed. Keep them closed and
+   restart each from main when its turn comes? Same for the editors' old look (Editors #12).
+3. The 8 world map questions, asked again when that item comes up.
+4. The recorded plays that change (the demo's five, the starter game's, the scene pictures'): each one shown to the
+   owner before it goes in.
