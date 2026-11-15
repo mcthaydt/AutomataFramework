@@ -8,12 +8,15 @@ Spec: [`specs/2026-11-15-game-checklist-design.md`](specs/2026-11-15-game-checkl
 every "Must have" box of the Owner's game checklist is met by every game by default, plus the "Good to have" boxes that
 make sense; only the boxes about the game itself, not about sending it to a host.
 
-Overall: **4%** (the spec is written and in review; stages 2 to 7 follow)
+Overall: **10%** (the spec and the plan are written and in review; stages 3 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Written, in review, 100%. Every box mapped to done (with proof), framework, template, check or the game maker; new: losing (`lost` and Try again), How to play, the goal line, `score` and best, a strict content security policy in the template, a `page` part of the `rules` step, `automata check --ship`; Part A takes over plan K's Step U (the template on `startFlow`) and moves the template's recording once, for the Owner to see. The Owner answered Q1 (2026-11-15): A, Playwright and a play test in every game's own CI | `specs/2026-11-15-game-checklist-design.md` |
-| 2 to 7 | Not started | |
+| 2. Plan (plan Q) | Written, in review (2026-11-15), 100%; plan Q at 0% built. Twenty-two tasks in five pull requests (4% each, 12% for the last green run and the Owner's yes to the moved recording), built B1, B2, A, C, D so the template's recording moves once: B1 what needs no page (`lost`, `score` and `[network] allow` in the project file; `hero.fell` as a plugin joined only to a game that names it; the `lost` step; the best score; the words in six languages); B2 the screens (Try again, Start again, the goal line, a level that waits for the first press, How to play, the score, the sound switch, Delete all my saves, the page-wide defaults, Back, the loading bar, a compressor, fades); A the template on `startFlow` under a strict policy, a level with a gap and a door for two players, and Playwright in every game's own CI (plan K's Step U); C the checks (`page`, words, ends, `--ship`); D the made game's journeys and the docs. One golden moves, once (`template/replays/level-1.json`, Task 15, shown to the Owner before merge); one is new (`fall.json`). No framework dependency; the template gains `playwright` 1.63.0 (Q1, A). "No ads" is left out (the Owner). Builder's calls for the audit: the best score is a settings section, mute is a flag, the goal is the message `level.<id>.goal`, no `<room>` in the policy, `hero.fell` is its own plugin | `plans/2026-11-15-game-checklist.md` |
+| 3 to 7 | Not started | |
+
+Nothing was run: this stage wrote a document.
 
 ## The Scenes cycle (the framework's side of the 2D environment builder)
 
