@@ -156,3 +156,13 @@ test('the walk over the slope and back ends on its recorded hash', async () => {
     golden,
   )
 })
+
+test('a hero dropped on the ledge from above stands on it', async () => {
+  const { sim, at, trace } = await hero({ x: 7.5, y: 2 })
+  for (let i = 0; i < 120; i++) {
+    sim.step([])
+    at()
+  }
+  expect(Math.abs(at().y - (LEDGE_TOP - 0.5)), trace.join('\n')).toBeLessThan(0.05)
+  expect(at().below).toBe(true)
+})
