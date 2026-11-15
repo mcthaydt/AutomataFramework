@@ -1,10 +1,12 @@
-// The fixture game with a two-tile gap in the floor of its level (columns 7 and 8 of 16) and `lost = "hero.fell"`:
-// a hero that runs right from its start falls through the gap. Built in memory, as `writeContent` writes each file.
+// The fixture game with a six-tile gap in the floor of its level (columns 5 to 10 of 16) and `lost = "hero.fell"`:
+// a hero that runs right from its start falls through the gap. It is wide on purpose: a hero that keeps pushing right
+// while it falls (the fixture's does) must be past the floor's row before it reaches the far side, or friction on the
+// face of the far tile holds it there and it never falls. Built in memory, as `writeContent` writes each file.
 import { writeContent } from '#src/features/content/content.ts'
 import { fixtureFiles } from './read.ts'
 
 /** The columns of the gap, counted from the left edge of the level. */
-export const GAP = { from: 7, to: 8 }
+export const GAP = { from: 5, to: 10 }
 
 export interface FallSetup {
   /** The line for `lost`, or `null` for none. Default `hero.fell`. */

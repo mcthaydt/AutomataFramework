@@ -231,7 +231,8 @@ test('each of the four alone is taken out, and a game that writes only one still
 
 test('lost and score never reach the sim: the content hash is the same with and without them', async () => {
   const plain = await loadFixtureGame()
-  const named = withProject(plain, { lost: 'hero.fell', score: 'hero.score.sparks' })
+  // A `lost` that is not `hero.fell`: that one joins the fall plugin, which is a sim of its own.
+  const named = withProject(plain, { lost: 'hero.drowned', score: 'hero.score.sparks' })
   const given = simContent(named)
   for (const key of ['lost', 'score']) expect(given.project).not.toHaveProperty(key)
   expect(given).not.toBe(plain)

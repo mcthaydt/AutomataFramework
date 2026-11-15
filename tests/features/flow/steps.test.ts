@@ -277,7 +277,7 @@ test.each(STEPS)("%s given level-lost, and given again: only the table's rows ch
 })
 
 test('leave for the menu and play again: attempt keeps counting, it does not start over', () => {
-  const menu = walk([play('level-1'), tap('pause'), leave])
+  const menu = walk([play('level-1'), tap('pause'), leave], {}, at('menu'))
   expect(menu).toEqual(at('menu', { attempt: 1 }))
   expect(go(menu, play('level-1')).attempt).toBe(2)
 })
