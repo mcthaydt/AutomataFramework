@@ -363,7 +363,7 @@ test('with no words there is no chip to see', () => {
   expect(getComputedStyle(hintBox('dash')).display).toBe('none')
 })
 
-test('a tall screen keeps room for the whole hint under the floor, and a short one keeps its game', async () => {
+test('a tall screen keeps room for the hint under the floor, a short one keeps its game', async () => {
   const t = make({ dash: true })
   expect(t.room()).toBe(120)
   await page.viewport(1180, 820)
