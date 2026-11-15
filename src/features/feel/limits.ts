@@ -50,5 +50,6 @@ export function withinLimits(feel: FeelFile): FeelFile {
   const shake = limitShake(feel.shake)
   const freeze = limitFreeze(feel.freeze)
   if (dust === feel.dust && shake === feel.shake && freeze === feel.freeze) return feel
-  return { format: feel.format, id: feel.id, on: feel.on, dust, shake, freeze }
+  // The rest of the file (its buzz) is not feel's to change here.
+  return { ...feel, dust, shake, freeze }
 }
