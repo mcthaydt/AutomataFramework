@@ -71,7 +71,7 @@ every part).
   order.
 - **A game changes the flow through files, not code.** `automata.toml` for what shows, messages for the words, CSS
   custom properties for the look; code replaces a whole screen (`FlowOptions.screens`) and nothing smaller.
-- **No file over 600 lines.** `src/features/flow/flow.ts` is at 578: Task 6 splits it before adding to it.
+- **No file over 600 lines.** `src/features/flow/flow.ts` is at 589: Task 6 splits it before adding to it.
 - **No `.svelte` file outside `src/features/ui/` and `src/features/screens/`.** Features import only from features
   below them (`tests/architecture/rules.ts`).
 - **The editors are not touched** (they are on hold), and nothing they call changes shape: `startGame`, `loadGame`,
