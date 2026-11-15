@@ -10,7 +10,7 @@ import { levelOne, START_FLOOR } from '../moves/level.ts'
 export const SPARK_X = 8
 
 /** What `land` buzzes with, so a test can say what the host was asked. */
-export const LAND_BUZZ = { strength: 0.3, ticks: 3 } as const
+export const LAND_BUZZ: { readonly strength: 0.3; readonly ticks: 3 } = { strength: 0.3, ticks: 3 }
 /** How many ticks `got` holds the game. */
 export const FREEZE_TICKS = 6
 
@@ -32,14 +32,16 @@ export const feelFiles = {
     id: 'land',
     on: 'hero.landed',
     dust: { count: 6, color: '#e8dcc0', speed: 2, life: 18 },
-    buzz: LAND_BUZZ,
+    // `LAND_BUZZ`, written out: a declared constant has to be made of plain values.
+    buzz: { strength: 0.3, ticks: 3 },
   },
   leap: { format: 1, id: 'leap', on: 'hero.jumped', shake: { strength: 0.2, ticks: 12 } },
   got: {
     format: 1,
     id: 'got',
     on: 'spark.taken',
-    freeze: { ticks: FREEZE_TICKS },
+    // `FREEZE_TICKS`, written out for the same reason.
+    freeze: { ticks: 6 },
     dust: { count: 12, color: '#ffd23f', speed: 3, life: 24 },
   },
 } as const

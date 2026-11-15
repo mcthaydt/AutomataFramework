@@ -2,7 +2,7 @@
 // framework's goldens with a feel runtime hearing every step and a frame drawn after each, in Node and in all three
 // browsers, and every one still ends on the hash recorded for it. (The template's own recording is held to the same in
 // `tests/template/feel-replay.parity.test.ts`.)
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, test } from 'vitest'
 import { createFeel } from '#src/features/feel/feel.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import type { Command, Sim } from '#src/features/sim/sim.ts'

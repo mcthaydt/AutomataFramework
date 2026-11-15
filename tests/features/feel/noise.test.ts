@@ -22,7 +22,10 @@ test('the order of the four matters', () => expect(noise(1, 2, 3, 4)).not.toBe(n
 
 test('ten thousand draws fill ten equal bins with 800 to 1200 each', () => {
   const bins = new Array<number>(10).fill(0)
-  for (let i = 0; i < 10_000; i++) bins[Math.floor(noise(3, 5, 7, i) * 10)]++
+  for (let i = 0; i < 10_000; i++) {
+    const bin = Math.floor(noise(3, 5, 7, i) * 10)
+    bins[bin] = (bins[bin] ?? 0) + 1
+  }
   for (const count of bins) {
     expect(count).toBeGreaterThanOrEqual(800)
     expect(count).toBeLessThanOrEqual(1200)
