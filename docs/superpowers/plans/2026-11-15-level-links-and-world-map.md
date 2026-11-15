@@ -37,6 +37,10 @@ its sim, its hashes and its replays.
   #64, closed, last commit `fc909a2`) and parked with it. So this cycle writes, checks and draws a `path` value and the
   `walk-path` act, and **no critter walks until the Characters slice**. The walk and its golden are the deferred tasks
   at the end of this plan; the test game's critter stands still until then.
+- **The plan audit's two questions (the Owner, 2026-11-15, 22:59 UTC, "1. a 2. a"):** (1a) a level's picture for
+  an agent uses numbered badges, with a list beside it that says in words what each number is (call 4); (2a) a door
+  opens the next level at once, with no "level done" screen between (call 5). The spec's sentences on both, and its
+  one sentence that a door's replay is one level, are changed to say so, in the pull request that carries this fix.
 
 ## What is on main and what is not (read on 2026-11-15, `main` at `127b4d7`)
 
@@ -58,15 +62,18 @@ The spec was written as if the work after slice 3 were still on `main`. It was t
    plan). One pure overlap test (Task 6) says what stands on a switch and what stands in a gate. It holds no hidden
    count, so a restore, a despawn and a rebuilt collider cannot leave a switch stuck.
 2. **A place's ground is one grid.** The joined levels' solid tiles are laid into one grid before the boxes are made,
-   so a floor that runs across an edge is one box and nothing catches on the seam.
+   so a floor that runs across an edge is one box and nothing catches on the seam. `spawnLevel` picks one box a row
+   (`tileRuns`) or `tileBoxes` by the game (a `#` level in a game whose hero has no `moves` keeps a box a row, so no
+   recorded game moves); `spawnPlace` always uses `tileBoxes`, since a seam is a seam in any game, and a place is
+   new, so no golden has one (audit L1).
 3. **`doorTaken` lives in `level`, not `flow`.** It is pure and needs no page, so the flow calls it and so can a game
    whose page is its own (the test game today). The flow still owns what happens next.
 4. **Pictures carry numbers, and the words are in a list beside them.** A tag, an arrow's end and a door's target are
    each a small numbered badge; the command prints what each number means, with the source language's words. A picture
    then needs only ten digits (no font for six languages), and badges are small enough to be moved apart. The spec's
-   "small labels in the source language" are the list.
+   "small labels in the source language" are the list. **The Owner chose this (2026-11-15, 22:59 UTC).**
 5. **A door opens its level at once, with no "level done" screen between.** The project's `done` event still ends a
-   level as it does today.
+   level as it does today. **The Owner chose this (2026-11-15, 22:59 UTC).**
 6. **The world file leaves the sim; what it joins goes in.** The sim is given `places` (each joined level's offset from
    its place's corner), never the map itself, so dragging a level or a whole place around the map moves no hash unless a
    join appears, moves or breaks.
@@ -75,11 +82,21 @@ The spec was written as if the work after slice 3 were still on `main`. It was t
 8. **A switch may link only to a thing whose character says `opens`.** Anything else is a `check` sentence.
 9. **A place is "big" past 8 levels or 16,384 tiles** (a note from `automata world` and `check`, never a failure).
 10. **Facts reach a sim as a command at tick 0** (`facts`, source 0), so a recording carries them and replays with no
-    new field.
+    new field. The sim believes only that: a `facts` command from any other source, or at any other tick, is
+    ignored (not rejected, so a replay still reads), because online the room passes on any command a player sends
+    (audit H2).
 11. **The save gains two optional fields,** `last` (the level the player was last in and where they came in) and
     `facts`. `level` keeps its meaning (the furthest level reached), so a save written today still reads.
 12. **Online play gets a place for free in the sim and on screen, and no doors**: doors are the flow's, and an online
     game is not started by the flow today.
+13. **A hero comes in beside a door, never inside it.** A door is a sensor, and a body made inside a sensor raises
+    its touch on the first step, so a hero put at a door's own middle would go straight back through a door that
+    leads back (audit H1). The spot is on the door's side toward the middle of the level, clear of its box (Task 8).
+14. **A player who joins late comes in the way the first heroes did,** at the level the sim was opened at, wherever
+    player 1 has got to since (audit L8). A place is one world and the new hero can walk to the others; no rule
+    then depends on who is where.
+15. **A `words` value must name a key the source language has** (audit L12). The spec says "a key no language has";
+    the source language is the one every other is a translation of, so this is the stricter and the safer check.
 
 ## Global Constraints
 
@@ -124,13 +141,22 @@ Inputs the spec implies and a person will meet. Each has its test in the task na
    (Tasks 3, 12, 13).
 5. **A saved game names a level, a door or a fact the game no longer has.** Continue opens the level's own starts, or
    the first level, and a fact about a thing that is gone is ignored; nothing throws (Tasks 9, 12).
+6. **A door that leads back.** Heroes come out beside it, clear of its box, and no door is raised on the next ticks;
+   walking into it on purpose goes back (Tasks 8, 12).
+7. **Two heroes at one door a tick apart, or a second door.** The first one starts the level; the game stops
+   listening and holds still at once, so the level is started once (Task 12).
+8. **A player sends `facts`.** Only source 0 on tick 0 is believed; a player's `facts`, at any tick, opens nothing
+   (Task 7).
+9. **Continue into a level whose gate was opened for good.** The first picture already shows it open, and the
+   first press is tick 1, so nothing pops open on the press (Task 10).
 
 ## File structure
 
 ```
 src/features/content/values.ts          new   the declarations a character makes, their Zod shapes, shownOf, withDefaults
 src/features/content/value-checks.ts    new   a level's values against its characters; one-per-level
-src/features/content/world.ts           new   the world file: its type, schema, row of the table
+src/features/content/world.ts           new   the world file: its type, schema and `worldInfo`, its row of the table (last)
+src/features/content/outside.ts         new   the "outside the level" sentences, lifted out of level.ts for both users
 src/features/content/places.ts          new   layoutWorld: which levels touch, where, and what is wrong
 src/features/content/paint-level.ts     new   the level and world pictures, as bytes
 src/features/content/paint-marks.ts     new   whole-number lines, circles and digit badges for the painter
@@ -144,9 +170,10 @@ src/features/level/overlap.ts           new   boxesOverlap
 src/features/level/switches.ts          new   Pressed, Open, the facts command, the switch plugin
 src/features/level/place.ts             new   levelsOf, levelAt, placeSize, shiftLevel, solidGrid
 src/features/level/spawn-place.ts       new   spawnPlace
+src/features/level/arrive.ts            new   arrivalSpots: where each hero comes in, beside a thing or at a spot
 src/features/level/entered.ts           new   In, level.entered, the place plugin
 src/features/level/doors.ts             new   doorTaken
-src/features/game/stage.ts              new   what the renderer is given for a level or a place
+src/features/game/stage-of.ts           new   what the renderer is given for a level or a place (render has its own stage.ts)
 src/features/flow/ways.ts               new   the flow's listeners for doors, crossings and facts
 src/features/cli/world.ts, picture.ts   new   the two commands
 docs/formats/changes.md                 new   the public list of format changes (shipped in the package)
@@ -167,7 +194,7 @@ The hero, its tuning and `source = "en"` words are copied from the moves fixture
 | `plate` | fixed, 1 by 0.25, kind `plate`, `touch: "sense"` | `values`: `opens` (thing, kinds `["gate"]`, most 4); `switch: { opens: "opens" }` |
 | `button` | as `plate`, kind `button` | adds `stays` (switch, default false); `switch: { opens: "opens", stays: "stays" }` |
 | `gate` | fixed, 0.5 by 8, kind `gate` | `opens: "walk-through"` |
-| `door` | fixed, 1 by 2, kind `door`, `touch: "sense"` | `values`: `to` (leads-to) |
+| `door` | fixed, 1 by 2, kind `door`, `touch: "sense"` | `values`: `to` (leads-to; not `needed`, a test that wants it needed overrides the file) |
 | `goal` | fixed, 1 by 1, kind `goal`, `touch: "sense"` | `one-per-level: true` |
 | `critter` | dynamic, upright, 1 by 1, kind `critter`, `behaviour: "patrol"` | `values`: `walk` (path), `reach` (number, least 1, most 8, step 0.5, default 3, shown `reach`) |
 
@@ -176,8 +203,14 @@ The hero, its tuning and `source = "en"` words are copied from the moves fixture
 | Level | Rows 0 to 7 | Things (`x`, `y`) | Starts |
 |---|---|---|---|
 | `room-1` | `#..............#` | `crate-1` crate (5.5, 7.5); `plate-1` plate (8.5, 7.875) `opens: ["gate-1"]`; `gate-1` gate (11.25, 4); `exit` door (13.5, 7) `to: { level: "room-2", thing: "door-in" }` | 1 (2.5, 7.5), 2 (3.5, 7.5) |
-| `room-2` | rows 0 to 4 `#..............#`; rows 5 to 7 `#...............` | `door-in` door (2.5, 7); `crate-1` crate (5.5, 7.5); `critter-1` critter (6, 7.5) `walk: [{4, 7.5}, {7, 7.5}]`; `button-1` button (8.5, 7.875) `opens: ["gate-1"], stays: true`; `gate-1` gate (11.25, 4) | 1 (2.5, 7.5), 2 (3.5, 7.5) |
-| `room-3` | rows 0 to 4 `#..............#`; rows 5 to 7 `...............#` | `goal-1` goal (13.5, 7.5) | 1 (2.5, 7.5), 2 (3.5, 7.5) |
+| `room-2` | rows 0 to 4 `#..............#`; rows 5 to 7 `#...............` | `door-in` door (2.5, 7) `to: { level: "room-1", thing: "exit" }`; `crate-1` crate (5.5, 7.5); `critter-1` critter (7.5, 7.5) `walk: [{7.5, 7.5}, {9.5, 7.5}]`; `button-1` button (11.5, 7.875) `opens: ["gate-1"], stays: true`; `gate-1` gate (13.25, 4) | 1 (2.5, 7.5), 2 (3.5, 7.5) |
+| `room-3` | rows 0 to 4 `#..............#`; rows 5 to 7 `...............#` | `goal-1` goal (13.5, 7.5); `back` door (14.5, 7) `to: { level: "room-1", thing: "exit" }` | 1 (2.5, 7.5), 2 (3.5, 7.5) |
+
+Every door in the fixture leads somewhere, and the ways in each have a way back (`door-in` to `exit`, `back` to
+`exit`), so a hero who comes out beside a door is beside one that leads back: the case that matters (audit H1, M5). A
+test that wants a door with no `to` takes it away by an override. The critter's box at both ends of its path clears
+the crate and the button, and no two bodies in any level overlap at spawn: Task 6 holds both (audit M2). `back` is
+past the goal, so a hero who walks to the goal does not pass through it.
 
 `world`: `room-1` at (0, 0), `room-2` at (20, 0), `room-3` at (36, 0). So `room-2` and `room-3` are one place, named
 `room-2`, 32 by 9, with `room-3` at offset (16, 0), joined along rows 5 to 7; `room-1` is a place of one.
@@ -225,9 +258,13 @@ export type ValueDeclaration =
   | (Declared & { readonly type: 'path'; readonly least?: number; readonly most?: number; readonly loop?: boolean })
   | (Declared & { readonly type: 'leads-to'; readonly needed?: boolean })
 export const valueDeclaration: z.ZodType<ValueDeclaration>   // `variants('type', [...])`
-/** How the level view draws it: its own `shown`, else number, switch, choice, words 'tag'; thing 'arrow'; path 'path'; leads-to 'arrow'. */
+/**
+ * How the level view draws it: its own `shown`, else number, switch, choice, words 'tag'; thing 'arrow'; path 'path';
+ * leads-to 'tag' (the world sheet draws every door as an arrow whatever this says). A switch's tag is drawn only when
+ * the thing's value is not the declaration's default (Task 14 holds that, since it needs the placed value).
+ */
 export function shownOf(declaration: ValueDeclaration): ValueShown
-/** What a declaration's `shown` may be: number tag|reach|none; switch, choice, words tag|none; thing arrow|none; path path|none; leads-to arrow|none. */
+/** What a declaration's `shown` may be: number tag|reach|none; switch, choice, words tag|none; thing arrow|none; path path|none; leads-to tag|none. */
 export const SHOWN_FOR: Readonly<Record<ValueDeclaration['type'], readonly ValueShown[]>>
 // content/character.ts: `Character` and `CharacterInput` gain
 readonly values?: readonly ValueDeclaration[] | undefined              // at most 16
@@ -267,8 +304,11 @@ Limits: `name` 1 to 40 letters; `about` at most 200; `from` 1 to 16; a thing's `
 ### Task 2: Values on a thing, checked against its character
 
 **Files:**
-- Create: `src/features/content/value-checks.ts`, `tests/fixtures/links-game/` (the table above), `tests/fixtures/links-game/read.ts`
-- Modify: `src/features/content/level.ts` (the thing's shape; `levelInfo.check` calls `checkThingValues`),
+- Create: `src/features/content/value-checks.ts`, `src/features/content/outside.ts`, `tests/fixtures/links-game/` (the
+  table above), `tests/fixtures/links-game/read.ts`
+- Modify: `src/features/content/level.ts` (the thing's shape; `levelInfo.check` calls `checkThingValues`; the
+  `outside` local of the schema's refine moves into `outside.ts`, so the schema and `checkThingValues` say the same
+  sentence and `level.ts` does not grow: audit L5),
   `src/features/content/behaviour.ts` (the act), `src/features/content/character.ts` (`characterInfo.check`),
   `src/features/content/values.ts`, `content.ts`
 - Test: `tests/features/content/value-checks.test.ts`, `behaviour.test.ts`, `level.test.ts`
@@ -290,9 +330,12 @@ export function checkThingValues(level: Level, game: Listed, report: Report): vo
 | { readonly act: 'walk-path'; readonly path: string; readonly speed: number }
 ```
 
-The thing's schema: `values` is `z.record(Id, …)` of a number, a boolean, a string of at most 96, a list of 1 to 16
-ids, a list of 2 to 64 places, or `{ level, thing? }`. Which of them a value must be is the character's to say, so
-`checkThingValues` checks it (the published level schema cannot know).
+The thing's schema: `values` is `z.record(Id, …)` of a number, a boolean, a string of at most 96, a list of 0 to 16
+ids, a list of 0 to 64 places, or `{ level, thing? }`. The lists may be empty or short in the schema on purpose: a
+list the character's `most`, `least` or `needed` does not allow gets a `check` sentence that says what to fix, never
+Zod's words (audit L10). Which of them a value must be is the character's to say, so `checkThingValues` checks it (the
+published level schema cannot know). `checkThingValues` reads a level through a small type of its own (its `tiles` and
+`things`), so `value-checks.ts` never imports `level.ts`, which calls it: imports must not make a cycle.
 
 - [ ] **Step 1: Write the failing tests** on the links game with one file overridden per test. Each sentence whole, at
   `things[i].values.<id>` unless said:
@@ -308,12 +351,13 @@ ids, a list of 2 to 64 places, or `{ level, thing? }`. Which of them a value mus
 | a link to itself | `A thing cannot link to itself.` |
 | a link to a kind `kinds` does not allow | `"crate-1" is a crate, and "opens" links only to: gate.` |
 | more links than `most` | `"opens" holds at most 4 things. This has 5.` |
+| a `needed` list of things left empty (`"opens": []`) | `"opens" needs at least one thing, like ["gate-1"].` (a list that is not `needed` may be empty: it links nothing) |
 | a switch's link to a thing that cannot open (call 8) | `"crate-1" is a crate, which cannot be opened. Give its character "opens": "walk-through", or link something else.` |
 | a path with too few or too many points | `"walk" needs from 2 to 64 places. This has 1.` |
 | a path point outside the level | the level's own `outside` sentence, at `…values.walk[j].x` or `.y` |
 | `leads-to` a level the game does not list | `noSuch('level', id, game.ids('level'))` |
 | `leads-to` a thing not in that level | `noSuch('thing', id, ids, 'The level "room-2"')` |
-| a `needed` value left out (at `things[i].values`) | `Every "door" needs "to". Add it to this thing's "values".` |
+| a `needed` value left out (at `things[i].values`; an override makes the door's `to` `needed`) | `Every "door" needs "to". Add it to this thing's "values".` |
 | two of a `one-per-level` character (at the second, `things[i].character`) | `This level already has a "goal", and there can be only one. Move that one, or take this one out.` |
 | a `walk-path` act whose `path` the character does not declare as a path (in the character file, at `behaviour`) | `The behaviour "patrol" walks the path "walk", and this character has no "path" value called "walk". It has: (list, or nothing).` |
 
@@ -330,8 +374,11 @@ ids, a list of 2 to 64 places, or `{ level, thing? }`. Which of them a value mus
 
 **Files:**
 - Create: `src/features/content/world.ts`, `src/features/content/places.ts`
-- Modify: `content-types.ts` (a `world` row, after `level`), `type-info.ts` (nothing: `editor: 'world'`, `part: 'map'`),
-  `load.ts`, `content.ts`, `src/features/level/sim-content.ts`
+- Modify: `content-types.ts` (a `world` row, **last**, after `messages`: anything that lists the kinds in the table's
+  order then sees the new kind at the end and moves no other; the tests and scripts that name every kind gain `world`:
+  `content-types.test.ts`, `project.test.ts`, `skills.test.ts`, `readme.test.ts`, `public-surface.test.ts`,
+  `scripts/write-schemas.ts` and `cli/mcp-library.ts`: audit L13), `type-info.ts` (nothing: `editor: 'world'`,
+  `part: 'map'`), `load.ts`, `content.ts`, `src/features/level/sim-content.ts`
 - Test: `tests/features/content/world.test.ts`, `places.test.ts`, `load.test.ts`, `tests/features/level/sim-content.test.ts`
 
 **Interfaces (produces):**
@@ -340,6 +387,8 @@ ids, a list of 2 to 64 places, or `{ level, thing? }`. Which of them a value mus
 // content/world.ts
 export interface WorldFile { readonly format: 1; readonly id: string; readonly levels: readonly { readonly level: string; readonly at: LevelPoint }[] }   // at most 1024
 export const WorldSchema: z.ZodType<WorldFile, WorldFile>
+/** The kind's row of the content table, as every kind has: `ContentTypeInfo<WorldFile, WorldFile>`. */
+export const worldInfo: ContentTypeInfo<WorldFile, WorldFile>
 // content/places.ts
 /** One joined level: where its corner is, in whole tiles from its place's own corner (never less than 0). */
 export interface PlaceLevel { readonly level: string; readonly x: number; readonly y: number }
@@ -380,7 +429,9 @@ not list is `noSuch('level', …)` at `levels[i].level`; a level named twice is 
 schema). `layoutWorld` runs only when every level read; its problems go on the world file at `levels[entry].at`.
 
 `simContent` (call 6): `'world'` joins `LEFT_OUT` and `worlds` leaves with it; `places` stays. A game with no world
-file still gets the very same object back.
+file still gets the very same object back: its early return also checks `content.worlds === undefined` (without it a
+game with a world file and nothing else left out would be handed back whole), and the test of "the very same object"
+gains a game that lists a world file and has `places` (audit L13).
 
 - [ ] **Step 1: Write the failing tests.** `layoutWorld` on small made-up levels: side by side joined (one `Join`,
   `along: 'y'`, the right `from` and `to`); stacked (`along: 'x'`); corner to corner (nothing); a gap of one tile
@@ -479,7 +530,8 @@ throws `This entity is not a thing from a level.` for a tile or a hero.
 
 ### Task 6: Two boxes that overlap
 
-**Files:** Create `src/features/level/overlap.ts`; test `tests/features/level/overlap.test.ts`.
+**Files:** Create `src/features/level/overlap.ts`; modify `level.ts` and `src/headless.ts` (it is exported: the test
+game's own tests use it); test `tests/features/level/overlap.test.ts`.
 
 ```ts
 /** A box by its middle, its half sizes and its turn in radians. */
@@ -490,7 +542,9 @@ export function boxesOverlap(a: TurnedBox, b: TurnedBox): boolean
 
 - [ ] **Step 1: Tests:** apart; touching edges (false); overlapping by 0.02 (true); one inside the other; a 1 by 1 box
   turned 45 degrees whose corner reaches into a plate (true) and whose corner is 0.05 short (false); the same answer
-  with `a` and `b` swapped, for each.
+  with `a` and `b` swapped, for each. And the links game's own levels (audit M2): no two bodies in any level overlap
+  at spawn (solid tiles, things and the heroes at the starts), and `critter-1`'s box at each end of its path
+  overlaps none.
 - [ ] **Step 2 to 4: push red, implement, push green.** **Step 5: Commit** `feat(level): a pure overlap test for boxes`
 
 ### Task 7: Switches open gates
@@ -511,7 +565,7 @@ export const Open: ComponentDef<{ on: 'bool'; kept: 'bool' }>         // on a th
 export function openEvent(kind: string, what: 'opened' | 'closed'): EventDef
 /** Raised once when a `stays` switch first holds a thing open for good: { fact: 'room-2.gate-1.open' }. */
 export const FactKept: EventDef       // id 'fact.kept'
-/** Tells the sim what was done for good before this play: sent once, at tick 0, with source 0. */
+/** Tells the sim what was done for good before this play: sent once, at tick 0, with source 0. Believed only so (below). */
 export const FactsCommand: CommandDef  // id 'facts', payload { facts: string[] } (at most 1024, each at most 200 letters)
 export function factsCommand(facts: readonly string[]): Command        // { tick: 0, source: 0, seq: 0, type: 'facts', … }
 export function switchPlugin(): PluginDef   // name 'switches', dependsOn ['level', 'where']
@@ -519,10 +573,16 @@ export function switchPlugin(): PluginDef   // name 'switches', dependsOn ['leve
 
 A fact is `<level>.<thing>.open`, the level and the thing's id as the files write them, whatever the sim's ids are.
 
-`level.switches` runs once a tick, in `gameplay`, lowest sid first within each pass:
+`level.switches` runs once a tick, in `gameplay`, lowest sid first within each pass. The schedule breaks ties by
+system name (`sim/schedule.ts`), and `level.switches` sorts after `level.moves`, so a press always reads the boxes
+after the hero's moves, wherever the plugin is in the list. It names no `after`: a name the sim does not have makes
+the schedule throw, and a game whose hero has no `moves` has no `level.moves` (audit L2). A test holds the order
+(`orderSystems` of the two).
 
-1. **Facts** (tick 0 only matters): for each fact of each `FactsCommand`, the thing it names, if it is in this sim and
-   has `Open`, gets `kept: true`. A fact that names nothing here is ignored.
+1. **Facts:** only a `facts` command with `source === 0` on tick 0 is believed. Any other (a player's, which online
+   is any command a seat sends, or one on a later tick) is ignored, never rejected, so a replay still reads (audit H2).
+   For each believed fact, the thing it names, if it is in this sim and has `Open`, gets `kept: true`. A fact that
+   names nothing here is ignored.
 2. **Presses:** a switch is pressed when any other entity with a `Thing` and a body that is not `fixed` overlaps its
    box (`boxesOverlap`, from each one's `Transform` and `Collider`). On the tick it becomes pressed, if its `stays`
    value is true, each thing it links that has `Open` and not `kept` gets `kept: true` and `FactKept` is raised for it.
@@ -531,7 +591,8 @@ A fact is `<level>.<thing>.open`, the level and the thing's id as the files writ
    Closing: only when nothing that is not `fixed` overlaps its box; then `on` false, `sensor` false, `<kind>.closed`
    and the `shut` clip. A field is written only when it changes.
 
-`switchPlugin` joins only when `usesSwitches(content)`, after `touch`, and brings `wherePlugin` with it.
+`switchPlugin` joins only when `usesSwitches(content)` and brings `wherePlugin` with it. Where it stands in the plugin
+list does not matter.
 
 - [ ] **Step 1: Write the failing tests** (Node; the links game, with `room-1`'s things moved by an override where a
   test needs a start position; every sim disposed):
@@ -544,12 +605,18 @@ test('a gate does not shut on a hero standing in it; it shuts the tick after the
 test('a thing taken away, or a hero who leaves, lets the plate up')                // Review Focus 1: despawn, and LeaveCommand in a two-player sim
 test('a button that stays opens its gate for good and raises fact.kept once')      // payload { fact: 'room-2.gate-1.open' }; pressed again: no second event
 test('facts at tick 0 open the gate before anyone moves; a fact about a missing thing is ignored')   // Review Focus 5
+test('a facts command from source 1 at tick 0, and one from source 0 at tick 5, open nothing')     // Review Focus 8, audit H2
+test('level.switches runs after level.moves in the schedule, with and without a hero that has moves')   // audit L2
 test('straight, and restored at tick 45, a switch run agrees')
 test('a game with no switch has no Pressed, no Open, no facts command')            // and ends on push-crate.json's idleHash60
 ```
 
   The parity test (`switch.json`): the links game at `room-1`, player 1 holds right for 300 ticks, then nothing for 60;
-  recorded and replayed; the golden's hashes in Node and the three browsers.
+  recorded and replayed; the golden's hashes in Node and the three browsers. The hero pushes the crate over the plate
+  and on through the gate. Asserted before the hashes (audit L3), so the run proves what it names: `gate.opened` was
+  raised and `gate.closed` after it, the same number of times each; the crate ends beyond the gate (its `x` above
+  11.5); the gate is shut at the end. If the run does not do that, change how long the hero holds right, never what
+  is asserted, and say so in the report.
 - [ ] **Step 2: Push; fails, and the Node job prints `switch.json`.**
 - [ ] **Step 3: Implement; commit the printed golden.**
 - [ ] **Step 4: Push; all four engines match; every existing golden unmoved.**
@@ -562,9 +629,9 @@ test('a game with no switch has no Pressed, no Open, no facts command')         
 ### Task 8: Several levels built into one world
 
 **Files:**
-- Create: `src/features/level/place.ts`, `src/features/level/spawn-place.ts`
+- Create: `src/features/level/place.ts`, `src/features/level/spawn-place.ts`, `src/features/level/arrive.ts`
 - Modify: `game-sim.ts`, `hero.ts` (`heroParts` takes a spot), `join.ts`, `where.ts` callers, `level.ts`
-- Test: `tests/features/level/place.test.ts`, `spawn-place.test.ts`
+- Test: `tests/features/level/place.test.ts`, `spawn-place.test.ts`, `arrive.test.ts`
 
 **Interfaces:**
 - Consumes: `GameContent.places` (Task 3), `SimLevel`, `wherePlugin` (Task 5).
@@ -585,6 +652,8 @@ export function solidGrid(content: GameContent, levels: readonly SimLevel[]): re
 /** Where the heroes come in, in the opened level: beside a thing of it, or at a spot in its own tiles. Default: its starts. */
 readonly arrive?: Arrive
 export type Arrive = { readonly thing: string } | { readonly x: number; readonly y: number }
+// level/arrive.ts: where each hero comes in (below). The spots are in the sim's tiles, the opened level's offset added.
+export function arrivalSpots(content: GameContent, levels: readonly SimLevel[], opened: string, players: readonly number[], arrive?: Arrive): ReadonlyMap<number, { readonly x: number; readonly y: number }>
 // level/spawn-place.ts
 export function spawnPlace(sim: Sim, content: GameContent, opened: string, players: readonly number[], arrive?: Arrive): void
 ```
@@ -594,13 +663,30 @@ this fixed order: the boxes of `tileBoxes(solidGrid(…))`; then for each level 
 order (ids `<level>.<id>`), its anchor if a joint needs one, its joints; then the heroes, lowest number first. A ground
 box inside one level is one entity as today, with that level's ground colour; a box that crosses an edge is one body
 with no `Look`, and one `Look`-only entity (a transform and a look, no body) for each level's part of it, in level
-order.
+order. The ground is always `tileBoxes`, never a box a row (call 2, audit L1).
 
-Heroes: with no `arrive`, at the opened level's starts. With one, player `n` is at the spot plus
-(`start n` minus `start 1`) of that level, so they are spread as the starts are. A hero whose spot is outside the
-opened level's box or in a solid tile takes the arriving spot itself. `arrive.thing` that the level does not have is
-ignored (the starts). `joinPlugin`'s late joiner comes in the same way, so `heroParts(content, level, number, at?)`
-takes the spot.
+The level's anchor, for a joint with no holder, is a fixed body at the place's corner, (0, 0), as `spawnLevel` makes it
+at the level's corner. `shiftLevel` has already moved each joint's places by the level's offset, so the holder's
+offset (`place` minus the anchor, `joints.ts`) is the place in the sim's own tiles and nothing else needs moving
+(audit M6 asked whether a pinned thing in a shifted level is held in the right place; it is, and a test says so).
+
+Heroes: with no `arrive`, at the opened level's starts. With one, `arrivalSpots` says where each comes in
+(audit H1, call 13). A door is a sensor, and a body made inside a sensor raises its `touched` on the first step, so
+no hero may be put inside the thing it comes in beside:
+
+- `{ thing }`: **beside** the thing, clear of its box. The near spot is on the thing's side toward the middle of the
+  level (the right side for a thing exactly at the middle): the thing's middle moved sideways by half its width, half
+  the hero's width and 0.05 tile (more than the 0.01 `SLOP`), and up or down so the hero's bottom is the thing's bottom
+  (the hero stands on the floor the door stands on). Player `n` is further from the thing than player 1 by the
+  distance along x between the level's starts 1 and `n`, so heroes are spread as the starts are, player 1 nearest.
+- `{ x, y }`: that spot (a saved place after an edge was crossed), and player `n` at the spot plus (`start n` minus
+  `start 1`) of that level.
+- Each hero's spots are tried in this order: its near spot; the same spot on the thing's other side (`{ thing }`
+  only); its own start. The first that lies inside the opened level's box, overlaps no solid tile and overlaps no
+  thing that has a `leads-to` value is the one used. An `arrive.thing` the level does not have gives the starts.
+
+`joinPlugin`'s late joiner comes in the way the first heroes did (`heroParts(content, level, number, at?)` takes the
+spot), at the level the sim was opened at, wherever player 1 has got to since (call 14, audit L8).
 
 `createGameSim` calls `spawnPlace`, gives `wherePlugin` `levelsOf(content, level)` when there is more than one, and
 gives `joinPlugin` the same `arrive`.
@@ -612,11 +698,13 @@ test('levelsOf: a lone level is itself at (0, 0); room-2 and room-3 give both, w
 test('levelAt: (15.99, 5) is room-2, (16, 5) is room-3, (40, 5) is none')
 test('shiftLevel moves things, starts, joints and path points, and nothing else')
 test('solidGrid: the floor of the place is one unbroken row of 32, and rows 5 to 7 are open at columns 15 and 16')
-test('the place of room-2 and room-3: the floor is one body 32 wide, with one Look for each level')
+test('the place of room-2 and room-3: the floor is one body 32 wide, with one Look for each level, and the sim steps')   // Look-only entities are new: step 10 ticks with them
 test('things keep their level in front: room-2.crate-1 and room-3.goal-1; heroes are player-1')
 test('room-1 alone is spawned exactly as spawnLevel spawns it')          // the same entity list, ids and order
-test('arriving beside door-in, two heroes stand at (2.5, 7) and (3.5, 7)')
-test('arriving beside a door one tile from a wall, a hero whose spot is solid takes the door\'s own spot')   // Review Focus 3
+test('arriving beside door-in (x 2 to 3), two heroes stand clear of it at (3.45, 7.5) and (4.45, 7.5)')   // audit H1
+test('arriving beside door-in, which leads back to room-1: no door.touched in the next 60 ticks')        // Review Focus 6
+test('a solid tile on the near side: the far side is used; solid on both, each hero takes its own start')   // Review Focus 3
+test('a pinned crate in room-3 is held at its own place, 16 tiles on from room-3\'s corner')   // audit M6: an override pins one
 test('arriving at a thing the level no longer has opens its starts')     // Review Focus 5
 test('a game with no place: every golden, and idleHash60, unmoved')
 ```
@@ -650,46 +738,63 @@ with `arrive` writes it into `meta.arrive` as `thing:door-in` or `at:3.5,7.5`, a
 - [ ] **Step 1: Write the failing tests:** a hero walking right from `room-2` raises `level.entered` once, with
   `level: 'room-3'`, `from: 'room-2'` and an `x` under 1; walking back raises it once more the other way; standing on
   the edge for 120 ticks raises nothing more; two heroes are tracked apart; a lone level has no `In` and no event;
-  `meta.arrive` round-trips both forms through `automata replay`.
+  `meta.arrive` round-trips both forms through `automata replay`; a `join` command at tick 100, after player 1 has
+  crossed into `room-3`, puts player 2 at `room-2`'s start for player 2, and `heroLevels` says `room-2` for them (call
+  14, audit L8).
 - [ ] **Step 2 to 4: push red, implement, push green.**
 - [ ] **Step 5: Commit** `feat(level): a hero's level is known every tick, and crossing is an event`
 
 ### Task 10: A place on the page, and its proof in four engines
 
 **Files:**
-- Create: `src/features/game/stage.ts`, `tests/golden/place.json`
-- Modify: `src/features/render/render.ts`, `art.ts`, `stage.ts`, `src/features/game/game.ts`, `watch.ts`, `online.ts`, `art.ts`
+- Create: `src/features/game/stage-of.ts` (not `stage.ts`: render has one, and both are about what is drawn),
+  `tests/golden/place.json`
+- Modify: `src/features/render/render.ts`, `render/art.ts`, `render/stage.ts`, `src/features/game/game.ts`,
+  `game/watch.ts`, `game/online.ts`, `game/art.ts`
 - Test: `tests/features/level/place.parity.test.ts`, `tests/features/render/camera.test.ts`,
   `tests/features/game/place.browser.test.ts`
 
 **Interfaces (produces):**
 
 ```ts
-// game/stage.ts: one place that decides what the renderer is given, for startGame, watchReplay and startOnlineGame
+// game/stage-of.ts: one place that decides what the renderer is given, for startGame, watchReplay and startOnlineGame
 export interface StageLevel extends SimLevel { readonly sky: number; readonly view: LevelView | undefined }
 export function stageOf(content: GameContent, opened: string): { readonly world: { w: number; h: number }; readonly levels: readonly StageLevel[] }
 // render/render.ts: createRenderer's options gain `levels?: readonly StageLevel[]` and `at?: string` (the level shown first); Renderer gains
 /** The sky, the backdrop and the view become this level's, from the next step on. Nothing for a level it was not given. */
 enter(level: string): void
-// render/art.ts: loadArt takes `levels: readonly SimLevel[]` in place of `level`; its tiles and ground are placed at each level's offset; Art gains
+// render/art.ts: loadArt gains `levels?: readonly SimLevel[]` beside its `level` (audit L7: `loadArt` is public, `src/index.ts` exports
+// the render feature whole, so `level` keeps working and means a place of one at (0, 0)); with `levels`, its tiles and ground are
+// placed at each level's offset. The API report gains the one option (taken from the `package` job). Art gains
 backdropOf(level: string): BackdropArt | undefined
 ```
 
 The camera's limits are `world`, the place's outline (`frameHeroes` already takes the level's size: it is now given the
-place's). `startGame` calls `renderer.enter` when the lowest-numbered hero raises `level.entered`, and sends
-`factsCommand(options.facts)` with tick 0's commands when `GameOptions.facts` (new, `readonly string[]`) is not empty.
+place's). `startGame` calls `renderer.enter` when the lowest-numbered hero raises `level.entered`.
+
+**Facts and the first picture (plan Q's return note on #169, change 5).** When `GameOptions.facts` (new, `readonly
+string[]`) is not empty, `startGame` steps tick 0 once, at once, before it draws or starts its loop: the one command
+of that step is `factsCommand(options.facts)` and no player's input. So a gate a fact opens is open in the first
+picture, and a game that waits for a first press (plan Q's start card) waits after this step, never before it, so
+the gate does not pop open on the press. The first input lands on tick 1. With no facts nothing is stepped early and
+nothing changes, so no recording moves; a recording of a game opened with facts carries the one command at tick 0
+and replays as it ran. `startFlow`'s Continue and the test game's page get this by calling `startGame`.
 
 - [ ] **Step 1: Write the failing tests.**
-  - Parity, `place.json` (the spec's proof): the links game opened at `room-2`, with `facts: ['room-2.gate-1.open']`
-    and `crate-1` moved to (12.5, 7.5) by an override; player 1 holds right for 420 ticks. Asserted before the hashes:
-    `level.entered` was raised exactly once, for player 1 (a crate raises none); the crate's `x` ends above 16 (it
-    crossed with the hero); between the tick before and the tick after the hero's crossing its `Body.vx` differs by
-    less than 0.01 (no break in speed). Recorded, replayed, restored at tick 200, in Node and the three browsers. The
-    hero also pushes the critter, which stands still this cycle; if the crate has not crossed by tick 420, raise the
-    ticks and say so in the report.
+  - Parity, `place.json` (the spec's proof): the links game opened at `room-2`, with `facts: ['room-2.gate-1.open']`,
+    `crate-1` moved to (12.5, 7.5) and `critter-1` taken out, all by overrides (the critter stands still this cycle
+    and would only make the hero push a stack, whose speed changes for reasons that are not the seam: audit L4);
+    player 1 holds right for 420 ticks. Asserted before the hashes: `level.entered` was raised exactly once, for
+    player 1 (a crate raises none); the crate's `x` ends above 16 (it crossed with the hero); between the tick before
+    and the tick after the hero's crossing the hero's `Body.vx` differs by less than 0.01 (no break in speed).
+    Recorded, replayed, restored at tick 200, in Node and the three browsers. If the crate has not crossed by tick
+    420, raise the ticks and say so in the report.
   - `camera.test.ts`: `frameHeroes({ w: 32, h: 9 }, view, [hero at x 30])` keeps the shot inside 0 to 32.
   - Browser: `startGame` on the links game at `room-2` draws both levels (the canvas is as wide as 32 tiles fitted);
-    after the crossing the renderer's sky is `room-3`'s (give `room-3` its own `sky` in the test).
+    after the crossing the renderer's sky is `room-3`'s (give `room-3` its own `sky` in the test). `startGame` with
+    `facts: ['room-2.gate-1.open']` has its sim at tick 1 and `gate-1` open before the first frame is drawn, and one
+    with no facts is at tick 0 as it is today; the recording of the first holds the `facts` command at tick 0 and
+    nothing else at tick 0.
 - [ ] **Step 2: Push; fails; the Node job prints `place.json`.**
 - [ ] **Step 3: Implement; commit the golden.**
 - [ ] **Step 4: Push; all engines match; every existing golden and every existing browser test unmoved.**
@@ -714,30 +819,45 @@ export interface Way { readonly level: string; readonly thing?: string; /** The 
 /** The first `<kind>.touched` event of the step, in order, raised by a hero on a thing that has a `leads-to` value; undefined when there is none. */
 export function doorTaken(content: GameContent, opened: string, events: readonly SimEvent[]): Way | undefined
 // flow/steps.ts
-// FlowState gains `arrive?: Arrive` (kept in `playing` and `paused`); FlowEvent gains
+// FlowState gains `arrive?: Arrive` (kept in `playing` and `paused`) and `door?: true` (set only by a door, kept the
+// same way); FlowEvent gains
 | { readonly type: 'door'; readonly level: string; readonly arrive?: Arrive }
-// and 'play' gains an optional `arrive`, so Continue can come in where the player left
+// and 'play' gains an optional `arrive`, so Continue can come in where the player left (and has no `door`)
 ```
 
-In `playing`, `door` answers a new `playing` state with that level and `arrive` (call 5: no `done` screen). Anywhere
-else it answers the same object. `pause` and `resume` carry `arrive` unchanged.
+In `playing`, `door` answers a new `playing` state with that level and `arrive` (call 5: no `done` screen, the Owner's
+answer). Anywhere else it answers the same object. `pause` and `resume` carry `arrive` unchanged. `advance` cannot tell
+a second door from the first (each is a new `playing` state, and the flow starts a level for each), so a level being
+started once per visit is `watchWays`' to keep (Task 12, audit M1).
+
+**Where plan Q meets this (its return note on #169, changes 4 and 5).** Plan Q's rule for starting a level is "the flow
+starts a level exactly when `attempt` changes", and `attempt` is not on `main` yet. Plan W's rule is the one the flow
+has: a new `playing` state from `playing` starts a level, and `door` always answers a new object, so a door starts a
+level under either rule. Whichever plan lands second makes a door raise `attempt` by one, and plan Q's note carries
+that change; nothing here has to know it. The flow state's `door: true` is what lets plan Q tell a level opened
+through a door from one opened by Continue (which also has `arrive`): a level opened by a door is opened mid-move, so
+plan Q's start card does not make it wait for a first press. Menu, Continue, Try again, Start again and Next level
+carry no `door`, and so wait.
 
 - [ ] **Step 1: Write the failing tests:** `doorTaken` on real events from a sim (a hero walked into `exit` in `room-1`
   gives `{ level: 'room-2', thing: 'door-in', through: { level: 'room-1', thing: 'exit' } }`); a crate pushed into the
-  door gives undefined; a door with no `to` gives undefined; in a place the prefixed id is read
-  (`room-3.back` to `room-1`); two heroes through two doors in one step gives the first event's. `advance`: `door` in
-  `playing` gives `playing` at the new level with `arrive`; in `paused`, `menu` and `done` the same object; a second
-  identical `door` event after the first gives a state that is deep-equal (the flow starts a level once per state
-  object it has not seen: Task 12).
+  door gives undefined; a door whose `to` an override takes away gives undefined; in a place the prefixed id is read
+  (`room-3.back` to `room-1`: the fixture has it); two heroes through two doors in one step gives the first event's.
+  `advance`: `door` in `playing` gives `playing` at the new level with `arrive` and `door: true`, always a new object;
+  `play` with an `arrive` (Continue) gives `playing` with `arrive` and no `door`; `pause` and `resume` keep `arrive` and
+  `door`; in `paused`, `menu` and `done` a door gives the same object. The template's door (below): in a game whose
+  `done` is `door.touched` and whose door has no `to`, `doorTaken` gives undefined, and the touch still ends the level.
 - [ ] **Step 2 to 4: push red, implement, push green.**
 - [ ] **Step 5: Commit** `feat(level): which door a hero went through, as one pure answer`
 
 ### Task 12: The flow follows doors and remembers
 
 **Files:**
-- Create: `src/features/flow/ways.ts`, `tests/fixtures/flow/links.ts` (the links game for the flow's browser tests)
+- Create: `src/features/flow/ways.ts`, `tests/fixtures/flow/links.ts` (the links game for the flow's browser tests),
+  `tests/features/flow/ways.test.ts`
 - Modify: `src/features/flow/progress.ts`, `places.ts`, `flow.ts` (at most 10 lines: it calls `ways.ts`), `types.ts`
-- Test: `tests/features/flow/progress.test.ts`, `tests/features/flow/doors.browser.test.ts`
+- Test: `tests/features/flow/progress.test.ts`, `tests/features/flow/doors.browser.test.ts`,
+  `tests/features/flow/ways.test.ts`
 
 **Interfaces:**
 - Consumes: `doorTaken`, `LevelEntered`, `FactKept`, `GameOptions.arrive` and `.facts`.
@@ -770,7 +890,10 @@ export function watchWays(options: { game: Game; content: GameContent; level: st
 
 `progressDef` becomes version 2 with `upgrades: { 1: (data) => data }` and a schema that takes the two optional
 fields; a version 1 save reads as it is. `startLevel` gives `startGame` the state's `arrive` and the save's `facts`.
-On a door: `places.cameIn({ level, thing })`, `places.reach(level, …)` as `done` does today, then
+**The first door stops everything (audit M1):** `watchWays` calls `onDoor` once and then listens to nothing more (it
+unhooks its `onStep` before `onDoor` returns), and the flow's `onDoor` pauses the game (`game.pause()`, as `done`
+does) before it awaits anything, so a second hero a tick later, or a second door, starts nothing. On a door:
+`places.cameIn({ level, thing })`, `places.reach(level, …)` as `done` does today, then
 `dispatch({ type: 'door', … })`. On player 1's `level.entered`: `places.cameIn({ level, x, y })`. On `fact.kept`:
 `places.remember(fact)`. A save that cannot be kept says what `done` says today (`automata.done.not-kept`) and the
 visit goes on from memory.
@@ -779,9 +902,15 @@ visit goes on from memory.
   - `progress.test.ts`: `cameIn`, `remembered` (sorted, once, same object when known), `continueAt` (a `last` level the
     game dropped falls back to `level`, then to the start: Review Focus 5); a version 1 save `{ level: 'room-1' }`
     loads under version 2.
+  - `ways.test.ts`, with a fake game whose `onStep` the test drives: two heroes through one door a tick apart, and
+    through two different doors a tick apart, call `onDoor` once; the game is paused before the first await; the
+    flow starts the level once (a count of `startLevel` calls). After the first door, `fact.kept` and `level.entered`
+    steps are no longer heard.
   - `doors.browser.test.ts`, the spec's journey, in the three browsers on the links game through `startFlow`: Play; the
     hero pushes the crate onto the plate, walks through the gate and into `exit`; the state is `playing` at `room-2`
-    with no screen between, and the hero is beside `door-in`. Then: the hero presses `button-1`, crosses into `room-3`;
+    with no screen between, and the hero is beside `door-in`. The hero stays there for 60 ticks and is still in
+    `room-2` (`door-in` leads back to `room-1`, so a hero put inside it would be sent straight back: audit H1);
+    walking into `door-in` on purpose opens `room-1` beside `exit`, and the hero goes through `exit` again. Then: the hero presses `button-1`, crosses into `room-3`;
     leave to the menu; Continue; the hero is in `room-3` near where it crossed, and `gate-1` is open on the first tick
     (the save holds `facts: ['room-2.gate-1.open']`), while `crate-1` is back at (5.5, 7.5). With two players, the
     first hero through the door takes both, and both stand beside `door-in`.
@@ -825,8 +954,9 @@ failure): a level that is not `start`, not in `levels` and that no door or join 
 `The place of room-2 has 9 levels (20,000 tiles). The whole place runs at once, so keep a place under 8 levels and 16,384 tiles.`).
 
 - [ ] **Step 1: Write the failing tests** on the links game in a temporary folder, as `art.test.ts` does: the report
-  deep-equals the expected one; the words; each note; a game with no world file lists its levels with `at: null` and
-  no joins; a game that does not load answers `ok: false` with one sentence.
+  deep-equals the expected one (three doors, `exit`, `door-in` and `back`; one join; two places); the words; each note;
+  a game with no world file lists its levels with `at: null` and no joins; a game that does not load answers
+  `ok: false` with one sentence.
 - [ ] **Step 2 to 4: push red, implement, push green.**
 - [ ] **Step 5: Commit** `feat(cli): automata world lists levels, doors and joins`
 
@@ -853,7 +983,7 @@ export function badge(picture: Picture, x: number, y: number, n: number, ink: nu
 export interface LegendLine { readonly n: number; readonly level: string; readonly thing: string; readonly value: string; readonly shown: ValueShown; readonly says: string }
 export interface Painted { readonly picture: IndexedPicture; readonly legend: readonly LegendLine[] }
 export function paintLevel(content: GameContent, level: string, options?: { readonly whatItIs?: boolean }): Painted
-/** The world file's sheet: each level small at its `at`, a numbered badge at each door and where it leads, a bar across each join. Undefined when no level fits (see below). */
+/** The world file's sheet: each level small at its `at`, an arrow from each door to where it leads (a numbered badge at each end), a bar across each join. Undefined when no level fits (see below). */
 export function paintWorld(content: GameContent): Painted | undefined
 ```
 
@@ -865,12 +995,17 @@ export function paintWorld(content: GameContent): Painted | undefined
   or its coloured box.
 - **`whatItIs`:** solid tiles in one flat tint; then for every value whose `shownOf` is not `none`: `arrow` a line
   from the thing to each linked thing with a badge at the far end; `path` lines through its points with a 3 by 3 dot
-  on each; `reach` a `ring` of that many tiles; `tag` a badge at the thing's top right; `leads-to` a badge on the door.
-  A badge that would cover an earlier one moves down by its own height until it is clear. Each badge's `LegendLine`
-  says it in the source language: `says` is the number, `yes` or `no` (the framework's own words for them), the
-  choice's `name`, the `words` value's text in the source language, the linked thing's id, or `to room-2, beside door-in`.
+  on each; `reach` a `ring` of that many tiles; `tag` a badge at the thing's top right, except that a `switch` is
+  tagged only when the thing's value is not its declaration's default (the spec's "when it is not the default", audit
+  L11); `leads-to` a badge on the door (the spec's "tag in the level": `paintWorld` draws the arrow). A badge that
+  would cover an earlier one moves down by its own height until it is clear. Each badge's `LegendLine` says it in the
+  source language: `says` is the number, `yes` or `no` (the framework's own words for them), the choice's `name`, the
+  `words` value's text in the source language, the linked thing's id, or `to room-2, beside door-in`. The Owner chose
+  numbers and a list over words on the picture (2026-11-15, 22:59 UTC).
 - **Colours:** the palette is every colour in first-used order; past 255 the nearest earlier one is used (whole-number
-  distance on red, green and blue).
+  distance on red, green and blue). `createPicture(width, height, palette)` takes its palette first
+  (`content/pixels.ts`), so each painter draws twice: a first pass that only collects the colours in the order they
+  will be used, then `createPicture` with them and the same drawing again (audit L6).
 
 `automata picture [level…] [--what-it-is] [--world] [--json]` writes `.automata/pictures/<level>.png` (or
 `<level>.what.png`, or `world.png`), prints each path and then the legend, one line a badge
@@ -880,9 +1015,10 @@ export function paintWorld(content: GameContent): Painted | undefined
 - [ ] **Step 1: Write the failing tests:** `line`, `ring` and `badge` on a small picture, pixel for pixel (a
   horizontal, a vertical and a steep line; a ring of radius 3; the digits 0 to 9; the number 12). `paintLevel` of
   `room-2`: 256 by 144; the pixel in the middle of `crate-1` is the crate's colour; with `whatItIs`, the legend is
-  exactly `opens` (arrow to `gate-1`), `stays` (tag, `yes`), `walk` (path), `reach` (reach, `3`) and `to`'s line for
-  `door-in` is absent (it gives no value); two tags on one thing do not overlap. `paintWorld`: one bar and one door
-  badge pair. Parity (`level-picture.json`): the xxhash64 of the PNG bytes of `room-2` as it plays, with `whatItIs`,
+  exactly `opens` (arrow to `gate-1`), `stays` (tag, `yes`), `walk` (path), `reach` (reach, `3`) and `to` (tag, `to
+  room-1, beside exit`, for `door-in`); a button whose `stays` is its default, `false`, has no tag (an override); two
+  tags on one thing do not overlap. `paintWorld`: one bar, and for each of the three doors an arrow with a numbered
+  badge at each end. Parity (`level-picture.json`): the xxhash64 of the PNG bytes of `room-2` as it plays, with `whatItIs`,
   and of the world, the same in Node and the three browsers. The command writes the files, prints the legend, and
   writes nothing for a game that does not load.
 - [ ] **Step 2: Push; fails; the Node job prints the three hashes.**
@@ -907,7 +1043,7 @@ door; the world file with two levels joined by an edge; the two commands and a l
 - [ ] **Step 1: Write the failing tests:** every JSON block of the skill page loads as a game with no problem; the
   README's command table names `world` and `picture`; the public surface lists the new exports of `src/index.ts` and
   `src/headless.ts` (`valuesOf`, `doorTaken`, `levelsOf`, `heroLevels`, `LevelEntered`, `FactKept`, `factsCommand`,
-  `openEvent`, `Pressed`, `Open`, `paintLevel`, `paintWorld`, `layoutWorld`, the types).
+  `openEvent`, `Pressed`, `Open`, `boxesOverlap`, `paintLevel`, `paintWorld`, `layoutWorld`, the types, `Arrive` among them).
 - [ ] **Step 2 to 4: push red, write, push green.**
 - [ ] **Step 5: Commit** `docs: links, paths and doors, for agents and for the README`
 - [ ] **Step 6:** Run the implementation prompt's last look over the five pull requests, tick everything here and in
@@ -935,23 +1071,30 @@ unmoved (the game uses none of the new parts yet). If either moves, stop and rep
 `content/levels/level-1.json` (changed), `level-2.json`, `level-3.json` (new), `content/world.json`,
 `content/messages/*.json`, `automata.toml`; `tests/game/game-files.test.ts`, `tests/game/words.test.ts`.
 
-- **Level 1:** today's room, with a plate at (8.5, 7.875) linked to a gate at (11.25, 4), and the exit door at
-  (13.5, 7) leading to `level-2`, beside `door-in`. The crate moves from (9.5, 7.5) to (5.5, 7.5), so it must be
-  pushed onto the plate.
-- **Level 2:** `door-in`, a crate, the critter with its path (it stands still until Characters), a button with
-  `stays: true` and its gate; rows 5 to 7 of its right edge open.
+- **Level 1:** today's room with its four starts (x 2.5, 4, 5.5 and 7, all at y 7.5), and `crate-1`, still the first
+  thing and still at (9.5, 7.5): it stays where it is, because a crate at 5.5 would sit on player 3's start (audit
+  M3). New: a plate at (11.5, 7.875), to the crate's right, linked to a gate at (12.75, 4), and the exit door at
+  (14, 7) leading to `level-2`, beside `door-in`. The crate is pushed two tiles onto the plate.
+- **Level 2:** `door-in`, which also leads back to level 1's `exit` (so a hero who comes out beside a door that leads
+  back is in the real game too, audit H1), a crate, the critter with its path (it stands still until Characters), a
+  button with `stays: true` and its gate; rows 5 to 7 of its right edge open. The critter's box at both ends of its
+  path clears the crate and the button.
+- **No thing overlaps a start's hero or another thing,** in any of the three levels; a test says so with
+  `boxesOverlap`, the critter at both ends of its path included. The exact places above are the ones to start from;
+  the journey (E3) is what proves a level can be played, and the places move before the rule does.
 - **Level 3:** rows 5 to 7 of its left edge open; the goal at (13.5, 7.5).
 - **`world.json`:** `level-1` at (0, 0), `level-2` at (20, 0), `level-3` at (36, 0).
 - **`automata.toml`:** the new files; `levels = ["level-1", "level-2", "level-3"]`.
 - **Words,** in six languages, English as `source` saying what each is for: `level.level-1.goal`
   ("Push the crate onto the plate"), `level.level-2.goal` ("Press the button, then run right"), `level.level-3.goal`
-  ("Reach the goal"), and the names of the three levels. The five other languages are drafts until a native speaker
+  ("Reach the goal"), `goal.done` ("You reached the goal. Well done!"), and the names of the three levels. The five other languages are drafts until a native speaker
   reads them (`automata.translations.toml` marks none).
 - The new characters are boxes in the demo's colours (the palette's five, nothing else; `blueprint.test.ts` holds it).
 - Every content file is written by `pnpm content:write`.
 
 - [ ] **Step 1: Tests:** the game loads; `automata world --json` (through the framework's headless entry) gives three
-  levels, one door and one join; every new key is in all six languages.
+  levels, two doors (`exit`, and `door-in` back) and one join; no thing overlaps a start or another thing; every new
+  key is in all six languages.
 - [ ] **Step 2 to 4: push red, write, push green** (CI says "the content changed" for `replays/level-1.json`: expected).
 - [ ] **Step 5: Commit** `feat: three levels, joined by a door and by an edge`
 
@@ -959,19 +1102,40 @@ unmoved (the game uses none of the new parts yet). If either moves, stop and rep
 
 **Files:** `src/features/play/play.ts`, a new `src/features/play/ways.ts`, `replays/level-1.json`, `replays/level-2.json`,
 `tests/fixtures/level-1-play.ts`, a new `tests/fixtures/level-2-play.ts`, `tests/replay/level-2.parity.test.ts`,
-`tests/journeys/door.journey.test.ts`, `README.md`, `CLAUDE.md` (the goldens are now three).
+`tests/journeys/door.journey.test.ts`, `content/messages/*.json` (the words that go), every test and page that reads
+the old words or the crate (find them with `goal.push`, `goal.pushed`, `Well done` and `crate-1`: today
+`tests/journeys/{files,play,watch,look,language,pictures}.journey.test.ts`,
+`tests/features/play/{play,watch,language}.browser.test.ts`, `tests/fixtures/pinned-level.ts` and
+`README.md`), `CLAUDE.md` (the goldens are now three).
 
 The page keeps calling `startGame` (it moves onto `startFlow` with plan D's Part 8). After each step it asks the
 framework's `doorTaken`; on a door it stops the game and starts it again at the door's level with `arrive`, keeping the
 player's devices and language, and it calls nothing else new: the place, the crossing and the camera are the
 framework's. Facts live for the visit only (the demo has no saves until plan D's Part 8): the page keeps the `fact.kept`
-facts in memory and hands them to the next `startGame`. The strip says the goal of the level player 1 is in, changing on
-`level.entered`.
+facts in memory and hands them to the next `startGame`. The page stops listening and holds the game still on the first
+door, as the flow does (audit M1). A hero comes out beside the door, clear of it (audit H1).
+
+**What "well done" is now (audit M4).** Today the page says "well done" when the crate has moved from where the start
+level put it (`goal.push`, `goal.pushed`, `CRATE`, `PUSHED_TILES` and the crate observer in `play.ts`). That rule goes,
+with the two words. The strip says the goal of the level player 1 is in (`level.<id>.goal`), changing on `level.entered`
+and on a door; "well done" (`goal.done`) is said when a hero touches the goal, which the page reads from `game.onStep`
+as `goal.touched`, the same event the project's `done` reads. The page never names a thing by a bare id once there is
+a place: where it still must (the recorded plays and journeys), the crate of the place of levels 2 and 3 is
+`level-2.crate-1`, read through `heroLevels` or `thingIn`.
+
+**What the Site reads (audit L14).** The Site's `facts` takes the start level's first thing and `replays/<start>.json`
+(`src/features/facts/parse.ts`). `crate-1` stays the first thing of level 1 and `replays/level-1.json` stays the start
+level's recording, so the home page's numbers still come from the crate; the Site's next cycle is told its numbers
+change when the recording moves.
 
 - [ ] **Step 1: Tests:** the journey, in the three browsers on the real levels: push the crate onto the plate, go
-  through the gate and the door, come out beside `door-in`, press the button, run right into level 3 with no break,
-  touch the goal, read "well done". `level-2.parity.test.ts` plays `replays/level-2.json` (the place of levels 2 and 3,
-  the crate pushed across the edge) in Node and the three browsers. `tests/fixtures/pinned-level.ts` is untouched.
+  through the gate and the door, come out beside `door-in` and stay there for 60 ticks (it leads back; the hero is
+  still in level 2), press the button, run right into level 3 with no break, touch the goal, read "well done"
+  (`goal.done`). Two players through the door a tick apart start level 2 once. `level-2.parity.test.ts` plays
+  `replays/level-2.json` (the place of levels 2 and 3, the crate pushed across the edge) in Node and the three
+  browsers. `tests/fixtures/pinned-level.ts`, the journeys' own level, gains a `goal-1` at (13.5, 7.5), clear of every
+  start, so the journeys that play it still have a "well done" to wait for (the crate rule they used is gone); nothing
+  else about it moves.
 - [ ] **Step 2: Push; the recorded plays print.** `replays/level-2.json` is committed. **`replays/level-1.json` is a
   golden that moves: send the coordinator the old and new final hashes and a `ci-screens` picture of each level at
   390 by 844, and do not merge until the Owner says yes.**
@@ -1008,16 +1172,63 @@ Not built in this cycle. They are written here so the Characters plan can lift t
   and hardly moved), it turns back. A thing with no path given stands still. Golden `walk-path.json` in four engines.
 - **D3. The test game's critter walks,** and `replays/level-2.json` moves for it (the Owner sees it first).
 
+## After the plan audit (2026-11-15)
+
+The audit (`audits/2026-11-15-plan-w-plan-audit.md`, #168) found 22 things (2 high, 6 medium, 14 low) and asked the
+Owner two questions. Every finding is fixed in this plan, in one round; the Owner answered both questions (22:59 UTC:
+numbered badges, and a door straight in). Where each went:
+
+| Finding | What the plan says now | Where |
+|---|---|---|
+| H1 a hero comes out inside a door | heroes come in beside it, clear of its box, near side then far side then the starts; the fixture's doors lead back; a test that no door fires | call 13; Tasks 8, 12; fixture; E2 |
+| H2 `facts` believed from anyone | only source 0 on tick 0 is believed; others ignored | call 10; Task 7; Review Focus 8 |
+| M1 a second door starts the level twice | the first door unhooks `watchWays` and pauses the game before any await; the deep-equal test is gone | Tasks 11, 12; Review Focus 7 |
+| M2 critter inside the crate | critter at (7.5, 7.5), path 7.5 to 9.5; a no-overlap test | fixture; Task 6 |
+| M3 crate on player 3's start | the crate stays at (9.5, 7.5); the plate and gate are to its right | E2 |
+| M4 "well done" was about the crate | the rule is the goal's touch; `goal.push` and `goal.pushed` go, `goal.done` comes | E2, E3 |
+| M5 `room-3.back` missing | `back` in `room-3`; `door-in` leads back too | fixture; Tasks 11, 13, 14 |
+| M6 a joint's holder in a shifted level | read against `joints.ts`: the anchor at the place's corner with shifted places is right; the plan says so and a test pins it | Task 8 |
+| L1 a place's ground is always joined | said, with why | call 2; Task 8 |
+| L2 the order of switches against moves | by name; no `after` (an unknown name throws); a test | Task 7 |
+| L3 `switch.json` proved nothing | what is asserted before the hashes | Task 7 |
+| L4 `place.json` measured a stack | the critter is taken out; the hero's speed is measured | Task 10 |
+| L5 the `outside` sentence | lifted into `content/outside.ts` | Task 2; file structure |
+| L6 the painter's palette comes first | two passes | Task 14 |
+| L7 `loadArt` is public | keeps `level`, gains `levels` | Task 10 |
+| L8 a late joiner in a place | comes in at the opened level; tested | call 14; Tasks 8, 9 |
+| L9 two `stage.ts` | `game/stage-of.ts` | Task 10; file structure |
+| L10 an empty list fails in Zod's words | lists 0 to 16 and 0 to 64 in the schema; `check` holds the limits | Task 2 |
+| L11 two "shown" rules | a switch tags only off its default; `leads-to` is a tag in a level and an arrow on the sheet | Tasks 1, 14 |
+| L12 a stricter check, unlisted | listed | call 15; self-review |
+| L13 the world kind's pieces | `worldInfo`; the row last; `simContent` checks `worlds` | Task 3 |
+| L14 the Site reads level 1 | `crate-1` stays first; the recording stays the start level's | E3 |
+| Also noted: the spec's "a replay is still one level" | the spec's sentence is changed | spec, doors |
+| Also noted: Look-only entities are new | the place test steps the sim | Task 8 |
+
+**From plan Q's return note (#169, 2026-11-15, 23:10 UTC)**, three points where the two plans meet, each handled here:
+
+| Point | What this plan says now | Where |
+|---|---|---|
+| A level with facts reaches a waiting level too late | `startGame` steps tick 0 once, with the facts and no input, before the first picture, so open gates show and the first press is tick 1 | Task 10 |
+| `attempt` against a new `playing` state; a door's level does not wait | a door always answers a new state, so it starts a level under either rule and raises `attempt` when that exists; the state carries `door: true` so plan Q does not make a door's level wait | Task 11 |
+| The template's door | stays the `done` touch with no `to`; `doorTaken` reads nothing from it; a second level for the starter is the Owner's question in plan Q | Handoffs; Task 11 |
+
 ## Handoffs
 
-- **The plan audit (next, Opus medium)** should try hardest to break: call 1 (overlap in place of Rapier's events),
-  call 2 (one ground grid) against "every existing golden unmoved", the facts command at source 0 against the recorder
-  and the room server (if either refuses source 0, the plan needs another carrier), and whether `places` in the sim
-  (call 6) can move a hash for a game that only arranges its map.
+- **The plan audit** is done (`audits/2026-11-15-plan-w-plan-audit.md`): calls 1, 2, 6 and 10 stand (10 with the guard
+  that the sim believes only source 0 at tick 0), the recorder and the room server take source 0, and `places` cannot
+  move a hash for a game that only arranges its map. The implementation audit (stage 5) should try hardest to break
+  what the audit could only read: a hero's arrival spot against every door and wall (Task 8), a second door a tick
+  later (Task 12), and the order of `level.switches` against `level.moves` in a game with and without `moves`.
 - **The Scenes plan,** when it returns: `openTile` is the one function to widen for ledges and scene ground, and
   `paintLevel` then draws the scene's own picture and the backdrop.
-- **Plan Q,** when it returns: the goal line and the level name read `heroLevels`; the template's level with a door
-  uses a `leads-to` value in place of `done`.
+- **Plan Q,** when it returns (its return note is on #169, and says where it meets this plan): the goal line and the
+  level name read `heroLevels`; a door raises `attempt`, and `door: true` on the state is what tells it a level was
+  opened mid-move (Task 11); `startGame` already steps tick 0 when facts are given, so its start card waits after that
+  step (Task 10). **The template's door stays the `done` touch** (`done = "door.touched"`, a door with no `to`),
+  because a `leads-to` needs a level to lead to and the starter has one; this plan's `doorTaken` reads nothing from
+  such a door. Whether the starter gets a second level is the Owner's question in plan Q (recommended: no); if it
+  does, its door gets a `to` and that is plan Q's task, built on this plan's.
 - **Plan D (the demo)** Part 4 is replaced by Tasks E2 and E3 here; Part 8 moves the page onto `startFlow` and then
   drops `play/ways.ts`.
 - **The roadmap** (slice 3, item 4) is unchanged by this plan; the tracker says where the cycle stands.
@@ -1035,7 +1246,10 @@ Not built in this cycle. They are written here so the Characters plan can lift t
 - **Not in the spec, added here:** `Where` and `thingIn` (a sim must know its levels to read a value), `facts` as a
   command, `Arrive`, `progressFields`, `heroLevels`, the legend. Each is the least that makes a spec sentence true.
 - **Away from the spec's words, each listed above:** tiles only for open stretches; flat ground and no backdrop in
-  pictures; numbered badges and a legend; no "level done" screen at a door; the demo's page follows doors itself.
+  pictures; numbered badges and a legend, and no "level done" screen at a door (both the Owner's, 2026-11-15, and the
+  spec is changed to say so); the demo's page follows doors itself; a `words` value must be a key the source language
+  has (call 15, stricter than the spec's "a key no language has"). Carried from the spec, not departures: a switch
+  is tagged only when it is not the default; a door is a tag in a level and an arrow on the world sheet.
 - **Types.** `Arrive`, `SimLevel`, `PlaceLevel`, `Join`, `Way`, `ThingValue` and `ValueDeclaration` are each defined in
   one task and used by the same name after it.
 - **Proportion.** The spec is 535 lines; this plan carries signatures, sentences and test names, and no function body.

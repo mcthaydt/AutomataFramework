@@ -10,13 +10,14 @@ world map, doors between levels, level pictures and a public list of format chan
 edge (for rooms put together from a seed later) and all story as facts and conditions
 (`specs/2026-11-15-rooms-and-storylets-amendment.md`). The first version was closed pull request #149 (`c449fca`).
 
-Overall: **25%** (stages 1 to 3 done; the plan's fix round is next; stages 4 to 7 follow)
+Overall: **30%** (stages 1 to 3 and the plan's fix round done; stage 4, the execution, is next; stages 5 to 7 follow)
 
 | Stage | State | Output |
 |---|---|---|
 | 1. Spec | Second version done (2026-11-15), 100%. The Owner's answers: edge joins come from where levels sit on the map (LDtk's way); a joined place plays as one seamless world, everything crossing, the whole place running at once (streaming later); what was done for good is remembered, as facts the story can read; the test game gets a third level joined by an edge; all twelve calls fine | the spec |
-| 2. Plan (plan W) | Written, in review (2026-11-15), 100%; plan W at 0% built. Fifteen framework tasks in five pull requests (formats and checks; switches and gates; a place; doors and what is remembered; the commands and the docs), then three tasks in AutomataFrameworkExamples in two pull requests (the pin; three levels, a door and an edge). Three new goldens (`switch.json`, `place.json`, `level-picture.json`), none moved in this repo; in Examples `replays/level-1.json` moves once (the Owner sees it first) and `replays/level-2.json` is new. The World editor's five tasks are listed and gated behind the mockups. No new dependency | `plans/2026-11-15-level-links-and-world-map.md` |
-| 3. Plan audit | Done (2026-11-15), 100%: 22 findings (2 high, 6 medium, 14 low) and 2 questions for the Owner (numbered badges in pictures; no "level done" screen at a door). Next: the fix round on the plan, then stage 4 | `audits/2026-11-15-plan-w-plan-audit.md` |
+| 2. Plan (plan W) | Written (2026-11-15), 100%, and fixed after its audit (below); plan W at 0% built. Fifteen framework tasks in five pull requests (formats and checks; switches and gates; a place; doors and what is remembered; the commands and the docs), then three tasks in AutomataFrameworkExamples in two pull requests (the pin; three levels, a door and an edge). Three new goldens (`switch.json`, `place.json`, `level-picture.json`), none moved in this repo; in Examples `replays/level-1.json` moves once (the Owner sees it first) and `replays/level-2.json` is new. The World editor's five tasks are listed and gated behind the mockups. No new dependency | `plans/2026-11-15-level-links-and-world-map.md` |
+| 3. Plan audit | Done (2026-11-15), 100%: 22 findings (2 high, 6 medium, 14 low) and 2 questions for the Owner (numbered badges in pictures; no "level done" screen at a door) | `audits/2026-11-15-plan-w-plan-audit.md` |
+| 3b. Plan fix round | Done (2026-11-15), 100%: all 22 fixed in the plan in one round, low ones included, and the table "After the plan audit" says where each went. The two high ones: a hero comes in beside a door, clear of it, never inside (so a door that leads back does not bounce them); the sim believes a `facts` command only from source 0 on tick 0. The Owner answered both questions (22:59 UTC, "1. a 2. a"): pictures use numbered badges with a list, and a door opens the next level at once. The spec's three matching sentences changed with it. Plan Q's return note (#169) is met in three places: `startGame` steps tick 0 with the facts before the first picture, a door's state carries `door: true` and always starts a level (so it can raise `attempt`), and the template's door stays the `done` touch | `plans/2026-11-15-level-links-and-world-map.md`, `specs/2026-11-15-level-links-and-world-map-design.md` |
 | 4 to 7 | Not started | |
 
 What the plan found, for every later stage:
@@ -30,9 +31,14 @@ What the plan found, for every later stage:
   plan's table "What is on main and what is not" says what each returning plan widens.
 - **The test game's page calls `startGame`, not `startFlow`,** so a door is read by one pure function (`doorTaken`)
   that the flow and that page both call.
-- **Twelve calls of the plan's own** are listed in it for the audit and the Owner to overrule: the main ones are a
+- **Fifteen calls of the plan's own** are listed in it for the audit and the Owner to overrule: the main ones are a
   press worked out from boxes and not from Rapier's events, a place's ground as one grid, pictures with numbered badges
-  and a list in the source language, and no "level done" screen at a door.
+  and a list in the source language, and no "level done" screen at a door. The audit stood by calls 1, 2, 6 and 10 (10
+  with a guard on who may send facts) and added three (a hero comes in beside a door, a late joiner comes in at the opened level, a `words` value must be
+  a key the source language has). The Owner approved the two they were asked about (2026-11-15, 22:59 UTC): numbered
+  badges and a list, and a door straight into the next level.
+- **One audit claim did not hold as written** (M6, a joint's anchor in a shifted level): the anchor at the place's corner
+  with the joints' places shifted is right, so the plan says so and adds the pin test instead of moving the anchor.
 
 Stage 4's weights, when it starts: 14% for each of the five framework pull requests, 5% for the pin, 15% for the test
 game, 10% for the last green run and the Owner's yes to the moved recording.
