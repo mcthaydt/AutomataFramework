@@ -188,7 +188,7 @@ const leadsToValue = z.strictObject({
 })
 
 /** One value a character declares. Unknown keys are refused; the checks across fields are `checkDeclarations`'. */
-export const valueDeclaration: z.ZodType<ValueDeclaration> = variants('type', [
+export const valueDeclaration: z.ZodType<ValueDeclaration, ValueDeclaration> = variants('type', [
   numberValue,
   switchValue,
   choiceValue,
