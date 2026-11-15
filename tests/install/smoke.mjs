@@ -126,8 +126,11 @@ if (audio.log().length !== 1 || audio.log()[0].on !== 'hero.jumped' || speaker.p
 }
 console.log('The installed package played a sound in Node.')
 
+// The palette is the one kind the full game has none of: its figures are free ones, painted in their own colours (plan R).
 const kinds = Object.keys(CONTENT_TYPES)
-const missing = kinds.filter((type) => Object.keys(full.value[CONTENT_TYPES[type].plural] ?? {}).length === 0)
+const missing = kinds.filter(
+  (type) => type !== 'palette' && Object.keys(full.value[CONTENT_TYPES[type].plural] ?? {}).length === 0,
+)
 if (missing.length > 0) {
   console.error(`The full game loaded but has no ${missing.join(', ')}.`)
   process.exit(1)
