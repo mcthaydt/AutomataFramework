@@ -1633,6 +1633,7 @@ interface Host {
     quit(): Promise<boolean>;
     readonly canBuzz: boolean;
     buzz(strength: number, ms: number): boolean;
+    keepAwake(on: boolean): void;
 }
 ```
 
@@ -4416,6 +4417,7 @@ interface TestHost extends Host {
         readonly strength: number;
         readonly ms: number;
     }[];
+    readonly awake: boolean;
 }
 ```
 
@@ -4860,6 +4862,17 @@ interface ViewSprite {
 }
 ```
 
+### `WakeLockLike` (interface)
+
+```ts
+interface WakeLockLike {
+    request(type: 'screen'): Promise<{
+        readonly released: boolean;
+        release(): Promise<void>;
+    }>;
+}
+```
+
 ### `warningsFor` (function)
 
 ```ts
@@ -4945,6 +4958,7 @@ interface WebSeams {
     readonly document: Pick<Document, 'visibilityState' | 'addEventListener' | 'removeEventListener'>;
     readonly navigator: Pick<Navigator, 'language' | 'languages'> & {
         readonly vibrate?: ((pattern: number) => boolean) | undefined;
+        readonly wakeLock?: WakeLockLike | undefined;
     };
     readonly open: (url: string, target: string) => {
         opener: unknown;
@@ -6186,6 +6200,7 @@ interface Host {
     quit(): Promise<boolean>;
     readonly canBuzz: boolean;
     buzz(strength: number, ms: number): boolean;
+    keepAwake(on: boolean): void;
 }
 ```
 
@@ -8260,6 +8275,7 @@ interface TestHost extends Host {
         readonly strength: number;
         readonly ms: number;
     }[];
+    readonly awake: boolean;
 }
 ```
 
