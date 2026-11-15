@@ -1,0 +1,183 @@
+{
+  "format": 1,
+  "id": "meadow",
+  "seed": 7,
+  "tile": 16,
+  "size": {
+    "w": 24,
+    "h": 12
+  },
+  "sky": "#9fd3f0",
+  "paints": [
+    {
+      "id": "soil-dark",
+      "color": "#4a3324"
+    },
+    {
+      "id": "soil",
+      "color": "#6b4a33"
+    },
+    {
+      "id": "soil-light",
+      "color": "#8a6444"
+    },
+    {
+      "id": "grass",
+      "color": "#5fa04a"
+    },
+    {
+      "id": "wood",
+      "color": "#a67c52"
+    },
+    {
+      "id": "brick-dark",
+      "color": "#6e3b34"
+    },
+    {
+      "id": "brick",
+      "color": "#9c5a4b"
+    },
+    {
+      "id": "brick-light",
+      "color": "#c08a74"
+    },
+    {
+      "id": "mortar-dark",
+      "color": "#7d7468"
+    },
+    {
+      "id": "mortar",
+      "color": "#a79f92"
+    },
+    {
+      "id": "mortar-light",
+      "color": "#cfc8bb"
+    },
+    {
+      "id": "stone-dark",
+      "color": "#4c525c"
+    },
+    {
+      "id": "stone-gray",
+      "color": "#7d8590"
+    },
+    {
+      "id": "stone-light",
+      "color": "#aab2bd"
+    }
+  ],
+  "materials": [
+    {
+      "id": "earth",
+      "kind": "photo",
+      "photo": "dirt",
+      "ladder": [
+        "soil-dark",
+        "soil",
+        "soil-light"
+      ],
+      "top": {
+        "material": "turf",
+        "deep": 4
+      },
+      "edge": "soil-dark",
+      "wear": 0.3
+    },
+    {
+      "id": "turf",
+      "kind": "flat",
+      "paint": "grass"
+    },
+    {
+      "id": "plank",
+      "kind": "flat",
+      "paint": "wood"
+    },
+    {
+      "id": "brick",
+      "kind": "photo",
+      "photo": "brick",
+      "ladder": [
+        "brick-dark",
+        "brick",
+        "brick-light"
+      ],
+      "accent": [
+        "mortar-dark",
+        "mortar",
+        "mortar-light"
+      ]
+    },
+    {
+      "id": "rock",
+      "kind": "photo",
+      "photo": "stone",
+      "match": 4
+    },
+    {
+      "id": "stone",
+      "kind": "tiles",
+      "tileset": "meadow",
+      "tile": "stone"
+    }
+  ],
+  "ground": {
+    "color": "#3b4a5a",
+    "letters": [
+      {
+        "letter": "G",
+        "material": "earth",
+        "shape": "solid"
+      },
+      {
+        "letter": "/",
+        "material": "earth",
+        "shape": "slope-up"
+      },
+      {
+        "letter": "h",
+        "material": "earth",
+        "shape": "half-down-high"
+      },
+      {
+        "letter": "l",
+        "material": "earth",
+        "shape": "half-down-low"
+      },
+      {
+        "letter": "=",
+        "material": "plank",
+        "shape": "ledge"
+      },
+      {
+        "letter": "b",
+        "material": "brick",
+        "shape": "back"
+      },
+      {
+        "letter": "W",
+        "material": "rock",
+        "shape": "solid"
+      },
+      {
+        "letter": "S",
+        "material": "stone",
+        "shape": "solid"
+      }
+    ],
+    "rows": [
+      "........................",
+      "........................",
+      "........................",
+      "........................",
+      ".......==...............",
+      "....................WW..",
+      "..../GGGGGhl...bbb..WW..",
+      ".../GGGGGGGGhl.bbb..WW..",
+      "../GGGGGGGGGGGGGGGGGGGGS",
+      "GGGGGGGGGGGGGGGGGGGGGGGG",
+      "GGGGGGGGGGGGGGGGGGGGGGGG",
+      "GGGGGGGGGGGGGGGGGGGGGGGG"
+    ]
+  }
+}

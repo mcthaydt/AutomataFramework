@@ -11,6 +11,11 @@ export const SHEET_COLUMNS = 8
 /** The most pixels wide or tall a painted picture may be. */
 export const MAX_PICTURE_SIDE = 2048
 
+/** How many tiles wide one page of a scene's ground is: as many as fit in a picture, `floor(MAX_PICTURE_SIDE / tile)`. */
+export function groundPageTiles(tile: number): number {
+  return Math.floor(MAX_PICTURE_SIDE / tile)
+}
+
 /** One picture in a sheet: its name and the box it fills, in pixels from the sheet's top left corner. */
 export interface Frame {
   readonly name: string

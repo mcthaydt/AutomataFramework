@@ -117,11 +117,39 @@ export {
   writeReadMarks,
 } from './read-marks.ts'
 export {
+  covers,
+  GROUND_SHAPES,
+  type GroundGrid,
+  type GroundShape,
+  gapsUnder,
+  LEDGE_DEEP,
+  lineAt,
+  runBottom,
+  runTop,
+  type SlopeRun,
+  shapesOf,
+  slopeRuns,
+  surfaceAt,
+} from './scene-ground.ts'
+export {
+  type FlatMaterial,
+  type MaterialTop,
+  type PhotoMaterial,
+  type SceneFile,
+  type SceneGround,
+  type SceneLetter,
+  type SceneMaterial,
+  type ScenePaint,
+  SceneSchema,
+  type TilesMaterial,
+} from './scene.ts'
+export {
   type Atlas,
   atlasOf,
   backdropSheet,
   type Frame,
   figureSheet,
+  groundPageTiles,
   SHEET_COLUMNS,
   type Sheet,
 } from './sheet.ts'
