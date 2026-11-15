@@ -1,4 +1,3 @@
-// (A draft-only CI try, taken out again.)
 // The camera: where in the level the screen looks. Plain functions of numbers, so they are tested without a page. A
 // `Shot` is the part of the level the screen must show; `placeCamera` turns it into a `Fit` (a scale and an offset)
 // the stage draws with, and shows more of the level where the screen is wider or taller than the shot.
