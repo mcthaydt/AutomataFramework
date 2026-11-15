@@ -5,6 +5,7 @@
 import { type Frames, pageFrames } from '../../lib/frames.ts'
 import type { GameAudio } from '../audio/audio.ts'
 import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
+import { moveNumbersOf } from '../content/content.ts'
 import type { Host } from '../host/host.ts'
 import {
   type Claim,
@@ -14,10 +15,10 @@ import {
   type PadLike,
   touchSettingsOf,
 } from '../input/input.ts'
-import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
+import { createGameSim, type GameSimOptions, levelSize, skyOf, tuneCommand } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
-import type { Sim, SimEvent } from '../sim/sim.ts'
+import type { Command, Sim, SimEvent } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
 import { createBuzzer } from './buzz.ts'
@@ -122,6 +123,13 @@ export interface Game {
   /** The player's setting: whether the device may buzz when a feel file says so. */
   setVibration(on: boolean): void
   /**
+   * For an editor: the hero's built-in numbers by id (`{ 'jump-speed': 13 }`), from the next tick, with nothing else
+   * reset. A number left out is the framework's value, so pass them all. Only in a game started with `tunable: true`;
+   * a game itself never needs it, because its numbers are its tuning file. While the game is paused, the tune waits and
+   * lands on the first tick after `resume`; after `stop` it does nothing.
+   */
+  tune(values: Readonly<Record<string, number>>): void
+  /**
    * The play so far, from tick 0. After `stop`, the play as it was when it stopped. Throws what the game's code threw
    * for a game that broke: its sim is not asked for a hash again.
    */
@@ -194,9 +202,16 @@ export async function startGame(options: GameOptions): Promise<Game> {
     input.setPlayers(options.players ?? [1])
     const levelId = options.level ?? options.content.project.start
     // The level and the players are written into the recording, so `automata replay` can set the same game up.
+    // A tunable game says so, so `automata replay` and `watchReplay` make the same sim, which can read a `tune`.
     const recorder = createRecorder(sim, {
-      meta: { level: levelId, players: (options.players ?? [1]).join(',') },
+      meta: {
+        level: levelId,
+        players: (options.players ?? [1]).join(','),
+        ...(options.tunable === true ? { tunable: 'true' } : {}),
+      },
     })
+    // The latest tune not yet sent: two before one step are one command, with the later values.
+    let waiting: ReturnType<typeof moveNumbersOf> | undefined
     const people = createPlayers({
       sim,
       content: options.content,
@@ -222,7 +237,9 @@ export async function startGame(options: GameOptions): Promise<Game> {
       tickHz: sim.tickHz,
       step() {
         const tick = sim.tick
-        const result = recorder.step([...people.commands(tick), ...input.poll(tick)])
+        const tune: Command[] = waiting === undefined ? [] : [tuneCommand(tick, sequence.next(0), waiting)]
+        waiting = undefined
+        const result = recorder.step([...tune, ...people.commands(tick), ...input.poll(tick)])
         renderer.apply(result.render)
         // Only the tick and the events: the audio is never handed the sim, the render delta or the commands.
         audio?.hear({ tick: result.tick, events: result.events })
@@ -296,6 +313,13 @@ export async function startGame(options: GameOptions): Promise<Game> {
       },
       heroes: () => renderer.heroes(),
       setVibration: (on) => buzzer.setOn(on),
+      tune(values) {
+        if (options.tunable !== true)
+          throw new Error(
+            'This game was not started with "tunable": true, so its numbers cannot change while it plays.',
+          )
+        if (!stopped) waiting = moveNumbersOf(values)
+      },
       replay: () => kept ?? recorder.replay(),
       stop() {
         if (stopped) return

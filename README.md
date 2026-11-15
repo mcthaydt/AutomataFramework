@@ -187,6 +187,12 @@ the thumb lands, and a quick flick of the walking thumb dashes. A keyboard and a
 the framework says what the hero did with eight events (`hero.jumped`, `hero.landed` and the rest, named with
 `moveEvent`), which a feel file (`content/feels/`) can answer with a buzz.
 
+An editor can change these numbers while the game plays: start the game with `tunable: true` and call
+`game.tune({ 'jump-speed': 13 })`, and the hero uses them from the next tick, with nothing else reset. A game never does
+that, because its numbers are its tuning file. `jumpPaths(moveNumbers(tuning), switches)` says how high and how far each
+move reaches, worked out by the hero's own move step. The editors play and draw with the framework's gravity (30), so a
+game whose code passes its own `gravity` sees its jump drawn for the default.
+
 ## Gamepads, changing keys and playing together
 
 Each control can name gamepad buttons (`pad:`) and two lists of keys for two people on one keyboard (`shared:`: the
