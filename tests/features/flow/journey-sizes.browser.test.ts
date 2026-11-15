@@ -99,7 +99,8 @@ test.each(SCREENS)(
     await drive.shown('playing')
     drive.flow()?.finishLevel()
     await drive.shown('done')
-    await drive.wait(es('automata.done.next'))
+    // Continue opened the last level, so there is no next one: "Well done" offers only the way back to the menu.
+    await drive.wait(es('automata.done.menu'))
     await look(size, 'done', 1)
   },
 )
@@ -121,7 +122,9 @@ test('turning the phone on the menu, in Settings and on pause keeps the focus an
   await drive.toMenu({ host, game: { noWarning: true } })
   const turn = async (): Promise<void> => {
     await page.viewport(844, 390)
-    await expect.poll(() => drive.mount.querySelector('[data-height="short"]')).not.toBeNull()
+    await expect.poll(() => window.innerHeight).toBe(390)
+    // A screen drawn in the kit's frame says "tall" until it has measured its new box; the menu has no frame.
+    await expect.poll(() => drive.mount.querySelector('[data-height="tall"]')).toBeNull()
   }
   // The menu: the same button is in focus on its side.
   await drive.wait(es('automata.menu.continue'))

@@ -18,6 +18,17 @@ afterEach(() => drive.stop())
 /** Walks the focus with the down and up arrows to the button called `label`, and presses it with Enter. */
 async function enter(label: string): Promise<void> {
   const seen: string[] = [focusedName()]
+  // What a failure needs to say: every focus change, and whether an earlier listener had already taken each arrow.
+  const moved: string[] = []
+  const arrows: string[] = []
+  const onFocus = (): void => {
+    moved.push(focusedName())
+  }
+  const onKey = (event: KeyboardEvent): void => {
+    arrows.push(`${event.key}${event.defaultPrevented ? '!' : ''}`)
+  }
+  window.addEventListener('focusin', onFocus)
+  window.addEventListener('keydown', onKey, { capture: true })
   for (const arrow of ['{ArrowDown}', '{ArrowUp}']) {
     for (let step = 0; step < 10 && focusedName() !== label; step++) {
       await userEvent.keyboard(arrow)
@@ -25,7 +36,15 @@ async function enter(label: string): Promise<void> {
     }
     if (focusedName() === label) break
   }
-  const went = seen.join(' > ')
+  window.removeEventListener('focusin', onFocus)
+  window.removeEventListener('keydown', onKey, { capture: true })
+  const screens = [...drive.mount.querySelectorAll<HTMLElement>('[data-screen]')].map((one) => one.dataset.screen)
+  const boxes = [...drive.mount.querySelectorAll('button')].map((one) => {
+    const box = one.getBoundingClientRect()
+    const says = one.textContent?.trim() || one.getAttribute('aria-label')
+    return `${says}@${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)}x${Math.round(box.height)}`
+  })
+  const went = `${seen.join(' > ')} | focus ${moved.join(' > ')} | keys ${arrows.join(' ')} | screens ${screens} | ${boxes}`
   expect(focusedName(), `Arrow keys could not reach "${label}": ${went}`).toBe(label)
   await userEvent.keyboard('{Enter}')
 }

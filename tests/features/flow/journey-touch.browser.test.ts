@@ -65,7 +65,7 @@ test('a first-time player is led from the warning to the last door and the menu,
   expect(drive.mount.textContent).toContain(es('automata.done.game'))
   await drive.press(es('automata.done.menu'))
   await drive.shown('menu')
-  await drive.wait(es('automata.menu.play'))
+  await drive.wait(es('automata.menu.continue'))
 })
 
 test('the same player comes back: no flags, Continue is first and opens the level reached, Swap sides still on', async () => {
