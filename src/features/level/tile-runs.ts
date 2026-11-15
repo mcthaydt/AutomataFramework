@@ -60,5 +60,6 @@ export function tileBoxes(tiles: readonly string[], isSolid?: (letter: string) =
 
 /** The level's width and height in tiles. */
 export function levelSize(level: Level): { readonly w: number; readonly h: number } {
-  return { w: level.tiles[0]?.length ?? 0, h: level.tiles.length }
+  const tiles = level.tiles ?? []
+  return { w: tiles[0]?.length ?? 0, h: tiles.length }
 }

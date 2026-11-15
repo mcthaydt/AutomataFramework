@@ -5,4 +5,9 @@ interface ImportMeta {
     pattern: string,
     options: { readonly query: '?raw'; readonly import: 'default'; readonly eager: true },
   ): Record<string, string>
+  /** The same, giving each file's address instead of its text: a browser fetches the picture there. */
+  glob(
+    pattern: string,
+    options: { readonly query: '?url'; readonly import: 'default'; readonly eager: true },
+  ): Record<string, string>
 }

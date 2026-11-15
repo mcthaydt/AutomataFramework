@@ -46,7 +46,7 @@ test('the M1 level has the runs it always had, written out', async () => {
   const game = await loadFixtureGame()
   const level = game.levels['level-1'] as NonNullable<(typeof game.levels)[string]>
   expect(levelSize(level)).toEqual({ w: 16, h: 9 })
-  expect(tileRuns(level.tiles)).toEqual([{ row: 8, col: 0, length: 16 }])
+  expect(tileRuns(level.tiles ?? [])).toEqual([{ row: 8, col: 0, length: 16 }])
 })
 
 const meadow = writeContent('tileset', {

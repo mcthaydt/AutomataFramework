@@ -899,6 +899,8 @@ Each kind has a JSON Schema, shipped in the package so an agent can read the for
 | Kind | What it holds | Folder | Schema |
 |---|---|---|---|
 | `level` | a map of tiles, the things standing on it and where each player starts | `content/levels/` | `schemas/level.schema.json` |
+| `scene` | the ground of a place: its shape in rows of letters, what each letter is made of, and the paints it is painted in | `content/scenes/` | `schemas/scene.schema.json` |
+| `photo` | one of a game's own photos, to paint a scene's ground from, and where it came from | `content/photos/` | `schemas/photo.schema.json` |
 | `character` | a body, its size and colour, and the kind, behaviour and tuning it uses | `content/characters/` | `schemas/character.schema.json` |
 | `tileset` | the letters a level's map may use, and which of them are solid | `content/tilesets/` | `schemas/tileset.schema.json` |
 | `backdrop` | what is behind a level: layers that repeat sideways, and the figures that stand on them | `content/backdrops/` | `schemas/backdrop.schema.json` |

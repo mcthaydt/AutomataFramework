@@ -68,10 +68,11 @@ export function spawnLevel(
   // A level with a tileset joins stacked tiles of one width into one box, so a wall has no seams, and so does a level of
   // a game whose hero the framework moves: a hero that leans on a wall catches on a seam, and can neither jump nor
   // slide past it. Any other level keeps one box a row, as every game recorded before the built-in hero does.
+  const tiles = level.tiles ?? []
   const solids =
     level.tileset === undefined && !usesMoves(content)
-      ? tileRuns(level.tiles, isSolid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
-      : tileBoxes(level.tiles, isSolid)
+      ? tileRuns(tiles, isSolid).map((run) => ({ row: run.row, col: run.col, w: run.length, h: 1 }))
+      : tileBoxes(tiles, isSolid)
   for (const box of solids)
     sim.spawn([
       transform({ x: box.col + box.w / 2, y: box.row + box.h / 2 }),

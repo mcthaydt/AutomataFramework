@@ -10,6 +10,7 @@
       "!schemas",
       "!docs/api",
       "!tests/fixtures/full-game/content",
+      "!tests/fixtures/scene-game/content",
       "!template/content",
       "!template/replays"
     ]

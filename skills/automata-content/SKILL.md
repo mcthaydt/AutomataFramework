@@ -65,6 +65,83 @@ A level: the walls, the things in it and where each player starts. Put the files
 }
 ```
 
+## scene
+
+A scene: the ground of a place, drawn in rows of letters, with what each letter is made of and the paints it is painted in. A level names its scene and only places what plays on it. Put the files in `content/scenes/`; the kind's rules are in `schemas/scene.schema.json`. A material is one paint (`flat`), a tileset's tile (`tiles`) or a photo turned into the scene's paints (`photo`, with a `ladder` of paints from dark to light).
+
+```json
+{
+  "format": 1,
+  "id": "meadow",
+  "seed": 7,
+  "tile": 16,
+  "size": {
+    "w": 8,
+    "h": 4
+  },
+  "paints": [
+    {
+      "id": "soil",
+      "color": "#6b4a33"
+    },
+    {
+      "id": "grass",
+      "color": "#5fa04a"
+    }
+  ],
+  "materials": [
+    {
+      "id": "earth",
+      "kind": "flat",
+      "paint": "soil",
+      "top": {
+        "material": "turf",
+        "deep": 4
+      }
+    },
+    {
+      "id": "turf",
+      "kind": "flat",
+      "paint": "grass"
+    }
+  ],
+  "ground": {
+    "letters": [
+      {
+        "letter": "G",
+        "material": "earth",
+        "shape": "solid"
+      }
+    ],
+    "rows": [
+      "........",
+      "........",
+      "........",
+      "GGGGGGGG"
+    ]
+  }
+}
+```
+
+## photo
+
+One of a game's own photos, to turn into a scene's paints. Put the files in `content/photos/`; the kind's rules are in `schemas/photo.schema.json`. The picture is a PNG beside the file, at most 256 pixels a side, and the record says where it came from. A scene's `photo` material names a photo by id: the game's own come before the framework's library.
+
+```json
+{
+  "format": 1,
+  "id": "moss",
+  "image": "content/photos/moss.png",
+  "size": {
+    "w": 1,
+    "h": 1
+  },
+  "source": "my own photo",
+  "licence": "CC0",
+  "credit": "Dana, taken in the garden"
+}
+```
+
 ## character
 
 A kind of thing: how its body behaves, how big it is and what colour it is. The hero is one, and so is a crate. Put the files in `content/characters/`; the kind's rules are in `schemas/character.schema.json`.

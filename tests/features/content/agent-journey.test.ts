@@ -16,6 +16,7 @@ import { gameFiles, readFiles, withSource } from '../../fixtures/content/kind.ts
 import { fullGamePictures } from '../../fixtures/full-game/pictures.ts'
 import { fullGameFiles, readFullGame } from '../../fixtures/full-game/read.ts'
 import { fixtureFiles, readFixture } from '../../fixtures/game/read.ts'
+import { readSceneGame } from '../../fixtures/scene-game/read.ts'
 
 /** A sound an agent might add: one falling sine tone, a door's creak. */
 const door = {
@@ -115,15 +116,18 @@ test('an agent repaints the hero, and is told when the picture is stale and when
   ])
 })
 
-test('every kind of file is in the full game, so nothing is untested', async () => {
-  const loaded = await loadGame(readFullGame())
-  expect(loaded.ok).toBe(true)
-  if (loaded.ok)
-    for (const info of Object.values(CONTENT_TYPES))
-      expect(
-        Object.keys(loaded.value[info.plural as keyof GameContent] ?? {}).length,
-        info.plural,
-      ).toBeGreaterThan(0)
+test('every kind of file is in the full game or the scene game, so nothing is untested', async () => {
+  const full = await loadGame(readFullGame())
+  // A scene and a photo come with pictures of their own, so they live in the scene game and not in the full one.
+  const scene = await loadGame(readSceneGame())
+  expect(full.ok).toBe(true)
+  expect(scene.ok).toBe(true)
+  if (full.ok && scene.ok)
+    for (const info of Object.values(CONTENT_TYPES)) {
+      const game = info.plural === 'scenes' || info.plural === 'photos' ? scene : full
+      const have = Object.keys(game.value[info.plural as keyof GameContent] ?? {}).length
+      expect(have, info.plural).toBeGreaterThan(0)
+    }
 })
 
 test('a game with only levels and characters loads to just those keys, so its content hash has not moved', async () => {

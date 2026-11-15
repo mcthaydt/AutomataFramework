@@ -1,0 +1,20 @@
+{
+  "format": 1,
+  "id": "level-1",
+  "scene": "meadow",
+  "things": [
+    {
+      "id": "crate-1",
+      "character": "crate",
+      "x": 18.5,
+      "y": 7.5
+    }
+  ],
+  "starts": [
+    {
+      "player": 1,
+      "x": 14.5,
+      "y": 7.5
+    }
+  ]
+}

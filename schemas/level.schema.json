@@ -13,6 +13,12 @@
       "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
       "description": "A name for this level, like \"level-1\". It matches the file name."
     },
+    "scene": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "The scene the level is played in, by the id in its file, like \"meadow\". The ground, sky and backdrop come from it, so a level with a scene has no \"tiles\"."
+    },
     "tileset": {
       "type": "string",
       "maxLength": 64,
@@ -90,7 +96,7 @@
         "minLength": 1,
         "maxLength": 256
       },
-      "description": "The map, one text row per line, top to bottom. # is solid ground and . is empty air. With a tileset, each letter is one of its tiles."
+      "description": "The map, one text row per line, top to bottom. # is solid ground and . is empty air. With a tileset, each letter is one of its tiles. Left out when the level names a \"scene\"."
     },
     "things": {
       "maxItems": 1024,
@@ -318,7 +324,6 @@
   "required": [
     "format",
     "id",
-    "tiles",
     "things",
     "starts"
   ],

@@ -13,8 +13,10 @@ import type { Level } from './level.ts'
 import { languageName, type MessagesFile } from './messages.ts'
 import type { MusicFile } from './music.ts'
 import { type Parsed, parseContent } from './parse.ts'
+import type { PhotoFile } from './photo.ts'
 import type { ContentRef } from './project.ts'
 import { PROJECT_FILE, type Project, parseProject } from './project.ts'
+import type { SceneFile } from './scene.ts'
 import { list, noSuch } from './shared.ts'
 import type { SoundFile } from './sound.ts'
 import type { TilesetFile } from './tileset.ts'
@@ -33,6 +35,8 @@ export interface GameContent {
   readonly characters: Readonly<Record<string, Character>>
   readonly tilesets?: Readonly<Record<string, TilesetFile>>
   readonly backdrops?: Readonly<Record<string, BackdropFile>>
+  readonly scenes?: Readonly<Record<string, SceneFile>>
+  readonly photos?: Readonly<Record<string, PhotoFile>>
   readonly figures?: Readonly<Record<string, FigureFile>>
   readonly behaviours?: Readonly<Record<string, BehaviourFile>>
   readonly tunings?: Readonly<Record<string, TuningFile>>
