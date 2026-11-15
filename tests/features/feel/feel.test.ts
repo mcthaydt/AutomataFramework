@@ -422,3 +422,27 @@ test('the same events and frame times give the same frames', () => {
   const other = newFeel({ seed: 10 })
   expect(stepAndFrame(other, 1, [event('hero.landed', 7)])).not.toEqual(run()[0])
 })
+
+test('moving is what frames alone can finish: dust, a shake or a hold of the picture, and not a hold of the game', () => {
+  const feel = newFeel()
+  expect(feel.moving).toBe(false)
+  feel.hear({ tick: 1, events: [event('hero.landed', 7)] })
+  expect(feel.moving).toBe(true)
+  for (let i = 0; i < 25; i++) feel.frame(F, place)
+  expect(feel.moving).toBe(false)
+  // A hold of the whole game waits for the loop: it keeps the feel from being idle, but frames cannot spend it.
+  feel.hear({ tick: 2, events: [event('spark.taken', 99)] })
+  // (Thing 99 is not in the scene, so its dust is dropped by the first frame.)
+  feel.frame(0, place)
+  expect(feel.holding).toBe(true)
+  expect(feel.moving).toBe(false)
+  expect(feel.idle).toBe(false)
+  // The same hold of the picture alone is something frames finish.
+  const picture = newFeel({ freezes: 'picture' })
+  picture.hear({ tick: 1, events: [event('spark.taken', 99)] })
+  picture.frame(0, place)
+  expect(picture.moving).toBe(true)
+  for (let i = 0; i < 8; i++) picture.frame(F, place)
+  expect(picture.moving).toBe(false)
+  expect(picture.idle).toBe(true)
+})

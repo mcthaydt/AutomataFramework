@@ -2,7 +2,15 @@
 export { groundOf, skyOf } from './colours.ts'
 export { Look, SKY_COLOR, Thing, TILE_COLOR } from './components.ts'
 export { createGameSim, type GameSimOptions } from './game-sim.ts'
-export { JoinCommand, joinCommand, joinPlugin, LeaveCommand, leaveCommand, playersIn } from './join.ts'
+export {
+  firstHeroSid,
+  JoinCommand,
+  joinCommand,
+  joinPlugin,
+  LeaveCommand,
+  leaveCommand,
+  playersIn,
+} from './join.ts'
 export { MOVE_START, type MoveEventName, MoveMode, type MoveState } from './move-step.ts'
 export { MOVE_EVENTS, type MoveEvent, Moves, moveEvent, movesPlugin } from './moves.ts'
 export { levelPlugin } from './plugin.ts'

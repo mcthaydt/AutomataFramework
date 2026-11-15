@@ -59,6 +59,11 @@ export interface Feel {
   readonly holding: boolean
   /** True when there is nothing to draw and nothing held. */
   readonly idle: boolean
+  /**
+   * True while frames alone would change the picture: dust in the air, a shake, a hold of the picture. A hold of the
+   * whole game is not counted, since only the loop can spend it.
+   */
+  readonly moving: boolean
 }
 
 /** A burst waiting for the next frame, which says where its thing is. */
@@ -141,6 +146,13 @@ export function createFeel(options: FeelOptions): Feel {
     }
   }
 
+  const moving = (): boolean =>
+    specks.length > 0 ||
+    shakes.length > 0 ||
+    bursts.length > 0 ||
+    starting.length > 0 ||
+    pictureHold.left > 0
+
   return {
     begin() {
       heard = undefined
@@ -205,14 +217,10 @@ export function createFeel(options: FeelOptions): Feel {
       return gameHold.left > 0
     },
     get idle() {
-      return (
-        specks.length === 0 &&
-        shakes.length === 0 &&
-        bursts.length === 0 &&
-        starting.length === 0 &&
-        gameHold.left === 0 &&
-        pictureHold.left === 0
-      )
+      return !moving() && gameHold.left === 0
+    },
+    get moving() {
+      return moving()
     },
   }
 }

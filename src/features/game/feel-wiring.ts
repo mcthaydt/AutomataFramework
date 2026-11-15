@@ -1,7 +1,7 @@
 // The game's feel, wired: the feel runtime and the buzzer hear the same steps, the loop waits through a freeze, and each
 // picture is drawn with the dust and the shake of its frame. `startGame`, `watchReplay` and `startOnlineGame` each make
 // one, so what a moment feels like is the same wherever the game is played; only what a freeze holds differs.
-import type { GameContent } from '../content/content.ts'
+import { type FeelFile, formatDiagnostic, type GameContent, parseContent } from '../content/content.ts'
 import { createFeel, type FeelFrame, type FeelSettings, feelSettingsOf } from '../feel/feel.ts'
 import type { Host } from '../host/host.ts'
 import type { DeviceKind } from '../input/input.ts'
@@ -28,6 +28,28 @@ export interface FeelWiring {
   frame(): FeelFrame
   /** True when nothing is drawn and nothing is held. */
   readonly idle: boolean
+  /** True while frames alone would change the picture (dust, a shake, a hold of the picture). */
+  readonly moving: boolean
+  /** Plays one checked file at a thing: the feel's `play`, and the buzzer's for player 1. */
+  show(feel: FeelFile, at: number | undefined): void
+}
+
+/**
+ * A feel file as a draft, checked the way `loadGame` checks a feel file. Throws a `RangeError`, with every problem in
+ * plain words, for one that does not pass.
+ */
+export function checkFeel(draft: unknown): FeelFile {
+  let text: string | undefined
+  try {
+    text = JSON.stringify(draft)
+  } catch {
+    text = undefined
+  }
+  if (text === undefined)
+    throw new RangeError('A feel file is an object with "format", "id", "on" and an effect.')
+  const parsed = parseContent('feel', text, 'the feel to show')
+  if (!parsed.ok) throw new RangeError(parsed.diagnostics.map(formatDiagnostic).join(' '))
+  return parsed.value
 }
 
 export interface FeelWiringOptions {
@@ -86,6 +108,13 @@ export function createFeelWiring(options: FeelWiringOptions): FeelWiring {
     frame: () => last,
     get idle() {
       return feel.idle
+    },
+    get moving() {
+      return feel.moving
+    },
+    show(file, at) {
+      feel.play(file, at)
+      buzzer?.play(file, 1)
     },
   }
 }

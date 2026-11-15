@@ -3,6 +3,7 @@ import { afterEach, expect, test } from 'vitest'
 import { controlsCommand, isHeld, Player } from '#src/features/commands/commands.ts'
 import {
   createGameSim,
+  firstHeroSid,
   joinCommand,
   Look,
   leaveCommand,
@@ -94,4 +95,14 @@ test('a co-op sim can start with nobody in it, and a join brings player 1', asyn
   expect(playersIn(sim)).toEqual([])
   sim.step([joinCommand(0, 1, 0)])
   expect(playersIn(sim)).toEqual([1])
+})
+
+test("firstHeroSid is the lowest player's hero, and undefined in an empty co-op game", async () => {
+  const sim = await coop([])
+  expect(firstHeroSid(sim)).toBeUndefined()
+  sim.step([joinCommand(0, 3, 0)])
+  expect(firstHeroSid(sim)).toBe(hero(sim, 3)?.sid)
+  sim.step([joinCommand(1, 2, 0)])
+  expect(firstHeroSid(sim)).toBe(hero(sim, 2)?.sid)
+  expect(hero(sim, 2)?.sid).not.toBe(hero(sim, 3)?.sid)
 })

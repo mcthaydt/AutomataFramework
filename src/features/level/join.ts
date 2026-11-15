@@ -40,6 +40,16 @@ export function playersIn(sim: Sim): number[] {
     .sort((a, b) => a - b)
 }
 
+/** The sid of the lowest player's hero (the thing a game's own feel is about); `undefined` when nobody is in. */
+export function firstHeroSid(sim: Sim): number | undefined {
+  let first: { readonly number: number; readonly sid: number } | undefined
+  for (const hero of sim.query(Player)) {
+    const number = hero.get(Player).number
+    if (first === undefined || number < first.number) first = { number, sid: hero.sid }
+  }
+  return first?.sid
+}
+
 /**
  * The plugin a co-op game gets: name 'join', depends on 'level', config `{ level, max }`. Its system runs in the
  * input phase before `commands.controls`, so a player's first `controls` command may arrive in the tick they join.

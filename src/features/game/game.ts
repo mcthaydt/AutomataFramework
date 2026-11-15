@@ -5,6 +5,7 @@
 import { type Frames, pageFrames } from '../../lib/frames.ts'
 import type { GameAudio } from '../audio/audio.ts'
 import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
+import type { FeelFile } from '../content/content.ts'
 import type { FeelFrame } from '../feel/feel.ts'
 import type { Host } from '../host/host.ts'
 import {
@@ -15,17 +16,18 @@ import {
   type PadLike,
   touchSettingsOf,
 } from '../input/input.ts'
-import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
+import { createGameSim, firstHeroSid, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Sim } from '../sim/sim.ts'
 import { soundNotice } from '../web/web.ts'
 import { levelArt } from './art.ts'
 import { resolveControls } from './controls.ts'
-import { createFeelWiring } from './feel-wiring.ts'
+import { checkFeel, createFeelWiring } from './feel-wiring.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
+import { createStillFrames } from './still-frames.ts'
 import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
 export { type Frames, MAX_STEPS_PER_FRAME } from './loop.ts'
@@ -110,6 +112,13 @@ export interface Game {
   setShake(on: boolean): void
   /** What the last picture drew of the game's feel: the specks, the shake offset and the ticks still held. */
   feel(): FeelFrame
+  /**
+   * Plays one feel file once, at the thing whose sid is `at` (the first hero when left out), playing or paused. The
+   * file may be an unsaved draft. Nothing is sent to the sim and nothing is recorded; its freeze holds the picture
+   * only, so a run is never changed. It follows the "Screen shake" setting like any other shake. Throws a
+   * `RangeError`, in plain words, for a file the feel format refuses.
+   */
+  showFeel(feel: FeelFile, at?: number): void
   /** The play so far, from tick 0. Not available after `stop`, which disposes the sim. */
   replay(): Replay
   /** Stops the loop, removes the canvas and the controls, and disposes the sim. Safe to call twice. */
@@ -207,6 +216,8 @@ export async function startGame(options: GameOptions): Promise<Game> {
         on: touchSettingsOf(options.touchSettings).vibration,
       },
     })
+    // How far between two steps the last picture was drawn, so a still picture is drawn there and does not jump.
+    let lastAlpha = 1
     const loop = createLoop({
       tickHz: sim.tickHz,
       step() {
@@ -218,7 +229,10 @@ export async function startGame(options: GameOptions): Promise<Game> {
         wiring.hear(result)
         people.afterStep()
       },
-      draw: wiring.draw,
+      draw(alpha, ms) {
+        lastAlpha = alpha
+        wiring.draw(alpha, ms)
+      },
       hold: wiring.hold,
       held: () => wiring.holding,
       frames,
@@ -228,12 +242,20 @@ export async function startGame(options: GameOptions): Promise<Game> {
     // While held, nobody is holding anything: what is down when the game comes back waits for a fresh press.
     let unsilence: (() => void) | undefined
     let stopped = false
+    // A paused picture still finishes what was moving in it, and shows a feel played by hand.
+    const still = createStillFrames({
+      frames,
+      wanted: () => pausedByHand && host.visible() && !stopped && wiring.moving,
+      draw: (ms) => wiring.draw(lastAlpha, ms),
+    })
     // Still while paused by hand or off screen. Starting the loop afresh each time means the time spent still is
     // never counted, so coming back never fast-forwards.
     const sync = (): void => {
       if (stopped) return
       if (pausedByHand || !host.visible()) loop.stop()
       else loop.start()
+      if (pausedByHand && host.visible()) still.kick()
+      else still.stop()
     }
     const unlisten = host.onVisibility(sync)
     // The level is on screen: a new sim is about to be heard, and the page says the level started.
@@ -273,11 +295,17 @@ export async function startGame(options: GameOptions): Promise<Game> {
       setVibration: wiring.setVibration,
       setShake: wiring.setShake,
       feel: wiring.frame,
+      showFeel(feel, at) {
+        wiring.show(checkFeel(feel), at ?? firstHeroSid(sim))
+        // Playing, the loop draws it; paused, the still frames do.
+        still.kick()
+      },
       replay: () => recorder.replay(),
       stop() {
         if (stopped) return
         stopped = true
         loop.stop()
+        still.stop()
         unlisten()
         removeNotice?.()
         cleanup()

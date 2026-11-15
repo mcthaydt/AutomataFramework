@@ -1,6 +1,6 @@
 // The device buzzing in the player's hand: the `buzz` of the game's feel files, played when the event they are `on`
 // happens to a player who is on touch. Hears the same steps the audio hears; makes no sound of its own.
-import type { GameContent } from '../content/content.ts'
+import type { FeelFile, GameContent } from '../content/content.ts'
 import type { Host } from '../host/host.ts'
 import type { DeviceKind } from '../input/input.ts'
 import type { SimEvent } from '../sim/sim.ts'
@@ -8,6 +8,8 @@ import type { SimEvent } from '../sim/sim.ts'
 export interface Buzzer {
   /** Asks the host to buzz for each event of this step that a feel file buzzes on. */
   hear(step: { readonly events: readonly SimEvent[] }): void
+  /** One file's buzz, now, for that player, under the same rules as `hear`. */
+  play(feel: FeelFile, player: number): void
   /** The player's setting: false makes every later step silent. */
   setOn(on: boolean): void
 }
@@ -34,17 +36,26 @@ function playerOf(event: SimEvent): number {
 export function createBuzzer(options: BuzzerOptions): Buzzer {
   const { content, host, device, tickHz } = options
   let on = options.on
-  const buzzes = Object.values(content.feels ?? {}).flatMap((feel) =>
+  /** What a file buzzes with, or none when it does not buzz (no `buzz`, or a strength of 0). */
+  const buzzOf = (feel: FeelFile): { readonly strength: number; readonly ms: number } | undefined =>
     feel.buzz === undefined || feel.buzz.strength <= 0
-      ? []
-      : [{ on: feel.on, strength: feel.buzz.strength, ms: (feel.buzz.ticks * 1000) / tickHz }],
-  )
+      ? undefined
+      : { strength: feel.buzz.strength, ms: (feel.buzz.ticks * 1000) / tickHz }
+  const buzzes = Object.values(content.feels ?? {}).flatMap((feel) => {
+    const buzz = buzzOf(feel)
+    return buzz === undefined ? [] : [{ on: feel.on, ...buzz }]
+  })
   return {
     hear(step) {
       if (!on || !host.canBuzz) return
       for (const event of step.events)
         for (const buzz of buzzes)
           if (buzz.on === event.type && device(playerOf(event)) === 'touch') host.buzz(buzz.strength, buzz.ms)
+    },
+    play(feel, player) {
+      const buzz = buzzOf(feel)
+      if (buzz === undefined || !on || !host.canBuzz || device(player) !== 'touch') return
+      host.buzz(buzz.strength, buzz.ms)
     },
     setOn(value) {
       on = value

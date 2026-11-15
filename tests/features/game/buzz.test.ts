@@ -110,3 +110,28 @@ test("an event with no player is the first player's", async () => {
   b.hear({ events: [{ type: 'level.started', payload: undefined }] })
   expect(host.buzzes).toHaveLength(1)
 })
+
+/** A file that is nothing but a buzz, as a draft shown by hand might be. */
+const DRAFT = { format: 1, id: 'draft', on: 'x.y', buzz: { strength: 0.8, ticks: 6 } } as const
+
+test('play buzzes for one file, now, with its strength and its ticks as milliseconds', async () => {
+  const { host, buzzer: b } = await buzzer([LAND])
+  b.play(DRAFT, 1)
+  expect(host.buzzes).toEqual([{ strength: 0.8, ms: 100 }])
+})
+
+test('play follows the same rules as hear: touch only, on, and a host that can', async () => {
+  const quiet = [{ device: 'keyboard' }, { device: 'gamepad' }, { on: false }, { canBuzz: false }] as const
+  for (const options of quiet) {
+    const { host, buzzer: b } = await buzzer([LAND], options)
+    b.play(DRAFT, 1)
+    expect(host.buzzes, JSON.stringify(options)).toEqual([])
+  }
+})
+
+test('play asks nothing for a file with no buzz or a buzz of 0', async () => {
+  const { host, buzzer: b } = await buzzer([LAND])
+  b.play({ format: 1, id: 'quiet', on: 'x.y', shake: { strength: 0.2, ticks: 6 } }, 1)
+  b.play({ format: 1, id: 'zero', on: 'x.y', buzz: { strength: 0, ticks: 6 } }, 1)
+  expect(host.buzzes).toEqual([])
+})
