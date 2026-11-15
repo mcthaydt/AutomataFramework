@@ -2,6 +2,21 @@
 
 The tracker every stage reads first and updates last. One section per cycle; newest first.
 
+## Cycle 8: scenes (the framework's side of the 2D environment builder)
+
+Spec: [`2026-11-15-2d-environment-builder-design.md`](https://github.com/mcthaydt/AutomataFrameworkEditors/blob/main/docs/superpowers/specs/2026-11-15-2d-environment-builder-design.md)
+in AutomataFrameworkEditors (its Cycle 4). Six slices, each a framework plan here and a builder plan there, the
+framework's first. It is on the path to Release 1: the demo's real art comes from the builders.
+
+Overall: **8%** (the spec is merged; slice 1's plan is written and in review; stages 3 to 7 follow)
+
+| Stage | State | Output |
+|---|---|---|
+| 1. Spec | Merged in AutomataFrameworkEditors (PR 31). The Owner (2026-11-15): a full scene builder, as powerful as the first attempt's 3D one; the scene owns the ground and the level only places what plays; all six slices | the link above |
+| 2. Plan, slice 1 (ground and materials) | Written, in review (2026-11-15). Sixteen tasks in four pull requests (5.5% each, 12% for the last green run): a PNG reader of our own; the photo library (38 CC0 photos with their records); the `scene` file (nine ground shapes; photo, tiles and flat materials); a game's own photos; a level names its scene; the photo pipeline, engine-proof; the ground's picture; scenes in a game's art and `sceneFromLevel`; the ground's colliders as plain data; slopes and a one-way ledge in physics; a level's sim reads its scene (a moved level plays to the same hash); the built-in hero on a slope (waits for plan H's build, PR 101); the renderer; `automata scene from-level` with `art` and `check`; the skill and the README; three end-to-end journeys. No golden moves; four new ones; no dependency. Fourteen calls the spec left to the builder are settled in it for the audit. Open to the audit: four Rapier names for the ledge's contact hook could not be checked from the planning session; `listContent` (one writer for `automata.toml`) may overlap another plan's. Slices 2 to 6 are outlined | [`plans/2026-11-15-scenes-1-ground-and-materials.md`](plans/2026-11-15-scenes-1-ground-and-materials.md); the builder's: [`2026-11-15-scenes-1-ground-and-materials.md`](https://github.com/mcthaydt/AutomataFrameworkEditors/blob/main/docs/superpowers/plans/2026-11-15-scenes-1-ground-and-materials.md) |
+| 3. Plan audit | Not started: slice 1, both plans (Opus, medium effort) | |
+| 4 to 7 | Not started | |
+
 ## Cycle 7: the default game flow (plan U)
 
 Spec: [`specs/2026-11-14-m2-design.md`](specs/2026-11-14-m2-design.md) ("UI, screens and layouts (plan U)"), with the
