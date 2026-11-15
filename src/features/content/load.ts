@@ -12,6 +12,7 @@ import type { FigureFile } from './figure.ts'
 import type { Level } from './level.ts'
 import { languageName, type MessagesFile } from './messages.ts'
 import type { MusicFile } from './music.ts'
+import type { PaletteFile } from './palette.ts'
 import { type Parsed, parseContent } from './parse.ts'
 import type { ContentRef } from './project.ts'
 import { PROJECT_FILE, type Project, parseProject } from './project.ts'
@@ -34,6 +35,7 @@ export interface GameContent {
   readonly tilesets?: Readonly<Record<string, TilesetFile>>
   readonly backdrops?: Readonly<Record<string, BackdropFile>>
   readonly figures?: Readonly<Record<string, FigureFile>>
+  readonly palettes?: Readonly<Record<string, PaletteFile>>
   readonly behaviours?: Readonly<Record<string, BehaviourFile>>
   readonly tunings?: Readonly<Record<string, TuningFile>>
   readonly feels?: Readonly<Record<string, FeelFile>>

@@ -76,7 +76,7 @@ test('the list of words files is not hashed either', async () => {
   const given = simContent(full)
   expect(given.project.content.some((entry) => entry.type === 'messages')).toBe(false)
   // Every other entry stays, in its order; the sound, music, cue and art files leave with the words (plans S and A).
-  const left = new Set(['messages', 'sound', 'music', 'cues', 'figure', 'backdrop', 'feel'])
+  const left = new Set(['messages', 'sound', 'music', 'cues', 'figure', 'palette', 'backdrop', 'feel'])
   expect(given.project.content).toEqual(full.project.content.filter((entry) => !left.has(entry.type)))
 })
 

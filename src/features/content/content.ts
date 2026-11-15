@@ -95,6 +95,15 @@ export {
 } from './music.ts'
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
+export {
+  DUEL_COLOURS,
+  inkOf,
+  LIBRARY_PALETTE,
+  lightness,
+  type PaletteFile,
+  PaletteSchema,
+  type Ramp,
+} from './palette.ts'
 export { type Parsed, parseContent } from './parse.ts'
 export {
   type ContentRef,

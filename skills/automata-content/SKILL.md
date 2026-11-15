@@ -168,6 +168,27 @@ After you change a figure, run `npx --no automata art`: it paints `content/figur
 }
 ```
 
+## palette
+
+The colours a figure is shaded in. Each ramp is one colour as three to six shades, from dark to light; a figure names a ramp (`moss`, `tan`) and the painter steps through its shades to light the figure, so a figure never has a colour its palette does not. The framework has a palette of its own (`automata`, 32 ramps); write one only for colours of your own. Put the files in `content/palettes/`; the kind's rules are in `schemas/palette.schema.json`.
+
+```json
+{
+  "format": 1,
+  "id": "meadow",
+  "ramps": [
+    {
+      "id": "moss",
+      "colors": [
+        "#174a1b",
+        "#225918",
+        "#2f690c"
+      ]
+    }
+  ]
+}
+```
+
 ## backdrop
 
 What is behind a level: strips of hills, mountains, clouds or flat colour that repeat sideways, with figures standing on them. A level names one with its `backdrop`. Put the files in `content/backdrops/`; the kind's rules are in `schemas/backdrop.schema.json`.

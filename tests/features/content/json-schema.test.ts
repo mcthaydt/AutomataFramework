@@ -79,6 +79,8 @@ test('the JSON Schema of a figure and a backdrop', () => {
   expectSchema('backdrop', 'Backdrop', ['format', 'id', 'seed', 'tile', 'width', 'layers', 'props'])
 })
 
+test('the JSON Schema of a palette', () => expectSchema('palette', 'Palette', ['format', 'id', 'ink', 'ramps']))
+
 test('the JSON Schema of a behaviour', () =>
   expectSchema('behaviour', 'Behaviour', ['format', 'id', 'rules']))
 

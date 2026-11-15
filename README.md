@@ -843,6 +843,7 @@ Each kind has a JSON Schema, shipped in the package so an agent can read the for
 | `tileset` | the letters a level's map may use, and which of them are solid | `content/tilesets/` | `schemas/tileset.schema.json` |
 | `backdrop` | what is behind a level: layers that repeat sideways, and the figures that stand on them | `content/backdrops/` | `schemas/backdrop.schema.json` |
 | `figure` | a character or a prop drawn from blocks in poses, painted into a picture | `content/figures/` | `schemas/figure.schema.json` |
+| `palette` | the colours a figure is shaded in: each a ramp of shades from dark to light | `content/palettes/` | `schemas/palette.schema.json` |
 | `behaviour` | rules for what a character does: flee, follow, wander, jump | `content/behaviours/` | `schemas/behaviour.schema.json` |
 | `tuning` | numbers that decide how something plays, each with its range, and the controls | `content/tunings/` | `schemas/tuning.schema.json` |
 | `feel` | a burst of dust, a shake or a freeze for a moment in the game | `content/feels/` | `schemas/feel.schema.json` |
