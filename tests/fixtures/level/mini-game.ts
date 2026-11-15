@@ -113,15 +113,15 @@ export function miniFiles(game: MiniGame = {}): Record<string, string | undefine
       const id = (file as { id: string }).id
       return { type, path: `content/${plural}/${id}.json`, text: writeContent(type, file as never) }
     })
+  // A game that lists words names the language they are written in; one without words has no language to name.
+  const named = (toml: string): string => (game.words === undefined ? toml : withSource(toml, 'en'))
   const base = {
     ...fixtureFiles,
-    // The fixture game lists words, so the project names the language they are written in.
-    'automata.toml': withSource(
+    'automata.toml': named(
       (fixtureFiles['automata.toml'] ?? '').replace(
         'hero = "hero"\n',
         players > 1 ? `hero = "hero"\nplayers = ${players}\n` : 'hero = "hero"\n',
       ),
-      'en',
     ),
     // The behaviours look for a hero by its kind.
     'content/characters/hero.json': writeContent('character', {

@@ -44,7 +44,7 @@ export interface StoryViewOptions {
   readonly content: GameContent
   /** The game's one count of command numbers, shared with the input and the players' joins. */
   readonly sequence: Sequence
-  /** Default: `wordsOf(content, 'en')`. */
+  /** Default: the game's own language (its `source`), or the keys themselves when the game lists no words. */
   readonly words?: Words
   /** The words on the box's own two buttons. Default: Next and Skip. */
   readonly boxWords?: BoxWords
@@ -112,7 +112,8 @@ function sceneState(content: GameContent, words: Words, scene: SceneView): BoxSt
 export function createStoryView(options: StoryViewOptions): StoryView {
   const { mount, sim, content, sequence, seats, onMenu } = options
   const watching = options.watching === true
-  const words = options.words ?? wordsOf(content, 'en')
+  const own = content.project.source
+  const words: Words = options.words ?? (own === undefined ? (key) => key : wordsOf(content, own))
   const local = (): readonly number[] => seats?.().map((seat) => seat.player) ?? []
   const pressed: Press[] = []
   /** The lowest-numbered player on this page: the one who skips, the same in every window of the same game. */

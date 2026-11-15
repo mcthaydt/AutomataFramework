@@ -160,17 +160,21 @@ test('"opens" is true or it is left out', () =>
 
 /** The fixture game with these cutscenes (id, level, opens), and English for their lines. */
 const withOpening = (scenes: readonly (readonly [string, boolean])[]) =>
-  storyGame([
-    { type: 'messages', path: 'content/messages/en.json', text: writeContent('messages', english()) },
-    ...scenes.map(([id, opens]) => {
-      const scene = { ...intro(), id, level: 'level-1', ...(opens ? { opens } : {}) }
-      return {
-        type: 'cutscene' as const,
-        path: `content/cutscenes/${id}.json`,
-        text: writeContent('cutscene', scene as never),
-      }
-    }),
-  ])
+  storyGame(
+    [
+      { type: 'messages', path: 'content/messages/en.json', text: writeContent('messages', english()) },
+      ...scenes.map(([id, opens]) => {
+        const scene = { ...intro(), id, level: 'level-1', ...(opens ? { opens } : {}) }
+        return {
+          type: 'cutscene' as const,
+          path: `content/cutscenes/${id}.json`,
+          text: writeContent('cutscene', scene as never),
+        }
+      }),
+    ],
+    {},
+    'en',
+  )
 
 test('a level that opens with one cutscene', async () =>
   expect(
