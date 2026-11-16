@@ -49,7 +49,12 @@ function plan(files: string[], { draft = true, labels = '' } = {}): Record<strin
 }
 
 test('a pull request that changes only Markdown that people read is docs-only, draft or not', () => {
-  const files = ['CLAUDE.md', 'docs/superpowers/progress.md', 'docs/superpowers/plans/2026-11-15-a-plan.md']
+  const files = [
+    'CLAUDE.md',
+    'docs/superpowers/progress.md',
+    'docs/superpowers/plans/2026-11-15-a-plan.md',
+    '.claude/skills/review-graph/SKILL.md',
+  ]
   expect(plan(files)).toMatchObject({ docs: 'true' })
   expect(plan(files, { draft: false })).toMatchObject({ docs: 'true' })
 })
@@ -60,6 +65,8 @@ test.each([
   'skills/automata/SKILL.md',
   'template/README.md',
   'docs/notes.txt',
+  '.claude/hooks/guard.mjs',
+  '.claude/settings.json',
   'src/index.ts',
 ])('%s, which a test reads or is not Markdown, is tested', (file) => {
   expect(plan(['CLAUDE.md', file])).toMatchObject({ docs: 'false' })

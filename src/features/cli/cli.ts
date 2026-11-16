@@ -11,12 +11,14 @@ import { createGame, nameOf } from './create.ts'
 import { helpFor } from './help.ts'
 import { liveLayer, stdinLines } from './live.ts'
 import { serveMcp } from './mcp.ts'
+import { describePicture, runPicture } from './picture.ts'
 import { runPlay } from './play.ts'
 import { CliError, Out, type OutService, type Ports } from './ports.ts'
 import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays } from './replay.ts'
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
 import { printToStderr } from './stderr.ts'
 import { describeWords, runWords } from './unread.ts'
+import { describeWorld, runWorld } from './world.ts'
 
 type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
 
@@ -85,6 +87,41 @@ const words: Command = (input) =>
     return 0
   })
 
+/** `automata world`: the levels, the doors and the joins, as words or as JSON. */
+const world: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const report = yield* runWorld({ folder: input.folder ?? '.' })
+    if (input.flags.json === true) yield* out.line(JSON.stringify(report, null, 2))
+    else {
+      const said = describeWorld(report)
+      for (const line of said.out) yield* out.line(line)
+      for (const line of said.err) yield* out.error(line)
+    }
+    return report.ok ? 0 : 1
+  })
+
+/** `automata picture`: the levels (and the world map) drawn, and what each number means, as words or as JSON. */
+const picture: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const { folder } = input.flags
+    // The words after the command are levels: a folder is named with `--folder`, so a level is typed the way it is read.
+    const report = yield* runPicture({
+      folder: typeof folder === 'string' ? folder : '.',
+      levels: [...(input.folder === undefined ? [] : [input.folder]), ...input.rest],
+      whatItIs: input.flags['what-it-is'] === true,
+      world: input.flags.world === true,
+    })
+    if (input.flags.json === true) yield* out.line(JSON.stringify(report, null, 2))
+    else {
+      const said = describePicture(report)
+      for (const line of said.out) yield* out.line(line)
+      for (const line of said.err) yield* out.error(line)
+    }
+    return report.ok ? 0 : 1
+  })
+
 /** A folder as a person can paste it after `cd`: in quotes when it has a space or a quote in it. */
 const shellWord = (word: string): string =>
   /^[\w@%+=:,./\\-]+$/.test(word) ? word : `"${word.replaceAll('"', '\\"')}"`
@@ -151,6 +188,8 @@ const COMMANDS: Readonly<Record<CommandName, Command>> = {
   replay,
   art,
   words,
+  world,
+  picture,
   mcp,
 }
 
@@ -172,7 +211,7 @@ const run = (args: readonly string[]): Effect.Effect<number, CliError, Ports> =>
     }
     // A word after the folder would be dropped, and the command would quietly work on another folder: a name with a
     // space typed without quotes is the usual way to get here.
-    if (parsed.rest.length > 0) {
+    if (parsed.rest.length > 0 && parsed.command !== 'picture') {
       yield* out.error(
         `automata ${parsed.command} takes one folder, but more words came after "${parsed.folder}": ${parsed.rest.join(' ')}. A folder with a space in its name goes in quotes, like "my games/first one".`,
       )
