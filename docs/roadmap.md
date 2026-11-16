@@ -19,7 +19,7 @@ slice runs the same six steps in order:
 6. **Design review loop.** Every screen built in the slice goes through review, fix and recheck (the `visual-review`
    skill) until the recheck passes, recorded in `docs/superpowers/audits/<date>-slice-<n>-design-review.md` with a
    `Scope:` line (what it covered) and the line `Recheck: passed`. The slice does not close, and the next slice does not start, before that (the owner,
-   2026-11-16); the `agent-rules` check fails a roadmap that closes a slice or starts the next one without it.
+   2026-11-16).
 
 Then the next editor starts. The editors go in this order: **World** (levels), **Characters**, **Feel** (with Tuner inside it),
 **Sound**, **Story**, **Screens**: levels first, then who is in them, then how they move, then sound, then the story that
