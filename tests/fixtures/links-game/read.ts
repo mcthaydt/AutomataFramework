@@ -231,3 +231,21 @@ export async function loadLinksGame(overrides: Readonly<Files> = {}): Promise<Ga
   if (!loaded.ok) throw new Error(loaded.diagnostics.map(formatDiagnostic).join('\n'))
   return loaded.value
 }
+
+/** A level of the links game as a test edits it: the file's own fields, with the lists a test moves things in. */
+export interface LevelJson {
+  things: { id: string; character: string; x: number; y: number; values?: Record<string, unknown> }[]
+  starts: { player: number; x: number; y: number }[]
+  [field: string]: unknown
+}
+
+/**
+ * An override that changes one level of the links game: its file is read, handed to `change`, and written back as
+ * `writeContent` writes it, so the changed game is one an editor or an agent could have saved.
+ */
+export function editLevel(id: string, change: (level: LevelJson) => void): Files {
+  const path = `content/levels/${id}.json`
+  const level = JSON.parse(linksFiles()[path] ?? '') as LevelJson
+  change(level)
+  return { [path]: writeContent('level', level as never) }
+}
