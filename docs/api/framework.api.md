@@ -1051,6 +1051,27 @@ function doneScreen(options: ScreenBase & {
 }): Screen;
 ```
 
+### `Door` (interface)
+
+```ts
+interface Door {
+    readonly from: {
+        readonly level: string;
+        readonly thing: string;
+    };
+    readonly to: {
+        readonly level: string;
+        readonly thing?: string;
+    };
+}
+```
+
+### `doorsOf` (function)
+
+```ts
+function doorsOf(content: GameContent): readonly Door[];
+```
+
 ### `DrumPart` (interface)
 
 ```ts
@@ -2072,6 +2093,19 @@ const LeaveCommand: CommandDef<typeof emptyPayload>;
 function leaveCommand(tick: number, player: number, seq: number): Command;
 ```
 
+### `LegendLine` (interface)
+
+```ts
+interface LegendLine {
+    readonly n: number;
+    readonly level: string;
+    readonly thing: string;
+    readonly value: string;
+    readonly shown: ValueShown;
+    readonly says: string;
+}
+```
+
 ### `Level` (interface)
 
 ```ts
@@ -2862,6 +2896,15 @@ const pageDensity: Density;
 function paintBackdrop(backdrop: BackdropFile): IndexedPicture;
 ```
 
+### `Painted` (interface)
+
+```ts
+interface Painted {
+    readonly picture: IndexedPicture;
+    readonly legend: readonly LegendLine[];
+}
+```
+
 ### `paintedPath` (function)
 
 ```ts
@@ -2872,6 +2915,20 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 
 ```ts
 function paintFigure(figure: FigureFile): IndexedPicture;
+```
+
+### `paintLevel` (function)
+
+```ts
+function paintLevel(content: GameContent, level: string, options?: {
+    readonly whatItIs?: boolean;
+}): Painted;
+```
+
+### `paintWorld` (function)
+
+```ts
+function paintWorld(content: GameContent): Painted | undefined;
 ```
 
 ### `ParaglideRuntime` (interface)
@@ -5975,6 +6032,27 @@ interface Diagnostic {
 }
 ```
 
+### `Door` (interface)
+
+```ts
+interface Door {
+    readonly from: {
+        readonly level: string;
+        readonly thing: string;
+    };
+    readonly to: {
+        readonly level: string;
+        readonly thing?: string;
+    };
+}
+```
+
+### `doorsOf` (function)
+
+```ts
+function doorsOf(content: GameContent): readonly Door[];
+```
+
 ### `DrumPart` (interface)
 
 ```ts
@@ -6646,6 +6724,19 @@ const LeaveCommand: CommandDef<typeof emptyPayload>;
 function leaveCommand(tick: number, player: number, seq: number): Command;
 ```
 
+### `LegendLine` (interface)
+
+```ts
+interface LegendLine {
+    readonly n: number;
+    readonly level: string;
+    readonly thing: string;
+    readonly value: string;
+    readonly shown: ValueShown;
+    readonly says: string;
+}
+```
+
 ### `Level` (interface)
 
 ```ts
@@ -7271,6 +7362,15 @@ type PadInput = (typeof PAD_BUTTONS)[number] | (typeof PAD_STICKS)[number];
 function paintBackdrop(backdrop: BackdropFile): IndexedPicture;
 ```
 
+### `Painted` (interface)
+
+```ts
+interface Painted {
+    readonly picture: IndexedPicture;
+    readonly legend: readonly LegendLine[];
+}
+```
+
 ### `paintedPath` (function)
 
 ```ts
@@ -7281,6 +7381,20 @@ function paintedPath(content: GameContent, type: Painted, id: string): string | 
 
 ```ts
 function paintFigure(figure: FigureFile): IndexedPicture;
+```
+
+### `paintLevel` (function)
+
+```ts
+function paintLevel(content: GameContent, level: string, options?: {
+    readonly whatItIs?: boolean;
+}): Painted;
+```
+
+### `paintWorld` (function)
+
+```ts
+function paintWorld(content: GameContent): Painted | undefined;
 ```
 
 ### `ParaglideRuntime` (interface)
