@@ -12,8 +12,8 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { type Browser, type BrowserContext, chromium, firefox, type Page, webkit } from 'playwright'
 import { build, type PreviewServer, preview } from 'vite'
 import { afterAll, beforeAll, expect, test } from 'vitest'
-import { engineFor, journeyEngines } from '../fixtures/journey-engines.ts'
 import { rapierWasm } from '../../vite-rapier-wasm.ts'
+import { engineFor, journeyEngines } from '../fixtures/journey-engines.ts'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const pageDir = fileURLToPath(new URL('../fixtures/online/page/', import.meta.url))
