@@ -48,6 +48,7 @@ export {
   type Ease,
 } from './cutscene.ts'
 export { type Diagnostic, formatDiagnostic } from './diagnostics.ts'
+export { type Door, doorsOf } from './doors.ts'
 export { type Buzz, type Dust, type FeelFile, FeelSchema, type Freeze, type Shake } from './feel.ts'
 export {
   type FigureFile,
@@ -96,6 +97,7 @@ export {
 } from './music.ts'
 export { paintBackdrop } from './paint-backdrop.ts'
 export { paintFigure } from './paint-figure.ts'
+export { type LegendLine, type Painted, paintLevel, paintWorld } from './paint-level.ts'
 export { type Parsed, parseContent } from './parse.ts'
 export { type IsOpen, type Join, layoutWorld, openTile, type PlaceLevel, type WorldLayout } from './places.ts'
 export {

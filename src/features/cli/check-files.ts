@@ -7,6 +7,7 @@ import { paintedPaths } from './art.ts'
 import type { GameFolder } from './game-folder.ts'
 import { type CliError, Files, type FilesService } from './ports.ts'
 import type { StepReport } from './report.ts'
+import { worldFacts } from './world.ts'
 
 const NOT_INSTALLED_NOTE =
   "This game is not installed, so its files were checked with automata's own copy of the framework."
@@ -69,6 +70,8 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
       const words = yield* translationStep(game, game.loaded.value, files)
       problems.push(...words.problems)
       notes.push(...words.notes)
+      // A level nothing leads to, or a place too big to run at once: worth saying, never a failure.
+      notes.push(...worldFacts(game.loaded.value, game.content).notes)
     }
 
     const state = problems.length > 0 ? 'failed' : 'passed'
