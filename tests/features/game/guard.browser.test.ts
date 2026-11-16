@@ -49,3 +49,21 @@ test('the undo puts back what the page had, its own values included', () => {
   expect(document.body.style.getPropertyValue('overscroll-behavior')).toBe('')
   document.documentElement.style.removeProperty('overscroll-behavior')
 })
+
+test('a game that fills the window stops the page from scrolling, and the undo gives the scroll back', () => {
+  mount.style.height = '100vh'
+  const undo = guardPlay(mount)
+  expect(getComputedStyle(document.documentElement).overflowY).toBe('hidden')
+  expect(getComputedStyle(document.body).overflowY).toBe('hidden')
+  undo()
+  expect(document.documentElement.style.getPropertyValue('overflow')).toBe('')
+  expect(document.body.style.getPropertyValue('overflow')).toBe('')
+})
+
+test('a game in the middle of an article leaves the article scrolling', () => {
+  mount.style.height = '300px'
+  const undo = guardPlay(mount)
+  expect(document.documentElement.style.getPropertyValue('overflow')).toBe('')
+  expect(document.body.style.getPropertyValue('overflow')).toBe('')
+  undo()
+})

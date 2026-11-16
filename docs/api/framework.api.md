@@ -1485,6 +1485,7 @@ interface FlowOptions<S extends Progress = Progress> {
     readonly frames?: Frames;
     readonly gamepads?: () => readonly (PadLike | null)[];
     readonly reload?: () => void;
+    readonly back?: boolean;
 }
 ```
 
@@ -4785,7 +4786,7 @@ const START_LEAD = 2;
 ### `startFlow` (function)
 
 ```ts
-function startFlow<S extends Progress = Progress>(options: FlowOptions<S>): Promise<Flow<S>>;
+function startFlow<S extends Progress = Progress>(given: FlowOptions<S>): Promise<Flow<S>>;
 ```
 
 ### `startGame` (function)

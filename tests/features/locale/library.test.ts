@@ -158,7 +158,7 @@ const PLAN_Q_WORDS: readonly string[] = [
  * the commit that first writes them; Task 13 asserts it is empty. A key on it that code already asks for fails the
  * second test below, so the list cannot go stale.
  */
-const OWED: string[] = ['automata.loading.slow']
+const OWED: string[] = []
 
 test("plan Q's words are in all six files, none empty, none its own key, and each keeps its {placeholders}", () => {
   const holes = (text: string): string[] => [...text.matchAll(/\{[a-z]+\}/g)].map((m) => m[0]).sort()

@@ -40,11 +40,17 @@ function setStyles(element: HTMLElement, styles: readonly (readonly [string, str
  */
 export function guardPlay(mount: HTMLElement): () => void {
   const page = mount.ownerDocument
-  const undo = [
+  const undo: Array<() => void> = [
     setStyles(mount, MOUNT_STYLES),
     setStyles(page.documentElement, [['overscroll-behavior', 'none']]),
     ...(page.body === null ? [] : [setStyles(page.body, [['overscroll-behavior', 'none']])]),
   ]
+  // A page the game fills from top to bottom has nothing to scroll to: the page itself stays still. A game in the middle
+  // of an article leaves the article scrolling.
+  if (mount.getBoundingClientRect().height >= (page.defaultView?.innerHeight ?? Number.POSITIVE_INFINITY)) {
+    undo.push(setStyles(page.documentElement, [['overflow', 'hidden']]))
+    if (page.body !== null) undo.push(setStyles(page.body, [['overflow', 'hidden']]))
+  }
   const noMenu = (event: Event): void => event.preventDefault()
   mount.addEventListener('contextmenu', noMenu)
   return () => {

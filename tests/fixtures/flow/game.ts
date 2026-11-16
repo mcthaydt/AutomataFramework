@@ -101,8 +101,9 @@ const level = (id: string, things: readonly object[], players = 1): string =>
   } as never)
 
 /**
- * A level with a gap in its floor, columns 5 to 10 of 16, and the door past it: the way to lose is to run right. The gap
- * is wide so that a hero pushing right while it falls is past the floor's row before it reaches the far side.
+ * A level with a gap in its floor, columns 6 to 9 of 16, and the door past it: the way to lose is to run right, and the way
+ * across is a jump from near the edge (the fixture hero's jump carries it about five tiles). The gap is wide enough that a
+ * hero pushing right while it falls is below the floor's row before it reaches the far side.
  */
 const pit = (players = 1): string =>
   writeContent('level', {
@@ -110,7 +111,7 @@ const pit = (players = 1): string =>
     id: 'level-pit',
     tiles: [
       ...Array.from({ length: 8 }, () => '.'.repeat(16)),
-      Array.from({ length: 16 }, (_, col) => (col >= 5 && col <= 10 ? '.' : '#')).join(''),
+      Array.from({ length: 16 }, (_, col) => (col >= 6 && col <= 9 ? '.' : '#')).join(''),
     ],
     things: [{ id: 'door-1', character: 'door', x: 13.5, y: 7.5 }],
     starts: Array.from({ length: players }, (_, i) => ({ player: i + 1, x: 2.5 + i, y: 7.5 })),

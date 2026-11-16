@@ -6,6 +6,9 @@ import { LANGUAGE_TAGS } from '../locale/locale.ts'
 import { menuKeys } from '../ui/ui.ts'
 import type { Screen, ScreenBase } from './screens.ts'
 
+/** How long a screen takes to fade in, in milliseconds. */
+const FADE_IN_MS = 150
+
 /** What a screen's player can put the focus on, in the order the screen lays them out. */
 const CONTROLS = 'button:enabled, [role="slider"], [role="switch"]'
 
@@ -41,6 +44,15 @@ export function show<P extends Record<string, unknown>>(
   box.style.cssText = 'position:absolute;inset:0;overflow:hidden'
   if (base.overlay === true) box.style.pointerEvents = 'none'
   mount.append(box)
+  // A screen eases in, unless it is the game's own overlay or the player asked for less movement. The box lives as long
+  // as the screen does, so drawing the screen again for a change of words does not play it again. Leaving is at once: the
+  // step that takes a screen off is the step that puts the next on, and the page never holds two screens.
+  if (
+    base.overlay !== true &&
+    typeof box.animate === 'function' &&
+    !matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+    box.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FADE_IN_MS, easing: 'ease-out' })
 
   let drawn: ReturnType<typeof render> | undefined
   const draw = (): void => {
