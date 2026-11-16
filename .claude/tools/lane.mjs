@@ -120,7 +120,9 @@ function main(args) {
   const at = args.indexOf('--base')
   const base = at >= 0 && args[at + 1] ? args[at + 1] : 'origin/main'
   const fork = git(['merge-base', base, 'HEAD']).trim()
-  const lines = git(['diff', '--name-status', '-M', `${fork}...HEAD`]).split('\n').filter(Boolean)
+  const lines = git(['diff', '--name-status', '-M', `${fork}...HEAD`])
+    .split('\n')
+    .filter(Boolean)
   const changes = lines.map((line) => {
     const [status = 'M', ...files] = line.split('\t')
     const kind = status.charAt(0)
