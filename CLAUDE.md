@@ -168,6 +168,11 @@ session on Sonnet at xhigh effort, before the next step starts.
   everywhere else (the project's files, the "needs you" board).
 - **Model choice.** Use the model named for each stage or review step. For anything not explicitly mapped (bug fixes,
   flaky tests, cleanups, one-off jobs), use Opus at medium effort (the Owner, 2026-11-15).
+- **Graphify** (the Owner, 2026-11-16). Every build, audit and fix thread uses the Graphify connector (indexed:
+  AutomataFramework, AutomataFrameworkEditors) to find code and to check what a change affects (`graphify_find`,
+  `query_graph`, `graphify_callers`, `graphify_impact`, `graphify_tests_for`) before grepping or opening files. The graph
+  is a snapshot at its `commitSha`: read the real file for anything changed since, and use text search for strings,
+  config and unindexed repos.
 - **A flaky test seen twice is fixed before other work.** Batch pushes: each push cancels the running CI.
 
 ## Fast CI
