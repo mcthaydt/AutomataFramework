@@ -18,12 +18,12 @@ import { fileURLToPath } from 'node:url'
 /** A unit that fails three corrections has a problem in the plan that made it, which the loop cannot see. */
 export const MAX_TRIES = 3
 
-/** Files any active scope may change: its own state, the tracker, the reports and the lessons (the learning edge). */
+/** Files any active scope may change: its state, the tracker, the reports and the constraints (the learning edge). */
 export const ALWAYS = [
   '.claude/scope.json',
   'docs/superpowers/progress.md',
   'docs/superpowers/audits/**',
-  '.claude/skills/review-graph/lessons.md',
+  'docs/constraints.md',
 ]
 
 /** The top of the git repo that holds `dir`, or null outside one. */

@@ -44,25 +44,28 @@ Work is a graph of small sessions. Each session is a node: one bounded job, one 
 inside it (make, check, correct, until the check is green). Between nodes there are gates, and the Owner stands at
 the end, not in the middle.
 
-- **The check comes first.** A node is done when something a program runs says so: CI is green, the diff stays inside
-  its scope (`node .claude/tools/scope.mjs check`), every finding has its evidence. "It looks good", "the model is
-  sure" and "no errors were raised" are not checks.
-- **An arrow is an edge only if the next step reads the last one's output.** Steps that don't run side by side.
+- **Build the gate first.** A new job that will repeat gets its failing check before the job itself. A node is done
+  when a program says so: CI is green, the diff stays inside its scope (`node .claude/tools/scope.mjs check`), every
+  finding has its evidence. "It looks good", "the model is sure" and "no errors were raised" are not checks.
+- **An edge is a real dependency.** One step waits for another only if it reads that step's output, and the plan names
+  what passes between them. If you can't name it, the two run side by side.
+- **Fixed steps are code, not a model.** Merging, ranking, deduplicating and comparing before and after have one right
+  answer each, so a script does them (`findings.mjs`, `lane.mjs`, the golden checks).
 - **Reviews run side by side.** Independent review lenses each run in their own find-only session and never read each
   other's reports. Then one fix session takes each finding alone: that finding's files only, at most three tries,
   then it reports the finding as stuck. A stuck finding means the plan is wrong. The `review-graph` skill has the
   graph, and `visual-review` and `stage-workflow` use it.
 - **Return the unit, not the batch.** When one fix fails, only that finding goes back; the others stay as they are.
-- **Every confirmed cause becomes a constraint.** Make it a check if a program can see it; otherwise add one line to
-  the review lessons (`.claude/skills/review-graph/lessons.md`), which every later review reads.
-- **Gates follow what a mistake costs to undo, never the model's confidence.**
-  - Reversible and contained (copy, a test, one covered function, docs): green CI merges it.
-  - Reversible but wide (a shared helper, a format or schema, the public API, CI, these rules): green CI and a clean
-    run with no stuck finding; the merge session merges it and says so.
-  - Hard to undo (a golden that moves, a release, a new dependency, credentials, money, deleting anything with an open
-    pull request, a change to the Owner's decisions): this lane never opens without the Owner.
+- **The learning edge.** When a result is accepted or a finding repeats, its cause becomes a constraint: a check if a
+  program can see it, otherwise one line in [`constraints.md`](constraints.md), which the plan and every review split
+  read when they cut the work. It carries the rule, never the output, and stays short.
+- **Lanes follow what a mistake costs to undo, never the model's confidence.** `node .claude/tools/lane.mjs` picks the
+  lane from the changed files: **contained** (docs, tests, one feature folder) merges on a green full run; **wide**
+  (shared code, formats, the public surface, CI and setup, these rules) also needs `graphify_impact` and the affected
+  callers' tests; **closed** (a golden or recording that moves, a deletion, a release, a migration, a new dependency)
+  never opens without the Owner. The `merge-and-release` skill follows it.
 - **The Owner approves only finished results:** the finished mockup set, the finished slice on the site, and the
-  hard-to-undo lane. Nothing in between waits for the Owner.
+  closed lane. Nothing in between waits for the Owner.
 
 ## Models and effort
 
