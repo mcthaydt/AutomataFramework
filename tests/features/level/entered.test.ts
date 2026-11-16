@@ -12,10 +12,10 @@ afterEach(() => {
   for (const sim of made.splice(0)) sim.dispose()
 })
 
-/** Room 2 with only its walls: no door, crate, critter, button or gate. */
+/** Room 2 with only its door (room 1's `exit` leads to it): no crate, critter, button or gate. */
 const bare = (change: (level: LevelJson) => void = () => {}): Record<string, string | undefined> =>
   editLevel('room-2', (level) => {
-    level.things = []
+    level.things = level.things.filter((t) => t.id === 'door-in')
     change(level)
   })
 

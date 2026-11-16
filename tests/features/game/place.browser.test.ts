@@ -30,7 +30,7 @@ afterEach(() => {
 
 /** Room 2 with nothing in it, so a hero can walk to room 3, and its first hero starting at x 12; room 3 has its own sky. */
 const open = editLevel('room-2', (level) => {
-  level.things = []
+  level.things = level.things.filter((t) => t.id === 'door-in')
   level.starts[0] = { player: 1, x: 12, y: 7.5 }
 })
 const ROOM_3_SKY = '#112233'

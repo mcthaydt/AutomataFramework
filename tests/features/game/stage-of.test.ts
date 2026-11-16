@@ -36,7 +36,7 @@ test("stageOf: a level alone is its own size; room-2 and room-3 are one 32 by 9 
 test('followLevel enters the level of the lowest-numbered hero when it changes, and only then', async () => {
   const content = await loadLinksGame(
     editLevel('room-2', (level) => {
-      level.things = []
+      level.things = level.things.filter((t) => t.id === 'door-in')
       level.starts[0] = { player: 1, x: 12, y: 7.5 }
     }),
   )
