@@ -392,7 +392,10 @@ for (const name of journeyEngines()) {
         await page.goto(address)
         await pickLanguage(page, 'en')
         await page.locator('#game[data-state="menu"] [data-screen="menu"]').waitFor({ timeout: 30_000 })
-        await page.locator('[data-screen="menu"]').getByRole('button', { name: /settings/i }).click()
+        await page
+          .locator('[data-screen="menu"]')
+          .getByRole('button', { name: /settings/i })
+          .click()
         await page.locator('#game[data-over="settings"]').waitFor({ timeout: 30_000 })
         // The first line for Jump: its Change button asks for a key, and the key pressed is the new one.
         const row = page.locator('.row', { hasText: /jump/i }).first()
@@ -423,7 +426,14 @@ for (const name of journeyEngines()) {
         // One pad that nobody has yet: a button on it asks to join.
         await context.addInitScript(() => {
           const buttons = Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 }))
-          const pad = { id: 'Test pad', index: 0, connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons }
+          const pad = {
+            id: 'Test pad',
+            index: 0,
+            connected: true,
+            mapping: 'standard',
+            axes: [0, 0, 0, 0],
+            buttons,
+          }
           ;(window as unknown as { __press: (on: boolean) => void }).__press = (on) => {
             const south = buttons[0]
             if (south !== undefined) Object.assign(south, { pressed: on, touched: on, value: on ? 1 : 0 })
@@ -434,7 +444,10 @@ for (const name of journeyEngines()) {
         await page.goto(address)
         await pickLanguage(page, 'en')
         await page.locator('#game[data-state="menu"] [data-screen="menu"]').waitFor({ timeout: 30_000 })
-        await page.locator('[data-screen="menu"]').getByRole('button', { name: /add a player/i }).click()
+        await page
+          .locator('[data-screen="menu"]')
+          .getByRole('button', { name: /add a player/i })
+          .click()
         await page.locator('#game[data-over="players"]').waitFor({ timeout: 30_000 })
         expect(await page.locator('#game').innerText()).toContain('Press any button on your gamepad to join.')
         await expect
@@ -455,8 +468,8 @@ for (const name of journeyEngines()) {
         await playFromMenu(page)
         const heroes = await page.evaluate(
           () =>
-            (window as unknown as PageWindow).automataGame
-              ?.sim.describeSnapshot()
+            (window as unknown as PageWindow).automataGame?.sim
+              .describeSnapshot()
               .entities.filter((entity) => 'player' in entity.components).length ?? 0,
         )
         expect(heroes, 'both players are in the level').toBe(2)
