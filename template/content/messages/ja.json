@@ -5,9 +5,7 @@
     "controls.jump": "ジャンプ",
     "controls.left": "左",
     "controls.right": "右",
-    "level.level-1.name": "レベル1",
-    "page.cannot-start": "このブラウザではゲームを始められませんでした。別のブラウザで試してください。",
-    "page.paint-again": "ゲームのフォルダーで npm run art を実行して絵を描き直してから、このページを読み込み直してください。",
-    "page.problem-title": "このゲームには問題があり、始められません。"
+    "level.level-1.goal": "ドアまで行こう。",
+    "level.level-1.name": "レベル1"
   }
 }

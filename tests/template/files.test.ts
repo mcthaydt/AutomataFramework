@@ -20,7 +20,7 @@ test('every content file is exactly what writeContent writes', () => {
   const project = parseProject(tree['automata.toml'] ?? '')
   expect(project.ok).toBe(true)
   if (!project.ok) return
-  expect(project.value.content.length).toBe(14)
+  expect(project.value.content.length).toBe(22)
   for (const ref of project.value.content) {
     const parsed = parseContent(ref.type, tree[ref.path] ?? '', ref.path)
     expect(parsed.ok, ref.path).toBe(true)
@@ -90,4 +90,44 @@ test("the template's page says no language of its own: no lang on the page, no E
   expect(JSON.parse(tree['biome.template.json'] ?? '{}').overrides).toEqual([
     { includes: ['index.html'], linter: { rules: { a11y: { useHtmlLang: 'off' } } } },
   ])
+})
+
+test('the template names done, lost, score, levels and players, and a goal for its level in six languages', async () => {
+  const project = parseProject(tree['automata.toml'] ?? '')
+  expect(project.ok).toBe(true)
+  if (!project.ok) return
+  expect(project.value).toMatchObject({
+    players: 2,
+    levels: ['level-1'],
+    done: 'door.touched',
+    lost: 'hero.fell',
+    score: 'hero.score.sparks',
+  })
+  const loaded = await loadGame(readTemplate())
+  if (!loaded.ok) throw new Error(loaded.diagnostics.map((d) => d.message).join('\n'))
+  for (const language of ['en', 'es', 'ko', 'ja', 'zh', 'pt'] as const)
+    expect(loaded.value.messages?.[language]?.messages['level.level-1.goal'], language).toBeTruthy()
+})
+
+test('no message key starts with page., since the framework says what a page used to', async () => {
+  for (const path of Object.keys(tree).filter((p) => p.startsWith('content/messages/')))
+    expect(tree[path], path).not.toContain('"page.')
+})
+
+test('every feel and cue of the template names an event its game can raise', () => {
+  // The events the template's rules and the framework's own raise: the hero landing, a spark taken, a hero falling.
+  const raised = ['hero.landed', 'spark.taken', 'hero.fell']
+  for (const path of Object.keys(tree).filter((p) => /^content\/(feels|cues)\//.test(p))) {
+    const file = JSON.parse(tree[path] ?? '{}') as { on?: string; cues?: { on: string }[] }
+    for (const on of file.cues === undefined ? [file.on] : file.cues.map((cue) => cue.on))
+      expect(raised, `${path}: ${on}`).toContain(on)
+  }
+})
+
+test("page.ts imports only the framework and the game's own files, calls startFlow once, and is under 60 lines", () => {
+  const page = tree['src/features/page/page.ts'] ?? ''
+  expect(page.split('\n').length).toBeLessThan(60)
+  expect(page.match(/startFlow\(/g)).toHaveLength(1)
+  for (const m of page.matchAll(/from '([^']+)'/g))
+    expect(m[1] === '@automataframework/framework' || m[1]?.startsWith('.'), m[1]).toBe(true)
 })

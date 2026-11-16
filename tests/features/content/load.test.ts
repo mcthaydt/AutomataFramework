@@ -281,13 +281,23 @@ test('a game written in Korean loads with no English file', async () =>
 // The flow's four fields (plan U, Task 1) are checked against the rest of the game. The template has words (written in
 // English), two figures and one level; a second level is added where the order has two.
 
+// The template's project file with the lines that name how a level ends, which these tests add themselves.
+const plainFiles: Record<string, string> = {
+  ...templateFiles,
+  'automata.toml': (templateFiles['automata.toml'] ?? '').replace(
+    /^(players|levels|done|lost|score) = .*\n/gm,
+    '',
+  ),
+}
+
 const level2 = writeContent('level', {
   ...(JSON.parse(templateFiles['content/levels/level-1.json'] ?? '') as Record<string, unknown>),
   id: 'level-2',
 } as never)
 
 const twoLevels: Record<string, string> = {
-  'automata.toml': `${templateFiles['automata.toml']}\n[[content]]\ntype = "level"\npath = "content/levels/level-2.json"\n`,
+  ...plainFiles,
+  'automata.toml': `${plainFiles['automata.toml']}\n[[content]]\ntype = "level"\npath = "content/levels/level-2.json"\n`,
   'content/levels/level-2.json': level2,
 }
 
@@ -310,7 +320,7 @@ test('levels, done, warnings and splash that fit the game load', async () => {
     twoLevels,
     'levels = ["level-1", "level-2"]',
     'done = "door.touched"',
-    'warnings = ["page.cannot-start"]',
+    'warnings = ["level.level-1.name"]',
     'splash = "hero"',
   )
   expect(await flowProblems(files)).toEqual([])
@@ -327,7 +337,7 @@ test('a start level that is not in the order says where to add it', async () =>
   ]))
 
 test('a warning the source language has no words for says which file to add it to', async () =>
-  expect(await flowProblems(withLines(templateFiles, 'warnings = ["warning.flashing"]'))).toEqual([
+  expect(await flowProblems(withLines(plainFiles, 'warnings = ["warning.flashing"]'))).toEqual([
     'automata.toml: warnings[0]: The game\'s words have no "warning.flashing". Add it to content/messages/en.json.',
   ]))
 
@@ -346,6 +356,6 @@ test('a game with no words cannot have warnings, and is told what to do', async 
 })
 
 test('a splash that is not a listed figure says which figures there are', async () =>
-  expect(await flowProblems(withLines(templateFiles, 'splash = "logo"'))).toEqual([
-    'automata.toml: splash: No figure has the id "logo". The figures are: crate, hero.',
+  expect(await flowProblems(withLines(plainFiles, 'splash = "logo"'))).toEqual([
+    'automata.toml: splash: No figure has the id "logo". The figures are: crate, door, hero.',
   ]))

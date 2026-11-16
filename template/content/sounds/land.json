@@ -1,0 +1,23 @@
+{
+  "format": 1,
+  "id": "land",
+  "volume": 0.7,
+  "voices": [
+    {
+      "kind": "tone",
+      "wave": "sine",
+      "from": 180,
+      "to": 90,
+      "at": 0,
+      "length": 0.12,
+      "volume": 1
+    },
+    {
+      "kind": "noise",
+      "pitch": 1200,
+      "at": 0,
+      "length": 0.08,
+      "volume": 0.5
+    }
+  ]
+}

@@ -8,6 +8,16 @@ start = "level-1"
 hero = "hero"
 # The language your team writes the game's words in. Every other language is checked against it.
 source = "en"
+# How many people can play at once: a second player joins from the menu, on a gamepad or by a second thumb.
+players = 2
+# The levels, in the order they are played.
+levels = ["level-1"]
+# The event that wins a level: the hero touches the door.
+done = "door.touched"
+# The event that loses a level: the hero falls out of the level. The framework raises it; there is nothing to write.
+lost = "hero.fell"
+# What the game counts, and shows as the score: the sparks the hero has taken.
+score = "hero.score.sparks"
 
 # Each [[content]] block lists one file of the game. A file that is not listed here is not part of the game.
 
@@ -15,6 +25,11 @@ source = "en"
 [[content]]
 type = "level"
 path = "content/levels/level-1.json"
+
+# The door: the hero wins the level by touching it.
+[[content]]
+type = "character"
+path = "content/characters/door.json"
 
 # The hero: the character the player controls. Its `moves` line is all it takes for the framework to walk and jump it.
 [[content]]
@@ -37,6 +52,11 @@ path = "content/figures/hero.json"
 type = "figure"
 path = "content/figures/crate.json"
 
+# The door's picture.
+[[content]]
+type = "figure"
+path = "content/figures/door.json"
+
 # The spark: something for the hero to take. It is taken when the hero touches it, and the game keeps count.
 [[content]]
 type = "character"
@@ -48,11 +68,37 @@ path = "content/characters/spark.json"
 type = "tuning"
 path = "content/tunings/hero-moves.json"
 
+# What the player feels when the hero takes a spark, and when the hero falls.
+[[content]]
+type = "feel"
+path = "content/feels/take.json"
+
+[[content]]
+type = "feel"
+path = "content/feels/fall.json"
+
 # What the player feels when the hero lands: a puff of dust and a short buzz. The dust is drawn once the framework draws
 # feels; the buzz works now, on a phone.
 [[content]]
 type = "feel"
 path = "content/feels/land.json"
+
+# The sounds, made from tones and noise, and which event plays which.
+[[content]]
+type = "sound"
+path = "content/sounds/land.json"
+
+[[content]]
+type = "sound"
+path = "content/sounds/take.json"
+
+[[content]]
+type = "sound"
+path = "content/sounds/fall.json"
+
+[[content]]
+type = "cues"
+path = "content/cues/cues.json"
 
 # The game's words, one file for each language. The file of the game's own language (source, above) says what every
 # word is for; the others carry the same keys. `automata check` names a word a language is missing.
