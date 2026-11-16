@@ -45,8 +45,8 @@ what this retro proposes (`docs/superpowers/specs/2026-11-16-slice-retro-design.
   test that delays the fonts); Editors `world-play.browser.test.ts` in WebKit at `52145af` (fixed in #95 with a longer
   readiness wait); Editors `approve.journey.test.ts` in WebKit, run 43928020067 at `83c7274` (the setup drag did not
   register; every Editors CI run since has passed).
-- Becomes: one lesson in Editors' and Site's `history.md` (fonts). The approve drag stays an open item in Editors'
-  `progress.md`: one failure is a defect to report, and its cause is still a guess.
+- Becomes: nothing new. Both font races are already caught by tests that delay the fonts, so no lesson. The approve drag
+  stays an open item in Editors' `progress.md`: one failure is a defect to report, and its cause is still a guess.
 
 ### 5. Vitest's failure screenshots committed
 
@@ -68,6 +68,8 @@ what this retro proposes (`docs/superpowers/specs/2026-11-16-slice-retro-design.
   restored check.
 - Framework `plan-q-checks` and `project-thread-lzla9u` red runs (19): the implementers' own produce-check-correct loop
   on their branches before merge. Not a repeat problem.
+- The footer in AutomataPrivate (#10): Private has no CI, so the restored check cannot run there. The body's last line
+  stays checked by hand, as `CLAUDE.md` "Identity" says.
 - One Chromium journey failure under a full local run (Editors `open-game.journey.test.ts`, 18:34 UTC): recorded in
   Editors' `progress.md`, seen once.
 
