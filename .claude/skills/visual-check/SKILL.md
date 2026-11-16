@@ -16,6 +16,17 @@ looks again. No findings means no fix round. For a set of screens or a slice, fr
 and the session that built the screens fixes them, with everything in one pull request. A slice, the first one
 included, is never a small change: fresh sessions run every step, even when it has one screen.
 
+## Before the build: a layout sketch
+
+A brief or spec that adds or changes a screen carries a layout sketch of it: an ASCII or simple box diagram in the spec,
+or on the short path in the pull request description, that shows what goes where, meaning the main action, the panels
+and the way back. Where the smallest and largest devices in the matrix in Settings lay the screen out differently, it
+sketches both. It takes minutes. No pixel mockups, no drawing tools and no round of approving the look before the build:
+the sketch catches a wrong layout early, and the steps below settle the look after the build. Steps 1 to 3 check the
+built screens against the sketch's layout; a difference is a defect unless the pull request names it with a reason. A
+named difference also goes into the next update to the owner, with pictures of the sketch and the built screen, as
+"Expose decisions" in `CLAUDE.md` asks; it is not a new approval gate.
+
 ## Before the next slice
 
 Do not move to the next slice without a design review loop on the screens completed during that slice: steps 1 and 2

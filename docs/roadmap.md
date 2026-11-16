@@ -11,8 +11,10 @@ is copied from this file. Change this file first, then copy it everywhere else; 
 slice runs the same six steps in order:
 
 1. **Build in Automata.** The runtime and formats the editor needs, in AutomataFramework.
-2. **Editor mockup.** Drawn, then put through the visual review process, until the owner says it is fine.
-3. **Build the editor.** From the approved mockup, in the editors' repo.
+2. **Layout sketch.** In the editor's spec, a quick sketch of each screen that shows what goes where; no pixel
+   mockups.
+3. **Build the editor.** From its spec and sketches, in the editors' repo; the look is settled by the design review
+   loop in step 6.
 4. **Test the editor.** In real browsers on iPad sizes, with the journeys, until it is green on main.
 5. **Update the website demo.** The demo on the site uses what the editor makes, so after every slice there is
    something new to try there. The demo grows with every slice; there is no separate demo slice at the end.
@@ -25,7 +27,7 @@ Then the next editor starts. The editors go in this order: **World** (levels), *
 **Sound**, **Story**, **Screens**: levels first, then who is in them, then how they move, then sound, then the story that
 ties them together (the owner, 2026-11-15), then the screens and the game's flow, added as the sixth editor
 (the owner, 2026-11-15). The shell is built with the first editor and every later editor reuses it, so
-each later mockup also follows the design language (see the rule below).
+each later editor also follows the design language (see the rule below).
 
 1. **One thing at a time.** There is one **Now**. Nothing else is built until it is done.
 2. **Slices go in order.** A slice starts only when the one before it is merged and green.
@@ -36,18 +38,18 @@ each later mockup also follows the design language (see the rule below).
 5. "Done" means merged to main and green there. Nothing else counts as done.
 6. **Work after the current slice stays off main.** Everything after the current slice is tagged and taken off main
    until its turn (AutomataFramework #153, Editors #54; the tag `archive/before-slice-cut` keeps it). Docs stay.
-7. **The design language comes after the mockups are approved.** The owner asked (2026-11-15) for one document that
-   defines the editors' design language and patterns, so later editors do not redo the work. It is written once the
-   shell and World mockups are approved, in its own pull request, and every later mockup reads it first.
+7. **The design language comes after the shell and World mockups were approved.** The owner asked (2026-11-15) for one
+   document that defines the editors' design language and patterns, so later editors do not redo the work. It is written
+   once the shell and World mockups are approved, in its own pull request, and every later sketch and build reads it
+   first.
 8. **One roadmap.** `docs/roadmap.md` in AutomataFramework is the only roadmap; update it first, and copy it
    everywhere else (the owner, 2026-11-15). Every repo's `CLAUDE.md` says so.
 9. **Nothing private here.** This repo is public, so the roadmap uses plain, general words. Prices, the market and
    the real demo games' names are kept in the owner's private notes, and this page does not link to them.
 
 **Who does what.** "Agents" means the project's sessions, each stage in its own: spec, plan, plan audit, build,
-implementation audit, fixes, then the owner's review (the workflow in `CLAUDE.md`). A mockup also goes through the
-visual review process. The merge session merges each green pull request. "The owner" means only the owner can do
-it: approve, decide, start a release, or give an account or a key.
+implementation audit, fixes, then the owner's review (the workflow in `CLAUDE.md`). The merge session merges each green
+pull request. "The owner" means only the owner can do it: approve, decide, start a release, or give an account or a key.
 
 How to read each list: **Done** is merged and green. **Now** is the one thing being built. **Next** is in line, in
 order. **Waiting** is approved, but its turn has not come. **Later** is after the current slice: not worked on now.
@@ -79,7 +81,7 @@ In order. Each line says who does it and where it stands today (2026-11-15).
 |---|---|---|---|
 | 1 | Slices 0 to 2: a game plays in the browser, made from its files | Agents | Done |
 | 2 | Slice 3: World, the levels editor | Agents; the owner approves the mockups | **Now:** the mockups are approved (board v17, Editors #70); the design language, the framework's part (plan W) and the World editor's spec (Editors #74) |
-| 3 | Slices 4 to 8: Characters, Feel, Sound, Story, Screens | Agents; the owner approves each mockup | Later; specs and plans for 4 to 7 are done |
+| 3 | Slices 4 to 8: Characters, Feel, Sound, Story, Screens | Agents; the owner approves each finished editor | Later; specs and plans for 4 to 7 are done |
 | 4 | Release 1: the framework in full and the 2D test game, on npm | Agents get it ready; the owner gives the npm key and starts the release | Later |
 | 5 | Release 2: the 2D editors, in the browser on the site | Agents; the owner gives the Cloudflare and GitHub App settings and starts it | Later; the editors' first screen and sign-in exist from slice 1 |
 | 6 | Release 3: the sales site in full (its first page goes up with Release 1) | Agents; the owner gives the domain | Later; its spec is done (Site #23) |
@@ -155,9 +157,9 @@ whole gate.
    (#124 was closed on 2026-11-15, last commit `150260a`) is rebuilt from its plan,
    `plans/2026-11-15-rigged-figures.md`, then parts 2 to 5. Scenes fix I1 changes the scene pictures' record, so the
    owner sees it first.
-3. Later: the Characters mockups (drawn in Editors #34), reviewed the same way as slice 3.
+3. Later: the Characters layout sketches, in its spec (the mockups drawn in Editors #34 are reference only).
 4. Later: build the Characters editor: the figure builder, clips and entity kinds, Schematic. The environment builder
-   is part of World, and is built when World's mockups cover it.
+   is part of World, and is built when World's spec sketches it.
 5. Later: test the Characters editor.
 6. Later: the website demo gets its real art: an agent draws every figure and scene in the builders, the owner
    finishes them, and the owner plays the demo end to end and says it is fine.
@@ -168,7 +170,7 @@ whole gate.
    live move numbers' plan and audits (#107, #114, #130).
 2. Later: build in Automata: the feel build and live move numbers. Pull request #120 was closed on 2026-11-15 (last
    commit `2f82722`) and #122 was taken off main by #153; they are rebuilt from their plans.
-3. Later: the Feel mockups, through the visual review process.
+3. Later: the Feel layout sketches, in its spec.
 4. Later: build the Feel editor, with Tuner.
 5. Later: test the Feel editor.
 6. Later: the website demo feels better: dust when the hero lands, a shake and a short freeze.
@@ -179,7 +181,7 @@ whole gate.
    (Editors #33, #39, #44).
 2. Later: build in Automata: the sound formats. Pull request #125 was closed on 2026-11-15 (last commit `59d3ffe`);
    it is rebuilt from its plan, `plans/2026-11-15-sound-formats.md`.
-3. Later: the Sound mockups, through the visual review process.
+3. Later: the Sound layout sketches, in its spec.
 4. Later: build the Sound editor.
 5. Later: test the Sound editor.
 6. Later: the website demo gets its music and sounds.
@@ -191,7 +193,7 @@ whole gate.
 2. Later: build in Automata: the story build. Pull request #64 was closed on 2026-11-15 (last commit `fc909a2`); it is
    rebuilt from its plan, changed first by the amendment (all story is facts and conditions, as storylets; the owner,
    2026-11-15): `specs/2026-11-15-rooms-and-storylets-amendment.md`.
-3. Later: the Story mockups, through the visual review process.
+3. Later: the Story layout sketches, in its spec.
 4. Later: build the Story editor.
 5. Later: test the Story editor.
 6. Later: the website demo's keeper talks and a cutscene plays, and the demo's screens, its saves and "What's inside"
@@ -206,7 +208,7 @@ the `flow` feature walks the steps), and Story edits only their words.
 
 1. Later: build in Automata: a screens format and a flow format, so a screen and the way screens lead to each other
    are content files an agent can write too.
-2. Later: the Screens mockups, through the visual review process.
+2. Later: the Screens layout sketches, in its spec.
 3. Later: build the Screens editor.
 4. Later: test the Screens editor.
 5. Later: the website demo's screens come from the editor.
