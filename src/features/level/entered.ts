@@ -107,9 +107,14 @@ export function heroLevels(
   opened?: string,
 ): readonly { readonly player: number; readonly level: string }[] {
   const only = onlyLevel(sim) ?? opened
+  // `In` is registered only by the place plugin, and a sim of one level has none: asking it would throw.
+  const placed = new Map<number, string>()
+  try {
+    for (const e of sim.query(In)) placed.set(e.sid, e.get(In).level)
+  } catch {}
   return sim
     .query(Player)
-    .map((e) => ({ player: e.get(Player).number, level: e.has(In) ? e.get(In).level : only }))
+    .map((e) => ({ player: e.get(Player).number, level: placed.get(e.sid) ?? only }))
     .filter((h): h is { player: number; level: string } => h.level !== undefined)
     .sort((a, b) => a.player - b.player)
 }

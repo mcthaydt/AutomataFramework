@@ -112,7 +112,7 @@ test('two heroes are tracked apart', async () => {
 test('a lone level has no In and no event, and heroLevels says the level it is', async () => {
   const sim = await open('room-1', { players: [1, 2] })
   expect(walk(sim, 120, () => ['right'])).toEqual([])
-  expect(sim.query(In)).toHaveLength(0)
+  expect(() => sim.query(In)).toThrow(/unknown component "level.in"/)
   expect(heroLevels(sim)).toEqual([
     { player: 1, level: 'room-1' },
     { player: 2, level: 'room-1' },
