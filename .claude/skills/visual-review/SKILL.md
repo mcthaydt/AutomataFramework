@@ -10,8 +10,9 @@ reviews all design work on the board, the Editor Mockups artifact
 (https://claude.ai/artifact/W5REbCVDUkABgoPY5Hxy2X). Every mockup change publishes a new version of that same
 artifact before it is reported done.
 
-1. **The Owner glances first.** Rough mockups go on the board and the Owner looks at them (about five minutes) before
-   any review or polish starts.
+1. **The Owner may glance, and nothing waits for it** (the Owner, 2026-11-16). Rough mockups go on the board first and
+   the coordinator tells the Owner they are there; the lenses start at once. A steer from the glance is a finding for
+   the fix session.
 2. **Only what changed.** The board shows only the round's new or changed screens; screens already reviewed are
    skipped, and a second round looks only at screens that changed again.
 3. **Two lenses, side by side** (Opus, medium effort, find only, each in its own thread):
