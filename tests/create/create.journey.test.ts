@@ -382,6 +382,91 @@ for (const name of journeyEngines()) {
       await browser.close()
     }
   }, 300_000)
+
+  test(`${name}: a key changed in Settings is the key that jumps in the level`, async () => {
+    const browser: Browser = await ENGINES[name].launch()
+    try {
+      const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'en-US' })
+      try {
+        const page = await context.newPage()
+        await page.goto(address)
+        await pickLanguage(page, 'en')
+        await page.locator('#game[data-state="menu"] [data-screen="menu"]').waitFor({ timeout: 30_000 })
+        await page.locator('[data-screen="menu"]').getByRole('button', { name: /settings/i }).click()
+        await page.locator('#game[data-over="settings"]').waitFor({ timeout: 30_000 })
+        // The first line for Jump: its Change button asks for a key, and the key pressed is the new one.
+        const row = page.locator('.row', { hasText: /jump/i }).first()
+        await row.getByRole('button').click()
+        await row.and(page.locator('[data-waiting]')).waitFor({ timeout: 30_000 })
+        await page.keyboard.press('j')
+        await expect.poll(() => row.locator('.input').textContent(), POLL).toMatch(/j/i)
+        await page.keyboard.press('Escape')
+        await page.locator('#game:not([data-over])').waitFor({ timeout: 30_000 })
+        await playFromMenu(page)
+        const floor = await heroY(page)
+        await page.keyboard.down('j')
+        await expect.poll(async () => Math.abs((await heroY(page)) - floor), POLL).toBeGreaterThan(0.5)
+        await page.keyboard.up('j')
+      } finally {
+        await context.close()
+      }
+    } finally {
+      await browser.close()
+    }
+  }, 300_000)
+
+  test(`${name}: a second player is added with a gamepad, and is in the level`, async () => {
+    const browser: Browser = await ENGINES[name].launch()
+    try {
+      const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'en-US' })
+      try {
+        // One pad that nobody has yet: a button on it asks to join.
+        await context.addInitScript(() => {
+          const buttons = Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 }))
+          const pad = { id: 'Test pad', index: 0, connected: true, mapping: 'standard', axes: [0, 0, 0, 0], buttons }
+          ;(window as unknown as { __press: (on: boolean) => void }).__press = (on) => {
+            const south = buttons[0]
+            if (south !== undefined) Object.assign(south, { pressed: on, touched: on, value: on ? 1 : 0 })
+          }
+          navigator.getGamepads = () => [pad as unknown as Gamepad]
+        })
+        const page = await context.newPage()
+        await page.goto(address)
+        await pickLanguage(page, 'en')
+        await page.locator('#game[data-state="menu"] [data-screen="menu"]').waitFor({ timeout: 30_000 })
+        await page.locator('[data-screen="menu"]').getByRole('button', { name: /add a player/i }).click()
+        await page.locator('#game[data-over="players"]').waitFor({ timeout: 30_000 })
+        expect(await page.locator('#game').innerText()).toContain('Press any button on your gamepad to join.')
+        await expect
+          .poll(async () => {
+            await page.evaluate(async () => {
+              const press = (window as unknown as { __press: (on: boolean) => void }).__press
+              const frame = () => new Promise((done) => requestAnimationFrame(done))
+              press(true)
+              await frame()
+              await frame()
+              press(false)
+            })
+            return page.locator('#game').innerText()
+          }, POLL)
+          .toContain('Player 2 is in.')
+        await page.locator('[data-screen="players"]').getByRole('button', { name: /done/i }).click()
+        await page.locator('#game:not([data-over])').waitFor({ timeout: 30_000 })
+        await playFromMenu(page)
+        const heroes = await page.evaluate(
+          () =>
+            (window as unknown as PageWindow).automataGame
+              ?.sim.describeSnapshot()
+              .entities.filter((entity) => 'player' in entity.components).length ?? 0,
+        )
+        expect(heroes, 'both players are in the level').toBe(2)
+      } finally {
+        await context.close()
+      }
+    } finally {
+      await browser.close()
+    }
+  }, 300_000)
 }
 
 // The thumbs answer to made-up pointer events everywhere else. Here Chromium's own touch input (the DevTools protocol's
