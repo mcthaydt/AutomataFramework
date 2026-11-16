@@ -43,13 +43,17 @@ test('shared code, setup and two feature folders are wide', () => {
   expect(two.join('\n')).toContain('2 feature folders')
 })
 
-test('a golden that moves, a deletion and a new dependency are closed; a new golden is not', () => {
-  expect(lane({ 'tests/golden/run.json': '{ "hash": 2 }\n' })[0]).toBe('closed')
+test("a golden that moves and a deletion are in the Owner's standing yes; a new golden is not", () => {
+  expect(lane({ 'tests/golden/run.json': '{ "hash": 2 }\n' })[0]).toBe('standing')
   const deleted = lane({ 'src/features/level/load.ts': null })
-  expect(deleted).toEqual(['closed', '- src/features/level/load.ts: deleted'])
-  const added = '{ "dependencies": { "pixi.js": "8.0.0", "lodash": "4.0.0" } }\n'
-  const dependency = lane({ 'package.json': added })
-  expect(dependency).toEqual(['closed', '- lodash: a new dependency'])
+  expect(deleted).toEqual(['standing', '- src/features/level/load.ts: deleted'])
   expect(lane({ 'tests/golden/new.json': '{ "hash": 3 }\n' })[0]).toBe('contained')
   expect(lane({ 'docs/superpowers/old.md': null })[0]).toBe('contained')
+})
+
+test('a new dependency or a release file is closed, and closed wins over the standing yes', () => {
+  const added = '{ "dependencies": { "pixi.js": "8.0.0", "lodash": "4.0.0" } }\n'
+  expect(lane({ 'package.json': added })).toEqual(['closed', '- lodash: a new dependency'])
+  const both = lane({ 'package.json': added, 'src/features/level/load.ts': null })
+  expect(both).toEqual(['closed', '- lodash: a new dependency', '- src/features/level/load.ts: deleted'])
 })
