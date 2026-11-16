@@ -1,6 +1,6 @@
 # History
 
-Finished milestones and their decision records, setup, standing permissions, approved screens and lessons.
+Finished milestones and their decision records, setup, rule changes, standing permissions, approved screens and lessons.
 
 ## Setup
 
@@ -15,6 +15,13 @@ Finished milestones and their decision records, setup, standing permissions, app
 - Session tools (the coordinator, 2026-11-16): start a thread, message it, choose its model and effort: found. Archive: by resolving a thread (hidden, can be reopened).
 - The earlier workflow's records were removed on 2026-11-16 (see "Archive" below); `git show <commit>:<path>` brings
   any of them back.
+
+## Rule changes
+
+- 2026-11-16, the Owner: a blind-judge round (step 4) at the end of each slice's design review in `visual-check`.
+  Approved in the project thread ("add that"). Scope: this change only, made the same in all five repos, as
+  AutomataFramework `docs/superpowers/specs/2026-11-16-blind-judge-design.md` describes. Later rule changes are lane 3
+  as usual.
 
 ## Standing permissions
 
