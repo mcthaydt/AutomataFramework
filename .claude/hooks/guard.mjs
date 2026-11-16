@@ -8,7 +8,6 @@ import { fileURLToPath } from 'node:url'
 import { inScope, readState, repoRoot } from '../tools/scope.mjs'
 import { hasCredit } from './git.mjs'
 
-
 /** What to do instead of forcing a push. */
 const REPLACE = 'Push a new branch and open a replacement pull request instead.'
 

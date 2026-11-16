@@ -89,7 +89,7 @@ test('while a finding is active, an edit outside its files is refused', () => {
   expect(edit('src/b.ts').refused).toBe(false)
 })
 
-test('a call that is not JSON, or not a rule\'s business, runs', () => {
+test("a call that is not JSON, or not a rule's business, runs", () => {
   expect(node('.claude/hooks/guard.mjs', [], { input: 'not json' }).status).toBe(0)
   expect(guard({ tool_name: 'Read', tool_input: { file_path: '/etc/hosts' } }).refused).toBe(false)
 })

@@ -31,7 +31,10 @@ const sha = (text: string): string => createHash('sha256').update(text).digest('
 
 /** Whether any word, or any two words side by side, of `text` hashes to one of `hashes`. */
 export function namesPrivate(text: string, hashes: readonly string[] = PRIVATE_NAMES): boolean {
-  const words = text.toLowerCase().split(/[^\p{L}]+/u).filter(Boolean)
+  const words = text
+    .toLowerCase()
+    .split(/[^\p{L}]+/u)
+    .filter(Boolean)
   return words.some((word, i) => {
     const next = words[i + 1]
     const forms = next === undefined ? [word] : [word, `${word} ${next}`, `${word}${next}`]

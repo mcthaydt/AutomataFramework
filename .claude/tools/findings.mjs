@@ -51,7 +51,8 @@ export function merge(reports) {
       continue
     }
     const other = ids.get(row.id)
-    if (other) errors.push(`${row.id} names two findings, in ${other.lens} and ${row.lens}: give one a new id`)
+    if (other)
+      errors.push(`${row.id} names two findings, in ${other.lens} and ${row.lens}: give one a new id`)
     ids.set(row.id, row)
     kept.set(key(row), row)
   }

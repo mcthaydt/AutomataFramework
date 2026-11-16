@@ -72,12 +72,14 @@ the end, not in the middle.
 | Plan (writing-plans; only the current slice) | Fable 5.2 | medium |
 | Plan audit (skipped for a plan of fewer than five tasks) | Opus | medium |
 | Build (executing-plans) | Sonnet | high |
-| Review lenses, code or visual | Opus | medium |
-| Fix session | Sonnet | high |
+| Implementation audit and every review lens, code or visual | Opus | medium |
+| Fixes | Sonnet | high |
 | The harsh last look at a mockup set | Opus | high |
+| Advisor | Fable 5.2 | |
 | Anything not named here | Opus | medium |
 
-Effort is low, medium or high, never above high. The guard hook refuses a session or agent asked to run higher.
+Every thread start sets both its model and its effort. Effort is low, medium or high, never above high; the guard
+hook refuses a session or agent asked to run higher.
 
 ## Sessions
 
