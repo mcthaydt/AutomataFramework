@@ -1,4 +1,5 @@
-// A thing's values, read from game code (plan W, task 5): on the links game opened at room-2.
+// A thing's values, read from game code (plan W, task 5): on the links game opened at room-2, which is in a place with
+// room-3, so its things have the level in front of their ids.
 import { afterEach, expect, test } from 'vitest'
 import { createGameSim, Thing, valuesOf, Where } from '#src/features/level/level.ts'
 import { Transform } from '#src/features/physics/physics.ts'
@@ -37,7 +38,7 @@ async function inside<T>(look: (ctx: SimContext) => T, level = 'room-2'): Promis
 }
 
 const sidOf = (ctx: SimContext, id: string): number => {
-  const found = ctx.query(Thing).find((e) => e.get(Thing).id === id)
+  const found = ctx.query(Thing).find((e) => e.get(Thing).id === id || e.get(Thing).id === `room-2.${id}`)
   if (found === undefined) throw new Error(`no thing ${id}`)
   return found.sid
 }
@@ -114,7 +115,18 @@ test('a game with no values has no Where, and sixty idle ticks end on the record
   expectRecorded('idleHash60', sim.hash(), (golden as { idleHash60?: string }).idleHash60)
 })
 
-test('the where resource holds the one level, unprefixed, at the corner', async () => {
+test('the where resource holds a level alone unprefixed, at the corner', async () => {
+  const where = await inside((ctx) => ({ ...ctx.resource(Where) }), 'room-1')
+  expect(where).toEqual({ levels: [{ level: 'room-1', x: 0, y: 0, w: 16, h: 9 }], prefixed: false })
+})
+
+test('the where resource holds a place with each level at its offset, prefixed', async () => {
   const where = await inside((ctx) => ({ ...ctx.resource(Where) }))
-  expect(where).toEqual({ levels: [{ level: 'room-2', x: 0, y: 0, w: 16, h: 9 }], prefixed: false })
+  expect(where).toEqual({
+    levels: [
+      { level: 'room-2', x: 0, y: 0, w: 16, h: 9 },
+      { level: 'room-3', x: 16, y: 0, w: 16, h: 9 },
+    ],
+    prefixed: true,
+  })
 })

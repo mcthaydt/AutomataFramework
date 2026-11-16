@@ -100,8 +100,9 @@ function holds(changes: readonly (readonly [number, readonly string[]])[]): (tic
   }
 }
 
+/** A thing by its id in its level; room 2 is in a place with room 3, so its things have the level in front. */
 const find = (sim: Sim, id: string) => {
-  const found = sim.query(Thing).find((e) => e.get(Thing).id === id)
+  const found = sim.query(Thing).find((e) => e.get(Thing).id === id || e.get(Thing).id.endsWith(`.${id}`))
   if (found === undefined) throw new Error(`no thing ${id}`)
   return found
 }
