@@ -27,6 +27,7 @@ import { defaultSave, type FlowSave, newest, type Progress } from './progress.ts
 import { openSections, type Sections, wireSound } from './sections.ts'
 import { advance, FLOW_START, type FlowEvent, type FlowFacts, type FlowState } from './steps.ts'
 import type { Flow, FlowOptions } from './types.ts'
+import { followWays, playEvent, startOptions } from './ways.ts'
 
 export * from './events.ts'
 export * from './party.ts'
@@ -129,7 +130,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     game: () => game,
     party: () => party as Party,
     places: places as unknown as Places<Progress>,
-    play: (level) => dispatch({ type: 'play', level }),
+    play: (level) => dispatch(playEvent(level, places.arrive())),
     fail: (error) => fail(error),
     back: () => dispatch({ type: 'back' }),
   })
@@ -220,7 +221,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     let level = project.start
     if (item === 'continue') level = await places.openNewest()
     else await places.begin()
-    if (!stopped && epoch === mine) dispatch({ type: 'play', level })
+    if (!stopped && epoch === mine) dispatch(playEvent(level, places.arrive()))
   }
 
   /** Puts the step `next` on the page, taking what the step `before` had off it. */
@@ -343,7 +344,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
           putOverlay()
           return
         }
-        await startLevel(next.level ?? project.start, mine)
+        await startLevel(next.level ?? project.start, next.arrive, mine)
         return
       }
       case 'paused': {
@@ -404,8 +405,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     })
   }
 
-  /** Starts `level` and puts the game on the page. */
-  async function startLevel(level: string, mine: number): Promise<void> {
+  /** Starts `level`, the heroes coming in as `arrive` says, and puts the game on the page. */
+  async function startLevel(level: string, arrive: FlowState['arrive'], mine: number): Promise<void> {
     const loaded = content as GameContent
     const heard = locale as Locale
     stopGame()
@@ -415,6 +416,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       // game, or a new one when there is none.
       await places.refresh()
       await places.openNewest()
+      arrive = places.arrive()
     }
     try {
       const started = await startGame({
@@ -429,6 +431,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
         ...(options.controls === undefined ? {} : { controls: options.controls }),
         ...(options.readPicture === undefined ? {} : { readPicture: options.readPicture }),
         ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
+        ...startOptions(arrive, places.progress()?.facts),
         ...(audio === undefined ? {} : { audio }),
         ...(sections === undefined
           ? {}
@@ -444,11 +447,19 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       for (const { player, claim } of party?.members() ?? []) {
         if (claim !== undefined) started.input.claim(player, claim)
       }
-      const done = loaded.project.done
       const off: (() => void)[] = [
         started.input.onBindings((changed) => void sections?.controls.set(changed)),
         started.onStep((step) => {
-          if (endsLevel(done, step.events)) dispatch({ type: 'level-done' })
+          if (endsLevel(loaded.project.done, step.events)) dispatch({ type: 'level-done' })
+        }),
+        followWays({
+          game: started,
+          content: loaded,
+          level,
+          places,
+          words,
+          dispatch,
+          current: () => epoch === mine,
         }),
         // The player is told in words, not in the rule's own message; the loop has thrown that one to the console.
         started.onBroken((error) => fail(error, [])),

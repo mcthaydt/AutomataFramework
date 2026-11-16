@@ -4,8 +4,20 @@
 import type { Words } from '../../lib/message.ts'
 import type { GameContent } from '../content/content.ts'
 import { levelOrder } from '../content/content.ts'
+import type { Arrive } from '../level/level.ts'
 import type { SaveProblem, SaveResult, Saves, SlotState, StoreResult } from '../saves/saves.ts'
-import { type FlowSave, firstEmpty, newest, type Progress, progressLabel, reached } from './progress.ts'
+import {
+  cameIn,
+  continueAt,
+  type FlowSave,
+  firstEmpty,
+  type Last,
+  newest,
+  type Progress,
+  progressLabel,
+  reached,
+  remembered,
+} from './progress.ts'
 
 /** What the places need from the flow: the saves (once there are any), the game's save, its project and the words. */
 export interface PlacesContext<S extends Progress> {
@@ -33,6 +45,12 @@ export interface Places<S extends Progress> {
   begin(place?: number): Promise<void>
   /** Opens the saved game in `place` and answers the level to play; a place with nothing opens a new game. */
   open(place: number): Promise<string>
+  /** Where the heroes come in on the level `open` and `openNewest` answered: where the player left off, if anywhere. */
+  arrive(): Arrive | undefined
+  /** Writes where the player was last and how they came into it. Not keeping it does not stop the visit. */
+  cameIn(last: Last): Promise<void>
+  /** Writes what was done for good. Not keeping it does not stop the visit. */
+  remember(fact: string): Promise<void>
   /** Opens the newest saved game, as `open`; with none, a new game. */
   openNewest(): Promise<string>
   /** The level the newest saved game would open, read without opening it; `undefined` when there is none. */
@@ -52,6 +70,7 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
   let slots: readonly SlotState[] = []
   let progress: S | undefined
   let slot: number | undefined
+  let arrive: Arrive | undefined
   let unread: SaveProblem | undefined
 
   async function refresh(): Promise<void> {
@@ -66,6 +85,7 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
   async function begin(place?: number): Promise<void> {
     const start = context.project().start
     progress = save.fresh(start)
+    arrive = undefined
     slot = place ?? firstEmpty(slots)
     const saves = context.saves()
     if (slot !== undefined && saves !== undefined)
@@ -81,8 +101,16 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
     }
     progress = loaded.data
     slot = place
-    // A level the game no longer has opens the first.
-    return levelOrder(project).includes(loaded.data.level) ? loaded.data.level : project.start
+    // Where the player left off, when the game still has that level; else the level reached, else the first.
+    const at = continueAt(loaded.data, levelOrder(project), project.start)
+    arrive = at.arrive
+    return at.level
+  }
+
+  /** Keeps `progress` as it is now, when there is a place to keep it in; a host that will not is not an error. */
+  async function write(): Promise<void> {
+    const saves = context.saves()
+    if (progress !== undefined && slot !== undefined && saves !== undefined) await saves.save(slot, progress)
   }
 
   return {
@@ -91,6 +119,19 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
     full: () => slots.length > 0 && firstEmpty(slots) === undefined,
     progress: () => progress,
     slot: () => slot,
+    arrive: () => arrive,
+    async cameIn(last) {
+      if (progress === undefined) return
+      const was = progress
+      progress = cameIn(progress, last)
+      if (progress !== was) await write()
+    },
+    async remember(fact) {
+      if (progress === undefined) return
+      const was = progress
+      progress = remembered(progress, fact)
+      if (progress !== was) await write()
+    },
     refresh,
     begin,
     open,
@@ -108,7 +149,7 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
       const loaded = await context.saves()?.load(at)
       if (loaded === undefined || !loaded.ok || loaded.data === null) return undefined
       const project = context.project()
-      return levelOrder(project).includes(loaded.data.level) ? loaded.data.level : project.start
+      return continueAt(loaded.data, levelOrder(project), project.start).level
     },
     async reach(level, notKept) {
       if (progress === undefined) return undefined
@@ -143,6 +184,7 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
     forget() {
       progress = undefined
       slot = undefined
+      arrive = undefined
     },
   }
 }

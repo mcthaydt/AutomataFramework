@@ -2,6 +2,7 @@
 // menu, the game with its pause, and back to the menu (the Owner's order, 2026-11-14). It decides nothing the page
 // knows better: whether there is anything to warn about, whether a warning can be read yet and whether the player has
 // a language come in as `FlowFacts`, so a test walks a whole visit with no page.
+import type { Arrive } from '../level/level.ts'
 
 /** Where a visit is. `loading` is before the game has been read; `problem` is the end of a visit that went wrong. */
 export type FlowStep =
@@ -26,6 +27,10 @@ export interface FlowState {
   readonly over?: Over
   /** The level being played, in `playing`, `paused` and `done`. */
   readonly level?: string
+  /** Where the heroes come in, in `playing` and `paused`: beside the door they came through, or where they left off. */
+  readonly arrive?: Arrive
+  /** The level was opened by a door, mid-move, so nothing waits for a first press. Only a door sets it. */
+  readonly door?: true
   /** The warnings have been shown this visit. */
   readonly warned: boolean
   /** A watching visitor took over: the splash and the menu are skipped once. */
@@ -53,10 +58,11 @@ export type FlowEvent =
   | { readonly type: 'warned' }
   | { readonly type: 'picked' }
   | { readonly type: 'splash-over' }
-  | { readonly type: 'play'; readonly level: string }
+  | { readonly type: 'play'; readonly level: string; readonly arrive?: Arrive }
   | { readonly type: 'pause' }
   | { readonly type: 'resume' }
   | { readonly type: 'level-done' }
+  | { readonly type: 'door'; readonly level: string; readonly arrive?: Arrive }
   | { readonly type: 'next' }
   | { readonly type: 'leave' }
   | { readonly type: 'open'; readonly over: Over }
@@ -67,14 +73,28 @@ export type FlowEvent =
 export const FLOW_START: FlowState = { step: 'loading', warned: false, taken: false }
 
 /** `step` with what a visit carries from step to step (what has been warned, who took over) and nothing else. */
-const to = (state: FlowState, step: FlowStep, more: { readonly level?: string } = {}): FlowState => ({
+const to = (
+  state: FlowState,
+  step: FlowStep,
+  more: { readonly level?: string; readonly arrive?: Arrive; readonly door?: true } = {},
+): FlowState => ({
   step,
   ...more,
   warned: state.warned,
   taken: state.taken,
 })
 
-const playing = (state: FlowState, level: string): FlowState => to(state, 'playing', { level })
+const playing = (
+  state: FlowState,
+  level: string,
+  more: { readonly arrive?: Arrive; readonly door?: true } = {},
+): FlowState => to(state, 'playing', { level, ...more })
+
+/** The level, and the way in and the door, a state carries from `playing` to `paused` and back. */
+const held = (state: FlowState): { readonly arrive?: Arrive; readonly door?: true } => ({
+  ...(state.arrive === undefined ? {} : { arrive: state.arrive }),
+  ...(state.door === undefined ? {} : { door: state.door }),
+})
 
 /** The main menu, and the visit is no longer a taken-over watch. */
 const menu = (state: FlowState): FlowState => ({ step: 'menu', warned: state.warned, taken: false })
@@ -126,11 +146,19 @@ export function advance(state: FlowState, event: FlowEvent, facts: FlowFacts): F
       const shown = screens(state, event)
       if (shown !== undefined) return shown
       const canPlay = state.over === undefined || state.over === 'saves'
-      return event.type === 'play' && canPlay ? playing(state, event.level) : state
+      if (event.type !== 'play' || !canPlay) return state
+      return playing(state, event.level, event.arrive === undefined ? {} : { arrive: event.arrive })
     }
     case 'playing': {
       const level = state.level === undefined ? {} : { level: state.level }
-      if (event.type === 'pause') return to(state, 'paused', level)
+      if (event.type === 'pause') return to(state, 'paused', { ...level, ...held(state) })
+      // A door is a way straight into the next level, with no screen between (the Owner, 2026-11-15). It is always a
+      // new state, so the flow starts a level for it, and a level it opens is opened mid-move.
+      if (event.type === 'door')
+        return playing(state, event.level, {
+          door: true,
+          ...(event.arrive === undefined ? {} : { arrive: event.arrive }),
+        })
       return event.type === 'level-done' ? to(state, 'done', level) : state
     }
     case 'paused': {
@@ -138,7 +166,7 @@ export function advance(state: FlowState, event: FlowEvent, facts: FlowFacts): F
       if (shown !== undefined) return shown
       if (event.type === 'leave') return menu(state)
       return event.type === 'resume' && state.over === undefined && state.level !== undefined
-        ? playing(state, state.level)
+        ? playing(state, state.level, held(state))
         : state
     }
     case 'done':
