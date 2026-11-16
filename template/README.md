@@ -5,13 +5,7 @@ a spark to take, and everything a game needs to be checked and played. Change it
 
 ## Play it
 
-```
-cd my-game
-npm install
-npm run dev
-```
-
-The game opens in your browser. Hold the left or right arrow key to move, and press Space to jump. Push the crate, and touch the spark to take it.
+Run `npm install` and `npm run dev` in the game's folder. The game opens in your browser. Hold the left or right arrow key to move, and press Space to jump. Push the crate, and touch the spark to take it.
 
 ## Change something
 
@@ -26,34 +20,21 @@ The game opens in your browser. Hold the left or right arrow key to move, and pr
    any that is missing.
 5. Open `content/figures/crate.json` and change a paint's `color`, then run `npm run art` to paint its picture again. Commit
    the picture with the file.
-6. Run `npm run dev` again.
-
-## Give it a name
-
-Open `automata.toml` and change `name`. It is the name a person reads.
+6. Open `automata.toml` and change `name`, the name a person reads.
+7. Run `npm run dev` again.
 
 ## Check it
 
-```
-npm run check
-```
-
-It says whether the game is sound, and if it is not, which file to fix and what is wrong with it. `npm run fix` puts
+Run `npm run check`. It says whether the game is sound, and if it is not, which file to fix and what is wrong with it. `npm run fix` puts
 the files in their standard form for you. If you meant to change how the game plays, `npm run check` will say the
 recording in `replays/` no longer matches; run `npm run accept` to record the new play.
 
 ## Play the built game in real browsers
 
-```
-npx playwright install --with-deps chromium webkit
-npm run build
-npm run play-test
-```
-
-`npm run build` makes `dist/`, the folder that goes to players. `npm run play-test` opens it in Chromium and WebKit, on a
-phone by touch and on a desktop by keys: it checks the game opens, that the hero can reach the door, and that falling in
-the gap is a lost level you can try again. `npm test` and `npm run check` need no browser. If you redraw the first level,
-change the two numbers at the top of `tests/play/play.test.ts`. Your game's own check on GitHub runs it too.
+Install the browsers once with `npx playwright install --with-deps chromium webkit`, then run `npm run build` and
+`npm run play-test`. It opens the built `dist/` on a phone by touch and on a desktop by keys, and checks that the hero
+reaches the door and that falling in the gap is a lost level you can try again. If you redraw the first level, change
+the two numbers at the top of `tests/play/play.test.ts`. Your game's check on GitHub runs it too.
 
 ## Where things are
 
