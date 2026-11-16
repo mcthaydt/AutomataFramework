@@ -9,8 +9,9 @@ import {
   type Person,
 } from '../../scripts/check-commit-authors.ts'
 
-// A made-up hidden name, so this test never holds a real one.
-const HIDDEN = [createHash('sha256').update('the quiet heron').digest('hex')]
+// A made-up hidden name, so this test never holds a real one, kept as HIDDEN_NAMES keeps a display name: lower case,
+// its words joined by nothing.
+const HIDDEN = [createHash('sha256').update('thequietheron').digest('hex')]
 
 const owner: Person = { name: OWNER.name, email: OWNER.email, login: OWNER.login }
 const claude: Person = { name: 'Claude', email: 'noreply@anthropic.com', login: null }

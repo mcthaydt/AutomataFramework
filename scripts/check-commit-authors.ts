@@ -41,12 +41,14 @@ const isOldName = (name: string): boolean => sha(lower(name.trim())) === OLD_NAM
 
 /**
  * The SHA-256 of each name of the Owner that may not appear in a pull request's words or a commit message, in lower
- * case with its words joined by one space: his old real name, and his display name with and without its first word.
+ * case: his old real name (its words joined by one space, as `OLD_NAME_HASH` is kept), and his display name with
+ * and without its first word, each with its words joined by nothing, so the name run together as one word is caught
+ * too.
  */
 export const HIDDEN_NAMES: readonly string[] = [
   OLD_NAME_HASH,
-  '1fe8ae30fdc949309bfd9014f411ea36259478291eb8e1c1a7e1748f90eb3ae6',
-  'fbeb8fc560b844f07dc4a5837bf0f11bdc9f16707571a6f489fb2d25037cdba5',
+  '8f714652fd5423e59a69279daff82a89eeacbd1b9154a237c4acd14f5d741151',
+  'c2d990e3ac7c4fbe9bb2065bd0bfeeff4bd83bfab45a00b37c78d2d1e49cb12b',
 ]
 
 /** Whether any run of one to three words of `text`, joined by a space or by nothing, hashes to one of `hashes`. */
