@@ -6,11 +6,11 @@ import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { type BrowserContext, chromium, firefox, type Page, webkit } from 'playwright'
+import { type BrowserContext, type BrowserType, chromium, firefox, type Page, webkit } from 'playwright'
 import { expect } from 'vitest'
 
-export const shots = fileURLToPath(new URL('./__screenshots__/', import.meta.url))
-export const ENGINES = { chromium, webkit, firefox }
+export const shots: string = fileURLToPath(new URL('./__screenshots__/', import.meta.url))
+export const ENGINES: Record<'chromium' | 'webkit' | 'firefox', BrowserType> = { chromium, webkit, firefox }
 
 export interface Size {
   readonly width: number
@@ -198,7 +198,10 @@ export const sparksTaken = (page: Page): Promise<number> =>
 export const tickOf = (page: Page): Promise<number> =>
   page.evaluate(() => (window as unknown as PageWindow).automataGame?.sim.tick ?? -1)
 
-export const POLL = { timeout: 30_000, intervals: [50, 100, 250] }
+export const POLL: { readonly timeout: number; readonly intervals: number[] } = {
+  timeout: 30_000,
+  intervals: [50, 100, 250],
+}
 
 /** A touch screen as the game's own question sees it: every page of the context says its pointer is coarse. */
 export async function markCoarse(context: BrowserContext): Promise<void> {
