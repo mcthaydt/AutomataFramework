@@ -7,11 +7,12 @@
 // because then the commands mean something else.
 import type { Replay } from '../commands/commands.ts'
 import type { Host } from '../host/host.ts'
-import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
+import { createGameSim, type GameSimOptions, skyOf } from '../level/level.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Command, Sim } from '../sim/sim.ts'
 import { levelArt } from './art.ts'
 import { createLoop, type Frames } from './loop.ts'
+import { followLevel, stageOf } from './stage-of.ts'
 
 export interface WatchOptions extends GameSimOptions {
   /** The element the game fills: a canvas and nothing else. */
@@ -86,26 +87,26 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
   // What to undo if a later step fails; it grows as things are made.
   let cleanup = (): void => sim.dispose()
   try {
-    const level = options.content.levels[options.level ?? options.content.project.start]
+    const opened = options.level ?? options.content.project.start
+    const level = options.content.levels[opened]
     if (level === undefined) throw new Error('The level this game opens is missing.')
+    const stage = stageOf(options.content, opened)
     // The pictures first: a game that cannot be drawn leaves nothing on the page.
-    const art = await levelArt(
-      'watchReplay',
-      options.content,
-      options.level ?? options.content.project.start,
-      options.readPicture,
-    )
+    const art = await levelArt('watchReplay', options.content, opened, options.readPicture, stage.simLevels)
     cleanup = () => {
       art?.destroy()
       sim.dispose()
     }
     const renderer = await createRenderer({
       mount,
-      world: levelSize(level),
+      world: stage.world,
       sky: skyOf(level),
       art,
       view: level.view,
+      levels: stage.levels,
+      at: opened,
     })
+    const follow = followLevel(renderer, sim, opened, stage.levels)
     cleanup = () => {
       renderer.destroy()
       sim.dispose()
@@ -148,6 +149,7 @@ export async function watchReplay(options: WatchOptions): Promise<Watch> {
           resting = undefined
         }
         renderer.apply(sim.step(commandsNow()).render)
+        follow()
         if (sim.tick < replay.ticks) return
         played++
         if (roundLimit !== undefined && played >= roundLimit) {

@@ -8,7 +8,16 @@ export { JoinCommand, joinCommand, joinPlugin, LeaveCommand, leaveCommand, playe
 export { MOVE_START, type MoveEventName, MoveMode, type MoveState } from './move-step.ts'
 export { MOVE_EVENTS, type MoveEvent, Moves, moveEvent, movesPlugin } from './moves.ts'
 export { boxesOverlap, type TurnedBox } from './overlap.ts'
-export { levelAt, levelsOf, placeSize, shiftLevel, solidGrid } from './place.ts'
+export {
+  type GroundBox,
+  type GroundPart,
+  groundBoxes,
+  levelAt,
+  levelsOf,
+  placeSize,
+  shiftLevel,
+  solidGrid,
+} from './place.ts'
 export { levelPlugin } from './plugin.ts'
 export { simContent } from './sim-content.ts'
 export { LevelError, spawnLevel } from './spawn-level.ts'

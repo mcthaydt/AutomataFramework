@@ -192,6 +192,36 @@ test("the level's tiles are drawn and the ground boxes under them are not", asyn
   expect(groundHas(renderer.canvas, 0xafd472)).toBe(true)
 })
 
+test("a place's art puts each level's tiles at its offset, and the level alone is as it was", async () => {
+  const game = await loaded()
+  const id = game.project.start
+  const level = game.levels[id]
+  if (level === undefined) throw new Error('the full game has no start level')
+  const alone = await loadArt({ content: game, readPicture: readFullGamePicture })
+  const first = { level: id, x: 0, y: 0, w: level.tiles[0]?.length ?? 0, h: level.tiles.length }
+  // The same level twice, side by side, stands for a place of two levels that share one tileset.
+  const twice = await loadArt({
+    content: game,
+    levels: [first, { ...first, x: first.w }],
+    readPicture: readFullGamePicture,
+  })
+  try {
+    expect(twice.tiles).toHaveLength(alone.tiles.length * 2)
+    expect(twice.tiles.slice(0, alone.tiles.length).map(({ col, row }) => [col, row])).toEqual(
+      alone.tiles.map(({ col, row }) => [col, row]),
+    )
+    expect(twice.tiles.slice(alone.tiles.length).map(({ col, row }) => [col - first.w, row])).toEqual(
+      alone.tiles.map(({ col, row }) => [col, row]),
+    )
+    // Every level's ground is hidden under its tiles: the boxes the sim makes, cut at the level's edge.
+    expect(twice.ground.length).toBeGreaterThanOrEqual(alone.ground.length)
+    expect(twice.backdropOf(id)?.layers.length).toBe(alone.backdrop?.layers.length)
+  } finally {
+    alone.destroy()
+    twice.destroy()
+  }
+})
+
 test('with no art every thing is its box, as before', async () => {
   renderer = await createRenderer({ mount, world: WORLD })
   renderer.apply(GROUND)

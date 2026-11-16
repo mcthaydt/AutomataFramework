@@ -4,7 +4,7 @@
 // pauses, because the room does not wait for anyone.
 import { pageFrames } from '../../lib/frames.ts'
 import { createInput, touchSettingsOf } from '../input/input.ts'
-import { createGameSim, levelSize, skyOf } from '../level/level.ts'
+import { createGameSim, skyOf } from '../level/level.ts'
 import {
   coopSeats,
   type Joined,
@@ -26,6 +26,7 @@ import type { GameOptions } from './game.ts'
 import { guardPlay } from './guard.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
+import { followLevel, stageOf } from './stage-of.ts'
 import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
 export interface OnlineOptions extends Omit<GameOptions, 'players' | 'level'> {
@@ -95,7 +96,14 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
   if (levelData === undefined) throw new Error('The level this game opens is missing.')
 
   // The pictures first, as `startGame` loads them: a game that cannot be drawn joins no room and puts nothing on the page.
-  const art: Art | undefined = await levelArt('startOnlineGame', simOptions.content, level, readPicture)
+  const stage = stageOf(simOptions.content, level)
+  const art: Art | undefined = await levelArt(
+    'startOnlineGame',
+    simOptions.content,
+    level,
+    readPicture,
+    stage.simLevels,
+  )
   // A co-op game's room has the places its level has starts for, and its heroes come by the sim's own `join`: both sims
   // then start with nobody, as the room's does. Any other game's room is for two unless this page says, and all of its
   // players are in from the start.
@@ -194,11 +202,15 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
   try {
     const renderer = await createRenderer({
       mount,
-      world: levelSize(levelData),
+      world: stage.world,
       sky: skyOf(levelData),
       art,
       view: levelData.view,
+      levels: stage.levels,
+      at: level,
     })
+    // The page follows the sim it predicts with: the level its lowest-numbered hero is in.
+    const follow = followLevel(renderer, session.sim, level, stage.levels)
     cleanup = () => {
       renderer.destroy()
       leaveRoom()
@@ -238,6 +250,7 @@ export async function startOnlineGame(options: OnlineOptions): Promise<OnlineGam
     const step = (): void => {
       const advance = session.advance(input.poll(session.sim.tick))
       for (const delta of advance.deltas) renderer.apply(delta)
+      follow()
       for (const heard of advance.steps) buzzer.hear(heard)
       if (audio === undefined) return
       const syncs = session.stats().syncs

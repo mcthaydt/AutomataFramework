@@ -109,6 +109,7 @@ interface Art {
     readonly tiles: readonly TileSprite[];
     readonly ground: readonly TileBox[];
     readonly backdrop: BackdropArt | undefined;
+    backdropOf(level: string): BackdropArt | undefined;
     destroy(): void;
 }
 ```
@@ -799,14 +800,9 @@ function createRenderer(options: {
     sky?: number;
     art?: Art | undefined;
     density?: Density | undefined;
-    view?: {
-        readonly w: number;
-        readonly h: number;
-        readonly most?: {
-            readonly w: number;
-            readonly h: number;
-        } | undefined;
-    } | undefined;
+    view?: ViewSize | undefined;
+    levels?: readonly StageLevel[] | undefined;
+    at?: string | undefined;
 }): Promise<Renderer>;
 ```
 
@@ -1616,6 +1612,7 @@ interface GameOptions extends GameSimOptions {
     readonly readPicture?: ReadPicture;
     readonly touchSettings?: unknown;
     readonly locale: Locale;
+    readonly facts?: readonly string[];
 }
 ```
 
@@ -1645,10 +1642,33 @@ interface GameStep {
 }
 ```
 
+### `GroundBox` (interface)
+
+```ts
+interface GroundBox {
+    readonly box: TileBox;
+    readonly parts: readonly GroundPart[];
+}
+```
+
+### `groundBoxes` (function)
+
+```ts
+function groundBoxes(content: GameContent, levels: readonly SimLevel[]): readonly GroundBox[];
+```
+
 ### `groundOf` (const)
 
 ```ts
 const groundOf: (level: Level) => number;
+```
+
+### `GroundPart` (interface)
+
+```ts
+interface GroundPart extends TileBox {
+    readonly level: string;
+}
 ```
 
 ### `HASH_EVERY` (const)
@@ -2368,6 +2388,7 @@ interface ListProps {
 function loadArt(options: {
     content: GameContent;
     level?: string;
+    levels?: readonly SimLevel[];
     readPicture: ReadPicture;
 }): Promise<Art>;
 ```
@@ -2787,7 +2808,7 @@ const MusicSchema: z.ZodType<MusicFile, MusicFile>;
 ### `needsPictures` (function)
 
 ```ts
-function needsPictures(content: GameContent, level?: string): boolean;
+function needsPictures(content: GameContent, level?: string, levels?: readonly SimLevel[]): boolean;
 ```
 
 ### `nextLevel` (function)
@@ -3487,6 +3508,7 @@ interface Renderer {
         readonly zoom: number;
     } | undefined): void;
     heroes(): readonly HeroBox[];
+    enter(level: string): void;
     destroy(): void;
 }
 ```
@@ -4537,6 +4559,15 @@ const Sprite: ComponentDef<typeof spriteFields>;
 const spritesPlugin: PluginDef;
 ```
 
+### `StageLevel` (interface)
+
+```ts
+interface StageLevel extends SimLevel {
+    readonly sky: number;
+    readonly view: ViewSize | undefined;
+}
+```
+
 ### `START_LEAD` (const)
 
 ```ts
@@ -5222,6 +5253,19 @@ interface View {
     readonly h: number;
     readonly color: number;
     readonly sprite?: ViewSprite;
+}
+```
+
+### `ViewSize` (interface)
+
+```ts
+interface ViewSize {
+    readonly w: number;
+    readonly h: number;
+    readonly most?: {
+        readonly w: number;
+        readonly h: number;
+    } | undefined;
 }
 ```
 
@@ -6658,10 +6702,33 @@ interface GameSimOptions {
 }
 ```
 
+### `GroundBox` (interface)
+
+```ts
+interface GroundBox {
+    readonly box: TileBox;
+    readonly parts: readonly GroundPart[];
+}
+```
+
+### `groundBoxes` (function)
+
+```ts
+function groundBoxes(content: GameContent, levels: readonly SimLevel[]): readonly GroundBox[];
+```
+
 ### `groundOf` (const)
 
 ```ts
 const groundOf: (level: Level) => number;
+```
+
+### `GroundPart` (interface)
+
+```ts
+interface GroundPart extends TileBox {
+    readonly level: string;
+}
 ```
 
 ### `HASH_EVERY` (const)

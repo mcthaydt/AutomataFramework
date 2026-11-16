@@ -1,5 +1,6 @@
 // The render feature's entry: the scene drawn from the sim's deltas with Pixi. The scene and the fit are plain
 // functions of numbers; only `createRenderer` needs a page.
+import type { SimLevel } from '../level/level.ts'
 import type { RenderDelta } from '../sim/sim.ts'
 import type { Art } from './art.ts'
 import { blendShot, easeShot, frameHeroes, type Shot } from './camera.ts'
@@ -29,6 +30,22 @@ export interface HeroBox {
   readonly h: number
 }
 
+/**
+ * One level of a place as the renderer needs it: where it is in the place, its own sky and what its `view` says. The
+ * renderer swaps these in when a hero passes into the level (`enter`).
+ */
+export interface StageLevel extends SimLevel {
+  readonly sky: number
+  readonly view: ViewSize | undefined
+}
+
+/** What a level's `view` says: how much of it the camera shows, and the most it pulls back to. */
+export interface ViewSize {
+  readonly w: number
+  readonly h: number
+  readonly most?: { readonly w: number; readonly h: number } | undefined
+}
+
 /** What `createRenderer` gives back. */
 export interface Renderer {
   readonly canvas: HTMLCanvasElement
@@ -56,6 +73,11 @@ export interface Renderer {
    * its top left, lowest player first. As of the last picture drawn.
    */
   heroes(): readonly HeroBox[]
+  /**
+   * The sky, the backdrop and the view become this level's, from the next step on. Nothing happens for a level it was not
+   * given (`levels`), so a renderer of one level never changes.
+   */
+  enter(level: string): void
   /** Removes the canvas, stops watching the mount and frees Pixi. Safe to call twice. */
   destroy(): void
 }
@@ -81,17 +103,24 @@ export async function createRenderer(options: {
    * What the level's `view` says: the camera follows the heroes and shows this many tiles, and pulls back to `most` for
    * heroes far apart. Left out, the whole level is always in view.
    */
-  view?:
-    | {
-        readonly w: number
-        readonly h: number
-        readonly most?: { readonly w: number; readonly h: number } | undefined
-      }
-    | undefined
+  view?: ViewSize | undefined
+  /**
+   * For a place of joined levels: each level's own sky and view, and where it is in `world` (the place's outline). With
+   * `at`, the renderer starts in that level; `enter` moves it to another. Left out, there is one level and it is `world`.
+   */
+  levels?: readonly StageLevel[] | undefined
+  /** The level of `levels` shown first. Default: the one `sky` and `view` are for. */
+  at?: string | undefined
 }): Promise<Renderer> {
-  const { mount, world, sky, art, view, density } = options
+  const { mount, world, sky, art, density } = options
+  const places = options.levels ?? []
+  // The view of the level the camera is in. A place changes it as a hero passes from one level to the next.
+  let view =
+    (options.at === undefined ? undefined : places.find((l) => l.level === options.at)?.view) ?? options.view
   const scene = createScene()
-  const stage = await createStage(world, sky, art, density)
+  const first = options.at === undefined ? undefined : places.find((l) => l.level === options.at)
+  const stage = await createStage(world, first?.sky ?? sky, art, density)
+  if (first !== undefined) stage.setBackdrop(art?.backdropOf(first.level))
   // Hidden until the first step puts a picture of the level on it: a screen before the game must not flash the sky.
   stage.canvas.style.visibility = 'hidden'
   mount.append(stage.canvas)
@@ -192,6 +221,13 @@ export async function createRenderer(options: {
           w: v.w * fit.scale,
           h: v.h * fit.scale,
         }))
+    },
+    enter(level) {
+      const found = places.find((l) => l.level === level)
+      if (found === undefined) return
+      view = found.view
+      stage.setSky(found.sky)
+      stage.setBackdrop(art?.backdropOf(level))
     },
     destroy() {
       watcher.disconnect()

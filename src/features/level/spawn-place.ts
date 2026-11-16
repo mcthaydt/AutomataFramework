@@ -8,9 +8,8 @@ import { type Arrive, arrivalSpots } from './arrive.ts'
 import { groundOf } from './colours.ts'
 import { Look } from './components.ts'
 import { heroParts } from './hero.ts'
-import { levelsOf, shiftLevel, solidGrid } from './place.ts'
+import { groundBoxes, levelsOf, shiftLevel } from './place.ts'
 import { characterOf, heroNumbers, levelOf, spawnContents, spawnLevel, tilesetSolid } from './spawn-level.ts'
-import { tileBoxes } from './tile-runs.ts'
 
 /**
  * Puts the place `opened` is in into `sim`, with the heroes of `players` coming in as `arrive` says (default: at the
@@ -43,37 +42,23 @@ export function spawnPlace(
   characterOf(content, content.project.hero, 'The hero')
   for (const l of levels) tilesetSolid(content, l.level, levelOf(content, l.level))
 
-  for (const box of tileBoxes(solidGrid(content, levels))) {
-    // Each level's part of the box, where it meets that level's box.
-    const parts = levels.flatMap((l) => {
-      const left = Math.max(box.col, l.x)
-      const top = Math.max(box.row, l.y)
-      const right = Math.min(box.col + box.w, l.x + l.w)
-      const bottom = Math.min(box.row + box.h, l.y + l.h)
-      if (right <= left || bottom <= top) return []
-      return [
-        {
-          x: (left + right) / 2,
-          y: (top + bottom) / 2,
-          w: right - left,
-          h: bottom - top,
-          color: groundOf(levelOf(content, l.level)),
-        },
-      ]
-    })
+  for (const { box, parts } of groundBoxes(content, levels)) {
     const ground = [
       transform({ x: box.col + box.w / 2, y: box.row + box.h / 2 }),
       body(BodyKind.fixed),
       collider.cuboid(box.w / 2, box.h / 2),
     ]
-    const whole = parts.length === 1 ? parts[0] : undefined
-    if (whole !== undefined) {
-      sim.spawn([...ground, [Look, { w: box.w, h: box.h, color: whole.color }]])
+    const only = parts.length === 1 ? parts[0] : undefined
+    if (only !== undefined) {
+      sim.spawn([...ground, [Look, { w: box.w, h: box.h, color: groundOf(levelOf(content, only.level)) }]])
       continue
     }
     sim.spawn(ground)
     for (const part of parts)
-      sim.spawn([transform({ x: part.x, y: part.y }), [Look, { w: part.w, h: part.h, color: part.color }]])
+      sim.spawn([
+        transform({ x: part.col + part.w / 2, y: part.row + part.h / 2 }),
+        [Look, { w: part.w, h: part.h, color: groundOf(levelOf(content, part.level)) }],
+      ])
   }
   for (const l of levels)
     spawnContents(

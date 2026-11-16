@@ -138,3 +138,10 @@ test('with room for the thumbs the shot reaches further down, and with none it i
   const low = frameHeroes(level, view, [{ x: 20, y: 11 }], 3)
   expect(low.y + low.h / 2).toBeLessThanOrEqual(level.h)
 })
+
+test("a place's outline is the camera's limit: a hero near its right end keeps the shot inside 0 to 32", () => {
+  const shot = frameHeroes({ w: 32, h: 9 }, { w: 16, h: 9 }, [{ x: 30, y: 6 }])
+  expect(shot.x - shot.w / 2).toBeGreaterThanOrEqual(0)
+  expect(shot.x + shot.w / 2).toBeLessThanOrEqual(32)
+  expect(shot).toEqual({ x: 24, y: 4.5, w: 16, h: 9 })
+})

@@ -9,7 +9,7 @@ import type {
   LevelThing,
   ThingValue,
 } from '../content/content.ts'
-import { levelSize } from './tile-runs.ts'
+import { levelSize, type TileBox, tileBoxes } from './tile-runs.ts'
 import type { SimLevel } from './where.ts'
 
 /** Code-unit order, which is how the content sorts a place's levels: `localeCompare` could differ between engines. */
@@ -110,4 +110,36 @@ export function solidGrid(content: GameContent, levels: readonly SimLevel[]): re
     })
   }
   return rows.map((row) => row.join(''))
+}
+
+/** One level's part of a ground box: where it is in the place's tiles, and which level it belongs to. */
+export interface GroundPart extends TileBox {
+  readonly level: string
+}
+
+/** A box of the place's ground: the whole box (one body), and each level's part of it, in level order. */
+export interface GroundBox {
+  readonly box: TileBox
+  readonly parts: readonly GroundPart[]
+}
+
+/**
+ * The boxes the place's ground is made of (`tileBoxes` of `solidGrid`), each with the parts of it that lie in each level.
+ * A box inside one level has one part, the box itself; a box that crosses an edge has a part for each level it crosses.
+ * Both the sim (which makes a body of the box and, when it crosses, a `Look` of each part) and the page (which hides a
+ * box its tile pictures are drawn over) take it from here, so the two never disagree about where a box is.
+ */
+export function groundBoxes(content: GameContent, levels: readonly SimLevel[]): readonly GroundBox[] {
+  return tileBoxes(solidGrid(content, levels)).map((box) => ({
+    box,
+    parts: levels.flatMap((l) => {
+      const col = Math.max(box.col, l.x)
+      const row = Math.max(box.row, l.y)
+      const right = Math.min(box.col + box.w, l.x + l.w)
+      const bottom = Math.min(box.row + box.h, l.y + l.h)
+      return right > col && bottom > row
+        ? [{ level: l.level, col, row, w: right - col, h: bottom - row }]
+        : []
+    }),
+  }))
 }
