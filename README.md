@@ -737,11 +737,15 @@ do its work (a folder that is not a game, a tool that is not installed). Add `--
 | `types` | the code's types (TypeScript) |
 | `replays` | every recording in `replays/` still ends where it did |
 | `tests` | the game's own tests (Vitest) |
+| `ship` | only with `--ship`: every finding that is a note on other days is a problem, and a heavy picture, words too small and a save that changed shape are added |
 
 - `--fix`: rewrite content files the standard way, and fix the code's style where that is safe.
 - `--only <step>`: run one step.
+- `--ship`: before the game goes to players. Also runs a `ship` step that fails on words that are not finished, a
+  picture over 512 KB, words under 14 pixels tall and a saved game whose shape changed without its version, and prints
+  the list only the game's makers can judge. Leave out `--only`.
 - `--json`: print the answer as JSON: `ok`, and a `steps` list, each with its `step`, its `state` (`passed`, `failed`,
-  `could-not-run` or `skipped`), its `problems` (each a `file`, a `path` and a `message`) and its `notes`.
+  `could-not-run` or `skipped`), its `problems` (each a `file`, a `path` and a `message`) and its `notes`. With `--ship` there is also `byHand`, the list to try yourself.
 
 ### automata play
 
@@ -884,7 +888,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 | Tool | Input | The same as |
 |---|---|---|
 | `create` | `folder` | `automata create <folder> --json` |
-| `check` | `folder`, `only?`, `fix?` | `automata check <folder> --json` |
+| `check` | `folder`, `only?`, `fix?`, `ship?` | `automata check <folder> --json` |
 | `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
 | `art` | `folder`, `check?` | `automata art <folder> --json` |
 | `words` | `folder`, `read?`, `keys?` | `automata words <folder> --json`, and `--read <read> <keys>` when `read` is given |

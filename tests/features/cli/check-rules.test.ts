@@ -192,7 +192,12 @@ const rulesStep = async (files: Record<string, string>, options?: MemoryOptions)
 }
 
 test('the rules step passes on the small game', async () => {
-  expect(await rulesStep(smallGame())).toEqual({ step: 'rules', state: 'passed', problems: [], notes: [NEITHER] })
+  expect(await rulesStep(smallGame())).toEqual({
+    step: 'rules',
+    state: 'passed',
+    problems: [],
+    notes: [NEITHER],
+  })
 })
 
 test('the rules step fails on a rule that reads the clock, naming the file and the line', async () => {
@@ -247,7 +252,12 @@ test('lost = "hero.fell" is always registered, and a game with it is not the nei
 
 test("the score's number is read from a sim made with the game's own rules", async () => {
   const files = withProject(smallGame(), 'lost = "hero.fell"\nscore = "hero.score.sparks"')
-  expect(await rulesStep(files, scored())).toEqual({ step: 'rules', state: 'passed', problems: [], notes: [] })
+  expect(await rulesStep(files, scored())).toEqual({
+    step: 'rules',
+    state: 'passed',
+    problems: [],
+    notes: [],
+  })
   const wrong = withProject(smallGame(), 'lost = "hero.fell"\nscore = "hero.score.name"')
   expect((await rulesStep(wrong, scored()))?.problems.map((p) => p.path)).toEqual(['score'])
   const missing = withProject(smallGame(), 'lost = "hero.fell"\nscore = "hero.score.sparks"')

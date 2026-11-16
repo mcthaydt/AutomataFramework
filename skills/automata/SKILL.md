@@ -64,6 +64,26 @@ npx --no automata replay
 3. If you meant to change how the game plays, `replay` will say the recording no longer ends where it did. Run
    `npx --no automata replay --accept` to record the new play, and say in your message why it moved.
 
+## Before you ship
+
+Run `npx --no automata check --ship`. It runs every step, and also fails on what a stranger would meet: words that are not
+finished (a message that is empty, says `TODO`, or is only its own key), a picture over 512 KB, words under 14 pixels
+tall, and a saved game whose shape changed while its version did not. Fix what it names. Then work through the list it
+prints with the person, since only the game's makers can judge it:
+
+- In five seconds, is it clear what to do?
+- Can someone who has never seen it work out how to play, with nobody explaining?
+- Is there enough to do: a few minutes of play, or a reason to play again?
+- Does it get harder bit by bit?
+- Did you make the art, the music and the characters, or are you allowed to use them?
+- Are there any stand-in pictures, half-made menus, or spots that do something when tapped that nobody would guess?
+- Do the pictures and words look cared for, the same style on every screen?
+- Is color ever the only clue? Is sound ever the only clue?
+- Can luck make a level impossible? Does anything appear right on top of the player?
+- Play it for ten minutes on a real phone.
+- Play it with one hand, on bad Wi-Fi, after locking and unlocking the phone, and after many restarts.
+- Hand it to someone and say nothing. Is it still fun after 30 seconds?
+
 Exit codes, for every command: 0 everything is fine, 1 the game has something to fix, 2 the command could not do its
 work (a folder that is not a game, a tool that is not installed). Add `--json` to read the answer as JSON.
 

@@ -95,6 +95,7 @@ test('create, check, replay, world and picture hand the command their words, and
     call(7, 'world', { folder: 'game' }),
     call(8, 'picture', { folder: 'game' }),
     call(9, 'picture', { folder: 'game', levels: ['room-1', 'room-2'], whatItIs: true, world: true }),
+    call(10, 'check', { folder: 'game', ship: true }),
   ])
   expect(asked).toEqual([
     ['create', 'new-game'],
@@ -106,8 +107,9 @@ test('create, check, replay, world and picture hand the command their words, and
     ['world', 'game'],
     ['picture', '--folder', 'game'],
     ['picture', 'room-1', 'room-2', '--folder', 'game', '--what-it-is', '--world'],
+    ['check', 'game', '--ship'],
   ])
-  expect(replies.map((reply) => JSON.parse(answerOf(reply).text))).toEqual(Array(9).fill({ ok: true }))
+  expect(replies.map((reply) => JSON.parse(answerOf(reply).text))).toEqual(Array(10).fill({ ok: true }))
 })
 
 test('words hands the command its folder, the language to mark and the words, and keys need a language', async () => {

@@ -1,9 +1,11 @@
 import { Effect } from 'effect'
 import { expect, test, vi } from 'vitest'
 import { runCheck } from '#src/features/cli/check.ts'
+import { saveMark } from '#src/features/cli/check-ship.ts'
 import { main } from '#src/features/cli/cli.ts'
 import { CliError, type GameCode } from '#src/features/cli/ports.ts'
 import { parseReplay, writeReplay } from '#src/features/commands/commands.ts'
+import * as framework from '#src/headless.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, memoryLayer } from '../../fixtures/cli/memory.ts'
 import {
@@ -15,6 +17,7 @@ import {
   RECORDED_CODE,
   recordedPlay,
 } from '../../fixtures/cli/recording.ts'
+import { heroPlugin } from '../../fixtures/game/hero.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const FILE = 'replays/level-1.json'
@@ -326,4 +329,21 @@ test('in check, a game whose files do not read cannot have its recordings played
   expect(step?.notes[0]).toBe(
     "The game's files have problems, so its recordings cannot be played. Run automata check --only files.",
   )
+})
+
+test('--accept writes meta.save for a game that exports a save, and nothing for one that does not', async () => {
+  const save = framework.defineSave({
+    game: 'crate-game',
+    version: 3,
+    schema: framework.z.object({ coins: framework.z.number() }),
+    slots: 1,
+  })
+  const kept = await replays(undefined, { code: { framework, rules: { plugins: [heroPlugin], save } } })
+  expect(await play(kept, '--accept')).toBe(0)
+  const mark = parseReplay(kept.files.get(`game/${FILE}`) as string).meta.save
+  expect(mark).toBe(saveMark(framework, save))
+  expect(mark).toMatch(/^3:[0-9a-f]{16}$/)
+  const without = await replays()
+  expect(await play(without, '--accept')).toBe(0)
+  expect(parseReplay(without.files.get(`game/${FILE}`) as string).meta.save).toBeUndefined()
 })

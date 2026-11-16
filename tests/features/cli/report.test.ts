@@ -96,3 +96,21 @@ test('exitCodeOf: 0 all passed or skipped, 1 any failed, 2 none failed and one c
   expect(exitCodeOf(report(step('files', 'failed'), step('lint', 'could-not-run')))).toBe(1)
   expect(exitCodeOf(report(step('files', 'passed'), step('lint', 'could-not-run')))).toBe(2)
 })
+
+test('formatReport prints the list to try yourself under the count, when the report has one', () => {
+  const text = formatReport({
+    ...report(step('ship', 'passed')),
+    byHand: ['Is it clear what to do?', 'Play it on a phone.'],
+  })
+  expect(text).toBe(
+    [
+      'ship      passed',
+      '',
+      'Everything passed.',
+      '',
+      'Try these yourself:',
+      '  Is it clear what to do?',
+      '  Play it on a phone.',
+    ].join('\n'),
+  )
+})

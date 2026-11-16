@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterEach, expect, test } from 'vitest'
 import { COMMAND_NAMES } from '#src/features/cli/args.ts'
+import { BY_HAND } from '#src/features/cli/check-ship.ts'
 import { helpFor } from '#src/features/cli/help.ts'
 import { describePicture } from '#src/features/cli/picture.ts'
 import { controlsCommand } from '#src/features/commands/commands.ts'
@@ -233,4 +234,13 @@ test('values-and-doors shows the legend that automata picture says for room-2', 
 test('automata-content and automata send an agent to values-and-doors', () => {
   expect(text('automata-content')).toContain('skills/automata-content/values-and-doors.md')
   expect(text('automata')).toContain('skills/automata-content/values-and-doors.md')
+})
+
+test('the skills and the template say to run check --ship, and automata has every line of the list to try by hand', () => {
+  for (const skill of ['automata', 'automata-content', 'automata-rules'])
+    expect(text(skill), skill).toContain('automata check --ship')
+  const agents = readFileSync(join(ROOT, 'template/AGENTS.md'), 'utf8')
+  expect(agents).toContain('## Before you ship')
+  expect(agents).toContain('automata check --ship')
+  for (const line of BY_HAND) expect(text('automata'), line).toContain(line)
 })

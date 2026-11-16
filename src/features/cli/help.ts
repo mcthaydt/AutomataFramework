@@ -30,6 +30,8 @@ Says whether the game is sound, one step after another, and what to fix if it is
 
   --fix          Rewrite content files the standard way, and fix the code's style where that is safe.
   --only <step>  Run one step.
+  --ship         Before you hand the game to players: also fail on words not finished, heavy pictures, words too
+                 small for a phone and a save that changed shape, then list what only you can judge.
   --json         Print the answer as JSON, for an agent or another tool.`
 
 const REPLAY_HELP = `automata replay [folder or file]

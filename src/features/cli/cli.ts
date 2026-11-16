@@ -22,20 +22,26 @@ import { describeWorld, runWorld } from './world.ts'
 
 type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
 
+/** The steps `--only` can name: `ship` is not one, since it is `--ship`. */
+const PICKABLE = STEP_NAMES.filter((name) => name !== 'ship')
+
 /** `automata check`: the steps' report, as words or as JSON, and the exit status the report gives. */
 const check: Command = (input) =>
   Effect.gen(function* () {
     const out = yield* Out
-    const { only, fix, json } = input.flags
-    const step = STEP_NAMES.find((name) => name === only)
+    const { only, fix, json, ship } = input.flags
+    const step = PICKABLE.find((name) => name === only)
     if (only !== undefined && step === undefined)
       return yield* Effect.fail(
-        new CliError(`There is no step called "${String(only)}". The steps are: ${STEP_NAMES.join(', ')}.`),
+        new CliError(`There is no step called "${String(only)}". The steps are: ${PICKABLE.join(', ')}.`),
       )
+    if (ship === true && step !== undefined)
+      return yield* Effect.fail(new CliError('--ship checks everything. Leave out --only.'))
     const report = yield* runCheck({
       folder: input.folder ?? '.',
       ...(step === undefined ? {} : { only: step }),
       fix: fix === true,
+      ship: ship === true,
     })
     yield* out.line(json === true ? JSON.stringify(report, null, 2) : formatReport(report))
     return exitCodeOf(report)

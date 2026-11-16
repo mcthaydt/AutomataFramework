@@ -9,7 +9,11 @@ import { readFiles } from '../../fixtures/content/kind.ts'
 async function contentWith(words: Partial<Record<Language, Record<string, string>>>): Promise<GameContent> {
   const files = wordsGame('en', ['en', 'es', 'ko'])
   for (const [language, messages] of Object.entries(words) as [Language, Record<string, string>][])
-    files[`content/messages/${language}.json`] = writeContent('messages', { format: 1, id: language, messages })
+    files[`content/messages/${language}.json`] = writeContent('messages', {
+      format: 1,
+      id: language,
+      messages,
+    })
   const loaded = await loadGame(readFiles(files))
   if (!loaded.ok) throw new Error(JSON.stringify(loaded.diagnostics))
   return loaded.value
