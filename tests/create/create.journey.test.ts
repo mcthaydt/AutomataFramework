@@ -462,8 +462,14 @@ for (const name of journeyEngines()) {
         await page.goto(address)
         await page.locator('.automata-picker-go').waitFor({ state: 'visible', timeout: 30_000 })
         await intoTheLevel(page, 'ja')
-        const start = await heroX(page)
         const floor = await heroY(page)
+        // The level waits for a first press, and a stick is not one: a tap of the bottom button starts it, and the
+        // hero lands again before the walk.
+        await page.evaluate(() => (window as unknown as { __south: (on: boolean) => void }).__south(true))
+        await page.waitForTimeout(100)
+        await page.evaluate(() => (window as unknown as { __south: (on: boolean) => void }).__south(false))
+        await expect.poll(async () => Math.abs((await heroY(page)) - floor), POLL).toBeLessThan(0.05)
+        const start = await heroX(page)
         await page.evaluate(() => (window as unknown as { __stick: (x: number) => void }).__stick(1))
         await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
         // On to the spark, and the game's count says it was taken.
