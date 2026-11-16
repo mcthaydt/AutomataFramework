@@ -14,17 +14,19 @@ are in `docs/rules.md`; never above high.
 | 1 | Spec, with the Owner (superpowers brainstorming) | `docs/superpowers/specs/<date>-<topic>-design.md` in AutomataFramework | it names the principle it serves; the Owner agreed to the product choices in it |
 | 2 | Plan (writing-plans), the current slice only | `docs/superpowers/plans/<date>-<topic>.md` | every task lists its files, the check that proves it, and what it reads from the tasks it waits for |
 | 3 | Plan audit, only when the plan touches a format, the public surface, the sim or a closed-lane file | `docs/superpowers/audits/<date>-<cycle>-plan-audit.md` | its findings are fixed in the plan |
-| 4 | Build (executing-plans) | code and tests, one draft pull request per plan part | every task's check passes in CI |
-| 5 | Review, only when `lane.mjs` prints `audit: needed`: lenses side by side, then one fix session | see the `review-graph` skill | CI green, no open finding but stuck or `owner choice` ones |
+| 4 | Build (executing-plans) | code and tests, one draft pull request per plan part | every task's check passes in CI; the pull request stays open for 5 |
+| 5 | Review, only when `lane.mjs` prints `audit: needed`: lenses side by side on the build's branch, then fixes on that same pull request (none if nothing is found) | see the `review-graph` skill | CI green, no open finding but stuck or `owner choice` ones; then it merges, once |
 | 6 | The Owner sees the finished result | | the Owner's yes; tweaks are targeted fixes, no new cycle |
 
 ## Handoffs
 
-- Each stage's doc is a docs pull request that merges on green, with no Owner step, so the next stage reads it from
-  `main`. A stage may start from an open stage branch when it reads that branch's file and says so; nothing waits on
-  a merge it doesn't need.
+- Handoffs are committed files. A spec or plan may merge on its own on green, or ride on the build's branch; build,
+  review and fixes share one pull request, which merges once. A stage may start from an open branch when it reads
+  that branch's file and says so; nothing waits on an intermediate merge.
 - `docs/superpowers/progress.md` holds one line per open task; finished work moves to `history.md`.
 - A stage that hits a decision only the Owner can make asks on a decision card and keeps working on the rest.
+- The test written first failing, and ordinary debugging, are part of the work. A stage stops only for a blocker
+  still unresolved after `fixTries` attempts, and reports it for a fresh look at the approach.
 
 ## Planning
 

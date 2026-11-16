@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url'
 /** The operating numbers of docs/rules.md (.claude/workflow.json), read beside this file. */
 const SETTINGS = JSON.parse(readFileSync(new URL('../workflow.json', import.meta.url), 'utf8'))
 
-/** A unit that fails its corrections has a problem in the plan that made it, which the loop cannot see. */
+/** A unit still failing after its tries calls for a fresh look at the approach, not another try. */
 export const MAX_TRIES = SETTINGS.fixTries
 
 /** Files any active scope may change: its state, the tracker, the reports and the constraints (the learning edge). */
@@ -59,7 +59,7 @@ function writeState(root, state) {
 }
 
 /** What a stuck report holds (the shape is in the review graph skill). */
-const STUCK = 'unit, verdict, reason, evidence, scope. The plan needs a look, not a fourth try.'
+const STUCK = 'unit, verdict, reason, evidence, scope. The approach needs a fresh look, not another try.'
 
 /** A glob as a regular expression: `**` crosses folders, `*` and `?` stay inside one. */
 export function globToRegExp(glob) {

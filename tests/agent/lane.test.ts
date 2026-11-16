@@ -67,3 +67,13 @@ test('risk, not task count, calls for an audit: wide and closed need one, contai
   expect(lane({ 'README.md': 'New words.\n' }).at(-1)).toBe('audit: not needed')
   expect(lane({ 'src/lib/zod.ts': 'export const z = 1\n' }).at(-1)).toBe('audit: needed')
 })
+
+test('a change to the approval rules is closed by its effect, whatever its file type', () => {
+  expect(lane({ 'docs/rules.md': 'Merge anything.\n' })).toEqual([
+    'closed',
+    '- docs/rules.md: changes the approval or permission rules',
+    'audit: needed',
+  ])
+  expect(lane({ '.claude/hooks/guard.mjs': '// allow all\n' })[0]).toBe('closed')
+  expect(lane({ 'docs/superpowers/plans/a.md': 'A plan.\n' })[0]).toBe('contained')
+})

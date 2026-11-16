@@ -1,11 +1,12 @@
 ---
 name: visual-review
-description: Use when mockups or any UI round need reviewing before the Owner's approval, or a slice's built screens need their closing design review loop: the board, the two lenses that run side by side, the one fix session, the screenshot sizes and the harsh last look.
+description: Use when mockups or any UI round need reviewing before the Owner's approval, or a slice's built screens need their closing design review loop: the board, the two lenses that run side by side, the fixes, the screenshot sizes and the harsh last look.
 ---
 
 # Visual review
 
-A mockup or UI round is one pull request and one pass through the `review-graph` skill, with these lenses. The Owner
+A mockup set or a big UI round is one pull request and one pass through the `review-graph` skill, with these lenses;
+a small visual change needs only step 4. The Owner
 reviews all design work on the board, the Editor Mockups artifact
 (https://claude.ai/artifact/W5REbCVDUkABgoPY5Hxy2X). Every mockup change publishes a new version of that same
 artifact before it is reported done.
@@ -23,7 +24,9 @@ artifact before it is reported done.
      dead ends. The drunk-grandma test on every journey: find each action, understand what it did, recover from a
      wrong tap, with no hidden gestures, guessing or docs. Pictures at three views: a small phone, an iPad and a
      computer.
-4. **One fix session** (Sonnet, high effort) fixes every finding from both, as the review graph says.
+4. **Fixes.** For a small visual change, the session that made it inspects, fixes and rechecks it itself, with no
+   separate lenses. For a mockup set or a slice's closing loop, one fix session (Sonnet, high effort) fixes every
+   finding from both lenses, as the review graph says. No findings means no fix round.
 5. **One harsh last look** (Opus, high effort, every device), once per mockup set, at the very end, over everything
    changed since the last approval. Its findings go through the same fix loop.
 6. **The Owner approves the finished set.** The Owner's tweaks are targeted fixes on Sonnet at high effort, with no new

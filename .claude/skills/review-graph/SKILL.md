@@ -5,7 +5,8 @@ description: Use when big or risky work needs reviewing (lane.mjs prints audit n
 
 # The review graph
 
-Small changes need no review sessions: their own checks are the gate. A review runs for big or risky work, when
+Small changes need no review sessions: the session that made one inspects it, fixes what it finds and rechecks, and
+its checks are the gate. A review runs for big or risky work, when
 `node .claude/tools/lane.mjs` prints `audit: needed` (wide or closed), and for every mockup set. A review is a small
 graph. Each node is its own session with one job; only the arrows below carry anything.
 
@@ -61,6 +62,9 @@ reads only that file.
 
 ## 4. Fix loop (one session, Sonnet at high effort)
 
+No findings means no fix round: the review is done. Fixes land on the same pull request as the work they fix, which
+the lenses read as a branch; nothing merges in between.
+
 One finding at a time, highest first. For each:
 
 ```
@@ -85,8 +89,8 @@ EVIDENCE  expected / got, file:line
 SCOPE     the files it was given
 ```
 
-A stuck finding means the plan or spec is wrong, which the loop cannot see; the coordinator takes it to the plan's
-author, not to a fourth try. An `owner choice` finding goes to the Owner with options while the rest are fixed.
+A stuck finding calls for reassessment, not another try: the coordinator looks again at the finding, the fix, the
+plan and the spec. Repeated failure doesn't say which of them is wrong. An `owner choice` finding goes to the Owner with options while the rest are fixed.
 
 ## 5. Lessons become tests
 

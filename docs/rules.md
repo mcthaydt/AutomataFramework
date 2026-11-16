@@ -10,26 +10,41 @@ experience. The Owner's product decisions are in [`decisions.md`](decisions.md),
 
 ## How to work
 
-**Keep working until there is something to approve.** The default, for every request:
+**Keep working until there is something to approve.** The test of every rule here: one session can fix a typo,
+look at it, run the relevant checks and merge it, with no other session and no planning document. The default:
 
 1. **Complete the requested change on your own**, test first, in one session, branch and pull request.
 2. **Keep the change contained.** Report an unrelated problem you find; don't fix it in the same change.
 3. **Ask only when a missing decision blocks progress, or an action needs the Owner's yes** (below). Otherwise pick
    the likeliest reading, say which, and go on.
 4. **Run the relevant checks and fix the failures your change causes.** Targeted tests run locally (one test file,
-   lint, typecheck, format); whole suites run in GitHub-hosted CI, and only its green full run merges. The guard
-   hook refuses a whole-suite run locally.
-5. **Show the finished result**, its evidence (the run, the test, the picture) and what is still limited or open.
-   Never round up: done means merged and green on `main`.
-6. **Merge on green; the Owner approves finished results.** Pull requests merge once ready and green on their full run
-   (the merge session, the `merge-and-release` skill). The Owner approves a finished feature, slice or mockup set, a
-   release, and the closed lane, never each pull request.
+   lint, typecheck, format); whole suites run in GitHub-hosted CI. The test you wrote first failing, and ordinary
+   debugging, are part of the work. Stop only for a blocker still unresolved after `fixTries` attempts, and then
+   report it and look again at the approach; repeated failure says to reassess, not where the cause is.
+5. **Look at the result and show it**: the session inspects its own change (a small visual change included), fixes
+   what it finds and rechecks; no findings means no fix round. Show the evidence (the run, the test, the picture)
+   and what is still limited or open. Never round up: done means merged and green on `main`.
+6. **Merge on green.** Required checks pass on the newest full run, then the pull request merges: the session that
+   made a contained or standing change merges it itself, and the merge session takes the rest (the
+   `merge-and-release` skill). The Owner approves a finished feature, slice or mockup set, a release, and the closed
+   lane, never each pull request.
+
+**The lane** comes from `node .claude/tools/lane.mjs` where it exists, otherwise from the diff and what it is meant to
+do; never build tooling before doing the task. It judges by effect as well as path: a change to the approval and
+permission rules themselves (this page, `decisions.md`, the lane, the hooks, the merge skill, the checks that
+enforce them, or the project instructions) is closed, whatever its file type.
 
 **Separate spec, plan, audit and review sessions are the exception**, for big or risky work: a new feature or format,
 a change to the public surface or the sim's determinism, a slice's editor work, or a closed-lane change. Then the
 `stage-workflow` and `review-graph` skills apply. Risk calls for an audit, not task count: `lane.mjs` prints
-`audit: needed` for wide and closed changes. A spec, plan or audit is a docs pull request that merges on green like
-any other; nothing waits on an unmerged stage branch.
+`audit: needed` for wide and closed changes. Implementation, review and fixes share one pull request: reviewers read
+its branch, fixes land on it, and it merges once. A spec or plan may merge on its own on green, or ride on that
+branch; handoffs are committed files, and nothing waits on an intermediate merge.
+
+**Red checks.** A required check must pass to merge; there is one exception, the Owner's explicit yes for that pull
+request, quoted in the merge commit. A required check that is red on `main` too is not this change's to fix: report
+it, the coordinator starts its fix thread, and the change merges once that fix lands or the Owner grants the
+exception. A check that isn't required never holds a merge.
 
 ## Boundaries
 
@@ -63,11 +78,10 @@ any other; nothing waits on an unmerged stage branch.
 
 ## Tests and goldens
 
-- **A failure blocks only the change that touches it**: this pull request's checks, or a test of the code it changes.
-  Never loosen, skip or quarantine a test to get green.
-- **A failure on `main`, or outside the change, gets its own thread**: report it with the run, and the coordinator
-  starts a fix thread. Work that doesn't touch it goes on. A test that fails then passes is a defect, reported the
-  same day.
+- **A failure blocks only the change that touches it**, through the red-check rule above. Never loosen, skip or
+  quarantine a test to get green.
+- **A failure on `main` gets its own thread**: report it with the run, and the coordinator starts a fix thread. Work
+  that doesn't touch it goes on. A test that fails then passes is a defect, reported the same day.
 - **A golden moves only for a behaviour change someone asked for**, the commit naming the move with its before and
   after. Re-recording to turn red green without knowing why hides a defect. Test games' goldens and planned deletions
   merge on green under the Owner's standing yes (2026-11-16, the `standing` lane); a real game's wait for the Owner.
@@ -76,8 +90,8 @@ any other; nothing waits on an unmerged stage branch.
 
 ## Sessions
 
-- **The long-lived three:** the coordinator; the merge session, which merges green pull requests and deletes their
-  branches; the advisor (Fable 5.2), which only advises, on big calls. Working threads are archived when done.
+- **The long-lived three:** the coordinator; the merge session, which merges wide changes and any green pull request
+  left open, and deletes merged branches; the advisor (Fable 5.2), which only advises, on big calls. Working threads are archived when done.
 - **Threads are not subagents.** Threads the coordinator starts, review lenses among them, are what these rules set
   up and need no further yes. A subagent (the Agent, Task or Workflow tools, from inside a session) needs the Owner's.
 - **Limits** are in `workflow.json`: working threads at once (all on the current slice; the board, merge session and

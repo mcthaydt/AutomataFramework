@@ -5,12 +5,13 @@
 //   node .claude/tools/lane.mjs [--base origin/main]
 //
 //   contained   docs, tests, one feature folder: a green full run merges it
-//   wide        shared code, formats, the public surface, CI and setup, the rules: also graphify_impact and the
+//   wide        shared code, formats, the public surface, CI and setup: also graphify_impact and the
 //               affected callers' tests
 //   standing    a test game's golden or recording that moves, or a deletion: the Owner's standing yes
 //               (2026-11-16) covers it when the plan calls for it, so a green full run merges it, with that yes
 //               quoted and a before-and-after note after
-//   closed      a release, a migration, a new dependency: never opens without the Owner
+//   closed      a release, a migration, a new dependency, a change to the approval and permission rules
+//               themselves: never opens without the Owner
 //
 // It prints the lane on the first line, one reason per line after it, and last `audit: needed` or `audit: not
 // needed`: risk, not task count, calls for an implementation audit (docs/rules.md, "How to work"), so wide and closed
@@ -30,6 +31,26 @@ const GOLDENS = ['tests/golden/**', 'template/replays/**', 'replays/**', '**/*.g
 /** Changing or removing one of these can't be taken back by a revert alone: the Owner sees it first. */
 const CLOSED = ['.changeset/**', '.github/workflows/release.yml', '**/migrations/**']
 
+/**
+ * The approval and permission rules themselves, judged by effect rather than file type: a change here changes what
+ * may merge without the Owner, so the Owner sees it first (the Owner, 2026-11-16).
+ */
+const RULES = [
+  'docs/rules.md',
+  'docs/decisions.md',
+  '.claude/tools/lane.mjs',
+  '.claude/hooks/**',
+  '.claude/settings.json',
+  '.claude/skills/merge-and-release/**',
+  'scripts/check-agent-rules.ts',
+  'scripts/check-commit-authors.ts',
+  '.github/workflows/agent-rules.yml',
+  '.github/workflows/commit-authors.yml',
+]
+
+/** Why a change to the rules waits for the Owner. */
+const RULE_CHANGE = 'changes the approval or permission rules'
+
 /** Many callers read these, so a mistake here travels far. */
 const WIDE = [
   'src/lib/**',
@@ -42,12 +63,8 @@ const WIDE = [
   'functions/**',
   'docs/api/**',
   'docs/formats/**',
-  'docs/rules.md',
-  'docs/decisions.md',
   '.github/**',
-  '.claude/hooks/**',
   '.claude/tools/**',
-  '.claude/settings.json',
   '.claude/workflow.json',
   'scripts/**',
   'tests/fixtures/**',
@@ -90,7 +107,8 @@ export function laneOf(changes, packages = null) {
   const standing = []
   const wide = []
   for (const { status, file } of changes) {
-    if (matches(CLOSED, file) && status !== 'A') closed.push(`${file}: ${MOVES}`)
+    if (matches(RULES, file)) closed.push(`${file}: ${RULE_CHANGE}`)
+    else if (matches(CLOSED, file) && status !== 'A') closed.push(`${file}: ${MOVES}`)
     else if (matches(GOLDENS, file) && status !== 'A') standing.push(`${file}: ${MOVES}`)
     else if (status === 'D' && !matches(MAY_DELETE, file)) standing.push(`${file}: deleted`)
     else if (matches(WIDE, file)) wide.push(`${file}: shared by many callers`)
