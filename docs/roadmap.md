@@ -18,7 +18,7 @@ slice runs the same six steps in order:
 4. **Test the editor.** In real browsers on iPad sizes, with the journeys, until it is green on main.
 5. **Update the website demo.** The demo on the site uses what the editor makes, so after every slice there is
    something new to try there. The demo grows with every slice; there is no separate demo slice at the end.
-6. **Design review loop.** Every screen built in the slice goes through review, fix and recheck (the `visual-review`
+6. **Design review loop.** Every screen built in the slice goes through review, fix and recheck (the `visual-check`
    skill) until the recheck passes, recorded in `docs/superpowers/audits/<date>-slice-<n>-design-review.md` with a
    `Scope:` line (what it covered) and the line `Recheck: passed`. The slice does not close, and the next slice does not start, before that (the owner,
    2026-11-16).
