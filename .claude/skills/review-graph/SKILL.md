@@ -13,15 +13,17 @@ split ──────┼─ lens B (find only) ─┼── merge (script) �
             └─ lens C (find only) ─┘          ▲                       │
                                               └──── back: that finding only, with its evidence
    * only for the finished result, or for the hard-to-undo lane (see docs/rules.md)
-                                lessons.md ◄── every confirmed cause (the learning edge)
+                      docs/constraints.md ◄── every accepted result's or repeated finding's cause (the learning edge)
 ```
 
 ## 1. Split (the coordinator)
 
-Cut the work by what each lens can see that the others can't, never by folder. Two or three lenses, each with:
+Cut the work by what each lens can see that the others can't, never by folder. Lenses never wait for each other:
+one node waits for another only if it reads that node's output, and the brief names what passes between them. Two or
+three lenses, each with:
 
 - one lens (the questions it asks), the files or screens in reach, the spec and plan sections it checks against;
-- `.claude/skills/review-graph/lessons.md`, the constraints earlier rounds learned;
+- the lines of `docs/constraints.md` that apply, the rules earlier rounds learned;
 - nothing from another lens. Lenses run at the same time, in their own threads, and never read each other's report.
 
 Usual lenses. Code: **matches the spec and plan** (complete, nothing extra, every task's check exists) and
@@ -45,7 +47,7 @@ table. One row per finding, in exactly this shape, because the merge step is a s
   check it, write `owner look` and say why.
 - A finding that needs an Owner choice says `owner choice` in `check`, with the options in the report above the table.
 
-## 3. Merge (a script, not a model)
+## 3. Merge (a script, never a model: merging, ranking and deduplicating have one right answer)
 
 ```
 node .claude/tools/findings.mjs docs/superpowers/audits/<date>-<cycle>-*.md > docs/superpowers/audits/<date>-<cycle>-findings.md
@@ -84,9 +86,11 @@ author, not to a fourth try. An `owner choice` finding goes to the Owner with op
 
 ## 5. Learning edge
 
-When a fix confirms a cause, turn it into a constraint before closing the finding:
+When a fix confirms a cause, or the same finding comes back from a second round, turn the cause into a constraint
+before closing the finding:
 
 - if a program can see it, the check stays (a test, a rule in `tests/architecture/rules.ts`, a guard hook, a CI step);
-- otherwise add one line to `lessons.md`: the date, what to look for, and why. Every later split hands it to the lenses.
+- otherwise add one line to `docs/constraints.md`: the date, the rule, and why. It carries the rule, not the output.
+  Every later split hands it to the nodes it applies to. Keep the page short: a line a program now checks goes.
 
 A verdict that does not change what runs next is only a report.

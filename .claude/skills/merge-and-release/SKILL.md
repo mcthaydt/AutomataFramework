@@ -5,10 +5,20 @@ description: Use when acting as the merge session, merging a pull request, delet
 
 # Merging and releasing
 
-## Before a merge
+## The lane
 
-Merge only a pull request that is ready for review and whose newest full run is green (a quick `quick ` run never
-counts). Then check, and stop and report to the coordinator, waiting for an answer, on any of these:
+Before anything else, check out the pull request's head and run `node <AutomataFramework>/.claude/tools/lane.mjs`
+in its repo (it compares with `origin/main`). It names the lane from the changed files, and the lane decides:
+
+- **contained**: merge once it is ready for review and its newest full run is green.
+- **wide**: the same, and first run `graphify_impact` on the changed files (`graphify_tests_for` for their callers).
+  Every affected caller must have a test, and the full run must have run it; name them in the merge report. If one
+  has none, stop and report.
+- **closed**: never merge. Report the lane and its reasons to the coordinator and wait for the Owner's own yes,
+  quoted in the merge commit's message.
+
+A quick `quick ` run never counts. Then check, and stop and report to the coordinator, waiting for an answer, on any
+of these:
 
 - a failing check or a conflict;
 - a commit whose author or committer is not `McThayDT`, or a Claude credit anywhere (`commit-authors` should have

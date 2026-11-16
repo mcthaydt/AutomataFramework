@@ -2,7 +2,7 @@
 // `agent-rules` workflow on every pull request, with Node alone, so it holds on a docs-only change too.
 //
 //   - CLAUDE.md and docs/rules.md, which every session reads first, stay under 200 lines together, and CLAUDE.md
-//     imports the rules page.
+//     imports the rules page. docs/constraints.md, the learning edge every split reads, stays under 40.
 //   - No rule, decision or skill names an effort above high (the hooks' code may, to refuse it).
 //   - Every skill under .claude/skills/ has the name of its folder and a description, which is how it loads.
 //   - Every hook command in .claude/settings.json names a file that exists.
@@ -16,6 +16,9 @@ import { fileURLToPath } from 'node:url'
 
 /** What every session reads first must stay short (the Owner, 2026-11-16). */
 export const MAX_START_LINES = 200
+
+/** The learning edge carries rules, not history, so it is pruned before it grows. */
+export const MAX_CONSTRAINT_LINES = 40
 
 /** The SHA-256 of each private name, in lower case, its words joined by one space or by none. */
 export const PRIVATE_NAMES: readonly string[] = [
@@ -63,12 +66,16 @@ export function problems(
   if (lines > MAX_START_LINES) {
     found.push(`CLAUDE.md and docs/rules.md are ${lines} lines together; keep them under ${MAX_START_LINES}.`)
   }
+  const constraints = (read('docs/constraints.md') ?? '').split('\n').length - 1
+  if (constraints > MAX_CONSTRAINT_LINES) {
+    found.push(`docs/constraints.md is ${constraints} lines; prune it under ${MAX_CONSTRAINT_LINES}.`)
+  }
   if (!/^@docs\/rules\.md$/m.test(claude)) {
     found.push('CLAUDE.md must import the rules page: a line `@docs/rules.md`.')
   }
 
   const skills = files.filter((f) => f.startsWith('.claude/') && f.endsWith('.md'))
-  for (const path of ['CLAUDE.md', 'docs/rules.md', 'docs/decisions.md', ...skills]) {
+  for (const path of ['CLAUDE.md', 'docs/rules.md', 'docs/decisions.md', 'docs/constraints.md', ...skills]) {
     if (/\bxhigh\b/i.test(read(path) ?? '')) {
       found.push(`${path} names an effort above high; no session runs above high.`)
     }

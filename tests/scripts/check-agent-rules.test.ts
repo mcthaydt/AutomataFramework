@@ -1,6 +1,11 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, test } from 'vitest'
-import { MAX_START_LINES, namesPrivate, problems } from '../../scripts/check-agent-rules.ts'
+import {
+  MAX_CONSTRAINT_LINES,
+  MAX_START_LINES,
+  namesPrivate,
+  problems,
+} from '../../scripts/check-agent-rules.ts'
 
 // A made-up private name, so this test never holds a real one.
 const SECRET = [createHash('sha256').update('moon garden').digest('hex')]
@@ -29,6 +34,11 @@ describe('each rule fails when broken', () => {
     expect(check({ 'docs/rules.md': 'line\n'.repeat(MAX_START_LINES) })).toEqual([
       expect.stringContaining('keep them under 200'),
     ])
+  })
+
+  test('a constraints page over its limit', () => {
+    const long = check({ 'docs/constraints.md': '- a rule\n'.repeat(MAX_CONSTRAINT_LINES + 1) })
+    expect(long).toEqual([expect.stringContaining('prune it under 40')])
   })
 
   test('CLAUDE.md without the rules import', () => {
