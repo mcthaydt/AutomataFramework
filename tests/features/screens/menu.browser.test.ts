@@ -111,10 +111,15 @@ test('on a phone on its side the name is on the left and the buttons are on the 
 
 test('Quit is there only for a host that can quit', () => {
   open(menuItems({ saved: false, room: false, canQuit: false }))
-  expect(buttons().map((button) => button.textContent?.trim())).toEqual(['Jugar', 'Ajustes'])
+  expect(buttons().map((button) => button.textContent?.trim())).toEqual(['Jugar', 'Ajustes', 'Cómo jugar'])
   screen?.destroy()
   open(menuItems({ saved: false, room: false, canQuit: true }))
-  expect(buttons().map((button) => button.textContent?.trim())).toEqual(['Jugar', 'Ajustes', 'Salir'])
+  expect(buttons().map((button) => button.textContent?.trim())).toEqual([
+    'Jugar',
+    'Ajustes',
+    'Cómo jugar',
+    'Salir',
+  ])
 })
 
 test('a tap on each button tells which it was', async () => {

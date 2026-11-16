@@ -1076,6 +1076,8 @@ interface DialogProps {
 function doneScreen(options: ScreenBase & {
     readonly level: string;
     readonly next: boolean;
+    readonly score?: number;
+    readonly best?: number;
     readonly notKept?: string;
     readonly onNext: () => void;
     readonly onMenu: () => void;
@@ -1462,7 +1464,7 @@ interface Flow<S extends Progress = Progress> {
 ### `FLOW_EVENTS` (const)
 
 ```ts
-const FLOW_EVENTS: readonly ["screen.menu", "screen.pause", "screen.done", "ui.move", "ui.press", "ui.back"];
+const FLOW_EVENTS: readonly ["screen.menu", "screen.pause", "screen.done", "screen.lost", "ui.move", "ui.press", "ui.back"];
 ```
 
 ### `FlowOptions` (interface)
@@ -1595,6 +1597,9 @@ interface Game {
     removePlayer(player: number): boolean;
     pause(): void;
     resume(): void;
+    score(): number | undefined;
+    levelNow(): string;
+    waiting(): boolean;
     paused(): boolean;
     onStep(listener: (step: GameStep) => void): () => void;
     broken(): unknown;
@@ -1669,6 +1674,7 @@ interface GameOptions extends GameSimOptions {
     readonly touchSettings?: unknown;
     readonly locale: Locale;
     readonly facts?: readonly string[];
+    readonly waitForPress?: boolean;
 }
 ```
 
@@ -1828,6 +1834,50 @@ interface Host {
 type HostTarget = 'web' | 'test';
 ```
 
+### `HowMoves` (interface)
+
+```ts
+interface HowMoves {
+    readonly doubleJump: boolean;
+    readonly wallJump: boolean;
+    readonly dash: boolean;
+}
+```
+
+### `HowRow` (interface)
+
+```ts
+interface HowRow {
+    readonly move: string;
+    readonly how: string;
+}
+```
+
+### `howRows` (function)
+
+```ts
+function howRows(facts: {
+    readonly device: DeviceKind;
+    readonly moves: HowMoves | undefined;
+    readonly first: (action: string) => string | undefined;
+    readonly swapped: boolean;
+    readonly words: Words;
+    readonly own?: readonly HowRow[];
+}): readonly HowRow[];
+```
+
+### `howScreen` (function)
+
+```ts
+function howScreen(options: ScreenBase & {
+    readonly goal?: string;
+    readonly rows: () => readonly HowRow[];
+    readonly onBack: () => void;
+}): Screen & {
+    update(): void;
+};
+```
+
 ### `hud` (function)
 
 ```ts
@@ -1835,6 +1885,8 @@ function hud(options: ScreenBase & {
     readonly jumpSide: () => 'left' | 'right';
     readonly onPause: () => void;
     readonly heroes?: () => readonly HeroBox[];
+    readonly card?: () => HudCard | undefined;
+    readonly score?: () => number | undefined;
     readonly watching?: {
         readonly onTake: () => void;
     };
@@ -2306,6 +2358,12 @@ class LevelError extends Error {
 }
 ```
 
+### `levelGoal` (function)
+
+```ts
+function levelGoal(words: Words, levelId: string): string | undefined;
+```
+
 ### `LevelJoint` (type)
 
 ```ts
@@ -2538,6 +2596,18 @@ const LOG_MAX = 1024;
 const Look: ComponentDef<typeof lookFields>;
 ```
 
+### `lostScreen` (function)
+
+```ts
+function lostScreen(options: ScreenBase & {
+    readonly score?: number;
+    readonly best?: number;
+    readonly notKept?: string;
+    readonly onAgain: () => void;
+    readonly onMenu: () => void;
+}): Screen;
+```
+
 ### `markRead` (function)
 
 ```ts
@@ -2640,7 +2710,7 @@ function memoryStore(initial?: Readonly<Record<string, string>>): MemoryStore;
 ### `MenuItem` (type)
 
 ```ts
-type MenuItem = 'continue' | 'play' | 'new' | 'saves' | 'add-player' | 'settings' | 'quit';
+type MenuItem = 'continue' | 'play' | 'new' | 'saves' | 'add-player' | 'settings' | 'how' | 'quit';
 ```
 
 ### `menuItems` (function)
@@ -3199,7 +3269,7 @@ function parseServerMessage(raw: unknown): ServerMessage | undefined;
 ### `PauseItem` (type)
 
 ```ts
-type PauseItem = 'resume' | 'add-player' | 'settings' | 'leave';
+type PauseItem = 'resume' | 'again' | 'add-player' | 'settings' | 'how' | 'leave';
 ```
 
 ### `pauseScreen` (function)
@@ -3208,6 +3278,11 @@ type PauseItem = 'resume' | 'add-player' | 'settings' | 'leave';
 function pauseScreen(options: ScreenBase & {
     readonly items: readonly PauseItem[];
     readonly removable: readonly number[];
+    readonly goal?: () => string | undefined;
+    readonly sound?: {
+        readonly on: boolean;
+        readonly onChange: (on: boolean) => void;
+    };
     readonly onPick: (item: PauseItem) => void;
     readonly onRemove: (player: number) => void;
 }): Screen;
@@ -4012,6 +4087,8 @@ interface ScreenMakers {
     readonly menu: typeof menuScreen;
     readonly pause: typeof pauseScreen;
     readonly done: typeof doneScreen;
+    readonly lost: typeof lostScreen;
+    readonly how: typeof howScreen;
     readonly problem: typeof problemScreen;
     readonly settings: typeof settingsScreen;
     readonly saves: typeof savesScreen;
@@ -4201,6 +4278,9 @@ function settingsScreen(options: ScreenBase & {
     readonly coarse: boolean;
     readonly problem?: SaveProblem;
     readonly sharing: boolean;
+    readonly onDeleteSaves?: () => Promise<{
+        readonly ok: boolean;
+    }>;
     readonly onBack: () => void;
 }): Screen;
 ```
@@ -4312,6 +4392,7 @@ interface Sim {
     entity(sid: number): EntityRef | undefined;
     query(...components: ComponentDef[]): EntityRef[];
     resource<Z extends z.ZodType>(def: ResourceDef<Z>): z.output<Z>;
+    read(resourceId: string): unknown;
     snapshot(): Uint8Array;
     restore(bytes: Uint8Array): void;
     describeSnapshot(bytes?: Uint8Array): SnapshotView;
@@ -7330,6 +7411,12 @@ class LevelError extends Error {
 }
 ```
 
+### `levelGoal` (function)
+
+```ts
+function levelGoal(words: Words, levelId: string): string | undefined;
+```
+
 ### `LevelJoint` (type)
 
 ```ts
@@ -8872,6 +8959,7 @@ interface Sim {
     entity(sid: number): EntityRef | undefined;
     query(...components: ComponentDef[]): EntityRef[];
     resource<Z extends z.ZodType>(def: ResourceDef<Z>): z.output<Z>;
+    read(resourceId: string): unknown;
     snapshot(): Uint8Array;
     restore(bytes: Uint8Array): void;
     describeSnapshot(bytes?: Uint8Array): SnapshotView;

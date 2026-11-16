@@ -17,6 +17,8 @@ export type DoneProps = {
   readonly title: string
   /** "You finished Level 1." or, after the last level, "You finished the game." */
   readonly line: string
+  /** "Score: 3" and "Best: 5", when the game counts a score. */
+  readonly lines: readonly string[]
   /** Why the progress was not kept, when it was not. */
   readonly notKept?: string
   readonly buttons: readonly DoneButton[]
@@ -34,19 +36,27 @@ export function doneScreen(
     readonly level: string
     /** There is a level after this one. */
     readonly next: boolean
+    /** The level's score, shown as "Score: n" when given. */
+    readonly score?: number
+    /** The best score, shown as "Best: n" when given. */
+    readonly best?: number
     /** Why the progress was not kept, when it was not: one sentence, already in the player's words. */
     readonly notKept?: string
     readonly onNext: () => void
     readonly onMenu: () => void
   },
 ): Screen {
-  const { level, next, notKept, onNext, onMenu } = options
+  const { level, next, score, best, notKept, onNext, onMenu } = options
   return show(
     Part,
     { ...options, name: 'done' },
     (words): DoneProps => ({
       title: words('automata.done.title'),
       line: next ? words('automata.done.level', { level }) : words('automata.done.game'),
+      lines: [
+        ...(score === undefined ? [] : [words('automata.hud.score', { score })]),
+        ...(best === undefined ? [] : [words('automata.hud.best', { best })]),
+      ],
       ...(notKept === undefined ? {} : { notKept }),
       buttons: next
         ? [

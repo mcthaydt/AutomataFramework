@@ -315,7 +315,7 @@ on), and returns `{ destroy() }`. The kit the framework's screens are made of (`
 `ScreenFrame`, `Dialog`, `KeyRow`) is exported for a game's own screens to use.
 
 The flow raises page events on the game's sound, so a cues file can give the menu its own music and a button its own click:
-`screen.menu`, `screen.pause`, `screen.done`, `ui.move`, `ui.press` and `ui.back`. `FLOW_EVENTS` lists them.
+`screen.menu`, `screen.pause`, `screen.done`, `screen.lost`, `ui.move`, `ui.press` and `ui.back`. `FLOW_EVENTS` lists them.
 
 ## Saves
 
