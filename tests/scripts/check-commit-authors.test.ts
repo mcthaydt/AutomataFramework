@@ -1,11 +1,17 @@
+import { createHash } from 'node:crypto'
 import { describe, expect, test } from 'vitest'
 import {
   type CommitInfo,
   explain,
   findProblems,
+  namesHidden,
   OWNER,
   type Person,
 } from '../../scripts/check-commit-authors.ts'
+
+// A made-up hidden name, so this test never holds a real one, kept as HIDDEN_NAMES keeps a display name: lower case,
+// its words joined by nothing.
+const HIDDEN = [createHash('sha256').update('thequietheron').digest('hex')]
 
 const owner: Person = { name: OWNER.name, email: OWNER.email, login: OWNER.login }
 const claude: Person = { name: 'Claude', email: 'noreply@anthropic.com', login: null }
@@ -38,7 +44,7 @@ describe('who a commit may come from', () => {
   })
 
   test('his GitHub login with any other name fails', () => {
-    const renamed: Person = { name: 'The Realest Alive', email: 'other@example.com', login: OWNER.login }
+    const renamed: Person = { name: 'Another Name', email: 'other@example.com', login: OWNER.login }
     expect(findProblems([commit(renamed)], 'A change', '')).toHaveLength(2)
   })
 
@@ -115,6 +121,38 @@ describe('Claude credits', () => {
   })
 })
 
+describe("the Owner's other names", () => {
+  test('a description that names him otherwise fails', () => {
+    const body =
+      '_Requested by **The Quiet Heron** · [project thread](https://claude.ai/code/project/chan_1)_'
+    const problems = findProblems([commit(owner)], 'A change', body, HIDDEN)
+    expect(problems).toHaveLength(1)
+    expect(problems[0]?.kind).toBe('name-in-text')
+  })
+
+  test('a title or a commit message that names him otherwise fails', () => {
+    expect(findProblems([commit(owner)], 'For the quiet-heron', '', HIDDEN)[0]?.kind).toBe('name-in-text')
+    const message = 'feat: a change\n\nAsked for by The Quiet Heron.'
+    const problems = findProblems([commit(owner, { message })], 'A change', '', HIDDEN)
+    expect(problems.map((p) => p.kind)).toEqual(['name-in-commit'])
+  })
+
+  test('the name is found in any case, spacing or punctuation, and only as whole words in order', () => {
+    expect(namesHidden('THE QUIET HERON', HIDDEN)).toBe(true)
+    expect(namesHidden('thequietheron', HIDDEN)).toBe(true)
+    expect(namesHidden('the heron is quiet', HIDDEN)).toBe(false)
+  })
+
+  test('the credit line with his name now passes', () => {
+    const body = '_Requested by **McThayDT** · [project thread](https://claude.ai/code/project/chan_1)_'
+    expect(findProblems([commit(owner)], 'A change', body, HIDDEN)).toEqual([])
+  })
+
+  test('the real hidden names are kept only as hashes', () => {
+    expect(namesHidden('Requested by **McThayDT**')).toBe(false)
+  })
+})
+
 describe('the message a person reads', () => {
   test('a wrong name comes with the three commands that fix it', () => {
     const text = explain(findProblems([commit(claude)], 'A change', ''), 'main')
@@ -134,5 +172,10 @@ describe('the message a person reads', () => {
     expect(text).toContain('git rebase -i origin/main')
     expect(text).toContain('press the pencil by the description')
     expect(text).not.toContain('--reset-author')
+  })
+
+  test('a name in the description says where to write the right one', () => {
+    const text = explain(findProblems([commit(owner)], 'A change', 'By the quiet heron.', HIDDEN), 'main')
+    expect(text).toContain(`write ${OWNER.name} where the other name is`)
   })
 })

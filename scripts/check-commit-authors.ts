@@ -8,6 +8,10 @@
 //   - A Claude credit (a `Co-Authored-By: Claude` line, a `Claude-Session` line, "Generated with Claude Code" or its
 //     "by" form) fails in any commit message and in the pull request's title or description.
 //   - Everyone else keeps their own name. GitHub's own committer (a web edit, a merge button) is not the Owner.
+//   - The Owner's other names (his old real name and his display name) never appear in a commit message or in the
+//     pull request's title or description: the credit line reads "Requested by **McThayDT**". A session's
+//     attribution template fills in the display name, so this catches it before it lands. The names are kept
+//     only as hashes.
 //
 // This file has no dependencies on purpose: the workflow runs it with Node alone, and the same file lives in every
 // repo of the project. It reads the commits from the GitHub API, so it needs no clone and sees the pull request as
@@ -31,8 +35,35 @@ const lower = (text: string): string => text.toLowerCase()
  */
 const OLD_NAME_HASH = '201f6494b670573dedc4e2baeb0499db0f3b19fdc6bc9d4982ac8ee84c42dcb7'
 
-const isOldName = (name: string): boolean =>
-  createHash('sha256').update(lower(name.trim())).digest('hex') === OLD_NAME_HASH
+const sha = (text: string): string => createHash('sha256').update(text).digest('hex')
+
+const isOldName = (name: string): boolean => sha(lower(name.trim())) === OLD_NAME_HASH
+
+/**
+ * The SHA-256 of each name of the Owner that may not appear in a pull request's words or a commit message, in lower
+ * case: his old real name (its words joined by one space, as `OLD_NAME_HASH` is kept), and his display name with
+ * and without its first word, each with its words joined by nothing, so the name run together as one word is caught
+ * too.
+ */
+export const HIDDEN_NAMES: readonly string[] = [
+  OLD_NAME_HASH,
+  '8f714652fd5423e59a69279daff82a89eeacbd1b9154a237c4acd14f5d741151',
+  'c2d990e3ac7c4fbe9bb2065bd0bfeeff4bd83bfab45a00b37c78d2d1e49cb12b',
+]
+
+/** Whether any run of one to three words of `text`, joined by a space or by nothing, hashes to one of `hashes`. */
+export function namesHidden(text: string, hashes: readonly string[] = HIDDEN_NAMES): boolean {
+  const words = lower(text)
+    .split(/[^\p{L}]+/u)
+    .filter(Boolean)
+  return words.some((_, i) =>
+    [1, 2, 3].some((size) => {
+      const run = words.slice(i, i + size)
+      if (run.length < size) return false
+      return [run.join(' '), run.join('')].some((form) => hashes.includes(sha(form)))
+    }),
+  )
+}
 
 /** One side of a commit: who wrote it or who committed it. `login` is the GitHub account git's email maps to. */
 export interface Person {
@@ -51,7 +82,7 @@ export interface CommitInfo {
 
 /** One thing wrong. `where` says which commit (or the pull request text); `what` is a plain sentence. */
 export interface Problem {
-  kind: 'identity' | 'credit-in-commit' | 'credit-in-text'
+  kind: 'identity' | 'credit-in-commit' | 'credit-in-text' | 'name-in-commit' | 'name-in-text'
   where: string
   what: string
 }
@@ -109,7 +140,12 @@ const short = (sha: string): string => sha.slice(0, 7)
  * Everything wrong with a pull request. Pure: give it the commits and the pull request's title and description,
  * and it returns the problems, none when all is well.
  */
-export function findProblems(commits: readonly CommitInfo[], title: string, body: string): Problem[] {
+export function findProblems(
+  commits: readonly CommitInfo[],
+  title: string,
+  body: string,
+  hidden: readonly string[] = HIDDEN_NAMES,
+): Problem[] {
   const problems: Problem[] = []
   for (const commit of commits) {
     const where = `commit ${short(commit.sha)}`
@@ -139,6 +175,13 @@ export function findProblems(commits: readonly CommitInfo[], title: string, body
         what: `its message has ${credit.label}: ${credit.line}`,
       })
     }
+    if (namesHidden(commit.message, hidden)) {
+      problems.push({
+        kind: 'name-in-commit',
+        where,
+        what: `its message names the Owner other than ${OWNER.name}`,
+      })
+    }
   }
   const credit = findCredit(`${title}\n${body}`)
   if (credit !== null) {
@@ -146,6 +189,13 @@ export function findProblems(commits: readonly CommitInfo[], title: string, body
       kind: 'credit-in-text',
       where: 'the pull request',
       what: `its title or description has ${credit.label}: ${credit.line}`,
+    })
+  }
+  if (namesHidden(`${title}\n${body}`, hidden)) {
+    problems.push({
+      kind: 'name-in-text',
+      where: 'the pull request',
+      what: `its title or description names the Owner other than ${OWNER.name}: write ${OWNER.name} there`,
     })
   }
   return problems
@@ -166,11 +216,11 @@ export function explain(problems: readonly Problem[], base: string): string {
       '  git push --force-with-lease',
     )
   }
-  if (problems.some((problem) => problem.kind === 'credit-in-commit')) {
+  if (problems.some((problem) => problem.kind === 'credit-in-commit' || problem.kind === 'name-in-commit')) {
     lines.push(
       '',
-      'To take a Claude line out of a commit message, run this, change "pick" to "reword" on that commit, save,',
-      'then delete the line in the message that opens, and push again:',
+      'To take a Claude line or a name out of a commit message, run this, change "pick" to "reword" on that commit,',
+      `save, then delete the line (or write ${OWNER.name} for the name) in the message that opens, and push again:`,
       '',
       `  git rebase -i origin/${base}`,
       '  git push --force-with-lease',
@@ -181,6 +231,13 @@ export function explain(problems: readonly Problem[], base: string): string {
       '',
       'To take a Claude line out of the pull request, open it on GitHub, press the pencil by the description (or',
       'the title), delete that line and save. This check then runs again by itself.',
+    )
+  }
+  if (problems.some((problem) => problem.kind === 'name-in-text')) {
+    lines.push(
+      '',
+      'To put the name right, open the pull request on GitHub, press the pencil by the description (or the title),',
+      `write ${OWNER.name} where the other name is and save. This check then runs again by itself.`,
     )
   }
   return lines.join('\n')
