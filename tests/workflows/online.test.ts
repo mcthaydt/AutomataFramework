@@ -8,8 +8,11 @@ const jobs = ci.slice(ci.indexOf('\njobs:'))
 const start = jobs.indexOf('\n  online:')
 const online = jobs.slice(start, jobs.indexOf('\n  # The package', start))
 
-test('the online job builds the package, installs all three browsers and runs the journeys', () => {
-  expect(online).toContain('pnpm exec playwright install --with-deps chromium webkit firefox')
+test('the online job builds the package, installs all three browsers (Chromium alone on a draft) and runs the journeys', () => {
+  expect(online).toContain(
+    `pnpm exec playwright install --with-deps \${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}`,
+  )
+  expect(online).toContain(`JOURNEY_ENGINES: \${{ needs.plan.outputs.full != 'true' && 'chromium' || '' }}`)
   expect(online.indexOf('pnpm build')).toBeGreaterThan(-1)
   expect(online.indexOf('pnpm test:journeys')).toBeGreaterThan(online.indexOf('pnpm build'))
 })
