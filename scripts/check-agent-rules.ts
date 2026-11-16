@@ -7,6 +7,8 @@
 //   - Every skill under .claude/skills/ has the name of its folder and a description, which is how it loads.
 //   - Every hook command in .claude/settings.json names a file that exists.
 //   - No tracked file names a real demo game. They are private; the names are kept here only as hashes.
+//   - No editor slice (slice 3 on, in docs/roadmap.md) closes, and no later slice starts, before its design review
+//     loop has passed: docs/superpowers/audits/<date>-slice-<n>-design-review.md with the line `Recheck: passed`.
 //
 // This file has no dependencies on purpose. `problems` is exported for tests/scripts/check-agent-rules.test.ts.
 import { execFileSync } from 'node:child_process'
@@ -58,6 +60,45 @@ function frontMatter(text: string): Record<string, string> {
   return Object.fromEntries(found.map((pair) => [pair[1] ?? '', pair[2] ?? '']))
 }
 
+/** The first slice that is an editor slice; the design review gate (the Owner, 2026-11-16) starts there. */
+export const FIRST_EDITOR_SLICE = 3
+
+/** A roadmap slice: its number and how far its numbered steps have got. */
+interface Slice {
+  n: number
+  started: boolean
+  done: boolean
+}
+
+/** The slices of docs/roadmap.md: a slice has started when a step is `Now:`, and is done when every step is `Done:`. */
+export function slicesOf(roadmap: string): Slice[] {
+  const parts = roadmap.split(/^## Slice (\d+):.*$/m)
+  const slices: Slice[] = []
+  for (let i = 1; i < parts.length; i += 2) {
+    const steps = (parts[i + 1] ?? '').split(/^(?:---|# )/m)[0]?.match(/^\d+\. \w+:/gm) ?? []
+    slices.push({
+      n: Number(parts[i]),
+      started: steps.some((step) => / Now:$/.test(step)),
+      done: steps.length > 0 && steps.every((step) => / Done:$/.test(step)),
+    })
+  }
+  return slices
+}
+
+/** The editor slices that closed, or let a later slice start, without a passed design review loop. */
+export function unreviewedSlices(files: readonly string[], read: Read): number[] {
+  const slices = slicesOf(read('docs/roadmap.md') ?? '')
+  const passed = (n: number): boolean =>
+    files
+      .filter((f) => new RegExp(`^docs/superpowers/audits/[\\w-]*slice-${n}-design-review\\.md$`).test(f))
+      .some((f) => /^Recheck: passed\s*$/m.test(read(f) ?? ''))
+  return slices
+    .filter((slice) => slice.n >= FIRST_EDITOR_SLICE)
+    .filter((slice) => slice.done || slices.some((later) => later.n > slice.n && later.started))
+    .map((slice) => slice.n)
+    .filter((n) => !passed(n))
+}
+
 /** Every problem with the repo's files, as plain sentences. `files` is every tracked path. */
 export function problems(
   files: readonly string[],
@@ -100,6 +141,13 @@ export function problems(
         found.push(`.claude/settings.json runs ${path}, which is missing.`)
       }
     }
+  }
+
+  for (const n of unreviewedSlices(files, read)) {
+    found.push(
+      `Slice ${n} is closed or the next one has started, but its design review loop has not passed: ` +
+        `add docs/superpowers/audits/<date>-slice-${n}-design-review.md with the line \`Recheck: passed\`.`,
+    )
   }
 
   for (const path of files) {

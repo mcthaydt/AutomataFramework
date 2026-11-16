@@ -1,6 +1,6 @@
 ---
 name: visual-review
-description: Use when mockups or any UI round need reviewing before the Owner's approval: the board, the two lenses that run side by side, the one fix session, the screenshot sizes and the harsh last look.
+description: Use when mockups or any UI round need reviewing before the Owner's approval, or a slice's built screens need their closing design review loop: the board, the two lenses that run side by side, the one fix session, the screenshot sizes and the harsh last look.
 ---
 
 # Visual review
@@ -28,6 +28,16 @@ artifact before it is reported done.
    changed since the last approval. Its findings go through the same fix loop.
 6. **The Owner approves the finished set.** The Owner's tweaks are targeted fixes on Sonnet at high effort, with no new
    cycle.
+
+## The design review loop that ends a slice
+
+A slice does not close, and the next slice does not start, until every screen built in it has been through one loop:
+**review** (the two lenses above, over the built screens in real browsers, not the mockups), **fix** (one fix
+session, every finding), **recheck** (the lenses again, only on what the fixes touched). Repeat fix and recheck until
+the recheck finds nothing. Record it in `docs/superpowers/audits/<date>-slice-<n>-design-review.md`: the screens
+covered, each round's findings and fixes, and last the line `Recheck: passed`. Only then may `docs/roadmap.md` mark
+the slice's last step done or a later slice's step `Now:`; the `agent-rules` check fails the pull request otherwise
+(the Owner, 2026-11-16).
 
 Checks a program can make come before any lens: touch sizes, contrast and the palette are tests in each repo
 (`tests/styles/`, the browser layout tests). A lens reports only what a program can't see.

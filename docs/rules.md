@@ -41,7 +41,10 @@ any other; nothing waits on an unmerged stage branch.
   GitHub-hosted CI); (7) port from AutomataFrameworkFailed in layer order, never ahead of its user. The design is
   [the first layer's spec](superpowers/specs/2026-11-13-2d-first-layer-design.md).
 - **The order of work.** One slice at a time (World, Characters, Feel, Sound, Story, Screens), and only the current
-  slice is planned. Mockups first: no editor code until the Owner approves the mockups.
+  slice is planned. Mockups first: no editor code until the Owner approves the mockups. **Design review last:** a
+  slice does not close, and the next does not start, until every screen built in it has been through the design
+  review loop (review, fix, recheck; the `visual-review` skill) and its record says `Recheck: passed` (the Owner,
+  2026-11-16; the `agent-rules` check reads `docs/roadmap.md` and fails without it).
 - **The Owner's yes** is needed for: a product choice that changes what we make, a new dependency, a release, a real
   game's golden that moves, and anything else `lane.mjs` calls closed. Ask at once, in plain words, on a decision
   card, with options and a recommendation, and keep working on the rest; never default an Owner decision.
