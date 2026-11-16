@@ -45,10 +45,25 @@ export const HEADLESS_SOURCE = `import { heroPlugin } from './features/hero/hero
 export const gamePlugins = [heroPlugin]
 `
 
+/** The page `automata create` writes, as far as the checks of a game's page care. */
+const INDEX_HTML = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Small Game</title>
+  </head>
+  <body>
+    <main id="game"></main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+`
+
 /** The fixture game, its code and a package.json, by path from the game's root. A fresh object every time. */
 export function smallGame(): Record<string, string> {
   return {
     ...fixtureFiles,
+    'index.html': INDEX_HTML,
     'package.json': `${JSON.stringify({ name: 'small-game', private: true, type: 'module' }, null, 2)}\n`,
     'src/headless.ts': HEADLESS_SOURCE,
     'src/features/hero/hero.ts': HERO_SOURCE,

@@ -8,6 +8,7 @@ import { Effect } from 'effect'
 import { importsOf, resolveImport, withoutComments } from '../../lib/imports.ts'
 import type { Diagnostic } from '../content/content.ts'
 import type { GameFolder } from './game-folder.ts'
+import { pageProblems } from './check-page.ts'
 import { Files, type FilesService } from './ports.ts'
 import type { StepReport } from './report.ts'
 
@@ -185,19 +186,30 @@ export function ruleProblems(files: Readonly<Record<string, string>>): Diagnosti
     .map((f) => ({ file: f.file, path: `line ${f.line}`, message: f.message }))
 }
 
-/** The rules step: every `.ts` under `src/` and the `package.json` are read, and `ruleProblems` says what is wrong. */
+/** The files a game's page is made of, which `pageProblems` reads: the page itself and what `src/` holds besides rules. */
+const PAGE_FILE = /\.(?:ts|js|svelte|html|css)$/
+
+/**
+ * The rules step: every `.ts` under `src/` and the `package.json` are read, and `ruleProblems` says what is wrong in the
+ * game's rules; then `pageProblems` says what is wrong in its page (every script, style and `index.html`).
+ */
 export function rulesStep(game: GameFolder): Effect.Effect<StepReport, never, FilesService> {
   return Effect.gen(function* () {
     const files = yield* Files
     const texts: Record<string, string> = {}
+    const page: Record<string, string> = {}
     for (const name of yield* files.list(join(game.folder, 'src'))) {
-      if (!name.endsWith('.ts')) continue
+      if (!PAGE_FILE.test(name)) continue
       const text = yield* files.readText(join(game.folder, 'src', name))
-      if (text !== undefined) texts[`src/${name}`] = text
+      if (text === undefined) continue
+      page[`src/${name}`] = text
+      if (name.endsWith('.ts')) texts[`src/${name}`] = text
     }
+    const index = yield* files.readText(join(game.folder, 'index.html'))
+    if (index !== undefined) page['index.html'] = index
     const packageJson = yield* files.readText(join(game.folder, 'package.json'))
     if (packageJson !== undefined) texts['package.json'] = packageJson
-    const problems = ruleProblems(texts)
+    const problems = [...ruleProblems(texts), ...pageProblems(page)]
     const state = problems.length > 0 ? 'failed' : 'passed'
     return { step: 'rules', state, problems, notes: [] } satisfies StepReport
   })
