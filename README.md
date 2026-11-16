@@ -1227,7 +1227,6 @@ fails if it is out of date.
 ## Working on this repo
 
 Tests run only in GitHub Actions. Locally, `pnpm lint`, `pnpm typecheck`, `pnpm knip` and `pnpm build` are fine.
-See `CLAUDE.md` for how the work is staged.
 
 ## License
 
