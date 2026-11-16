@@ -174,6 +174,8 @@ test('automata says where the flow lives and what to read on a page; automata-co
   const intro = content.slice(0, content.indexOf('\n## '))
   for (const line of ['levels = [', 'done = "', 'warnings = [', 'splash = "'])
     expect(intro, line).toContain(line)
+  // And how a level is lost, scored and told: a game that is asked for them finds the lines.
+  for (const line of ['lost = "', 'score = "', 'level.<id>.goal']) expect(intro, line).toContain(line)
 })
 
 test('no skill says npx automata without --no', () => {

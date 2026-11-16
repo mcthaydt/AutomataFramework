@@ -29,7 +29,8 @@ src/index.ts, src/headless.ts the public surface; headless is everything that ne
 src/server.ts, src/cli.ts     Node-only entries: the room server, and the `automata` command (the package's `bin`)
 src/lib/                      shared helpers, no feature logic; `zod.ts` is the one way into Zod
 src/features/<feature>/       <feature>.ts entry, <part>.ts one job per file, library/ JSON data
-template/                     the game `automata create` writes; `template/replays/level-1.json` is a golden
+template/                     the game `automata create` writes; `template/replays/level-1.json` is a golden;
+                              `template/tests/play/` plays its built page in Chromium and WebKit (`npm run play-test`)
 tests/                        mirrors src/; journeys/, create/ and install/ use real browsers or the packed package
 tests/golden/                 recorded hashes and replays
 docs/superpowers/             specs/, plans/, audits/, progress.md (open work), history.md
@@ -38,7 +39,8 @@ docs/superpowers/             specs/, plans/, audits/, progress.md (open work), 
 - Features import only from features below them (`tests/architecture/rules.ts` checks it). `net` is pure, just above
   `commands`; `server` is Node only, above `level`, imported only by `src/server.ts`; `cli` is the last feature, on
   Effect, uses only what `src/headless.ts` re-exports, and is imported only by `src/cli.ts`. `flow`, the one above
-  `game`, is the default game flow; the screens it draws are in `screens`, below `game`.
+  `game`, is the default game flow (the visit, losing and trying again, the score and Back); the screens it draws are
+  in `screens`, below `game`.
 - Svelte 5 is allowed only in `ui` (the kit) and `screens` (one `.ts` and `.svelte` pair per screen). `pnpm typecheck`
   runs `svelte-check`, which needs TypeScript 6: `.pnpmfile.cjs` gives it the `typescript-6` copy, since a pnpm
   override does not reach a peer dependency.

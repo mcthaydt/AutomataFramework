@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
 import { COMMAND_NAMES } from '#src/features/cli/args.ts'
 import { helpFor } from '#src/features/cli/help.ts'
+import { BY_HAND } from '#src/features/cli/check-ship.ts'
 import { PROTOCOL_VERSIONS } from '#src/features/cli/mcp.ts'
 import { mcpTools } from '#src/features/cli/mcp-tools.ts'
 import { createSessions } from '#src/features/cli/session.ts'
@@ -367,4 +368,51 @@ test('the README has a "Screens and the flow" section: a page of a few lines, th
     'content/messages/',
   ])
     expect(section, word).toContain(word)
+})
+
+test('"Screens and the flow" says how a level is lost, scored, told and left, each with an example', () => {
+  const start = readme.indexOf('## Screens and the flow')
+  const flow = readme.slice(start, readme.indexOf('\n## ', start + 1))
+  for (const example of [
+    'lost = "hero.fell"',
+    'score = "hero.score.sparks"',
+    '"level.level-1.goal"',
+    'screens: { how: myHow }',
+    'back: false',
+  ])
+    expect(flow, example).toContain(example)
+  for (const word of [
+    '`lost`',
+    'data-state="lost"',
+    'Try again',
+    'goal line',
+    'How to play',
+    'Back',
+    'howRows',
+    'howScreen',
+  ])
+    expect(flow, word).toContain(word)
+  // A framed game leaves Back to the page that frames it.
+  expect(flow).toContain('A game framed inside another page leaves Back to that page')
+})
+
+test('the README has "The checklist every game meets": each group, where each box is held, and the list that is yours', () => {
+  const checklist = section('## The checklist every game meets')
+  for (const group of ['It works', "There's a game here", 'It feels finished', "It's honest", "It's safe"])
+    expect(checklist, group).toContain(group)
+  for (const word of [
+    'a default',
+    'a check',
+    'yours',
+    'automata check --ship',
+    'npm run play-test',
+    'the `page` part',
+  ])
+    expect(checklist, word).toContain(word)
+  for (const line of BY_HAND) expect(checklist, line).toContain(line)
+  // It comes straight after the screens and the flow, which is where its defaults are.
+  expect(readme.indexOf('## The checklist every game meets')).toBeGreaterThan(
+    readme.indexOf('## Screens and the flow'),
+  )
+  expect(section('## The automata command')).toContain('`page` part')
 })

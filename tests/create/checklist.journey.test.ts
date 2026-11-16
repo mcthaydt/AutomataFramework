@@ -17,6 +17,7 @@ import {
   type PageWindow,
   POLL,
   pickLanguage,
+  playFromMenu,
   runAutomata,
   runNpm,
   SIZES,
@@ -160,10 +161,9 @@ async function winTheLevel(page: Page, touch: boolean): Promise<void> {
 async function backAtTheMenu(page: Page, where: string): Promise<void> {
   await inState(page, 'menu')
   expect(await page.locator('.automata-picker').count(), `${where}: the language is kept`).toBe(0)
-  expect(
-    await page.evaluate(() => document.documentElement.lang),
-    `${where}: and the page says it`,
-  ).toMatch(/^en/)
+  expect(await page.evaluate(() => document.documentElement.lang), `${where}: and the page says it`).toMatch(
+    /^en/,
+  )
 }
 
 /** Counts the sound devices the page makes, without changing what they do. */
@@ -239,8 +239,7 @@ for (const name of journeyEngines()) {
           await pickLanguage(page, 'en')
           await inState(page, 'menu')
           expect(await outside(page), `${where}: the menu`).toEqual([])
-          await page.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click()
-          await inState(page, 'playing')
+          await playFromMenu(page)
           await expect.poll(() => tickOf(page), POLL).toBeGreaterThanOrEqual(0)
           // The level waits for a first press, and says what to do: the start card.
           expect(await outside(page), `${where}: the level and its buttons`).toEqual([])
@@ -308,7 +307,8 @@ for (const name of journeyEngines()) {
           await inState(page, 'playing')
           expect(await attemptOf(page), `restart ${n}`).toBe(attempt + 1)
           attempt += 1
-          expect(await page.locator('#game canvas').count(), `restart ${n}: the same canvas`).toBe(canvases)
+          // The new canvas is put in a moment after the state says playing; it settles on the same number.
+          await expect.poll(() => page.locator('#game canvas').count(), POLL).toBe(canvases)
           expect(await things(), `restart ${n}: the same things`).toBe(first)
         }
         expect(
@@ -377,19 +377,16 @@ for (const name of journeyEngines()) {
         await page.reload()
         await backAtTheMenu(page, 'menu')
         // Playing.
-        await page.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click()
-        await inState(page, 'playing')
+        await playFromMenu(page)
         await page.reload()
         await backAtTheMenu(page, 'playing')
         // Paused, then settings from the pause screen.
-        await page.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click()
-        await inState(page, 'playing')
+        await playFromMenu(page)
         await page.keyboard.press('Escape')
         await inState(page, 'paused')
         await page.reload()
         await backAtTheMenu(page, 'paused')
-        await page.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click()
-        await inState(page, 'playing')
+        await playFromMenu(page)
         await page.keyboard.press('Escape')
         await inState(page, 'paused')
         await page
@@ -400,14 +397,12 @@ for (const name of journeyEngines()) {
         await page.reload()
         await backAtTheMenu(page, 'settings')
         // Lost.
-        await page.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click()
-        await inState(page, 'playing')
+        await playFromMenu(page)
         await loseTheLevel(page, false)
         await page.reload()
         await backAtTheMenu(page, 'lost')
         // Done.
-        await page.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click()
-        await inState(page, 'playing')
+        await playFromMenu(page)
         await winTheLevel(page, false)
         await page.reload()
         await backAtTheMenu(page, 'done')
@@ -528,8 +523,7 @@ for (const name of journeyEngines()) {
         ).toBe(0)
         await pickLanguage(quiet.page, 'en')
         await inState(quiet.page, 'menu')
-        await quiet.page.locator('[data-screen="menu"] button').first().click()
-        await inState(quiet.page, 'playing')
+        await playFromMenu(quiet.page)
         // Sound off, from the pause screen, when the game has the switch.
         await quiet.page.keyboard.press('Escape')
         await inState(quiet.page, 'paused')
@@ -575,8 +569,7 @@ for (const name of journeyEngines()) {
           .first()
           .waitFor({ timeout: 60_000 })
         if ((await page.locator('.automata-picker-go').count()) > 0) await pickLanguage(page, 'en')
-        await page.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click()
-        await inState(page, 'playing')
+        await playFromMenu(page)
         await expect.poll(() => heroX(page), POLL).not.toBeNaN()
         const start = await heroX(page)
         const release = await walkRight(page, false)
