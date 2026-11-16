@@ -51,7 +51,11 @@ function frontMatter(text: string): Record<string, string> {
 }
 
 /** Every problem with the repo's files, as plain sentences. `files` is every tracked path. */
-export function problems(files: readonly string[], read: Read, hashes = PRIVATE_NAMES): string[] {
+export function problems(
+  files: readonly string[],
+  read: Read,
+  hashes: readonly string[] = PRIVATE_NAMES,
+): string[] {
   const found: string[] = []
   const claude = read('CLAUDE.md') ?? ''
   const rules = read('docs/rules.md') ?? ''

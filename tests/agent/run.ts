@@ -6,8 +6,8 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const ROOT = fileURLToPath(new URL('../../', import.meta.url))
-export const OWNER = [
+export const ROOT: string = fileURLToPath(new URL('../../', import.meta.url))
+export const OWNER: string[] = [
   '-c',
   'user.name=McThayDT',
   '-c',
