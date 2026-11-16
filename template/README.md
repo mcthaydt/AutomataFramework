@@ -5,7 +5,7 @@ a spark to take, and everything a game needs to be checked and played. Change it
 
 ## Play it
 
-Run `npm install` and `npm run dev` in the game's folder. The game opens in your browser. Hold the left or right arrow key to move, and press Space to jump. Push the crate, and touch the spark to take it.
+In the `my-game` folder, run `npm install` and `npm run dev`. The game opens in your browser. Hold the left or right arrow key to move, and press Space to jump. Push the crate, and touch the spark to take it.
 
 ## Change something
 

@@ -30,7 +30,7 @@ test('README.md and AGENTS.md name only commands, files and skills that exist', 
       for (const m of span.matchAll(/(?:^|\s)automata ([a-z]+)/g))
         expect(COMMAND_NAMES, `${page}: ${span}`).toContain(m[1])
       // `npm run <script>`: the game's package.json has it.
-      for (const m of span.matchAll(/npm run ([a-z]+)/g))
+      for (const m of span.matchAll(/npm run ([a-z-]+)/g))
         expect(Object.keys(scripts), `${page}: ${span}`).toContain(m[1])
       // A path: a file or a folder of the game, or one `create` writes.
       const isPath =
