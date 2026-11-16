@@ -9,6 +9,7 @@ import { Look, Thing } from './components.ts'
 import { MOVE_START } from './move-step.ts'
 import { Moves } from './moves.ts'
 import { Sprite } from './sprite.ts'
+import { Open, Pressed } from './switches.ts'
 import { usesMoves, usesSprites } from './uses.ts'
 
 /**
@@ -30,6 +31,9 @@ export function characterParts(
     collider.cuboid(character.size.w / 2, character.size.h / 2, { sensor: character.touch !== undefined }),
     [Look, { w: character.size.w, h: character.size.h, color: colourNumber(character.color) }],
     ...(sprites ? [[Sprite, { character: character.id, player, face: 1 }] as const] : []),
+    // A switch knows whether it is pressed and a gate whether it is open, only in a game that has either.
+    ...(character.switch !== undefined ? [Pressed] : []),
+    ...(character.opens !== undefined ? [Open] : []),
   ]
 }
 

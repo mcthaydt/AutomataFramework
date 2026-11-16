@@ -8,8 +8,11 @@ import { levelPlugin } from './plugin.ts'
 import { simContent } from './sim-content.ts'
 import { spawnLevel } from './spawn-level.ts'
 import { spritesPlugin } from './sprite.ts'
+import { openKinds, switchPlugin } from './switches.ts'
+import { levelSize } from './tile-runs.ts'
 import { touchPlugin } from './touch.ts'
-import { touchKinds, usesJoints, usesMoves, usesSprites } from './uses.ts'
+import { touchKinds, usesJoints, usesMoves, usesSprites, usesSwitches, usesValues } from './uses.ts'
+import { wherePlugin } from './where.ts'
 
 /** What `createGameSim` takes. Only the content is required. */
 export interface GameSimOptions {
@@ -39,6 +42,9 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const kinds = touchKinds(content)
   const gravity = options.gravity ?? { x: 0, y: 30 }
   const moved = usesMoves(content)
+  const opened = options.level ?? content.project.start
+  const openedLevel = content.levels[opened]
+  const openedSize = openedLevel === undefined ? { w: 0, h: 0 } : levelSize(openedLevel)
   const sim = await createSim({
     seed: options.seed ?? 1,
     content: simContent(content),
@@ -47,18 +53,24 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
       commandsPlugin,
       levelPlugin,
       // Only a game for two or more players can have people join and leave (see join.ts).
-      ...(players >= 2 ? [joinPlugin({ level: options.level ?? content.project.start, max: players })] : []),
+      ...(players >= 2 ? [joinPlugin({ level: opened, max: players })] : []),
       // Only a game with a figure or a camera has sprites, so every other game keeps the sim it had.
       ...(usesSprites(content) ? [spritesPlugin] : []),
       // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
       ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
       // Only a game whose hero has `moves` has the built-in hero, so every other game keeps the sim it had.
       ...(moved ? [movesPlugin({ gravity })] : []),
+      // Only a game with a character that has `values`, or a switch or a gate, knows which levels it holds.
+      ...(usesValues(content) || usesSwitches(content)
+        ? [wherePlugin([{ level: opened, x: 0, y: 0, ...openedSize }])]
+        : []),
+      // Only a game with a switch or a gate has the switch plugin (its components, events and the `facts` command).
+      ...(usesSwitches(content) ? [switchPlugin(openKinds(content))] : []),
       ...(options.plugins ?? []),
     ],
   })
   try {
-    spawnLevel(sim, content, options.level ?? content.project.start, options.players ?? [1])
+    spawnLevel(sim, content, opened, options.players ?? [1])
   } catch (error) {
     sim.dispose()
     throw error

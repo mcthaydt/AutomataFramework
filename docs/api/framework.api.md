@@ -278,6 +278,12 @@ const BodyKind: {
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
 ```
 
+### `boxesOverlap` (function)
+
+```ts
+function boxesOverlap(a: TurnedBox, b: TurnedBox): boolean;
+```
+
 ### `Bus` (type)
 
 ```ts
@@ -1124,6 +1130,28 @@ interface EventDef<Z extends z.ZodType = z.ZodType> {
 
 ```ts
 function exp(x: number): number;
+```
+
+### `FactKept` (const)
+
+```ts
+const FactKept: EventDef<z.ZodType<{
+    fact: string;
+}>>;
+```
+
+### `FactsCommand` (const)
+
+```ts
+const FactsCommand: CommandDef<z.ZodType<{
+    facts: string[];
+}>>;
+```
+
+### `factsCommand` (function)
+
+```ts
+function factsCommand(facts: readonly string[]): Command;
 ```
 
 ### `FeelFile` (interface)
@@ -2789,6 +2817,24 @@ type OnlineStatus = {
 function onlineWords(status: OnlineStatus, words: Words): string;
 ```
 
+### `Open` (const)
+
+```ts
+const Open: ComponentDef<typeof openFields>;
+```
+
+### `openEvent` (function)
+
+```ts
+function openEvent(kind: string, what: 'opened' | 'closed'): EventDef<z.ZodType<OpenPayload>>;
+```
+
+### `openKinds` (function)
+
+```ts
+function openKinds(content: GameContent): readonly string[];
+```
+
 ### `openSettings` (function)
 
 ```ts
@@ -3158,6 +3204,12 @@ interface PreparedRestore {
     commit(): void;
     discard(): void;
 }
+```
+
+### `Pressed` (const)
+
+```ts
+const Pressed: ComponentDef<typeof pressedFields>;
 ```
 
 ### `problemScreen` (function)
@@ -4087,6 +4139,18 @@ class SimFaultedError extends Error {
 }
 ```
 
+### `SimLevel` (interface)
+
+```ts
+interface SimLevel {
+    readonly level: string;
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+}
+```
+
 ### `SimOptions` (interface)
 
 ```ts
@@ -4423,6 +4487,12 @@ type StoreResult<T> = {
 };
 ```
 
+### `switchPlugin` (function)
+
+```ts
+function switchPlugin(kinds: readonly string[]): PluginDef;
+```
+
 ### `SYNC_BEHIND` (const)
 
 ```ts
@@ -4536,6 +4606,18 @@ function testSpeaker(options?: {
 const Thing: ComponentDef<typeof thingFields>;
 ```
 
+### `thingIn` (function)
+
+```ts
+function thingIn(where: {
+    readonly levels: readonly SimLevel[];
+    readonly prefixed: boolean;
+}, thingId: string): {
+    readonly level: string;
+    readonly id: string;
+} | undefined;
+```
+
 ### `ThingValue` (type)
 
 ```ts
@@ -4543,6 +4625,23 @@ type ThingValue = number | boolean | string | readonly string[] | readonly Level
     readonly level: string;
     readonly thing?: string | undefined;
 };
+```
+
+### `ThingValues` (interface)
+
+```ts
+interface ThingValues {
+    number(id: string): number;
+    switch(id: string): boolean;
+    choice(id: string): string;
+    words(id: string): string | undefined;
+    things(id: string): readonly number[];
+    path(id: string): readonly LevelPoint[];
+    leadsTo(id: string): {
+        readonly level: string;
+        readonly thing?: string | undefined;
+    } | undefined;
+}
 ```
 
 ### `TILE_COLOR` (const)
@@ -4824,6 +4923,18 @@ function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
 const TuningSchema: z.ZodType<TuningFile, TuningFile>;
 ```
 
+### `TurnedBox` (interface)
+
+```ts
+interface TurnedBox {
+    readonly x: number;
+    readonly y: number;
+    readonly hw: number;
+    readonly hh: number;
+    readonly rotation: number;
+}
+```
+
 ### `typed` (function)
 
 ```ts
@@ -4863,6 +4974,18 @@ function usesMoves(content: GameContent): boolean;
 
 ```ts
 function usesSprites(content: GameContent): boolean;
+```
+
+### `usesSwitches` (function)
+
+```ts
+function usesSwitches(content: GameContent): boolean;
+```
+
+### `usesValues` (function)
+
+```ts
+function usesValues(content: GameContent): boolean;
 ```
 
 ### `Value` (type)
@@ -4925,6 +5048,12 @@ type Values = Readonly<Record<string, Value>>;
 
 ```ts
 type ValueShown = 'tag' | 'reach' | 'arrow' | 'path' | 'none';
+```
+
+### `valuesOf` (function)
+
+```ts
+function valuesOf(ctx: SimContext, sid: number): ThingValues;
 ```
 
 ### `Verdict` (type)
@@ -5100,6 +5229,18 @@ function webSpeaker(options?: {
     readonly host?: Host;
     readonly seams?: Partial<SpeakerSeams>;
 }): Speaker;
+```
+
+### `Where` (const)
+
+```ts
+const Where: ResourceDef<z.ZodType<WhereValue>>;
+```
+
+### `wherePlugin` (function)
+
+```ts
+function wherePlugin(levels: readonly SimLevel[]): PluginDef;
 ```
 
 ### `withDefaults` (function)
@@ -5410,6 +5551,12 @@ const BodyKind: {
     readonly kinematicVelocity: 3;
 };
 type BodyKind = (typeof BodyKind)[keyof typeof BodyKind];
+```
+
+### `boxesOverlap` (function)
+
+```ts
+function boxesOverlap(a: TurnedBox, b: TurnedBox): boolean;
 ```
 
 ### `Bus` (type)
@@ -6048,6 +6195,28 @@ interface EventDef<Z extends z.ZodType = z.ZodType> {
 
 ```ts
 function exp(x: number): number;
+```
+
+### `FactKept` (const)
+
+```ts
+const FactKept: EventDef<z.ZodType<{
+    fact: string;
+}>>;
+```
+
+### `FactsCommand` (const)
+
+```ts
+const FactsCommand: CommandDef<z.ZodType<{
+    facts: string[];
+}>>;
+```
+
+### `factsCommand` (function)
+
+```ts
+function factsCommand(facts: readonly string[]): Command;
 ```
 
 ### `FeelFile` (interface)
@@ -7232,6 +7401,24 @@ type OnlineStatus = {
 function onlineWords(status: OnlineStatus, words: Words): string;
 ```
 
+### `Open` (const)
+
+```ts
+const Open: ComponentDef<typeof openFields>;
+```
+
+### `openEvent` (function)
+
+```ts
+function openEvent(kind: string, what: 'opened' | 'closed'): EventDef<z.ZodType<OpenPayload>>;
+```
+
+### `openKinds` (function)
+
+```ts
+function openKinds(content: GameContent): readonly string[];
+```
+
 ### `openSettings` (function)
 
 ```ts
@@ -7525,6 +7712,12 @@ interface PreparedRestore {
     commit(): void;
     discard(): void;
 }
+```
+
+### `Pressed` (const)
+
+```ts
+const Pressed: ComponentDef<typeof pressedFields>;
 ```
 
 ### `Project` (interface)
@@ -8201,6 +8394,18 @@ class SimFaultedError extends Error {
 }
 ```
 
+### `SimLevel` (interface)
+
+```ts
+interface SimLevel {
+    readonly level: string;
+    readonly x: number;
+    readonly y: number;
+    readonly w: number;
+    readonly h: number;
+}
+```
+
 ### `SimOptions` (interface)
 
 ```ts
@@ -8449,6 +8654,12 @@ type StoreResult<T> = {
 };
 ```
 
+### `switchPlugin` (function)
+
+```ts
+function switchPlugin(kinds: readonly string[]): PluginDef;
+```
+
 ### `SYNC_BEHIND` (const)
 
 ```ts
@@ -8562,6 +8773,18 @@ function testSpeaker(options?: {
 const Thing: ComponentDef<typeof thingFields>;
 ```
 
+### `thingIn` (function)
+
+```ts
+function thingIn(where: {
+    readonly levels: readonly SimLevel[];
+    readonly prefixed: boolean;
+}, thingId: string): {
+    readonly level: string;
+    readonly id: string;
+} | undefined;
+```
+
 ### `ThingValue` (type)
 
 ```ts
@@ -8569,6 +8792,23 @@ type ThingValue = number | boolean | string | readonly string[] | readonly Level
     readonly level: string;
     readonly thing?: string | undefined;
 };
+```
+
+### `ThingValues` (interface)
+
+```ts
+interface ThingValues {
+    number(id: string): number;
+    switch(id: string): boolean;
+    choice(id: string): string;
+    words(id: string): string | undefined;
+    things(id: string): readonly number[];
+    path(id: string): readonly LevelPoint[];
+    leadsTo(id: string): {
+        readonly level: string;
+        readonly thing?: string | undefined;
+    } | undefined;
+}
 ```
 
 ### `TILE_COLOR` (const)
@@ -8806,6 +9046,18 @@ function tuningNumbers(tuning: TuningFile): Readonly<Record<string, number>>;
 const TuningSchema: z.ZodType<TuningFile, TuningFile>;
 ```
 
+### `TurnedBox` (interface)
+
+```ts
+interface TurnedBox {
+    readonly x: number;
+    readonly y: number;
+    readonly hw: number;
+    readonly hh: number;
+    readonly rotation: number;
+}
+```
+
 ### `typed` (function)
 
 ```ts
@@ -8839,6 +9091,18 @@ function usesMoves(content: GameContent): boolean;
 
 ```ts
 function usesSprites(content: GameContent): boolean;
+```
+
+### `usesSwitches` (function)
+
+```ts
+function usesSwitches(content: GameContent): boolean;
+```
+
+### `usesValues` (function)
+
+```ts
+function usesValues(content: GameContent): boolean;
 ```
 
 ### `Value` (type)
@@ -8903,6 +9167,12 @@ type Values = Readonly<Record<string, Value>>;
 type ValueShown = 'tag' | 'reach' | 'arrow' | 'path' | 'none';
 ```
 
+### `valuesOf` (function)
+
+```ts
+function valuesOf(ctx: SimContext, sid: number): ThingValues;
+```
+
 ### `Verdict` (type)
 
 ```ts
@@ -8948,6 +9218,18 @@ function wasPressed(player: EntityRef, action: string): boolean;
 
 ```ts
 type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
+```
+
+### `Where` (const)
+
+```ts
+const Where: ResourceDef<z.ZodType<WhereValue>>;
+```
+
+### `wherePlugin` (function)
+
+```ts
+function wherePlugin(levels: readonly SimLevel[]): PluginDef;
 ```
 
 ### `withDefaults` (function)

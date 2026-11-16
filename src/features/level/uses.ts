@@ -46,3 +46,22 @@ export function usesSprites(content: GameContent): boolean {
 export function usesMoves(content: GameContent): boolean {
   return content.characters[content.project.hero]?.moves !== undefined
 }
+
+/**
+ * Whether any character declares `values` (plan W): a number, a switch, a link, a path or a door's way into a level that
+ * its placed things hold. It switches the `where` plugin on for the whole game, so a game with none keeps exactly the
+ * sim it had.
+ */
+export function usesValues(content: GameContent): boolean {
+  return Object.values(content.characters).some((character) => (character.values?.length ?? 0) > 0)
+}
+
+/**
+ * Whether any character is a switch (`switch`) or can be opened (`opens`). It switches the `switches` plugin, and so
+ * its components, events and the `facts` command, on for the whole game, so a game with none keeps the sim it had.
+ */
+export function usesSwitches(content: GameContent): boolean {
+  return Object.values(content.characters).some(
+    (character) => character.switch !== undefined || character.opens !== undefined,
+  )
+}
