@@ -40,9 +40,9 @@ In `.claude/skills/visual-check/SKILL.md`:
 2. "The steps": add step 4 after step 3:
 
    > 4. **Blind judge:** one round, at the end of a slice only, after step 3 passes. The coordinator picks a polished
-   >    commercial product of the same kind and names it in the brief. A fresh session sees the slice's screens next to
-   >    that product's, on the same devices, with nothing saying which is ours. It says which one looks amateur and
-   >    names the single biggest gap between them. That gap becomes one fix brief, fixed even when no acceptance
+   >    commercial product of the same kind and names it in the judge's brief. A fresh session sees the slice's screens
+   >    next to that product's, on the same devices, with nothing saying which is ours. It says which one looks amateur
+   >    and names the single biggest gap between them. That gap becomes one fix brief, fixed even when no acceptance
    >    criterion names it, and step 3 runs again on the screens the fix changed. The blind judge does not run again.
 
 3. The order paragraph: replace "The order is initial reviews, then the fixes, then the final look." with "The order
