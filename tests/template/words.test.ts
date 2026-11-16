@@ -11,7 +11,7 @@ const PAGES = ['README.md', 'AGENTS.md'] as const
 /** The skills the package ships (Task 10 reads the folder itself; until then these four are the promise). */
 const SKILLS = ['automata', 'automata-content', 'automata-rules', 'automata-api']
 /** What `create` writes under another name, so it is not in `template/` under this one. */
-const WRITTEN_BY_CREATE = ['package.json', 'biome.json', '.gitignore']
+const WRITTEN_BY_CREATE = ['package.json', 'biome.json', '.gitignore', 'dist/']
 
 /** The text between backticks, line by line. */
 const spans = (text: string): string[] => [...text.matchAll(/`([^`\n]+)`/g)].map((m) => m[1] ?? '')
@@ -30,7 +30,7 @@ test('README.md and AGENTS.md name only commands, files and skills that exist', 
       for (const m of span.matchAll(/(?:^|\s)automata ([a-z]+)/g))
         expect(COMMAND_NAMES, `${page}: ${span}`).toContain(m[1])
       // `npm run <script>`: the game's package.json has it.
-      for (const m of span.matchAll(/npm run ([a-z]+)/g))
+      for (const m of span.matchAll(/npm run ([a-z-]+)/g))
         expect(Object.keys(scripts), `${page}: ${span}`).toContain(m[1])
       // A path: a file or a folder of the game, or one `create` writes.
       const isPath =
@@ -63,5 +63,5 @@ test('neither names a colour, a competitor or a price', () => {
 test('nothing in the template says npx automata without --no', () => {
   // `npx automata` fetches npm's unrelated package of that name wherever the game's install is missing.
   for (const [path, text] of Object.entries(tree))
-    expect(text, path).not.toMatch(/npx\s+(?!--no\s+automata\b)/)
+    expect(text, path).not.toMatch(/npx\s+(?!--no\s+automata\b|playwright\b)/)
 })

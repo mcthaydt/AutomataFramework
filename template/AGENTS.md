@@ -32,6 +32,7 @@ Run them as `npx --no automata <command>`, which never fetches anything. A perso
   Run it after you add or change a word. `--read <language>` marks a language's words read once a person has read
   them, and only then; `--json` prints the answer as JSON.
 - `npx --no automata play` serves the game for a browser.
+- `npm run build` makes `dist/`, which goes to players; `npm run play-test` plays it in Chromium and WebKit (the README says how to install them); `npm test` needs no browser.
 - `npx --no automata create <name>` makes a new game.
 
 Exit codes: 0 fine, 1 the game needs fixing, 2 the command could not do its work.
@@ -71,8 +72,6 @@ Run `npx --no automata check --ship` and fix what it names. Then work through th
 - Did you make the art, the music and the characters, or are you allowed to use them?
 - Are there any stand-in pictures, half-made menus, or spots that do something when tapped that nobody would guess?
 - Do the pictures and words look cared for, the same style on every screen?
-- Is color ever the only clue? Is sound ever the only clue?
-- Can luck make a level impossible? Does anything appear right on top of the player?
-- Play it for ten minutes on a real phone.
-- Play it with one hand, on bad Wi-Fi, after locking and unlocking the phone, and after many restarts.
+- Is color or sound ever the only clue? Can luck make a level impossible? Does anything appear right on top of the player?
+- Play it for ten minutes on a real phone: with one hand, on bad Wi-Fi, after locking and unlocking it, and after many restarts.
 - Hand it to someone and say nothing. Is it still fun after 30 seconds?

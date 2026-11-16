@@ -25,6 +25,11 @@ reach it), `done = "door.touched"` is the event that ends a level, `warnings = [
 reads before they play (each key needs a word in every language), and `splash = "logo"` names the figure shown first. `automata check`
 says which one is wrong.
 
+Two more lines say how a level is lost and scored: `lost = "hero.fell"` is the event that loses a level (the screen says "You
+lost." and Try again plays it again, with no reload), and `score = "hero.score.sparks"` is the number the screen shows and keeps the
+best of. What a level asks of the player is the message `level.<id>.goal` in every language, for example `"level.level-1.goal":
+"Get to the door."`. `automata check --ship` notes a level with no goal line.
+
 Each kind has a JSON Schema in the package, `schemas/<kind>.schema.json`, that lists every field and what it means. Read
 it for what the file may hold. The smallest whole file of each kind is below, to copy.
 

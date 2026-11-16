@@ -225,6 +225,9 @@ test('the page entry has the flow, the kit and the screens, and headless has onl
     expect(api, name).toHaveProperty(name)
   const entry = readFileSync(new URL('../src/index.ts', import.meta.url), 'utf8')
   for (const name of ['startFlow', 'FLOW_EVENTS']) expect(entry, name).toContain(name)
+  // The checklist's screens: the lost screen, How to play and the rows it lists.
+  const shown = readFileSync(new URL('../src/features/screens/screens.ts', import.meta.url), 'utf8')
+  for (const name of ['lostScreen', 'howScreen', 'howRows']) expect(shown, name).toContain(name)
   for (const path of ['features/screens/screens.ts', 'features/ui/ui.ts'])
     expect(entry, path).toContain(`export * from './${path}'`)
   const screens = readFileSync(new URL('../src/features/screens/screens.ts', import.meta.url), 'utf8')

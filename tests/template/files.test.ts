@@ -63,7 +63,8 @@ test('its workflow pins every action to a commit that ci.yml also pins', () => {
     [...text.matchAll(/uses: (\S+@[0-9a-f]{40})/g)].map((m) => m[1] ?? '')
   const ours = pins(tree['.github/workflows/check.yml'] ?? '')
   const ci = pins(readFileSync('.github/workflows/ci.yml', 'utf8'))
-  expect(ours.length).toBe(2)
+  // Two jobs, `check` and `play`, each with the same two actions.
+  expect(ours.length).toBe(4)
   for (const pin of ours) expect(ci, pin).toContain(pin)
   // No other `uses:` line: every action is pinned.
   expect((tree['.github/workflows/check.yml'] ?? '').match(/uses:/g)?.length).toBe(ours.length)
@@ -130,4 +131,37 @@ test("page.ts imports only the framework and the game's own files, calls startFl
   expect(page.match(/startFlow\(/g)).toHaveLength(1)
   for (const m of page.matchAll(/from '([^']+)'/g))
     expect(m[1] === '@automataframework/framework' || m[1]?.startsWith('.'), m[1]).toBe(true)
+})
+
+test("the template's play test is wired in, and `npm test` never needs a browser", () => {
+  for (const name of ['tests/play/play.test.ts', 'tests/play/serve.ts', 'vitest.play.config.ts'])
+    expect(tree[name], name).toBeDefined()
+  const own = JSON.parse(tree['package.template.json'] ?? '{}') as {
+    scripts: Record<string, string>
+    devDependencies: Record<string, string>
+  }
+  expect(own.scripts.build).toBe('vite build')
+  expect(own.scripts['play-test']).toBe('vitest run --config vitest.play.config.ts')
+  expect(own.devDependencies.playwright).toBe('1.63.0')
+  expect(tree['vite.config.ts']).toContain("exclude: ['tests/play/**', 'node_modules/**', 'dist/**']")
+  expect(tree['vitest.play.config.ts']).toContain("include: ['tests/play/**/*.test.ts']")
+  expect(tree['vitest.play.config.ts']).toContain('testTimeout: 120_000')
+})
+
+test("the template's workflow has a play job after check that builds, then plays", () => {
+  const workflow = tree['.github/workflows/check.yml'] ?? ''
+  const play = workflow.slice(workflow.indexOf('\n  play:'))
+  expect(play).toContain('needs: check')
+  const runs = [...play.matchAll(/^\s*- run: (.+)$/gm)].map((m) => m[1])
+  expect(runs).toEqual([
+    'npm install',
+    'npx playwright install --with-deps chromium webkit',
+    'npm run build',
+    'npm run play-test',
+  ])
+})
+
+test('building the game puts its own files beside the page, since the page reads them from there', () => {
+  const config = tree['vite.config.ts'] ?? ''
+  for (const name of ["'automata.toml'", "'content'", "'replays'"]) expect(config, name).toContain(name)
 })

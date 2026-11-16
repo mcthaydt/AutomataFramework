@@ -348,7 +348,7 @@ jobs:
     needs: [create-pack, plan]
     name: ${{ needs.plan.outputs.quick }}create-play
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       actions: read
       contents: read
@@ -360,18 +360,19 @@ jobs:
           node-version: 24.21.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # The browser is kept between runs, by Playwright's version; the system libraries it needs are put in each time.
+      # The browser is kept between runs, by Playwright's version; the system libraries it needs are put in each time. The
+      # made game's own play test plays in Chromium and WebKit, so a draft installs both.
       - id: version
         run: echo "playwright=$(pnpm exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: browser
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ needs.plan.outputs.full == 'true' && 'all' || 'chromium' }}
+          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ needs.plan.outputs.full == 'true' && 'all' || 'chromium-webkit' }}
       - if: steps.browser.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}
+        run: pnpm exec playwright install --with-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium webkit' }}
       - if: steps.browser.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}
+        run: pnpm exec playwright install-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium webkit' }}
       - name: Get the tarball create-pack made
         shell: bash
         run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name create-tarball --dir "$RUNNER_TEMP/tarball"
