@@ -6,8 +6,10 @@ import { BodyKind, body, collider, Touching, transform } from '../physics/physic
 import type { SpawnPart } from '../sim/sim.ts'
 import { colourNumber } from './colours.ts'
 import { Look, Thing } from './components.ts'
+import { In } from './entered.ts'
 import { MOVE_START } from './move-step.ts'
 import { Moves } from './moves.ts'
+import { levelAt, levelsOf } from './place.ts'
 import { Sprite } from './sprite.ts'
 import { Open, Pressed } from './switches.ts'
 import { usesMoves, usesSprites } from './uses.ts'
@@ -51,10 +53,15 @@ export function heroParts(
   const start = content.levels[levelId]?.starts.find((s) => s.player === number)
   const hero = content.characters[content.project.hero]
   if (start === undefined || hero === undefined) return undefined
+  // In a place of two or more levels a hero knows which level it is in: the one its spot is in.
+  const levels = levelsOf(content, levelId)
+  const spot = at ?? start
+  const inLevel = levels.length > 1 ? (levelAt(levels, spot.x, spot.y) ?? levelId) : undefined
   return [
     ...characterParts(hero, at ?? start, usesSprites(content), number),
     [Thing, { id: `player-${number}`, character: content.project.hero }],
     [Player, { number }],
+    ...(inLevel === undefined ? [] : [[In, { level: inLevel }] as const]),
     // A hero the framework moves remembers how, and is told what it stands on and leans against.
     ...(usesMoves(content) ? [[Moves, { ...MOVE_START }] as const, Touching] : []),
   ]

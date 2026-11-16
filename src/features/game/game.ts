@@ -14,7 +14,7 @@ import {
   type PadLike,
   touchSettingsOf,
 } from '../input/input.ts'
-import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
+import { arriveLine, createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Sim, SimEvent } from '../sim/sim.ts'
@@ -194,9 +194,14 @@ export async function startGame(options: GameOptions): Promise<Game> {
     wireTouchRoom(input, renderer, level.view !== undefined)
     input.setPlayers(options.players ?? [1])
     const levelId = options.level ?? options.content.project.start
-    // The level and the players are written into the recording, so `automata replay` can set the same game up.
+    // The level, the players and where they came in are written into the recording, so `automata replay` can set the
+    // same game up.
     const recorder = createRecorder(sim, {
-      meta: { level: levelId, players: (options.players ?? [1]).join(',') },
+      meta: {
+        level: levelId,
+        players: (options.players ?? [1]).join(','),
+        ...(options.arrive === undefined ? {} : { arrive: arriveLine(options.arrive) }),
+      },
     })
     const people = createPlayers({
       sim,

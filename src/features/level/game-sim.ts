@@ -3,6 +3,7 @@ import type { GameContent } from '../content/content.ts'
 import { physics } from '../physics/physics.ts'
 import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
 import type { Arrive } from './arrive.ts'
+import { placePlugin } from './entered.ts'
 import { joinPlugin } from './join.ts'
 import { movesPlugin } from './moves.ts'
 import { levelsOf } from './place.ts'
@@ -76,6 +77,8 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
       ...(moved ? [movesPlugin({ gravity })] : []),
       // Only a game with a character that has `values`, a switch or a gate, or a place of joined levels, knows which levels it holds.
       ...(usesValues(content) || usesSwitches(content) || levels.length > 1 ? [wherePlugin(levels)] : []),
+      // Only a place of two or more levels says which level a hero is in, and when one passes into another.
+      ...(levels.length > 1 ? [placePlugin()] : []),
       // Only a game with a switch or a gate has the switch plugin (its components, events and the `facts` command).
       ...(usesSwitches(content) ? [switchPlugin(openKinds(content))] : []),
       ...(options.plugins ?? []),

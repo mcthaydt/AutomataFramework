@@ -101,3 +101,19 @@ export function arrivalSpots(
   }
   return spots
 }
+
+/**
+ * `arrive` as the line a recording keeps in its `meta`: `thing:door-in` or `at:3.5,7.5`, so `automata replay` and a
+ * watching page can open the game the way it was opened.
+ */
+export function arriveLine(arrive: Arrive): string {
+  return 'thing' in arrive ? `thing:${arrive.thing}` : `at:${arrive.x},${arrive.y}`
+}
+
+/** The `arrive` a recording's line says, or `undefined` when the line is not one `arriveLine` writes. */
+export function arriveOf(line: string): Arrive | undefined {
+  if (line.startsWith('thing:') && line.length > 'thing:'.length)
+    return { thing: line.slice('thing:'.length) }
+  const at = /^at:(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)$/.exec(line)
+  return at === null ? undefined : { x: Number(at[1]), y: Number(at[2]) }
+}

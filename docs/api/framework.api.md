@@ -89,6 +89,18 @@ type Arrive = {
 };
 ```
 
+### `arriveLine` (function)
+
+```ts
+function arriveLine(arrive: Arrive): string;
+```
+
+### `arriveOf` (function)
+
+```ts
+function arriveOf(line: string): Arrive | undefined;
+```
+
 ### `Art` (interface)
 
 ```ts
@@ -1120,6 +1132,19 @@ function emptyReadMarks(source: Language): ReadMarks;
 function encodePng(picture: IndexedPicture): Uint8Array<ArrayBuffer>;
 ```
 
+### `Entered` (interface)
+
+```ts
+interface Entered {
+    readonly level: string;
+    readonly from: string;
+    readonly player: number;
+    readonly sid: number;
+    readonly x: number;
+    readonly y: number;
+}
+```
+
 ### `EntityRef` (interface)
 
 ```ts
@@ -1650,6 +1675,15 @@ interface HeroBox {
 function heroControls(content: GameContent, given?: Controls): Controls | undefined;
 ```
 
+### `heroLevels` (function)
+
+```ts
+function heroLevels(sim: Sim, opened?: string): readonly {
+    readonly player: number;
+    readonly level: string;
+}[];
+```
+
 ### `HeroMoves` (interface)
 
 ```ts
@@ -1734,6 +1768,12 @@ type IconName = 'pause' | 'play' | 'back' | 'gear' | 'plus' | 'check' | 'reload'
 
 ```ts
 const Id: z.ZodString;
+```
+
+### `In` (const)
+
+```ts
+const In: ComponentDef<typeof inFields>;
 ```
 
 ### `IndexedPicture` (interface)
@@ -2141,6 +2181,12 @@ interface Level {
 
 ```ts
 function levelAt(levels: readonly SimLevel[], x: number, y: number): string | undefined;
+```
+
+### `LevelEntered` (const)
+
+```ts
+const LevelEntered: EventDef<z.ZodType<Entered>>;
 ```
 
 ### `LevelError` (class)
@@ -3112,6 +3158,12 @@ interface PlaceLevel {
     readonly x: number;
     readonly y: number;
 }
+```
+
+### `placePlugin` (function)
+
+```ts
+function placePlugin(): PluginDef;
 ```
 
 ### `placeSize` (function)
@@ -5466,6 +5518,18 @@ type Arrive = {
 };
 ```
 
+### `arriveLine` (function)
+
+```ts
+function arriveLine(arrive: Arrive): string;
+```
+
+### `arriveOf` (function)
+
+```ts
+function arriveOf(line: string): Arrive | undefined;
+```
+
 ### `ArtFile` (interface)
 
 ```ts
@@ -6252,6 +6316,19 @@ function emptyReadMarks(source: Language): ReadMarks;
 function encodePng(picture: IndexedPicture): Uint8Array<ArrayBuffer>;
 ```
 
+### `Entered` (interface)
+
+```ts
+interface Entered {
+    readonly level: string;
+    readonly from: string;
+    readonly player: number;
+    readonly sid: number;
+    readonly x: number;
+    readonly y: number;
+}
+```
+
 ### `EntityRef` (interface)
 
 ```ts
@@ -6593,6 +6670,15 @@ const groundOf: (level: Level) => number;
 const HASH_EVERY = 60;
 ```
 
+### `heroLevels` (function)
+
+```ts
+function heroLevels(sim: Sim, opened?: string): readonly {
+    readonly player: number;
+    readonly level: string;
+}[];
+```
+
 ### `HeroMoves` (interface)
 
 ```ts
@@ -6656,6 +6742,12 @@ function hypot(x: number, y: number): number;
 
 ```ts
 const Id: z.ZodString;
+```
+
+### `In` (const)
+
+```ts
+const In: ComponentDef<typeof inFields>;
 ```
 
 ### `IndexedPicture` (interface)
@@ -6923,6 +7015,12 @@ interface Level {
 
 ```ts
 function levelAt(levels: readonly SimLevel[], x: number, y: number): string | undefined;
+```
+
+### `LevelEntered` (const)
+
+```ts
+const LevelEntered: EventDef<z.ZodType<Entered>>;
 ```
 
 ### `LevelError` (class)
@@ -7706,6 +7804,12 @@ interface PlaceLevel {
     readonly x: number;
     readonly y: number;
 }
+```
+
+### `placePlugin` (function)
+
+```ts
+function placePlugin(): PluginDef;
 ```
 
 ### `placeSize` (function)

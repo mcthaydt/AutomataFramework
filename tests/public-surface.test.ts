@@ -138,6 +138,12 @@ test('headless exports what a game sim and an editor need', async () => {
     'solidGrid',
     'arrivalSpots',
     'spawnPlace',
+    'arriveLine',
+    'arriveOf',
+    'In',
+    'LevelEntered',
+    'placePlugin',
+    'heroLevels',
     // The player's language (plan L).
     'createLocale',
     'fill',

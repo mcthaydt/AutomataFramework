@@ -2,7 +2,7 @@
 // the links game: room 2's `door-in` stands at x 2.5 (it is 1 wide, so it spans 2 to 3) and leads back to room 1, and
 // the hero is 0.8 wide, so the first spot beside it is 2.5 + 0.5 + 0.4 + 0.05 = 3.45.
 import { expect, test } from 'vitest'
-import { arrivalSpots, levelsOf } from '#src/features/level/level.ts'
+import { arrivalSpots, arriveLine, arriveOf, levelsOf } from '#src/features/level/level.ts'
 import { editLevel, type LevelJson, loadLinksGame } from '../../fixtures/links-game/read.ts'
 
 /** The spots of `players` in `opened`, as {1: [x, y], 2: [x, y]}. */
@@ -78,4 +78,14 @@ test('a player the level has no start for is left out, and an unknown level has 
   expect(Object.keys(await spots('room-2', undefined, {}, [1, 3]))).toEqual(['1'])
   const content = await loadLinksGame()
   expect(arrivalSpots(content, levelsOf(content, 'nowhere'), 'nowhere', [1]).size).toBe(0)
+})
+
+test('arriveLine and arriveOf round-trip both forms, and read nothing else', () => {
+  expect(arriveLine({ thing: 'door-in' })).toBe('thing:door-in')
+  expect(arriveLine({ x: 3.5, y: 7.5 })).toBe('at:3.5,7.5')
+  expect(arriveOf('thing:door-in')).toEqual({ thing: 'door-in' })
+  expect(arriveOf('at:3.5,7.5')).toEqual({ x: 3.5, y: 7.5 })
+  expect(arriveOf(arriveLine({ x: -1, y: 0 }))).toEqual({ x: -1, y: 0 })
+  for (const line of ['', 'thing:', 'at:3', 'at:3,x', 'door-in', 'sideways', 'at: 3,4'])
+    expect(arriveOf(line), line).toBeUndefined()
 })
