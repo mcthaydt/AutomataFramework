@@ -45,6 +45,7 @@ export {
   usesSprites,
   usesSwitches,
   usesValues,
+  usesWeights,
 } from './uses.ts'
 export { type ThingValues, valuesOf } from './values.ts'
 export { type SimLevel, thingIn, Where, wherePlugin } from './where.ts'

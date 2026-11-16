@@ -37,7 +37,9 @@ export function characterParts(
     ...(character.switch !== undefined ? [Pressed] : []),
     ...(character.opens !== undefined ? [Open] : []),
     // A character that names a weight weighs its thing's own value, or the value's default: read once, at spawn.
-    ...(character.weight !== undefined ? [mass(withDefaults(character, at)[character.weight] as number)] : []),
+    ...(character.weight !== undefined
+      ? [mass(withDefaults(character, at)[character.weight] as number)]
+      : []),
   ]
 }
 

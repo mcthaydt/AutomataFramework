@@ -12,6 +12,7 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
 ### Current work
 
 - Installing the new workflow and its CI gate (this repo's setup pull request).
+- F4 (weight) is in a draft pull request; F5 (draw order) follows, then the test game's E4 in AutomataFrameworkExamples.
 - Next: F1 and F2.
 
 ### Completed outcomes

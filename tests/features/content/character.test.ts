@@ -310,3 +310,52 @@ describe('moves', () => {
       ]))
   })
 })
+
+describe('weight', () => {
+  const heavy = { id: 'heavy', name: 'How heavy', type: 'number', least: 0.5, most: 8, step: 0.5, default: 1 }
+  const weighed = (extra: Record<string, unknown> = {}) => ({
+    ...crate(),
+    values: [heavy],
+    weight: 'heavy',
+    ...extra,
+  })
+  const file = 'content/characters/crate.json'
+
+  test('a weight that names a number value reads and writes back unchanged', () => {
+    const parsed = parseContent('character', JSON.stringify(weighed()), file)
+    expect(parsed.ok && parsed.value.weight).toBe('heavy')
+    expect(parsed.ok && JSON.parse(writeContent('character', parsed.value)).weight).toBe('heavy')
+  })
+
+  test('a character that names no weight is read and written with no weight key', () => {
+    const parsed = parseContent('character', JSON.stringify(crate()), file)
+    expect(parsed.ok && 'weight' in parsed.value).toBe(false)
+    expect(parsed.ok && writeContent('character', parsed.value)).not.toContain('weight')
+  })
+
+  test('a weight that names a missing value is refused with the number values it has', () => {
+    expect(problems(file, weighed({ weight: 'mass' }))).toEqual([
+      `${file}: weight: "mass" must name one of this character's "number" values. It has: heavy.`,
+    ])
+  })
+
+  test('a weight that names a switch is refused', () => {
+    const values = [{ id: 'heavy', name: 'Heavy', type: 'switch', default: false }]
+    expect(problems(file, weighed({ values }))).toEqual([
+      `${file}: weight: "heavy" must name one of this character's "number" values. It has: nothing.`,
+    ])
+  })
+
+  test('a weight whose least is 0 is refused', () => {
+    const values = [{ ...heavy, least: 0 }]
+    expect(problems(file, weighed({ values }))).toEqual([
+      `${file}: weight: A weight must be more than 0: make the "least" of "heavy" more than 0, like 0.5.`,
+    ])
+  })
+
+  test('a fixed body has no weight', () => {
+    expect(problems(file, weighed({ body: 'fixed' }))).toEqual([
+      `${file}: weight: A fixed body does not move, so it has no weight. Take out "weight".`,
+    ])
+  })
+})

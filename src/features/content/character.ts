@@ -168,7 +168,9 @@ function checkWeight(character: Partial<Character>, ctx: z.core.$RefinementCtx):
   const numbers = (character.values ?? []).filter((value) => value.type === 'number')
   const named = numbers.find((value) => value.id === weight)
   if (named === undefined) {
-    add(`"${weight}" must name one of this character's "number" values. It has: ${list(numbers.map((v) => v.id))}.`)
+    add(
+      `"${weight}" must name one of this character's "number" values. It has: ${list(numbers.map((v) => v.id))}.`,
+    )
     return
   }
   if (!(named.least > 0))

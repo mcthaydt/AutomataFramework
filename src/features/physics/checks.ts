@@ -24,7 +24,8 @@ export function checkCollider(sid: number, component: string, shape: number, hx:
 
 /** A weight must be a number above 0: Rapier would make a body of no mass move as if it were fixed. */
 export function checkMass(sid: number, component: string, kilos: number): void {
-  if (!(kilos > 0 && Number.isFinite(kilos))) invalid(sid, component, 'kilos', `is ${kilos}; a weight must be above 0`)
+  if (!(kilos > 0 && Number.isFinite(kilos)))
+    invalid(sid, component, 'kilos', `is ${kilos}; a weight must be above 0`)
 }
 
 /**
