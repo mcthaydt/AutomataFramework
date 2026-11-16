@@ -4,7 +4,13 @@
 
 import { type Frames, pageFrames } from '../../lib/frames.ts'
 import type { GameAudio } from '../audio/audio.ts'
-import { createRecorder, createSequence, type Replay } from '../commands/commands.ts'
+import {
+  ControlsCommand,
+  controlsCommand,
+  createRecorder,
+  createSequence,
+  type Replay,
+} from '../commands/commands.ts'
 import { scoreRef } from '../content/content.ts'
 import type { Host } from '../host/host.ts'
 import {
@@ -31,6 +37,7 @@ import { levelArt } from './art.ts'
 import { createBuzzer } from './buzz.ts'
 import { resolveControls } from './controls.ts'
 import { guardPlay } from './guard.ts'
+import { createKept } from './kept.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
@@ -101,6 +108,11 @@ export interface GameOptions extends GameSimOptions {
    * counts. Nothing is silenced once it starts. Default: the game starts at once.
    */
   readonly waitForPress?: boolean
+  /**
+   * How many seconds of play can be gone back through with `backTo`, a whole number 0 to 60. A snapshot of the sim is kept
+   * once a second for them. Default 0: none is kept, and `backTo` has nowhere to go.
+   */
+  readonly keepSeconds?: number
 }
 
 /** One step of the game, as `onStep` tells it: the tick the sim is at after it, and the events it raised in order. */
@@ -136,6 +148,28 @@ export interface Game {
   waiting(): boolean
   /** True between `pause()` and `resume()`: a game still because its page is off screen is not paused by hand. */
   paused(): boolean
+  /**
+   * While paused by hand: takes exactly one step and draws it. Nobody holds anything while the game is paused (pausing
+   * lets go of every key and button), so it is a step with empty hands. Does nothing while the game runs or after it
+   * stopped; `onStep` and the sound hear it as they hear any step.
+   */
+  step(): void
+  /**
+   * How fast time passes: 1 is the game's own speed, 0.5 and 0.25 are slower. Each step is still the same step, so a
+   * slower game plays the same play, only later. Anything but 1, 0.5 or 0.25 throws.
+   */
+  setSpeed(rate: number): void
+  /**
+   * The ticks `backTo` can reach: `from` is the oldest, `to` is now. They are equal when nothing is kept (`keepSeconds`
+   * is 0, or the play is only just under way).
+   */
+  kept(): { readonly from: number; readonly to: number }
+  /**
+   * While paused by hand: the game as it was at `tick`, drawn, and what was played after it is forgotten (`replay()` ends
+   * there). Throws while the game runs, and for a tick outside `kept()`. The sound and `onStep` are not told the steps it
+   * plays again, and a player who joined or left after `tick` is not undone.
+   */
+  backTo(tick: number): void
   /**
    * Called after each step with the tick the sim is at after it and the events it raised, in order. The sound is told
    * the same. Returns the function that stops it.
@@ -174,6 +208,9 @@ export async function startGame(options: GameOptions): Promise<Game> {
   // First, so a mistake in the controls costs nothing: no sim, no canvas.
   const controls = resolveControls('startGame', options.content, options.controls)
   requireLanguage(locale)
+  const keepSeconds = options.keepSeconds ?? 0
+  if (!Number.isInteger(keepSeconds) || keepSeconds < 0 || keepSeconds > 60)
+    throw new Error(`keepSeconds must be a whole number of seconds, 0 to 60, but it is ${keepSeconds}.`)
   const sim = await createGameSim(options)
   // What to undo if a later step fails; it grows as things are made.
   let cleanup = (): void => sim.dispose()
@@ -238,6 +275,9 @@ export async function startGame(options: GameOptions): Promise<Game> {
         ...(options.arrive === undefined ? {} : { arrive: arriveLine(options.arrive) }),
       },
     })
+    // The snapshots `backTo` goes back to: one is taken now, at tick 0, before the facts step or any press.
+    const snapshots = keepSeconds > 0 ? createKept(sim, keepSeconds) : undefined
+    snapshots?.note(sim.tick)
     const people = createPlayers({
       sim,
       content: options.content,
@@ -264,6 +304,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
     if (options.facts !== undefined && options.facts.length > 0) {
       renderer.apply(recorder.step([factsCommand([...options.facts])]).render)
       follow()
+      snapshots?.note(sim.tick)
     }
     // A level that waits does not step until the first press; the time spent waiting is never owed.
     const first =
@@ -273,29 +314,45 @@ export async function startGame(options: GameOptions): Promise<Game> {
             ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
           })
         : undefined
+    // Players the sim still has holding something, after `backTo` put it back to a tick where they did. Nobody holds
+    // anything while the game is paused, so the next step lets go for them, unless the input already says so.
+    const stillHolding = new Set<number>()
+    // One step of the game: the loop's, and the one `step()` takes by hand.
+    const takeStep = (): void => {
+      const tick = sim.tick
+      const polled = input.poll(tick)
+      const letGo = [...stillHolding]
+        .filter((p) => !polled.some((c) => c.source === p && c.type === ControlsCommand.id))
+        .map((p) => controlsCommand(tick, p, sequence.next(p), []))
+      stillHolding.clear()
+      const result = recorder.step([...people.commands(tick), ...letGo, ...polled])
+      snapshots?.note(sim.tick)
+      renderer.apply(result.render)
+      follow()
+      // Only the tick and the events: the audio is never handed the sim, the render delta or the commands.
+      audio?.hear({ tick: result.tick, events: result.events })
+      buzzer.hear(result)
+      people.afterStep()
+      for (const listener of [...stepListeners]) listener({ tick: result.tick, events: result.events })
+    }
+    const failed = (error: unknown): void => {
+      broke = { error }
+      for (const listener of [...brokenListeners]) listener(error)
+    }
+    let speed = 1
     const loop = createLoop({
       tickHz: sim.tickHz,
       step() {
         if (first !== undefined && !first.pressed()) return
-        const tick = sim.tick
-        const result = recorder.step([...people.commands(tick), ...input.poll(tick)])
-        renderer.apply(result.render)
-        follow()
-        // Only the tick and the events: the audio is never handed the sim, the render delta or the commands.
-        audio?.hear({ tick: result.tick, events: result.events })
-        buzzer.hear(result)
-        people.afterStep()
-        for (const listener of [...stepListeners]) listener({ tick: result.tick, events: result.events })
+        takeStep()
       },
       draw(alpha) {
         first?.frame()
         renderer.draw(alpha)
       },
       frames,
-      onError(error) {
-        broke = { error }
-        for (const listener of [...brokenListeners]) listener(error)
-      },
+      onError: failed,
+      rate: () => speed,
     })
 
     let pausedByHand = false
@@ -303,7 +360,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
     let unsilence: (() => void) | undefined
     let stopped = false
     // The play as it was when `stop` was called, once it has been: the sim it came from is gone by then.
-    let kept: Replay | undefined
+    let ended: Replay | undefined
     // Still while paused by hand or off screen. Starting the loop afresh each time means the time spent still is
     // never counted, so coming back never fast-forwards.
     // The screen is kept lit exactly while the loop runs: a paused, hidden or broken game lets it dim.
@@ -332,6 +389,11 @@ export async function startGame(options: GameOptions): Promise<Game> {
     const unguard = guardPlay(mount)
     sync()
 
+    const keptRange = (): { readonly from: number; readonly to: number } => ({
+      from: Math.min(snapshots?.from() ?? sim.tick, sim.tick),
+      to: sim.tick,
+    })
+
     return {
       sim,
       input,
@@ -348,6 +410,63 @@ export async function startGame(options: GameOptions): Promise<Game> {
         unsilence?.()
         unsilence = undefined
         sync()
+      },
+      step() {
+        if (!pausedByHand || stopped || broke !== undefined) return
+        try {
+          takeStep()
+        } catch (error) {
+          failed(error)
+          sync()
+          throw error
+        }
+        renderer.draw(1)
+      },
+      setSpeed(rate) {
+        if (rate !== 1 && rate !== 0.5 && rate !== 0.25)
+          throw new Error(`The speed can be 1, 0.5 or 0.25, but it was ${rate}.`)
+        speed = rate
+      },
+      kept: keptRange,
+      backTo(tick) {
+        if (stopped || broke !== undefined) throw new Error('This game has stopped, so it cannot go back.')
+        if (!pausedByHand)
+          throw new Error('Pause the game before going back: backTo works only while it is paused.')
+        const { from, to } = keptRange()
+        const snapshot = snapshots?.nearest(tick)
+        if (!Number.isInteger(tick) || tick < from || tick > to || snapshot === undefined)
+          throw new Error(
+            from === to
+              ? `Nothing is kept to go back to (keepSeconds is ${keepSeconds}, and the game is at tick ${to}).`
+              : `Tick ${tick} cannot be gone back to: the ticks kept are ${from} to ${to}.`,
+          )
+        // What was recorded, read before the sim moves: the commands to play again from the snapshot up to `tick`.
+        const recorded = recorder.replay().commands
+        try {
+          sim.restore(snapshot.bytes)
+          let next = recorded.findIndex((c) => c.tick >= snapshot.tick)
+          if (next < 0) next = recorded.length
+          while (sim.tick < tick) {
+            const now: (typeof recorded)[number][] = []
+            while (next < recorded.length && (recorded[next]?.tick ?? 0) === sim.tick)
+              now.push(recorded[next++] as (typeof recorded)[number])
+            renderer.apply(sim.step(now).render)
+            follow()
+          }
+        } catch (error) {
+          failed(error)
+          sync()
+          throw error
+        }
+        recorder.cutTo(tick)
+        snapshots?.cutTo(tick)
+        const held = new Map<number, boolean>()
+        for (const c of recorded)
+          if (c.tick < tick && c.type === ControlsCommand.id)
+            held.set(c.source, ((c.payload as { held?: unknown[] }).held?.length ?? 0) > 0)
+        stillHolding.clear()
+        for (const [player, holding] of held) if (holding) stillHolding.add(player)
+        renderer.draw(1)
       },
       score() {
         const named = scoreRef(options.content.project)
@@ -374,12 +493,12 @@ export async function startGame(options: GameOptions): Promise<Game> {
       },
       heroes: () => renderer.heroes(),
       setVibration: (on) => buzzer.setOn(on),
-      replay: () => kept ?? recorder.replay(),
+      replay: () => ended ?? recorder.replay(),
       stop() {
         if (stopped) return
         stopped = true
         // A game that broke cannot be hashed again, so it keeps no play: `replay()` then says what broke.
-        if (broke === undefined) kept = recorder.replay()
+        if (broke === undefined) ended = recorder.replay()
         loop.stop()
         first?.stop()
         unlisten()

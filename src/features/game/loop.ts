@@ -33,8 +33,10 @@ export function createLoop(options: {
   frames: Frames
   /** Told what a frame threw, before the loop stops and the error is thrown again. */
   onError?: (error: unknown) => void
+  /** How fast time passes: what a frame adds to the pool is multiplied by it. Read at every frame. Default 1. */
+  rate?: () => number
 }): Loop {
-  const { tickHz, step, draw, frames, onError } = options
+  const { tickHz, step, draw, frames, onError, rate } = options
   const period = 1000 / tickHz
   let running = false
   let pending: number | undefined
@@ -45,7 +47,7 @@ export function createLoop(options: {
     // The first frame after a start has nothing to measure against. Time going backwards counts as none passing.
     const passed = last === undefined ? 0 : Math.max(0, ms - last)
     last = ms
-    pool += passed
+    pool += rate === undefined ? passed : passed * rate()
     let steps = 0
     while (pool + SLACK_MS >= period && steps < MAX_STEPS_PER_FRAME) {
       step()
