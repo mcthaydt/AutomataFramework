@@ -130,6 +130,14 @@ test('headless exports what a game sim and an editor need', async () => {
     'FactKept',
     'FactsCommand',
     'factsCommand',
+    // Places of joined levels (plan W).
+    'levelsOf',
+    'levelAt',
+    'placeSize',
+    'shiftLevel',
+    'solidGrid',
+    'arrivalSpots',
+    'spawnPlace',
     // The player's language (plan L).
     'createLocale',
     'fill',

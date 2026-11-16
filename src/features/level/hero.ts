@@ -38,15 +38,21 @@ export function characterParts(
 }
 
 /**
- * The parts of player `number`'s hero at that player's start point in the level. `undefined` when the level, the
- * hero's character or that player's start point does not exist.
+ * The parts of player `number`'s hero at that player's start point in the level, or at `at` when it is given (where a
+ * hero comes in beside a door, or in a place: `arrivalSpots` says). `undefined` when the level, the hero's character or
+ * that player's start point does not exist.
  */
-export function heroParts(content: GameContent, levelId: string, number: number): SpawnPart[] | undefined {
+export function heroParts(
+  content: GameContent,
+  levelId: string,
+  number: number,
+  at?: { readonly x: number; readonly y: number },
+): SpawnPart[] | undefined {
   const start = content.levels[levelId]?.starts.find((s) => s.player === number)
   const hero = content.characters[content.project.hero]
   if (start === undefined || hero === undefined) return undefined
   return [
-    ...characterParts(hero, start, usesSprites(content), number),
+    ...characterParts(hero, at ?? start, usesSprites(content), number),
     [Thing, { id: `player-${number}`, character: content.project.hero }],
     [Player, { number }],
     // A hero the framework moves remembers how, and is told what it stands on and leans against.

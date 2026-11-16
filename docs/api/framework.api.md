@@ -72,6 +72,23 @@ function applySettings(defaults: Controls, saved: unknown): {
 };
 ```
 
+### `arrivalSpots` (function)
+
+```ts
+function arrivalSpots(content: GameContent, levels: readonly SimLevel[], opened: string, players: readonly number[], arrive?: Arrive): ReadonlyMap<number, Spot>;
+```
+
+### `Arrive` (type)
+
+```ts
+type Arrive = {
+    readonly thing: string;
+} | {
+    readonly x: number;
+    readonly y: number;
+};
+```
+
 ### `Art` (interface)
 
 ```ts
@@ -1586,6 +1603,7 @@ interface GameSimOptions {
     readonly seed?: number;
     readonly level?: string;
     readonly players?: readonly number[];
+    readonly arrive?: Arrive;
     readonly gravity?: {
         readonly x: number;
         readonly y: number;
@@ -1897,6 +1915,7 @@ interface JoinOptions {
 function joinPlugin(options: {
     readonly level: string;
     readonly max: number;
+    readonly arrive?: Arrive;
 }): PluginDef;
 ```
 
@@ -2118,6 +2137,12 @@ interface Level {
 }
 ```
 
+### `levelAt` (function)
+
+```ts
+function levelAt(levels: readonly SimLevel[], x: number, y: number): string | undefined;
+```
+
 ### `LevelError` (class)
 
 ```ts
@@ -2190,6 +2215,12 @@ function levelSize(level: Level): {
     readonly w: number;
     readonly h: number;
 };
+```
+
+### `levelsOf` (function)
+
+```ts
+function levelsOf(content: GameContent, opened: string): readonly SimLevel[];
 ```
 
 ### `LevelStart` (interface)
@@ -3081,6 +3112,15 @@ interface PlaceLevel {
     readonly x: number;
     readonly y: number;
 }
+```
+
+### `placeSize` (function)
+
+```ts
+function placeSize(levels: readonly SimLevel[]): {
+    readonly w: number;
+    readonly h: number;
+};
 ```
 
 ### `Played` (interface)
@@ -4017,6 +4057,12 @@ interface Sheet {
 const SHEET_COLUMNS = 8;
 ```
 
+### `shiftLevel` (function)
+
+```ts
+function shiftLevel(level: Level, content: GameContent, dx: number, dy: number): Level;
+```
+
 ### `Shot` (interface)
 
 ```ts
@@ -4281,6 +4327,12 @@ interface SnapshotView {
 }
 ```
 
+### `solidGrid` (function)
+
+```ts
+function solidGrid(content: GameContent, levels: readonly SimLevel[]): readonly string[];
+```
+
 ### `SOUND_SETTINGS_DEFAULT` (const)
 
 ```ts
@@ -4350,13 +4402,19 @@ type SoundVoice = ToneVoice | NoiseVoice;
 ### `spawnLevel` (function)
 
 ```ts
-function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: readonly number[]): void;
+function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: readonly number[], spots?: ReadonlyMap<number, Spot>): void;
 ```
 
 ### `SpawnPart` (type)
 
 ```ts
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
+```
+
+### `spawnPlace` (function)
+
+```ts
+function spawnPlace(sim: Sim, content: GameContent, opened: string, players: readonly number[], arrive?: Arrive): void;
 ```
 
 ### `Speaker` (interface)
@@ -4404,6 +4462,15 @@ function splashScreen(options: ScreenBase & {
     readonly picture?: Blob;
     readonly onDone: () => void;
 }): Screen;
+```
+
+### `Spot` (interface)
+
+```ts
+interface Spot {
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `Sprite` (const)
@@ -5380,6 +5447,23 @@ interface Advance {
         readonly events: readonly SimEvent[];
     }[];
 }
+```
+
+### `arrivalSpots` (function)
+
+```ts
+function arrivalSpots(content: GameContent, levels: readonly SimLevel[], opened: string, players: readonly number[], arrive?: Arrive): ReadonlyMap<number, Spot>;
+```
+
+### `Arrive` (type)
+
+```ts
+type Arrive = {
+    readonly thing: string;
+} | {
+    readonly x: number;
+    readonly y: number;
+};
 ```
 
 ### `ArtFile` (interface)
@@ -6489,6 +6573,7 @@ interface GameSimOptions {
     readonly seed?: number;
     readonly level?: string;
     readonly players?: readonly number[];
+    readonly arrive?: Arrive;
     readonly gravity?: {
         readonly x: number;
         readonly y: number;
@@ -6667,6 +6752,7 @@ interface JoinOptions {
 function joinPlugin(options: {
     readonly level: string;
     readonly max: number;
+    readonly arrive?: Arrive;
 }): PluginDef;
 ```
 
@@ -6833,6 +6919,12 @@ interface Level {
 }
 ```
 
+### `levelAt` (function)
+
+```ts
+function levelAt(levels: readonly SimLevel[], x: number, y: number): string | undefined;
+```
+
 ### `LevelError` (class)
 
 ```ts
@@ -6905,6 +6997,12 @@ function levelSize(level: Level): {
     readonly w: number;
     readonly h: number;
 };
+```
+
+### `levelsOf` (function)
+
+```ts
+function levelsOf(content: GameContent, opened: string): readonly SimLevel[];
 ```
 
 ### `LevelStart` (interface)
@@ -7610,6 +7708,15 @@ interface PlaceLevel {
 }
 ```
 
+### `placeSize` (function)
+
+```ts
+function placeSize(levels: readonly SimLevel[]): {
+    readonly w: number;
+    readonly h: number;
+};
+```
+
 ### `Played` (interface)
 
 ```ts
@@ -8296,6 +8403,12 @@ interface Sheet {
 const SHEET_COLUMNS = 8;
 ```
 
+### `shiftLevel` (function)
+
+```ts
+function shiftLevel(level: Level, content: GameContent, dx: number, dy: number): Level;
+```
+
 ### `SHOWN_FOR` (const)
 
 ```ts
@@ -8503,6 +8616,12 @@ interface SnapshotView {
 }
 ```
 
+### `solidGrid` (function)
+
+```ts
+function solidGrid(content: GameContent, levels: readonly SimLevel[]): readonly string[];
+```
+
 ### `SOUND_SETTINGS_DEFAULT` (const)
 
 ```ts
@@ -8561,13 +8680,19 @@ type SoundVoice = ToneVoice | NoiseVoice;
 ### `spawnLevel` (function)
 
 ```ts
-function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: readonly number[]): void;
+function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: readonly number[], spots?: ReadonlyMap<number, Spot>): void;
 ```
 
 ### `SpawnPart` (type)
 
 ```ts
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
+```
+
+### `spawnPlace` (function)
+
+```ts
+function spawnPlace(sim: Sim, content: GameContent, opened: string, players: readonly number[], arrive?: Arrive): void;
 ```
 
 ### `Speaker` (interface)
@@ -8589,6 +8714,15 @@ interface Speaker {
 
 ```ts
 type SpeakerState = 'waiting' | 'on' | 'unavailable';
+```
+
+### `Spot` (interface)
+
+```ts
+interface Spot {
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `Sprite` (const)

@@ -13,7 +13,9 @@ import {
   type PluginDef,
   type Sim,
 } from '../sim/sim.ts'
+import { type Arrive, arrivalSpots } from './arrive.ts'
 import { heroParts } from './hero.ts'
+import { levelsOf } from './place.ts'
 
 const emptyPayload: z.ZodObject<Record<string, never>, z.core.$strict> = z.strictObject({})
 
@@ -41,11 +43,16 @@ export function playersIn(sim: Sim): number[] {
 }
 
 /**
- * The plugin a co-op game gets: name 'join', depends on 'level', config `{ level, max }`. Its system runs in the
+ * The plugin a co-op game gets: name 'join', depends on 'level', config `{ level, max }` (and `arrive`, when the game was
+ * opened with one). Its system runs in the
  * input phase before `commands.controls`, so a player's first `controls` command may arrive in the tick they join.
  */
-export function joinPlugin(options: { readonly level: string; readonly max: number }): PluginDef {
-  const { level, max } = options
+export function joinPlugin(options: {
+  readonly level: string
+  readonly max: number
+  readonly arrive?: Arrive
+}): PluginDef {
+  const { level, max, arrive } = options
   const system = defineSystem({
     name: 'level.join',
     phase: 'input',
@@ -69,7 +76,16 @@ export function joinPlugin(options: { readonly level: string; readonly max: numb
             ctx.despawn(sid)
           }
         } else if (source >= 1 && source <= Math.min(max, MAX_PLAYERS) && !heroes.has(source)) {
-          const parts = heroParts(ctx.content as GameContent, level, source)
+          const content = ctx.content as GameContent
+          // A late joiner comes in the way the first heroes did, at the level the sim was opened at (wherever player 1
+          // has got to since): beside the same door, or at its own start in a place, which has an offset. A level alone
+          // with no `arrive` is the start, as it always was.
+          const levels = levelsOf(content, level)
+          const at =
+            levels.length > 1 || arrive !== undefined
+              ? arrivalSpots(content, levels, level, [source], arrive).get(source)
+              : undefined
+          const parts = heroParts(content, level, source, at)
           if (parts !== undefined) heroes.set(source, ctx.spawn(...parts))
         }
       }
@@ -78,7 +94,7 @@ export function joinPlugin(options: { readonly level: string; readonly max: numb
   return definePlugin({
     name: 'join',
     dependsOn: ['level'],
-    config: { level, max },
+    config: { level, max, ...(arrive === undefined ? {} : { arrive }) },
     commands: [JoinCommand, LeaveCommand],
     systems: [system],
   })
