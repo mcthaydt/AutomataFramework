@@ -154,6 +154,7 @@ gh api repos/mcthaydt/AutomataFramework/rulesets/27248571 \
           else . end]}' \
   | gh api -X PUT repos/mcthaydt/AutomataFramework/rulesets/27248571 --input -
 id=$(gh api repos/mcthaydt/AutomataFrameworkEditors/rulesets --jq '.[] | select(.name=="required-checks") | .id')
+[ -n "$id" ] || { echo "Editors has no ruleset named required-checks; stopping."; exit 1; }
 gh api "repos/mcthaydt/AutomataFrameworkEditors/rulesets/$id" \
   --jq '{rules: [.rules[] | if .type == "required_status_checks"
           then .parameters.required_status_checks |= (. + [{"context":"commit-authors","integration_id":15368}] | unique_by(.context))
