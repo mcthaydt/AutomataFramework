@@ -145,6 +145,7 @@ test('headless exports what a game sim and an editor need', async () => {
     'LevelEntered',
     'placePlugin',
     'heroLevels',
+    'doorTaken',
     // The player's language (plan L).
     'createLocale',
     'fill',

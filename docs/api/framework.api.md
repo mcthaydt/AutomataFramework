@@ -1103,6 +1103,12 @@ interface Door {
 function doorsOf(content: GameContent): readonly Door[];
 ```
 
+### `doorTaken` (function)
+
+```ts
+function doorTaken(content: GameContent, opened: string, events: readonly SimEvent[]): Way | undefined;
+```
+
 ### `DrumPart` (interface)
 
 ```ts
@@ -1470,6 +1476,8 @@ interface FlowState {
     readonly step: FlowStep;
     readonly over?: Over;
     readonly level?: string;
+    readonly arrive?: Arrive;
+    readonly door?: true;
     readonly warned: boolean;
     readonly taken: boolean;
 }
@@ -3398,6 +3406,8 @@ function problemScreen(options: Omit<ScreenBase, 'locale'> & {
 ```ts
 interface Progress {
     readonly level: string;
+    readonly last?: Last;
+    readonly facts?: readonly string[];
 }
 ```
 
@@ -5420,6 +5430,19 @@ class WatchSetupError extends Error {
 type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
 ```
 
+### `Way` (interface)
+
+```ts
+interface Way {
+    readonly level: string;
+    readonly thing?: string;
+    readonly through: {
+        readonly level: string;
+        readonly thing: string;
+    };
+}
+```
+
 ### `webHost` (function)
 
 ```ts
@@ -6390,6 +6413,12 @@ interface Door {
 
 ```ts
 function doorsOf(content: GameContent): readonly Door[];
+```
+
+### `doorTaken` (function)
+
+```ts
+function doorTaken(content: GameContent, opened: string, events: readonly SimEvent[]): Way | undefined;
 ```
 
 ### `DrumPart` (interface)
@@ -9637,6 +9666,19 @@ function wasPressed(player: EntityRef, action: string): boolean;
 
 ```ts
 type Wave = 'sine' | 'square' | 'sawtooth' | 'triangle';
+```
+
+### `Way` (interface)
+
+```ts
+interface Way {
+    readonly level: string;
+    readonly thing?: string;
+    readonly through: {
+        readonly level: string;
+        readonly thing: string;
+    };
+}
 ```
 
 ### `Where` (const)
