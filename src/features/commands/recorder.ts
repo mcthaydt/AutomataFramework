@@ -9,6 +9,8 @@ export interface Recorder {
   step(commands: readonly Command[]): StepResult
   /** The run so far, from tick 0 to the sim's current tick. */
   replay(): Replay
+  /** Forgets everything recorded after `tick`. The sim must already be at `tick`. */
+  cutTo(tick: number): void
 }
 
 /** How often, in ticks, the recorder takes a check hash. */
@@ -42,6 +44,13 @@ export function createRecorder(
       }
       if (sim.tick % checkEvery === 0) checks.push({ tick: sim.tick, hash: sim.hash() })
       return result
+    },
+    cutTo(tick) {
+      if (sim.tick !== tick)
+        throw new Error(`cutTo(${tick}) needs the sim at tick ${tick}, but it is at tick ${sim.tick}.`)
+      // Commands are recorded in tick order, so what is after `tick` is the end of the list.
+      while (commands.length > 0 && (commands[commands.length - 1] as Command).tick >= tick) commands.pop()
+      while (checks.length > 0 && (checks[checks.length - 1] as ReplayCheck).tick > tick) checks.pop()
     },
     replay() {
       return {

@@ -141,3 +141,55 @@ test('a step that throws tells onError first and still throws', () => {
   expect(told).toEqual([boom])
   expect(loop.running).toBe(false)
 })
+
+// Plan W, F1: a slower speed is time that passes more slowly, so a frame adds less to the pool.
+function stepsAtRate(rate: number, frameCount: number): number {
+  const frames = manualFrames()
+  let steps = 0
+  const loop = createLoop({
+    tickHz: 60,
+    step: () => {
+      steps++
+    },
+    draw: () => undefined,
+    frames,
+    rate: () => rate,
+  })
+  loop.start()
+  for (let i = 0; i <= frameCount; i++) frames.at(i * FRAME)
+  return steps
+}
+
+test('at half speed 120 frames take 60 steps', () => {
+  expect(stepsAtRate(0.5, 120)).toBe(60)
+})
+
+test('at a quarter speed 120 frames take 30 steps', () => {
+  expect(stepsAtRate(0.25, 120)).toBe(30)
+})
+
+test('at the game own speed a loop with a rate steps as it did without one', () => {
+  expect(stepsAtRate(1, 120)).toBe(120)
+})
+
+test('the rate is read at each frame, so a change takes hold at once', () => {
+  const frames = manualFrames()
+  let rate = 1
+  let steps = 0
+  const loop = createLoop({
+    tickHz: 60,
+    step: () => {
+      steps++
+    },
+    draw: () => undefined,
+    frames,
+    rate: () => rate,
+  })
+  loop.start()
+  frames.at(0)
+  for (let i = 1; i <= 60; i++) frames.at(i * FRAME)
+  expect(steps).toBe(60)
+  rate = 0.5
+  for (let i = 61; i <= 120; i++) frames.at(i * FRAME)
+  expect(steps).toBe(90)
+})

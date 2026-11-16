@@ -161,3 +161,39 @@ test('parseReplay refuses text that is not a replay', async () => {
     expect(() => parseReplay(bad)).toThrow(ReplayFormatError)
   }
 })
+
+// Plan W, F2: going back forgets what was recorded after a tick, and what is left is a play that stands on its own.
+test('cutTo forgets what was recorded after a tick, and the cut play verifies on a fresh sim', async () => {
+  const sim = await bounceSim()
+  const recorder = createRecorder(sim, { meta: { game: 'bounce' } })
+  const rng = createRng(deriveSeed(BOUNCE_SEED, 'golden-script'))
+  const snapshots = new Map<number, Uint8Array>()
+  for (let t = 0; t < 200; t++) {
+    snapshots.set(sim.tick, sim.snapshot())
+    recorder.step(bounceScript(sim.tick, rng))
+  }
+  sim.restore(snapshots.get(130) as Uint8Array)
+  recorder.cutTo(130)
+  const cut = recorder.replay()
+  expect(cut.ticks).toBe(130)
+  expect(cut.commands.every((c) => c.tick < 130)).toBe(true)
+  expect(cut.checks.map((c) => c.tick)).toEqual([60, 120])
+  expect(verifyReplay(await bounceSim(), cut)).toEqual({ ok: true })
+})
+
+test('cutTo to a tick the sim is not at throws', async () => {
+  const sim = await bounceSim()
+  const recorder = createRecorder(sim)
+  for (let t = 0; t < 10; t++) recorder.step([])
+  expect(() => recorder.cutTo(4)).toThrow(/at tick 10/)
+})
+
+test('cutTo the tick the sim is at forgets nothing', async () => {
+  const { replay } = await record(100)
+  const sim = await bounceSim()
+  const recorder = createRecorder(sim)
+  const rng = createRng(deriveSeed(BOUNCE_SEED, 'golden-script'))
+  for (let t = 0; t < 100; t++) recorder.step(bounceScript(sim.tick, rng))
+  recorder.cutTo(100)
+  expect(recorder.replay().commands).toEqual(replay.commands)
+})
