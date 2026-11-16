@@ -136,9 +136,10 @@ reports into one owner-facing update. Otherwise the implementer handles these du
   that approach and reassess; never repeat a failed approach without new evidence. Keep on with independent work
   meanwhile. Report material setbacks under "Owner visibility and early steering". Pause and request an owner decision
   only when their decision, access or a change to an agreed budget is needed. Never bypass an access restriction or
-  weaken an acceptance criterion to get past a problem. No subagents unless the owner says so. Sessions the coordinator starts are
-  threads, not subagents. If this repo is indexed in Graphify, use its tools to find code and check what a change
-  affects before changing it.
+  weaken an acceptance criterion to get past a problem. No subagents unless the owner says so. Sessions the coordinator
+  starts are threads, not subagents. If this repo is indexed in Graphify, use its tools to find code and check what a
+  change affects before changing it. Its answers name the commit the graph was built from; read the files changed since
+  that commit.
 
 ## Risk
 
@@ -251,7 +252,7 @@ The least every brief's acceptance criteria cover, where they apply:
 - Sessions the coordinator starts are threads, not subagents. No session starts subagents of its own unless the owner
   says so.
 - **Slices.** Do not move to the next slice without a design review loop on the screens completed during that slice (see
-  `visual-check`).
+  `visual-check`), then a slice retro (see `review`).
 - **Handoff.** Every stage reads the files its prompt names, normally the spec, the audits so far and `progress.md`; the
   plan also reads Lessons in `history.md`. It reports its progress to the coordinator, which keeps `progress.md`, and
   its last step is to commit and push. `progress.md` holds the active milestone, including completed outcomes needed
@@ -308,12 +309,13 @@ Change a number or a model here and nowhere else.
   writes where things stand to `progress.md` first.
 - Browser test pieces in CI: 6. Device matrix: small phone, tablet, computer, as browser profiles (emulation evidence);
   a brief may change it. Progress: the coordinator keeps each stage's row in `progress.md` up to date, with a percentage
-  from the plan's ticked steps, as supporting information. Rule edits: batched into one session a day.
+  from the plan's ticked steps, as supporting information. Rule edits: batched; each slice retro's rule edits are one
+  batch, and a rule change the Owner asks for runs on its own.
 - Audits by lane: lane 1 none; lane 2 one fresh review of the change, after the build; lane 3 a plan audit and an
   implementation audit.
 - Models and effort: a session whose model and effort are not named runs on Opus, medium. Nothing runs above high
   effort. Plan: Fable 5.2, medium. Plan audit: Opus, medium. Execution (and its fixes): Sonnet, high. Implementation
-  audit: Opus, medium. Advisor: Fable 5.2, medium.
+  audit: Opus, medium. Advisor: Fable 5.2, medium. Slice retro: Opus, medium.
 
 ## This repo
 
