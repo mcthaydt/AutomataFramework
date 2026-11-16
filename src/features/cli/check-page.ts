@@ -15,7 +15,8 @@ const OPENS =
 const NO_NOTIFICATIONS = 'A game sends no notifications.'
 const NO_WRITE = 'document.write can wipe the page. Add elements with document.createElement.'
 const NO_BACKGROUND = 'A game runs nothing in the background. Take this out.'
-const NO_SENSORS = "A game does not ask for the player's place, camera, microphone or clipboard. Take this out."
+const NO_SENSORS =
+  "A game does not ask for the player's place, camera, microphone or clipboard. Take this out."
 const NO_PERSONAL = 'A game never asks for a password or personal details. Take this field out.'
 
 /** The names whose call stops the game or opens a window: found as `window.name(` anywhere, or bare when not the game's own. */
@@ -78,14 +79,16 @@ function attribute(tag: string, name: string): string | undefined {
 function personal(field: string): boolean {
   const type = attribute(field, 'type')?.trim().toLowerCase()
   if (type !== undefined && PERSONAL_TYPES.includes(type)) return true
-  const set = /\.type\s*=\s*['"]([^'"]*)['"]|setAttribute\(\s*['"]type['"]\s*,\s*['"]([^'"]*)['"]/i.exec(field)
+  const set = /\.type\s*=\s*['"]([^'"]*)['"]|setAttribute\(\s*['"]type['"]\s*,\s*['"]([^'"]*)['"]/i.exec(
+    field,
+  )
   const made = (set?.[1] ?? set?.[2])?.toLowerCase()
   if (made !== undefined && PERSONAL_TYPES.includes(made)) return true
   const complete =
     attribute(field, 'autocomplete') ??
-    /\.autocomplete\s*=\s*['"]([^'"]*)['"]|setAttribute\(\s*['"]autocomplete['"]\s*,\s*['"]([^'"]*)['"]/i.exec(
-      field,
-    )?.slice(1, 3)
+    /\.autocomplete\s*=\s*['"]([^'"]*)['"]|setAttribute\(\s*['"]autocomplete['"]\s*,\s*['"]([^'"]*)['"]/i
+      .exec(field)
+      ?.slice(1, 3)
       .find((v) => v !== undefined)
   if (complete === undefined) return false
   return complete
@@ -108,7 +111,9 @@ export function pageProblems(files: Readonly<Record<string, string>>): Diagnosti
       found.push({ file, index, line: lineOf(code, index), message })
     }
     for (const { name, sentence } of CALLED) {
-      for (const m of code.matchAll(new RegExp(`(?<![\\w$.])(?:window|globalThis|self)\\.${name}\\s*\\(`, 'g')))
+      for (const m of code.matchAll(
+        new RegExp(`(?<![\\w$.])(?:window|globalThis|self)\\.${name}\\s*\\(`, 'g'),
+      ))
         add(m.index, sentence)
       if (declares(code, name)) continue
       for (const m of code.matchAll(new RegExp(`(?<![\\w$.])${name}\\s*\\(`, 'g'))) {

@@ -3,9 +3,9 @@
 // whose shape changed without its version), and says the list only a game's makers can judge.
 import { join } from 'node:path'
 import { Effect } from 'effect'
+import type * as Headless from '../../headless.ts'
 import { canonicalJson } from '../../lib/canonical.ts'
 import { hex64, xxhash64 } from '../../lib/xxhash64.ts'
-import type * as Headless from '../../headless.ts'
 import type { Diagnostic } from '../content/content.ts'
 import type { SaveDef } from '../saves/saves.ts'
 import type { GameFolder } from './game-folder.ts'

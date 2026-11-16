@@ -83,7 +83,9 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
         ship: z
           .boolean()
           .optional()
-          .describe('Check what must be right before players get the game, and give the list a maker tries by hand.'),
+          .describe(
+            'Check what must be right before players get the game, and give the list a maker tries by hand.',
+          ),
       }),
       (input) =>
         command([

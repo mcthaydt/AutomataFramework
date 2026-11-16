@@ -4,9 +4,9 @@ import { join } from 'node:path'
 import { Effect } from 'effect'
 import { type Diagnostic, type GameContent, type Language, parseProject } from '../content/content.ts'
 import { paintedPaths } from './art.ts'
+import { unfinishedWords } from './check-words.ts'
 import type { GameFolder } from './game-folder.ts'
 import { type CliError, Files, type FilesService } from './ports.ts'
-import { unfinishedWords } from './check-words.ts'
 import type { ShipFinding, StepReport } from './report.ts'
 import { worldFacts } from './world.ts'
 
@@ -83,7 +83,13 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
     }
 
     const state = problems.length > 0 ? 'failed' : 'passed'
-    return { step: 'files', state, problems, notes, ...(ship.length > 0 ? { ship } : {}) } satisfies StepReport
+    return {
+      step: 'files',
+      state,
+      problems,
+      notes,
+      ...(ship.length > 0 ? { ship } : {}),
+    } satisfies StepReport
   })
 }
 

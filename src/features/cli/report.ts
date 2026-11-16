@@ -5,7 +5,16 @@ import { type Diagnostic, formatDiagnostic } from '../content/content.ts'
 /** The steps of `automata check`, in the order they run. */
 export type StepName = 'files' | 'art' | 'rules' | 'lint' | 'types' | 'replays' | 'tests' | 'ship'
 /** `ship` is last, and runs only with `--ship`. */
-export const STEP_NAMES: readonly StepName[] = ['files', 'art', 'rules', 'lint', 'types', 'replays', 'tests', 'ship']
+export const STEP_NAMES: readonly StepName[] = [
+  'files',
+  'art',
+  'rules',
+  'lint',
+  'types',
+  'replays',
+  'tests',
+  'ship',
+]
 
 /** A finding that is a note every day and a problem under `--ship`. */
 export interface ShipFinding extends Diagnostic {
@@ -82,6 +91,8 @@ export function formatReport(report: CheckReport): string {
   if (endings.length === 0) endings.push('Everything passed.')
   if (report.advice !== undefined) endings.push(report.advice)
   const byHand =
-    report.byHand === undefined ? [] : ['', 'Try these yourself:', ...report.byHand.map((line) => `  ${line}`)]
+    report.byHand === undefined
+      ? []
+      : ['', 'Try these yourself:', ...report.byHand.map((line) => `  ${line}`)]
   return [...report.steps.flatMap(stepLines), '', ...endings, ...byHand].join('\n')
 }

@@ -1,9 +1,9 @@
 import { Effect } from 'effect'
 import { expect, test } from 'vitest'
 import { runCheck } from '#src/features/cli/check.ts'
+import { ruleProblems } from '#src/features/cli/check-rules.ts'
 import { CliError } from '#src/features/cli/ports.ts'
 import * as framework from '#src/headless.ts'
-import { ruleProblems } from '#src/features/cli/check-rules.ts'
 import { HEADLESS_SOURCE, smallGame, under } from '../../fixtures/cli/game.ts'
 import { type MemoryOptions, memoryLayer } from '../../fixtures/cli/memory.ts'
 

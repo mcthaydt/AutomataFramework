@@ -76,9 +76,13 @@ test.each([
   ['a resource the sim does not have', 'hero.coins.sparks', () => ({ sparks: 0 })],
   ['a field that is not a number', 'hero.score.name', () => ({ name: 'x' })],
   ['a field the resource lacks', 'hero.score.gems', () => ({ sparks: 0 })],
-  ['a resource that cannot be read', 'hero.score.sparks', () => {
+  [
+    'a resource that cannot be read',
+    'hero.score.sparks',
+    () => {
       throw new Error('no')
-    }],
+    },
+  ],
 ])('score names %s', async (_name, score, read) => {
   const { problems } = endProblems(await game({ score }), sim(read))
   expect(problems).toEqual([

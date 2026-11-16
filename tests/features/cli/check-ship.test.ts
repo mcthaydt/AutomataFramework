@@ -146,7 +146,7 @@ test('a save with the same shape, a raised version, or no recording that knows i
   expect((await shipped(smallGame(), { code: unknown })).ship.problems).toEqual([])
 })
 
-test('a save's mark is stable, follows its fields in the hash and its version in the version', () => {
+test('the mark of a save is stable, follows its fields in the hash and its version in the version', () => {
   const [version, hash] = markOf(OLD, 1).split(':')
   expect(markOf(OLD, 1)).toBe(markOf(OLD, 1))
   expect(markOf(NEW, 1).split(':')[1]).not.toBe(hash)
