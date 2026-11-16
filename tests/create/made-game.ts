@@ -88,11 +88,27 @@ export async function makeGame(source: string): Promise<MadeGame> {
   const slashes = tarball.replaceAll('\\', '/')
   execFileSync(
     npx,
-    ['--yes', '--package', tarball, 'automata', 'create', 'my-game', '--source', source, '--framework', `file:${slashes}`],
+    [
+      '--yes',
+      '--package',
+      tarball,
+      'automata',
+      'create',
+      'my-game',
+      '--source',
+      source,
+      '--framework',
+      `file:${slashes}`,
+    ],
     { cwd: work, env, shell: WINDOWS, stdio: 'inherit' },
   )
   const gameFolder = join(work, 'my-game')
-  execFileSync(npm, ['install', '--no-audit', '--no-fund'], { cwd: gameFolder, env, shell: WINDOWS, stdio: 'inherit' })
+  execFileSync(npm, ['install', '--no-audit', '--no-fund'], {
+    cwd: gameFolder,
+    env,
+    shell: WINDOWS,
+    stdio: 'inherit',
+  })
   return {
     work,
     gameFolder,

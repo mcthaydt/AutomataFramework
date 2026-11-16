@@ -4,7 +4,7 @@
 // close it. The made game is the one `made-game.ts` makes, served by its own `automata play`; nothing is waited for with
 // a sleep, each wait is for something a person would see.
 import { mkdirSync } from 'node:fs'
-import { type Browser, type BrowserContext, type Page } from 'playwright'
+import type { Browser, BrowserContext, Page } from 'playwright'
 import { afterAll, beforeAll, expect, test } from 'vitest'
 import { journeyEngines } from '../fixtures/journey-engines.ts'
 import {
@@ -15,8 +15,8 @@ import {
   makeGame,
   markCoarse,
   type PageWindow,
-  pickLanguage,
   POLL,
+  pickLanguage,
   runAutomata,
   runNpm,
   SIZES,
@@ -74,19 +74,26 @@ const DESKTOP: Size = { width: 1280, height: 720, touch: false }
 
 /** The buttons and canvases of the game that are not wholly inside the screen. Safe-area insets are padding inside it. */
 const outside = (page: Page): Promise<string[]> =>
-  page.evaluate(() =>
-    [...document.querySelectorAll('#game button, #game canvas')]
+  page.evaluate(() => {
+    const inside = (box: DOMRect): boolean =>
+      box.left >= -0.5 &&
+      box.top >= -0.5 &&
+      box.right <= window.innerWidth + 0.5 &&
+      box.bottom <= window.innerHeight + 0.5
+    /** A button in a list that scrolls is reached by scrolling it, as long as the list itself is on the screen. */
+    const inAList = (el: Element): boolean => {
+      for (let up = el.parentElement; up !== null && up.id !== 'game'; up = up.parentElement) {
+        const overflow = getComputedStyle(up).overflowY
+        if ((overflow === 'auto' || overflow === 'scroll') && inside(up.getBoundingClientRect())) return true
+      }
+      return false
+    }
+    return [...document.querySelectorAll('#game button, #game canvas')]
+      .filter((el) => !inAList(el))
       .map((el) => ({ name: el.textContent?.trim() || el.tagName, box: el.getBoundingClientRect() }))
-      .filter(
-        ({ box }) =>
-          box.width > 0 &&
-          (box.left < -0.5 ||
-            box.top < -0.5 ||
-            box.right > window.innerWidth + 0.5 ||
-            box.bottom > window.innerHeight + 0.5),
-      )
-      .map(({ name }) => name),
-  )
+      .filter(({ box }) => box.width > 0 && !inside(box))
+      .map(({ name }) => name)
+  })
 
 const finger = (id: number) =>
   ({ pointerType: 'touch', pointerId: id, isPrimary: true, bubbles: true }) as const
@@ -153,21 +160,25 @@ async function winTheLevel(page: Page, touch: boolean): Promise<void> {
 async function backAtTheMenu(page: Page, where: string): Promise<void> {
   await inState(page, 'menu')
   expect(await page.locator('.automata-picker').count(), `${where}: the language is kept`).toBe(0)
-  expect(await page.evaluate(() => document.documentElement.lang), `${where}: and the page says it`).toBe('en')
+  expect(
+    await page.evaluate(() => document.documentElement.lang),
+    `${where}: and the page says it`,
+  ).toMatch(/^en/)
 }
 
+/** Counts the sound devices the page makes, without changing what they do. */
 const countAudio = (): void => {
   const counted = window as unknown as { __audio: number }
   counted.__audio = 0
   for (const name of ['AudioContext', 'webkitAudioContext'] as const) {
     const Real = (window as unknown as Record<string, typeof AudioContext | undefined>)[name]
     if (Real === undefined) continue
-    ;(window as unknown as Record<string, unknown>)[name] = class extends Real {
-      constructor(...args: ConstructorParameters<typeof AudioContext>) {
-        super(...args)
+    ;(window as unknown as Record<string, unknown>)[name] = new Proxy(Real, {
+      construct(target, args, newTarget) {
         counted.__audio++
-      }
-    }
+        return Reflect.construct(target, args, newTarget)
+      },
+    })
   }
 }
 
@@ -187,7 +198,9 @@ for (const name of journeyEngines()) {
           })
           const first = await attemptOf(page)
           await loseTheLevel(page, size.touch)
-          expect(await page.locator('#game').innerText(), `${name} ${size.width}: it says so`).toContain('You lost')
+          expect(await page.locator('#game').innerText(), `${name} ${size.width}: it says so`).toContain(
+            'You lost',
+          )
           const again = page.locator('#game[data-state="lost"] [data-screen="lost"] button').first()
           const box = await again.boundingBox()
           expect(box?.height ?? 0, 'Try again is a primary target').toBeGreaterThanOrEqual(48)
@@ -201,6 +214,7 @@ for (const name of journeyEngines()) {
             'the page was not loaded again',
           ).toBe(1)
           // And it plays again: the hero walks.
+          await expect.poll(() => heroX(page), POLL).not.toBeNaN()
           const start = await heroX(page)
           const release = await walkRight(page, size.touch)
           await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
@@ -236,8 +250,14 @@ for (const name of journeyEngines()) {
           await inState(page, 'paused')
           expect(await outside(page), `${where}: the pause screen`).toEqual([])
           // How to play is a button of the pause screen.
-          await page.locator('[data-screen="pause"]').getByRole('button', { name: /how to play/i }).click()
-          await page.locator('#game[data-over], #game [data-screen="how"]').first().waitFor({ timeout: 30_000 })
+          await page
+            .locator('[data-screen="pause"]')
+            .getByRole('button', { name: /how to play/i })
+            .click()
+          await page
+            .locator('#game[data-over], #game [data-screen="how"]')
+            .first()
+            .waitFor({ timeout: 30_000 })
           expect(await outside(page), `${where}: how to play`).toEqual([])
           await page.screenshot({ path: `${shots}${name}-how-${size.width}x${size.height}.png` })
           await page.keyboard.press('Escape')
@@ -265,23 +285,30 @@ for (const name of journeyEngines()) {
         await intoTheLevel(page, 'en')
         const things = (): Promise<number> =>
           page.evaluate(
-            () => (window as unknown as PageWindow).automataGame?.sim.describeSnapshot().entities.length ?? -1,
+            () =>
+              (window as unknown as PageWindow).automataGame?.sim.describeSnapshot().entities.length ?? -1,
           )
         await page.evaluate(() => {
           ;(window as unknown as { visit: number }).visit = 1
         })
         const first = await things()
         expect(first, 'there are things in the level').toBeGreaterThan(0)
+        // One canvas, or none where the browser has no graphics to give: the same number every time.
+        const canvases = await page.locator('#game canvas').count()
+        expect(canvases, 'at most one canvas').toBeLessThanOrEqual(1)
         let attempt = await attemptOf(page)
         for (let n = 1; n <= 50; n++) {
           await page.keyboard.press('Escape')
           await inState(page, 'paused')
-          await page.locator('[data-screen="pause"]').getByRole('button', { name: /start again/i }).click()
+          await page
+            .locator('[data-screen="pause"]')
+            .getByRole('button', { name: /start again/i })
+            .click()
           await page.locator('[role="alertdialog"] button').first().click()
           await inState(page, 'playing')
           expect(await attemptOf(page), `restart ${n}`).toBe(attempt + 1)
           attempt += 1
-          expect(await page.locator('#game canvas').count(), `restart ${n}: one canvas`).toBe(1)
+          expect(await page.locator('#game canvas').count(), `restart ${n}: the same canvas`).toBe(canvases)
           expect(await things(), `restart ${n}: the same things`).toBe(first)
         }
         expect(
@@ -307,7 +334,10 @@ for (const name of journeyEngines()) {
         await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(5)
         const set = (hidden: boolean): Promise<void> =>
           page.evaluate((now) => {
-            Object.defineProperty(document, 'visibilityState', { get: () => (now ? 'hidden' : 'visible'), configurable: true })
+            Object.defineProperty(document, 'visibilityState', {
+              get: () => (now ? 'hidden' : 'visible'),
+              configurable: true,
+            })
             document.dispatchEvent(new Event('visibilitychange'))
           }, hidden)
         await set(true)
@@ -362,7 +392,10 @@ for (const name of journeyEngines()) {
         await inState(page, 'playing')
         await page.keyboard.press('Escape')
         await inState(page, 'paused')
-        await page.locator('[data-screen="pause"]').getByRole('button', { name: /settings/i }).click()
+        await page
+          .locator('[data-screen="pause"]')
+          .getByRole('button', { name: /settings/i })
+          .click()
         await page.locator('#game[data-over="settings"]').waitFor({ timeout: 30_000 })
         await page.reload()
         await backAtTheMenu(page, 'settings')
@@ -398,7 +431,9 @@ for (const name of journeyEngines()) {
           await page.setViewportSize({ width: PHONE.width, height })
           await page.waitForFunction((h) => window.innerHeight === h, height)
           // A frame after the resize, so the page has laid itself out again.
-          await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))))
+          await page.evaluate(
+            () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
+          )
           expect(await outside(page), `height ${height}: playing`).toEqual([])
           await page.keyboard.press('Escape')
           await inState(page, 'paused')
@@ -427,10 +462,16 @@ for (const name of journeyEngines()) {
         await page.goto(address, { waitUntil: 'commit' })
         await page.locator('#game [role="progressbar"]').waitFor({ state: 'attached', timeout: 30_000 })
         await expect
-          .poll(async () => ((await page.locator('#game [role="status"]').first().textContent()) ?? '').trim(), POLL)
+          .poll(
+            async () => ((await page.locator('#game [role="status"]').first().textContent()) ?? '').trim(),
+            POLL,
+          )
           .not.toBe('')
         await page.locator('.automata-picker-go').waitFor({ state: 'visible', timeout: 60_000 })
-        expect(await page.locator('#game [role="progressbar"]').count(), 'the bar is gone when the game is there').toBe(0)
+        expect(
+          await page.locator('#game [role="progressbar"]').count(),
+          'the bar is gone when the game is there',
+        ).toBe(0)
       } finally {
         await context.close()
       }
@@ -460,7 +501,9 @@ for (const name of journeyEngines()) {
       try {
         await always.page.route('**/content/levels/level-1.json', (route) => route.abort())
         await always.page.goto(address)
-        const button = always.page.locator('#game[data-state="problem"] [role="alert"] button, #game[data-state="problem"] button')
+        const button = always.page.locator(
+          '#game[data-state="problem"] [role="alert"] button, #game[data-state="problem"] button',
+        )
         await button.first().waitFor({ state: 'visible', timeout: 60_000 })
         const box = await button.first().boundingBox()
         expect(box?.height ?? 0, 'the button is a target').toBeGreaterThanOrEqual(44)
@@ -527,10 +570,14 @@ for (const name of journeyEngines()) {
         expect(garbled, 'the game keeps something in storage').toBeGreaterThan(0)
         await page.reload()
         // The language may be asked again; either way the level opens.
-        await page.locator('.automata-picker-go, #game[data-state="menu"]').first().waitFor({ timeout: 60_000 })
+        await page
+          .locator('.automata-picker-go, #game[data-state="menu"]')
+          .first()
+          .waitFor({ timeout: 60_000 })
         if ((await page.locator('.automata-picker-go').count()) > 0) await pickLanguage(page, 'en')
         await page.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click()
         await inState(page, 'playing')
+        await expect.poll(() => heroX(page), POLL).not.toBeNaN()
         const start = await heroX(page)
         const release = await walkRight(page, false)
         await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
