@@ -72,6 +72,8 @@ interface Drawn {
   readonly figure: Container
   readonly picture: PixiSprite
   look: string
+  /** The layer it was put on, so a thing whose `draw` changes is moved. */
+  draw: View['draw']
 }
 
 /** The key of a box in the world, so a ground box the tiles replace can be told from the rest. */
@@ -133,10 +135,14 @@ export async function createStage(
   const root = new Container()
   // Back to front: boxes, the level's tiles, then the figures. The ropes and pins sit over all of them, so they have a
   // layer of their own with the same fit.
+  // A thing drawn `behind` is under all of them, and one drawn `in-front` over all of them, each keeping its box and its
+  // figure together; every other thing is in the middle three, as things and heroes always were.
+  const behindLayer = new Container()
   const boxLayer = new Container()
   const tileLayer = new Container()
   const figureLayer = new Container()
-  root.addChild(boxLayer, tileLayer, figureLayer)
+  const frontLayer = new Container()
+  root.addChild(behindLayer, boxLayer, tileLayer, figureLayer, frontLayer)
   const linkLayer = new Container()
   const linkShape = new Graphics()
   linkLayer.addChild(linkShape)
@@ -253,10 +259,21 @@ export async function createStage(
         picture.anchor.set(0.5, 1)
         const figure = new Container()
         figure.addChild(picture)
-        item = { box: new Graphics(), figure, picture, look: '' }
+        item = { box: new Graphics(), figure, picture, look: '', draw: undefined }
         boxLayer.addChild(item.box)
         figureLayer.addChild(item.figure)
         drawn.set(v.sid, item)
+      }
+      if (item.draw !== v.draw) {
+        const [boxes, figures] =
+          v.draw === 'behind'
+            ? [behindLayer, behindLayer]
+            : v.draw === 'in-front'
+              ? [frontLayer, frontLayer]
+              : [boxLayer, figureLayer]
+        boxes.addChild(item.box)
+        figures.addChild(item.figure)
+        item.draw = v.draw
       }
       // A thing with a figure whose picture is loaded is that picture, standing on the bottom of its box; any other thing
       // is its box.
