@@ -192,10 +192,11 @@ paragraphs). The same change goes into both kits; their `CLAUDE.md` blocks follo
 - **E. The test, written first.** `tests/unit/kit-content.test.ts` lets the two hook blocks follow the skills, each
   with its "Save this as" note, and the games `CLAUDE.md` block's line limit goes from 360 to 380, with the test's
   name (it ends `_under_360_lines`) changed to match (the block is 342 lines with #67 and about 365 with this
-  change; the apps block is about 342). A new test, for both kits: the three bullets are in `CLAUDE.md`; the settings block parses as JSON with one `SessionStart` entry whose matcher is `compact`; the
-  reminder says "beats the summary" and names `CLAUDE.md`, `docs/superpowers/progress.md`, `docs/superpowers/live/`
-  and "fresh session"; the two hook blocks are the same in both kits apart from the skills list in line 2; and each
-  kit's release skill has the new setup-check line.
+  change; the apps block is about 342). A new test, for both kits: the three bullets are in `CLAUDE.md`; the
+  settings block parses as JSON with one `SessionStart` entry whose matcher is `compact`; the reminder says "beats the
+  summary" and names `CLAUDE.md`, `docs/superpowers/progress.md`, `docs/superpowers/live/` and "fresh session"; the
+  two hook blocks are the same in both kits apart from the skills list in line 2; and each kit's release skill has
+  the new setup-check line.
 
 ## Acceptance criteria
 
