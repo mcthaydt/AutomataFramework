@@ -276,7 +276,7 @@ readonly 'one-per-level'?: boolean | undefined
 Limits: `name` 1 to 40 letters; `about` at most 200; `from` 1 to 16; a thing's `most` 1 to 16; a path's `least` and
 `most` 2 to 64 (left out: 2 and 64); `step` above 0. A `words` default is a `MessageKey`.
 
-- [ ] **Step 1: Write the failing tests.** One accepted example per type, and one per sentence below (each sentence is
+- [x] **Step 1: Write the failing tests.** One accepted example per type, and one per sentence below (each sentence is
   asserted whole, at the path given):
 
 | Wrong | Path | Sentence |
@@ -295,11 +295,11 @@ Limits: `name` 1 to 40 letters; `about` at most 200; `from` 1 to 16; a thing's `
   Also: a character that writes none of the four fields parses to a value with none of the four keys
   (`Object.keys` is what it was), and `writeContent('character', …)` writes the new fields in the schema's order
   (`values`, `switch`, `opens`, `one-per-level`, after `moves`).
-- [ ] **Step 2: Push; the Node job fails on the new tests.**
-- [ ] **Step 3: Implement.** A step is checked as `Math.abs(n - Math.round(n)) < 1e-9` for `n = (value - least) / step`
+- [x] **Step 2: Push; the Node job fails on the new tests.**
+- [x] **Step 3: Implement.** A step is checked as `Math.abs(n - Math.round(n)) < 1e-9` for `n = (value - least) / step`
   (export it as `onStep(value, least, step)`: Task 2 uses it).
-- [ ] **Step 4: Push; green.** `schemas/character.schema.json` is taken from `pnpm schemas --check`'s log.
-- [ ] **Step 5: Commit** `feat(content): a character declares the values its things hold`
+- [x] **Step 4: Push; green.** `schemas/character.schema.json` is taken from `pnpm schemas --check`'s log.
+- [x] **Step 5: Commit** `feat(content): a character declares the values its things hold`
 
 ### Task 2: Values on a thing, checked against its character
 
@@ -337,7 +337,7 @@ Zod's words (audit L10). Which of them a value must be is the character's to say
 published level schema cannot know). `checkThingValues` reads a level through a small type of its own (its `tiles` and
 `things`), so `value-checks.ts` never imports `level.ts`, which calls it: imports must not make a cycle.
 
-- [ ] **Step 1: Write the failing tests** on the links game with one file overridden per test. Each sentence whole, at
+- [x] **Step 1: Write the failing tests** on the links game with one file overridden per test. Each sentence whole, at
   `things[i].values.<id>` unless said:
 
 | Wrong | Sentence |
@@ -364,11 +364,11 @@ published level schema cannot know). `checkThingValues` reads a level through a 
   And: the links game loads with no problem; `withDefaults` on `button-1` gives `{ opens: ['gate-1'], stays: true }`,
   on `critter-1` `{ walk: [...], reach: 3 }`, on `plate-1` `{ opens: ['gate-1'] }`; a value equal to its default
   survives `writeContent` as written; a level with no `values` anywhere parses to the value it did (same keys).
-- [ ] **Step 2: Push; fails.**
-- [ ] **Step 3: Implement.** A check skips what it cannot see (a character or level that did not read), as the loader's
+- [x] **Step 2: Push; fails.**
+- [x] **Step 3: Implement.** A check skips what it cannot see (a character or level that did not read), as the loader's
   other checks do. `level.ts` gains only the thing's field and one call.
-- [ ] **Step 4: Push; green.** `schemas/level.schema.json` and `behaviour.schema.json` from the log.
-- [ ] **Step 5: Commit** `feat(content): a thing's values, checked against its character`
+- [x] **Step 4: Push; green.** `schemas/level.schema.json` and `behaviour.schema.json` from the log.
+- [x] **Step 5: Commit** `feat(content): a thing's values, checked against its character`
 
 ### Task 3: The world file, and which levels join
 
@@ -433,7 +433,7 @@ file still gets the very same object back: its early return also checks `content
 game with a world file and nothing else left out would be handed back whole), and the test of "the very same object"
 gains a game that lists a world file and has `places` (audit L13).
 
-- [ ] **Step 1: Write the failing tests.** `layoutWorld` on small made-up levels: side by side joined (one `Join`,
+- [x] **Step 1: Write the failing tests.** `layoutWorld` on small made-up levels: side by side joined (one `Join`,
   `along: 'y'`, the right `from` and `to`); stacked (`along: 'x'`); corner to corner (nothing); a gap of one tile
   (nothing); both solid (no join, no problem, two places of one, so `places` is `{}`); each problem above, whole; three
   in a row make one place of three; the place's offsets are from its top left corner whatever the map's numbers are
@@ -441,10 +441,10 @@ gains a game that lists a world file and has `places` (audit L13).
   `{ 'room-2': [{ level: 'room-2', x: 0, y: 0 }, { level: 'room-3', x: 16, y: 0 }] }`, and a game with no world file,
   or one whose levels do not touch, has no `places` key. `simContent` of the links game has `places`, no `worlds`, and
   no `world` entry in `project.content`; moving `room-1` on the map gives a `simContent` that is deep-equal.
-- [ ] **Step 2: Push; fails.**
-- [ ] **Step 3: Implement.**
-- [ ] **Step 4: Push; green**, with `schemas/world.schema.json` from the log; every existing golden unmoved.
-- [ ] **Step 5: Commit** `feat(content): the world file, and levels that join where they touch`
+- [x] **Step 2: Push; fails.**
+- [x] **Step 3: Implement.**
+- [x] **Step 4: Push; green**, with `schemas/world.schema.json` from the log; every existing golden unmoved.
+- [x] **Step 5: Commit** `feat(content): the world file, and levels that join where they touch`
 
 ### Task 4: The public list of format changes
 
@@ -466,14 +466,14 @@ The hash is `xxhash64` (`src/lib/xxhash64.ts`) of the bytes of `schemas/<kind>.s
 cycle's entries: `character`, `level` (a thing's `values`), `behaviour` (`walk-path`), `world` (new kind), and under
 them one first entry per kind as it stood before this cycle ("The format as first listed"), so every schema has one.
 
-- [ ] **Step 1: Write the failing test:** for every `schemas/*.schema.json` but `replay`, the newest entry of that kind
+- [x] **Step 1: Write the failing test:** for every `schemas/*.schema.json` but `replay`, the newest entry of that kind
   ends with the file's hash; else it fails with
   `schemas/level.schema.json changed and docs/formats/changes.md has no entry for it. Add one, newest first, ending with: **Schema:** \`<hash>\``.
   An entry whose kind has no schema fails too. The packed package holds the page (`tests/package.test.ts`).
-- [ ] **Step 2: Write the page with every hash as sixteen zeros; push; the test fails and prints each hash.**
-- [ ] **Step 3: Put the printed hashes in; push; green.**
-- [ ] **Step 4: Commit** `docs(formats): the public list of format changes, held to the schemas`
-- [ ] **Step 5: Tick this pull request's tasks here and in `progress.md`, mark it ready, report to the coordinator.**
+- [x] **Step 2: Write the page with every hash as sixteen zeros; push; the test fails and prints each hash.**
+- [x] **Step 3: Put the printed hashes in; push; green.**
+- [x] **Step 4: Commit** `docs(formats): the public list of format changes, held to the schemas`
+- [x] **Step 5: Tick this pull request's tasks here and in `progress.md`, mark it ready, report to the coordinator.**
 
 Every later task that changes a schema adds its entry in the same commit. None is planned after this pull request.
 
@@ -521,12 +521,12 @@ export function valuesOf(ctx: SimContext, sid: number): ThingValues
 declare that id with that type (`The character "critter" has no number called "hits". It has: reach.`), and `valuesOf`
 throws `This entity is not a thing from a level.` for a tile or a hero.
 
-- [ ] **Step 1: Write the failing tests** on the links game opened at `room-2`: `valuesOf(…button-1).switch('stays')`
+- [x] **Step 1: Write the failing tests** on the links game opened at `room-2`: `valuesOf(…button-1).switch('stays')`
   is true and `.things('opens')` is `[sid of gate-1]`; `critter-1`'s `number('reach')` is 3 (the default) and
   `path('walk')` is the two places; the two throws; a game with no `values` has no `Where` (asking for it throws) and
   ends sixty idle ticks on `push-crate.json`'s `idleHash60`.
-- [ ] **Step 2: Push; fails.** **Step 3: Implement.** **Step 4: Push; green; every golden unmoved.**
-- [ ] **Step 5: Commit** `feat(level): a thing's values, read from game code`
+- [x] **Step 2: Push; fails.** **Step 3: Implement.** **Step 4: Push; green; every golden unmoved.**
+- [x] **Step 5: Commit** `feat(level): a thing's values, read from game code`
 
 ### Task 6: Two boxes that overlap
 
@@ -540,12 +540,12 @@ export interface TurnedBox { readonly x: number; readonly y: number; readonly hw
 export function boxesOverlap(a: TurnedBox, b: TurnedBox): boolean
 ```
 
-- [ ] **Step 1: Tests:** apart; touching edges (false); overlapping by 0.02 (true); one inside the other; a 1 by 1 box
+- [x] **Step 1: Tests:** apart; touching edges (false); overlapping by 0.02 (true); one inside the other; a 1 by 1 box
   turned 45 degrees whose corner reaches into a plate (true) and whose corner is 0.05 short (false); the same answer
   with `a` and `b` swapped, for each. And the links game's own levels (audit M2): no two bodies in any level overlap
   at spawn (solid tiles, things and the heroes at the starts), and `critter-1`'s box at each end of its path
   overlaps none.
-- [ ] **Step 2 to 4: push red, implement, push green.** **Step 5: Commit** `feat(level): a pure overlap test for boxes`
+- [x] **Step 2 to 4: push red, implement, push green.** **Step 5: Commit** `feat(level): a pure overlap test for boxes`
 
 ### Task 7: Switches open gates
 
@@ -594,7 +594,7 @@ the schedule throw, and a game whose hero has no `moves` has no `level.moves` (a
 `switchPlugin` joins only when `usesSwitches(content)` and brings `wherePlugin` with it. Where it stands in the plugin
 list does not matter.
 
-- [ ] **Step 1: Write the failing tests** (Node; the links game, with `room-1`'s things moved by an override where a
+- [x] **Step 1: Write the failing tests** (Node; the links game, with `room-1`'s things moved by an override where a
   test needs a start position; every sim disposed):
 
 ```ts
@@ -617,10 +617,10 @@ test('a game with no switch has no Pressed, no Open, no facts command')         
   raised and `gate.closed` after it, the same number of times each; the crate ends beyond the gate (its `x` above
   11.5); the gate is shut at the end. If the run does not do that, change how long the hero holds right, never what
   is asserted, and say so in the report.
-- [ ] **Step 2: Push; fails, and the Node job prints `switch.json`.**
-- [ ] **Step 3: Implement; commit the printed golden.**
-- [ ] **Step 4: Push; all four engines match; every existing golden unmoved.**
-- [ ] **Step 5: Commit** `feat(level): switches open gates, with no game code`, then tick, mark ready, report.
+- [x] **Step 2: Push; fails, and the Node job prints `switch.json`.**
+- [x] **Step 3: Implement; commit the printed golden.**
+- [x] **Step 4: Push; all four engines match; every existing golden unmoved.**
+- [x] **Step 5: Commit** `feat(level): switches open gates, with no game code`, then tick, mark ready, report.
 
 ---
 
@@ -691,7 +691,7 @@ spot), at the level the sim was opened at, wherever player 1 has got to since (c
 `createGameSim` calls `spawnPlace`, gives `wherePlugin` `levelsOf(content, level)` when there is more than one, and
 gives `joinPlugin` the same `arrive`.
 
-- [ ] **Step 1: Write the failing tests:**
+- [x] **Step 1: Write the failing tests:**
 
 ```ts
 test('levelsOf: a lone level is itself at (0, 0); room-2 and room-3 give both, with room-3 at (16, 0)')
@@ -709,8 +709,8 @@ test('arriving at a thing the level no longer has opens its starts')     // Revi
 test('a game with no place: every golden, and idleHash60, unmoved')
 ```
 
-- [ ] **Step 2 to 4: push red, implement, push green; every golden unmoved.**
-- [ ] **Step 5: Commit** `feat(level): joined levels are built into one world`
+- [x] **Step 2 to 4: push red, implement, push green; every golden unmoved.**
+- [x] **Step 5: Commit** `feat(level): joined levels are built into one world`
 
 ### Task 9: Which level a hero is in
 
@@ -735,14 +735,14 @@ A hero in no level's box (in the air beyond the outline) keeps the level it was 
 with `arrive` writes it into `meta.arrive` as `thing:door-in` or `at:3.5,7.5`, and `automata replay` reads it back
 (`replay.ts`), so `replays/room-2.json` plays the place as it was opened.
 
-- [ ] **Step 1: Write the failing tests:** a hero walking right from `room-2` raises `level.entered` once, with
+- [x] **Step 1: Write the failing tests:** a hero walking right from `room-2` raises `level.entered` once, with
   `level: 'room-3'`, `from: 'room-2'` and an `x` under 1; walking back raises it once more the other way; standing on
   the edge for 120 ticks raises nothing more; two heroes are tracked apart; a lone level has no `In` and no event;
   `meta.arrive` round-trips both forms through `automata replay`; a `join` command at tick 100, after player 1 has
   crossed into `room-3`, puts player 2 at `room-2`'s start for player 2, and `heroLevels` says `room-2` for them (call
   14, audit L8).
-- [ ] **Step 2 to 4: push red, implement, push green.**
-- [ ] **Step 5: Commit** `feat(level): a hero's level is known every tick, and crossing is an event`
+- [x] **Step 2 to 4: push red, implement, push green.**
+- [x] **Step 5: Commit** `feat(level): a hero's level is known every tick, and crossing is an event`
 
 ### Task 10: A place on the page, and its proof in four engines
 
@@ -780,7 +780,7 @@ the gate does not pop open on the press. The first input lands on tick 1. With n
 nothing changes, so no recording moves; a recording of a game opened with facts carries the one command at tick 0
 and replays as it ran. `startFlow`'s Continue and the test game's page get this by calling `startGame`.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - Parity, `place.json` (the spec's proof): the links game opened at `room-2`, with `facts: ['room-2.gate-1.open']`,
     `crate-1` moved to (12.5, 7.5) and `critter-1` taken out, all by overrides (the critter stands still this cycle
     and would only make the hero push a stack, whose speed changes for reasons that are not the seam: audit L4);
@@ -795,10 +795,10 @@ and replays as it ran. `startFlow`'s Continue and the test game's page get this 
     `facts: ['room-2.gate-1.open']` has its sim at tick 1 and `gate-1` open before the first frame is drawn, and one
     with no facts is at tick 0 as it is today; the recording of the first holds the `facts` command at tick 0 and
     nothing else at tick 0.
-- [ ] **Step 2: Push; fails; the Node job prints `place.json`.**
-- [ ] **Step 3: Implement; commit the golden.**
-- [ ] **Step 4: Push; all engines match; every existing golden and every existing browser test unmoved.**
-- [ ] **Step 5: Commit** `feat(game): a place is drawn and followed as one world`, then tick, mark ready, report.
+- [x] **Step 2: Push; fails; the Node job prints `place.json`.**
+- [x] **Step 3: Implement; commit the golden.**
+- [x] **Step 4: Push; all engines match; every existing golden and every existing browser test unmoved.**
+- [x] **Step 5: Commit** `feat(game): a place is drawn and followed as one world`, then tick, mark ready, report.
 
 ---
 
@@ -839,7 +839,7 @@ through a door from one opened by Continue (which also has `arrive`): a level op
 plan Q's start card does not make it wait for a first press. Menu, Continue, Try again, Start again and Next level
 carry no `door`, and so wait.
 
-- [ ] **Step 1: Write the failing tests:** `doorTaken` on real events from a sim (a hero walked into `exit` in `room-1`
+- [x] **Step 1: Write the failing tests:** `doorTaken` on real events from a sim (a hero walked into `exit` in `room-1`
   gives `{ level: 'room-2', thing: 'door-in', through: { level: 'room-1', thing: 'exit' } }`); a crate pushed into the
   door gives undefined; a door whose `to` an override takes away gives undefined; in a place the prefixed id is read
   (`room-3.back` to `room-1`: the fixture has it); two heroes through two doors in one step gives the first event's.
@@ -847,8 +847,8 @@ carry no `door`, and so wait.
   `play` with an `arrive` (Continue) gives `playing` with `arrive` and no `door`; `pause` and `resume` keep `arrive` and
   `door`; in `paused`, `menu` and `done` a door gives the same object. The template's door (below): in a game whose
   `done` is `door.touched` and whose door has no `to`, `doorTaken` gives undefined, and the touch still ends the level.
-- [ ] **Step 2 to 4: push red, implement, push green.**
-- [ ] **Step 5: Commit** `feat(level): which door a hero went through, as one pure answer`
+- [x] **Step 2 to 4: push red, implement, push green.**
+- [x] **Step 5: Commit** `feat(level): which door a hero went through, as one pure answer`
 
 ### Task 12: The flow follows doors and remembers
 
@@ -898,7 +898,7 @@ does) before it awaits anything, so a second hero a tick later, or a second door
 `places.remember(fact)`. A save that cannot be kept says what `done` says today (`automata.done.not-kept`) and the
 visit goes on from memory.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
   - `progress.test.ts`: `cameIn`, `remembered` (sorted, once, same object when known), `continueAt` (a `last` level the
     game dropped falls back to `level`, then to the start: Review Focus 5); a version 1 save `{ level: 'room-1' }`
     loads under version 2.
@@ -916,9 +916,9 @@ visit goes on from memory.
     first hero through the door takes both, and both stand beside `door-in`.
   - A world file edited so `room-3` no longer touches `room-2`, then Continue from that save: `room-3` opens alone at
     its starts, and nothing throws (Review Focus 4).
-- [ ] **Step 2 to 4: push red, implement, push green** (`flow.ts` stays under 600 lines; if it would not, move
+- [x] **Step 2 to 4: push red, implement, push green** (`flow.ts` stays under 600 lines; if it would not, move
   `startLevel`'s listeners into `ways.ts`).
-- [ ] **Step 5: Commit** `feat(flow): a door opens its level, and the save remembers where and what`, then tick, mark
+- [x] **Step 5: Commit** `feat(flow): a door opens its level, and the save remembers where and what`, then tick, mark
   ready, report.
 
 ---
@@ -953,12 +953,12 @@ failure): a level that is not `start`, not in `levels` and that no door or join 
 (`Nothing leads to room-4 yet.`), and a big place (call 9:
 `The place of room-2 has 9 levels (20,000 tiles). The whole place runs at once, so keep a place under 8 levels and 16,384 tiles.`).
 
-- [ ] **Step 1: Write the failing tests** on the links game in a temporary folder, as `art.test.ts` does: the report
+- [x] **Step 1: Write the failing tests** on the links game in a temporary folder, as `art.test.ts` does: the report
   deep-equals the expected one (three doors, `exit`, `door-in` and `back`; one join; two places); the words; each note;
   a game with no world file lists its levels with `at: null` and no joins; a game that does not load answers
   `ok: false` with one sentence.
-- [ ] **Step 2 to 4: push red, implement, push green.**
-- [ ] **Step 5: Commit** `feat(cli): automata world lists levels, doors and joins`
+- [x] **Step 2 to 4: push red, implement, push green.**
+- [x] **Step 5: Commit** `feat(cli): automata world lists levels, doors and joins`
 
 ### Task 14: `automata picture`
 
@@ -1012,7 +1012,7 @@ export function paintWorld(content: GameContent): Painted | undefined
 (`3  room-2 button-1  opens  gate-1`); `--json` gives `{ ok, pictures: [{ level, path, legend }] }`. The MCP tool
 `picture` takes `{ folder, levels?, whatItIs?, world? }` and returns the same.
 
-- [ ] **Step 1: Write the failing tests:** `line`, `ring` and `badge` on a small picture, pixel for pixel (a
+- [x] **Step 1: Write the failing tests:** `line`, `ring` and `badge` on a small picture, pixel for pixel (a
   horizontal, a vertical and a steep line; a ring of radius 3; the digits 0 to 9; the number 12). `paintLevel` of
   `room-2`: 256 by 144; the pixel in the middle of `crate-1` is the crate's colour; with `whatItIs`, the legend is
   exactly `opens` (arrow to `gate-1`), `stays` (tag, `yes`), `walk` (path), `reach` (reach, `3`) and `to` (tag, `to
@@ -1021,10 +1021,10 @@ export function paintWorld(content: GameContent): Painted | undefined
   badge at each end. Parity (`level-picture.json`): the xxhash64 of the PNG bytes of `room-2` as it plays, with `whatItIs`,
   and of the world, the same in Node and the three browsers. The command writes the files, prints the legend, and
   writes nothing for a game that does not load.
-- [ ] **Step 2: Push; fails; the Node job prints the three hashes.**
-- [ ] **Step 3: Implement; commit the golden.**
-- [ ] **Step 4: Push; green in all four engines.**
-- [ ] **Step 5: Commit** `feat(cli): automata picture paints a level, what it is, and the world`
+- [x] **Step 2: Push; fails; the Node job prints the three hashes.**
+- [x] **Step 3: Implement; commit the golden.**
+- [x] **Step 4: Push; green in all four engines.**
+- [x] **Step 5: Commit** `feat(cli): automata picture paints a level, what it is, and the world`
 
 ### Task 15: The skill, the README and the close
 
@@ -1040,13 +1040,13 @@ gate pair; a critter with a path (and one sentence: the walk comes with the Char
 door; the world file with two levels joined by an edge; the two commands and a legend read back. The README gains
 "Links, paths and doors" (after "Joints and touch") and the two commands in its table and under "The automata command".
 
-- [ ] **Step 1: Write the failing tests:** every JSON block of the skill page loads as a game with no problem; the
+- [x] **Step 1: Write the failing tests:** every JSON block of the skill page loads as a game with no problem; the
   README's command table names `world` and `picture`; the public surface lists the new exports of `src/index.ts` and
   `src/headless.ts` (`valuesOf`, `doorTaken`, `levelsOf`, `heroLevels`, `LevelEntered`, `FactKept`, `factsCommand`,
   `openEvent`, `Pressed`, `Open`, `boxesOverlap`, `paintLevel`, `paintWorld`, `layoutWorld`, the types, `Arrive` among them).
-- [ ] **Step 2 to 4: push red, write, push green.**
-- [ ] **Step 5: Commit** `docs: links, paths and doors, for agents and for the README`
-- [ ] **Step 6:** Run the implementation prompt's last look over the five pull requests, tick everything here and in
+- [x] **Step 2 to 4: push red, write, push green.**
+- [x] **Step 5: Commit** `docs: links, paths and doors, for agents and for the README`
+- [x] **Step 6:** Run the implementation prompt's last look over the five pull requests, tick everything here and in
   `progress.md`, mark ready, and send the coordinator the end summary: each deviation with its reason, and the
   framework commit the test game should pin.
 
