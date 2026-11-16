@@ -69,7 +69,18 @@ async function readText(read: (path: string) => Promise<string>, path: string): 
   }
 }
 
-const fail = (diagnostics: Diagnostic[]): Parsed<GameContent> => ({ ok: false, diagnostics })
+/**
+ * A game read, with every problem found in it. `content` is there whenever the project file and every file it lists
+ * read as their own kind, even when the files disagree with each other (a door into a level that is not there); it is
+ * not there when a file is missing, is not its kind, or has the wrong id, since the game is then not whole. An editor
+ * shows what is there and says what is wrong with it; `loadGame` is for a caller that wants a game with no problems.
+ */
+export interface GameRead {
+  readonly content: GameContent | undefined
+  readonly diagnostics: readonly Diagnostic[]
+}
+
+const fail = (diagnostics: Diagnostic[]): GameRead => ({ content: undefined, diagnostics })
 
 /** "a level", "an apple": the article follows the first letter of the noun. */
 const withArticle = (noun: string): string => `${/^[aeiou]/i.test(noun) ? 'an' : 'a'} ${noun}`
@@ -102,7 +113,7 @@ interface Slot {
   value?: unknown
 }
 
-async function load(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>> {
+async function load(read: (path: string) => Promise<string>): Promise<GameRead> {
   const projectText = await readText(read, PROJECT_FILE)
   if (projectText === undefined)
     return fail([
@@ -307,9 +318,11 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
   }
 
   const problems = [...projectProblems, ...slots.flatMap((slot) => slot.problems)]
-  if (problems.length > 0) return fail(problems)
+  // The game is whole when every listed file read as its own kind; problems between the files do not stop that.
+  if (slots.some((slot) => slot.value === undefined)) return fail(problems)
 
   // Which levels join into one place, from where the world file puts them. Nothing is added for a game with none.
+  // A world file naming a level that is not there has no layout, so no places: the diagnostic says why.
   const world = slots.find((slot) => slot.ref.type === 'world')?.value as WorldFile | undefined
   const places = world === undefined ? undefined : layoutFor(world, game)?.places
 
@@ -325,16 +338,17 @@ async function load(read: (path: string) => Promise<string>): Promise<Parsed<Gam
     map[(slot.value as { id: string }).id] = slot.value
   }
   const joined = places !== undefined && Object.keys(places).length > 0 ? { places } : {}
-  return { ok: true, value: deepFreeze({ project, ...maps, ...joined }) as GameContent }
+  return { content: deepFreeze({ project, ...maps, ...joined }) as GameContent, diagnostics: problems }
 }
 
 /**
- * Reads a game: the project file, then every file it lists, through `read` (a fetch, the file system, GitHub).
- * Every problem in every file comes back at once: the project file's own first, then, in the order the project
- * lists the files, each file's reading problems, or else its id problem, or else its checks against the other
- * files. Never throws.
+ * Reads a game and says what is wrong with it, both at once: the game when it is whole, and every problem in every
+ * file, the project file's own first, then, in the order the project lists the files, each file's reading problems, or
+ * else its id problem, or else its checks against the other files. `content.places` is worked out whenever the world
+ * file and every level it names read, whatever is wrong with how they sit (an overlap, a wall); otherwise it is left
+ * out. A caller that sees a problem in the world file treats `places` as unreliable. Never throws.
  */
-export async function loadGame(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>> {
+export async function readGame(read: (path: string) => Promise<string>): Promise<GameRead> {
   try {
     return await load(read)
   } catch {
@@ -346,4 +360,15 @@ export async function loadGame(read: (path: string) => Promise<string>): Promise
       },
     ])
   }
+}
+
+/**
+ * Reads a game: the project file, then every file it lists, through `read` (a fetch, the file system, GitHub).
+ * Every problem in every file comes back at once, in the order `readGame` gives them. The game is there only when
+ * there is no problem at all. Never throws.
+ */
+export async function loadGame(read: (path: string) => Promise<string>): Promise<Parsed<GameContent>> {
+  const { content, diagnostics } = await readGame(read)
+  if (content === undefined || diagnostics.length > 0) return { ok: false, diagnostics: [...diagnostics] }
+  return { ok: true, value: content }
 }

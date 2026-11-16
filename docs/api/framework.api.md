@@ -1679,6 +1679,15 @@ interface GameOptions extends GameSimOptions {
 }
 ```
 
+### `GameRead` (interface)
+
+```ts
+interface GameRead {
+    readonly content: GameContent | undefined;
+    readonly diagnostics: readonly Diagnostic[];
+}
+```
+
 ### `GameSimOptions` (interface)
 
 ```ts
@@ -3577,6 +3586,12 @@ const PROTOCOL_VERSION: 1;
 
 ```ts
 const READ_MARKS_FILE = "automata.translations.toml";
+```
+
+### `readGame` (function)
+
+```ts
+function readGame(read: (path: string) => Promise<string>): Promise<GameRead>;
 ```
 
 ### `readMark` (function)
@@ -6966,6 +6981,15 @@ interface GameContent {
 }
 ```
 
+### `GameRead` (interface)
+
+```ts
+interface GameRead {
+    readonly content: GameContent | undefined;
+    readonly diagnostics: readonly Diagnostic[];
+}
+```
+
 ### `GameSimOptions` (interface)
 
 ```ts
@@ -8384,6 +8408,12 @@ const PROTOCOL_VERSION: 1;
 
 ```ts
 const READ_MARKS_FILE = "automata.translations.toml";
+```
+
+### `readGame` (function)
+
+```ts
+function readGame(read: (path: string) => Promise<string>): Promise<GameRead>;
 ```
 
 ### `readMark` (function)
