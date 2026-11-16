@@ -1602,6 +1602,13 @@ interface Game {
     levelNow(): string;
     waiting(): boolean;
     paused(): boolean;
+    step(): void;
+    setSpeed(rate: number): void;
+    kept(): {
+        readonly from: number;
+        readonly to: number;
+    };
+    backTo(tick: number): void;
     onStep(listener: (step: GameStep) => void): () => void;
     broken(): unknown;
     onBroken(listener: (error: unknown) => void): () => void;
@@ -1676,6 +1683,7 @@ interface GameOptions extends GameSimOptions {
     readonly locale: Locale;
     readonly facts?: readonly string[];
     readonly waitForPress?: boolean;
+    readonly keepSeconds?: number;
 }
 ```
 
@@ -3660,6 +3668,7 @@ const RECONNECT_GRACE_SECONDS = 30;
 interface Recorder {
     step(commands: readonly Command[]): StepResult;
     replay(): Replay;
+    cutTo(tick: number): void;
 }
 ```
 
@@ -8449,6 +8458,7 @@ const RECONNECT_GRACE_SECONDS = 30;
 interface Recorder {
     step(commands: readonly Command[]): StepResult;
     replay(): Replay;
+    cutTo(tick: number): void;
 }
 ```
 
