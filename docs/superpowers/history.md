@@ -26,6 +26,10 @@ Finished milestones and their decision records, setup, rule changes, standing pe
   the first retro's rule edits. Approved in the project thread ("yes", then "lets do self improving after every slice
   actually"). Scope: this change only, made the same in all five repos, as AutomataFramework
   `docs/superpowers/specs/2026-11-16-slice-retro-design.md` describes. Later rule changes are lane 3 as usual.
+- 2026-11-16, the Owner: a layout sketch in the spec instead of pixel mockups before a screen is built (`visual-check`,
+  "Before the build"). Approved in the project chat on 2026-11-16 at 19:57 UTC ("yes"). Scope: this change only, made
+  the same in all five repos, as AutomataFramework `docs/superpowers/specs/2026-11-16-layout-sketch-design.md`
+  describes. Later rule changes are lane 3 as usual.
 
 ## Standing permissions
 
