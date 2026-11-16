@@ -1,15 +1,15 @@
 // Lifted from AutomataFrameworkFailed@ed8592e8: extensions/physics/src/features/2d/physics-2d.ts
 // The physics feature's entry: the plugin, and everything another feature may use of it. Game code never imports Rapier.
 import { definePlugin, type PluginDef } from '../sim/sim.ts'
-import { Body, Collider, Joint, Touching, Transform } from './components.ts'
+import { Body, Collider, Joint, Mass, Touching, Transform } from './components.ts'
 import { CollisionEnded, CollisionStarted } from './events.ts'
 import { PhysicsWorld } from './physics-world.ts'
 import { eventsSystem, stepSystem, syncInSystem, syncOutSystem } from './systems.ts'
 
-export { Body, Collider, Joint, Touching, Transform } from './components.ts'
+export { Body, Collider, Joint, Mass, Touching, Transform } from './components.ts'
 export { CollisionEnded, CollisionStarted } from './events.ts'
 export { BodyKind, type ColliderOptions, JointKind, ShapeKind } from './kinds.ts'
-export { body, collider, joint, transform } from './spawn.ts'
+export { body, collider, joint, mass, transform } from './spawn.ts'
 export { type Felt, type FeltContact, felt, STEEP, TOUCH_SLOP } from './touching.ts'
 
 /**
@@ -28,6 +28,11 @@ export interface PhysicsOptions {
    * entity that has one. Left out, the sim is exactly as it was before the component existed.
    */
   readonly touching?: boolean
+  /**
+   * Adds the `Mass` component, so an entity can weigh what it is given rather than what its shape does. Left out, the
+   * sim is exactly as it was before weights existed.
+   */
+  readonly weights?: boolean
 }
 
 /**
@@ -46,6 +51,7 @@ export function physics(options: PhysicsOptions = {}): PluginDef {
       gravity,
       ...(options.joints ? { joints: true } : {}),
       ...(options.touching ? { touching: true } : {}),
+      ...(options.weights ? { weights: true } : {}),
     },
     components: [
       Transform,
@@ -53,12 +59,13 @@ export function physics(options: PhysicsOptions = {}): PluginDef {
       Collider,
       ...(options.joints ? [Joint] : []),
       ...(options.touching ? [Touching] : []),
+      ...(options.weights ? [Mass] : []),
     ],
     events: [CollisionStarted, CollisionEnded],
     systems: [syncInSystem, stepSystem, syncOutSystem, eventsSystem],
     state: async ({ dt }) => {
       const { createRapier } = await import('./rapier.ts')
-      return new PhysicsWorld(await createRapier({ gravity, dt }), {
+      return new PhysicsWorld(await createRapier({ gravity, dt, weights: options.weights === true }), {
         joints: options.joints === true,
         touching: options.touching === true,
       })

@@ -12,11 +12,12 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
 ### Current work
 
 - Installing the new workflow and its CI gate (this repo's setup pull request).
+- F5 (draw order) is in a draft pull request; then the test game's E4 in AutomataFrameworkExamples.
 - Next: F1 and F2.
 
 ### Completed outcomes
 
-- Plan W: #171, #172, #173, #177, #180, #181. Plan Q: #143, #145, #148, #189, #190, #191. F3, `readGame`: #194.
+- Plan W: #171, #172, #173, #177, #180, #181. Plan Q: #143, #145, #148, #189, #190, #191. F3, `readGame`: #194. F4, a character's weight: #205.
 
 ### Remaining
 
@@ -26,8 +27,6 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
   seconds; the recorder gains `cutTo`. F1 and F2 are partly built on the branch `claude/f1-f2-step-back` (one commit,
   `6643c2b`, "work in progress, browser tests not yet run"): merge `main` in first, run the browser tests in CI, take
   the API report, open a draft pull request.
-- **F4, a character's weight is the thing's Rapier mass**, with a parity test that a game naming no weight hashes as
-  before. No new dependency.
 - **F5, drawn behind, with the hero, or in front:** a thing's `draw` field; drawing only, so no hash moves.
 - Plan Q's open items: a native speaker's read of the new words in ES, KO, JA, ZH and PT (nothing read yet).
 

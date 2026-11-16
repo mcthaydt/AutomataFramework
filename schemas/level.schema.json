@@ -192,6 +192,15 @@
               ]
             },
             "description": "What this thing holds, by the ids its character declares, like { \"opens\": [\"gate-1\"] }. Left out means only its character's defaults."
+          },
+          "draw": {
+            "type": "string",
+            "enum": [
+              "behind",
+              "with-hero",
+              "in-front"
+            ],
+            "description": "How it is drawn: \"behind\" the ground and every other thing, \"with-hero\" like the hero and most things, or \"in-front\" of everything, the hero too. Left out means \"with-hero\". It changes the picture only, not how things move."
           }
         },
         "required": [

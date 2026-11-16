@@ -4,8 +4,8 @@
 
 import RAPIER from '@dimforge/rapier2d-deterministic'
 import type { EntityRef } from '../sim/sim.ts'
-import { checkBody, checkCollider, checkJoint } from './checks.ts'
-import { Body, Collider, Joint, Transform } from './components.ts'
+import { checkBody, checkCollider, checkJoint, checkMass } from './checks.ts'
+import { Body, Collider, Joint, Mass, Transform } from './components.ts'
 import { CollisionEnded, CollisionStarted } from './events.ts'
 import { BodyKind, JointKind, ShapeKind } from './kinds.ts'
 import type { PhysicsAdapter } from './physics-world.ts'
@@ -23,7 +23,12 @@ const COLLISION_TYPES =
   RAPIER.ActiveCollisionTypes.KINEMATIC_FIXED |
   RAPIER.ActiveCollisionTypes.KINEMATIC_KINEMATIC
 
-function colliderDesc(entity: EntityRef): RAPIER.ColliderDesc {
+/** The entity's weight in kilograms, or undefined for one that weighs what its shape does (or a sim with no weights). */
+function kilosOf(entity: EntityRef, weights: boolean): number | undefined {
+  return weights && entity.has(Mass) ? entity.get(Mass).kilos : undefined
+}
+
+function colliderDesc(entity: EntityRef, weights: boolean): RAPIER.ColliderDesc {
   const c = entity.get(Collider)
   const desc =
     c.shape === ShapeKind.ball
@@ -31,6 +36,8 @@ function colliderDesc(entity: EntityRef): RAPIER.ColliderDesc {
       : c.shape === ShapeKind.cuboid
         ? RAPIER.ColliderDesc.cuboid(c.hx, c.hy)
         : RAPIER.ColliderDesc.capsule(c.hy, c.hx)
+  const kilos = kilosOf(entity, weights)
+  if (kilos !== undefined) desc.setMass(kilos)
   return desc
     .setSensor(c.sensor)
     .setCollisionGroups(c.groups)
@@ -43,6 +50,8 @@ function colliderDesc(entity: EntityRef): RAPIER.ColliderDesc {
 export async function createRapier(setup: {
   gravity: { x: number; y: number }
   dt: number
+  /** Whether the sim has the `Mass` component (`physics({ weights: true })`): an entity may ask Mass of it only then. */
+  weights?: boolean
 }): Promise<PhysicsAdapter<World>> {
   // A rejected init is not kept: the next createSim retries it (a wasm fetch can fail transiently).
   ready ??= loadRapier().catch((err: unknown) => {
@@ -51,6 +60,7 @@ export async function createRapier(setup: {
   })
   await ready
   const queue = new RAPIER.EventQueue(true)
+  const weights = setup.weights === true
   // Rapier has no getter for a body's rotation lock, so the adapter remembers what it applied. After a restore it
   // knows nothing about a body and takes the entity's value as the one the snapshot's world holds: asking Rapier to lock
   // again would wake every sleeping body and so change the state hash (the restore parity tests catch that). The one
@@ -136,6 +146,8 @@ export async function createRapier(setup: {
         const c = entity.get(Collider)
         checkCollider(entity.sid, 'physics.collider', c.shape, c.hx, c.hy)
       }
+      const kilos = kilosOf(entity, weights)
+      if (kilos !== undefined) checkMass(entity.sid, 'physics.mass', kilos)
     },
 
     createBody(world, entity) {
@@ -154,7 +166,7 @@ export async function createRapier(setup: {
       return handle
     },
     createCollider(world, entity, body) {
-      const desc = colliderDesc(entity)
+      const desc = colliderDesc(entity, weights)
       if (body !== undefined) return world.createCollider(desc, world.getRigidBody(body)).handle
       const t = entity.get(Transform)
       desc.setTranslation(t.x, t.y).setRotation(t.rotation)
@@ -202,6 +214,7 @@ export async function createRapier(setup: {
     colliderMatches(world, handle, entity) {
       const collider = world.getCollider(handle)
       const c = entity.get(Collider)
+      const kilos = kilosOf(entity, weights)
       if (collider.shapeType() !== (c.shape as number)) return false
       let sizeMatches: boolean
       if (c.shape === ShapeKind.ball) sizeMatches = collider.radius() === c.hx
@@ -214,7 +227,9 @@ export async function createRapier(setup: {
         collider.isSensor() === c.sensor &&
         collider.collisionGroups() === c.groups &&
         collider.friction() === c.friction &&
-        collider.restitution() === c.restitution
+        collider.restitution() === c.restitution &&
+        // A weighed collider must still weigh what Mass says; a changed weight rebuilds it.
+        (kilos === undefined || collider.mass() === kilos)
       )
     },
     updateLoneCollider(world, handle, entity) {

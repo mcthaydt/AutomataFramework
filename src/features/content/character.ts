@@ -79,6 +79,11 @@ export interface Character {
   readonly opens?: 'walk-through' | undefined
   /** True when a level may hold only one thing of this character, like a goal. */
   readonly 'one-per-level'?: boolean | undefined
+  /**
+   * The `number` value that is this character's weight, in kilograms: the thing's mass in Rapier. Needs `body:
+   * 'dynamic'`. Left out, a body weighs what its box does (its area, at Rapier's density of 1).
+   */
+  readonly weight?: string | undefined
 }
 
 /** What a person may write: `upright` can be left out, and then it is false; so can the three switches of `moves`. */
@@ -151,6 +156,27 @@ function checkSwitch(character: Partial<Character>, ctx: z.core.$RefinementCtx):
     add(['opens'], 'Only a "fixed" character with no "touch" can be walked through when open.')
 }
 
+/**
+ * What a character says about its weight: a number value of its own that can never be 0 or less, on a body that moves.
+ * Written to cope with a half-read character, since it may run beside other problems.
+ */
+function checkWeight(character: Partial<Character>, ctx: z.core.$RefinementCtx): void {
+  const weight = character.weight
+  if (weight === undefined) return
+  const add = (message: string): void => ctx.addIssue({ code: 'custom', path: ['weight'], message })
+  if (character.body === 'fixed') add('A fixed body does not move, so it has no weight. Take out "weight".')
+  const numbers = (character.values ?? []).filter((value) => value.type === 'number')
+  const named = numbers.find((value) => value.id === weight)
+  if (named === undefined) {
+    add(
+      `"${weight}" must name one of this character's "number" values. It has: ${list(numbers.map((v) => v.id))}.`,
+    )
+    return
+  }
+  if (!(named.least > 0))
+    add(`A weight must be more than 0: make the "least" of "${weight}" more than 0, like 0.5.`)
+}
+
 /** The rules for a character file; unknown keys are refused. */
 export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
   .strictObject({
@@ -218,6 +244,9 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
         'True when a level may hold only one thing of this character, like a goal. Left out means false.',
       )
       .optional(),
+    weight: Id.describe(
+      'The "number" value that says how heavy each of its things is, in kilograms, like "heavy". Needs a "dynamic" body. Left out means it weighs what its size does.',
+    ).optional(),
   })
   .superRefine((character, ctx) => {
     unique(character.clips ?? [], 'id', 'clip', ['clips'], ctx)
@@ -245,6 +274,7 @@ export const CharacterSchema: z.ZodType<Character, CharacterInput> = z
     }
     checkDeclarations(character.values ?? [], ctx)
     checkSwitch(character, ctx)
+    checkWeight(character, ctx)
     if (character.clips !== undefined && character.clips.length > 0 && character.figure === undefined)
       ctx.addIssue({
         code: 'custom',

@@ -495,3 +495,42 @@ describe('a level with a backdrop and a view', () => {
     ])
   })
 })
+
+describe('draw', () => {
+  const things = (draw: unknown): Record<string, unknown>[] => {
+    const level = exampleLevel() as unknown as { things: Record<string, unknown>[] }
+    const first = level.things[0]
+    if (first === undefined) throw new Error('the example level has no thing')
+    return [{ ...first, draw }, ...level.things.slice(1)]
+  }
+  const drawn = (draw: unknown): string => JSON.stringify({ ...exampleLevel(), things: things(draw) })
+
+  test('a thing may be drawn behind, with the hero or in front', () => {
+    for (const draw of ['behind', 'with-hero', 'in-front']) {
+      const parsed = parseContent('level', drawn(draw), FILE)
+      expect(parsed.ok && parsed.value.things[0]?.draw).toBe(draw)
+    }
+  })
+
+  test('a thing that says nothing has no draw key', () => {
+    const parsed = parseContent('level', JSON.stringify(exampleLevel()), FILE)
+    expect(parsed.ok && parsed.value.things.some((t) => 'draw' in t)).toBe(false)
+  })
+
+  test('a draw that is none of the three gets one sentence naming them', () => {
+    expect(problems(drawn('above'))).toEqual([
+      `${FILE}: things[0].draw: This must be one of: behind, with-hero, in-front.`,
+    ])
+  })
+
+  test('a written file keeps behind and in-front and never holds the default', () => {
+    for (const draw of ['behind', 'in-front'] as const) {
+      const parsed = parseContent('level', drawn(draw), FILE)
+      if (!parsed.ok) throw new Error('the level did not read')
+      expect(JSON.parse(writeContent('level', parsed.value)).things[0].draw).toBe(draw)
+    }
+    const parsed = parseContent('level', drawn('with-hero'), FILE)
+    if (!parsed.ok) throw new Error('the level did not read')
+    expect('draw' in JSON.parse(writeContent('level', parsed.value)).things[0]).toBe(false)
+  })
+})

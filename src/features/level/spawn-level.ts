@@ -5,6 +5,7 @@ import type { Sim } from '../sim/sim.ts'
 import type { Spot } from './arrive.ts'
 import { groundOf } from './colours.ts'
 import { Look, Thing } from './components.ts'
+import { Draw } from './draw.ts'
 import { characterParts, heroParts } from './hero.ts'
 import { jointParts, type Placed } from './joints.ts'
 import { tileBoxes, tileRuns } from './tile-runs.ts'
@@ -88,6 +89,9 @@ export function spawnContents(
     placed.set(thing.id, {
       sid: sim.spawn([
         ...characterParts(characterOf(content, thing.character, `Thing "${thing.id}"`), thing, sprites),
+        ...(thing.draw === 'behind' || thing.draw === 'in-front'
+          ? [[Draw, { layer: thing.draw }] as const]
+          : []),
         [Thing, { id: `${prefix}${thing.id}`, character: thing.character }],
       ]),
       x: thing.x,

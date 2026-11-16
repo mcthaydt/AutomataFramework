@@ -194,3 +194,17 @@ test('a row with no sprite is the box it always was, with no sprite key at all',
   scene.apply(delta({ added: [row(1, 4, 5)] }))
   expect(Object.keys(scene.views(1)[0] ?? {})).toEqual(['sid', 'x', 'y', 'rotation', 'w', 'h', 'color'])
 })
+
+test('a thing drawn behind or in front says so in its view, and one drawn with the hero has no such key', () => {
+  const scene = createScene()
+  const draw = (layer: string): RenderRow => ({
+    ...row(1, 0),
+    components: { ...row(1, 0).components, 'level.draw': { layer } },
+  })
+  scene.apply(
+    delta({ added: [draw('behind'), { ...draw('in-front'), sid: 2 }, row(3, 0), { ...draw('?'), sid: 4 }] }),
+  )
+  const drawn = scene.views(1).map((v) => v.draw)
+  expect(drawn).toEqual(['behind', 'in-front', undefined, undefined])
+  expect('draw' in (scene.views(1)[2] ?? {})).toBe(false)
+})

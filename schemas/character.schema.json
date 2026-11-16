@@ -615,6 +615,12 @@
     "one-per-level": {
       "type": "boolean",
       "description": "True when a level may hold only one thing of this character, like a goal. Left out means false."
+    },
+    "weight": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "The \"number\" value that says how heavy each of its things is, in kilograms, like \"heavy\". Needs a \"dynamic\" body. Left out means it weighs what its size does."
     }
   },
   "required": [

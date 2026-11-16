@@ -420,6 +420,7 @@ interface Character {
     } | undefined;
     readonly opens?: 'walk-through' | undefined;
     readonly 'one-per-level'?: boolean | undefined;
+    readonly weight?: string | undefined;
 }
 ```
 
@@ -1109,6 +1110,18 @@ function doorsOf(content: GameContent): readonly Door[];
 
 ```ts
 function doorTaken(content: GameContent, opened: string, events: readonly SimEvent[]): Way | undefined;
+```
+
+### `Draw` (const)
+
+```ts
+const Draw: ComponentDef<typeof drawFields>;
+```
+
+### `drawPlugin` (const)
+
+```ts
+const drawPlugin: PluginDef;
 ```
 
 ### `DrumPart` (interface)
@@ -2474,6 +2487,7 @@ interface LevelThing {
     readonly x: number;
     readonly y: number;
     readonly values?: Readonly<Record<string, ThingValue>> | undefined;
+    readonly draw?: 'behind' | 'with-hero' | 'in-front' | undefined;
 }
 ```
 
@@ -2630,6 +2644,18 @@ function lostScreen(options: ScreenBase & {
 
 ```ts
 function markRead(content: GameContent, marks: ReadMarks | undefined, language: Language, keys?: readonly string[]): ReadMarks;
+```
+
+### `Mass` (const)
+
+```ts
+const Mass: ComponentDef<typeof massFields>;
+```
+
+### `mass` (function)
+
+```ts
+function mass(kilos: number): SpawnPart;
 ```
 
 ### `matchLanguage` (function)
@@ -3334,6 +3360,7 @@ interface PhysicsOptions {
     };
     readonly joints?: boolean;
     readonly touching?: boolean;
+    readonly weights?: boolean;
 }
 ```
 
@@ -5341,6 +5368,12 @@ function unreadWords(content: GameContent, marks: ReadMarks | undefined): readon
 }[];
 ```
 
+### `usesDraw` (function)
+
+```ts
+function usesDraw(content: GameContent): boolean;
+```
+
 ### `usesFalls` (function)
 
 ```ts
@@ -5375,6 +5408,12 @@ function usesSwitches(content: GameContent): boolean;
 
 ```ts
 function usesValues(content: GameContent): boolean;
+```
+
+### `usesWeights` (function)
+
+```ts
+function usesWeights(content: GameContent): boolean;
 ```
 
 ### `Value` (type)
@@ -5492,6 +5531,7 @@ interface View {
     readonly h: number;
     readonly color: number;
     readonly sprite?: ViewSprite;
+    readonly draw?: 'behind' | 'in-front';
 }
 ```
 
@@ -6063,6 +6103,7 @@ interface Character {
     } | undefined;
     readonly opens?: 'walk-through' | undefined;
     readonly 'one-per-level'?: boolean | undefined;
+    readonly weight?: string | undefined;
 }
 ```
 
@@ -6591,6 +6632,18 @@ function doorsOf(content: GameContent): readonly Door[];
 
 ```ts
 function doorTaken(content: GameContent, opened: string, events: readonly SimEvent[]): Way | undefined;
+```
+
+### `Draw` (const)
+
+```ts
+const Draw: ComponentDef<typeof drawFields>;
+```
+
+### `drawPlugin` (const)
+
+```ts
+const drawPlugin: PluginDef;
 ```
 
 ### `DrumPart` (interface)
@@ -7543,6 +7596,7 @@ interface LevelThing {
     readonly x: number;
     readonly y: number;
     readonly values?: Readonly<Record<string, ThingValue>> | undefined;
+    readonly draw?: 'behind' | 'with-hero' | 'in-front' | undefined;
 }
 ```
 
@@ -7651,6 +7705,18 @@ const Look: ComponentDef<typeof lookFields>;
 
 ```ts
 function markRead(content: GameContent, marks: ReadMarks | undefined, language: Language, keys?: readonly string[]): ReadMarks;
+```
+
+### `Mass` (const)
+
+```ts
+const Mass: ComponentDef<typeof massFields>;
+```
+
+### `mass` (function)
+
+```ts
+function mass(kilos: number): SpawnPart;
 ```
 
 ### `matchLanguage` (function)
@@ -8203,6 +8269,7 @@ interface PhysicsOptions {
     };
     readonly joints?: boolean;
     readonly touching?: boolean;
+    readonly weights?: boolean;
 }
 ```
 
@@ -9777,6 +9844,12 @@ function unreadWords(content: GameContent, marks: ReadMarks | undefined): readon
 }[];
 ```
 
+### `usesDraw` (function)
+
+```ts
+function usesDraw(content: GameContent): boolean;
+```
+
 ### `usesFalls` (function)
 
 ```ts
@@ -9811,6 +9884,12 @@ function usesSwitches(content: GameContent): boolean;
 
 ```ts
 function usesValues(content: GameContent): boolean;
+```
+
+### `usesWeights` (function)
+
+```ts
+function usesWeights(content: GameContent): boolean;
 ```
 
 ### `Value` (type)

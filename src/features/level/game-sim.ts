@@ -3,6 +3,7 @@ import type { GameContent } from '../content/content.ts'
 import { physics } from '../physics/physics.ts'
 import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
 import type { Arrive } from './arrive.ts'
+import { drawPlugin } from './draw.ts'
 import { placePlugin } from './entered.ts'
 import { fallPlugin, levelBottom } from './fall.ts'
 import { joinPlugin } from './join.ts'
@@ -16,12 +17,14 @@ import { openKinds, switchPlugin } from './switches.ts'
 import { touchPlugin } from './touch.ts'
 import {
   touchKinds,
+  usesDraw,
   usesFalls,
   usesJoints,
   usesMoves,
   usesSprites,
   usesSwitches,
   usesValues,
+  usesWeights,
 } from './uses.ts'
 import { wherePlugin } from './where.ts'
 
@@ -61,7 +64,7 @@ export function gameSimPlugins(options: GameSimOptions): readonly PluginDef[] {
   // The levels the sim holds: the opened level's place, or the opened level alone.
   const levels = levelsOf(content, opened)
   return [
-    physics({ gravity, joints: usesJoints(content), touching: moved }),
+    physics({ gravity, joints: usesJoints(content), touching: moved, weights: usesWeights(content) }),
     commandsPlugin,
     levelPlugin,
     // Only a game for two or more players can have people join and leave (see join.ts).
@@ -76,6 +79,8 @@ export function gameSimPlugins(options: GameSimOptions): readonly PluginDef[] {
       : []),
     // Only a game with a figure or a camera has sprites, so every other game keeps the sim it had.
     ...(usesSprites(content) ? [spritesPlugin] : []),
+    // Only a game with a thing drawn behind or in front has the draw component, so every other game keeps the sim it had.
+    ...(usesDraw(content) ? [drawPlugin] : []),
     // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
     ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
     // Only a game whose hero has `moves` has the built-in hero, so every other game keeps the sim it had.
