@@ -167,7 +167,8 @@ test('a gameSave that is not a save definition is a problem at src/headless.ts',
 
 test('a gameSave made like defineSave comes with the rules, and a game with none has no save', async () => {
   const save = "{ game: 'g', version: 2, slots: 1, schema: { parse: (x) => x } }"
-  expect(await rulesProblem(`export const gamePlugins = []\nexport const gameSave = ${save}\n`)).toMatchObject({
+  const made = await rulesProblem(`export const gamePlugins = []\nexport const gameSave = ${save}\n`)
+  expect(made).toMatchObject({
     plugins: [],
     save: { game: 'g', version: 2, slots: 1 },
   })

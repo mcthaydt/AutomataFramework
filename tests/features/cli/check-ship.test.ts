@@ -80,7 +80,8 @@ test('a picture over 512 KB is a problem, and one at 512 KB is not', async () =>
     {
       file: 'content/art/big.png',
       path: '',
-      message: 'content/art/big.png is 600 KB. A picture over 512 KB makes the game slow to open. Make it smaller.',
+      message:
+        'content/art/big.png is 600 KB. A picture over 512 KB makes the game slow to open. Make it smaller.',
     },
   ])
   const light = await shipped({ ...smallGame(), 'content/art/ok.png': picture(512) })
