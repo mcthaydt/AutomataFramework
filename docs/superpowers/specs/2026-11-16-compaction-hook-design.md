@@ -88,7 +88,7 @@ Your context was just compacted. Read this before you do anything else.
 3. Your live state is in docs/superpowers/live/<your branch>.md, with "/" in the branch name written as "-" (the
    branch is `git branch --show-current`): your task, your last commit, your next step and your open decisions. An
    audit session keeps it at the top of its audit file. Where the summary and that file differ, the file wins. If it
-   is behind what you did, update it and commit it first.
+   is behind what you did, update it and commit it first. The coordinator's live state is progress.md.
 4. Do not carry this session into the next big job. A spec, a plan, a pull request's build and an audit each run in a
    fresh session. When your job is done, commit, report and stop.
 ```
@@ -101,8 +101,10 @@ Your context was just compacted. Read this before you do anything else.
 >   task, its last commit, its next step and its open decisions. A session that writes keeps it in its own file,
 >   `docs/superpowers/live/<branch>.md` (the branch name with "/" written as "-"), so two sessions never touch the same
 >   file; it updates and commits that file at each milestone, reading the commit from `git rev-parse --short HEAD` and
->   the time from `date`, never typing them. The pull request's last commit before the merge deletes the file, so it
->   never reaches `main`; the outcome goes to the coordinator's report and `progress.md`, as before. A reviewer, which
+>   the time from `date`, never typing them. The session deletes the file in its last commit before it hands the branch
+>   to the audit (or, with no audit, before the merge), so the commit the audit and the owner's approval name is the one
+>   that merges and the file never reaches `main`; a fix session writes it again and deletes it the same way. The
+>   outcome goes to the coordinator's report and `progress.md`, as before. A reviewer, which
 >   changes nothing but its audit file, keeps the same four lines at the top of that file and removes them when the
 >   audit is done. The coordinator keeps `progress.md` and needs no such file.
 > - **The rules file beats the summary.** A compaction summary is a note about the rules, not the rules. Where it and
@@ -124,8 +126,10 @@ adds the plan when the approach is uncertain (superpowers writing-plans)" become
 starts, with the owner (superpowers brainstorming); a plan session adds the plan when the approach is uncertain
 (superpowers writing-plans)".
 
-The **Writing.** bullet: "The coordinator is the only writer of `progress.md` and `history.md` while active" gains
-"apart from each session's own live-state file in `docs/superpowers/live/`".
+The **Writing.** bullet: the sentence "The coordinator is the only writer of `progress.md` and `history.md` while
+active, including for delegated short-path work." becomes "The coordinator is the only writer of `progress.md` and
+`history.md` while active, including for delegated short-path work; each session's own live-state file in
+`docs/superpowers/live/` is the exception, written only by that session."
 
 The **coordinator** bullet: "It talks with the owner, writes the spec, creates" becomes "It talks with the owner,
 creates", since "starts each stage's session" already covers the spec session.
@@ -187,7 +191,7 @@ run by hand and the output (see the acceptance criteria).
    from that `main`, and put the `history.md` entry after theirs. AutomataFramework is at its three-pull-request limit
    (#203, #204 and #205), so its build also waits for a free slot. The five repos need not start together.
 3. In each repo, on its own branch from `main`: write the test first and see it fail (four repos), then the hook, the
-   reminder, the rules, the heading and the history entry. One pull request each, a draft until the last push, bodies
+   reminder, the rules and the history entry. One pull request each, a draft until the last push, bodies
    naming the footer mid-sentence if at all.
 4. Check the acceptance criteria with `md5sum`, `jq`, `awk` (line length) and the new test, and wait for green on
    GitHub's runners.
