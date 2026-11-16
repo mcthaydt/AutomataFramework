@@ -420,6 +420,7 @@ interface Character {
     } | undefined;
     readonly opens?: 'walk-through' | undefined;
     readonly 'one-per-level'?: boolean | undefined;
+    readonly weight?: string | undefined;
 }
 ```
 
@@ -2632,6 +2633,18 @@ function lostScreen(options: ScreenBase & {
 function markRead(content: GameContent, marks: ReadMarks | undefined, language: Language, keys?: readonly string[]): ReadMarks;
 ```
 
+### `Mass` (const)
+
+```ts
+const Mass: ComponentDef<typeof massFields>;
+```
+
+### `mass` (function)
+
+```ts
+function mass(kilos: number): SpawnPart;
+```
+
 ### `matchLanguage` (function)
 
 ```ts
@@ -3334,6 +3347,7 @@ interface PhysicsOptions {
     };
     readonly joints?: boolean;
     readonly touching?: boolean;
+    readonly weights?: boolean;
 }
 ```
 
@@ -5377,6 +5391,12 @@ function usesSwitches(content: GameContent): boolean;
 function usesValues(content: GameContent): boolean;
 ```
 
+### `usesWeights` (function)
+
+```ts
+function usesWeights(content: GameContent): boolean;
+```
+
 ### `Value` (type)
 
 ```ts
@@ -6063,6 +6083,7 @@ interface Character {
     } | undefined;
     readonly opens?: 'walk-through' | undefined;
     readonly 'one-per-level'?: boolean | undefined;
+    readonly weight?: string | undefined;
 }
 ```
 
@@ -7653,6 +7674,18 @@ const Look: ComponentDef<typeof lookFields>;
 function markRead(content: GameContent, marks: ReadMarks | undefined, language: Language, keys?: readonly string[]): ReadMarks;
 ```
 
+### `Mass` (const)
+
+```ts
+const Mass: ComponentDef<typeof massFields>;
+```
+
+### `mass` (function)
+
+```ts
+function mass(kilos: number): SpawnPart;
+```
+
 ### `matchLanguage` (function)
 
 ```ts
@@ -8203,6 +8236,7 @@ interface PhysicsOptions {
     };
     readonly joints?: boolean;
     readonly touching?: boolean;
+    readonly weights?: boolean;
 }
 ```
 
@@ -9811,6 +9845,12 @@ function usesSwitches(content: GameContent): boolean;
 
 ```ts
 function usesValues(content: GameContent): boolean;
+```
+
+### `usesWeights` (function)
+
+```ts
+function usesWeights(content: GameContent): boolean;
 ```
 
 ### `Value` (type)
