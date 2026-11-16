@@ -19,6 +19,9 @@ import type { CliError, Ports } from './ports.ts'
 const BIG_LEVELS = 8
 const BIG_TILES = 16_384
 
+/** 1296 as `1,296`: written out, so it reads the same on every machine. */
+const commas = (n: number): string => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+
 /** What `automata world` found. */
 export interface WorldReport {
   readonly ok: boolean
@@ -102,7 +105,7 @@ export function worldNotes(
     const tiles = place.reduce((sum, level) => sum + sizeOf(content, level).w * sizeOf(content, level).h, 0)
     if (place.length > BIG_LEVELS || tiles > BIG_TILES)
       notes.push(
-        `The place of ${place[0]} has ${place.length} ${place.length === 1 ? 'level' : 'levels'} (${tiles.toLocaleString('en-US')} tiles). The whole place runs at once, so keep a place to ${BIG_LEVELS} levels and ${BIG_TILES.toLocaleString('en-US')} tiles at most.`,
+        `The place of ${place[0]} has ${place.length} ${place.length === 1 ? 'level' : 'levels'} (${commas(tiles)} tiles). The whole place runs at once, so keep a place to ${BIG_LEVELS} levels and ${commas(BIG_TILES)} tiles at most.`,
       )
   }
   return notes

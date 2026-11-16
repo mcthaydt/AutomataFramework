@@ -264,13 +264,13 @@ const leadsTo = (to: { readonly level: string; readonly thing?: string | undefin
 
 /** What a value shown as a tag says, or `undefined` when there is no tag to draw (a switch left at its default). */
 function tagSays(content: GameContent, declaration: ValueDeclaration, held: unknown): string | undefined {
-  const source = content.project.source ?? 'en'
+  const source = content.project.source
   switch (declaration.type) {
     case 'number':
       return typeof held === 'number' ? String(held) : undefined
     case 'switch': {
       if (typeof held !== 'boolean' || held === declaration.default) return undefined
-      const [yes, no] = YES_NO[source] ?? ['yes', 'no']
+      const [yes, no] = (source === undefined ? undefined : YES_NO[source]) ?? ['yes', 'no']
       return held ? yes : no
     }
     case 'choice':
@@ -278,7 +278,9 @@ function tagSays(content: GameContent, declaration: ValueDeclaration, held: unkn
         ? (declaration.from.find((option) => option.id === held)?.name ?? held)
         : undefined
     case 'words':
-      return typeof held === 'string' ? (content.messages?.[source]?.messages[held] ?? held) : undefined
+      return typeof held === 'string'
+        ? ((source === undefined ? undefined : content.messages?.[source]?.messages[held]) ?? held)
+        : undefined
     case 'leads-to':
       return typeof held === 'object' && held !== null && 'level' in held
         ? leadsTo(held as { level: string; thing?: string })
