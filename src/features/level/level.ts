@@ -2,6 +2,7 @@
 export { type Arrive, arrivalSpots, arriveLine, arriveOf, type Spot } from './arrive.ts'
 export { groundOf, skyOf } from './colours.ts'
 export { Look, SKY_COLOR, Thing, TILE_COLOR } from './components.ts'
+export { doorTaken, type Way } from './doors.ts'
 export { type Entered, heroLevels, In, LevelEntered, placePlugin } from './entered.ts'
 export { createGameSim, type GameSimOptions } from './game-sim.ts'
 export { JoinCommand, joinCommand, joinPlugin, LeaveCommand, leaveCommand, playersIn } from './join.ts'

@@ -215,3 +215,39 @@ test('level-done while done, pause while a screen is on top, play while playing:
   expect(go(splash, next)).toBe(splash)
   expect(go(splash, tap('pause'))).toBe(splash)
 })
+
+// Doors (plan W, task 11): a door is a way straight into the next level, with no screen between.
+const door = (level: string, arrive?: { thing: string }): FlowEvent =>
+  arrive === undefined ? { type: 'door', level } : { type: 'door', level, arrive }
+
+test('a door in playing opens the next level at once, beside the door, marked as a door, always a new state', () => {
+  const playing = at('playing', { level: 'room-1' })
+  const through = go(playing, door('room-2', { thing: 'door-in' }))
+  expect(through).toEqual(at('playing', { level: 'room-2', arrive: { thing: 'door-in' }, door: true }))
+  // The same door twice is still a new state each time, so the flow starts a level for each.
+  expect(go(through, door('room-2', { thing: 'door-in' }))).not.toBe(through)
+  expect(go(playing, door('room-2'))).toEqual(at('playing', { level: 'room-2', door: true }))
+})
+
+test('play with an arrive (Continue) comes in where the player left, and is no door', () => {
+  const state = go(at('menu'), { type: 'play', level: 'room-3', arrive: { x: 3.5, y: 7.5 } })
+  expect(state).toEqual(at('playing', { level: 'room-3', arrive: { x: 3.5, y: 7.5 } }))
+  expect(state.door).toBeUndefined()
+})
+
+test('pause and resume keep where the heroes come in and the door', () => {
+  const through = go(at('playing', { level: 'room-1' }), door('room-2', { thing: 'door-in' }))
+  const paused = go(through, tap('pause'))
+  expect(paused).toEqual(at('paused', { level: 'room-2', arrive: { thing: 'door-in' }, door: true }))
+  expect(go(paused, tap('resume'))).toEqual(through)
+})
+
+test('a door in paused, the menu or done gives the very same state', () => {
+  for (const state of [at('paused', { level: 'room-1' }), at('menu'), at('done', { level: 'room-1' })])
+    expect(go(state, door('room-2', { thing: 'door-in' }))).toBe(state)
+})
+
+test('finishing a door level, then Next, carries no door and no arrive', () => {
+  const through = go(at('playing', { level: 'room-1' }), door('room-2', { thing: 'door-in' }))
+  expect(go(go(through, done), next, { next: 'room-3' })).toEqual(at('playing', { level: 'room-3' }))
+})
