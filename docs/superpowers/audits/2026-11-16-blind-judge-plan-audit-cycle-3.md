@@ -17,7 +17,7 @@ Ready to implement: 0 red, 0 new notes. The spec is the only file changed since 
 | 1 | red | Fixed | Step 4: the judge "names the single biggest gap for each set, where it falls short of the other", and "the coordinator, who holds the key, takes the gap named for ours". Nothing asks the judge which set is ours. Acceptance criterion 3 says the same. |
 | 2 | note | Fixed | `awk 'length>120'` on the spec prints nothing. The quoted intro is rewrapped inside the quote; acceptance criterion 2 still has the skill rewrapped to 120, so the skill's own wrap stays right. |
 | 3 | note | Fixed | Step 4: "the coordinator records its pick in `docs/superpowers/progress.md`"; acceptance criterion 3 matches. |
-| 8 (cycle 1) | note | Open, outside the spec | PR #199's body still ends with the Claude Code footer, to be stripped before merge. |
+| 8 (cycle 1) | note | Fixed | PR #199's body now ends with "Requested by **McThayDT**"; the Claude Code footer is gone (read through `gh api`). |
 
 ## Exploratory
 
