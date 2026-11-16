@@ -8,6 +8,13 @@ hash: the `xxhash64` of the bytes of `schemas/<kind>.schema.json`, 16 hex digits
 when a schema changes, the newest entry of its kind must end with its new hash, so a format cannot change without a
 line here saying so.
 
+## 2026-11-16 · level · draw
+
+A thing in a level can now say how it is drawn: `draw` is `behind` (under the ground and every other thing), `with-hero` (the way things and heroes are drawn, which is what no `draw` means) or `in-front` (over everything, the hero too). It changes the picture only, not how anything moves. A level that says no `draw` is read, written, played and hashed as it was, and a written file never holds `with-hero`.
+
+**An older file needs:** nothing.
+**Schema:** `94ffd9b72946c0a1`
+
 ## 2026-11-16 · character · weight
 
 A character can now name a `weight`: one of its own `number` values, whose `least` is more than 0, that says how heavy

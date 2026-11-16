@@ -26,6 +26,12 @@ export interface LevelThing {
   readonly y: number
   /** What it holds, by the ids its character declares. Left out, it holds only its character's defaults. */
   readonly values?: Readonly<Record<string, ThingValue>> | undefined
+  /**
+   * How it is drawn: `behind` the ground and every other thing (over the backdrop), `with-hero` as things and heroes are
+   * drawn today, or `in-front` of everything the level draws, the hero included. Left out is `with-hero`. Drawing only:
+   * nothing in the sim reads it.
+   */
+  readonly draw?: 'behind' | 'with-hero' | 'in-front' | undefined
 }
 
 /** Where a player's hero begins. `player` (1 to 4) is the number its commands carry as their source. */
@@ -141,6 +147,12 @@ const thing = z.strictObject({
     .record(Id, thingValue)
     .describe(
       'What this thing holds, by the ids its character declares, like { "opens": ["gate-1"] }. Left out means only its character\'s defaults.',
+    )
+    .optional(),
+  draw: z
+    .enum(['behind', 'with-hero', 'in-front'])
+    .describe(
+      'How it is drawn: "behind" the ground and every other thing, "with-hero" like the hero and most things, or "in-front" of everything, the hero too. Left out means "with-hero". It changes the picture only, not how things move.',
     )
     .optional(),
 })
@@ -379,6 +391,13 @@ export const LevelSchema: z.ZodType<Level, Level> = z
 /** The level's row of the content table. */
 export const levelInfo: ContentTypeInfo<Level, Level> = {
   schema: LevelSchema,
+  // "with-hero" is what no key means, so a written file never holds it.
+  tidy: (level) => ({
+    ...level,
+    things: level.things.map(({ draw, ...rest }) =>
+      draw === undefined || draw === 'with-hero' ? rest : { ...rest, draw },
+    ),
+  }),
   title: 'Level',
   plural: 'levels',
   editor: 'world',

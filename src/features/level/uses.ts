@@ -76,6 +76,16 @@ export function usesFalls(content: GameContent): boolean {
 }
 
 /**
+ * Whether any thing of any level is drawn `behind` or `in-front`. It switches the draw component on for the whole game,
+ * so a game whose things are all drawn with the hero keeps exactly the sim it had.
+ */
+export function usesDraw(content: GameContent): boolean {
+  return Object.values(content.levels).some((level) =>
+    level.things.some((thing) => thing.draw === 'behind' || thing.draw === 'in-front'),
+  )
+}
+
+/**
  * Whether any character names a `weight`. It switches the `Mass` component on for the whole game, so a game whose
  * characters name none keeps exactly the sim it had.
  */

@@ -1,4 +1,4 @@
-import { Look, Sprite } from '../level/level.ts'
+import { Draw, Look, Sprite } from '../level/level.ts'
 import { Joint, Transform } from '../physics/physics.ts'
 import type { RenderDelta, RenderRow } from '../sim/sim.ts'
 
@@ -26,6 +26,8 @@ export interface View {
   readonly h: number
   readonly color: number
   readonly sprite?: ViewSprite
+  /** Drawn under the ground (`behind`) or over everything (`in-front`). A thing drawn with the hero has no such key. */
+  readonly draw?: 'behind' | 'in-front'
 }
 
 /**
@@ -68,6 +70,8 @@ interface Entry {
   look: { readonly w: number; readonly h: number; readonly color: number } | undefined
   /** Left out for a thing with no sprite. */
   sprite: ViewSprite | undefined
+  /** Left out for a thing drawn with the hero. */
+  draw: View['draw']
 }
 
 /** The fields of a joint the scene keeps. */
@@ -100,11 +104,15 @@ const text = (record: Readonly<Record<string, number | boolean | string>>, key: 
 }
 
 /** An entity with a transform has a pose; with a look as well it is drawn. Without a transform it is nothing. */
-function read(row: RenderRow): { pose: Pose; look: Entry['look']; sprite: Entry['sprite'] } | undefined {
+function read(
+  row: RenderRow,
+): { pose: Pose; look: Entry['look']; sprite: Entry['sprite']; draw: Entry['draw'] } | undefined {
   const transform = row.components[Transform.id]
   if (transform === undefined) return undefined
   const look = row.components[Look.id]
   const sprite = row.components[Sprite.id]
+  const draw = row.components[Draw.id]
+  const layer = draw === undefined ? '' : text(draw, 'layer')
   return {
     pose: { x: num(transform, 'x'), y: num(transform, 'y'), rotation: num(transform, 'rotation') },
     look:
@@ -118,6 +126,7 @@ function read(row: RenderRow): { pose: Pose; look: Entry['look']; sprite: Entry[
             face: num(sprite, 'face') < 0 ? -1 : 1,
             player: num(sprite, 'player'),
           },
+    draw: layer === 'behind' || layer === 'in-front' ? layer : undefined,
   }
 }
 
@@ -183,6 +192,7 @@ export function createScene(): Scene {
             curr: now.pose,
             look: now.look,
             sprite: now.sprite,
+            draw: now.draw,
           })
         }
         const joint = readJoint(row)
@@ -208,6 +218,7 @@ export function createScene(): Scene {
               h: e.look.h,
               color: e.look.color,
               ...(e.sprite === undefined ? {} : { sprite: e.sprite }),
+              ...(e.draw === undefined ? {} : { draw: e.draw }),
             },
           ]
         })

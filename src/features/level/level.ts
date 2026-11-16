@@ -3,6 +3,7 @@ export { type Arrive, arrivalSpots, arriveLine, arriveOf, type Spot } from './ar
 export { groundOf, skyOf } from './colours.ts'
 export { Look, SKY_COLOR, Thing, TILE_COLOR } from './components.ts'
 export { doorTaken, type Way } from './doors.ts'
+export { Draw, drawPlugin } from './draw.ts'
 export { type Entered, heroLevels, In, LevelEntered, placePlugin } from './entered.ts'
 export { FALL_DEPTH, Fallen, fallPlugin, fellEvent, levelBottom } from './fall.ts'
 export { createGameSim, type GameSimOptions, gameSimPlugins } from './game-sim.ts'
@@ -39,6 +40,7 @@ export { levelSize, type TileBox, type TileRun, tileBoxes, tileRuns } from './ti
 export { type Touch, touchEvent, touchPlugin } from './touch.ts'
 export {
   touchKinds,
+  usesDraw,
   usesFalls,
   usesJoints,
   usesMoves,
