@@ -1,11 +1,13 @@
 # One replay hash must come out the same in Node, Chromium, WebKit and Firefox. `plan` says how much this run tests;
-# `check` runs the static checks and the Node tests; `browsers` runs the parity and browser tests, each browser in two
-# shards side by side; `engines` names each browser's result, so a failing engine is named by its check. Every action
+# `check` runs the static checks and the Node tests; `browsers` runs the parity and browser tests, each browser in six
+# shards side by side (18 jobs in a full run); `engines` names each browser's result, so a failing engine is named by its check. Every action
 # is pinned to a commit.
 #
 # How much is tested (the Owner, 2026-11-15): while a pull request is a draft, a thread is still working on it, so only
 # what its change reaches runs, and a run stops at its first failure. The whole suite runs once the pull request is
-# ready for review, on every push to main, and on a draft that carries the `full-tests` label.
+# ready for review, on every push to main, and on a draft that carries the `full-tests` label. A draft also runs in
+# Chromium only (the Owner, 2026-11-16): WebKit and Firefox, and so the cross-browser parity proof, run in the full run
+# that gates merge.
 name: ci
 
 on:
@@ -26,7 +28,9 @@ concurrency:
 jobs:
   # How much this run tests, from the event and the files the pull request changes. Everything but `docs` is `true`
   # except on a draft without the `full-tests` label whose change leaves the build and the test setup alone:
-  #   full     false: the Node and browser tests the change reaches (Vitest's `--changed`), stopping at the first failure
+  #   full     false: the Node and browser tests the change reaches (Vitest's `--changed`: the browser tests, and so
+  #            the pictures they take, are only those whose files the change reaches), stopping at the first failure
+  #   engines  the browsers the shards run in: Chromium only on a draft, all three otherwise
   #   docs     true when only Markdown that people read changed: `docs` passes every check main requires,
   #            under its own name, and every job that tests is left out
   #   quick    `quick ` on a draft, `skipped ` on a docs-only run, and empty otherwise: the start of every
@@ -42,6 +46,7 @@ jobs:
       pull-requests: read
     outputs:
       full: ${{ steps.plan.outputs.full }}
+      engines: ${{ steps.plan.outputs.engines }}
       online: ${{ steps.plan.outputs.online }}
       package: ${{ steps.plan.outputs.package }}
       docs: ${{ steps.plan.outputs.docs }}
@@ -57,6 +62,7 @@ jobs:
         run: |
           set -euo pipefail
           full=true online=true package=true docs=false
+          engines='["chromium","webkit","firefox"]'
           if [ "$EVENT" = pull_request ] && [[ " $LABELS " != *" full-tests "* ]] &&
             changed="$(gh pr diff "$PR" --repo "$GITHUB_REPOSITORY" --name-only)" && [ -n "$changed" ]; then
             printf 'This pull request changes:\n%s\n' "$changed"
@@ -68,15 +74,15 @@ jobs:
               docs=true
             # A change to how things are installed, built or tested, or to the shared test files, reaches every test.
             elif [ "$DRAFT" = true ] && ! grep -qE '^(tests/fixtures/|package\.json|pnpm-lock\.yaml|\.pnpmfile\.cjs|[^/]*\.config\.(ts|js)|vite-rapier-wasm\.ts|tsconfig[^/]*\.json|\.github/)' <<<"$changed"; then
-              full=false
+              full=false engines='["chromium"]'
               # The `screenshots` label asks for the online journeys, which take the pictures, on any draft.
               grep -qE '^(src/server\.ts|src/features/(net|server)/|tests/journeys/)' <<<"$changed" ||
                 [[ " $LABELS " == *" screenshots "* ]] || online=false
               grep -qE '^(src/(cli|headless|index|server)\.ts|src/features/cli/|template/|skills/|scripts/|tests/install/|tests/create/|tests/golden/|README\.md)' <<<"$changed" || package=false
             fi
           fi
-          echo "docs=$docs full=$full online=$online package=$package"
-          { echo "docs=$docs"; echo "full=$full"; echo "online=$online"; echo "package=$package"; } >> "$GITHUB_OUTPUT"
+          echo "docs=$docs full=$full engines=$engines online=$online package=$package"
+          { echo "docs=$docs"; echo "full=$full"; echo "engines=$engines"; echo "online=$online"; echo "package=$package"; } >> "$GITHUB_OUTPUT"
 
   # A pull request that changes only Markdown that people read has nothing to test (the Owner, 2026-11-15). This job
   # stands in for every check main requires, under its exact name, and passes at once. Every job that tests is left out
@@ -131,18 +137,19 @@ jobs:
       - run: pnpm build
       - run: pnpm test:node $ONLY
 
-  # Each browser in two shards that run side by side, so a full run takes about half as long (the Owner, 2026-11-15).
+  # Each browser in six shards that run side by side, so a full run is 18 jobs (the Owner, 2026-11-16). A draft runs
+  # Chromium only: the `engines` list comes from `plan`.
   browsers:
     needs: plan
     if: needs.plan.outputs.docs != 'true'
-    name: browsers (${{ matrix.engine }} ${{ matrix.shard }}/2)
+    name: browsers (${{ matrix.engine }} ${{ matrix.shard }}/6)
     runs-on: ubuntu-latest
     strategy:
       # On a draft the first failure stops the other shards too; the whole suite lets every shard finish.
       fail-fast: ${{ needs.plan.outputs.full != 'true' }}
       matrix:
-        engine: [chromium, webkit, firefox]
-        shard: [1, 2]
+        engine: ${{ fromJSON(needs.plan.outputs.engines) }}
+        shard: [1, 2, 3, 4, 5, 6]
     env:
       ONLY: ${{ needs.plan.outputs.full != 'true' && '--changed=origin/main --bail=1' || '' }}
     steps:
@@ -167,7 +174,7 @@ jobs:
         run: pnpm exec playwright install --with-deps ${{ matrix.engine }}
       - if: steps.browser.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps ${{ matrix.engine }}
-      - run: pnpm test:engine ${{ matrix.engine }} --shard=${{ matrix.shard }}/2 $ONLY
+      - run: pnpm test:engine ${{ matrix.engine }} --shard=${{ matrix.shard }}/6 $ONLY
       # Pictures a person looks at (the drunk-grandma check); nothing compares them.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
@@ -176,8 +183,8 @@ jobs:
           path: tests/**/__screenshots__/**
           if-no-files-found: ignore
 
-  # One check per browser, `engines (<browser>)`, green only when both of that browser's shards passed, so the names
-  # main's protection asks for stay as they were.
+  # One check per browser, `engines (<browser>)`, green only when all six of that browser's shards passed, so the names
+  # main's protection asks for stay as they were. A draft has only Chromium's.
   engines:
     needs: [plan, browsers]
     name: ${{ needs.plan.outputs.quick }}engines (${{ matrix.engine }})
@@ -189,17 +196,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        engine: [chromium, webkit, firefox]
+        engine: ${{ fromJSON(needs.plan.outputs.engines) }}
     env:
       GH_TOKEN: ${{ github.token }}
+      # The shards each browser is split into: the `shard` list of the `browsers` job.
+      SHARDS: 6
     steps:
-      - name: Both shards of ${{ matrix.engine }} passed
+      - name: Every shard of ${{ matrix.engine }} passed
         run: |
           set -euo pipefail
           results="$(gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --attempt "$GITHUB_RUN_ATTEMPT" --json jobs \
             --jq '.jobs[] | select(.name | startswith("browsers (${{ matrix.engine }} ")) | "\(.name): \(.conclusion)"')"
           echo "$results"
-          [ "$(grep -c ': success$' <<<"$results")" -eq 2 ]
+          [ "$(grep -c ': success$' <<<"$results")" -eq "$SHARDS" ]
 
   # Proof 3 of the networking: two real browsers play one room on a server started here. It needs the built package (the
   # server is `dist/`, as a game's own server file would be), and all three browsers because every engine plays.

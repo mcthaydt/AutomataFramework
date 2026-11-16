@@ -12,11 +12,12 @@ the Owner's decisions (`docs/decisions.md`), the roadmap (`docs/roadmap.md`), ev
 
 ## This repo
 
-- **Fast CI here.** A draft runs only the Node and browser tests the change reaches; the `online` job only when the
-  networking or its journeys changed, or the pull request has the `screenshots` label; the packing and `create` jobs
-  only when the command, the template, the skills or the install checks changed. `.pnpmfile.cjs` counts as build
-  setup. The docs-only path never covers the README or `docs/api/`, which tests read. The browsers' six shards are
-  `browsers (<engine> <n>/2)`, with `engines (<engine>)` checks.
+- **Fast CI here.** A draft runs Chromium only, and only the Node and browser tests the change reaches (the browser
+  tests are the screens, so only the screens it touches); the `online` job only when the networking or its journeys
+  changed, or the pull request has the `screenshots` label; the packing and `create` jobs only when the command, the
+  template, the skills or the install checks changed. `.pnpmfile.cjs` counts as build setup. The docs-only path never
+  covers the README or `docs/api/`, which tests read. The full run's 18 shards are `browsers (<engine> <n>/6)`, with
+  `engines (<engine>)` checks (the gate counts six each).
 - **Two kinds of skill.** `skills/` ships in the package, for agents making a game. `.claude/skills/` is for the
   sessions working on these repos, and never ships.
 
