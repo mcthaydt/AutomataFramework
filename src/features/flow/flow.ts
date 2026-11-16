@@ -3,7 +3,15 @@
 // page. It owns no rule: `advance` decides what comes next, the screens draw, and this file only connects them.
 import { pageFrames } from '../../lib/frames.ts'
 import { createAudio, type GameAudio, type Speaker } from '../audio/audio.ts'
-import { formatDiagnostic, type GameContent, loadGame, nextLevel, paintedPath } from '../content/content.ts'
+import {
+  formatDiagnostic,
+  type GameContent,
+  loadGame,
+  nextLevel,
+  PROJECT_FILE,
+  paintedPath,
+  parseProject,
+} from '../content/content.ts'
 import type { Watch } from '../game/game.ts'
 import { createLocale, type Locale, levelName, type Words } from '../locale/locale.ts'
 import { createSaves, type Saves, type StoreResult } from '../saves/saves.ts'
@@ -17,13 +25,24 @@ import {
   warningsFor,
 } from '../screens/screens.ts'
 import { followLanguage, languagePicker, webHost, webSpeaker } from '../web/web.ts'
-import { putLoadingMark, startWatching, waitForTake } from './loading.ts'
+import { backDefault, wireBack } from './back.ts'
+import {
+  type LoadingBar,
+  putLoadingBar,
+  RETRY_MS,
+  retrying,
+  SLOW_MS,
+  slowLineFor,
+  startWatching,
+  waitForTake,
+  waitOn,
+} from './loading.ts'
 import { createOvers } from './overs.ts'
 import { createParty, type Party } from './party.ts'
 import { createPlaces, type Places } from './places.ts'
 import { createPlay } from './play.ts'
 import { defaultSave, type FlowSave, newest, type Progress } from './progress.ts'
-import { RECORDS_DEFAULT, withScore } from './records.ts'
+import { type Finish, RECORDS_DEFAULT, recordScore } from './records.ts'
 import { openSections, type Sections, wireSound } from './sections.ts'
 import { advance, FLOW_START, type FlowEvent, type FlowFacts, type FlowState } from './steps.ts'
 import type { Flow, FlowOptions } from './types.ts'
@@ -42,10 +61,16 @@ const FIX = 'Fix the file named above, then load this page again.'
  * Loads the game and walks the flow in `mount`. Never rejects: whatever goes wrong is a screen of words. It answers at
  * once, with the page showing "loading"; `state()` and `onState` say where the visit is.
  */
-export async function startFlow<S extends Progress = Progress>(options: FlowOptions<S>): Promise<Flow<S>> {
-  const { mount, read } = options
-  const host = options.host ?? webHost()
-  const frames = options.frames ?? pageFrames
+export async function startFlow<S extends Progress = Progress>(given: FlowOptions<S>): Promise<Flow<S>> {
+  const { mount } = given
+  const host = given.host ?? webHost()
+  const frames = given.frames ?? pageFrames
+  // A file that fails to arrive is asked for once more, a second later: a phone on a train drops a request now and then.
+  const wait = (): Promise<void> => waitOn(frames, RETRY_MS)
+  const options: FlowOptions<S> = {
+    ...given,
+    ...(given.readPicture === undefined ? {} : { readPicture: retrying(given.readPicture, { wait }) }),
+  }
   const makers: ScreenMakers = { ...defaultScreens, ...options.screens }
   const save = (options.save ?? defaultSave(options.game)) as unknown as FlowSave<S>
   const reload = options.reload ?? ((): void => location.reload())
@@ -73,7 +98,8 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
   let stopSound = (): void => {}
 
   // What is on the page.
-  let loadingMark: HTMLElement | undefined
+  let loadingBar: LoadingBar | undefined
+  let slowFrame: number | undefined
   let shown: Screen | undefined
   let watcher: Watch | undefined
   let letGoOfWatch = (): void => {}
@@ -88,13 +114,15 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     words,
   })
 
+  const raise = (event: string): void => void (host.visible() && audio?.raise(event)) // none to a hidden page
+
   const base = (): ScreenBase => ({
     mount,
     // A screen is only made once the game's files have loaded and there is a locale.
     locale: locale as Locale,
     frames,
     ...(options.gamepads === undefined ? {} : { gamepads: options.gamepads }),
-    onSound: (event) => audio?.raise(event),
+    onSound: raise,
   })
 
   const facts = (): FlowFacts => {
@@ -171,8 +199,10 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     watcher = undefined
   }
   const dropLoading = (): void => {
-    loadingMark?.remove()
-    loadingMark = undefined
+    if (slowFrame !== undefined) frames.cancel(slowFrame)
+    slowFrame = undefined
+    loadingBar?.remove()
+    loadingBar = undefined
   }
 
   const fail = (error: unknown, lines?: readonly string[]): void => {
@@ -229,32 +259,25 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
     if (!stopped && epoch === mine) dispatch(playEvent(level, places.arrive()))
   }
 
+  const finishOfLevel = (): Promise<Finish> =>
+    recordScore(sections?.records, play.game()?.score(), words('automata.done.not-kept'))
+
   /**
-   * The level just ended, won or lost: its score, the best now, and the sentence for a best the store would not keep. The
-   * best is shown from the second end on, when there was one before this; the first end keeps it and says nothing of it.
+   * Puts the step `next` on the page. The loading bar stays until the step has put something of its own there, so the
+   * mount is never without a child from the first frame to the menu.
    */
-  async function recordScore(): Promise<{ score?: number; best?: number; notKept?: string }> {
-    const score = play.game()?.score()
-    if (score === undefined || sections === undefined) return {}
-    const before = sections.records.get()
-    const after = withScore(before, score)
-    let notKept: string | undefined
-    if (after !== before) {
-      const written = await sections.records.set(after)
-      if (!written.ok) notKept = (locale as Locale).words('automata.done.not-kept')
-    }
-    return {
-      score,
-      ...(before.best === undefined || after.best === undefined ? {} : { best: after.best }),
-      ...(notKept === undefined ? {} : { notKept }),
+  async function present(before: FlowState, next: FlowState, mine: number): Promise<void> {
+    try {
+      await show(before, next, mine)
+    } finally {
+      dropLoading()
     }
   }
 
   /** Puts the step `next` on the page, taking what the step `before` had off it. */
-  async function present(before: FlowState, next: FlowState, mine: number): Promise<void> {
+  async function show(before: FlowState, next: FlowState, mine: number): Promise<void> {
     const current = (): boolean => !stopped && epoch === mine
     const project = content?.project
-    dropLoading()
     overs.close()
     if (next.step === 'problem') {
       dropScreen()
@@ -335,11 +358,11 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       }
       case 'menu': {
         play.stop()
-        dropScreen()
         places.forget()
-        await places.refresh()
+        await places.refresh() // what was on show stays until then, so the mount is never bare
         if (!current()) return
-        audio?.raise('screen.menu')
+        dropScreen()
+        raise('screen.menu')
         const members = party?.members() ?? []
         const items = menuItems({
           saved: newest(places.slots()) !== undefined,
@@ -371,14 +394,14 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       case 'paused': {
         play.hold()
         dropScreen()
-        if (before.over === undefined) audio?.raise('screen.pause')
+        if (before.over === undefined) raise('screen.pause')
         play.showPause()
         return
       }
       case 'done': {
         play.hold()
         dropScreen()
-        const finish = await recordScore()
+        const finish = await finishOfLevel()
         const finished = play.game()?.levelNow() ?? next.level ?? project.start
         const after = nextLevel(project, finished)
         let notKept: string | undefined
@@ -386,7 +409,7 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
         // The same sentence says it whichever of the two writes was refused.
         notKept ??= finish.notKept
         if (!current()) return
-        audio?.raise('screen.done')
+        raise('screen.done')
         shown = makers.done({
           ...base(),
           level: levelName(words, finished),
@@ -402,9 +425,9 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       case 'lost': {
         play.hold()
         dropScreen()
-        const finish = await recordScore()
+        const finish = await finishOfLevel()
         if (!current()) return
-        audio?.raise('screen.lost')
+        raise('screen.lost')
         shown = makers.lost({
           ...base(),
           ...(finish.score === undefined ? {} : { score: finish.score }),
@@ -460,13 +483,56 @@ export async function startFlow<S extends Progress = Progress>(options: FlowOpti
       mount.removeAttribute('data-attempt')
       mount.removeAttribute('data-over')
       if (mountPosition !== undefined) mount.style.position = mountPosition
+      stopBack()
     },
   }
 
+  // Back is the game's where the page is the game's own. (The page holds still under a game in `guardPlay`.)
+  const stopBack =
+    (options.back ?? backDefault({ top: window.top, self: window }))
+      ? wireBack({ state: () => state, dispatch, onState: flow.onState })
+      : (): void => {}
   mount.dataset.state = 'loading'
   if (mountPosition !== undefined) mount.style.position = 'relative'
   mount.replaceChildren()
-  loadingMark = putLoadingMark(mount)
+  loadingBar = putLoadingBar(mount)
+  const slowLine = slowLineFor(host.deviceLanguages())
+  // The bar counts the project file, then each file it lists. The slow line shows when no file has come for ten seconds
+  // of the page's frames, and goes when one does.
+  let arrivals = 0
+  let expected = 1
+  let quietSince: number | undefined
+  let slowShown = false
+  const watchQuiet = (ms: number): void => {
+    quietSince ??= ms
+    if (!slowShown && slowLine !== undefined && ms - quietSince >= SLOW_MS) {
+      slowShown = true
+      loadingBar?.slow(slowLine)
+    }
+    slowFrame = frames.request(watchQuiet)
+  }
+  slowFrame = frames.request(watchQuiet)
+  const read = retrying(
+    async (path: string): Promise<string> => {
+      const text = await given.read(path)
+      if (path === PROJECT_FILE) {
+        const parsed = parseProject(text)
+        if (parsed.ok) expected = 1 + parsed.value.content.length
+      }
+      return text
+    },
+    {
+      wait,
+      arrived: () => {
+        arrivals += 1
+        // The clock starts again at the next frame.
+        quietSince = undefined
+        if (slowShown) loadingBar?.slow(undefined)
+        slowShown = false
+        loadingBar?.progress(arrivals, expected)
+      },
+    },
+  )
 
   const boot = async (): Promise<void> => {
     const loaded = await loadGame(read)

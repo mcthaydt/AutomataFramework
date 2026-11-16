@@ -1,6 +1,7 @@
 // The splash's picture through the flow: the game names a figure, the page reads its picture, and a picture that cannot
 // be read leaves the game's name in its place.
 import { afterEach, beforeEach, expect, test } from 'vitest'
+import { RETRY_MS } from '#src/features/flow/loading.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
 
 const drive = createDrive()
@@ -40,6 +41,13 @@ test("a picture that cannot be read leaves the game's name on the splash", async
     game: { noWarning: true, splash: true },
     readPicture: () => Promise.reject(new Error('no such picture')),
   })
+  // The picture is asked for once more a second later, which is a second of the page's frames.
+  await expect
+    .poll(() => {
+      drive.run(RETRY_MS / 2)
+      return drive.mount.dataset.state
+    })
+    .toBe('picking')
   await drive.shown('picking')
   await expect.poll(() => drive.mount.querySelector('.automata-picker-go')).not.toBeNull()
   ;(drive.mount.querySelector('.automata-flag') as HTMLElement).click()
