@@ -146,6 +146,12 @@ test('headless exports what a game sim and an editor need', async () => {
     'placePlugin',
     'heroLevels',
     'doorTaken',
+    // Doors, the map and the pictures of a level (plan W).
+    'doorsOf',
+    'layoutWorld',
+    'openTile',
+    'paintLevel',
+    'paintWorld',
     // The player's language (plan L).
     'createLocale',
     'fill',

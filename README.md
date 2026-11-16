@@ -1087,6 +1087,74 @@ them. One placed in `postPhysics` must say `after: ['level.touch']`, or it sees 
 A pinned thing turns about its pin, a roped thing can go no further than its rope, and every pin, rope and touch
 is on the same hash in Node, Chromium, WebKit and Firefox, so a replay of them verifies anywhere.
 
+## Links, paths and doors
+
+A thing in a level can hold values, a plate can open a gate, a door can lead to another level, and levels can touch along
+an edge. All of it is content: JSON files, no game code, and a game that uses none of it plays exactly as it did before.
+
+A character lists the `values` its things may hold: a `number` between two limits, a `switch` (yes or no), a `choice` of a
+few named options, `words` (the key of one of the game's own messages), `thing` (a link to other things in the level), a
+`path` (a list of places) and `leads-to` (a way into another level). A thing in a level gives them, by the same ids:
+
+```json
+{
+  "id": "plate-1",
+  "character": "plate",
+  "x": 8.5,
+  "y": 7.875,
+  "values": { "opens": ["gate-1"] }
+}
+```
+
+A character with `switch` is pressed by anything with a moving body that stands on it, and opens the things it links. A
+character with `"opens": "walk-through"` is what a switch opens: while it is open, things walk through it. A button
+whose `stays` value is true opens its gate for good, and says so: the event `fact.kept` carries the fact
+`<level>.<thing>.open`, which the default game flow keeps and hands to the next game it starts.
+
+A door is a thing of a character with a `leads-to` value and `"touch": "sense"`. It names the level to open, and the thing
+to come out beside:
+
+```json
+{
+  "id": "exit",
+  "character": "door",
+  "x": 13.5,
+  "y": 7,
+  "values": { "to": { "level": "room-2", "thing": "door-in" } }
+}
+```
+
+The hero comes out beside that thing, clear of its box and never inside it, so a door that leads back does not send the
+hero straight back. The default flow follows a door by itself. A game with its own page asks `doorTaken(content, level,
+events)` after each step and opens the level it names with `createGameSim({ level, arrive })`.
+
+A `world` file (`content/worlds/`) puts each level on a map, in whole tiles. Two levels whose sides touch, and are open
+along the same rows or columns, join into one place: it plays as one world, with everything crossing the edge, and the
+whole place runs at once. Keep a place to 8 levels and 16,384 tiles at most. `layoutWorld` and `openTile` give a game the
+same joins the loader finds:
+
+```json
+{
+  "format": 1,
+  "id": "world",
+  "levels": [
+    { "level": "room-1", "at": { "x": 0, "y": 0 } },
+    { "level": "room-2", "at": { "x": 20, "y": 0 } },
+    { "level": "room-3", "at": { "x": 36, "y": 0 } }
+  ]
+}
+```
+
+A path is a list of places, and a rule `walk-path` in a behaviour walks along it. The framework does not run that rule
+yet: the walk comes with the Characters slice, so a thing with a path stands still for now.
+
+Two commands show how the levels fit together without an editor. `automata world` lists the levels, the doors, the joins
+and the places they make; `automata picture` paints a picture of each level into `.automata/pictures/`, which a game's
+`.gitignore` leaves out. `automata picture --what-it-is` draws what each thing holds on top of its level, with a
+numbered badge on each, and says in words what every badge is, so a person and an agent read the same picture; `automata
+picture --world` paints the map. `paintLevel` and `paintWorld` are the painters behind them, the same bytes in Node and in
+every browser. The agent skill `skills/automata-content/values-and-doors.md` has every file whole.
+
 ## The public API
 
 `docs/api/framework.api.md` lists every export of both entries. It is generated (`pnpm api-report --update`), and CI

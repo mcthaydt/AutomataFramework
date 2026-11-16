@@ -6,12 +6,20 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, expect, test } from 'vitest'
 import { COMMAND_NAMES } from '#src/features/cli/args.ts'
 import { helpFor } from '#src/features/cli/help.ts'
+import { describePicture } from '#src/features/cli/picture.ts'
 import { controlsCommand } from '#src/features/commands/commands.ts'
-import { CONTENT_TYPES, type ContentType, parseContent, writeContent } from '#src/features/content/content.ts'
+import {
+  CONTENT_TYPES,
+  type ContentType,
+  paintLevel,
+  parseContent,
+  writeContent,
+} from '#src/features/content/content.ts'
 import { createGameSim } from '#src/features/level/level.ts'
 import type { Sim } from '#src/features/sim/sim.ts'
 import * as framework from '#src/headless.ts'
 import { heroPlugin } from '../../template/src/features/hero/hero.ts'
+import { linksFiles, loadLinksGame } from '../fixtures/links-game/read.ts'
 import { loadTemplateGame } from '../template/game.ts'
 import { Jumps, jumpCountPlugin } from './jump-count.ts'
 
@@ -20,6 +28,11 @@ const SKILLS = join(ROOT, 'skills')
 const names = readdirSync(SKILLS).filter((name) => statSync(join(SKILLS, name)).isDirectory())
 const text = (name: string): string => readFileSync(join(SKILLS, name, 'SKILL.md'), 'utf8')
 const all = names.map((name) => ({ name, text: text(name) }))
+/** The page of values, switches, doors and joined levels, which `automata-content` links to. */
+const VALUES_PAGE = 'automata-content/values-and-doors'
+const valuesPage = readFileSync(join(SKILLS, `${VALUES_PAGE}.md`), 'utf8')
+/** Every page an agent reads: the skills, and the pages they link to. Their commands, paths and words are held alike. */
+const pages = [...all, { name: VALUES_PAGE, text: valuesPage }]
 
 test('every skill folder has a SKILL.md whose name is its folder and whose description is 1 to 1024 characters', () => {
   expect(names.sort()).toEqual(['automata', 'automata-api', 'automata-content', 'automata-rules'])
@@ -66,7 +79,7 @@ test("each kind's smallest whole file is read by parseContent with no problems, 
 })
 
 test('every automata command a skill names exists, with flags its help has', () => {
-  for (const skill of all) {
+  for (const skill of pages) {
     for (const line of skill.text.split('\n')) {
       for (const m of line.matchAll(/(?:^|[\s`])automata ([a-z]+)([^`\n]*)/g)) {
         expect(COMMAND_NAMES as readonly string[], `${skill.name}: ${line}`).toContain(m[1])
@@ -81,7 +94,7 @@ test('every automata command a skill names exists, with flags its help has', () 
 test('every path a skill names exists in the template, in the package, or is written by create', () => {
   // `create` writes these under another name, and a game makes the folders for kinds it has not used yet.
   const written = ['package.json', 'biome.json', '.gitignore']
-  for (const skill of all) {
+  for (const skill of pages) {
     for (const span of [...skill.text.matchAll(/`([^`\n]+)`/g)].map((m) => m[1] ?? '')) {
       const isPath = /^[\w./-]+$/.test(span) && (span.includes('/') || /\.(json|toml|ts|md|css)$/.test(span))
       if (!isPath || span.startsWith('node_modules/') || span.startsWith('content/') || span.endsWith('/'))
@@ -163,11 +176,11 @@ test('automata says where the flow lives and what to read on a page; automata-co
 })
 
 test('no skill says npx automata without --no', () => {
-  for (const skill of all) expect(skill.text, skill.name).not.toMatch(/npx\s+(?!--no\s+automata\b)/)
+  for (const skill of pages) expect(skill.text, skill.name).not.toMatch(/npx\s+(?!--no\s+automata\b)/)
 })
 
 test('no skill names a colour, a competitor, a price, or a plan of this project', () => {
-  for (const skill of all) {
+  for (const skill of pages) {
     expect(skill.text, skill.name).not.toMatch(
       /\b(red|green|blue|yellow|orange|purple|pink|black|white|gr[ae]y|brown)\b/i,
     )
@@ -176,4 +189,48 @@ test('no skill names a colour, a competitor, a price, or a plan of this project'
       /\$\d|\b(price|prices|pricing|paid|milestone)\b|\bplan [A-Z]\b/i,
     )
   }
+})
+
+// The page of values and doors is the links game's own files, whole, so an agent that copies one gets a file `writeContent`
+// writes and `loadGame` reads, and the legend it shows is what `automata picture` says.
+test('values-and-doors holds the links game whole: every file is the file, and the game loads', async () => {
+  const files = [...valuesPage.matchAll(/^File `([^`\n]+)`:\n\n```json\n([\s\S]*?)```/gm)].map((m) => ({
+    path: m[1] ?? '',
+    json: m[2] ?? '',
+  }))
+  expect(files.map((file) => file.path)).toEqual([
+    'content/characters/plate.json',
+    'content/characters/gate.json',
+    'content/levels/room-1.json',
+    'content/characters/door.json',
+    'content/levels/room-2.json',
+    'content/characters/critter.json',
+    'content/worlds/world.json',
+  ])
+  const written = linksFiles()
+  for (const file of files) expect(file.json, file.path).toBe(written[file.path])
+  // The game those files are part of loads with no problem.
+  expect(await loadLinksGame(Object.fromEntries(files.map((file) => [file.path, file.json])))).toBeDefined()
+})
+
+test('values-and-doors names every kind of value a character declares, and the table says what each holds', () => {
+  const table = valuesPage.slice(valuesPage.indexOf('| `type`'), valuesPage.indexOf('## A plate and a gate'))
+  for (const type of ['number', 'switch', 'choice', 'words', 'thing', 'path', 'leads-to'])
+    expect(table, type).toContain(`| \`${type}\` |`)
+})
+
+test('values-and-doors shows the legend that automata picture says for room-2', async () => {
+  const content = await loadLinksGame()
+  const { legend } = paintLevel(content, 'room-2', { whatItIs: true })
+  const said = describePicture({
+    ok: true,
+    pictures: [{ kind: 'what-it-is', level: 'room-2', path: '.automata/pictures/room-2.what.png', legend }],
+  }).out
+  expect(said).toHaveLength(6)
+  expect(valuesPage).toContain(said.join('\n'))
+})
+
+test('automata-content and automata send an agent to values-and-doors', () => {
+  expect(text('automata-content')).toContain('skills/automata-content/values-and-doors.md')
+  expect(text('automata')).toContain('skills/automata-content/values-and-doors.md')
 })
