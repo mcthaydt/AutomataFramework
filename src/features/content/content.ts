@@ -71,7 +71,7 @@ export {
   type LevelView,
   type ThingValue,
 } from './level.ts'
-export { type GameContent, loadGame } from './load.ts'
+export { type GameContent, type GameRead, loadGame, readGame } from './load.ts'
 export {
   LANGUAGES,
   type Language,
