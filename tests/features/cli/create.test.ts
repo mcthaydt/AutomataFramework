@@ -82,7 +82,7 @@ test('its recording still says "as recorded"', async () => {
   const results = await Effect.runPromise(Effect.provide(runReplays({ folder: 'my-game' }), memory.layer))
   // The message rides along, so a failure says why the play could not start.
   expect(results.map((result) => `${result.verdict}: ${result.message}`)).toEqual([
-    expect.stringMatching(/^ok: Played 300 ticks and ended on [0-9a-f]{16}, as recorded\.$/),
+    expect.stringMatching(/^ok: Played 240 ticks and ended on [0-9a-f]{16}, as recorded\.$/),
   ])
 })
 
