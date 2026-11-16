@@ -287,7 +287,7 @@ It never rejects: whatever goes wrong shows a screen of words with a button that
 answers at once, and the object it gives back says where the visit is (`state()`, `onState`), holds the running game
 (`game()`), ends a level the way the game's event does (`finishLevel()`), lets a watching visitor take over
 (`takeOver()`), and stops everything (`stop()`). The mount carries `data-state` (`loading`, `warnings`, `picking`,
-`splash`, `menu`, `playing`, `paused`, `done`, `watching` or `problem`), and `data-over` while settings, saved games or
+`splash`, `menu`, `playing`, `paused`, `lost`, `done`, `watching` or `problem`), and `data-over` while settings, saved games or
 the players screen is on top. A test or an agent reads those two attributes to know where a page is.
 
 Four fields of `automata.toml` say what the screens show. None of them changes the rules of the game:
@@ -298,6 +298,30 @@ done = "door.touched"             # the event that ends a level (a hero, not a c
 warnings = ["warning.flashing"]   # message keys read on one screen at the start of each visit
 splash = "logo"                   # a figure shown for two seconds; left out, the splash is the game's name
 ```
+
+Losing, the score, what to do and Back are four more things a game says in its files, and none changes a rule:
+
+```toml
+lost = "hero.fell"                # the event that loses a level: the screen says "You lost." and Try again is its first button
+score = "hero.score.sparks"       # a number the screen shows; the best of it is kept. Left out, there is no score
+```
+
+```json
+{ "level.level-1.goal": "Get to the door." }
+```
+
+- **`lost`** is to `done` what losing is to winning. The mount says `data-state="lost"`; Try again plays the level again in
+  the same page, with no reload, and `data-attempt` counts each start. Pause has Start again for the same.
+- **`score`** names `<resource>.<field>`, as `scoreRef` reads it. A level's best is kept with the saved settings, and
+  the screen at the end shows both.
+- **The goal line** is the message `level.<id>.goal`, in every language the game ships. It shows for three seconds when a
+  level starts and on the pause screen. A level waits for the player's first press before it starts, and says so.
+- **How to play** is a button of the menu and of pause. It lists the hero's moves and the keys, thumbs and pad buttons
+  that do them, from the hero's `moves` and the bindings, and says the goal line. `howRows` makes the rows, and
+  `howScreen` draws them; give `screens: { how: myHow }` to replace it.
+- **Back** pauses a level, steps back through the screens, and only then leaves the page. `startFlow({ ..., back: false })`
+  turns it off. A game framed inside another page leaves Back to that page, so a frame's history is not the game's:
+  pass `back: true` to take it anyway.
 
 A game dresses every screen with CSS properties set on the mount or above it: `--automata-ui-background`,
 `--automata-ui-color`, `--automata-ui-accent` (the main button), `--automata-ui-accent-color` (its text),
@@ -316,6 +340,42 @@ on), and returns `{ destroy() }`. The kit the framework's screens are made of (`
 
 The flow raises page events on the game's sound, so a cues file can give the menu its own music and a button its own click:
 `screen.menu`, `screen.pause`, `screen.done`, `screen.lost`, `ui.move`, `ui.press` and `ui.back`. `FLOW_EVENTS` lists them.
+
+## The checklist every game meets
+
+The Owner keeps a checklist of what a finished web game needs. A game made with `automata create` meets the "Must
+have" boxes by default: by a **default** the framework gives every game that uses `startFlow` (or the starter game
+that `create` writes), by a **check** that fails when a game breaks it, or by **yours**, which only the game's makers
+can judge. `npx --no automata check --ship` runs every check, then prints what is yours.
+
+| Group | Box | Held by |
+|---|---|---|
+| It works | Play again always works, with no reload | a default: Try again and Start again; the create journey restarts fifty times |
+| It works | You are never stuck with no way forward | a default: pause, Start again and Main menu; a check: a level whose `done` event can never be raised |
+| It works | It works after switching apps, and after a reload | a default: a hidden page pauses, a visit opens again from what was saved; the create journey does both |
+| It works | The page does not scroll, and the game fits the screen | a default: `startFlow` stops the page moving and fills the mount; the create journey checks five sizes |
+| It works | No sound until the first tap; the game plays with sound off | a default: the speaker is made on the first tap, and Sound is a switch on pause |
+| It works | Slow or failed loading says so | a default: a bar that fills, a line after ten seconds, one more try, then a screen with a button |
+| There's a game here | Clear in five seconds, and a way to win or lose | a default: hints, the goal line, How to play; a check: a game with neither `done` nor `lost` is told |
+| It feels finished | No stand-in pictures, no test words | a check: `art`, and `--ship` fails a message that is empty, only its key, or holds `TODO` or `test` |
+| It's honest | Nothing pops up to cut in | a check: the `page` part of `rules` refuses `alert`, `confirm`, `prompt`, `Notification` and `document.write` |
+| It's safe | No passwords or personal details, no other windows, nothing in the background | a check: the `page` part refuses those fields, a window opened by hand (`host.openLink` opens a link a player pressed), service workers, and asking for the player's place, camera, microphone or clipboard |
+
+The template's own CI also plays the built game in Chromium and WebKit (`npm run play-test`), so a game that stops
+opening or stops being winnable fails there. Yours, which `--ship` prints and an agent works through with the person:
+
+- In five seconds, is it clear what to do?
+- Can someone who has never seen it work out how to play, with nobody explaining?
+- Is there enough to do: a few minutes of play, or a reason to play again?
+- Does it get harder bit by bit?
+- Did you make the art, the music and the characters, or are you allowed to use them?
+- Are there any stand-in pictures, half-made menus, or spots that do something when tapped that nobody would guess?
+- Do the pictures and words look cared for, the same style on every screen?
+- Is color ever the only clue? Is sound ever the only clue?
+- Can luck make a level impossible? Does anything appear right on top of the player?
+- Play it for ten minutes on a real phone.
+- Play it with one hand, on bad Wi-Fi, after locking and unlocking the phone, and after many restarts.
+- Hand it to someone and say nothing. Is it still fun after 30 seconds?
 
 ## Saves
 
@@ -732,7 +792,7 @@ do its work (a folder that is not a game, a tool that is not installed). Add `--
 |---|---|
 | `files` | every content file reads, is listed, and is written the standard way; every language has every word English has (a missing one is named), and the words no native speaker has read yet are counted in a note |
 | `art` | every picture the figures and backdrops make is painted, and none is older than its file |
-| `rules` | the game's rules can be replayed: no clock, no dice of their own, no files |
+| `rules` | the game's rules can be replayed: no clock, no dice of their own, no files; and its page (`src/` and `index.html`) pops nothing up, asks for no password or personal details and runs nothing in the background (the `page` part) |
 | `lint` | the code's style (Biome) |
 | `types` | the code's types (TypeScript) |
 | `replays` | every recording in `replays/` still ends where it did |

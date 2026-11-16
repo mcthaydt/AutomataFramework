@@ -8,11 +8,13 @@
   },
   "scripts": {
     "dev": "automata play",
+    "build": "vite build",
     "check": "automata check",
     "fix": "automata check --fix",
     "art": "automata art",
     "accept": "automata replay --accept",
-    "test": "vitest run"
+    "test": "vitest run",
+    "play-test": "vitest run --config vitest.play.config.ts"
   },
   "dependencies": {
     "@automataframework/framework": "0.0.0-template"
@@ -20,6 +22,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@types/node": "24.19.1",
+    "playwright": "1.63.0",
     "typescript": "7.0.2",
     "vite": "8.3.3",
     "vitest": "5.0.3"
