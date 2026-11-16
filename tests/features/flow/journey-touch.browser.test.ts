@@ -5,7 +5,7 @@ import { testHost } from '#src/features/host/host.ts'
 import { frameworkWords } from '#src/features/locale/locale.ts'
 import { SPLASH_MS } from '#src/features/screens/screens.ts'
 import { createDrive } from '../../fixtures/flow/drive.ts'
-import { ticks, walkByThumb } from '../../fixtures/flow/page.ts'
+import { crossThePit, thumbHands, ticks, walkByThumb } from '../../fixtures/flow/page.ts'
 
 const es = frameworkWords('es')
 const drive = createDrive()
@@ -121,4 +121,55 @@ test('the same player comes back: no flags, Continue is first and opens the leve
   await drive.press(es('automata.menu.continue'))
   await drive.shown('playing')
   expect(drive.flow()?.state().level).toBe('level-2')
+})
+
+test('touch: read the goal, tap to start, fall, Try again, reach the door, Next level, pause, How to play, Back, Sound off, Start again, yes, the last door, Main menu', async () => {
+  await page.viewport(390, 844)
+  await drive.toMenu({ game: { noWarning: true, start: 'level-pit' } })
+  await drive.press(es('automata.menu.play'))
+  await drive.shown('playing')
+  drive.frames.at(0)
+  // The goal is on the screen, and the level stands still until a thumb is down.
+  await expect
+    .poll(() => drive.mount.querySelector('.card')?.textContent)
+    .toContain('Salta el hueco y llega a la puerta.')
+  const before = drive.flow()?.game()?.sim.tick
+  ticks(drive, 30)
+  expect(drive.flow()?.game()?.sim.tick).toBe(before)
+  // Tap to start, and the hero runs into the gap.
+  walkByThumb(drive)
+  await drive.shown('lost')
+  await drive.wait(es('automata.lost.again'))
+  await drive.press(es('automata.lost.again'))
+  await drive.shown('playing')
+  drive.frames.at(0)
+  crossThePit(drive, thumbHands(drive))
+  await drive.shown('done')
+  await drive.wait(es('automata.done.next'))
+  await drive.press(es('automata.done.next'))
+  await drive.shown('playing')
+  expect(drive.flow()?.state().level).toBe('level-2')
+  drive.frames.at(0)
+  ticks(drive, 30)
+  // Pause, read how to play, come back, switch the sound off, and start the level again.
+  await drive.press(es('automata.pause.button'))
+  await drive.shown('paused')
+  await drive.press(es('automata.menu.how'))
+  await expect.poll(() => drive.mount.querySelector('[data-screen="how"]')).not.toBeNull()
+  await drive.press(es('automata.back'))
+  await drive.wait(es('automata.pause.resume'))
+  const sound = [...drive.mount.querySelectorAll<HTMLElement>('[role="switch"]')].find(
+    (one) => one.textContent?.trim() === es('automata.settings.sound'),
+  ) as HTMLElement
+  await userEvent.click(sound)
+  await expect.poll(() => drive.speaker.levels.music).toBe(0)
+  await drive.press(es('automata.pause.again'))
+  await drive.answer(es('automata.pause.again'))
+  await drive.shown('playing')
+  drive.frames.at(0)
+  walkByThumb(drive)
+  await drive.shown('done')
+  expect(drive.mount.textContent).toContain(es('automata.done.game'))
+  await drive.press(es('automata.done.menu'))
+  await drive.shown('menu')
 })
