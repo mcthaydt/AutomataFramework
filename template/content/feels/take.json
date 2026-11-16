@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "id": "take",
+  "on": "spark.taken",
+  "dust": {
+    "count": 8,
+    "color": "#f5d547",
+    "speed": 3,
+    "life": 16
+  },
+  "buzz": {
+    "strength": 0.2,
+    "ticks": 2
+  }
+}

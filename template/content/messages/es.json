@@ -5,9 +5,7 @@
     "controls.jump": "Saltar",
     "controls.left": "Izquierda",
     "controls.right": "Derecha",
-    "level.level-1.name": "Nivel 1",
-    "page.cannot-start": "Este juego no pudo empezar en este navegador. Prueba con otro navegador.",
-    "page.paint-again": "Ejecuta npm run art en la carpeta del juego para pintar los dibujos y vuelve a cargar esta página.",
-    "page.problem-title": "Este juego tiene un problema y no puede empezar."
+    "level.level-1.goal": "Llega a la puerta.",
+    "level.level-1.name": "Nivel 1"
   }
 }

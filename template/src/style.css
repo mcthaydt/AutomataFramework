@@ -24,76 +24,12 @@ body {
   height: 100dvh;
 }
 
-/* The language picker is dressed in the page's own colours. */
+/* The framework's screens (language, menu, pause, settings, saved games, the messages) are dressed in the page's own
+   colours. Change these and every screen changes with them. */
 #game {
   --automata-picker-background: var(--paper);
   --automata-picker-color: var(--ink);
-}
-
-/* The mark shown while the game's files load. It has no letters: the player has no language yet. */
-#game > .loading {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  box-sizing: border-box;
-  width: 40px;
-  height: 40px;
-  margin: -20px 0 0 -20px;
-  border: 4px solid var(--edge);
-  border-top-color: var(--ink);
-  border-radius: 50%;
-  animation: spin 0.9s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* A player who asked for less movement sees a still ring. */
-@media (prefers-reduced-motion: reduce) {
-  #game > .loading {
-    animation: none;
-  }
-}
-
-/* The words over the game that tell a player at a keyboard what to press, until they press it. */
-.hint {
-  position: absolute;
-  left: 50%;
-  top: 16px;
-  transform: translateX(-50%);
-  margin: 0;
-  padding: 12px 20px;
-  max-width: calc(100% - 32px);
-  box-sizing: border-box;
-  border: 1px solid var(--edge);
-  border-radius: 8px;
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 18px;
-  text-align: center;
-  pointer-events: none;
-}
-
-/* What goes wrong, in words, in place of the game. */
-.problem {
-  box-sizing: border-box;
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: 24px;
-  font-size: 18px;
-  line-height: 1.5;
-}
-
-.problem h1 {
-  margin: 0 0 16px;
-  font-size: 24px;
-}
-
-.problem ul {
-  margin: 0 0 16px;
-  padding-left: 20px;
-  color: var(--soft);
+  --automata-ui-background: var(--paper);
+  --automata-ui-color: var(--ink);
+  --automata-ui-border: var(--edge);
 }
