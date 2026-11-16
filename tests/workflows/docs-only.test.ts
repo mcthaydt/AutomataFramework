@@ -105,3 +105,25 @@ test('every job that tests is left out of a docs-only run, so no skipped job wea
   }
   expect(job('plan')).toContain("'skipped '")
 })
+
+// The quick run's engines and the shards (the Owner, 2026-11-16): a draft runs Chromium only; the run that gates merge
+// runs all three browsers, so the cross-browser parity proof stays in it, each in six shards.
+test('a draft runs Chromium only, and a ready pull request or a `full-tests` draft runs all three browsers', () => {
+  expect(plan(['src/index.ts'])).toMatchObject({ engines: '["chromium"]' })
+  expect(plan(['src/index.ts'], { draft: false })).toMatchObject({ engines: '["chromium","webkit","firefox"]' })
+  expect(plan(['src/index.ts'], { labels: 'full-tests' })).toMatchObject({
+    engines: '["chromium","webkit","firefox"]',
+  })
+})
+
+test('every browser is six shards, and the `engines` gate counts the same six', () => {
+  const browsers = job('browsers')
+  expect(browsers).toContain('name: browsers (${{ matrix.engine }} ${{ matrix.shard }}/6)')
+  expect(browsers).toContain('shard: [1, 2, 3, 4, 5, 6]')
+  expect(browsers).toContain('--shard=${{ matrix.shard }}/6')
+  expect(browsers).toContain('engine: ${{ fromJSON(needs.plan.outputs.engines) }}')
+  const engines = job('engines')
+  expect(engines).toContain('engine: ${{ fromJSON(needs.plan.outputs.engines) }}')
+  expect(engines).toContain('SHARDS: 6')
+  expect(engines).toContain('-eq "$SHARDS"')
+})

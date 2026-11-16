@@ -135,11 +135,11 @@ hook refuses a session or agent asked to run higher.
 Each repo's `.github/workflows/ci.yml` has a `plan` job that reads the pull request's changed files; what each repo's
 quick run picks is in its `CLAUDE.md`.
 
-- **A draft gets the quick run:** only the tests the change reaches, and pictures only when something seen changed or
-  the pull request has the `screenshots` label. Its job names start with `quick `, so it never counts as a required
-  check.
+- **A draft gets the quick run:** Chromium only, only the tests the change reaches, and pictures only of the screens
+  it touches, when something seen changed or the pull request has the `screenshots` label. Its job names start with
+  `quick `, so it never counts as a required check.
 - **The full run gates merge:** ready for review, a push to `main`, the `full-tests` label, or a change to the build
-  or test setup. Browsers run in six shards.
+  or test setup. It runs every browser (Chromium, WebKit, Firefox), each in six shards: 18 jobs.
 - **Docs-only runs no tests:** Markdown people read, less any a test reads, passes the required checks in about a
   minute.
 - **Wait, don't watch.** Wait for the result once (`gh run watch --exit-status`); read only the failing job's log.
