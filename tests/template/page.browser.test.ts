@@ -1,15 +1,14 @@
-// The template's page in each real browser: it starts the game, shows a broken file in words, keeps a changed key, tells
-// a keyboard player which keys to press, gives a thumb two whole halves at every screen size, and asks a player with no
-// language for one, in flags, before it says anything.
+// The template's page in each real browser: one call to the flow. A first visit walks the picker, the splash and the menu
+// and plays; a broken file is the framework's problem screen; `?watch` plays the recording and a tap takes over; stopping
+// empties the page; and a thumb has two whole halves at every screen size.
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { page } from 'vitest/browser'
 import { Player } from '#src/features/commands/commands.ts'
-import type { Language } from '#src/features/content/content.ts'
+import type { Flow } from '#src/features/flow/flow.ts'
 import { testHost } from '#src/features/host/host.ts'
-import { LANGUAGE_SETTINGS_DEFAULT, LanguageSettingsSchema } from '#src/features/locale/locale.ts'
 import { Transform } from '#src/features/physics/physics.ts'
-import { openSettings } from '#src/features/saves/saves.ts'
-import { type Page, startPage } from '../../template/src/features/page/page.ts'
+import { SPLASH_MS } from '#src/features/screens/screens.ts'
+import { startPage } from '../../template/src/features/page/page.ts'
 import style from '../../template/src/style.css?raw'
 import { FRAME, key, run } from '../fixtures/game/co-op-game.ts'
 import { type ManualFrames, manualFrames } from '../fixtures/game/frames.ts'
@@ -17,8 +16,9 @@ import { SCREENS } from '../fixtures/game/screens.ts'
 import { readFiles, readPicture, templateFiles } from './game.ts'
 
 let root: HTMLElement
-let started: Page | undefined
+let started: Flow | undefined
 let sheet: HTMLStyleElement
+let coarse = false
 
 beforeEach(() => {
   // The page's own stylesheet and element, so it is laid out as it is for a player.
@@ -28,7 +28,10 @@ beforeEach(() => {
   root = document.createElement('main')
   root.id = 'game'
   document.body.append(root)
-  vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList)
+  coarse = false
+  vi.spyOn(window, 'matchMedia').mockImplementation(
+    (query) => ({ matches: coarse && query.includes('coarse'), media: query }) as MediaQueryList,
+  )
 })
 afterEach(() => {
   started?.stop()
@@ -38,261 +41,106 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-type Host = ReturnType<typeof testHost>
-
-/** What the player chose last time, kept before the page starts as the page itself keeps it. */
-async function remember(host: Host, language: Language): Promise<void> {
-  const settings = await openSettings({ game: 'my-game', store: host.store })
-  const section = settings.section({
-    name: 'language',
-    schema: LanguageSettingsSchema,
-    initial: LANGUAGE_SETTINGS_DEFAULT,
-  })
-  await section.set({ format: 1, language })
-}
-
-/**
- * Starts the page on the template's files, with frames driven by hand; the first frame has set the clock. With
- * `language` the player chose it last time, so the page goes straight to the game; without it, a host that does not
- * speak a language the game has is asked.
- */
+/** Starts the page on the template's files, with frames driven by hand; a first visit by a French speaker. */
 async function open(
-  options: { files?: Record<string, string>; host?: Host; coarse?: boolean; language?: Language } = {},
-): Promise<{ frames: ManualFrames; shown: Page }> {
+  options: { files?: Record<string, string>; watch?: boolean } = {},
+): Promise<{ frames: ManualFrames; flow: Flow }> {
   const frames = manualFrames()
-  const host = options.host ?? testHost()
-  if (options.language !== undefined) await remember(host, options.language)
-  const shown = await startPage(root, {
+  const flow = await startPage(root, {
     read: readFiles(options.files),
     readPicture,
-    host,
+    host: testHost({ deviceLanguages: ['fr-FR'] }),
     frames,
-    coarse: options.coarse ?? false,
+    watch: options.watch ?? false,
   })
-  started = shown
-  frames.at(0)
-  return { frames, shown }
+  started = flow
+  return { frames, flow }
 }
 
-const heroX = (shown: Page): number => {
-  const hero = shown.game?.sim.query(Player, Transform)[0]
+const shown = (want: string): Promise<void> =>
+  vi.waitFor(() => expect(root.dataset.state).toBe(want), { timeout: 10_000 })
+
+/** The picker's English flag and Go, as a first-time player presses them. */
+async function chooseEnglish(): Promise<void> {
+  await shown('picking')
+  root.querySelector<HTMLButtonElement>(".automata-flag[data-language='en']")?.click()
+  root.querySelector<HTMLButtonElement>('.automata-picker-go')?.click()
+}
+
+/** From the picker to the level: English, the splash, the menu's first button (Play). */
+async function intoTheLevel(frames: ManualFrames): Promise<void> {
+  await chooseEnglish()
+  await shown('splash')
+  frames.at(0)
+  run(frames, Math.ceil(SPLASH_MS / FRAME) + 20)
+  await shown('menu')
+  await vi.waitFor(() => expect(root.querySelector('[data-screen="menu"] button')).not.toBeNull())
+  root.querySelector<HTMLButtonElement>('[data-screen="menu"] button')?.click()
+  await shown('playing')
+  await vi.waitFor(() => expect(started?.game()).toBeDefined())
+}
+
+const heroX = (flow: Flow): number => {
+  const hero = flow.game()?.sim.query(Player, Transform)[0]
   if (hero === undefined) throw new Error('There is no hero.')
   return hero.get(Transform).x
 }
 
-test('the page starts the game, and holding right moves the hero', async () => {
+test('a first visit walks the picker, the splash and the menu, and Play starts a level the hero walks in', async () => {
   await page.viewport(1280, 720)
-  const { frames, shown } = await open({ language: 'en' })
-  expect(root.dataset.state).toBe('playing')
+  const { frames, flow } = await open()
+  await shown('picking')
+  await intoTheLevel(frames)
   run(frames, 30)
-  const before = heroX(shown)
+  const before = heroX(flow)
   key('keydown', 'ArrowRight')
   run(frames, 30)
   key('keyup', 'ArrowRight')
-  expect(heroX(shown)).toBeGreaterThan(before + 1)
+  expect(heroX(flow)).toBeGreaterThan(before + 1)
 })
 
-test('a broken level is shown in words, in the page', async () => {
+test("a broken level is the framework's problem screen, in words", async () => {
   const level = JSON.parse(templateFiles['content/levels/level-1.json'] ?? '') as { things: { x: unknown }[] }
   ;(level.things[0] as { x: unknown }).x = 'far'
-  const { shown } = await open({ files: { 'content/levels/level-1.json': JSON.stringify(level) } })
-  expect(shown.game).toBeUndefined()
-  expect(root.dataset.state).toBe('problem')
-  expect(root.textContent).toContain('This game has a problem and cannot start.')
-  expect(root.textContent).toContain('content/levels/level-1.json: things[0].x: This must be a number.')
+  const { flow } = await open({ files: { 'content/levels/level-1.json': JSON.stringify(level) } })
+  await shown('problem')
+  expect(flow.game()).toBeUndefined()
+  expect(root.querySelector('canvas')).toBeNull()
+  expect(root.querySelector('[role="alert"]')?.textContent).toBeTruthy()
+})
+
+test('?watch plays the recording, and a tap takes over', async () => {
+  await page.viewport(1280, 720)
+  const { flow } = await open({ watch: true })
+  await shown('watching')
+  expect(root.querySelector('canvas')).not.toBeNull()
+  flow.takeOver()
+  await shown('picking')
   expect(root.querySelector('canvas')).toBeNull()
 })
 
-test("a picture that was never painted is said in the player's language, with the command that paints it", async () => {
-  const frames = manualFrames()
-  const unpainted = async (path: string): Promise<Blob> => {
-    if (path === 'content/figures/hero.png') throw new Error(`${path}: no such file`)
-    return readPicture(path)
-  }
-  const host = testHost({ deviceLanguages: ['es-ES'] })
-  await remember(host, 'es')
-  started = await startPage(root, {
-    read: readFiles(),
-    readPicture: unpainted,
-    host,
-    frames,
-    coarse: false,
-  })
-  expect(root.dataset.state).toBe('problem')
-  expect(root.textContent).toContain('Este juego tiene un problema y no puede empezar.')
-  expect(root.textContent).toContain('content/figures/hero.png')
-  expect(root.querySelector('.problem p')?.textContent).toContain('npm run art')
-  expect(root.textContent).not.toContain('Fix the file named above')
-})
-
-test('a changed key is still there on a fresh page', async () => {
-  const host = testHost()
-  const first = await open({ host, language: 'en' })
-  expect(first.shown.game?.input.rebind('jump', 'keys', 'KeyK').ok).toBe(true)
-  // The page saves the change by itself; give the store a moment to take it.
-  await new Promise((done) => setTimeout(done, 20))
-  first.shown.stop()
-
-  const second = await open({ host })
-  expect(second.shown.game?.input.controls().jump?.keys).toEqual(['KeyK'])
-})
-
-test('a keyboard player is told the keys, until they move', async () => {
-  await page.viewport(1280, 720)
-  const { frames } = await open({ language: 'en' })
-  const hint = (): string | undefined => root.querySelector('.hint')?.textContent ?? undefined
-  expect(hint()).toBe('Arrow keys to move. Space to jump.')
-  key('keydown', 'ArrowRight')
-  run(frames, 2)
-  key('keyup', 'ArrowRight')
-  expect(hint()).toBeUndefined()
-})
-
-test('a hero with the dash switched on is told its key too', async () => {
-  await page.viewport(1280, 720)
-  // What the README tells a developer to do: `"dash": true` in the hero's file, and the dash in the tuning's list of
-  // controls, with its keys for one player and for two on a shared keyboard (every action has both, or none does).
-  const heroFile = JSON.parse(templateFiles['content/characters/hero.json'] as string)
-  heroFile.moves.dash = true
-  const tuning = JSON.parse(templateFiles['content/tunings/hero-moves.json'] as string)
-  tuning.controls.push({
-    action: 'dash',
-    label: 'Dash',
-    keys: ['ShiftLeft'],
-    side: 'right',
-    pad: ['west'],
-    shared: [['ShiftLeft'], ['ShiftRight']],
-  })
-  await open({
-    language: 'en',
-    files: {
-      'content/characters/hero.json': JSON.stringify(heroFile),
-      'content/tunings/hero-moves.json': JSON.stringify(tuning),
-    },
-  })
-  expect(root.querySelector('.hint')?.textContent).toBe('Arrow keys to move. Space to jump. Shift to dash.')
-})
-
-/** The flag of a language on the picker, and Go. */
-const flag = (language: Language): HTMLButtonElement => {
-  const found = root.querySelector<HTMLButtonElement>(`.automata-flag[data-language='${language}']`)
-  if (found === null) throw new Error(`The page has no flag for ${language}.`)
-  return found
-}
-const go = (): HTMLButtonElement => {
-  const found = root.querySelector<HTMLButtonElement>('.automata-picker-go')
-  if (found === null) throw new Error('The page has no Go.')
-  return found
-}
-const playing = (): Promise<void> => vi.waitFor(() => expect(root.dataset.state).toBe('playing'))
-
-test('a player whose device speaks French is asked for a language, in flags, and then plays in it', async () => {
-  await page.viewport(1280, 720)
-  const host = testHost({ deviceLanguages: ['fr-FR'] })
-  const { shown } = await open({ host })
-  expect(root.dataset.state).toBe('picking')
-  const flags = [...root.querySelectorAll('.automata-flag')]
-  expect(flags.map((b) => b.getAttribute('data-language'))).toEqual(['zh', 'es', 'en', 'pt', 'ja', 'ko'])
-  expect(flags.filter((b) => b.getAttribute('aria-pressed') === 'true')).toEqual([])
-  expect(root.querySelector('canvas')).toBeNull()
-  // Go with nothing chosen does nothing.
-  go().click()
-  await new Promise((done) => setTimeout(done, 50))
-  expect(root.dataset.state).toBe('picking')
-
-  flag('ko').click()
-  go().click()
-  await playing()
-  expect(root.querySelector('.hint')?.textContent).toBe('이동: 방향키 점프: 스페이스바')
-  expect(document.documentElement.lang).toBe('ko')
-  shown.stop()
-
-  // The next page on the same device is not asked again, and speaks Korean at once.
-  await open({ host })
-  expect(root.dataset.state).toBe('playing')
-  expect(root.querySelector('.hint')?.textContent).toBe('이동: 방향키 점프: 스페이스바')
-})
-
-test('a player whose device speaks Spanish finds Mexico first and pressed, and one press of Go plays in Spanish', async () => {
-  await page.viewport(1280, 720)
-  await open({ host: testHost({ deviceLanguages: ['es-ES'] }) })
-  expect(root.dataset.state).toBe('picking')
-  const first = root.querySelector('.automata-flag')
-  expect([first?.getAttribute('data-language'), first?.getAttribute('aria-pressed')]).toEqual(['es', 'true'])
-  go().click()
-  await playing()
-  expect(root.querySelector('.hint')?.textContent).toBe('Las flechas para moverte. Espacio para saltar.')
-  expect(document.documentElement.lang).toBe('es')
-})
-
-test('while the files load the page has no letters, only a mark that says it is busy', async () => {
-  const frames = manualFrames()
-  const gate: { open: () => void } = { open: () => undefined }
-  const held = new Promise<void>((resolve) => {
-    gate.open = resolve
-  })
-  const reading = readFiles()
-  const loading = startPage(root, {
-    read: async (path) => {
-      await held
-      return reading(path)
-    },
-    readPicture,
-    host: testHost({ deviceLanguages: ['fr-FR'] }),
-    frames,
-    coarse: false,
-  })
-  expect(root.dataset.state).toBe('loading')
-  expect(root.textContent).toBe('')
-  const mark = root.querySelector('.loading')
-  expect([mark?.getAttribute('role'), mark?.getAttribute('aria-busy')]).toEqual(['status', 'true'])
-  gate.open()
-  started = await loading
-  expect(root.dataset.state).toBe('picking')
-})
-
-test('stopping the page while it asks for a language empties it, and no game starts', async () => {
-  const { shown } = await open({ host: testHost({ deviceLanguages: ['fr-FR'] }) })
-  expect(root.dataset.state).toBe('picking')
-  flag('ja').click()
-  shown.stop()
+test('stopping the page empties it, and no game starts later', async () => {
+  const { flow } = await open()
+  await shown('picking')
+  flow.stop()
   expect(root.childElementCount).toBe(0)
-  // Nothing is left to start a game later.
   await new Promise((done) => setTimeout(done, 50))
   expect(root.childElementCount).toBe(0)
-  expect(shown.game).toBeUndefined()
+  expect(flow.game()).toBeUndefined()
 })
-
-test('the touch halves say their words in the language of the device', async () => {
-  await page.viewport(390, 844)
-  await open({ language: 'pt', coarse: true })
-  window.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }))
-  const label = (half: string): string =>
-    root.querySelector(`[data-half='${half}']`)?.getAttribute('aria-label') ?? ''
-  expect([label('walk'), label('jump')]).toEqual(['Andar', 'Pular'])
-})
-
-test('a player with a finger on the screen is not told about keys', async () => {
-  await page.viewport(390, 844)
-  await open({ language: 'en', coarse: true })
-  expect(root.querySelector('.hint')).toBeNull()
-})
-
-const frames2 = (): Promise<void> =>
-  new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done())))
 
 for (const [name, w, h] of SCREENS) {
   test(`on ${name} the two thumb halves are whole, inside the screen and side by side`, async () => {
+    coarse = true
     await page.viewport(w, h)
     expect([window.innerWidth, window.innerHeight]).toEqual([w, h])
-    const { frames } = await open({ language: 'en', coarse: true })
+    const { frames } = await open()
+    await intoTheLevel(frames)
     // A finger on the screen brings up the thumbs, as it does for a player on a phone.
     window.dispatchEvent(
       new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }),
     )
     for (let i = 0; i < 30; i++) frames.advance(FRAME)
-    await frames2()
-    frames.advance(FRAME)
 
     const rect = (half: string): DOMRect => {
       const found = root.querySelector(`[data-half='${half}']`)

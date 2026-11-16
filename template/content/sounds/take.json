@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "id": "take",
+  "volume": 0.6,
+  "voices": [
+    {
+      "kind": "tone",
+      "wave": "square",
+      "from": 660,
+      "to": 660,
+      "at": 0,
+      "length": 0.07,
+      "volume": 1
+    },
+    {
+      "kind": "tone",
+      "wave": "square",
+      "from": 990,
+      "to": 990,
+      "at": 0.07,
+      "length": 0.1,
+      "volume": 1
+    }
+  ]
+}

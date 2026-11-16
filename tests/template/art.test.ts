@@ -7,15 +7,18 @@ import { templateTree } from './tree.ts'
 
 const tree = templateTree()
 
-test('the hero and the crate each wear a figure, and each figure is painted into a picture and its atlas', async () => {
+test('the hero, the crate and the door each wear a figure, and each figure is painted into a picture and its atlas', async () => {
   const content = await loadTemplateGame()
   expect(content.characters.hero?.figure).toBe('hero')
   expect(content.characters.crate?.figure).toBe('crate')
+  expect(content.characters.door?.figure).toBe('door')
   expect(artFiles(content).map((file) => file.path)).toEqual([
     'content/figures/hero.png',
     'content/figures/hero.atlas.json',
     'content/figures/crate.png',
     'content/figures/crate.atlas.json',
+    'content/figures/door.png',
+    'content/figures/door.atlas.json',
   ])
 })
 

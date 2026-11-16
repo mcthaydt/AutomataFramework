@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "id": "fall",
+  "on": "hero.fell",
+  "buzz": {
+    "strength": 0.6,
+    "ticks": 8
+  }
+}
