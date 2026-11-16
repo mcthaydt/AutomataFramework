@@ -30,6 +30,11 @@ Finished milestones and their decision records, setup, rule changes, standing pe
   "Before the build"). Approved in the project chat on 2026-11-16 at 19:57 UTC ("yes"). Scope: this change only, made
   the same in all five repos, as AutomataFramework `docs/superpowers/specs/2026-11-16-layout-sketch-design.md`
   describes. Later rule changes are lane 3 as usual.
+- 2026-11-16, the Owner: a reminder after compaction that the rules file beats the summary (a `SessionStart` hook
+  with the matcher `compact`), live state in a file, a fresh session per big job and spec writing in its own session.
+  Approved in the project thread at 20:28 and 20:29 UTC, and on decision cards at 20:46 UTC. Scope: this change
+  only, made the same in all five repos, as AutomataFramework
+  `docs/superpowers/specs/2026-11-16-compaction-hook-design.md` describes. Later rule changes are lane 3 as usual.
 
 ## Standing permissions
 
