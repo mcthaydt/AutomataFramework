@@ -1112,6 +1112,18 @@ function doorsOf(content: GameContent): readonly Door[];
 function doorTaken(content: GameContent, opened: string, events: readonly SimEvent[]): Way | undefined;
 ```
 
+### `Draw` (const)
+
+```ts
+const Draw: ComponentDef<typeof drawFields>;
+```
+
+### `drawPlugin` (const)
+
+```ts
+const drawPlugin: PluginDef;
+```
+
 ### `DrumPart` (interface)
 
 ```ts
@@ -2475,6 +2487,7 @@ interface LevelThing {
     readonly x: number;
     readonly y: number;
     readonly values?: Readonly<Record<string, ThingValue>> | undefined;
+    readonly draw?: 'behind' | 'with-hero' | 'in-front' | undefined;
 }
 ```
 
@@ -5355,6 +5368,12 @@ function unreadWords(content: GameContent, marks: ReadMarks | undefined): readon
 }[];
 ```
 
+### `usesDraw` (function)
+
+```ts
+function usesDraw(content: GameContent): boolean;
+```
+
 ### `usesFalls` (function)
 
 ```ts
@@ -5512,6 +5531,7 @@ interface View {
     readonly h: number;
     readonly color: number;
     readonly sprite?: ViewSprite;
+    readonly draw?: 'behind' | 'in-front';
 }
 ```
 
@@ -6614,6 +6634,18 @@ function doorsOf(content: GameContent): readonly Door[];
 function doorTaken(content: GameContent, opened: string, events: readonly SimEvent[]): Way | undefined;
 ```
 
+### `Draw` (const)
+
+```ts
+const Draw: ComponentDef<typeof drawFields>;
+```
+
+### `drawPlugin` (const)
+
+```ts
+const drawPlugin: PluginDef;
+```
+
 ### `DrumPart` (interface)
 
 ```ts
@@ -7564,6 +7596,7 @@ interface LevelThing {
     readonly x: number;
     readonly y: number;
     readonly values?: Readonly<Record<string, ThingValue>> | undefined;
+    readonly draw?: 'behind' | 'with-hero' | 'in-front' | undefined;
 }
 ```
 
@@ -9809,6 +9842,12 @@ function unreadWords(content: GameContent, marks: ReadMarks | undefined): readon
     readonly language: Language;
     readonly key: string;
 }[];
+```
+
+### `usesDraw` (function)
+
+```ts
+function usesDraw(content: GameContent): boolean;
 ```
 
 ### `usesFalls` (function)
