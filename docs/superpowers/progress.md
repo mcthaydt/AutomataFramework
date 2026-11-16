@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-11-16 17:16 UTC (from `date`).
+Last updated: 2026-11-16 17:27 UTC (from `date`).
 
 ## Active milestone: the World slice (roadmap slice 3)
 
@@ -34,6 +34,10 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
 ### Blockers
 
 None.
+
+### Previews
+
+- None yet: the framework's browser tests keep their pictures as each CI run's artifacts.
 
 ### Material decisions
 

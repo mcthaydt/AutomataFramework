@@ -12,6 +12,7 @@ Finished milestones and their decision records, setup, standing permissions, app
     are no subagents unless the Owner says so, and the implementation audit is a fresh session (`review`).
   - `executing-plans` defers minor final-review findings; here the fix round fixes every in-scope finding.
   - `executing-plans` sets up a worktree and ledger; here a thread works on its own branch.
+- Session tools (the coordinator, 2026-11-16): start a thread, message it, choose its model and effort: found. Archive: by resolving a thread (hidden, can be reopened).
 - The earlier workflow's records were removed on 2026-11-16 (see "Archive" below); `git show <commit>:<path>` brings
   any of them back.
 

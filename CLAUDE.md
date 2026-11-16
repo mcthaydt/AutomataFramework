@@ -9,7 +9,7 @@ anything new, is the owner's call.
 
 ## Stack and checks
 
-- Stack: TypeScript, strict; pnpm workspaces; Node 24. PixiJS 8 for drawing; Koota (ECS) for the sim; `@dimforge/rapier2d-deterministic` 0.21.0 for physics; Zod as the one schema language; Svelte 5 where noted below; Paraglide for words. Vite, Vitest 5 (Node, Chromium, WebKit, Firefox browser modes), Playwright 1.63 journeys, Biome, knip. GitHub-hosted CI; Colyseus 0.18 for online play; Effect for the Node tooling (the `automata` CLI); API Extractor reports; changesets for releases.
+- Stack: TypeScript, strict; pnpm workspaces; Node 24. PixiJS 8 for drawing; Koota (ECS) for the sim; `@dimforge/rapier2d-deterministic` 0.21.0 for physics; Zod as the one schema language; Svelte 5 where noted below; Paraglide for words. Vite, Vitest 5 (Node, Chromium, WebKit, Firefox browser modes), Playwright 1.63 journeys, Biome, knip. GitHub-hosted CI; Colyseus 0.18 for online play; Effect for the Node tooling (the `automata` CLI); its own API report (`pnpm api-report`); changesets for releases.
 - Install: `pnpm install --frozen-lockfile`
 - Lint: `pnpm lint && pnpm knip`
 - Typecheck: `pnpm typecheck`
@@ -317,7 +317,7 @@ Change a number or a model here and nowhere else.
 
 ## This repo
 
-What is particular to this repo, kept from its earlier notes.
+What is particular to this repo, kept from its earlier notes and the 2026-11-16 handoff.
 
 - **Fast CI here.** `.github/workflows/ci.yml`'s `plan` job decides what a run tests. A draft runs Chromium only, and
   only the Node and browser tests the change reaches (the browser tests are the screens, so only the screens it
