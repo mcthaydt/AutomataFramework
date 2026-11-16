@@ -234,7 +234,9 @@ test('a door in playing opens the next level at once, beside the door, marked as
   const playing = at('playing', { level: 'room-1' })
   const through = go(playing, door('room-2', { thing: 'door-in' }))
   // A door is a fresh start too, so it counts one more attempt.
-  expect(through).toEqual(at('playing', { level: 'room-2', arrive: { thing: 'door-in' }, door: true, attempt: 1 }))
+  expect(through).toEqual(
+    at('playing', { level: 'room-2', arrive: { thing: 'door-in' }, door: true, attempt: 1 }),
+  )
   // The same door twice is still a new state each time, so the flow starts a level for each.
   expect(go(through, door('room-2', { thing: 'door-in' }))).not.toBe(through)
   expect(go(playing, door('room-2'))).toEqual(at('playing', { level: 'room-2', door: true, attempt: 1 }))
@@ -249,7 +251,9 @@ test('play with an arrive (Continue) comes in where the player left, and is no d
 test('pause and resume keep where the heroes come in and the door', () => {
   const through = go(at('playing', { level: 'room-1' }), door('room-2', { thing: 'door-in' }))
   const paused = go(through, tap('pause'))
-  expect(paused).toEqual(at('paused', { level: 'room-2', arrive: { thing: 'door-in' }, door: true, attempt: 1 }))
+  expect(paused).toEqual(
+    at('paused', { level: 'room-2', arrive: { thing: 'door-in' }, door: true, attempt: 1 }),
+  )
   expect(go(paused, tap('resume'))).toEqual(through)
 })
 
@@ -260,7 +264,9 @@ test('a door in paused, the menu or done gives the very same state', () => {
 
 test('finishing a door level, then Next, carries no door and no arrive', () => {
   const through = go(at('playing', { level: 'room-1' }), door('room-2', { thing: 'door-in' }))
-  expect(go(go(through, done), next, { next: 'room-3' })).toEqual(at('playing', { level: 'room-3', attempt: 2 }))
+  expect(go(go(through, done), next, { next: 'room-3' })).toEqual(
+    at('playing', { level: 'room-3', attempt: 2 }),
+  )
 })
 
 // Losing, starting again and asking how to play (plan Q, Task 3).
@@ -375,5 +381,7 @@ test('lost keeps where the heroes came in, so Try again brings them in there and
   const fell = go(through, lost)
   expect(fell).toEqual(at('lost', { level: 'room-2', arrive: { thing: 'door-in' }, attempt: 1 }))
   // The level waits for a first press again, so it is no longer a door's mid-move opening.
-  expect(go(fell, again)).toEqual(at('playing', { level: 'room-2', arrive: { thing: 'door-in' }, attempt: 2 }))
+  expect(go(fell, again)).toEqual(
+    at('playing', { level: 'room-2', arrive: { thing: 'door-in' }, attempt: 2 }),
+  )
 })

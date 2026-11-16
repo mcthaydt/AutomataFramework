@@ -37,6 +37,14 @@ export {
 } from './switches.ts'
 export { levelSize, type TileBox, type TileRun, tileBoxes, tileRuns } from './tile-runs.ts'
 export { type Touch, touchEvent, touchPlugin } from './touch.ts'
-export { touchKinds, usesFalls, usesJoints, usesMoves, usesSprites, usesSwitches, usesValues } from './uses.ts'
+export {
+  touchKinds,
+  usesFalls,
+  usesJoints,
+  usesMoves,
+  usesSprites,
+  usesSwitches,
+  usesValues,
+} from './uses.ts'
 export { type ThingValues, valuesOf } from './values.ts'
 export { type SimLevel, thingIn, Where, wherePlugin } from './where.ts'

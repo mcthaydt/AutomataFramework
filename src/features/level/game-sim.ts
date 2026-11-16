@@ -14,7 +14,15 @@ import { spawnPlace } from './spawn-place.ts'
 import { spritesPlugin } from './sprite.ts'
 import { openKinds, switchPlugin } from './switches.ts'
 import { touchPlugin } from './touch.ts'
-import { touchKinds, usesFalls, usesJoints, usesMoves, usesSprites, usesSwitches, usesValues } from './uses.ts'
+import {
+  touchKinds,
+  usesFalls,
+  usesJoints,
+  usesMoves,
+  usesSprites,
+  usesSwitches,
+  usesValues,
+} from './uses.ts'
 import { wherePlugin } from './where.ts'
 
 /** What `createGameSim` takes. Only the content is required. */

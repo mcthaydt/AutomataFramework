@@ -186,7 +186,10 @@ export function advance(state: FlowState, event: FlowEvent, facts: FlowFacts): F
       if (event.type === 'level-done') return to(state, 'done', level)
       // A lost level keeps where the heroes came in, so Try again brings them in where Continue would.
       if (event.type === 'level-lost')
-        return to(state, 'lost', { ...level, ...(state.arrive === undefined ? {} : { arrive: state.arrive }) })
+        return to(state, 'lost', {
+          ...level,
+          ...(state.arrive === undefined ? {} : { arrive: state.arrive }),
+        })
       return state
     }
     case 'paused': {
@@ -200,7 +203,9 @@ export function advance(state: FlowState, event: FlowEvent, facts: FlowFacts): F
     }
     case 'lost':
       if (event.type === 'leave') return menu(state)
-      return event.type === 'again' && state.level !== undefined ? playing(state, state.level, again(state)) : state
+      return event.type === 'again' && state.level !== undefined
+        ? playing(state, state.level, again(state))
+        : state
     case 'done':
       if (event.type === 'leave') return menu(state)
       if (event.type !== 'next') return state
