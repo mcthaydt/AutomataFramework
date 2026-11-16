@@ -44,6 +44,8 @@ const create = {
     name: 'create',
     environment: 'node',
     include: ['tests/create/**/*.journey.test.ts'],
+    // Each file makes and serves a game of its own, and two at once would starve each other.
+    fileParallelism: false,
     testTimeout: 600_000,
     hookTimeout: 600_000,
   },
