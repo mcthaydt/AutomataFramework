@@ -22,6 +22,7 @@ const wanted = [
   'template/replays/level-1.json',
   'skills/automata/SKILL.md',
   'skills/automata-content/SKILL.md',
+  'skills/automata-content/values-and-doors.md',
   'skills/automata-rules/SKILL.md',
   'skills/automata-api/SKILL.md',
   'docs/api/framework.api.md',

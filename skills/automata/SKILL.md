@@ -44,6 +44,7 @@ files. Read this page, then the skill for the kind of change you are making.
   language is `source` in `automata.toml`; write the word there first, then in every other file, under the same key; `check` names any language that is missing it. `npx --no automata words` lists the
   translations no native speaker has read, beside the game's own text. Mark a language read (`--read <language>`) only
   once a native speaker has read it.
+- A plate that opens a gate, a button that stays down, a door to another level, a path, or levels that touch along an edge: content, values on the things and a world file. Skill `automata-content`, page `skills/automata-content/values-and-doors.md`. To see how the levels fit together, run `automata world`, and to look at a level, or at what its things hold, run `automata picture`.
 - How the game looks on the page: `src/features/page/` and `src/style.css`.
 - A level to play after another, a warning before play, the splash or the event that ends a level: `levels`, `warnings`, `splash` and `done` in `automata.toml` (skill `automata-content`). The screens are never edited: their colours and font are the `--automata-ui-*` properties, and a word on one is a message key of the game's own, which wins over the framework's.
 - Where a visit to a running page is: the element the game fills carries `data-state` (`loading`, `warnings`, `picking`, `splash`, `menu`, `playing`, `paused`, `done`, `watching` or `problem`) and `data-over` (`settings`, `saves` or `players`) while a screen is on top.

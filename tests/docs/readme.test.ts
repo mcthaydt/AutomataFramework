@@ -194,6 +194,42 @@ test('the README shows a pin, a rope, a touched character and the event a game r
   expect(typeof framework.touchEvent).toBe('function')
 })
 
+// A game finds out how to link things, how a door works and how to see the levels fit together from this section.
+test('the README has a "Links, paths and doors" section after "Joints and touch": the values, a plate, a door, the map and the two commands', () => {
+  expect(readme.indexOf('## Links, paths and doors')).toBeGreaterThan(readme.indexOf('## Joints and touch'))
+  const links = section('## Links, paths and doors')
+  for (const word of [
+    '`number`',
+    '`switch`',
+    '`choice`',
+    '`words`',
+    '`thing`',
+    '`path`',
+    '`leads-to`',
+    '"opens": ["gate-1"]',
+    '"to": { "level": "room-2", "thing": "door-in" }',
+    '`fact.kept`',
+    'doorTaken(',
+    'createGameSim({ level, arrive })',
+    '`automata world`',
+    '`automata picture`',
+    '--what-it-is',
+    '--world',
+    '.automata/pictures/',
+    'skills/automata-content/values-and-doors.md',
+  ])
+    expect(links, word).toContain(word)
+  // Every name the section tells a game to call is exported.
+  for (const name of ['doorTaken', 'createGameSim', 'layoutWorld', 'openTile', 'paintLevel', 'paintWorld'])
+    expect(framework, name).toHaveProperty(name)
+  // Its world file is read with no problem (the other blocks are parts of a level, which hold what they say).
+  const world = [...links.matchAll(/```json\n([\s\S]*?)```/g)]
+    .map((m) => m[1] ?? '')
+    .find((b) => b.includes('"levels"'))
+  const parsed = framework.parseContent('world', world ?? '', 'content/worlds/world.json')
+  expect(parsed.ok ? [] : parsed.diagnostics).toEqual([])
+})
+
 // A game finds out how to give itself sound from here, and copies an example that uses only what the entries export.
 test('the README has a Sound section: the states, the button, the page event, the three kinds of file and a real example', () => {
   const sound = section('## Sound')

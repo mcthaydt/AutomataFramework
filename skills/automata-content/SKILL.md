@@ -32,6 +32,8 @@ it for what the file may hold. The smallest whole file of each kind is below, to
 
 A level: the walls, the things in it and where each player starts. Put the files in `content/levels/`; the kind's rules are in `schemas/level.schema.json`.
 
+Things can hold values (a plate that opens a gate, a door to another level, a path), and levels can touch along an edge: `skills/automata-content/values-and-doors.md` has them whole, and `automata world` and `automata picture` show how the levels fit together.
+
 ```json
 {
   "format": 1,
