@@ -113,6 +113,33 @@ test('with two players a number is over each hero and follows it after each draw
   expect([Math.round(moved.left + moved.width / 2), Math.round(moved.bottom)]).toEqual([170, 250])
 })
 
+test('the score line is clear of the pause button and of the numbers over two heroes at the start', async () => {
+  await page.viewport(390, 844)
+  heroes = [
+    { player: 1, x: 100, y: 400, w: 40, h: 40 },
+    { player: 2, x: 200, y: 400, w: 40, h: 40 },
+  ]
+  screen = hud({
+    mount,
+    locale: testLocale('es').locale,
+    frames: manualFrames(),
+    jumpSide: () => jump,
+    onPause: () => {},
+    heroes: () => heroes,
+    score: () => 3,
+  })
+  screen.draw()
+  const line = (mount.querySelector('.score') as HTMLElement).getBoundingClientRect()
+  const apart = (other: DOMRect): boolean =>
+    line.right <= other.left ||
+    other.right <= line.left ||
+    line.bottom <= other.top ||
+    other.bottom <= line.top
+  expect(apart(pauseButton().getBoundingClientRect())).toBe(true)
+  for (const one of mount.querySelectorAll('.number')) expect(apart(one.getBoundingClientRect())).toBe(true)
+  expect(mount.querySelectorAll('.number')).toHaveLength(2)
+})
+
 test('with one player no number is drawn', () => {
   heroes = [{ player: 1, x: 100, y: 300, w: 40, h: 40 }]
   open()

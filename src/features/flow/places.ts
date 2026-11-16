@@ -61,6 +61,8 @@ export interface Places<S extends Progress> {
   keep(data: S): Promise<SaveResult>
   /** Empties a place. */
   erase(place: number): Promise<StoreResult<void>>
+  /** Empties every place, one that is damaged too. Answers how many could not be emptied. */
+  eraseAll(): Promise<number>
   /** Back on the main menu: no saved game is being played. */
   forget(): void
 }
@@ -111,6 +113,19 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
   async function write(): Promise<void> {
     const saves = context.saves()
     if (progress !== undefined && slot !== undefined && saves !== undefined) await saves.save(slot, progress)
+  }
+
+  function erase(place: number): Promise<StoreResult<void>> {
+    const saves = context.saves()
+    if (saves === undefined) {
+      const none: StoreResult<void> = {
+        ok: false,
+        refusal: 'unavailable',
+        detail: 'There is no place to keep it.',
+      }
+      return Promise.resolve(none)
+    }
+    return saves.erase(place)
   }
 
   return {
@@ -169,17 +184,16 @@ export function createPlaces<S extends Progress>(context: PlacesContext<S>): Pla
         }
       return saves.save(slot, data)
     },
-    erase(place) {
-      const saves = context.saves()
-      if (saves === undefined) {
-        const none: StoreResult<void> = {
-          ok: false,
-          refusal: 'unavailable',
-          detail: 'There is no place to keep it.',
-        }
-        return Promise.resolve(none)
+    erase,
+    async eraseAll() {
+      await refresh()
+      let failed = 0
+      for (let place = 0; place < slots.length; place++) {
+        const done = await erase(place)
+        if (!done.ok) failed += 1
       }
-      return saves.erase(place)
+      await refresh()
+      return failed
     },
     forget() {
       progress = undefined
