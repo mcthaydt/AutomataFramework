@@ -4,8 +4,8 @@
 
 When a session's context is compacted, the session is told at once that the rules file beats the summary, and where to
 find its place again. Every session keeps its live state in a committed file instead of only in its context. Each big
-job runs in its own fresh session. The three changes are the same in all five repos, so a session behaves the same
-wherever it works.
+job runs in its own fresh session. The three changes are the same in all five repos and in the two CLAUDE.md kits of
+`mcthaydt-website`, so a session behaves the same wherever it works.
 
 ## Owner approval
 
@@ -17,7 +17,7 @@ wherever it works.
   add". The proposal was written first and nothing was changed.
 - 2026-11-16 20:46 UTC, the Owner's answers on decision cards, relayed by the coordinator: (a) the spec gets its own
   session, so that change stays; (b) the website change goes in as proposed, with the games prompt's line limit raised
-  to 380 and one setup-check line added to the `release` skill in the kits; (c) `McThayDT-Website` #67 merges
+  to 380 and one setup-check line added to the `release` skill in the kits; (c) `mcthaydt-website` #67 merges
   first.
 
 All of these cover this change only. The implementation pull requests are lane 3 and wait for the Owner's approval
@@ -41,9 +41,11 @@ across all six, then the Owner's approval, then a merge commit.
   slice-retro change leaves it. Not `template/` in AutomataFramework: see "Open product decisions".
 - And, in `mcthaydt-website` (section 5): `content/prompts/claude-md-games/body.md`,
   `content/prompts/claude-md-apps/body.md`, their two `meta.json` and `tests/unit/kit-content.test.ts`. Nothing else
-  there.
+  there. The one skill edit, the setup-check line in each kit's `release` skill (5 D), is inside those two `body.md`
+  files; it is the exception to "not the three skills" above, which is about the five repos.
 - No new tools, dependencies, environments or spend. The hook runs `cat` on a committed file and nothing else; it
-  reads no network and writes nothing. Expected duration: about two hours, most of it waiting on audits and CI.
+  reads no network and writes nothing. Expected duration: about three hours, most of it waiting on audits, CI and
+  the other pull requests that come first (including `mcthaydt-website` #67).
 
 ## Where the two prompts live
 
@@ -164,13 +166,14 @@ run by hand and the output (see the acceptance criteria).
 `docs/superpowers/history.md`, under "Rule changes", after the layout-sketch entry, add:
 
 > - 2026-11-16, the Owner: a reminder after compaction that the rules file beats the summary (a `SessionStart` hook
->   with the matcher `compact`), live state in a file, and a fresh session per big job. Approved in the project thread
->   at 20:28 and 20:29 UTC. Scope: this change only, made the same in all five repos, as AutomataFramework
+>   with the matcher `compact`), live state in a file, a fresh session per big job and spec writing in its own session.
+>   Approved in the project thread at 20:28 and 20:29 UTC, and on decision cards at 20:46 UTC. Scope: this change
+>   only, made the same in all five repos, as AutomataFramework
 >   `docs/superpowers/specs/2026-11-16-compaction-hook-design.md` describes. Later rule changes are lane 3 as usual.
 
 ### 5. The two kits in `mcthaydt-website`
 
-One pull request, on `main` after `McThayDT-Website` #67 has merged (it edits the same two kits and test, in other
+One pull request, on `main` after `mcthaydt-website` #67 has merged (it edits the same two kits and test, in other
 paragraphs). The same change goes into both kits; their `CLAUDE.md` blocks follow the repos' text exactly.
 
 - **A. In each kit's `CLAUDE.md` block:** the three bullets of 2 after the "Acceptance criteria come first." bullet;
@@ -187,9 +190,9 @@ paragraphs). The same change goes into both kits; their `CLAUDE.md` blocks follo
   has the `SessionStart` entry with the matcher `compact`, and its command prints `.claude/after-compaction.md`." A
   kit cannot ship the test the five repos get, so the setup check verifies it.
 - **E. The test, written first.** `tests/unit/kit-content.test.ts` lets the two hook blocks follow the skills, each
-  with its "Save this as" note, and the games `CLAUDE.md` block's line limit goes from 360 to 380 (it is 342 lines
-  with #67 and about 365 with this change; the apps block is about 342). A new test, for both kits: the three bullets
-  are in `CLAUDE.md`; the settings block parses as JSON with one `SessionStart` entry whose matcher is `compact`; the
+  with its "Save this as" note, and the games `CLAUDE.md` block's line limit goes from 360 to 380, with the test's
+  name (it ends `_under_360_lines`) changed to match (the block is 342 lines with #67 and about 365 with this
+  change; the apps block is about 342). A new test, for both kits: the three bullets are in `CLAUDE.md`; the settings block parses as JSON with one `SessionStart` entry whose matcher is `compact`; the
   reminder says "beats the summary" and names `CLAUDE.md`, `docs/superpowers/progress.md`, `docs/superpowers/live/`
   and "fresh session"; the two hook blocks are the same in both kits apart from the skills list in line 2; and each
   kit's release skill has the new setup-check line.
@@ -213,8 +216,10 @@ paragraphs). The same change goes into both kits; their `CLAUDE.md` blocks follo
 8. Every commit is authored and committed by McThayDT with no Claude credit; each pull request body ends with
    `Requested by **McThayDT**`; each merges with a merge commit after the Owner approves.
 9. In `mcthaydt-website`, the new tests fail on `main` plus the tests alone and pass with the change, the whole
-   `vitest run` and `content:check` pass, the diff touches only the files in Boundaries, and the two kits' shared
-   text matches the five repos' word for word.
+   `vitest run` and `content:check` pass, the diff touches only the files in Boundaries, and each kit matches the five
+   repos word for word in: the three bullets and the Lane 3, table row 1, Writing and coordinator replacements of 2;
+   the settings block (`.claude/settings.json`); and the reminder (`.claude/after-compaction.md`) except the games
+   kit's line 2.
 10. CI is green on each pull request in the four repos with CI; AutomataPrivate has no CI, so criterion 4 stands in
     for it there. `mcthaydt-website` has no CI of its own, only Netlify's deploy preview, so criterion 9 stands in
     for it there. Nothing runs on the Owner's computer.
@@ -223,7 +228,7 @@ paragraphs). The same change goes into both kits; their `CLAUDE.md` blocks follo
 
 1. Merge this spec with its plan audit on green. The audit is made by a fresh session the coordinator starts, never by
    the session that wrote this spec.
-2. Order. `McThayDT-Website` #67 merges first. The edits touch `CLAUDE.md` and `history.md`, which the layout-sketch
+2. Order. `mcthaydt-website` #67 merges first. The edits touch `CLAUDE.md` and `history.md`, which the layout-sketch
    change (spec #203, its Private pull request #14 and the four to come) and, in Editors only, the slice-retro pull
    request #99 also edit (the other four slice-retro pull requests have merged). Start each repo's implementation
    only after those have merged, branching
@@ -234,10 +239,10 @@ paragraphs). The same change goes into both kits; their `CLAUDE.md` blocks follo
    naming the footer mid-sentence if at all.
 4. Check the acceptance criteria with `md5sum`, `jq`, `awk` (line length) and the new test, and wait for green on
    GitHub's runners.
-5. One implementation audit across the five pull requests by a fresh session, through the coordinator; fixes on the
+5. One implementation audit across the six pull requests by a fresh session, through the coordinator; fixes on the
    same branches by this session's successor build session.
 6. The Owner's approval through the coordinator, then each merges with a merge commit.
-7. `mcthaydt-website`: after #67 has merged, one more implementation pull request as in 5, the sixth, in the same
+7. `mcthaydt-website`: after #67 has merged, one more implementation pull request as in 3 to 5, the sixth, in the same
    implementation audit and under the same Owner approval.
 
 ## Open product decisions
