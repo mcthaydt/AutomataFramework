@@ -13,26 +13,27 @@ in its repo (it compares with `origin/main`). It names the lane from the changed
 - **contained**: merge once it is ready for review and its newest full run is green.
 - **wide**: the same, and first run `graphify_impact` on the changed files (`graphify_tests_for` for their callers).
   Every affected caller must have a test, and the full run must have run it; name them in the merge report. If one
-  has none, stop and report.
-- **standing**: a test game's golden or recording that moves, or a deletion. If the plan calls for each one, merge
+  has none, the pull request waits for that test, and its thread is told.
+- **standing**: a test game's golden or recording that moves, or a deletion. If the plan or the request calls for each one, merge
   it like a wide change under the Owner's standing yes, quoted in the merge commit's message: "test-game recording
   moves and screen deletions that the plan calls for, and that a revert can undo, merge on green with no owner
   card" (the Owner, 2026-11-16). Then post the before and after (the moved hashes, the deleted files) to the
-  coordinator. If the plan does not call for one, treat the change as closed.
-- **closed**: a release, a migration, a new dependency, or anything unplanned. Never merge. Report the lane and its
+  coordinator. If neither calls for one, treat the change as closed.
+- **closed**: a release, a migration, a new dependency, a real game's golden, or anything unplanned. Never merge. Report the lane and its
   reasons to the coordinator, put the question on a decision card, and wait for the Owner's own yes, quoted in the
   merge commit's message.
 
-A quick `quick ` run never counts. Then check, and stop and report to the coordinator, waiting for an answer, on any
-of these:
+A quick `quick ` run never counts. A pull request that isn't ready to merge stays open, and the merge session goes
+on with the others; it tells the coordinator in one line when:
 
-- a failing check or a conflict;
-- a commit whose author or committer is not `McThayDT`, or a Claude credit anywhere (`commit-authors` should have
+- a check fails or there is a conflict (the pull request's own thread fixes it; a failure on `main` gets its own
+  thread);
+- a commit's author or committer is not `McThayDT`, or a Claude credit is anywhere (`commit-authors` should have
   failed it; if it didn't, that is a defect to report too);
-- a golden that moved (`tests/golden/`, `template/replays/level-1.json`, and each repo's goldens in its `CLAUDE.md`)
-  without a commit naming it, or that the plan does not call for;
-- more than five branches in a repo, or a branch nobody asked for;
-- any judgement call.
+- a golden moved (`tests/golden/`, `template/replays/level-1.json`, and each repo's goldens in its `CLAUDE.md`)
+  without a commit naming it and its before and after.
+
+A repo over `branchesPerRepo` (`.claude/workflow.json`) is reported, and its merged branches are deleted.
 
 ## The merge
 

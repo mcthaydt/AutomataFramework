@@ -32,7 +32,7 @@ test('the repo as it should be has no problems', () => {
 describe('each rule fails when broken', () => {
   test('the start-up pages over the limit', () => {
     expect(check({ 'docs/rules.md': 'line\n'.repeat(MAX_START_LINES) })).toEqual([
-      expect.stringContaining('keep them under 200'),
+      expect.stringContaining(`keep them under ${MAX_START_LINES}`),
     ])
   })
 

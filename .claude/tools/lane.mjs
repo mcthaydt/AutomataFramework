@@ -12,7 +12,9 @@
 //               quoted and a before-and-after note after
 //   closed      a release, a migration, a new dependency: never opens without the Owner
 //
-// It prints the lane on the first line and one reason per line after it. The paths cover every repo of the project.
+// It prints the lane on the first line, one reason per line after it, and last `audit: needed` or `audit: not
+// needed`: risk, not task count, calls for an implementation audit (docs/rules.md, "How to work"), so wide and closed
+// changes get one and contained and standing ones don't. The paths cover every repo of the project.
 // `laneOf` is exported for tests/agent/lane.test.ts. No dependencies, on purpose: it runs with Node alone.
 import { execFileSync } from 'node:child_process'
 import { resolve } from 'node:path'
@@ -100,10 +102,10 @@ export function laneOf(changes, packages = null) {
   const folders = changes.map(({ file }) => /^src\/features\/([^/]+)\//.exec(file)?.[1])
   const features = new Set(folders.filter(Boolean))
   if (features.size > 1) wide.push(`${features.size} feature folders: ${[...features].join(', ')}`)
-  if (closed.length > 0) return { lane: 'closed', reasons: [...closed, ...standing] }
-  if (standing.length > 0) return { lane: 'standing', reasons: standing }
-  if (wide.length > 0) return { lane: 'wide', reasons: wide }
-  return { lane: 'contained', reasons: ['docs, tests or one feature folder only'] }
+  if (closed.length > 0) return { lane: 'closed', reasons: [...closed, ...standing], audit: true }
+  if (standing.length > 0) return { lane: 'standing', reasons: standing, audit: wide.length > 0 }
+  if (wide.length > 0) return { lane: 'wide', reasons: wide, audit: true }
+  return { lane: 'contained', reasons: ['docs, tests or one feature folder only'], audit: false }
 }
 
 function git(args) {
@@ -135,6 +137,7 @@ function main(args) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const { lane, reasons } = main(process.argv.slice(2))
-  process.stdout.write(`${lane}\n${reasons.map((reason) => `- ${reason}`).join('\n')}\n`)
+  const { lane, reasons, audit } = main(process.argv.slice(2))
+  const lines = [lane, ...reasons.map((reason) => `- ${reason}`), `audit: ${audit ? 'needed' : 'not needed'}`]
+  process.stdout.write(`${lines.join('\n')}\n`)
 }

@@ -11,18 +11,33 @@ import { hasCredit } from './git.mjs'
 /** What to do instead of forcing a push. */
 const REPLACE = 'Push a new branch and open a replacement pull request instead.'
 
+/** What to do instead of a whole suite locally. */
+const TARGET = 'Name the test file or folder to run it here, or push and wait for CI.'
+
 /** What to do when a fix needs a file outside its scope. */
 const NEW_FINDING =
   'A fix that needs it is a new finding: add it and start it on its own, or end this one with scope.mjs done.'
 
-/** Commands that run tests or checks: those run only in GitHub-hosted CI. */
-const LOCAL_CHECKS = [
-  /^(npx |pnpm (exec |dlx )?|bunx )?(vitest|svelte-check|knip|tsc)(\s|$)/,
+/** Commands that run a test suite. Locally they must name what they test; a whole suite runs in GitHub-hosted CI. */
+const TEST_RUNNERS = [
+  /^(npx |pnpm (exec |dlx )?|bunx )?vitest(\s|$)/,
   /^(npx |pnpm (exec |dlx )?)?playwright test(\s|$)/,
-  /^pnpm (run )?(test[\w:-]*|typecheck|lint|knip|check)(\s|$)/,
+  /^pnpm (run )?test[\w:-]*(\s|$)/,
   /^npm (run )?test(\s|$)/,
-  /^node --run (test[\w:-]*|typecheck|lint|knip|check)(\s|$)/,
+  /^node --run test[\w:-]*(\s|$)/,
 ]
+
+/** Commands that run every check at once: always CI's job. */
+const WHOLE_CHECKS = [/^pnpm (run )?check(\s|$)/, /^node --run check(\s|$)/]
+
+/** Whether a test command names a test file or folder, so it runs only what it names. */
+const targeted = (command) => command.split(/\s+/).some((word) => /\/|\.(test|spec)\./.test(word))
+
+/** Whether a command runs a whole suite: a test runner that names no test, or every check at once. */
+function wholeSuite(command) {
+  if (WHOLE_CHECKS.some((pattern) => pattern.test(command))) return true
+  return TEST_RUNNERS.some((pattern) => pattern.test(command)) && !targeted(command)
+}
 
 /**
  * A shell command line cut into the commands it runs, each without its leading `NAME=value` settings. Heredoc bodies
@@ -79,8 +94,8 @@ export function judge({ tool_name: name = '', tool_input: input = {}, cwd = proc
   if (name === 'Bash') {
     for (const command of commands(input.command ?? '')) {
       if (forcesPush(command)) return `Never force-push (docs/rules.md). ${REPLACE}`
-      if (LOCAL_CHECKS.some((pattern) => pattern.test(command))) {
-        return `Tests and checks run only in GitHub-hosted CI (docs/rules.md): \`${command}\`. Push and wait.`
+      if (wholeSuite(command)) {
+        return `Whole suites run in GitHub-hosted CI (docs/rules.md): \`${command}\`. ${TARGET}`
       }
     }
   }

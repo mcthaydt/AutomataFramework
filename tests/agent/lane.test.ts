@@ -46,14 +46,24 @@ test('shared code, setup and two feature folders are wide', () => {
 test("a golden that moves and a deletion are in the Owner's standing yes; a new golden is not", () => {
   expect(lane({ 'tests/golden/run.json': '{ "hash": 2 }\n' })[0]).toBe('standing')
   const deleted = lane({ 'src/features/level/load.ts': null })
-  expect(deleted).toEqual(['standing', '- src/features/level/load.ts: deleted'])
+  expect(deleted).toEqual(['standing', '- src/features/level/load.ts: deleted', 'audit: not needed'])
   expect(lane({ 'tests/golden/new.json': '{ "hash": 3 }\n' })[0]).toBe('contained')
   expect(lane({ 'docs/superpowers/old.md': null })[0]).toBe('contained')
 })
 
 test('a new dependency or a release file is closed, and closed wins over the standing yes', () => {
   const added = '{ "dependencies": { "pixi.js": "8.0.0", "lodash": "4.0.0" } }\n'
-  expect(lane({ 'package.json': added })).toEqual(['closed', '- lodash: a new dependency'])
+  expect(lane({ 'package.json': added })).toEqual(['closed', '- lodash: a new dependency', 'audit: needed'])
   const both = lane({ 'package.json': added, 'src/features/level/load.ts': null })
-  expect(both).toEqual(['closed', '- lodash: a new dependency', '- src/features/level/load.ts: deleted'])
+  expect(both).toEqual([
+    'closed',
+    '- lodash: a new dependency',
+    '- src/features/level/load.ts: deleted',
+    'audit: needed',
+  ])
+})
+
+test('risk, not task count, calls for an audit: wide and closed need one, contained does not', () => {
+  expect(lane({ 'README.md': 'New words.\n' }).at(-1)).toBe('audit: not needed')
+  expect(lane({ 'src/lib/zod.ts': 'export const z = 1\n' }).at(-1)).toBe('audit: needed')
 })

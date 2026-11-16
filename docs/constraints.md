@@ -1,12 +1,12 @@
 # Constraints
 
-The learning edge of the work graph (`docs/rules.md`, "How work runs"). When a result is accepted or a finding
-repeats, its cause becomes a constraint: a check if a program can see it, otherwise one line here. The plan and every
-review split read this page when they cut the work, and hand the lines that apply to each node's brief.
+Lessons become tests first (`docs/rules.md`, "Tests and goldens"): when a mistake repeats, its cause becomes a
+regression test or a check. Only a lesson no program can catch is one line here, which a plan and a review split read
+when they cut the work.
 
 One line each, newest last: the date, the rule, and why. A line carries the rule, never the output it came from. A
-line a program now checks is deleted, and the page stays under 40 lines (the `agent-rules` check holds it there), so
-prune the weakest line before adding one.
+line a program now checks is deleted, and the page stays under `constraintLines` (`.claude/workflow.json`, held by
+the `agent-rules` check), so prune the weakest line before adding one.
 
 - 2026-11-16: A claim that a test or picture shows something names the run or file that shows it; an unsourced claim
   is not a finding. (Reviews that agreed without evidence.)

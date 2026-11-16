@@ -1,8 +1,8 @@
 // The rules of docs/rules.md that a program can check about the repo's own words and agent setup. Run by the
 // `agent-rules` workflow on every pull request, with Node alone, so it holds on a docs-only change too.
 //
-//   - CLAUDE.md and docs/rules.md, which every session reads first, stay under 200 lines together, and CLAUDE.md
-//     imports the rules page. docs/constraints.md, the learning edge every split reads, stays under 40.
+//   - CLAUDE.md and docs/rules.md, which every session reads first, stay under `startLines` together, and CLAUDE.md
+//     imports the rules page. docs/constraints.md stays under `constraintLines` (both in .claude/workflow.json).
 //   - No rule, decision or skill names an effort above high (the hooks' code may, to refuse it).
 //   - Every skill under .claude/skills/ has the name of its folder and a description, which is how it loads.
 //   - Every hook command in .claude/settings.json names a file that exists.
@@ -14,11 +14,16 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
+/** The operating numbers of docs/rules.md, kept in one settings file rather than in the rules. */
+const SETTINGS: { startLines: number; constraintLines: number } = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../.claude/workflow.json', import.meta.url)), 'utf8'),
+)
+
 /** What every session reads first must stay short (the Owner, 2026-11-16). */
-export const MAX_START_LINES = 200
+export const MAX_START_LINES: number = SETTINGS.startLines
 
 /** The learning edge carries rules, not history, so it is pruned before it grows. */
-export const MAX_CONSTRAINT_LINES = 40
+export const MAX_CONSTRAINT_LINES: number = SETTINGS.constraintLines
 
 /** The SHA-256 of each private name, in lower case, its words joined by one space or by none. */
 export const PRIVATE_NAMES: readonly string[] = [

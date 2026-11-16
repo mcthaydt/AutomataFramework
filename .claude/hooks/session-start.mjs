@@ -46,6 +46,7 @@ for (const dir of clones) git(dir, ['config', '--local', 'core.hooksPath', hooks
 const lines = [
   `Git: commits are McThayDT's, and the git hooks are on in ${clones.length} clone(s).`,
   'First: turn on the caveman skill (/caveman) for notes and reports; code, docs and commits stay plain.',
-  'The shared rules are AutomataFramework docs/rules.md; workflow steps are skills in its .claude/skills/.',
+  'Keep working until there is something to approve: build, check, show the result (AutomataFramework docs/rules.md).',
+  'Spec, plan, audit and review sessions are only for big or risky work (.claude/skills/stage-workflow).',
 ]
 process.stdout.write(`${lines.join('\n')}\n`)

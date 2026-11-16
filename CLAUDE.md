@@ -17,8 +17,8 @@ the Owner's decisions (`docs/decisions.md`), the roadmap (`docs/roadmap.md`), ev
   changed, or the pull request has the `screenshots` label, and then in Chromium alone (`JOURNEY_ENGINES`, which
   `online` and `create-play` read; the full run plays all three); the packing and `create` jobs only when the command, the
   template, the skills or the install checks changed. `.pnpmfile.cjs` counts as build setup. The docs-only path never
-  covers the README or `docs/api/`, which tests read. The full run's 18 shards are `browsers (<engine> <n>/6)`, with
-  `engines (<engine>)` checks (the gate counts six each).
+  covers the README or `docs/api/`, which tests read. The full run's shards and `engines (<engine>)` gates are set in
+  `ci.yml`.
 - **Two kinds of skill.** `skills/` ships in the package, for agents making a game. `.claude/skills/` is for the
   sessions working on these repos, and never ships.
 
