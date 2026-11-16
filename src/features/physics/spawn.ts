@@ -1,6 +1,6 @@
 // Lifted from AutomataFrameworkFailed@ed8592e8: extensions/physics/src/features/2d/spawn-2d.ts
 import type { SpawnPart } from '../sim/sim.ts'
-import { Body, Collider, Joint, Transform } from './components.ts'
+import { Body, Collider, Joint, Mass, Transform } from './components.ts'
 import { type BodyKind, type ColliderOptions, colliderDefaults, JointKind, ShapeKind } from './kinds.ts'
 
 // Spawn helpers: component fields default to zero, which is a collider in no group, so
@@ -31,6 +31,14 @@ export function body(
 ): SpawnPart {
   const { linearDamping = 0, angularDamping = 0, vx = 0, vy = 0, angvel = 0, fixedRotation = false } = opts
   return [Body, { kind, linearDamping, angularDamping, vx, vy, angvel, fixedRotation }]
+}
+
+/**
+ * The spawn part that makes an entity weigh `kilos`: its collider's mass in Rapier. Only a sim made with
+ * `physics({ weights: true })` has the `Mass` component.
+ */
+export function mass(kilos: number): SpawnPart {
+  return [Mass, { kilos }]
 }
 
 /**

@@ -22,6 +22,12 @@ export function checkCollider(sid: number, component: string, shape: number, hx:
   if (!(hy > 0)) invalid(sid, component, 'hy', `is ${hy}; sizes must be positive`)
 }
 
+/** A weight must be a number above 0: Rapier would make a body of no mass move as if it were fixed. */
+export function checkMass(sid: number, component: string, kilos: number): void {
+  if (!(kilos > 0 && Number.isFinite(kilos)))
+    invalid(sid, component, 'kilos', `is ${kilos}; a weight must be above 0`)
+}
+
 /**
  * A joint's kind must be a `JointKind`, its two ends two different entities, every number a number, a rope's length
  * positive and a limited pin's `min` no more than its `max`. The sim's own fields refuse NaN and Infinity when they

@@ -77,3 +77,13 @@ export const Touching: ComponentDef<typeof touchingFields> = defineComponent(
   touchingFields,
   { render: false },
 )
+
+const massFields = { kilos: 'f32' } as const
+/**
+ * What the body weighs, in kilograms: its collider's mass in Rapier, in place of the mass its shape would have at
+ * Rapier's density of 1. Not drawn. Only a sim made with `physics({ weights: true })` has it, so a sim without it
+ * hashes as it did before weights existed.
+ */
+export const Mass: ComponentDef<typeof massFields> = defineComponent('physics.mass', massFields, {
+  render: false,
+})

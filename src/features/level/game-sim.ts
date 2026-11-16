@@ -22,6 +22,7 @@ import {
   usesSprites,
   usesSwitches,
   usesValues,
+  usesWeights,
 } from './uses.ts'
 import { wherePlugin } from './where.ts'
 
@@ -61,7 +62,7 @@ export function gameSimPlugins(options: GameSimOptions): readonly PluginDef[] {
   // The levels the sim holds: the opened level's place, or the opened level alone.
   const levels = levelsOf(content, opened)
   return [
-    physics({ gravity, joints: usesJoints(content), touching: moved }),
+    physics({ gravity, joints: usesJoints(content), touching: moved, weights: usesWeights(content) }),
     commandsPlugin,
     levelPlugin,
     // Only a game for two or more players can have people join and leave (see join.ts).

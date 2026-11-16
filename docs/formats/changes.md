@@ -8,6 +8,15 @@ hash: the `xxhash64` of the bytes of `schemas/<kind>.schema.json`, 16 hex digits
 when a schema changes, the newest entry of its kind must end with its new hash, so a format cannot change without a
 line here saying so.
 
+## 2026-11-16 · character · weight
+
+A character can now name a `weight`: one of its own `number` values, whose `least` is more than 0, that says how heavy
+each of its things is in kilograms. Its things then weigh that in play, so a heavier crate is harder to push. Only a
+`dynamic` body can have one. A character that names no weight is read, written, played and hashed as it was.
+
+**An older file needs:** nothing.
+**Schema:** `80ee15ef1d4dd6f3`
+
 ## 2026-11-15 · character · values, switch, opens and one-per-level
 
 A character can now list the `values` its things may hold: a number, a switch, a choice, words, a link to other things, a path or a way into a level. It can say it is a `switch` that opens the things a value links to, that it `opens` (a gate that things walk through while it is open), and that a level may hold only one thing of it (`one-per-level`). None of these has a default, so a character that says none of them is read, written and hashed as it was.
