@@ -35,19 +35,24 @@ describe('pushes', () => {
   })
 })
 
-describe('tests and checks run only in CI', () => {
+describe('locally, tests run only when named; whole suites run in CI', () => {
   test.each([
     'pnpm test:node',
-    'pnpm run typecheck',
-    'pnpm lint',
-    'cd x && npx vitest run tests/a.test.ts',
+    'pnpm test',
+    'pnpm check',
+    'cd x && npx vitest run',
     'CI=1 pnpm exec playwright test',
-    'node --run knip',
+    'node --run check',
   ])('`%s` is refused', (command) => {
     expect(bash(command)).toMatchObject(refusal('GitHub-hosted CI'))
   })
 
   test.each([
+    'pnpm exec vitest run tests/agent/guard.test.ts',
+    'pnpm test:node tests/features/level/',
+    'pnpm exec playwright test tests/journeys/play.spec.ts',
+    'pnpm typecheck',
+    'pnpm lint',
     'grep -n vitest package.json',
     'pnpm format',
     'git commit -F - <<EOF\nfix: pnpm test runs again\nEOF',

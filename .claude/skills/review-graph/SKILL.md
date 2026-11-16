@@ -1,11 +1,14 @@
 ---
 name: review-graph
-description: Use when work needs reviewing or a review's findings need fixing, code or visual. Runs independent find-only review lenses side by side, merges their findings with a script, then one scoped fix loop per finding (its files only, three tries, then report).
+description: Use when big or risky work needs reviewing (lane.mjs prints audit needed, or a mockup set), or a review's findings need fixing, code or visual. Runs independent find-only review lenses side by side, merges their findings with a script, then one scoped fix loop per finding (its files only, a capped number of tries, then report).
 ---
 
 # The review graph
 
-A review is a small graph. Each node is its own session with one job; only the arrows below carry anything.
+Small changes need no review sessions: the session that made one inspects it, fixes what it finds and rechecks, and
+its checks are the gate. A review runs for big or risky work, when
+`node .claude/tools/lane.mjs` prints `audit: needed` (wide or closed), and for every mockup set. A review is a small
+graph. Each node is its own session with one job; only the arrows below carry anything.
 
 ```
             ┌─ lens A (find only) ─┐
@@ -28,7 +31,8 @@ three lenses, each with:
 
 Usual lenses. Code: **matches the spec and plan** (complete, nothing extra, every task's check exists) and
 **correct and fits the codebase** (bugs, tests that can fail, patterns, the architecture rules). Visual: see the
-`visual-review` skill. A plan: one audit lens is enough under five tasks, so skip it.
+`visual-review` skill. A plan: one audit lens, and only when the plan touches a format, the public surface, the sim
+or a closed-lane file.
 
 ## 2. Lens (find only, Opus at medium effort)
 
@@ -58,6 +62,9 @@ reads only that file.
 
 ## 4. Fix loop (one session, Sonnet at high effort)
 
+No findings means no fix round: the review is done. Fixes land on the same pull request as the work they fix, which
+the lenses read as a branch; nothing merges in between.
+
 One finding at a time, highest first. For each:
 
 ```
@@ -71,26 +78,27 @@ failing test), fix, commit with the finding's id in the message, and `node .clau
 - A fix that needs a file outside the scope is a new finding: stop, add a row, and give it its own scope.
 - Push once all findings are done; CI is the gate. A red check sends back **only the finding it names**: `start` it
   again with the same id. The other findings stay as they are.
-- `start` refuses a fourth try. Report that finding as stuck to the coordinator, in this shape, and go on with the next:
+- `start` refuses a try past `fixTries` (`.claude/workflow.json`). Report that finding as stuck to the coordinator,
+  in this shape, and go on with the next:
 
 ```
 UNIT      A1
-VERDICT   stuck after 3 tries
+VERDICT   stuck after its tries
 REASON    the check that still fails
 EVIDENCE  expected / got, file:line
 SCOPE     the files it was given
 ```
 
-A stuck finding means the plan or spec is wrong, which the loop cannot see; the coordinator takes it to the plan's
-author, not to a fourth try. An `owner choice` finding goes to the Owner with options while the rest are fixed.
+A stuck finding calls for reassessment, not another try: the coordinator looks again at the finding, the fix, the
+plan and the spec. Repeated failure doesn't say which of them is wrong. An `owner choice` finding goes to the Owner with options while the rest are fixed.
 
-## 5. Learning edge
+## 5. Lessons become tests
 
-When a fix confirms a cause, or the same finding comes back from a second round, turn the cause into a constraint
-before closing the finding:
+When a fix confirms a cause, or the same finding comes back from a second round, turn the cause into a regression
+test before closing the finding:
 
-- if a program can see it, the check stays (a test, a rule in `tests/architecture/rules.ts`, a guard hook, a CI step);
-- otherwise add one line to `docs/constraints.md`: the date, the rule, and why. It carries the rule, not the output.
-  Every later split hands it to the nodes it applies to. Keep the page short: a line a program now checks goes.
+- first a program: a test, a rule in `tests/architecture/rules.ts`, a guard hook, a CI step;
+- only if no program can see it, one line in `docs/constraints.md`: the date, the rule, and why. Keep the page short:
+  a line a program now checks goes. A new rule in `docs/rules.md` is the last resort.
 
 A verdict that does not change what runs next is only a report.

@@ -2,7 +2,7 @@
 // Holds a session to one finding's (or one task's) files, and counts its tries: the fix loop of the review graph
 // (.claude/skills/review-graph/SKILL.md). The state is `.claude/scope.json` at the top of the repo, which git ignores.
 //
-//   node .claude/tools/scope.mjs start <id> <file or glob>...   name the files and count a try (a fourth is refused)
+//   node .claude/tools/scope.mjs start <id> <file or glob>...   name the files and count a try (one past fixTries is refused)
 //   node .claude/tools/scope.mjs done                            end the active one (its tries are kept)
 //   node .claude/tools/scope.mjs check                           fail if a file outside the scope changed since start
 //   node .claude/tools/scope.mjs show                            print the state
@@ -15,8 +15,11 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-/** A unit that fails three corrections has a problem in the plan that made it, which the loop cannot see. */
-export const MAX_TRIES = 3
+/** The operating numbers of docs/rules.md (.claude/workflow.json), read beside this file. */
+const SETTINGS = JSON.parse(readFileSync(new URL('../workflow.json', import.meta.url), 'utf8'))
+
+/** A unit still failing after its tries calls for a fresh look at the approach, not another try. */
+export const MAX_TRIES = SETTINGS.fixTries
 
 /** Files any active scope may change: its state, the tracker, the reports and the constraints (the learning edge). */
 export const ALWAYS = [
@@ -56,7 +59,7 @@ function writeState(root, state) {
 }
 
 /** What a stuck report holds (the shape is in the review graph skill). */
-const STUCK = 'unit, verdict, reason, evidence, scope. The plan needs a look, not a fourth try.'
+const STUCK = 'unit, verdict, reason, evidence, scope. The approach needs a fresh look, not another try.'
 
 /** A glob as a regular expression: `**` crosses folders, `*` and `?` stay inside one. */
 export function globToRegExp(glob) {

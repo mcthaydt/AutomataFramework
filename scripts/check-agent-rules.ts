@@ -1,12 +1,15 @@
 // The rules of docs/rules.md that a program can check about the repo's own words and agent setup. Run by the
 // `agent-rules` workflow on every pull request, with Node alone, so it holds on a docs-only change too.
 //
-//   - CLAUDE.md and docs/rules.md, which every session reads first, stay under 200 lines together, and CLAUDE.md
-//     imports the rules page. docs/constraints.md, the learning edge every split reads, stays under 40.
+//   - CLAUDE.md and docs/rules.md, which every session reads first, stay under `startLines` together, and CLAUDE.md
+//     imports the rules page. docs/constraints.md stays under `constraintLines` (both in .claude/workflow.json).
 //   - No rule, decision or skill names an effort above high (the hooks' code may, to refuse it).
 //   - Every skill under .claude/skills/ has the name of its folder and a description, which is how it loads.
 //   - Every hook command in .claude/settings.json names a file that exists.
 //   - No tracked file names a real demo game. They are private; the names are kept here only as hashes.
+//   - No editor slice (slice 3 on, in docs/roadmap.md) closes, and no later slice starts, before its design review
+//     loop has passed: docs/superpowers/audits/<date>-slice-<n>-design-review.md with a `Scope:` line
+//     (what the loop covered) and the line `Recheck: passed`.
 //
 // This file has no dependencies on purpose. `problems` is exported for tests/scripts/check-agent-rules.test.ts.
 import { execFileSync } from 'node:child_process'
@@ -14,11 +17,16 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
+/** The operating numbers of docs/rules.md, kept in one settings file rather than in the rules. */
+const SETTINGS: { startLines: number; constraintLines: number } = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../.claude/workflow.json', import.meta.url)), 'utf8'),
+)
+
 /** What every session reads first must stay short (the Owner, 2026-11-16). */
-export const MAX_START_LINES = 200
+export const MAX_START_LINES: number = SETTINGS.startLines
 
 /** The learning edge carries rules, not history, so it is pruned before it grows. */
-export const MAX_CONSTRAINT_LINES = 40
+export const MAX_CONSTRAINT_LINES: number = SETTINGS.constraintLines
 
 /** The SHA-256 of each private name, in lower case, its words joined by one space or by none. */
 export const PRIVATE_NAMES: readonly string[] = [
@@ -51,6 +59,45 @@ function frontMatter(text: string): Record<string, string> {
   const pairs = block.split('\n').map((line) => /^(\w+):\s*(.*)$/.exec(line))
   const found = pairs.filter((pair) => pair !== null)
   return Object.fromEntries(found.map((pair) => [pair[1] ?? '', pair[2] ?? '']))
+}
+
+/** The first slice that is an editor slice; the design review gate (the Owner, 2026-11-16) starts there. */
+export const FIRST_EDITOR_SLICE = 3
+
+/** A roadmap slice: its number and how far its numbered steps have got. */
+interface Slice {
+  n: number
+  started: boolean
+  done: boolean
+}
+
+/** The slices of docs/roadmap.md: a slice has started when a step is `Now:`, and is done when every step is `Done:`. */
+export function slicesOf(roadmap: string): Slice[] {
+  const parts = roadmap.split(/^## Slice (\d+):.*$/m)
+  const slices: Slice[] = []
+  for (let i = 1; i < parts.length; i += 2) {
+    const steps = (parts[i + 1] ?? '').split(/^(?:---|# )/m)[0]?.match(/^\d+\. \w+:/gm) ?? []
+    slices.push({
+      n: Number(parts[i]),
+      started: steps.some((step) => / Now:$/.test(step)),
+      done: steps.length > 0 && steps.every((step) => / Done:$/.test(step)),
+    })
+  }
+  return slices
+}
+
+/** The editor slices that closed, or let a later slice start, without a passed design review loop. */
+export function unreviewedSlices(files: readonly string[], read: Read): number[] {
+  const slices = slicesOf(read('docs/roadmap.md') ?? '')
+  const passed = (n: number): boolean =>
+    files
+      .filter((f) => new RegExp(`^docs/superpowers/audits/[\\w-]*slice-${n}-design-review\\.md$`).test(f))
+      .some((f) => /^Scope: \S.*$/m.test(read(f) ?? '') && /^Recheck: passed\s*$/m.test(read(f) ?? ''))
+  return slices
+    .filter((slice) => slice.n >= FIRST_EDITOR_SLICE)
+    .filter((slice) => slice.done || slices.some((later) => later.n > slice.n && later.started))
+    .map((slice) => slice.n)
+    .filter((n) => !passed(n))
 }
 
 /** Every problem with the repo's files, as plain sentences. `files` is every tracked path. */
@@ -95,6 +142,13 @@ export function problems(
         found.push(`.claude/settings.json runs ${path}, which is missing.`)
       }
     }
+  }
+
+  for (const n of unreviewedSlices(files, read)) {
+    found.push(
+      `Slice ${n} is closed or the next one has started, but its design review loop has not passed: ` +
+        `add docs/superpowers/audits/<date>-slice-${n}-design-review.md with a \`Scope:\` line and the line \`Recheck: passed\`.`,
+    )
   }
 
   for (const path of files) {

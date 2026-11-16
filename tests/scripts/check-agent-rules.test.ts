@@ -32,7 +32,7 @@ test('the repo as it should be has no problems', () => {
 describe('each rule fails when broken', () => {
   test('the start-up pages over the limit', () => {
     expect(check({ 'docs/rules.md': 'line\n'.repeat(MAX_START_LINES) })).toEqual([
-      expect.stringContaining('keep them under 200'),
+      expect.stringContaining(`keep them under ${MAX_START_LINES}`),
     ])
   })
 
@@ -68,4 +68,54 @@ describe('each rule fails when broken', () => {
     expect(namesPrivate('the moon-garden level', SECRET)).toBe(true)
     expect(namesPrivate('a garden on the moon', SECRET)).toBe(false)
   })
+})
+
+describe('an editor slice closes, and the next starts, only after its design review loop passes', () => {
+  const roadmap = (three: string, four: string) =>
+    `# Roadmap\n\n## Slice 2: Files\n\n1. Done: levels.\n\n## Slice 3: World\n\n${three}\n\n## Slice 4: Characters\n\n${four}\n`
+  const review = 'docs/superpowers/audits/2026-11-20-slice-3-design-review.md'
+
+  test('a slice still being built needs no review yet, and a later slice may have its spec done', () => {
+    expect(
+      check({
+        'docs/roadmap.md': roadmap(
+          '1. Done: mockups.\n2. Now: the editor.',
+          '1. Done: the spec.\n2. Next: the editor.',
+        ),
+      }),
+    ).toEqual([])
+  })
+
+  test('closing slice 3, or starting slice 4, without a passed review fails', () => {
+    const closed = check({
+      'docs/roadmap.md': roadmap(
+        '1. Done: mockups.\n2. Done: the editor.',
+        '1. Done: the spec.\n2. Next: the editor.',
+      ),
+    })
+    expect(closed).toEqual([expect.stringContaining('Slice 3 is closed')])
+    const started = check({ 'docs/roadmap.md': roadmap('1. Now: the editor.', '1. Now: the editor.') })
+    expect(started).toEqual([expect.stringContaining('slice-3-design-review.md')])
+    const unpassed = {
+      'docs/roadmap.md': roadmap('1. Done: the editor.', '1. Now: x.'),
+      [review]: 'Recheck: 2 left\n',
+    }
+    expect(check(unpassed)).toEqual([expect.stringContaining('Slice 3')])
+  })
+
+  test('a passed recheck lets slice 3 close and slice 4 start; slices before 3 need none', () => {
+    const files = {
+      'docs/roadmap.md': roadmap('1. Done: the editor.', '1. Now: the editor.'),
+      [review]: '# Review\n\nScope: drift check against approved mockups\n\nRecheck: passed\n',
+    }
+    expect(check(files)).toEqual([])
+  })
+})
+
+test('a design review record without its scope line does not pass the gate', () => {
+  const roadmap = '## Slice 3: World\n\n1. Done: the editor.\n'
+  const review = 'docs/superpowers/audits/2026-11-20-slice-3-design-review.md'
+  expect(check({ 'docs/roadmap.md': roadmap, [review]: 'Recheck: passed\n' })).toEqual([
+    expect.stringContaining('Scope:'),
+  ])
 })
