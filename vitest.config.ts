@@ -19,12 +19,7 @@ const node = {
     name: 'node',
     environment: 'node',
     include: ['tests/**/*.test.ts', 'template/tests/**/*.test.ts'],
-    exclude: [
-      '**/*.browser.test.ts',
-      '**/*.journey.test.ts',
-      'template/tests/play/**',
-      '**/node_modules/**',
-    ],
+    exclude: ['**/*.browser.test.ts', '**/*.journey.test.ts', 'template/tests/play/**', '**/node_modules/**'],
   },
 }
 

@@ -25,7 +25,9 @@ const ENGINES: readonly (readonly [string, BrowserType])[] = [
 ]
 
 interface PlayWindow {
-  automataGame?: { sim: { describeSnapshot(): { entities: { components: Record<string, { x?: number }> }[] } } }
+  automataGame?: {
+    sim: { describeSnapshot(): { entities: { components: Record<string, { x?: number }> }[] } }
+  }
 }
 
 /** The hero's x in tiles, read from the running game; NaN while there is none. */
@@ -60,7 +62,8 @@ async function play(page: Page): Promise<void> {
 }
 
 /** What a thumb is: a touch pointer, with its own number. */
-const finger = (id: number) => ({ pointerType: 'touch', pointerId: id, isPrimary: true, bubbles: true }) as const
+const finger = (id: number) =>
+  ({ pointerType: 'touch', pointerId: id, isPrimary: true, bubbles: true }) as const
 
 /** The middle of an element of the page. */
 async function middleOf(page: Page, selector: string): Promise<{ x: number; y: number }> {
@@ -133,7 +136,10 @@ for (const [engine, type] of ENGINES) {
             await toTheMenu(page, address)
             const outside = await page.evaluate(() =>
               [...document.querySelectorAll('#game button, #game canvas')]
-                .map((el) => ({ name: el.textContent?.trim() || el.tagName, box: el.getBoundingClientRect() }))
+                .map((el) => ({
+                  name: el.textContent?.trim() || el.tagName,
+                  box: el.getBoundingClientRect(),
+                }))
                 .filter(
                   ({ box }) =>
                     box.width > 0 &&

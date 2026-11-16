@@ -533,7 +533,10 @@ if (process.platform === 'linux') {
   const workflow = readFileSync(join(game, '.github', 'workflows', 'check.yml'), 'utf8')
   // The `play` job needs browsers, which a machine running `automata check` has no reason to have: its own job in the
   // game's CI, and Task 21's journey, play it. Here only the `check` job is run, and `check` must pass with no browser.
-  const checkJob = workflow.slice(0, workflow.includes('\n  play:') ? workflow.indexOf('\n  play:') : undefined)
+  const checkJob = workflow.slice(
+    0,
+    workflow.includes('\n  play:') ? workflow.indexOf('\n  play:') : undefined,
+  )
   if (!workflow.includes('npm run play-test')) fail("the game's workflow has no play job.", workflow)
   const lines = [...checkJob.matchAll(/^\s*- run: (.+)$/gm)].map((m) => m[1] ?? '')
   if (lines.length === 0) fail("the game's workflow has no `run:` line.", workflow)

@@ -19,7 +19,10 @@ function freePort(): Promise<number> {
 }
 
 /** Starts the built game and gives its address, and a way to stop it. */
-export async function serveBuilt(): Promise<{ readonly address: string; readonly stop: () => Promise<void> }> {
+export async function serveBuilt(): Promise<{
+  readonly address: string
+  readonly stop: () => Promise<void>
+}> {
   const port = await freePort()
   const server = await preview({
     logLevel: 'silent',
