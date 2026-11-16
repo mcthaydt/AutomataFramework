@@ -7,6 +7,9 @@ import type { Arrive } from '../level/level.ts'
 import { fitLabel, levelName } from '../locale/locale.ts'
 import { defineSave, latestSlot, type SaveDef, type SlotState } from '../saves/saves.ts'
 
+// The best score is kept beside the progress (a settings section, not in a saved game), so one file says what a visit keeps.
+export * from './records.ts'
+
 /** Where the player was last, and how they came into that level: through a door (`thing`) or an edge (`x`, `y`). */
 export interface Last {
   readonly level: string

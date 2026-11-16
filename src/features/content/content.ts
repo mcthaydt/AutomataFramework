@@ -108,6 +108,7 @@ export {
   type Project,
   ProjectSchema,
   parseProject,
+  scoreRef,
 } from './project.ts'
 export {
   emptyReadMarks,

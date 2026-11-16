@@ -1219,6 +1219,26 @@ const FactsCommand: CommandDef<z.ZodType<{
 function factsCommand(facts: readonly string[]): Command;
 ```
 
+### `FALL_DEPTH` (const)
+
+```ts
+const FALL_DEPTH = 2;
+```
+
+### `Fallen` (const)
+
+```ts
+const Fallen: ComponentDef<typeof fallenFields>;
+```
+
+### `fallPlugin` (function)
+
+```ts
+function fallPlugin(options: {
+    readonly bottom: number;
+}): PluginDef;
+```
+
 ### `FeelFile` (interface)
 
 ```ts
@@ -1237,6 +1257,12 @@ interface FeelFile {
 
 ```ts
 const FeelSchema: z.ZodType<FeelFile, FeelFile>;
+```
+
+### `fellEvent` (const)
+
+```ts
+const fellEvent: EventDef<typeof fellPayload>;
 ```
 
 ### `Felt` (interface)
@@ -1480,13 +1506,14 @@ interface FlowState {
     readonly door?: true;
     readonly warned: boolean;
     readonly taken: boolean;
+    readonly attempt: number;
 }
 ```
 
 ### `FlowStep` (type)
 
 ```ts
-type FlowStep = 'loading' | 'watching' | 'warnings' | 'picking' | 'splash' | 'menu' | 'playing' | 'paused' | 'done' | 'problem';
+type FlowStep = 'loading' | 'watching' | 'warnings' | 'picking' | 'splash' | 'menu' | 'playing' | 'paused' | 'done' | 'lost' | 'problem';
 ```
 
 ### `followLanguage` (function)
@@ -1662,6 +1689,12 @@ interface GameSimOptions {
 }
 ```
 
+### `gameSimPlugins` (function)
+
+```ts
+function gameSimPlugins(options: GameSimOptions): readonly PluginDef[];
+```
+
 ### `GameStep` (interface)
 
 ```ts
@@ -1704,6 +1737,15 @@ interface GroundPart extends TileBox {
 
 ```ts
 const HASH_EVERY = 60;
+```
+
+### `heardVolumes` (function)
+
+```ts
+function heardVolumes(settings: SoundSettings): {
+    readonly sound: number;
+    readonly music: number;
+};
 ```
 
 ### `HeroBox` (interface)
@@ -2243,6 +2285,12 @@ interface Level {
 
 ```ts
 function levelAt(levels: readonly SimLevel[], x: number, y: number): string | undefined;
+```
+
+### `levelBottom` (function)
+
+```ts
+function levelBottom(content: GameContent, level: string): number;
 ```
 
 ### `LevelEntered` (const)
@@ -3423,6 +3471,8 @@ interface Project {
     readonly source?: Language | undefined;
     readonly levels?: readonly string[] | undefined;
     readonly done?: string | undefined;
+    readonly lost?: string | undefined;
+    readonly score?: string | undefined;
     readonly warnings?: readonly string[] | undefined;
     readonly splash?: string | undefined;
     readonly content: readonly ContentRef[];
@@ -3916,6 +3966,15 @@ interface ScoreNote {
 
 ```ts
 function scoreOf(music: MusicFile): Score;
+```
+
+### `scoreRef` (function)
+
+```ts
+function scoreRef(project: Project): {
+    readonly resource: string;
+    readonly field: string;
+} | undefined;
 ```
 
 ### `Screen` (interface)
@@ -4525,6 +4584,7 @@ interface SoundSettings {
     readonly format: 1;
     readonly music: number;
     readonly sound: number;
+    readonly muted?: boolean | undefined;
 }
 ```
 
@@ -5173,6 +5233,12 @@ function unreadWords(content: GameContent, marks: ReadMarks | undefined): readon
     readonly language: Language;
     readonly key: string;
 }[];
+```
+
+### `usesFalls` (function)
+
+```ts
+function usesFalls(content: GameContent): boolean;
 ```
 
 ### `usesJoints` (function)
@@ -6531,6 +6597,26 @@ const FactsCommand: CommandDef<z.ZodType<{
 function factsCommand(facts: readonly string[]): Command;
 ```
 
+### `FALL_DEPTH` (const)
+
+```ts
+const FALL_DEPTH = 2;
+```
+
+### `Fallen` (const)
+
+```ts
+const Fallen: ComponentDef<typeof fallenFields>;
+```
+
+### `fallPlugin` (function)
+
+```ts
+function fallPlugin(options: {
+    readonly bottom: number;
+}): PluginDef;
+```
+
 ### `FeelFile` (interface)
 
 ```ts
@@ -6549,6 +6635,12 @@ interface FeelFile {
 
 ```ts
 const FeelSchema: z.ZodType<FeelFile, FeelFile>;
+```
+
+### `fellEvent` (const)
+
+```ts
+const fellEvent: EventDef<typeof fellPayload>;
 ```
 
 ### `Felt` (interface)
@@ -6809,6 +6901,12 @@ interface GameSimOptions {
 }
 ```
 
+### `gameSimPlugins` (function)
+
+```ts
+function gameSimPlugins(options: GameSimOptions): readonly PluginDef[];
+```
+
 ### `GroundBox` (interface)
 
 ```ts
@@ -6842,6 +6940,15 @@ interface GroundPart extends TileBox {
 
 ```ts
 const HASH_EVERY = 60;
+```
+
+### `heardVolumes` (function)
+
+```ts
+function heardVolumes(settings: SoundSettings): {
+    readonly sound: number;
+    readonly music: number;
+};
 ```
 
 ### `heroLevels` (function)
@@ -7202,6 +7309,12 @@ interface Level {
 
 ```ts
 function levelAt(levels: readonly SimLevel[], x: number, y: number): string | undefined;
+```
+
+### `levelBottom` (function)
+
+```ts
+function levelBottom(content: GameContent, level: string): number;
 ```
 
 ### `LevelEntered` (const)
@@ -8153,6 +8266,8 @@ interface Project {
     readonly source?: Language | undefined;
     readonly levels?: readonly string[] | undefined;
     readonly done?: string | undefined;
+    readonly lost?: string | undefined;
+    readonly score?: string | undefined;
     readonly warnings?: readonly string[] | undefined;
     readonly splash?: string | undefined;
     readonly content: readonly ContentRef[];
@@ -8511,6 +8626,15 @@ interface ScoreNote {
 
 ```ts
 function scoreOf(music: MusicFile): Score;
+```
+
+### `scoreRef` (function)
+
+```ts
+function scoreRef(project: Project): {
+    readonly resource: string;
+    readonly field: string;
+} | undefined;
 ```
 
 ### `Sense` (type)
@@ -8976,6 +9100,7 @@ interface SoundSettings {
     readonly format: 1;
     readonly music: number;
     readonly sound: number;
+    readonly muted?: boolean | undefined;
 }
 ```
 
@@ -9521,6 +9646,12 @@ function unreadWords(content: GameContent, marks: ReadMarks | undefined): readon
     readonly language: Language;
     readonly key: string;
 }[];
+```
+
+### `usesFalls` (function)
+
+```ts
+function usesFalls(content: GameContent): boolean;
 ```
 
 ### `usesJoints` (function)

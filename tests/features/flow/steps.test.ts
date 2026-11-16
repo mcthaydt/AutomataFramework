@@ -28,6 +28,7 @@ const at = (step: FlowStep, more: Partial<FlowState> = {}): FlowState => ({
   step,
   warned: false,
   taken: false,
+  attempt: 0,
   ...more,
 })
 
@@ -40,6 +41,8 @@ const done = { type: 'level-done' } as const
 const next = { type: 'next' } as const
 const leave = { type: 'leave' } as const
 const back = { type: 'back' } as const
+const lost = { type: 'level-lost' } as const
+const again = { type: 'again' } as const
 
 const STEPS: readonly FlowStep[] = [
   'loading',
@@ -51,11 +54,12 @@ const STEPS: readonly FlowStep[] = [
   'playing',
   'paused',
   'done',
+  'lost',
   'problem',
 ]
 
-test('the flow starts loading, with nothing warned and nothing taken over', () =>
-  expect(FLOW_START).toEqual({ step: 'loading', warned: false, taken: false }))
+test('the flow starts loading, with nothing warned, nothing taken over and nothing started', () =>
+  expect(FLOW_START).toEqual({ step: 'loading', warned: false, taken: false, attempt: 0 }))
 
 // The table, a row each.
 
@@ -65,7 +69,9 @@ test('loading, loaded not watching: the entry, here the splash', () =>
   expect(go(FLOW_START, loaded(false))).toEqual(at('splash')))
 
 test('watching, take-over: the entry with taken, here the level itself', () =>
-  expect(go(at('watching'), tap('take-over'))).toEqual(at('playing', { level: 'level-1', taken: true })))
+  expect(go(at('watching'), tap('take-over'))).toEqual(
+    at('playing', { level: 'level-1', taken: true, attempt: 1 }),
+  ))
 
 test('warnings, warned: the entry with warned, here the splash', () =>
   expect(go(at('warnings'), tap('warned'), { warnings: true })).toEqual(at('splash', { warned: true })))
@@ -76,7 +82,7 @@ test('picking, picked: the entry, here the splash', () =>
 test('splash, splash-over: the menu', () => expect(go(at('splash'), tap('splash-over'))).toEqual(at('menu')))
 
 test('menu, play: that level', () =>
-  expect(go(at('menu'), play('level-2'))).toEqual(at('playing', { level: 'level-2' })))
+  expect(go(at('menu'), play('level-2'))).toEqual(at('playing', { level: 'level-2', attempt: 1 })))
 
 test('menu or paused, open: the same step with a screen on top', () => {
   expect(go(at('menu'), open('settings'))).toEqual(at('menu', { over: 'settings' }))
@@ -91,7 +97,9 @@ test('menu or paused with a screen on top, back: the same step with none', () =>
 })
 
 test('menu with the saved games on top, play: that level, and the screen goes', () =>
-  expect(go(at('menu', { over: 'saves' }), play('level-2'))).toEqual(at('playing', { level: 'level-2' })))
+  expect(go(at('menu', { over: 'saves' }), play('level-2'))).toEqual(
+    at('playing', { level: 'level-2', attempt: 1 }),
+  ))
 
 test('playing, pause: paused, on the same level', () =>
   expect(go(at('playing', { level: 'level-1' }), tap('pause'))).toEqual(at('paused', { level: 'level-1' })))
@@ -110,7 +118,7 @@ test('playing, level-done: done, on the same level', () =>
 
 test('done, next with a next level: playing it', () =>
   expect(go(at('done', { level: 'level-1' }), next, { next: 'level-2' })).toEqual(
-    at('playing', { level: 'level-2' }),
+    at('playing', { level: 'level-2', attempt: 1 }),
   ))
 
 test('done, next with none after: the menu, and a taken-over visit is over', () =>
@@ -179,28 +187,30 @@ test('a watcher who takes over on a first visit: picker, then the level, never t
   expect(watching.step).toBe('watching')
   const taking = go(watching, tap('take-over'), { asked: false })
   expect(taking).toEqual(at('picking', { taken: true }))
-  expect(go(taking, tap('picked'))).toEqual(at('playing', { level: 'level-1', taken: true }))
+  expect(go(taking, tap('picked'))).toEqual(at('playing', { level: 'level-1', taken: true, attempt: 1 }))
 })
 
 test('a watcher who takes over on a later visit goes straight into the level', () =>
-  expect(walk([loaded(true), tap('take-over')])).toEqual(at('playing', { level: 'level-1', taken: true })))
+  expect(walk([loaded(true), tap('take-over')])).toEqual(
+    at('playing', { level: 'level-1', taken: true, attempt: 1 }),
+  ))
 
 test('the warnings show once a visit: leaving a level for the menu never shows them again', () => {
   const facts = { warnings: true }
   const visit = [loaded(false), tap('warned'), tap('splash-over'), play('level-1'), tap('pause'), leave]
   const menu = walk(visit, facts)
-  expect(menu).toEqual(at('menu', { warned: true }))
+  expect(menu).toEqual(at('menu', { warned: true, attempt: 1 }))
   // Taking a level and finishing it comes back to the menu with them still counted as shown.
-  expect(walk([play('level-1'), done, next], facts, menu)).toEqual(at('menu', { warned: true }))
+  expect(walk([play('level-1'), done, next], facts, menu)).toEqual(at('menu', { warned: true, attempt: 2 }))
 })
 
 test('a whole visit: menu, play, pause, resume, finish both levels, back to the menu', () => {
   const visit = [loaded(false), tap('splash-over'), play('level-1'), tap('pause'), tap('resume'), done]
   const first = walk(visit, { next: 'level-2' })
-  expect(first).toEqual(at('done', { level: 'level-1' }))
+  expect(first).toEqual(at('done', { level: 'level-1', attempt: 1 }))
   const second = go(first, next, { next: 'level-2' })
-  expect(second).toEqual(at('playing', { level: 'level-2' }))
-  expect(go(go(second, done), next)).toEqual(at('menu'))
+  expect(second).toEqual(at('playing', { level: 'level-2', attempt: 2 }))
+  expect(go(go(second, done), next)).toEqual(at('menu', { attempt: 2 }))
 })
 
 test('level-done while done, pause while a screen is on top, play while playing: the same object back', () => {
@@ -223,22 +233,27 @@ const door = (level: string, arrive?: { thing: string }): FlowEvent =>
 test('a door in playing opens the next level at once, beside the door, marked as a door, always a new state', () => {
   const playing = at('playing', { level: 'room-1' })
   const through = go(playing, door('room-2', { thing: 'door-in' }))
-  expect(through).toEqual(at('playing', { level: 'room-2', arrive: { thing: 'door-in' }, door: true }))
+  // A door is a fresh start too, so it counts one more attempt.
+  expect(through).toEqual(
+    at('playing', { level: 'room-2', arrive: { thing: 'door-in' }, door: true, attempt: 1 }),
+  )
   // The same door twice is still a new state each time, so the flow starts a level for each.
   expect(go(through, door('room-2', { thing: 'door-in' }))).not.toBe(through)
-  expect(go(playing, door('room-2'))).toEqual(at('playing', { level: 'room-2', door: true }))
+  expect(go(playing, door('room-2'))).toEqual(at('playing', { level: 'room-2', door: true, attempt: 1 }))
 })
 
 test('play with an arrive (Continue) comes in where the player left, and is no door', () => {
   const state = go(at('menu'), { type: 'play', level: 'room-3', arrive: { x: 3.5, y: 7.5 } })
-  expect(state).toEqual(at('playing', { level: 'room-3', arrive: { x: 3.5, y: 7.5 } }))
+  expect(state).toEqual(at('playing', { level: 'room-3', arrive: { x: 3.5, y: 7.5 }, attempt: 1 }))
   expect(state.door).toBeUndefined()
 })
 
 test('pause and resume keep where the heroes come in and the door', () => {
   const through = go(at('playing', { level: 'room-1' }), door('room-2', { thing: 'door-in' }))
   const paused = go(through, tap('pause'))
-  expect(paused).toEqual(at('paused', { level: 'room-2', arrive: { thing: 'door-in' }, door: true }))
+  expect(paused).toEqual(
+    at('paused', { level: 'room-2', arrive: { thing: 'door-in' }, door: true, attempt: 1 }),
+  )
   expect(go(paused, tap('resume'))).toEqual(through)
 })
 
@@ -249,5 +264,124 @@ test('a door in paused, the menu or done gives the very same state', () => {
 
 test('finishing a door level, then Next, carries no door and no arrive', () => {
   const through = go(at('playing', { level: 'room-1' }), door('room-2', { thing: 'door-in' }))
-  expect(go(go(through, done), next, { next: 'room-3' })).toEqual(at('playing', { level: 'room-3' }))
+  expect(go(go(through, done), next, { next: 'room-3' })).toEqual(
+    at('playing', { level: 'room-3', attempt: 2 }),
+  )
+})
+
+// Losing, starting again and asking how to play (plan Q, Task 3).
+
+const ROWS: readonly (readonly [string, FlowState, FlowEvent, FlowState])[] = [
+  [
+    'playing, level-lost: lost, the same level',
+    at('playing', { level: 'level-1', attempt: 1 }),
+    lost,
+    at('lost', { level: 'level-1', attempt: 1 }),
+  ],
+  [
+    'lost, again: playing the same level, one more attempt',
+    at('lost', { level: 'level-1', attempt: 1 }),
+    again,
+    at('playing', { level: 'level-1', attempt: 2 }),
+  ],
+  [
+    'lost, leave: the menu, and a taken-over visit is over',
+    at('lost', { level: 'level-1', attempt: 1, taken: true }),
+    leave,
+    at('menu', { attempt: 1 }),
+  ],
+  [
+    'paused, again: playing the same level, one more attempt',
+    at('paused', { level: 'level-1', attempt: 1 }),
+    again,
+    at('playing', { level: 'level-1', attempt: 2 }),
+  ],
+]
+
+test.each(ROWS)('%s', (_, from, event, expected) => expect(go(from, event)).toEqual(expected))
+
+test('paused with a screen on top, again: the very same object', () => {
+  const state = at('paused', { level: 'level-1', over: 'settings', attempt: 1 })
+  expect(go(state, again)).toBe(state)
+})
+
+test('menu or paused, open how: the same step with the screen on top', () => {
+  expect(go(at('menu'), open('how'))).toEqual(at('menu', { over: 'how' }))
+  const paused = at('paused', { level: 'level-1' })
+  expect(go(paused, open('how'))).toEqual({ ...paused, over: 'how' })
+})
+
+test.each(STEPS)("%s given level-lost, and given again: only the table's rows change anything", (step) => {
+  const state = at(step, { level: 'level-1' })
+  if (step === 'playing') expect(go(state, lost).step, 'level-lost').toBe('lost')
+  else expect(go(state, lost), 'level-lost').toBe(state)
+  if (step === 'lost' || step === 'paused') expect(go(state, again).step, 'again').toBe('playing')
+  else expect(go(state, again), 'again').toBe(state)
+})
+
+test('leave for the menu and play again: attempt keeps counting, it does not start over', () => {
+  const menu = walk([play('level-1'), tap('pause'), leave], {}, at('menu'))
+  expect(menu).toEqual(at('menu', { attempt: 1 }))
+  expect(go(menu, play('level-1')).attempt).toBe(2)
+})
+
+test('lose, try again, lose, try again, win: attempt is 1, 2, 3 and the step ends at done', () => {
+  const first = go(at('menu'), play('level-1'))
+  expect(first.attempt).toBe(1)
+  const second = go(go(first, lost), again)
+  expect(second.attempt).toBe(2)
+  const third = go(go(second, lost), again)
+  expect(third.attempt).toBe(3)
+  expect(go(third, done)).toEqual(at('done', { level: 'level-1', attempt: 3 }))
+})
+
+test('pause, Keep playing: attempt does not change', () => {
+  const playing = go(at('menu'), play('level-1'))
+  expect(go(go(playing, tap('pause')), tap('resume')).attempt).toBe(playing.attempt)
+})
+
+test('pause, Start again: attempt goes up and the step is playing', () => {
+  const paused = go(go(at('menu'), play('level-1')), tap('pause'))
+  expect(go(paused, again)).toEqual(at('playing', { level: 'level-1', attempt: 2 }))
+})
+
+test('level-lost while lost or done gives the very same object back', () => {
+  for (const step of ['lost', 'done'] as const) {
+    const state = at(step, { level: 'level-1' })
+    expect(go(state, lost), step).toBe(state)
+    expect(go(state, done), step).toBe(state)
+    expect(go(state, tap('pause')), step).toBe(state)
+  }
+})
+
+test('Next level and Continue each add one to attempt', () => {
+  expect(go(at('done', { level: 'level-1', attempt: 3 }), next, { next: 'level-2' }).attempt).toBe(4)
+  // Continue is Play on the level the saved game names.
+  expect(go(at('menu', { attempt: 3 }), play('level-2')).attempt).toBe(4)
+})
+
+test('menu, done, playing and every step before the menu given again: the very same object', () => {
+  for (const step of [
+    'loading',
+    'watching',
+    'warnings',
+    'picking',
+    'splash',
+    'menu',
+    'playing',
+    'done',
+  ] as const) {
+    const state = at(step, { level: 'level-1' })
+    expect(go(state, again), step).toBe(state)
+  }
+})
+
+test('lost keeps where the heroes came in, so Try again brings them in there and counts a fresh start', () => {
+  const through = go(at('playing', { level: 'room-1' }), door('room-2', { thing: 'door-in' }))
+  const fell = go(through, lost)
+  expect(fell).toEqual(at('lost', { level: 'room-2', arrive: { thing: 'door-in' }, attempt: 1 }))
+  // The level waits for a first press again, so it is no longer a door's mid-move opening.
+  expect(go(fell, again)).toEqual(
+    at('playing', { level: 'room-2', arrive: { thing: 'door-in' }, attempt: 2 }),
+  )
 })

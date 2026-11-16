@@ -4,16 +4,25 @@ import { physics } from '../physics/physics.ts'
 import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
 import type { Arrive } from './arrive.ts'
 import { placePlugin } from './entered.ts'
+import { fallPlugin, levelBottom } from './fall.ts'
 import { joinPlugin } from './join.ts'
 import { movesPlugin } from './moves.ts'
-import { levelsOf } from './place.ts'
+import { levelsOf, placeSize } from './place.ts'
 import { levelPlugin } from './plugin.ts'
 import { simContent } from './sim-content.ts'
 import { spawnPlace } from './spawn-place.ts'
 import { spritesPlugin } from './sprite.ts'
 import { openKinds, switchPlugin } from './switches.ts'
 import { touchPlugin } from './touch.ts'
-import { touchKinds, usesJoints, usesMoves, usesSprites, usesSwitches, usesValues } from './uses.ts'
+import {
+  touchKinds,
+  usesFalls,
+  usesJoints,
+  usesMoves,
+  usesSprites,
+  usesSwitches,
+  usesValues,
+} from './uses.ts'
 import { wherePlugin } from './where.ts'
 
 /** What `createGameSim` takes. Only the content is required. */
@@ -37,13 +46,12 @@ export interface GameSimOptions {
 }
 
 /**
- * The sim a game runs: physics, commands, the level plugin and the game's own plugins, with the level spawned, at
- * tick 0. The content goes into the sim, so it is part of `contentHash` and a replay knows if it changed, but not the
- * game's words or its sound, music and cue files (see `simContent`), so a replay does not notice what a game says or
- * sounds like. The level is spawned from the whole content. If the level cannot be spawned, the sim is disposed and the
- * `LevelError` is thrown.
+ * The framework's own plugins for this game, in the order a sim joins them, without the game's own: physics, commands,
+ * the level, then each of join, sprites, touch, moves, where, place, switches and fall for the game that asks for it.
+ * `createGameSim` joins exactly these and then `options.plugins`; a check that needs to know what a game's sim
+ * registers (its events and resources) reads it from here, so it never has a list of its own to keep in step.
  */
-export async function createGameSim(options: GameSimOptions): Promise<Sim> {
+export function gameSimPlugins(options: GameSimOptions): readonly PluginDef[] {
   const { content } = options
   const players = content.project.players ?? 1
   const kinds = touchKinds(content)
@@ -52,37 +60,54 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const opened = options.level ?? content.project.start
   // The levels the sim holds: the opened level's place, or the opened level alone.
   const levels = levelsOf(content, opened)
+  return [
+    physics({ gravity, joints: usesJoints(content), touching: moved }),
+    commandsPlugin,
+    levelPlugin,
+    // Only a game for two or more players can have people join and leave (see join.ts).
+    ...(players >= 2
+      ? [
+          joinPlugin({
+            level: opened,
+            max: players,
+            ...(options.arrive === undefined ? {} : { arrive: options.arrive }),
+          }),
+        ]
+      : []),
+    // Only a game with a figure or a camera has sprites, so every other game keeps the sim it had.
+    ...(usesSprites(content) ? [spritesPlugin] : []),
+    // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
+    ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
+    // Only a game whose hero has `moves` has the built-in hero, so every other game keeps the sim it had.
+    ...(moved ? [movesPlugin({ gravity })] : []),
+    // Only a game with a character that has `values`, a switch or a gate, or a place of joined levels, knows which levels it holds.
+    ...(usesValues(content) || usesSwitches(content) || levels.length > 1 ? [wherePlugin(levels)] : []),
+    // Only a place of two or more levels says which level a hero is in, and when one passes into another.
+    ...(levels.length > 1 ? [placePlugin()] : []),
+    // Only a game with a switch or a gate has the switch plugin (its components, events and the `facts` command).
+    ...(usesSwitches(content) ? [switchPlugin(openKinds(content))] : []),
+    // Only a game that says `lost = "hero.fell"` has the fall, so every other game keeps the sim it had. A fall is
+    // counted from the bottom of what the sim holds: a lone level's lowest row, or the bottom of a place's outline.
+    ...(usesFalls(content)
+      ? [fallPlugin({ bottom: levels.length > 1 ? placeSize(levels).h : levelBottom(content, opened) })]
+      : []),
+  ]
+}
+
+/**
+ * The sim a game runs: physics, commands, the level plugin and the game's own plugins, with the level spawned, at
+ * tick 0. The content goes into the sim, so it is part of `contentHash` and a replay knows if it changed, but not the
+ * game's words or its sound, music and cue files (see `simContent`), so a replay does not notice what a game says or
+ * sounds like. The level is spawned from the whole content. If the level cannot be spawned, the sim is disposed and the
+ * `LevelError` is thrown.
+ */
+export async function createGameSim(options: GameSimOptions): Promise<Sim> {
+  const { content } = options
+  const opened = options.level ?? content.project.start
   const sim = await createSim({
     seed: options.seed ?? 1,
     content: simContent(content),
-    plugins: [
-      physics({ gravity, joints: usesJoints(content), touching: moved }),
-      commandsPlugin,
-      levelPlugin,
-      // Only a game for two or more players can have people join and leave (see join.ts).
-      ...(players >= 2
-        ? [
-            joinPlugin({
-              level: opened,
-              max: players,
-              ...(options.arrive === undefined ? {} : { arrive: options.arrive }),
-            }),
-          ]
-        : []),
-      // Only a game with a figure or a camera has sprites, so every other game keeps the sim it had.
-      ...(usesSprites(content) ? [spritesPlugin] : []),
-      // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
-      ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
-      // Only a game whose hero has `moves` has the built-in hero, so every other game keeps the sim it had.
-      ...(moved ? [movesPlugin({ gravity })] : []),
-      // Only a game with a character that has `values`, a switch or a gate, or a place of joined levels, knows which levels it holds.
-      ...(usesValues(content) || usesSwitches(content) || levels.length > 1 ? [wherePlugin(levels)] : []),
-      // Only a place of two or more levels says which level a hero is in, and when one passes into another.
-      ...(levels.length > 1 ? [placePlugin()] : []),
-      // Only a game with a switch or a gate has the switch plugin (its components, events and the `facts` command).
-      ...(usesSwitches(content) ? [switchPlugin(openKinds(content))] : []),
-      ...(options.plugins ?? []),
-    ],
+    plugins: [...gameSimPlugins(options), ...(options.plugins ?? [])],
   })
   try {
     spawnPlace(sim, content, opened, options.players ?? [1], options.arrive)

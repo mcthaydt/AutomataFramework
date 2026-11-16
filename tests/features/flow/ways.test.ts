@@ -93,7 +93,7 @@ test('the game is held still before anything is awaited, and the door opens its 
   const content = await loadLinksGame()
   const fake = fakeGame()
   const order: string[] = []
-  let state: FlowState = { step: 'playing', level: 'room-2', warned: true, taken: false }
+  let state: FlowState = { step: 'playing', level: 'room-2', warned: true, taken: false, attempt: 0 }
   let starts = 0
   const dispatch = (event: FlowEvent): void => {
     const next = advance(state, event, FACTS)
