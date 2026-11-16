@@ -84,7 +84,12 @@ function playing(sim: Sim, ticks: number, held: (tick: number) => string[] | und
   for (let tick = 0; tick < ticks; tick++) {
     const now = held(tick)
     const commands: Command[] = now === undefined ? [] : [controlsCommand(sim.tick, 1, seq++, now)]
-    for (const event of sim.step(commands).events) if (!first.has(event.type)) first.set(event.type, tick)
+    for (const event of sim.step(commands).events) {
+      // The crate can touch the door too; the level is won by a hero, which has a player number.
+      const by = (event.payload as { player?: number } | undefined)?.player ?? 0
+      if (event.type === 'door.touched' && by === 0) continue
+      if (!first.has(event.type)) first.set(event.type, tick)
+    }
   }
   return first
 }
@@ -142,7 +147,8 @@ test('touching the door wins the level, and it is player 1 who touched it', asyn
     const now = script(tick)
     const commands: Command[] = now === undefined ? [] : [controlsCommand(sim.tick, 1, tick, now)]
     for (const event of sim.step(commands).events)
-      if (event.type === 'door.touched' && by === undefined) by = (event.payload as { player: number }).player
+      if (event.type === 'door.touched' && (event.payload as { player: number }).player > 0)
+        by ??= (event.payload as { player: number }).player
   }
   expect(by).toBe(1)
 })

@@ -50,7 +50,10 @@ async function record(): Promise<{
   for (let tick = 0; tick < TEMPLATE_TICKS; tick++) {
     for (const event of recorder.step(templatePlay(sim.tick)).events) {
       const player = (event.payload as { player?: number } | undefined)?.player
-      if (!said.has(event.type)) said.set(event.type, { tick, ...(player === undefined ? {} : { player }) })
+      // A touch of the door by a crate has no player; the door's touch that counts is a hero's.
+      const heroTouch = event.type !== 'door.touched' || (player ?? 0) > 0
+      if (heroTouch && !said.has(event.type))
+        said.set(event.type, { tick, ...(player === undefined ? {} : { player }) })
     }
   }
   return { sim, replay: recorder.replay(), said }
