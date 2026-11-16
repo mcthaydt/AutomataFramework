@@ -62,8 +62,9 @@ the end, not in the middle.
 - **Lanes follow what a mistake costs to undo, never the model's confidence.** `node .claude/tools/lane.mjs` picks the
   lane from the changed files: **contained** (docs, tests, one feature folder) merges on a green full run; **wide**
   (shared code, formats, the public surface, CI and setup, these rules) also needs `graphify_impact` and the affected
-  callers' tests; **closed** (a golden or recording that moves, a deletion, a release, a migration, a new dependency)
-  never opens without the Owner. The `merge-and-release` skill follows it.
+  callers' tests; **standing** (a test game's golden that moves, a deletion, as the plan calls for) merges on green
+  under the Owner's standing yes (2026-11-16); **closed** (a release, a migration, a new dependency, anything
+  unplanned) never opens without the Owner. The `merge-and-release` skill follows it.
 - **The Owner approves only finished results:** the finished mockup set, the finished slice on the site, and the
   closed lane. Nothing in between waits for the Owner.
 

@@ -7,8 +7,10 @@
 //   contained   docs, tests, one feature folder: a green full run merges it
 //   wide        shared code, formats, the public surface, CI and setup, the rules: also graphify_impact and the
 //               affected callers' tests
-//   closed      a golden or recording that moves, a deletion, a release, a migration, a new dependency: never
-//               opens without the Owner
+//   standing    a test game's golden or recording that moves, or a deletion: the Owner's standing yes
+//               (2026-11-16) covers it when the plan calls for it, so a green full run merges it, with that yes
+//               quoted and a before-and-after note after
+//   closed      a release, a migration, a new dependency: never opens without the Owner
 //
 // It prints the lane on the first line and one reason per line after it. The paths cover every repo of the project.
 // `laneOf` is exported for tests/agent/lane.test.ts. No dependencies, on purpose: it runs with Node alone.
@@ -17,16 +19,14 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { globToRegExp } from './scope.mjs'
 
+/**
+ * The test games' goldens and recordings. Moving one is a choice the Owner gave a standing yes to (2026-11-16):
+ * a revert brings it back, so it merges on green when the plan calls for it.
+ */
+const GOLDENS = ['tests/golden/**', 'template/replays/**', 'replays/**', '**/*.golden.*']
+
 /** Changing or removing one of these can't be taken back by a revert alone: the Owner sees it first. */
-const CLOSED = [
-  'tests/golden/**',
-  'template/replays/**',
-  'replays/**',
-  '**/*.golden.*',
-  '.changeset/**',
-  '.github/workflows/release.yml',
-  '**/migrations/**',
-]
+const CLOSED = ['.changeset/**', '.github/workflows/release.yml', '**/migrations/**']
 
 /** Many callers read these, so a mistake here travels far. */
 const WIDE = [
@@ -84,10 +84,12 @@ function dependencies(text) {
  */
 export function laneOf(changes, packages = null) {
   const closed = []
+  const standing = []
   const wide = []
   for (const { status, file } of changes) {
     if (matches(CLOSED, file) && status !== 'A') closed.push(`${file}: ${MOVES}`)
-    else if (status === 'D' && !matches(MAY_DELETE, file)) closed.push(`${file}: deleted`)
+    else if (matches(GOLDENS, file) && status !== 'A') standing.push(`${file}: ${MOVES}`)
+    else if (status === 'D' && !matches(MAY_DELETE, file)) standing.push(`${file}: deleted`)
     else if (matches(WIDE, file)) wide.push(`${file}: shared by many callers`)
   }
   if (packages) {
@@ -98,7 +100,8 @@ export function laneOf(changes, packages = null) {
   const folders = changes.map(({ file }) => /^src\/features\/([^/]+)\//.exec(file)?.[1])
   const features = new Set(folders.filter(Boolean))
   if (features.size > 1) wide.push(`${features.size} feature folders: ${[...features].join(', ')}`)
-  if (closed.length > 0) return { lane: 'closed', reasons: closed }
+  if (closed.length > 0) return { lane: 'closed', reasons: [...closed, ...standing] }
+  if (standing.length > 0) return { lane: 'standing', reasons: standing }
   if (wide.length > 0) return { lane: 'wide', reasons: wide }
   return { lane: 'contained', reasons: ['docs, tests or one feature folder only'] }
 }
