@@ -33,7 +33,8 @@ async function toMenu(host: TestHost, overrides: Record<string, string | undefin
   drive.frames.at(0)
   drive.run(SPLASH_MS + 200)
   await drive.shown('menu')
-  await drive.wait(en('automata.menu.play'))
+  // The menu's first button is Play, or Continue when a game was kept.
+  await expect.poll(() => drive.mount.querySelector('[data-screen="menu"] button') !== null).toBe(true)
 }
 
 const sim = () => {
