@@ -48,6 +48,7 @@ const WIDE = [
   '.claude/hooks/**',
   '.claude/tools/**',
   '.claude/settings.json',
+  '.claude/workflow.json',
   'scripts/**',
   'tests/fixtures/**',
   'package.json',
