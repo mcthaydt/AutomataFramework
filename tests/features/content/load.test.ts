@@ -284,7 +284,10 @@ test('a game written in Korean loads with no English file', async () =>
 // The template's project file with the lines that name how a level ends, which these tests add themselves.
 const plainFiles: Record<string, string> = {
   ...templateFiles,
-  'automata.toml': (templateFiles['automata.toml'] ?? '').replace(/^(players|levels|done|lost|score) = .*\n/gm, ''),
+  'automata.toml': (templateFiles['automata.toml'] ?? '').replace(
+    /^(players|levels|done|lost|score) = .*\n/gm,
+    '',
+  ),
 }
 
 const level2 = writeContent('level', {

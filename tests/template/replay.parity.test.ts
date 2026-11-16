@@ -39,7 +39,11 @@ async function fresh(): Promise<Sim> {
 }
 
 /** What the scripted play did: the sim after it, its recording, and the tick each event was first said, by name. */
-async function record(): Promise<{ sim: Sim; replay: Replay; said: Map<string, { tick: number; player?: number }> }> {
+async function record(): Promise<{
+  sim: Sim
+  replay: Replay
+  said: Map<string, { tick: number; player?: number }>
+}> {
   const sim = await fresh()
   const recorder = createRecorder(sim)
   const said = new Map<string, { tick: number; player?: number }>()

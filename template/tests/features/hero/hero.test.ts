@@ -77,12 +77,14 @@ test('touching the spark takes it, and the score counts it once', async () => {
   expect(sim.resource(Score).sparks).toBe(1)
 })
 
-/** What the level says while a play is held: the events by name, and the tick each was first said. */
-function playing(sim: Sim, ticks: number, script: (tick: number) => Command[]): Map<string, number> {
+/** What a play makes the sim say: the tick (counted from the play's first) each event was first said, by name. */
+function playing(sim: Sim, ticks: number, held: (tick: number) => string[] | undefined): Map<string, number> {
   const first = new Map<string, number>()
-  for (let i = 0; i < ticks; i++) {
-    const tick = sim.tick
-    for (const event of sim.step(script(tick)).events) if (!first.has(event.type)) first.set(event.type, tick)
+  let seq = 0
+  for (let tick = 0; tick < ticks; tick++) {
+    const now = held(tick)
+    const commands: Command[] = now === undefined ? [] : [controlsCommand(sim.tick, 1, seq++, now)]
+    for (const event of sim.step(commands).events) if (!first.has(event.type)) first.set(event.type, tick)
   }
   return first
 }
@@ -94,11 +96,11 @@ function playing(sim: Sim, ticks: number, script: (tick: number) => Command[]): 
  */
 const runAndJump =
   (jumpAt: number | undefined) =>
-  (tick: number): Command[] => {
-    if (tick === 0) return [controlsCommand(tick, 1, 0, ['right'])]
-    if (tick === jumpAt) return [controlsCommand(tick, 1, 1, ['jump', 'right'])]
-    if (tick === (jumpAt ?? 0) + 24) return [controlsCommand(tick, 1, 2, ['right'])]
-    return []
+  (tick: number): string[] | undefined => {
+    if (tick === 0) return ['right']
+    if (tick === jumpAt) return ['jump', 'right']
+    if (jumpAt !== undefined && tick === jumpAt + 24) return ['right']
+    return undefined
   }
 
 test('walking off the edge of the gap loses the level', async () => {
@@ -123,12 +125,7 @@ test('a crate pushed into the gap falls, loses nothing, and the door still wins 
   const pushed = await newGame((level) => {
     for (const thing of level.things) if (thing.id === 'crate-1') thing.x = 5.5
   })
-  const stop = (tick: number): Command[] =>
-    tick === 0
-      ? [controlsCommand(tick, 1, 0, ['right'])]
-      : tick === 45
-        ? [controlsCommand(tick, 1, 1, [])]
-        : []
+  const stop = (tick: number): string[] | undefined => (tick === 0 ? ['right'] : tick === 45 ? [] : undefined)
   expect(playing(pushed, 300, stop).has('hero.fell')).toBe(false)
   // Without a crate, the same jump still reaches the door.
   const empty = await newGame((level) => {
@@ -141,8 +138,10 @@ test('touching the door wins the level, and it is player 1 who touched it', asyn
   const sim = await newGame()
   let by: number | undefined
   const script = runAndJump(40)
-  for (let i = 0; i < 240; i++) {
-    for (const event of sim.step(script(sim.tick)).events)
+  for (let tick = 0; tick < 240; tick++) {
+    const now = script(tick)
+    const commands: Command[] = now === undefined ? [] : [controlsCommand(sim.tick, 1, tick, now)]
+    for (const event of sim.step(commands).events)
       if (event.type === 'door.touched' && by === undefined) by = (event.payload as { player: number }).player
   }
   expect(by).toBe(1)

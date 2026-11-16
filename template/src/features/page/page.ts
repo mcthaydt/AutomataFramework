@@ -24,18 +24,22 @@ export interface PageOptions {
 }
 
 /** Fetches `path` from beside the page; a file that is not there, or a web page in its place, is "no such file". */
-const fetchBeside = (base: URL) => async (path: string) => {
-  const response = await fetch(new URL(path, base))
-  if (!response.ok || (response.headers.get('content-type') ?? '').toLowerCase().startsWith('text/html'))
-    throw new Error(`${path}: no such file`)
-  return response.text()
-}
+const fetchBeside =
+  (base: URL) =>
+  async (path: string): Promise<string> => {
+    const response = await fetch(new URL(path, base))
+    if (!response.ok || (response.headers.get('content-type') ?? '').toLowerCase().startsWith('text/html'))
+      throw new Error(`${path}: no such file`)
+    return response.text()
+  }
 
-const fetchPictureBeside = (base: URL): ReadPicture => async (path) => {
-  const response = await fetch(new URL(path, base))
-  if (!response.ok) throw new Error(`${path}: no such file`)
-  return response.blob()
-}
+const fetchPictureBeside =
+  (base: URL): ReadPicture =>
+  async (path) => {
+    const response = await fetch(new URL(path, base))
+    if (!response.ok) throw new Error(`${path}: no such file`)
+    return response.blob()
+  }
 
 /** Starts the visit in `mount`. Never rejects: anything that goes wrong is words on the screen. */
 export function startPage(mount: HTMLElement, options: PageOptions = {}): Promise<Flow> {

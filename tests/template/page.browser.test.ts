@@ -89,7 +89,7 @@ const heroX = (flow: Flow): number => {
 test('a first visit walks the picker, the splash and the menu, and Play starts a level the hero walks in', async () => {
   await page.viewport(1280, 720)
   const { frames, flow } = await open()
-  expect(root.dataset.state).toBe('picking')
+  await shown('picking')
   await intoTheLevel(frames)
   run(frames, 30)
   const before = heroX(flow)
@@ -137,7 +137,9 @@ for (const [name, w, h] of SCREENS) {
     const { frames } = await open()
     await intoTheLevel(frames)
     // A finger on the screen brings up the thumbs, as it does for a player on a phone.
-    window.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }))
+    window.dispatchEvent(
+      new PointerEvent('pointerdown', { pointerId: 1, pointerType: 'touch', bubbles: true }),
+    )
     for (let i = 0; i < 30; i++) frames.advance(FRAME)
 
     const rect = (half: string): DOMRect => {
