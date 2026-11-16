@@ -80,6 +80,12 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
           .boolean()
           .optional()
           .describe('Rewrite content files the standard way, and fix style where safe.'),
+        ship: z
+          .boolean()
+          .optional()
+          .describe(
+            'Check what must be right before players get the game, and give the list a maker tries by hand.',
+          ),
       }),
       (input) =>
         command([
@@ -87,6 +93,7 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
           input.folder,
           ...(input.only === undefined ? [] : ['--only', input.only]),
           ...(input.fix === true ? ['--fix'] : []),
+          ...(input.ship === true ? ['--ship'] : []),
         ]),
     ),
     tool(

@@ -4,6 +4,7 @@ import { Effect } from 'effect'
 import { artStep } from './art.ts'
 import { filesStep } from './check-files.ts'
 import { rulesStep } from './check-rules.ts'
+import { BY_HAND, shipStep } from './check-ship.ts'
 import { isToolStep, toolStep } from './check-tools.ts'
 import { readGame } from './game-folder.ts'
 import type { CliError, Ports } from './ports.ts'
@@ -15,12 +16,18 @@ export function runCheck(options: {
   readonly folder: string
   readonly only?: StepName
   readonly fix?: boolean
+  /** Also the ship step, and the list a maker tries by hand. */
+  readonly ship?: boolean
 }): Effect.Effect<CheckReport, CliError, Ports> {
   return Effect.gen(function* () {
     const game = yield* readGame(options.folder)
     const steps: StepReport[] = []
     for (const step of STEP_NAMES) {
       if (options.only !== undefined && options.only !== step) continue
+      if (step === 'ship') {
+        if (options.ship === true) steps.push(yield* shipStep(game, steps))
+        continue
+      }
       if (step === 'files') steps.push(yield* filesStep(game, options.fix === true))
       else if (step === 'art') steps.push(yield* artStep(game))
       else if (step === 'rules') steps.push(yield* rulesStep(game))
@@ -32,6 +39,7 @@ export function runCheck(options: {
     return {
       ok: steps.every((s) => s.state === 'passed' || s.state === 'skipped'),
       steps,
+      ...(options.ship === true ? { byHand: BY_HAND } : {}),
       ...(unknown && game.codeError !== undefined ? { advice: game.codeError } : {}),
     }
   })

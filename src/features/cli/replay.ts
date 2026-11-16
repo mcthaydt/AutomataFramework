@@ -6,6 +6,7 @@ import { Effect } from 'effect'
 import type { Replay } from '../commands/commands.ts'
 import { formatDiagnostic, type GameContent } from '../content/content.ts'
 import type { PluginDef, Sim } from '../sim/sim.ts'
+import { saveMark } from './check-ship.ts'
 import type { GameFolder } from './game-folder.ts'
 import { readGame } from './game-folder.ts'
 import { CliError, Files, type FilesService, type GameCode, type Ports } from './ports.ts'
@@ -151,7 +152,11 @@ async function playOne(
 
     try {
       if (options.accept === true) {
-        const recorder = framework.createRecorder(sim, { meta: replay.meta })
+        // A game with a save of its own has the shape of it written into the recording, for `check --ship`.
+        const { rules } = ready.code
+        const save = 'save' in rules && rules.save !== undefined ? saveMark(framework, rules.save) : undefined
+        const meta = save === undefined ? replay.meta : { ...replay.meta, save }
+        const recorder = framework.createRecorder(sim, { meta })
         const at = commandsAt(replay)
         for (let i = 0; i < replay.ticks; i++) recorder.step(at(sim.tick))
         const again = recorder.replay()

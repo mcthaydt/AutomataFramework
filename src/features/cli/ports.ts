@@ -5,6 +5,7 @@
 import { Context, type Effect } from 'effect'
 import type * as Headless from '../../headless.ts'
 import type { Diagnostic } from '../content/content.ts'
+import type { SaveDef } from '../saves/saves.ts'
 import type { PluginDef } from '../sim/sim.ts'
 import type { GameState } from './state.ts'
 
@@ -62,7 +63,12 @@ export interface GameCode {
   readonly framework: typeof Headless
   /** `actions` is the game's own list of what a player can hold, when `src/headless.ts` exports one. */
   readonly rules:
-    | { readonly plugins: readonly PluginDef[]; readonly actions?: readonly string[] }
+    | {
+        readonly plugins: readonly PluginDef[]
+        readonly actions?: readonly string[]
+        /** The game's `gameSave`, when `src/headless.ts` exports one. */
+        readonly save?: SaveDef<unknown>
+      }
     | { readonly problem: Diagnostic }
 }
 

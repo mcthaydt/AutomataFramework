@@ -3,8 +3,23 @@
 import { type Diagnostic, formatDiagnostic } from '../content/content.ts'
 
 /** The steps of `automata check`, in the order they run. */
-export type StepName = 'files' | 'art' | 'rules' | 'lint' | 'types' | 'replays' | 'tests'
-export const STEP_NAMES: readonly StepName[] = ['files', 'art', 'rules', 'lint', 'types', 'replays', 'tests']
+export type StepName = 'files' | 'art' | 'rules' | 'lint' | 'types' | 'replays' | 'tests' | 'ship'
+/** `ship` is last, and runs only with `--ship`. */
+export const STEP_NAMES: readonly StepName[] = [
+  'files',
+  'art',
+  'rules',
+  'lint',
+  'types',
+  'replays',
+  'tests',
+  'ship',
+]
+
+/** A finding that is a note every day and a problem under `--ship`. */
+export interface ShipFinding extends Diagnostic {
+  readonly rule: 'words' | 'size' | 'small-words' | 'save'
+}
 
 export interface StepReport {
   readonly step: StepName
@@ -14,6 +29,8 @@ export interface StepReport {
   readonly problems: readonly Diagnostic[]
   /** True and worth saying, but nothing to fix. For a step that could not run, the first note is why. */
   readonly notes: readonly string[]
+  /** What `--ship` turns into problems: said as a note every other day. */
+  readonly ship?: readonly ShipFinding[]
   /** A tool's own last lines, for `lint`, `types` and `tests`. */
   readonly output?: string
 }
@@ -22,6 +39,8 @@ export interface CheckReport {
   /** True when nothing failed and nothing was left unknown. */
   readonly ok: boolean
   readonly steps: readonly StepReport[]
+  /** Under --ship: what only the game's makers can judge, in the order to try them. */
+  readonly byHand?: readonly string[]
   /** One last sentence for a person, such as what to run first when the game is not installed. */
   readonly advice?: string
 }
@@ -71,5 +90,9 @@ export function formatReport(report: CheckReport): string {
     endings.push(`${count(unknown.length, 'step', 'steps')} could not run: ${unknown.join(', ')}.`)
   if (endings.length === 0) endings.push('Everything passed.')
   if (report.advice !== undefined) endings.push(report.advice)
-  return [...report.steps.flatMap(stepLines), '', ...endings].join('\n')
+  const byHand =
+    report.byHand === undefined
+      ? []
+      : ['', 'Try these yourself:', ...report.byHand.map((line) => `  ${line}`)]
+  return [...report.steps.flatMap(stepLines), '', ...endings, ...byHand].join('\n')
 }

@@ -495,3 +495,9 @@ Where the levels sit on the world map: each level's top left corner, in whole ti
   ]
 }
 ```
+
+## Before you ship
+
+Run `npx --no automata check --ship`. For content it fails on a message that is not finished (empty, only its own key, or
+holding `TODO`, `FIXME`, `lorem`, `ipsum`, `xxx`, `placeholder` or `test` as a word), and on a picture under `content/`
+over 512 KB. Fix what it names, then work through the list it prints with the person.

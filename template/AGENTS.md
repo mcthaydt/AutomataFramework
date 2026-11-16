@@ -23,7 +23,7 @@ the skills below.
 Run them as `npx --no automata <command>`, which never fetches anything. A person types the `npm run` form.
 
 - `npx --no automata check` says whether the game is sound, step by step, with what to fix. `--only <step>` runs one
-  step, `--fix` puts content files in their standard form, `--json` prints the report as JSON.
+  step, `--fix` puts content files in their standard form, `--ship` also checks what players would meet, `--json` prints the report as JSON.
 - `npx --no automata replay` plays the recordings in `replays/` and says whether each ends where it did. `--accept`
   records them again.
 - `npx --no automata art` paints the pictures of the figures and backdrops. Run it after you change a figure, and commit the
@@ -59,3 +59,20 @@ Exit codes: 0 fine, 1 the game needs fixing, 2 the command could not do its work
 
 The framework ships four skills, in `node_modules/@automataframework/framework/skills/`:
 `automata` (read first), `automata-content`, `automata-rules` and `automata-api`.
+
+## Before you ship
+
+Run `npx --no automata check --ship` and fix what it names. Then work through the list it prints with the person:
+
+- In five seconds, is it clear what to do?
+- Can someone who has never seen it work out how to play, with nobody explaining?
+- Is there enough to do: a few minutes of play, or a reason to play again?
+- Does it get harder bit by bit?
+- Did you make the art, the music and the characters, or are you allowed to use them?
+- Are there any stand-in pictures, half-made menus, or spots that do something when tapped that nobody would guess?
+- Do the pictures and words look cared for, the same style on every screen?
+- Is color ever the only clue? Is sound ever the only clue?
+- Can luck make a level impossible? Does anything appear right on top of the player?
+- Play it for ten minutes on a real phone.
+- Play it with one hand, on bad Wi-Fi, after locking and unlocking the phone, and after many restarts.
+- Hand it to someone and say nothing. Is it still fun after 30 seconds?

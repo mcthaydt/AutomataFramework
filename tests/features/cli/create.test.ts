@@ -45,12 +45,17 @@ test('it writes every template file, the three under their real names', async ()
 })
 
 test('the new game passes the files and rules steps as it is', async () => {
-  const memory = await made(['my-game'])
+  // Its own rules are loaded, since a score is a resource they register.
+  const code: GameCode = { framework, rules: { plugins: gamePlugins } }
+  const memory = await made(['my-game'], withTemplate({}, code))
   for (const only of ['files', 'rules'] as const) {
     const check = runCheck({ folder: 'my-game', only })
     const report = await Effect.runPromise(Effect.provide(check, memory.layer))
     expect(report.steps[0]?.problems, only).toEqual([])
     expect(report.steps[0]?.state, only).toBe('passed')
+    expect(report.steps[0]?.ship ?? [], only).toEqual([])
+    const said = (report.steps[0]?.notes ?? []).filter((n) => /not finished/.test(n))
+    expect(said, only).toEqual([])
   }
 })
 

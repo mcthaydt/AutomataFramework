@@ -149,3 +149,31 @@ test.skipIf(process.platform === 'win32')('with none set the live Device says no
   expect(await deviceLanguages()).toEqual([])
   vi.unstubAllEnvs()
 })
+
+const SAVE_PROBLEM = {
+  problem: {
+    file: 'src/headless.ts',
+    path: '',
+    message:
+      'gameSave must be made with defineSave: export const gameSave = defineSave({ game, version, schema, slots }).',
+  },
+}
+
+test('a gameSave that is not a save definition is a problem at src/headless.ts', async () => {
+  expect(await rulesProblem('export const gamePlugins = []\nexport const gameSave = { game: 1 }\n')).toEqual(
+    SAVE_PROBLEM,
+  )
+})
+
+test('a gameSave made like defineSave comes with the rules', async () => {
+  const save = "{ game: 'g', version: 2, slots: 1, schema: { parse: (x) => x } }"
+  const made = await rulesProblem(`export const gamePlugins = []\nexport const gameSave = ${save}\n`)
+  expect(made).toMatchObject({
+    plugins: [],
+    save: { game: 'g', version: 2, slots: 1 },
+  })
+})
+
+test('a game with no gameSave has no save', async () => {
+  expect(await rulesProblem('export const gamePlugins = []\n')).toEqual({ plugins: [] })
+})

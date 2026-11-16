@@ -136,3 +136,13 @@ test('picture reads its words as levels, and takes --folder, --what-it-is and --
   })
   expect(parseArgs(['picture', '--check'])).toMatchObject({ problem: expect.stringContaining('--check') })
 })
+
+test('check takes --ship as a switch', () => {
+  expect(parseArgs(['check', 'game', '--ship'])).toEqual({
+    command: 'check',
+    folder: 'game',
+    flags: { ship: true },
+    lists: {},
+    rest: [],
+  })
+})

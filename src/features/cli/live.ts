@@ -12,6 +12,7 @@ import { Worker } from 'node:worker_threads'
 import { Effect, Layer } from 'effect'
 import type * as Headless from '../../headless.ts'
 import type { Diagnostic } from '../content/content.ts'
+import type { SaveDef } from '../saves/saves.ts'
 import type { PluginDef } from '../sim/sim.ts'
 import { commandAnswer } from './command-answer.ts'
 import {
@@ -206,6 +207,19 @@ const problemIn = (message: string): { readonly problem: Diagnostic } => ({
   problem: { file: 'src/headless.ts', path: '', message },
 })
 
+/** Whether a value is what `defineSave` makes: a game id, a version, a Zod schema and a number of slots. */
+function isSaveDef(value: unknown): value is SaveDef<unknown> {
+  const save = value as Partial<Record<keyof SaveDef<unknown>, unknown>> | null
+  return (
+    typeof save === 'object' &&
+    save !== null &&
+    typeof save.game === 'string' &&
+    typeof save.version === 'number' &&
+    typeof save.slots === 'number' &&
+    typeof (save.schema as { parse?: unknown } | null)?.parse === 'function'
+  )
+}
+
 /** The game's rules: `gamePlugins` from its own `src/headless.ts`, loaded as it is (Node runs TypeScript that only has types to take out). */
 async function loadRules(folder: string): Promise<GameCode['rules']> {
   const file = join(folder, 'src', 'headless.ts')
@@ -221,8 +235,14 @@ async function loadRules(folder: string): Promise<GameCode['rules']> {
   if (!Array.isArray(plugins))
     return problemIn("This file must export gamePlugins, the list of the game's plugins.")
   const actions = loaded.actions
+  const save = loaded.gameSave
+  if (save !== undefined && !isSaveDef(save))
+    return problemIn(
+      'gameSave must be made with defineSave: export const gameSave = defineSave({ game, version, schema, slots }).',
+    )
   return {
     plugins: plugins as readonly PluginDef[],
+    ...(save === undefined ? {} : { save }),
     // The list of what a player can hold, when the game keeps one: a play session refuses a name that is not on it.
     ...(Array.isArray(actions) && actions.every((name) => typeof name === 'string')
       ? { actions: actions as readonly string[] }
