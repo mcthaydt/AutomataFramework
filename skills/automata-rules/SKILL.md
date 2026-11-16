@@ -24,6 +24,8 @@ with no page, no clock and no files. Skill `automata` says why. Skill `automata-
 5. **A test** steps the sim and looks at the answer. Copy `tests/features/hero/hero.test.ts`.
 6. **Check, then the recording.** Run `npx --no automata check`. If the play changed on purpose, the replays step says the
    recording no longer ends where it did: run `npx --no automata replay --accept`, and say why it moved.
+7. **Before you ship**, run `npx --no automata check --ship`: fix what it names, then work through the list it prints with
+   the person.
 
 ## Answering an event
 

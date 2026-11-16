@@ -7,13 +7,15 @@ import { BY_HAND, saveMark } from '#src/features/cli/check-ship.ts'
 import { main } from '#src/features/cli/cli.ts'
 import type { GameCode } from '#src/features/cli/ports.ts'
 import type { CheckReport, StepReport } from '#src/features/cli/report.ts'
-import { writeContent } from '#src/features/content/content.ts'
+import { type Language, writeContent } from '#src/features/content/content.ts'
 import * as framework from '#src/headless.ts'
 import { gamePlugins } from '../../../template/src/headless.ts'
 import { smallGame, under } from '../../fixtures/cli/game.ts'
 import { type Memory, type MemoryOptions, memoryLayer } from '../../fixtures/cli/memory.ts'
 import { templateInMemory } from '../../fixtures/cli/template.ts'
 import { wordsGame } from '../../fixtures/cli/words.ts'
+
+const ALL_SIX: Language[] = ['zh', 'es', 'en', 'pt', 'ja', 'ko']
 
 /** The whole check with `--ship` on a game at `game/`, and its last step. */
 async function shipped(
@@ -51,7 +53,7 @@ test('check --ship on a new game passes and prints the list', async () => {
 })
 
 test('a TODO in a message is a note in check and a problem in --ship', async () => {
-  const files = { ...wordsGame('en', ['en']), 'content/messages/en.json': messages('TODO') }
+  const files = { ...wordsGame('en', ALL_SIX), 'content/messages/en.json': messages('TODO') }
   const { report, ship } = await shipped(files)
   expect(report.steps[0]?.notes).toContain('1 word is not finished. See them with automata check --ship.')
   expect(report.steps[0]?.state).toBe('passed')
@@ -175,7 +177,7 @@ test('a level with a goal line has no such note', async () => {
       'level.level-1.goal': 'Push the crate.',
     },
   })
-  const { ship } = await shipped({ ...wordsGame('en', ['en']), 'content/messages/en.json': goal })
+  const { ship } = await shipped({ ...wordsGame('en', ALL_SIX), 'content/messages/en.json': goal })
   expect(ship.notes).toEqual([])
 })
 
@@ -192,7 +194,7 @@ test('--only ship is not a step to pick', async () => {
 })
 
 test('--json carries ship findings and byHand', async () => {
-  const files = { ...wordsGame('en', ['en']), 'content/messages/en.json': messages('TODO') }
+  const files = { ...wordsGame('en', ALL_SIX), 'content/messages/en.json': messages('TODO') }
   const memory = memoryLayer(under('game', files))
   expect(await main(['check', 'game', '--ship', '--json'], memory.layer)).toBe(1)
   const report = JSON.parse(memory.out.join('\n')) as CheckReport

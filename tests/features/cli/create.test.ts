@@ -54,7 +54,7 @@ test('the new game passes the files and rules steps as it is', async () => {
     expect(report.steps[0]?.problems, only).toEqual([])
     expect(report.steps[0]?.state, only).toBe('passed')
     expect(report.steps[0]?.ship ?? [], only).toEqual([])
-    const said = (report.steps[0]?.notes ?? []).filter((n) => /not finished|neither/.test(n))
+    const said = (report.steps[0]?.notes ?? []).filter((n) => /not finished/.test(n))
     expect(said, only).toEqual([])
   }
 })

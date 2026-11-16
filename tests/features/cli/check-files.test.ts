@@ -19,6 +19,7 @@ import { readFiles, withSource } from '../../fixtures/content/kind.ts'
 import { fixtureFiles } from '../../fixtures/game/read.ts'
 
 const LEVEL = 'content/levels/level-1.json'
+const ALL_SIX: Language[] = ['zh', 'es', 'en', 'pt', 'ja', 'ko']
 
 /** The files step on a game in the folder `game/`, with some files replaced (or taken out, with `undefined`). */
 async function filesStep(
@@ -263,7 +264,7 @@ test('a game with no words says nothing about them', async () => {
 test('a message that is not finished is a note every day, with its finding kept in ship', async () => {
   const messages = { 'controls.jump': 'Jump', 'keeper.bye': 'Goodbye!', 'keeper.hello': 'TODO' }
   const { report } = await filesStep({
-    ...wordsGame('en', ['en']),
+    ...wordsGame('en', ALL_SIX),
     'content/messages/en.json': writeContent('messages', { format: 1, id: 'en', messages }),
   })
   const [step] = report.steps
