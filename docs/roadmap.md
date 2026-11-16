@@ -74,7 +74,7 @@ In order. Each line says who does it and where it stands today (2026-11-15).
 | # | Step | Who | Where it stands |
 |---|---|---|---|
 | 1 | Slices 0 to 2: a game plays in the browser, made from its files | Agents | Done |
-| 2 | Slice 3: World, the levels editor | Agents; the owner approves the mockups | **Now:** the owner reviews the shell and World mockups (Editors #64) |
+| 2 | Slice 3: World, the levels editor | Agents; the owner approves the mockups | **Now:** the mockups are approved (board v17, Editors #70); the design language, the framework's part (plan W) and the World editor's spec (Editors #74) |
 | 3 | Slices 4 to 8: Characters, Feel, Sound, Story, Screens | Agents; the owner approves each mockup | Later; specs and plans for 4 to 7 are done |
 | 4 | Release 1: the framework in full and the 2D test game, on npm | Agents get it ready; the owner gives the npm key and starts the release | Later |
 | 5 | Release 2: the 2D editors, in the browser on the site | Agents; the owner gives the Cloudflare and GitHub App settings and starts it | Later; the editors' first screen and sign-in exist from slice 1 |
@@ -116,15 +116,16 @@ whole gate.
 1. Done: the first rounds of mockups, the check against professional tools, the harsh reviews of the shell and World,
    what World takes from LDtk, the Apple Pencil review, the plain-words audit, the design pass, the end-to-end check
    and the second visual look (Editors #49, #51, #52, #57, closed and carried on in #64).
-2. **Now: the editor mockup, the shell and World's levels, until the owner says they are fine** (Editors #64, which
-   replaced #57, with the owner reviewing).
-3. Next: write down the editors' design language and patterns, so every editor after World reuses it (rule 7).
-4. Next: build in Automata what the levels editor needs. Level pictures on save, so an agent can see a level; a public
+2. Done: the editor mockup, the shell and World's levels, approved by the owner on 2026-11-16 (board v17, Editors #70,
+   which replaced #64).
+3. Now: write down the editors' design language and patterns, so every editor after World reuses it (rule 7).
+4. Now: build in Automata what the levels editor needs. Level pictures on save, so an agent can see a level; a public
    list of format changes; what a placed thing may hold (values and links); the world map of levels, with levels joined
    by doors and edge to edge as one seamless place (the spec's second version, #165, with the owner's answers of
    2026-11-15; it replaces part 1 of `specs/2026-11-15-rooms-and-storylets-amendment.md`).
-5. Next: build the editor: the shell (top bar, tools, panels, Help, Settings, tour, sign-in, Share) and World's
-   Levels part, open a level, change it on an iPad, save it into the game.
+5. Now: build the editor: the shell (top bar, tools, panels, Help, Settings, tour, sign-in, Share), World's Levels
+   part and the world map, open a level, change it on an iPad, save it into the game. Its spec is Editors #74; World's
+   Tiles and Scenes parts come after, each once its framework part is built (the owner, 2026-11-16).
 6. Next: test the editor, in real browsers at iPad, phone and computer sizes, with the journeys from the end-to-end
    check; green on main.
 7. Next: the website demo uses World: three levels with a door, for one or two players, and two levels joined on a
