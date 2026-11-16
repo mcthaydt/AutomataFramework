@@ -16,7 +16,7 @@ import {
   type EventDef,
   type PluginDef,
 } from '../sim/sim.ts'
-import { worldSize } from './tile-runs.ts'
+import { levelSize } from './tile-runs.ts'
 
 /** What `hero.fell` says: whose hero it was and which entity, as a move event does. */
 const fellPayload: z.ZodType<{ readonly player: number; readonly sid: number }> = z.object({
@@ -39,10 +39,10 @@ export const Fallen: ComponentDef<typeof fallenFields> = defineComponent('level.
   render: false,
 })
 
-/** How many tile rows the level has: its own `tiles`, or its scene's ground rows. 0 for a level the game lacks. */
+/** How many tile rows the level has. 0 for a level the game lacks. */
 export function levelBottom(content: GameContent, level: string): number {
   const found = content.levels[level]
-  return found === undefined ? 0 : worldSize(content, found).h
+  return found === undefined ? 0 : levelSize(found).h
 }
 
 /**
