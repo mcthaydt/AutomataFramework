@@ -27,9 +27,10 @@ across all five, then the Owner's approval, then a merge commit.
 
 - Repos: AutomataFramework, AutomataFrameworkEditors, AutomataFrameworkExamples, AutomataFrameworkSite and
   AutomataPrivate.
-- Files, in each repo: `CLAUDE.md`, `.claude/settings.json`, `.claude/after-compaction.md`,
-  `docs/superpowers/progress.md` (one new heading, see 3), `docs/superpowers/history.md`. In the four repos with CI also
-  `tests/workflows/compaction-hook.test.ts`. Nothing else, apart from this spec and its audits.
+- Files, in each repo: `CLAUDE.md`, `.claude/settings.json`, `.claude/after-compaction.md` and
+  `docs/superpowers/history.md`. In the four repos with CI also `tests/workflows/compaction-hook.test.ts`. Nothing
+  else, apart from this spec and its audits. `progress.md` is not edited: live state goes in files under
+  `docs/superpowers/live/` that sessions create and delete on their own branches.
 - Not the three skills: the reviewer's live state is a rule in `CLAUDE.md`, so `review/SKILL.md` stays as the
   slice-retro change leaves it. Not `template/` in AutomataFramework: see "Open product decisions".
 - No new tools, dependencies, environments or spend. The hook runs `cat` on a committed file and nothing else; it
@@ -56,7 +57,7 @@ Every edited paragraph is rewrapped to 120 columns. The new text is the same in 
 
 ### 1. The hook (all five repos)
 
-`.claude/settings.json`, new:
+`.claude/settings.json`, new, already in Biome's format (checked with `biome check`, the version in `biome.json`):
 
 ```json
 {
@@ -65,9 +66,7 @@ Every edited paragraph is rewrapped to 120 columns. The new text is the same in 
     "SessionStart": [
       {
         "matcher": "compact",
-        "hooks": [
-          { "type": "command", "command": "cat \"$CLAUDE_PROJECT_DIR/.claude/after-compaction.md\"" }
-        ]
+        "hooks": [{ "type": "command", "command": "cat \"$CLAUDE_PROJECT_DIR/.claude/after-compaction.md\"" }]
       }
     ]
   }
@@ -86,9 +85,10 @@ Your context was just compacted. Read this before you do anything else.
    another, CLAUDE.md and the skill win. The summary is someone's note about the rules, not the rules.
 2. Re-read CLAUDE.md and docs/superpowers/progress.md now, before your next step. Open the skill for the work you are
    in (review, release or visual-check).
-3. Your live state is in docs/superpowers/progress.md under "Live state": your task, your last commit, your next step
-   and your open decisions. An audit session keeps it at the top of its audit file. Where the summary and that block
-   differ, the block wins. If it is behind what you did, update it and commit it first.
+3. Your live state is in docs/superpowers/live/<your branch>.md, with "/" in the branch name written as "-" (the
+   branch is `git branch --show-current`): your task, your last commit, your next step and your open decisions. An
+   audit session keeps it at the top of its audit file. Where the summary and that file differ, the file wins. If it
+   is behind what you did, update it and commit it first.
 4. Do not carry this session into the next big job. A spec, a plan, a pull request's build and an audit each run in a
    fresh session. When your job is done, commit, report and stop.
 ```
@@ -98,12 +98,13 @@ Your context was just compacted. Read this before you do anything else.
 "How work goes", after the **Acceptance criteria come first.** bullet, three new bullets:
 
 > - **Live state in a file.** A session keeps its live state in a committed file, never only in its context: its current
->   task, its last commit, its next step and its open decisions. A session that writes keeps it under "Live state" in
->   `docs/superpowers/progress.md`, one block per session headed by its branch, and updates and commits it at each
->   milestone: the commit is read from `git rev-parse --short HEAD` and the time from `date`, never typed by hand. A
->   reviewer, which changes nothing but its audit file, keeps the same four lines at the top of that file and removes
->   them when the audit is done. A block is removed when its pull request merges, and its outcome moves to the
->   milestone's completed outcomes.
+>   task, its last commit, its next step and its open decisions. A session that writes keeps it in its own file,
+>   `docs/superpowers/live/<branch>.md` (the branch name with "/" written as "-"), so two sessions never touch the same
+>   file; it updates and commits that file at each milestone, reading the commit from `git rev-parse --short HEAD` and
+>   the time from `date`, never typing them. The pull request's last commit before the merge deletes the file, so it
+>   never reaches `main`; the outcome goes to the coordinator's report and `progress.md`, as before. A reviewer, which
+>   changes nothing but its audit file, keeps the same four lines at the top of that file and removes them when the
+>   audit is done. The coordinator keeps `progress.md` and needs no such file.
 > - **The rules file beats the summary.** A compaction summary is a note about the rules, not the rules. Where it and
 >   `CLAUDE.md` or a skill differ, `CLAUDE.md` and the skill win, and where it and the live state differ, the live state
 >   wins. A hook in `.claude/settings.json` says so after every compaction and sends the session back to `CLAUDE.md`
@@ -124,48 +125,31 @@ starts, with the owner (superpowers brainstorming); a plan session adds the plan
 (superpowers writing-plans)".
 
 The **Writing.** bullet: "The coordinator is the only writer of `progress.md` and `history.md` while active" gains
-"apart from each session's own block under 'Live state'".
+"apart from each session's own live-state file in `docs/superpowers/live/`".
 
 The **coordinator** bullet: "It talks with the owner, writes the spec, creates" becomes "It talks with the owner,
 creates", since "starts each stage's session" already covers the spec session.
 
-### 3. The live-state heading (all five repos)
-
-`docs/superpowers/progress.md` gains, after "Previews" and before "Material decisions", a heading and the block's shape:
-
-> ## Live state
->
-> One block per session that writes, removed when its pull request merges. The commit comes from
-> `git rev-parse --short HEAD` and the time from `date`.
->
-> ```
-> ### <branch>
-> - Task:
-> - Last commit:
-> - Next step:
-> - Open decisions: none
-> - Updated:
-> ```
-
-### 4. The check (Framework, Editors, Examples, Site)
+### 3. The check (Framework, Editors, Examples, Site)
 
 `tests/workflows/compaction-hook.test.ts`, written first and seen to fail before the files exist, the same text in each
-repo. It checks that:
+repo. It imports only `vitest` and Node's own modules, nothing from the repo, so the four copies are identical, and it
+passes that repo's Biome and knip. It checks that:
 
 1. `.claude/settings.json` parses, has exactly one `SessionStart` entry, its matcher is `compact`, and it holds one
    command hook.
 2. Run with `CLAUDE_PROJECT_DIR` set to the repo's root, that command exits 0 and prints exactly
    `.claude/after-compaction.md`.
 3. The reminder says "beats the summary" and names `CLAUDE.md`, `docs/superpowers/progress.md` and "fresh session".
-4. Each path the reminder names exists in the repo: `CLAUDE.md`, `docs/superpowers/progress.md`, `.claude/skills/`.
+4. Each path the reminder names exists in the repo: `CLAUDE.md`, `docs/superpowers/progress.md`, `.claude/skills/`
+   (`docs/superpowers/live/` is made by the sessions, so it is not required to exist).
 
 AutomataPrivate has no code, no tests and no CI, so it has no test file; its pull request shows the same four checks
 run by hand and the output (see the acceptance criteria).
 
-### 5. The history record (all five repos)
+### 4. The history record (all five repos)
 
-`docs/superpowers/history.md`, under "Rule changes", after the layout-sketch entry (or the slice-retro one if that
-has not merged), add:
+`docs/superpowers/history.md`, under "Rule changes", after the layout-sketch entry, add:
 
 > - 2026-11-16, the Owner: a reminder after compaction that the rules file beats the summary (a `SessionStart` hook
 >   with the matcher `compact`), live state in a file, and a fresh session per big job. Approved in the project thread
@@ -177,6 +161,7 @@ has not merged), add:
 1. `md5sum` over the five `.claude/settings.json` files gives one hash, and likewise over the five
    `.claude/after-compaction.md` files and the four `tests/workflows/compaction-hook.test.ts` files.
 2. Each repo's `CLAUDE.md` diff against `main` holds only the edits in 2, and no edited line is over 120 columns.
+   `.claude/settings.json` passes `biome check` in the four repos that run it.
 3. In each of the four repos with CI, the new test fails on `main` plus the test alone, and passes with the change.
 4. In AutomataPrivate, the pull request body shows `jq` on `.claude/settings.json` printing matcher `compact` and one
    command hook, and the command, run from the repo's root with `CLAUDE_PROJECT_DIR` set, printing the reminder
@@ -184,22 +169,23 @@ has not merged), add:
 5. In a real Claude Code session in this repo, `/compact` makes the reminder appear in the context (checked once, by
    asking the session what it was told after compaction), and a normal start and a resume print nothing from it. If the
    runtime cannot run a hook, the pull request says so and criterion 3 stands in for it.
-6. `docs/superpowers/progress.md` in each repo has the "Live state" heading and block shape.
+6. The "Live state in a file" bullet names `docs/superpowers/live/<branch>.md`, the reminder names the same path, and
+   no pull request edits `progress.md`.
 7. Each pull request's diff touches only the files in Boundaries.
 8. Every commit is authored and committed by McThayDT with no Claude credit; each pull request body ends with
    `Requested by **McThayDT**`; each merges with a merge commit after the Owner approves.
-9. CI is green on each pull request; nothing runs on the Owner's computer.
+9. CI is green on each pull request in the four repos with CI; AutomataPrivate has no CI, so criterion 4 stands in
+   for it there. Nothing runs on the Owner's computer.
 
 ## Plan
 
 1. Merge this spec with its plan audit on green. The audit is made by a fresh session the coordinator starts, never by
    the session that wrote this spec.
-2. Order. The edits touch `CLAUDE.md`, Settings-adjacent bullets and `history.md`, which the slice-retro pull requests
-   (AutomataFramework #202, Editors #99, Examples #67; Site #51 and Private #13 have merged) and the layout-sketch
-   change (spec #203, its Private pull request #14 and the four to come) also edit. Start the implementation only after
-   those have merged, branching each repo from that `main`. The `history.md` entry goes after theirs. If an owner's
-   decision changes the order, take whatever has merged and merge `main` in before the audit; a conflict in `CLAUDE.md`
-   is resolved by keeping both sides' edits.
+2. Order. The edits touch `CLAUDE.md` and `history.md`, which the layout-sketch change (spec #203, its Private pull
+   request #14 and the four to come) and, in Editors only, the slice-retro pull request #99 also edit (the other four
+   slice-retro pull requests have merged). Start each repo's implementation only after those have merged, branching
+   from that `main`, and put the `history.md` entry after theirs. AutomataFramework is at its three-pull-request limit
+   (#203, #204 and #205), so its build also waits for a free slot. The five repos need not start together.
 3. In each repo, on its own branch from `main`: write the test first and see it fail (four repos), then the hook, the
    reminder, the rules, the heading and the history entry. One pull request each, a draft until the last push, bodies
    naming the footer mid-sentence if at all.
@@ -214,10 +200,14 @@ has not merged), add:
 
 ## Open product decisions
 
-1. **Does the framework's game template get the same three rules?** `template/AGENTS.md` (what `automata create` writes
+1. **Who writes the spec.** "Fresh session per big job" moves spec writing from the coordinator to a spec session the
+   coordinator starts (table row 1 and the coordinator bullet in 2). It follows from the Owner's rule but is the
+   agent's reading, beyond the three rules named; the coordinator reports it to the Owner as a material decision.
+
+2. **Does the framework's game template get the same three rules?** `template/AGENTS.md` (what `automata create` writes
    into every game, with `CLAUDE.md` importing it) is the only game-facing prompt in these repos. It would need its own
    reminder text, since a game has no `docs/superpowers/` (`AGENTS.md` and a `PROGRESS.md` at the game's root), and it
    changes what `create` writes, so the create tests and the tarball file list move: lane 2 by `template/`. Not
    included above because the Owner's prompts are most likely in `mcthaydt-website`, and a game-facing change is a
    product choice. Recommendation: yes, as its own pull request after this one, once the Owner says the template is one
-   of the two prompts. Until then nothing changes there.
+   of the two prompts. Until then nothing changes there. The coordinator is asking the Owner.
