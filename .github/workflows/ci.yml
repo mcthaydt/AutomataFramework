@@ -68,7 +68,7 @@ jobs:
             printf 'This pull request changes:\n%s\n' "$changed"
             # Only Markdown that people read (CLAUDE.md, the notes under docs/ and the sessions' skills under
             # .claude/skills/, never the README or a page a test reads): there is nothing to test, so `docs` passes
-            # every check main requires at once, draft or not. The `agent-rules` workflow still checks those words.
+            # every check main requires at once, draft or not.
             others="$(grep -vE '^(CLAUDE\.md|docs/.+\.md|\.claude/skills/.+\.md)$' <<<"$changed" || true)$(grep -E '^docs/api/' <<<"$changed" || true)"
             if [ -z "$others" ]; then
               docs=true
