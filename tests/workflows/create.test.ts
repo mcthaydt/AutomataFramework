@@ -58,7 +58,12 @@ test('the pictures create-play makes are uploaded', () => {
   const play = job('create-play')
   expect(play).toContain('name: screens-create')
   expect(play).toContain('tests/create/__screenshots__/**')
-  expect(play).toContain('pnpm exec playwright install --with-deps chromium webkit firefox')
+  expect(play).toContain(
+    `pnpm exec playwright install --with-deps \${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}`,
+  )
+  expect(play).toContain(
+    `JOURNEY_ENGINES: \${{ needs.plan.outputs.full != 'true' && 'chromium' || '' }}`,
+  )
 })
 
 test('test:journeys never runs tests/create, and test:create runs nothing else', () => {

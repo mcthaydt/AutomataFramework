@@ -19,6 +19,7 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { type Browser, type BrowserContext, chromium, firefox, type Page, webkit } from 'playwright'
 import { afterAll, beforeAll, expect, test } from 'vitest'
+import { journeyEngines } from '../fixtures/journey-engines.ts'
 
 const shots = fileURLToPath(new URL('./__screenshots__/', import.meta.url))
 const ENGINES = { chromium, webkit, firefox }
@@ -220,7 +221,7 @@ async function pickLanguage(page: Page, flag: string): Promise<void> {
   await go.click()
 }
 
-for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
+for (const name of journeyEngines()) {
   test(`${name}: a new game plays by key and by touch, and a broken file is put in words`, async () => {
     const browser: Browser = await ENGINES[name].launch()
     try {
@@ -367,7 +368,7 @@ for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
 
 // A player whose device speaks a language the framework has no words in is not given one: six flags, none chosen, and
 // Go waits until one is. The choice is kept, so the next visit does not ask again.
-for (const name of Object.keys(ENGINES) as (keyof typeof ENGINES)[]) {
+for (const name of journeyEngines()) {
   test(`${name}: a player whose language is not shipped chooses one, and is not asked again`, async () => {
     const browser: Browser = await ENGINES[name].launch()
     try {
