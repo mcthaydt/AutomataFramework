@@ -15,10 +15,10 @@ is what the design review loop and the blind judge are for.
 
 ## Owner approval
 
-The Owner asked for this on 2026-11-16 at 19:56 UTC in the project chat ("should we just skip the mockup moving
-forward? Just build it out then fix it with the review cycle"), and at 19:57 UTC said "yes" to the coordinator's
-proposal to keep a quick layout sketch in each spec and drop polished mockups. It changes the rules files, so it is lane 3; that message is the
-approval for this change only, and the finished change still comes back to the Owner before it merges.
+The Owner asked for this on 2026-11-16 at 19:56 UTC in the project chat ("should we just skip the mockup moving forward?
+Just build it out then fix it with the review cycle"), and at 19:57 UTC said "yes" to the coordinator's proposal to keep
+a quick layout sketch in each spec and drop polished mockups. It changes the rules files, so it is lane 3; that message
+is the approval for this change only, and the finished change still comes back to the Owner before it merges.
 
 ## Lane and path
 
