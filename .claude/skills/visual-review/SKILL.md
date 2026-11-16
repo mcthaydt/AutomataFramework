@@ -37,8 +37,11 @@ artifact before it is reported done.
 A slice does not close, and the next slice does not start, until every screen built in it has been through one loop:
 **review** (the two lenses above, over the built screens in real browsers, not the mockups), **fix** (one fix
 session, every finding), **recheck** (the lenses again, only on what the fixes touched). Repeat fix and recheck until
-the recheck finds nothing. Record it in `docs/superpowers/audits/<date>-slice-<n>-design-review.md`: the screens
-covered, each round's findings and fixes, and last the line `Recheck: passed`. Only then may `docs/roadmap.md` mark
+the recheck finds nothing. The Owner sets how deep the review goes: for World (slice 3) it is a drift check, the
+built screens against the approved mockups, fixing any drift and rechecking, not a review from scratch (the Owner,
+2026-11-16). Record it in `docs/superpowers/audits/<date>-slice-<n>-design-review.md`: a line `Scope: <what it
+covered>` (for World, `Scope: drift check against approved mockups`), the screens covered, each round's findings and
+fixes, and last the line `Recheck: passed`. Only then may `docs/roadmap.md` mark
 the slice's last step done or a later slice's step `Now:`; the `agent-rules` check fails the pull request otherwise
 (the Owner, 2026-11-16).
 

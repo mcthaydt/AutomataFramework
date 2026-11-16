@@ -8,7 +8,8 @@
 //   - Every hook command in .claude/settings.json names a file that exists.
 //   - No tracked file names a real demo game. They are private; the names are kept here only as hashes.
 //   - No editor slice (slice 3 on, in docs/roadmap.md) closes, and no later slice starts, before its design review
-//     loop has passed: docs/superpowers/audits/<date>-slice-<n>-design-review.md with the line `Recheck: passed`.
+//     loop has passed: docs/superpowers/audits/<date>-slice-<n>-design-review.md with a `Scope:` line
+//     (what the loop covered) and the line `Recheck: passed`.
 //
 // This file has no dependencies on purpose. `problems` is exported for tests/scripts/check-agent-rules.test.ts.
 import { execFileSync } from 'node:child_process'
@@ -91,7 +92,7 @@ export function unreviewedSlices(files: readonly string[], read: Read): number[]
   const passed = (n: number): boolean =>
     files
       .filter((f) => new RegExp(`^docs/superpowers/audits/[\\w-]*slice-${n}-design-review\\.md$`).test(f))
-      .some((f) => /^Recheck: passed\s*$/m.test(read(f) ?? ''))
+      .some((f) => /^Scope: \S.*$/m.test(read(f) ?? '') && /^Recheck: passed\s*$/m.test(read(f) ?? ''))
   return slices
     .filter((slice) => slice.n >= FIRST_EDITOR_SLICE)
     .filter((slice) => slice.done || slices.some((later) => later.n > slice.n && later.started))
@@ -146,7 +147,7 @@ export function problems(
   for (const n of unreviewedSlices(files, read)) {
     found.push(
       `Slice ${n} is closed or the next one has started, but its design review loop has not passed: ` +
-        `add docs/superpowers/audits/<date>-slice-${n}-design-review.md with the line \`Recheck: passed\`.`,
+        `add docs/superpowers/audits/<date>-slice-${n}-design-review.md with a \`Scope:\` line and the line \`Recheck: passed\`.`,
     )
   }
 

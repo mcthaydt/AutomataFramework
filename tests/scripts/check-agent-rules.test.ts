@@ -106,8 +106,16 @@ describe('an editor slice closes, and the next starts, only after its design rev
   test('a passed recheck lets slice 3 close and slice 4 start; slices before 3 need none', () => {
     const files = {
       'docs/roadmap.md': roadmap('1. Done: the editor.', '1. Now: the editor.'),
-      [review]: '# Review\n\nRecheck: passed\n',
+      [review]: '# Review\n\nScope: drift check against approved mockups\n\nRecheck: passed\n',
     }
     expect(check(files)).toEqual([])
   })
+})
+
+test('a design review record without its scope line does not pass the gate', () => {
+  const roadmap = '## Slice 3: World\n\n1. Done: the editor.\n'
+  const review = 'docs/superpowers/audits/2026-11-20-slice-3-design-review.md'
+  expect(check({ 'docs/roadmap.md': roadmap, [review]: 'Recheck: passed\n' })).toEqual([
+    expect.stringContaining('Scope:'),
+  ])
 })

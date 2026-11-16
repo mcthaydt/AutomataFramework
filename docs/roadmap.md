@@ -17,8 +17,8 @@ slice runs the same six steps in order:
 5. **Update the website demo.** The demo on the site uses what the editor makes, so after every slice there is
    something new to try there. The demo grows with every slice; there is no separate demo slice at the end.
 6. **Design review loop.** Every screen built in the slice goes through review, fix and recheck (the `visual-review`
-   skill) until the recheck passes, recorded in `docs/superpowers/audits/<date>-slice-<n>-design-review.md` with the
-   line `Recheck: passed`. The slice does not close, and the next slice does not start, before that (the owner,
+   skill) until the recheck passes, recorded in `docs/superpowers/audits/<date>-slice-<n>-design-review.md` with a
+   `Scope:` line (what it covered) and the line `Recheck: passed`. The slice does not close, and the next slice does not start, before that (the owner,
    2026-11-16); the `agent-rules` check fails a roadmap that closes a slice or starts the next one without it.
 
 Then the next editor starts. The editors go in this order: **World** (levels), **Characters**, **Feel** (with Tuner inside it),
@@ -137,7 +137,9 @@ whole gate.
    sees them first). A new game passes the game checklist, parts 1 to 5 (#137, #139, #140, #151 are its spec, plan,
    audit and pause note; the built parts #143, #145, #148 were taken off main by #153). Part 3 changes the starter
    game's recorded play, so the owner sees it before and after.
-8. Next: the design review loop on every screen built in this slice: review, fix, recheck, until the recheck passes.
+8. Next: the design review loop on every screen built in this slice, as a drift check against the approved mockups:
+   fix any drift and recheck, not a review from scratch (the owner, 2026-11-16). Its record says
+   `Scope: drift check against approved mockups` and ends `Recheck: passed`.
 
 ---
 
