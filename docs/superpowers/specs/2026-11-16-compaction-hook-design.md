@@ -12,16 +12,22 @@ wherever it works.
 - 2026-11-16 20:28 UTC, project thread: "Add a new hook: after compaction saying 'the rules file beats the summary'.
   Live state in a file. Fresh session per big job."
 - 2026-11-16 20:29 UTC, project thread: "add the repo when we get there, we have a claude.md for games and claude.md for
-  apps prompts, it needs to be in both". "The repo" is `mcthaydt-website`, which is not in the project yet; see Plan.
+  apps prompts, it needs to be in both". "The repo" is `mcthaydt-website`.
+- 2026-11-16 20:41 UTC, project thread: "Add the repo, but don't change anything until you tell me exactly what you will
+  add". The proposal was written first and nothing was changed.
+- 2026-11-16 20:46 UTC, the Owner's answers on decision cards, relayed by the coordinator: (a) the spec gets its own
+  session, so that change stays; (b) the website change goes in as proposed, with the games prompt's line limit raised
+  to 380 and one setup-check line added to the `release` skill in the kits; (c) `McThayDT-Website` #67 merges
+  first.
 
-Both cover this change only. The implementation pull requests are lane 3 and wait for the Owner's approval of the
-finished result before they merge.
+All of these cover this change only. The implementation pull requests are lane 3 and wait for the Owner's approval
+of the finished result before they merge.
 
 ## Lane and path
 
 Lane 3 (`CLAUDE.md`, and a hook in `.claude/settings.json`, which runs a command at the start of every session),
 staged path: this spec and its plan audit, then one implementation pull request per repo with one implementation audit
-across all five, then the Owner's approval, then a merge commit.
+across all six, then the Owner's approval, then a merge commit.
 
 ## Boundaries
 
@@ -33,23 +39,25 @@ across all five, then the Owner's approval, then a merge commit.
   `docs/superpowers/live/` that sessions create and delete on their own branches.
 - Not the three skills: the reviewer's live state is a rule in `CLAUDE.md`, so `review/SKILL.md` stays as the
   slice-retro change leaves it. Not `template/` in AutomataFramework: see "Open product decisions".
+- And, in `mcthaydt-website` (section 5): `content/prompts/claude-md-games/body.md`,
+  `content/prompts/claude-md-apps/body.md`, their two `meta.json` and `tests/unit/kit-content.test.ts`. Nothing else
+  there.
 - No new tools, dependencies, environments or spend. The hook runs `cat` on a committed file and nothing else; it
   reads no network and writes nothing. Expected duration: about two hours, most of it waiting on audits and CI.
 
 ## Where the two prompts live
 
-The Owner named a CLAUDE.md prompt for games and one for apps. Looked for in all six repos in the project
-(AutomataFramework, Editors, Examples, Site, Private and the archive AutomataFrameworkFailed), by file name and by text:
+The Owner named a CLAUDE.md prompt for games and one for apps. Looked for in the six repos first in the project
+(AutomataFramework, Editors, Examples, Site, Private and the archive AutomataFrameworkFailed), by file name and by text,
+and then in `mcthaydt-website` once it was added:
 
-- The only game-facing one is AutomataFramework's `template/AGENTS.md`, with `template/CLAUDE.md` containing only
-  `@AGENTS.md`. `automata create` writes both into every new game. It is for a person's game, not a rule for these
-  repos.
-- No CLAUDE.md or prompt for apps exists in any of the six repos. The Owner's own rules text, saved as
-  `handoff/2026-11-16-owner-message.md` in the project files, is the one generic CLAUDE.md template, and each repo's
-  `CLAUDE.md` came from it.
-
-So the pair is most likely in `mcthaydt-website`, the repo the Owner said to add. This change covers it as a follow-up
-(Plan, step 7). The game template here is an open decision below.
+- In `mcthaydt-website` (`main` at `fcdcc0b`): the **games kit**, `content/prompts/claude-md-games/body.md`, and the
+  **apps kit**, `content/prompts/claude-md-apps/body.md`. Each is a `CLAUDE.md` block, its skills (five for games,
+  three for apps) and Project instructions. `tests/unit/kit-content.test.ts` holds both to their rules, and to one
+  workflow word for word. That repo has no `CLAUDE.md` or `.claude/` of its own. These are the two prompts.
+- In AutomataFramework, `template/AGENTS.md` (with `template/CLAUDE.md` containing only `@AGENTS.md`), which
+  `automata create` writes into every new game. It is for a person's game, not a rule for these repos, and it is not
+  one of the two prompts; see open decision 2.
 
 ## The change
 
@@ -160,6 +168,32 @@ run by hand and the output (see the acceptance criteria).
 >   at 20:28 and 20:29 UTC. Scope: this change only, made the same in all five repos, as AutomataFramework
 >   `docs/superpowers/specs/2026-11-16-compaction-hook-design.md` describes. Later rule changes are lane 3 as usual.
 
+### 5. The two kits in `mcthaydt-website`
+
+One pull request, on `main` after `McThayDT-Website` #67 has merged (it edits the same two kits and test, in other
+paragraphs). The same change goes into both kits; their `CLAUDE.md` blocks follow the repos' text exactly.
+
+- **A. In each kit's `CLAUDE.md` block:** the three bullets of 2 after the "Acceptance criteria come first." bullet;
+  the Lane 3 wording; table row 1; the Writing sentence; the coordinator bullet; and the folder picture's
+  `docs/superpowers/` line, which gains `live/`.
+- **B. Two new blocks after the last skill and before "Project instructions", the same in both kits:** "Hook:
+  settings.json" ("Save this as .claude/settings.json in your repo. If the file exists, add the SessionStart entry to
+  it.") holding the file in 1, and "Hook: after-compaction.md" ("Save this as .claude/after-compaction.md in your
+  repo.") holding the reminder in 1. In the games kit, the reminder's line 2 ends "(review, release, visual-check,
+  vertical-slice or scene-polish)".
+- **C. Words around the kits:** both `meta.json` summaries gain "and a reminder after compaction" after the number of
+  skills. The "Start here" box needs no change.
+- **D. The release skill in each kit:** one more line in its setup check: "The compaction hook: `.claude/settings.json`
+  has the `SessionStart` entry with the matcher `compact`, and its command prints `.claude/after-compaction.md`." A
+  kit cannot ship the test the five repos get, so the setup check verifies it.
+- **E. The test, written first.** `tests/unit/kit-content.test.ts` lets the two hook blocks follow the skills, each
+  with its "Save this as" note, and the games `CLAUDE.md` block's line limit goes from 360 to 380 (it is 342 lines
+  with #67 and about 365 with this change; the apps block is about 342). A new test, for both kits: the three bullets
+  are in `CLAUDE.md`; the settings block parses as JSON with one `SessionStart` entry whose matcher is `compact`; the
+  reminder says "beats the summary" and names `CLAUDE.md`, `docs/superpowers/progress.md`, `docs/superpowers/live/`
+  and "fresh session"; the two hook blocks are the same in both kits apart from the skills list in line 2; and each
+  kit's release skill has the new setup-check line.
+
 ## Acceptance criteria
 
 1. `md5sum` over the five `.claude/settings.json` files gives one hash, and likewise over the five
@@ -178,16 +212,21 @@ run by hand and the output (see the acceptance criteria).
 7. Each pull request's diff touches only the files in Boundaries.
 8. Every commit is authored and committed by McThayDT with no Claude credit; each pull request body ends with
    `Requested by **McThayDT**`; each merges with a merge commit after the Owner approves.
-9. CI is green on each pull request in the four repos with CI; AutomataPrivate has no CI, so criterion 4 stands in
-   for it there. Nothing runs on the Owner's computer.
+9. In `mcthaydt-website`, the new tests fail on `main` plus the tests alone and pass with the change, the whole
+   `vitest run` and `content:check` pass, the diff touches only the files in Boundaries, and the two kits' shared
+   text matches the five repos' word for word.
+10. CI is green on each pull request in the four repos with CI; AutomataPrivate has no CI, so criterion 4 stands in
+    for it there. `mcthaydt-website` has no CI of its own, only Netlify's deploy preview, so criterion 9 stands in
+    for it there. Nothing runs on the Owner's computer.
 
 ## Plan
 
 1. Merge this spec with its plan audit on green. The audit is made by a fresh session the coordinator starts, never by
    the session that wrote this spec.
-2. Order. The edits touch `CLAUDE.md` and `history.md`, which the layout-sketch change (spec #203, its Private pull
-   request #14 and the four to come) and, in Editors only, the slice-retro pull request #99 also edit (the other four
-   slice-retro pull requests have merged). Start each repo's implementation only after those have merged, branching
+2. Order. `McThayDT-Website` #67 merges first. The edits touch `CLAUDE.md` and `history.md`, which the layout-sketch
+   change (spec #203, its Private pull request #14 and the four to come) and, in Editors only, the slice-retro pull
+   request #99 also edit (the other four slice-retro pull requests have merged). Start each repo's implementation
+   only after those have merged, branching
    from that `main`, and put the `history.md` entry after theirs. AutomataFramework is at its three-pull-request limit
    (#203, #204 and #205), so its build also waits for a free slot. The five repos need not start together.
 3. In each repo, on its own branch from `main`: write the test first and see it fail (four repos), then the hook, the
@@ -198,20 +237,19 @@ run by hand and the output (see the acceptance criteria).
 5. One implementation audit across the five pull requests by a fresh session, through the coordinator; fixes on the
    same branches by this session's successor build session.
 6. The Owner's approval through the coordinator, then each merges with a merge commit.
-7. Follow-up, when `mcthaydt-website` is added to the project: find its CLAUDE.md prompts for games and for apps, and
-   give each the three rules in 2 (not the hook, which is a settings file, unless those prompts ship one). A new spec
-   amendment names what was found, and that pull request goes through the same stages.
+7. `mcthaydt-website`: after #67 has merged, one more implementation pull request as in 5, the sixth, in the same
+   implementation audit and under the same Owner approval.
 
 ## Open product decisions
 
-1. **Who writes the spec.** "Fresh session per big job" moves spec writing from the coordinator to a spec session the
-   coordinator starts (table row 1 and the coordinator bullet in 2). It follows from the Owner's rule but is the
-   agent's reading, beyond the three rules named; the coordinator reports it to the Owner as a material decision.
+1. **Who writes the spec.** Decided: "Fresh session per big job" moves spec writing from the coordinator to a spec
+   session the coordinator starts (table row 1 and the coordinator bullet in 2). The Owner said yes on 2026-11-16, in
+   the answers recorded above.
 
 2. **Does the framework's game template get the same three rules?** `template/AGENTS.md` (what `automata create` writes
    into every game, with `CLAUDE.md` importing it) is the only game-facing prompt in these repos. It would need its own
    reminder text, since a game has no `docs/superpowers/` (`AGENTS.md` and a `PROGRESS.md` at the game's root), and it
    changes what `create` writes, so the create tests and the tarball file list move: lane 2 by `template/`. Not
-   included above because the Owner's prompts are most likely in `mcthaydt-website`, and a game-facing change is a
-   product choice. Recommendation: yes, as its own pull request after this one, once the Owner says the template is one
-   of the two prompts. Until then nothing changes there. The coordinator is asking the Owner.
+   included above because the Owner's two prompts are the website's kits, and a game-facing change is a product
+   choice. Recommendation: yes, as its own pull request after this one, once the Owner asks for it. Until then
+   nothing changes there. The coordinator is asking the Owner.
