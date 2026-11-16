@@ -101,3 +101,18 @@ test('--read with no language is a problem, and so is a list flag on a command t
 test('every command has a lists table, empty unless it has a list flag', () => {
   expect(parseArgs(['check'])).toMatchObject({ lists: {} })
 })
+
+test('world takes a folder and --json, and no other flag', () => {
+  expect(parseArgs(['world', 'my-game', '--json'])).toEqual({
+    command: 'world',
+    folder: 'my-game',
+    flags: { json: true },
+    lists: {},
+    rest: [],
+  })
+  expect(parseArgs(['world', '--check'])).toEqual({
+    problem:
+      'automata world does not have an option called --check. Run automata world --help to see its options.',
+  })
+  expect(parseArgs(['help', 'world'])).toEqual({ help: 'world' })
+})

@@ -10,6 +10,7 @@ export const ROOT_HELP = `automata: make a game, check it, play it.
   automata replay          Play this game's recordings and check they end where they did.
   automata art             Paint this game's pictures from its figure and backdrop files.
   automata words           List the translated words nobody has read, and mark them read.
+  automata world           List this game's levels, the doors between them and where they join on the map.
   automata mcp             Let an agent use these commands (an MCP server).
 
 Run a command with --help to see its options. Each works on the game in this folder, or in the folder you name.`
@@ -73,6 +74,13 @@ a machine is a first draft; this is the list of what still needs a person.
   --read <language> <key> …    Mark only those words.
   --json                       Print the answer as JSON, for an agent or another tool.`
 
+const WORLD_HELP = `automata world [folder]
+
+Lists this game's levels and where each sits on the world map, the doors that lead from one level to another, and the
+levels that touch along a side and join into one place. A level that no door, join or level list reaches gets a note.
+
+  --json   Print the answer as JSON, for an agent or another tool.`
+
 const MCP_HELP = `automata mcp
 
 Lets an agent use automata's commands as tools, over the Model Context Protocol. An agent's own program starts
@@ -85,6 +93,7 @@ const HELP: Readonly<Record<CommandName | 'root', string>> = {
   replay: REPLAY_HELP,
   art: ART_HELP,
   words: WORDS_HELP,
+  world: WORLD_HELP,
   create: CREATE_HELP,
   play: PLAY_HELP,
   mcp: MCP_HELP,

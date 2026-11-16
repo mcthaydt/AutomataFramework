@@ -3,7 +3,7 @@
 // Ported in shape from AutomataFrameworkFailed@ed8592e8: packages/tools/src/app/cli.ts (one small file parses the
 // words; the work is in files a test runs with fakes).
 
-export type CommandName = 'create' | 'check' | 'play' | 'replay' | 'art' | 'words' | 'mcp'
+export type CommandName = 'create' | 'check' | 'play' | 'replay' | 'art' | 'words' | 'world' | 'mcp'
 
 /** The commands, in the order help lists them. One row per command in `cli.ts`'s table. */
 export const COMMAND_NAMES: readonly CommandName[] = [
@@ -13,6 +13,7 @@ export const COMMAND_NAMES: readonly CommandName[] = [
   'replay',
   'art',
   'words',
+  'world',
   'mcp',
 ]
 
@@ -51,6 +52,7 @@ const FLAGS: Readonly<Record<CommandName, Flags>> = {
   replay: { switches: ['accept', 'state', 'json'], values: [], lists: [] },
   art: { switches: ['check', 'json'], values: [], lists: [] },
   words: { switches: ['json'], values: [], lists: ['read'] },
+  world: { switches: ['json'], values: [], lists: [] },
   mcp: { switches: [], values: [], lists: [] },
 }
 

@@ -57,6 +57,7 @@ fetch an unrelated package of that name from npm.
 | `automata replay` | Plays the game's recordings and checks each ends where it was recorded. |
 | `automata art` | Paints the game's pictures from its figure and backdrop files. |
 | `automata words` | Lists the translated words nobody has read, and marks them read. |
+| `automata world` | Lists the game's levels, the doors between them and where they join on the map. |
 | `automata mcp` | Lets an agent use these commands as tools (an MCP server). |
 
 ## Install
@@ -807,6 +808,28 @@ again. The exit code is `0` whenever the command ran: words that wait are not a 
 - `--json`: print the answer as JSON: the `source` language, the `unread` words (each a `language`, a `key`, the game's
   own `source` text and the translation's `text`) and, after `--read`, what was `marked`.
 
+### automata world
+
+`automata world [folder]` says how a game's levels fit together: a line for each level (its size, where it sits on the
+world map and which one is the `start`), a line for each door and where it leads, and a line for each join, where two
+levels touch along a side and are open there, with the rows or columns the join runs along. Levels that join are one
+place, and each place of more than one level is listed. A level that no door, join or level list reaches, and a place
+of more than 8 levels or 16,384 tiles, are notes (`automata check` says the same notes), never a failure.
+
+```
+room-1  16 by 9  at 0, 0  start
+room-2  16 by 9  at 20, 0
+room-1 exit leads to room-2 door-in
+room-2 and room-3 touch: room-2's right edge, rows 5 to 7
+room-2 and room-3 are one place.
+```
+
+It writes nothing. The exit code is `0` when the game loads and `1` when it does not.
+
+- `--json`: print the answer as JSON: `ok`, the `levels` (each a `level`, its `at` on the map or `null`, its `size`,
+  whether it is the `start` and its `order` in the list of levels), the `doors` (a `from` and a `to`), the `joins`, the
+  `places` (each a list of levels) and the `notes`. A game that does not load says why in `sentence`.
+
 ### automata mcp
 
 `automata mcp` lets an agent use these commands as tools, over the [Model Context Protocol](https://modelcontextprotocol.io).
@@ -833,6 +856,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 | `replay` | `folder`, `file?`, `accept?`, `state?` | `automata replay <folder> --json` |
 | `art` | `folder`, `check?` | `automata art <folder> --json` |
 | `words` | `folder`, `read?`, `keys?` | `automata words <folder> --json`, and `--read <read> <keys>` when `read` is given |
+| `world` | `folder` | `automata world <folder> --json` |
 | `content_types` | none | the table of content kinds above |
 | `schema` | `type` | reading `schemas/<type>.schema.json` |
 | `skill` | `name?` | reading `skills/<name>/SKILL.md` |
@@ -845,7 +869,7 @@ holds the sentence the command would have printed, so an agent reads what a pers
 Every kind's schema and every skill is also a resource: `automata://schemas/<kind>` (and `automata://schemas/replay`)
 and `automata://skills/<name>`.
 
-The server never loads a game's rules itself. `create`, `check`, `replay`, `art` and `words` each run the command in a process of their
+The server never loads a game's rules itself. `create`, `check`, `replay`, `art`, `words` and `world` each run the command in a process of their
 own, and a play session runs in a Worker of its own, so a change to the rules is seen by the next answer. A session
 keeps the rules it started with, and says so when it starts. At most four games run at once. What a game's rules print
 goes to standard error, never into the messages.

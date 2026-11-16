@@ -17,6 +17,7 @@ import { describeResult, NO_RECORDINGS, replayExitCode, replayTarget, runReplays
 import { exitCodeOf, formatReport, STEP_NAMES } from './report.ts'
 import { printToStderr } from './stderr.ts'
 import { describeWords, runWords } from './unread.ts'
+import { describeWorld, runWorld } from './world.ts'
 
 type Command = (input: CommandInput) => Effect.Effect<number, CliError, Ports>
 
@@ -85,6 +86,20 @@ const words: Command = (input) =>
     return 0
   })
 
+/** `automata world`: the levels, the doors and the joins, as words or as JSON. */
+const world: Command = (input) =>
+  Effect.gen(function* () {
+    const out = yield* Out
+    const report = yield* runWorld({ folder: input.folder ?? '.' })
+    if (input.flags.json === true) yield* out.line(JSON.stringify(report, null, 2))
+    else {
+      const said = describeWorld(report)
+      for (const line of said.out) yield* out.line(line)
+      for (const line of said.err) yield* out.error(line)
+    }
+    return report.ok ? 0 : 1
+  })
+
 /** A folder as a person can paste it after `cd`: in quotes when it has a space or a quote in it. */
 const shellWord = (word: string): string =>
   /^[\w@%+=:,./\\-]+$/.test(word) ? word : `"${word.replaceAll('"', '\\"')}"`
@@ -151,6 +166,7 @@ const COMMANDS: Readonly<Record<CommandName, Command>> = {
   replay,
   art,
   words,
+  world,
   mcp,
 }
 

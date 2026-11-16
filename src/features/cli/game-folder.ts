@@ -10,8 +10,10 @@ import {
   type Diagnostic,
   type GameContent,
   languageName,
+  layoutWorld,
   loadGame,
   markRead,
+  openTile,
   type Parsed,
   parseContent,
   parseReadMarks,
@@ -29,8 +31,10 @@ type ContentApi = Pick<
   | 'artFiles'
   | 'artProblems'
   | 'languageName'
+  | 'layoutWorld'
   | 'loadGame'
   | 'markRead'
+  | 'openTile'
   | 'parseContent'
   | 'parseReadMarks'
   | 'READ_MARKS_FILE'
@@ -45,8 +49,10 @@ const OWN_CONTENT: ContentApi = {
   artFiles,
   artProblems,
   languageName,
+  layoutWorld,
   loadGame,
   markRead,
+  openTile,
   parseContent,
   parseReadMarks,
   READ_MARKS_FILE,
