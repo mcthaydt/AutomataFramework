@@ -61,8 +61,8 @@ test('a game in three languages reports a TODO in each language it is in', async
     ko: { 'keeper.hello': 'TODO' },
   })
   expect(unfinishedWords(content).map((f) => `${f.file} ${f.path}`)).toEqual([
-    'content/messages/en.json messages.keeper.hello',
     'content/messages/es.json messages.keeper.hello',
+    'content/messages/en.json messages.keeper.hello',
     'content/messages/ko.json messages.keeper.hello',
   ])
 })

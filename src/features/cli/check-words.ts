@@ -1,6 +1,6 @@
 // The words a game still has to finish: a message that is empty, is only its own key, or still says "TODO". Every day
 // it is a note; under `automata check --ship` it is a problem, since a player would read it.
-import { type GameContent, languageName } from '../content/content.ts'
+import { type GameContent, LANGUAGES, languageName } from '../content/content.ts'
 import type { ShipFinding } from './report.ts'
 
 /** The stand-in words a team writes while it is working, as whole words in any capitals. */
@@ -16,11 +16,13 @@ function messagePaths(content: GameContent): ReadonlyMap<string, string> {
   return paths
 }
 
-/** Messages that are not finished, in every language the game has: the file order, then each file's keys sorted. */
+/** Messages that are not finished, in every language the game has: the languages in their own order, then keys sorted. */
 export function unfinishedWords(content: GameContent): ShipFinding[] {
   const found: ShipFinding[] = []
   const paths = messagePaths(content)
-  for (const [language, file] of Object.entries(content.messages ?? {})) {
+  for (const language of LANGUAGES) {
+    const file = content.messages?.[language]
+    if (file === undefined) continue
     const path = paths.get(language) ?? `content/messages/${language}.json`
     for (const key of Object.keys(file.messages).sort()) {
       const value = file.messages[key] ?? ''
