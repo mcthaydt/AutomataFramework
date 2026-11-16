@@ -388,3 +388,40 @@ jobs:
           name: screens-create
           path: tests/create/__screenshots__/**
           if-no-files-found: ignore
+
+  # The one aggregate check main requires beside the names above. `plan` decides which checks apply to this run; this
+  # passes only when each of those ran and passed and every other was left out by `plan`, so a job skipped because
+  # something before it failed or was cancelled never counts as passed. A draft's is `quick gate`, which main never
+  # requires, so only a full run (or a docs-only one) can let a pull request merge. A new job is added to both lists.
+  gate:
+    needs: [plan, docs, check, browsers, engines, online, package, create-pack, create, create-play]
+    if: always()
+    name: ${{ needs.plan.outputs.quick == 'quick ' && 'quick ' || '' }}gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every check that applies ran and passed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          GATE: |
+            const results = JSON.parse(process.env.RESULTS)
+            const applies = JSON.parse(process.env.APPLIES)
+            let ok = true
+            for (const [job, want] of Object.entries(applies)) {
+              const got = results[job]?.result
+              const good = want ? got === 'success' : got === 'skipped'
+              console.log(`${good ? 'ok ' : 'NO '} ${job}: ${want ? 'applies' : 'not applicable'}, ${got}`)
+              ok &&= good
+            }
+            for (const job of Object.keys(results)) {
+              if (!(job in applies)) {
+                console.log(`NO  ${job}: the gate does not know this job`)
+                ok = false
+              }
+            }
+            process.exit(ok ? 0 : 1)
+          APPLIES: >-
+            {"plan": true, "docs": ${{ needs.plan.outputs.docs == 'true' }}, "check": ${{ needs.plan.outputs.docs != 'true' }}, "browsers": ${{ needs.plan.outputs.docs != 'true' }}, "engines": ${{ needs.plan.outputs.docs != 'true' }}, "online": ${{ needs.plan.outputs.docs != 'true' && needs.plan.outputs.online == 'true' }}, "package": ${{ needs.plan.outputs.docs != 'true' && needs.plan.outputs.package == 'true' }}, "create-pack": ${{ needs.plan.outputs.docs != 'true' && needs.plan.outputs.package == 'true' }}, "create": ${{ needs.plan.outputs.docs != 'true' && needs.plan.outputs.package == 'true' }}, "create-play": ${{ needs.plan.outputs.docs != 'true' && needs.plan.outputs.package == 'true' }}}
+        run: |
+          node --input-type=module -e "$GATE"
+        shell: bash
