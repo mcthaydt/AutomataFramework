@@ -1,0 +1,3 @@
+#!/bin/sh
+# Turned on by .claude/hooks/session-start.mjs (git's core.hooksPath). The checks are in ../git.mjs.
+exec node "$(dirname "$0")/../git.mjs" commit-msg "$@"
