@@ -389,10 +389,14 @@ export async function startGame(options: GameOptions): Promise<Game> {
     const unguard = guardPlay(mount)
     sync()
 
-    const keptRange = (): { readonly from: number; readonly to: number } => ({
-      from: Math.min(snapshots?.from() ?? sim.tick, sim.tick),
-      to: sim.tick,
-    })
+    // The tick the play ended at, for `kept()` once `stop()` has taken the sim away.
+    let endedAt = 0
+    const keptRange = (): { readonly from: number; readonly to: number } => {
+      // A stopped or broken game cannot go back, so nothing is kept: the range is the one tick it is at.
+      if (stopped) return { from: endedAt, to: endedAt }
+      if (broke !== undefined) return { from: sim.tick, to: sim.tick }
+      return { from: Math.min(snapshots?.from() ?? sim.tick, sim.tick), to: sim.tick }
+    }
 
     return {
       sim,
@@ -433,13 +437,17 @@ export async function startGame(options: GameOptions): Promise<Game> {
         if (!pausedByHand)
           throw new Error('Pause the game before going back: backTo works only while it is paused.')
         const { from, to } = keptRange()
-        const snapshot = snapshots?.nearest(tick)
-        if (!Number.isInteger(tick) || tick < from || tick > to || snapshot === undefined)
+        if (!Number.isInteger(tick) || tick < from || tick > to)
           throw new Error(
             from === to
               ? `Nothing is kept to go back to (keepSeconds is ${keepSeconds}, and the game is at tick ${to}).`
               : `Tick ${tick} cannot be gone back to: the ticks kept are ${from} to ${to}.`,
           )
+        // Now is always inside `kept()`, and going back to it is staying where it is.
+        if (tick === to) return
+        const snapshot = snapshots?.nearest(tick)
+        if (snapshot === undefined)
+          throw new Error(`Tick ${tick} cannot be gone back to: no snapshot is kept before it.`)
         // What was recorded, read before the sim moves: the commands to play again from the snapshot up to `tick`.
         const recorded = recorder.replay().commands
         try {
@@ -496,6 +504,7 @@ export async function startGame(options: GameOptions): Promise<Game> {
       replay: () => ended ?? recorder.replay(),
       stop() {
         if (stopped) return
+        endedAt = sim.tick
         stopped = true
         // A game that broke cannot be hashed again, so it keeps no play: `replay()` then says what broke.
         if (broke === undefined) ended = recorder.replay()

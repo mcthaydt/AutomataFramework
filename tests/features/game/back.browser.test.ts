@@ -172,3 +172,41 @@ test("the hero's box after backTo(120) equals the box read at tick 120", async (
   g.backTo(120)
   expect(g.heroes()).toEqual(at120)
 })
+
+test('backTo(kept().to) is allowed in every case, changes nothing, and does not throw', async () => {
+  // Nothing is kept, so kept() is from = to, and the tick it names is still inside it.
+  const bare = await start()
+  script(bare.game, bare.frames, 30)
+  bare.game.pause()
+  expect(bare.game.kept()).toEqual({ from: 30, to: 30 })
+  const hash = bare.game.sim.hash()
+  expect(() => bare.game.backTo(30)).not.toThrow()
+  expect(bare.game.sim.tick).toBe(30)
+  expect(bare.game.sim.hash()).toBe(hash)
+  bare.game.stop()
+
+  // Kept, but only just started: at tick 0 there is nothing before now to go back to, and now is still reachable.
+  const fresh = await start(5)
+  fresh.game.pause()
+  expect(fresh.game.kept()).toEqual({ from: 0, to: 0 })
+  expect(() => fresh.game.backTo(0)).not.toThrow()
+  expect(fresh.game.sim.tick).toBe(0)
+  expect(fresh.game.replay().ticks).toBe(0)
+
+  // Kept and played: now is the newest end of the range, and a step taken after it goes on from there.
+  fresh.game.resume()
+  script(fresh.game, fresh.frames, 100)
+  fresh.game.pause()
+  const { to } = fresh.game.kept()
+  const before = fresh.game.sim.hash()
+  expect(() => fresh.game.backTo(to)).not.toThrow()
+  expect(fresh.game.sim.hash()).toBe(before)
+})
+
+test('after stop(), kept() has nothing to go back to: from = to, the last tick', async () => {
+  const { game: g, frames } = await start(5)
+  script(g, frames, 30)
+  expect(g.kept().from).toBeLessThan(g.kept().to)
+  g.stop()
+  expect(g.kept()).toEqual({ from: 30, to: 30 })
+})
