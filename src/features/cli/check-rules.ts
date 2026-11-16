@@ -7,8 +7,10 @@ import { join } from 'node:path'
 import { Effect } from 'effect'
 import { importsOf, resolveImport, withoutComments } from '../../lib/imports.ts'
 import type { Diagnostic } from '../content/content.ts'
-import type { GameFolder } from './game-folder.ts'
+import type { Sim } from '../sim/sim.ts'
+import { endProblems, simIds } from './check-ends.ts'
 import { pageProblems } from './check-page.ts'
+import type { GameFolder } from './game-folder.ts'
 import { Files, type FilesService } from './ports.ts'
 import type { StepReport } from './report.ts'
 
@@ -210,7 +212,44 @@ export function rulesStep(game: GameFolder): Effect.Effect<StepReport, never, Fi
     const packageJson = yield* files.readText(join(game.folder, 'package.json'))
     if (packageJson !== undefined) texts['package.json'] = packageJson
     const problems = [...ruleProblems(texts), ...pageProblems(page)]
+    // How the levels end is held against the game's own sim, when its code loaded: its own problem is already said.
+    const ends = yield* Effect.promise(() => endsOf(game))
+    problems.push(...ends.problems)
     const state = problems.length > 0 ? 'failed' : 'passed'
-    return { step: 'rules', state, problems, notes: [] } satisfies StepReport
+    return { step: 'rules', state, problems, notes: ends.notes } satisfies StepReport
   })
+}
+
+/**
+ * `endProblems` for the game's own copy of the framework and rules: the ids its sim registers, and for `score` alone one
+ * sim, read once and disposed. Nothing when the code or the content did not load.
+ */
+async function endsOf(game: GameFolder): Promise<{ problems: Diagnostic[]; notes: string[] }> {
+  const { code, loaded } = game
+  if (code === undefined || !('plugins' in code.rules) || !loaded.ok) return { problems: [], notes: [] }
+  const content = loaded.value
+  const ids = simIds([...code.framework.gameSimPlugins({ content }), ...code.rules.plugins])
+  let sim: Sim | undefined
+  if (content.project.score !== undefined) {
+    try {
+      sim = await code.framework.createGameSim({ content, plugins: code.rules.plugins })
+    } catch {
+      // A game whose sim cannot start is for the replays step to say; its score cannot be read, so it is not judged.
+    }
+  }
+  try {
+    const judged =
+      content.project.score === undefined || sim !== undefined
+        ? content
+        : { ...content, project: { ...content.project, score: undefined } }
+    return endProblems(judged, {
+      ids,
+      read: (resourceId) => {
+        if (sim === undefined) throw new Error('There is no sim.')
+        return sim.read(resourceId)
+      },
+    })
+  } finally {
+    sim?.dispose()
+  }
 }

@@ -1,10 +1,14 @@
 import { Effect } from 'effect'
 import { expect, test } from 'vitest'
 import { runCheck } from '#src/features/cli/check.ts'
+import { CliError } from '#src/features/cli/ports.ts'
+import * as framework from '#src/headless.ts'
 import { ruleProblems } from '#src/features/cli/check-rules.ts'
 import { HEADLESS_SOURCE, smallGame, under } from '../../fixtures/cli/game.ts'
-import { memoryLayer } from '../../fixtures/cli/memory.ts'
+import { type MemoryOptions, memoryLayer } from '../../fixtures/cli/memory.ts'
 
+const NEITHER =
+  'This game can be neither won nor lost. Add done = "…" or lost = "…" to automata.toml, or give the player something to aim for.'
 const HERO = 'src/features/hero/hero.ts'
 const MORE = 'src/features/hero/more.ts'
 const HEADLESS = 'src/headless.ts'
@@ -179,8 +183,8 @@ test('the small game has none', () => {
 })
 
 // The step, over a folder: it reads every .ts under src/ and the package.json.
-const rulesStep = async (files: Record<string, string>) => {
-  const memory = memoryLayer(under('game', files))
+const rulesStep = async (files: Record<string, string>, options?: MemoryOptions) => {
+  const memory = memoryLayer(under('game', files), options)
   const report = await Effect.runPromise(
     runCheck({ folder: 'game', only: 'rules' }).pipe(Effect.provide(memory.layer)),
   )
@@ -188,7 +192,7 @@ const rulesStep = async (files: Record<string, string>) => {
 }
 
 test('the rules step passes on the small game', async () => {
-  expect(await rulesStep(smallGame())).toEqual({ step: 'rules', state: 'passed', problems: [], notes: [] })
+  expect(await rulesStep(smallGame())).toEqual({ step: 'rules', state: 'passed', problems: [], notes: [NEITHER] })
 })
 
 test('the rules step fails on a rule that reads the clock, naming the file and the line', async () => {
@@ -200,4 +204,58 @@ test('the rules step fails on a rule that reads the clock, naming the file and t
 test('a file under src/ that is not .ts is not read as rules', async () => {
   const step = await rulesStep({ ...smallGame(), 'src/style.css': 'body { color: red } /* Math.random */' })
   expect(step?.state).toBe('passed')
+})
+
+// How the levels end, held against the game's own sim.
+const withProject = (files: Record<string, string>, lines: string): Record<string, string> => ({
+  ...files,
+  'automata.toml': (files['automata.toml'] ?? '').replace('hero = "hero"\n', `hero = "hero"\n${lines}\n`),
+})
+const SCORE = framework.z.object({ sparks: framework.z.number(), name: framework.z.string() })
+const scored = (): MemoryOptions => ({
+  code: {
+    framework,
+    rules: {
+      plugins: [
+        framework.definePlugin({
+          name: 'scoring',
+          resources: [framework.defineResource('hero.score', SCORE, () => ({ sparks: 0, name: 'x' }))],
+        }),
+      ],
+    },
+  },
+})
+
+test('a done nothing raises fails the rules step at automata.toml, and says it with a sentence', async () => {
+  const step = await rulesStep(withProject(smallGame(), 'done = "gate.touched"'))
+  expect(step?.state).toBe('failed')
+  expect(step?.problems).toEqual([
+    {
+      file: 'automata.toml',
+      path: 'done',
+      message:
+        'done = "gate.touched" can never happen: nothing in this game raises it. A door needs a character with "kind": "door" and "touch": "sense".',
+    },
+  ])
+  expect(step?.notes).toEqual([])
+})
+
+test('lost = "hero.fell" is always registered, and a game with it is not the neither note', async () => {
+  const step = await rulesStep(withProject(smallGame(), 'lost = "hero.fell"'))
+  expect(step).toEqual({ step: 'rules', state: 'passed', problems: [], notes: [] })
+})
+
+test("the score's number is read from a sim made with the game's own rules", async () => {
+  const files = withProject(smallGame(), 'lost = "hero.fell"\nscore = "hero.score.sparks"')
+  expect(await rulesStep(files, scored())).toEqual({ step: 'rules', state: 'passed', problems: [], notes: [] })
+  const wrong = withProject(smallGame(), 'lost = "hero.fell"\nscore = "hero.score.name"')
+  expect((await rulesStep(wrong, scored()))?.problems.map((p) => p.path)).toEqual(['score'])
+  const missing = withProject(smallGame(), 'lost = "hero.fell"\nscore = "hero.score.sparks"')
+  expect((await rulesStep(missing))?.problems.map((p) => p.path)).toEqual(['score'])
+})
+
+test('a game whose code did not load says nothing about how its levels end', async () => {
+  const code = new CliError('not installed')
+  const step = await rulesStep(withProject(smallGame(), 'done = "gate.touched"'), { code })
+  expect(step?.problems).toEqual([])
 })

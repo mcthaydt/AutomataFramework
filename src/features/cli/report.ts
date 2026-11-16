@@ -6,6 +6,11 @@ import { type Diagnostic, formatDiagnostic } from '../content/content.ts'
 export type StepName = 'files' | 'art' | 'rules' | 'lint' | 'types' | 'replays' | 'tests'
 export const STEP_NAMES: readonly StepName[] = ['files', 'art', 'rules', 'lint', 'types', 'replays', 'tests']
 
+/** A finding that is a note every day and a problem under `--ship`. */
+export interface ShipFinding extends Diagnostic {
+  readonly rule: 'words' | 'size' | 'small-words' | 'save'
+}
+
 export interface StepReport {
   readonly step: StepName
   /** `could-not-run`: the step's tool is missing or the game is not installed, so nothing is known about this step. */
@@ -14,6 +19,8 @@ export interface StepReport {
   readonly problems: readonly Diagnostic[]
   /** True and worth saying, but nothing to fix. For a step that could not run, the first note is why. */
   readonly notes: readonly string[]
+  /** What `--ship` turns into problems: said as a note every other day. */
+  readonly ship?: readonly ShipFinding[]
   /** A tool's own last lines, for `lint`, `types` and `tests`. */
   readonly output?: string
 }

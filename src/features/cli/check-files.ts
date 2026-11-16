@@ -6,7 +6,8 @@ import { type Diagnostic, type GameContent, type Language, parseProject } from '
 import { paintedPaths } from './art.ts'
 import type { GameFolder } from './game-folder.ts'
 import { type CliError, Files, type FilesService } from './ports.ts'
-import type { StepReport } from './report.ts'
+import { unfinishedWords } from './check-words.ts'
+import type { ShipFinding, StepReport } from './report.ts'
 import { worldFacts } from './world.ts'
 
 const NOT_INSTALLED_NOTE =
@@ -21,6 +22,7 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
     const files = yield* Files
     const problems: Diagnostic[] = game.loaded.ok ? [] : [...game.loaded.diagnostics]
     const notes: string[] = game.code === undefined ? [NOT_INSTALLED_NOTE] : []
+    let ship: readonly ShipFinding[] = []
 
     const text = yield* files.readText(join(game.folder, 'automata.toml'))
     const project = text === undefined ? undefined : parseProject(text)
@@ -72,10 +74,16 @@ export function filesStep(game: GameFolder, fix: boolean): Effect.Effect<StepRep
       notes.push(...words.notes)
       // A level nothing leads to, or a place too big to run at once: worth saying, never a failure.
       notes.push(...worldFacts(game.loaded.value, game.content).notes)
+      // Words that are not finished are a note every day, and a problem under `--ship`.
+      ship = unfinishedWords(game.loaded.value)
+      if (ship.length > 0)
+        notes.push(
+          `${ship.length} ${ship.length === 1 ? 'word is' : 'words are'} not finished. See them with automata check --ship.`,
+        )
     }
 
     const state = problems.length > 0 ? 'failed' : 'passed'
-    return { step: 'files', state, problems, notes } satisfies StepReport
+    return { step: 'files', state, problems, notes, ...(ship.length > 0 ? { ship } : {}) } satisfies StepReport
   })
 }
 
