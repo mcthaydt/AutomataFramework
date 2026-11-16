@@ -22,6 +22,10 @@ Finished milestones and their decision records, setup, rule changes, standing pe
   Approved in the project thread ("add that"). Scope: this change only, made the same in all five repos, as
   AutomataFramework `docs/superpowers/specs/2026-11-16-blind-judge-design.md` describes. Later rule changes are lane 3
   as usual.
+- 2026-11-16, the Owner: a slice retro at the end of every slice (`review`), the `commit-authors` check restored, and
+  the first retro's rule edits. Approved in the project thread ("yes", then "lets do self improving after every slice
+  actually"). Scope: this change only, made the same in all five repos, as AutomataFramework
+  `docs/superpowers/specs/2026-11-16-slice-retro-design.md` describes. Later rule changes are lane 3 as usual.
 
 ## Standing permissions
 

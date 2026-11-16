@@ -1,0 +1,32 @@
+# The Owner's commits must say McThayDT, and no Claude credit may appear in a commit or in the pull request's words.
+# A cloud session whose git settings reset commits as `Claude`, and some add a `Co-Authored-By: Claude` line; this
+# stops both before they reach `main`. Only the Owner's own commits are held to the name: everyone else keeps theirs.
+# The rules and the text of the failure message are in `scripts/check-commit-authors.ts`. It reads the commits from
+# the GitHub API, so there is nothing to install and no code of the pull request is built or run besides that file.
+# It runs again when the description or title changes, because a credit in those words fails too.
+name: commit-authors
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: commit-authors-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  commit-authors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+      - run: node scripts/check-commit-authors.ts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
