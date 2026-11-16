@@ -40,6 +40,16 @@ export interface Stage {
    */
   setInset(px: number): void
   /**
+   * Puts this colour behind the level (and in the bars beside it) from the next picture on, and draws the last views
+   * again. For a place: each level has its own sky.
+   */
+  setSky(color: number): void
+  /**
+   * Puts this backdrop behind the level (none when `undefined`) and draws the last views again. A place gives each level its
+   * own; the textures belong to the art, which frees them.
+   */
+  setBackdrop(backdrop: BackdropArt | undefined): void
+  /**
    * Where the level is on the canvas for this shot: the whole level fitted (`fitWorld`) when there is no shot, and the
    * camera's placement, with the offset rounded to whole device pixels, when there is one.
    */
@@ -97,10 +107,12 @@ function buildBackdrop(backdrop: BackdropArt, into: Container): BackdropDrawn[] 
  */
 export async function createStage(
   world: { w: number; h: number },
-  sky: number = SKY_COLOR,
+  start: number = SKY_COLOR,
   art?: Art,
   density: Density = pageDensity,
 ): Promise<Stage> {
+  // The colour behind the level: the level's, until a place passes into a level with another.
+  let sky = start
   const app = new Application()
   await app.init({
     width: 1,
@@ -132,7 +144,9 @@ export async function createStage(
   // sky, over everything.
   const cover = new Graphics()
   app.stage.addChild(backdropLayer, root, linkLayer, cover)
-  const backdropLayers = art?.backdrop === undefined ? [] : buildBackdrop(art.backdrop, backdropLayer)
+  // The backdrop in use and its layers on the stage: the level's, until a place passes into a level with another.
+  let backdropNow = art?.backdrop
+  let backdropLayers = backdropNow === undefined ? [] : buildBackdrop(backdropNow, backdropLayer)
   // The tiles are placed once: the level's tiles do not move. When they are drawn, the boxes that make the same ground
   // are not.
   for (const tile of art?.tiles ?? []) {
@@ -223,7 +237,7 @@ export async function createStage(
       .clear()
       .rect(0, room().h, box.w, box.h - room().h)
       .fill(sky)
-    if (art?.backdrop !== undefined) paintBackdrop(art.backdrop, fit, shot !== undefined)
+    if (backdropNow !== undefined) paintBackdrop(backdropNow, fit, shot !== undefined)
     root.scale.set(fit.scale)
     root.position.set(fit.left, fit.top)
     linkLayer.scale.set(fit.scale)
@@ -309,6 +323,20 @@ export async function createStage(
       if (destroyed) return
       // Not above zero, or not a number, is no room at all.
       inset = px > 0 ? px : 0
+      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
+    },
+    setSky(color) {
+      if (destroyed || color === sky) return
+      sky = color
+      app.renderer.background.color = color
+      if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
+    },
+    setBackdrop(backdrop) {
+      if (destroyed || backdrop === backdropNow) return
+      // Its holders and strips go; the textures are the art's and stay.
+      for (const one of backdropLayers) one.holder.destroy({ children: true })
+      backdropNow = backdrop
+      backdropLayers = backdrop === undefined ? [] : buildBackdrop(backdrop, backdropLayer)
       if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
     },
     fit: fitFor,

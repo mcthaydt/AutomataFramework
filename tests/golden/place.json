@@ -1,0 +1,12 @@
+{
+  "ticks": 420,
+  "finalHash": "186db557f6e14efa",
+  "checks": [
+    { "tick": 60, "hash": "af313d2bf0d2a36b" },
+    { "tick": 120, "hash": "ea47e2886d1d80d7" },
+    { "tick": 180, "hash": "44001c73d112e004" },
+    { "tick": 240, "hash": "12788772435ad2b8" },
+    { "tick": 300, "hash": "883176c65c0e0efe" },
+    { "tick": 360, "hash": "7ff101253cf138e6" }
+  ]
+}

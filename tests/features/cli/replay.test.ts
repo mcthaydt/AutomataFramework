@@ -91,6 +91,38 @@ test('a level the game does not have cannot be played, and says so', async () =>
   expect(memory.out).toEqual([`${FILE}: This cannot be played on this game: ${detail}.`])
 })
 
+/** The recorded play with `arrive` written into its `meta`, as a game opened beside a door or at a spot writes it. */
+async function arrivedAt(line: string): Promise<Record<string, string>> {
+  const recorded = JSON.parse(await recordedPlay()) as { meta: Record<string, string> }
+  return { [FILE]: JSON.stringify({ ...recorded, meta: { ...recorded.meta, arrive: line } }) }
+}
+
+test('a recording opened at a spot plays from that spot: the same spot as the start plays as recorded, another one does not', async () => {
+  const same = await replays(await arrivedAt('at:2.5,7.5'))
+  expect(await play(same)).toBe(0)
+  expect(same.out[0]).toContain('as recorded.')
+  const elsewhere = await replays(await arrivedAt('at:12.5,7.5'))
+  expect(await play(elsewhere)).toBe(1)
+  expect(elsewhere.out[0]).toContain('The game no longer plays the way it was recorded')
+})
+
+test('a recording opened beside a thing plays beside it; one beside a thing the level has not opens at the starts', async () => {
+  const beside = await replays(await arrivedAt('thing:crate-1'))
+  expect(await play(beside)).toBe(1)
+  expect(beside.out[0]).toContain('The game no longer plays the way it was recorded')
+  const gone = await replays(await arrivedAt('thing:gone'))
+  expect(await play(gone)).toBe(0)
+  expect(gone.out[0]).toContain('as recorded.')
+})
+
+test('an arrive line that is neither form cannot be played, and says what it should look like', async () => {
+  const memory = await replays(await arrivedAt('sideways'))
+  expect(await play(memory)).toBe(1)
+  expect(memory.out).toEqual([
+    `${FILE}: This cannot be played on this game: its "arrive" line is "sideways", and it must be like "thing:door-in" or "at:3.5,7.5".`,
+  ])
+})
+
 test('a file that is not a replay is named with its sentence, and the others are still played', async () => {
   const memory = await replays({ 'replays/bad.json': '{"nope": 1}', [FILE]: await recordedPlay() })
   expect(await play(memory)).toBe(1)

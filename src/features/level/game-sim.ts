@@ -2,14 +2,16 @@ import { commandsPlugin } from '../commands/commands.ts'
 import type { GameContent } from '../content/content.ts'
 import { physics } from '../physics/physics.ts'
 import { createSim, type PluginDef, type Sim } from '../sim/sim.ts'
+import type { Arrive } from './arrive.ts'
+import { placePlugin } from './entered.ts'
 import { joinPlugin } from './join.ts'
 import { movesPlugin } from './moves.ts'
+import { levelsOf } from './place.ts'
 import { levelPlugin } from './plugin.ts'
 import { simContent } from './sim-content.ts'
-import { spawnLevel } from './spawn-level.ts'
+import { spawnPlace } from './spawn-place.ts'
 import { spritesPlugin } from './sprite.ts'
 import { openKinds, switchPlugin } from './switches.ts'
-import { levelSize } from './tile-runs.ts'
 import { touchPlugin } from './touch.ts'
 import { touchKinds, usesJoints, usesMoves, usesSprites, usesSwitches, usesValues } from './uses.ts'
 import { wherePlugin } from './where.ts'
@@ -25,6 +27,11 @@ export interface GameSimOptions {
   readonly level?: string
   /** Which players are in: default `[1]`. Each needs a start point in the level. */
   readonly players?: readonly number[]
+  /**
+   * Where the heroes come in, in the opened level: beside a thing of it (a door they came through), or at a spot in its
+   * own tiles. Default: its start points. A hero is never put inside a door (see `arrivalSpots`).
+   */
+  readonly arrive?: Arrive
   /** Default `{ x: 0, y: 30 }`: y points down, so this pulls things down the screen, a little harder than Earth. */
   readonly gravity?: { readonly x: number; readonly y: number }
 }
@@ -43,8 +50,8 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
   const gravity = options.gravity ?? { x: 0, y: 30 }
   const moved = usesMoves(content)
   const opened = options.level ?? content.project.start
-  const openedLevel = content.levels[opened]
-  const openedSize = openedLevel === undefined ? { w: 0, h: 0 } : levelSize(openedLevel)
+  // The levels the sim holds: the opened level's place, or the opened level alone.
+  const levels = levelsOf(content, opened)
   const sim = await createSim({
     seed: options.seed ?? 1,
     content: simContent(content),
@@ -53,24 +60,32 @@ export async function createGameSim(options: GameSimOptions): Promise<Sim> {
       commandsPlugin,
       levelPlugin,
       // Only a game for two or more players can have people join and leave (see join.ts).
-      ...(players >= 2 ? [joinPlugin({ level: opened, max: players })] : []),
+      ...(players >= 2
+        ? [
+            joinPlugin({
+              level: opened,
+              max: players,
+              ...(options.arrive === undefined ? {} : { arrive: options.arrive }),
+            }),
+          ]
+        : []),
       // Only a game with a figure or a camera has sprites, so every other game keeps the sim it had.
       ...(usesSprites(content) ? [spritesPlugin] : []),
       // Only a game with a touched character has the touch plugin, so every other game keeps the sim it had.
       ...(kinds.sense.length + kinds.take.length > 0 ? [touchPlugin(kinds)] : []),
       // Only a game whose hero has `moves` has the built-in hero, so every other game keeps the sim it had.
       ...(moved ? [movesPlugin({ gravity })] : []),
-      // Only a game with a character that has `values`, or a switch or a gate, knows which levels it holds.
-      ...(usesValues(content) || usesSwitches(content)
-        ? [wherePlugin([{ level: opened, x: 0, y: 0, ...openedSize }])]
-        : []),
+      // Only a game with a character that has `values`, a switch or a gate, or a place of joined levels, knows which levels it holds.
+      ...(usesValues(content) || usesSwitches(content) || levels.length > 1 ? [wherePlugin(levels)] : []),
+      // Only a place of two or more levels says which level a hero is in, and when one passes into another.
+      ...(levels.length > 1 ? [placePlugin()] : []),
       // Only a game with a switch or a gate has the switch plugin (its components, events and the `facts` command).
       ...(usesSwitches(content) ? [switchPlugin(openKinds(content))] : []),
       ...(options.plugins ?? []),
     ],
   })
   try {
-    spawnLevel(sim, content, opened, options.players ?? [1])
+    spawnPlace(sim, content, opened, options.players ?? [1], options.arrive)
   } catch (error) {
     sim.dispose()
     throw error

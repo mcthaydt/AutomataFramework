@@ -14,7 +14,7 @@ import {
   type PadLike,
   touchSettingsOf,
 } from '../input/input.ts'
-import { createGameSim, type GameSimOptions, levelSize, skyOf } from '../level/level.ts'
+import { arriveLine, createGameSim, factsCommand, type GameSimOptions, skyOf } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
 import { createRenderer, type HeroBox, type ReadPicture } from '../render/render.ts'
 import type { Sim, SimEvent } from '../sim/sim.ts'
@@ -26,6 +26,7 @@ import { guardPlay } from './guard.ts'
 import { requireLanguage } from './language.ts'
 import { createLoop } from './loop.ts'
 import { createPlayers, type JoinAnswer } from './players.ts'
+import { followLevel, stageOf } from './stage-of.ts'
 import { thumbsOf, wireTouchRoom } from './thumb-wiring.ts'
 
 export { resolveControls } from './controls.ts'
@@ -79,6 +80,12 @@ export interface GameOptions extends GameSimOptions {
    * for a tap in it, and all of them change when the player picks another.
    */
   readonly locale: Locale
+  /**
+   * What was done for good before this play (`fact.kept` events of an earlier one, like `room-2.gate-1.open`). When it is
+   * not empty the game steps tick 0 once, at once, before the first picture, with these and no player's input, so a gate
+   * they open is open in the first picture and the first press lands on tick 1. A recording of it carries the one command.
+   */
+  readonly facts?: readonly string[]
 }
 
 /** One step of the game, as `onStep` tells it: the tick the sim is at after it, and the events it raised in order. */
@@ -144,26 +151,27 @@ export async function startGame(options: GameOptions): Promise<Game> {
   // What to undo if a later step fails; it grows as things are made.
   let cleanup = (): void => sim.dispose()
   try {
-    const level = options.content.levels[options.level ?? options.content.project.start]
+    const opened = options.level ?? options.content.project.start
+    const level = options.content.levels[opened]
     if (level === undefined) throw new Error('The level this game opens is missing.')
+    // The place the level is in: its outline, and each level's offset, sky and view.
+    const stage = stageOf(options.content, opened)
     // The pictures first: a game that cannot be drawn leaves nothing on the page.
-    const art = await levelArt(
-      'startGame',
-      options.content,
-      options.level ?? options.content.project.start,
-      options.readPicture,
-    )
+    const art = await levelArt('startGame', options.content, opened, options.readPicture, stage.simLevels)
     cleanup = () => {
       art?.destroy()
       sim.dispose()
     }
     const renderer = await createRenderer({
       mount,
-      world: levelSize(level),
+      world: stage.world,
       sky: skyOf(level),
       art,
       view: level.view,
+      levels: stage.levels,
+      at: opened,
     })
+    const follow = followLevel(renderer, sim, opened, stage.levels)
     cleanup = () => {
       renderer.destroy()
       sim.dispose()
@@ -193,10 +201,15 @@ export async function startGame(options: GameOptions): Promise<Game> {
     input.setSwapSides(touchSettingsOf(options.touchSettings).swapSides)
     wireTouchRoom(input, renderer, level.view !== undefined)
     input.setPlayers(options.players ?? [1])
-    const levelId = options.level ?? options.content.project.start
-    // The level and the players are written into the recording, so `automata replay` can set the same game up.
+    const levelId = opened
+    // The level, the players and where they came in are written into the recording, so `automata replay` can set the
+    // same game up.
     const recorder = createRecorder(sim, {
-      meta: { level: levelId, players: (options.players ?? [1]).join(',') },
+      meta: {
+        level: levelId,
+        players: (options.players ?? [1]).join(','),
+        ...(options.arrive === undefined ? {} : { arrive: arriveLine(options.arrive) }),
+      },
     })
     const people = createPlayers({
       sim,
@@ -219,12 +232,19 @@ export async function startGame(options: GameOptions): Promise<Game> {
       tickHz: sim.tickHz,
       on: touchSettingsOf(options.touchSettings).vibration,
     })
+    // What was done for good: tick 0 is stepped once now, with only the facts, so the first picture already has the gates
+    // they open, and a game that waits for a first press waits after this step. The recording holds the one command.
+    if (options.facts !== undefined && options.facts.length > 0) {
+      renderer.apply(recorder.step([factsCommand([...options.facts])]).render)
+      follow()
+    }
     const loop = createLoop({
       tickHz: sim.tickHz,
       step() {
         const tick = sim.tick
         const result = recorder.step([...people.commands(tick), ...input.poll(tick)])
         renderer.apply(result.render)
+        follow()
         // Only the tick and the events: the audio is never handed the sim, the render delta or the commands.
         audio?.hear({ tick: result.tick, events: result.events })
         buzzer.hear(result)

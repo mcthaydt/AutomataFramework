@@ -72,6 +72,35 @@ function applySettings(defaults: Controls, saved: unknown): {
 };
 ```
 
+### `arrivalSpots` (function)
+
+```ts
+function arrivalSpots(content: GameContent, levels: readonly SimLevel[], opened: string, players: readonly number[], arrive?: Arrive): ReadonlyMap<number, Spot>;
+```
+
+### `Arrive` (type)
+
+```ts
+type Arrive = {
+    readonly thing: string;
+} | {
+    readonly x: number;
+    readonly y: number;
+};
+```
+
+### `arriveLine` (function)
+
+```ts
+function arriveLine(arrive: Arrive): string;
+```
+
+### `arriveOf` (function)
+
+```ts
+function arriveOf(line: string): Arrive | undefined;
+```
+
 ### `Art` (interface)
 
 ```ts
@@ -80,6 +109,7 @@ interface Art {
     readonly tiles: readonly TileSprite[];
     readonly ground: readonly TileBox[];
     readonly backdrop: BackdropArt | undefined;
+    backdropOf(level: string): BackdropArt | undefined;
     destroy(): void;
 }
 ```
@@ -770,14 +800,9 @@ function createRenderer(options: {
     sky?: number;
     art?: Art | undefined;
     density?: Density | undefined;
-    view?: {
-        readonly w: number;
-        readonly h: number;
-        readonly most?: {
-            readonly w: number;
-            readonly h: number;
-        } | undefined;
-    } | undefined;
+    view?: ViewSize | undefined;
+    levels?: readonly StageLevel[] | undefined;
+    at?: string | undefined;
 }): Promise<Renderer>;
 ```
 
@@ -1122,6 +1147,19 @@ function emptyReadMarks(source: Language): ReadMarks;
 
 ```ts
 function encodePng(picture: IndexedPicture): Uint8Array<ArrayBuffer>;
+```
+
+### `Entered` (interface)
+
+```ts
+interface Entered {
+    readonly level: string;
+    readonly from: string;
+    readonly player: number;
+    readonly sid: number;
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `EntityRef` (interface)
@@ -1595,6 +1633,7 @@ interface GameOptions extends GameSimOptions {
     readonly readPicture?: ReadPicture;
     readonly touchSettings?: unknown;
     readonly locale: Locale;
+    readonly facts?: readonly string[];
 }
 ```
 
@@ -1607,6 +1646,7 @@ interface GameSimOptions {
     readonly seed?: number;
     readonly level?: string;
     readonly players?: readonly number[];
+    readonly arrive?: Arrive;
     readonly gravity?: {
         readonly x: number;
         readonly y: number;
@@ -1623,10 +1663,33 @@ interface GameStep {
 }
 ```
 
+### `GroundBox` (interface)
+
+```ts
+interface GroundBox {
+    readonly box: TileBox;
+    readonly parts: readonly GroundPart[];
+}
+```
+
+### `groundBoxes` (function)
+
+```ts
+function groundBoxes(content: GameContent, levels: readonly SimLevel[]): readonly GroundBox[];
+```
+
 ### `groundOf` (const)
 
 ```ts
 const groundOf: (level: Level) => number;
+```
+
+### `GroundPart` (interface)
+
+```ts
+interface GroundPart extends TileBox {
+    readonly level: string;
+}
 ```
 
 ### `HASH_EVERY` (const)
@@ -1651,6 +1714,15 @@ interface HeroBox {
 
 ```ts
 function heroControls(content: GameContent, given?: Controls): Controls | undefined;
+```
+
+### `heroLevels` (function)
+
+```ts
+function heroLevels(sim: Sim, opened?: string): readonly {
+    readonly player: number;
+    readonly level: string;
+}[];
 ```
 
 ### `HeroMoves` (interface)
@@ -1737,6 +1809,12 @@ type IconName = 'pause' | 'play' | 'back' | 'gear' | 'plus' | 'check' | 'reload'
 
 ```ts
 const Id: z.ZodString;
+```
+
+### `In` (const)
+
+```ts
+const In: ComponentDef<typeof inFields>;
 ```
 
 ### `IndexedPicture` (interface)
@@ -1918,6 +1996,7 @@ interface JoinOptions {
 function joinPlugin(options: {
     readonly level: string;
     readonly max: number;
+    readonly arrive?: Arrive;
 }): PluginDef;
 ```
 
@@ -2152,6 +2231,18 @@ interface Level {
 }
 ```
 
+### `levelAt` (function)
+
+```ts
+function levelAt(levels: readonly SimLevel[], x: number, y: number): string | undefined;
+```
+
+### `LevelEntered` (const)
+
+```ts
+const LevelEntered: EventDef<z.ZodType<Entered>>;
+```
+
 ### `LevelError` (class)
 
 ```ts
@@ -2224,6 +2315,12 @@ function levelSize(level: Level): {
     readonly w: number;
     readonly h: number;
 };
+```
+
+### `levelsOf` (function)
+
+```ts
+function levelsOf(content: GameContent, opened: string): readonly SimLevel[];
 ```
 
 ### `LevelStart` (interface)
@@ -2325,6 +2422,7 @@ interface ListProps {
 function loadArt(options: {
     content: GameContent;
     level?: string;
+    levels?: readonly SimLevel[];
     readPicture: ReadPicture;
 }): Promise<Art>;
 ```
@@ -2744,7 +2842,7 @@ const MusicSchema: z.ZodType<MusicFile, MusicFile>;
 ### `needsPictures` (function)
 
 ```ts
-function needsPictures(content: GameContent, level?: string): boolean;
+function needsPictures(content: GameContent, level?: string, levels?: readonly SimLevel[]): boolean;
 ```
 
 ### `nextLevel` (function)
@@ -3140,6 +3238,21 @@ interface PlaceLevel {
 }
 ```
 
+### `placePlugin` (function)
+
+```ts
+function placePlugin(): PluginDef;
+```
+
+### `placeSize` (function)
+
+```ts
+function placeSize(levels: readonly SimLevel[]): {
+    readonly w: number;
+    readonly h: number;
+};
+```
+
 ### `Played` (interface)
 
 ```ts
@@ -3452,6 +3565,7 @@ interface Renderer {
         readonly zoom: number;
     } | undefined): void;
     heroes(): readonly HeroBox[];
+    enter(level: string): void;
     destroy(): void;
 }
 ```
@@ -4074,6 +4188,12 @@ interface Sheet {
 const SHEET_COLUMNS = 8;
 ```
 
+### `shiftLevel` (function)
+
+```ts
+function shiftLevel(level: Level, content: GameContent, dx: number, dy: number): Level;
+```
+
 ### `Shot` (interface)
 
 ```ts
@@ -4338,6 +4458,12 @@ interface SnapshotView {
 }
 ```
 
+### `solidGrid` (function)
+
+```ts
+function solidGrid(content: GameContent, levels: readonly SimLevel[]): readonly string[];
+```
+
 ### `SOUND_SETTINGS_DEFAULT` (const)
 
 ```ts
@@ -4407,13 +4533,19 @@ type SoundVoice = ToneVoice | NoiseVoice;
 ### `spawnLevel` (function)
 
 ```ts
-function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: readonly number[]): void;
+function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: readonly number[], spots?: ReadonlyMap<number, Spot>): void;
 ```
 
 ### `SpawnPart` (type)
 
 ```ts
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
+```
+
+### `spawnPlace` (function)
+
+```ts
+function spawnPlace(sim: Sim, content: GameContent, opened: string, players: readonly number[], arrive?: Arrive): void;
 ```
 
 ### `Speaker` (interface)
@@ -4463,6 +4595,15 @@ function splashScreen(options: ScreenBase & {
 }): Screen;
 ```
 
+### `Spot` (interface)
+
+```ts
+interface Spot {
+    readonly x: number;
+    readonly y: number;
+}
+```
+
 ### `Sprite` (const)
 
 ```ts
@@ -4473,6 +4614,15 @@ const Sprite: ComponentDef<typeof spriteFields>;
 
 ```ts
 const spritesPlugin: PluginDef;
+```
+
+### `StageLevel` (interface)
+
+```ts
+interface StageLevel extends SimLevel {
+    readonly sky: number;
+    readonly view: ViewSize | undefined;
+}
 ```
 
 ### `START_LEAD` (const)
@@ -5163,6 +5313,19 @@ interface View {
 }
 ```
 
+### `ViewSize` (interface)
+
+```ts
+interface ViewSize {
+    readonly w: number;
+    readonly h: number;
+    readonly most?: {
+        readonly w: number;
+        readonly h: number;
+    } | undefined;
+}
+```
+
 ### `ViewSprite` (interface)
 
 ```ts
@@ -5437,6 +5600,35 @@ interface Advance {
         readonly events: readonly SimEvent[];
     }[];
 }
+```
+
+### `arrivalSpots` (function)
+
+```ts
+function arrivalSpots(content: GameContent, levels: readonly SimLevel[], opened: string, players: readonly number[], arrive?: Arrive): ReadonlyMap<number, Spot>;
+```
+
+### `Arrive` (type)
+
+```ts
+type Arrive = {
+    readonly thing: string;
+} | {
+    readonly x: number;
+    readonly y: number;
+};
+```
+
+### `arriveLine` (function)
+
+```ts
+function arriveLine(arrive: Arrive): string;
+```
+
+### `arriveOf` (function)
+
+```ts
+function arriveOf(line: string): Arrive | undefined;
 ```
 
 ### `ArtFile` (interface)
@@ -6246,6 +6438,19 @@ function emptyReadMarks(source: Language): ReadMarks;
 function encodePng(picture: IndexedPicture): Uint8Array<ArrayBuffer>;
 ```
 
+### `Entered` (interface)
+
+```ts
+interface Entered {
+    readonly level: string;
+    readonly from: string;
+    readonly player: number;
+    readonly sid: number;
+    readonly x: number;
+    readonly y: number;
+}
+```
+
 ### `EntityRef` (interface)
 
 ```ts
@@ -6567,11 +6772,27 @@ interface GameSimOptions {
     readonly seed?: number;
     readonly level?: string;
     readonly players?: readonly number[];
+    readonly arrive?: Arrive;
     readonly gravity?: {
         readonly x: number;
         readonly y: number;
     };
 }
+```
+
+### `GroundBox` (interface)
+
+```ts
+interface GroundBox {
+    readonly box: TileBox;
+    readonly parts: readonly GroundPart[];
+}
+```
+
+### `groundBoxes` (function)
+
+```ts
+function groundBoxes(content: GameContent, levels: readonly SimLevel[]): readonly GroundBox[];
 ```
 
 ### `groundOf` (const)
@@ -6580,10 +6801,27 @@ interface GameSimOptions {
 const groundOf: (level: Level) => number;
 ```
 
+### `GroundPart` (interface)
+
+```ts
+interface GroundPart extends TileBox {
+    readonly level: string;
+}
+```
+
 ### `HASH_EVERY` (const)
 
 ```ts
 const HASH_EVERY = 60;
+```
+
+### `heroLevels` (function)
+
+```ts
+function heroLevels(sim: Sim, opened?: string): readonly {
+    readonly player: number;
+    readonly level: string;
+}[];
 ```
 
 ### `HeroMoves` (interface)
@@ -6649,6 +6887,12 @@ function hypot(x: number, y: number): number;
 
 ```ts
 const Id: z.ZodString;
+```
+
+### `In` (const)
+
+```ts
+const In: ComponentDef<typeof inFields>;
 ```
 
 ### `IndexedPicture` (interface)
@@ -6745,6 +6989,7 @@ interface JoinOptions {
 function joinPlugin(options: {
     readonly level: string;
     readonly max: number;
+    readonly arrive?: Arrive;
 }): PluginDef;
 ```
 
@@ -6924,6 +7169,18 @@ interface Level {
 }
 ```
 
+### `levelAt` (function)
+
+```ts
+function levelAt(levels: readonly SimLevel[], x: number, y: number): string | undefined;
+```
+
+### `LevelEntered` (const)
+
+```ts
+const LevelEntered: EventDef<z.ZodType<Entered>>;
+```
+
 ### `LevelError` (class)
 
 ```ts
@@ -6996,6 +7253,12 @@ function levelSize(level: Level): {
     readonly w: number;
     readonly h: number;
 };
+```
+
+### `levelsOf` (function)
+
+```ts
+function levelsOf(content: GameContent, opened: string): readonly SimLevel[];
 ```
 
 ### `LevelStart` (interface)
@@ -7724,6 +7987,21 @@ interface PlaceLevel {
 }
 ```
 
+### `placePlugin` (function)
+
+```ts
+function placePlugin(): PluginDef;
+```
+
+### `placeSize` (function)
+
+```ts
+function placeSize(levels: readonly SimLevel[]): {
+    readonly w: number;
+    readonly h: number;
+};
+```
+
 ### `Played` (interface)
 
 ```ts
@@ -8410,6 +8688,12 @@ interface Sheet {
 const SHEET_COLUMNS = 8;
 ```
 
+### `shiftLevel` (function)
+
+```ts
+function shiftLevel(level: Level, content: GameContent, dx: number, dy: number): Level;
+```
+
 ### `SHOWN_FOR` (const)
 
 ```ts
@@ -8617,6 +8901,12 @@ interface SnapshotView {
 }
 ```
 
+### `solidGrid` (function)
+
+```ts
+function solidGrid(content: GameContent, levels: readonly SimLevel[]): readonly string[];
+```
+
 ### `SOUND_SETTINGS_DEFAULT` (const)
 
 ```ts
@@ -8675,13 +8965,19 @@ type SoundVoice = ToneVoice | NoiseVoice;
 ### `spawnLevel` (function)
 
 ```ts
-function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: readonly number[]): void;
+function spawnLevel(sim: Sim, content: GameContent, levelId: string, players: readonly number[], spots?: ReadonlyMap<number, Spot>): void;
 ```
 
 ### `SpawnPart` (type)
 
 ```ts
 type SpawnPart = ComponentDef | readonly [ComponentDef, Readonly<Record<string, unknown>>];
+```
+
+### `spawnPlace` (function)
+
+```ts
+function spawnPlace(sim: Sim, content: GameContent, opened: string, players: readonly number[], arrive?: Arrive): void;
 ```
 
 ### `Speaker` (interface)
@@ -8703,6 +8999,15 @@ interface Speaker {
 
 ```ts
 type SpeakerState = 'waiting' | 'on' | 'unavailable';
+```
+
+### `Spot` (interface)
+
+```ts
+interface Spot {
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `Sprite` (const)

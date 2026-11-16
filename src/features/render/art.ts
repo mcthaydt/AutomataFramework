@@ -18,7 +18,7 @@ import {
   type GameContent,
   paintedPath,
 } from '../content/content.ts'
-import { type TileBox, tileBoxes } from '../level/level.ts'
+import { groundBoxes, type SimLevel, type TileBox, tileBoxes } from '../level/level.ts'
 import { tilePictures } from './tiles.ts'
 
 /**
@@ -80,18 +80,25 @@ export interface Art {
   readonly tiles: readonly TileSprite[]
   /** The boxes the level's solid tiles make. When tiles are drawn from pictures these boxes are not drawn. */
   readonly ground: readonly TileBox[]
+  /** The opened level's backdrop (the first level's when a place was loaded). */
   readonly backdrop: BackdropArt | undefined
+  /** The backdrop of a level of the place that was loaded, or `undefined` for one with none (or that was not loaded). */
+  backdropOf(level: string): BackdropArt | undefined
   /** Frees every texture. Safe to call twice. */
   destroy(): void
 }
 
-/** True when the level has a tileset or a backdrop, or any character has a figure: when there is art to load. */
-export function needsPictures(content: GameContent, level?: string): boolean {
-  const here = content.levels[level ?? content.project.start]
+/**
+ * True when the level has a tileset or a backdrop, or any character has a figure: when there is art to load. With `levels`
+ * (a place of joined levels), when any of them has.
+ */
+export function needsPictures(content: GameContent, level?: string, levels?: readonly SimLevel[]): boolean {
+  const shown = levels === undefined ? [level ?? content.project.start] : levels.map((l) => l.level)
   return (
-    here?.tileset !== undefined ||
-    here?.backdrop !== undefined ||
-    Object.values(content.characters).some((character) => character.figure !== undefined)
+    shown.some((id) => {
+      const here = content.levels[id]
+      return here?.tileset !== undefined || here?.backdrop !== undefined
+    }) || Object.values(content.characters).some((character) => character.figure !== undefined)
   )
 }
 
@@ -120,16 +127,20 @@ interface FigureArt {
 }
 
 /**
- * Loads and checks the art of a level (the project's `start` unless `level` says). Throws an `ArtError` for the first
- * picture that is missing, unreadable or not the size its file makes it; nothing is left loaded when it throws.
+ * Loads and checks the art of a level (the project's `start` unless `level` says). With `levels`, the art of a place of
+ * joined levels: each level's tiles and ground are put at its offset, and each level's backdrop is loaded (`backdropOf`);
+ * `level` is then the one `backdrop` is. Throws an `ArtError` for the first picture that is missing, unreadable or not
+ * the size its file makes it; nothing is left loaded when it throws.
  */
 export async function loadArt(options: {
   content: GameContent
   level?: string
+  levels?: readonly SimLevel[]
   readPicture: ReadPicture
 }): Promise<Art> {
   const { content, readPicture } = options
-  const level = content.levels[options.level ?? content.project.start]
+  const opened = options.level ?? content.project.start
+  const levels: readonly SimLevel[] = options.levels ?? [{ level: opened, x: 0, y: 0, w: 0, h: 0 }]
   const sources: ImageSource[] = []
   const textures: Texture[] = []
   const bitmaps: ImageBitmap[] = []
@@ -166,47 +177,80 @@ export async function loadArt(options: {
   }
 
   try {
-    // The tileset's picture, cut into the tiles the level uses.
-    let tiles: TileSprite[] = []
-    let ground: TileBox[] = []
-    const tileset = level?.tileset === undefined ? undefined : content.tilesets?.[level.tileset]
-    if (level !== undefined && tileset !== undefined) {
-      const bitmap = await read(tileset.image)
-      const wide = tileset.columns * tileset.tileSize
-      if (bitmap.width !== wide)
-        throw new ArtError(
-          `The tileset "${tileset.id}" says its picture is ${tileset.columns} tiles of ${tileset.tileSize} pixels wide, which is ${wide}, but ${tileset.image} is ${bitmap.width} pixels wide.`,
-        )
-      const squares = tileset.columns * Math.floor(bitmap.height / tileset.tileSize)
-      const used = Math.max(-1, ...tileset.tiles.flatMap((tile) => tile.pictures.map((one) => one.frame)))
-      if (used >= squares)
-        throw new ArtError(
-          `The tileset "${tileset.id}" uses picture ${used}, but its picture has only ${squares} squares, 0 to ${squares - 1}.`,
-        )
-      // Each square the level uses, cut once.
-      const placed = tilePictures(level, tileset)
-      const squareOf = new Map<number, Texture>()
-      const size = tileset.tileSize
-      for (const { frame } of placed) {
-        if (squareOf.has(frame)) continue
-        const x = (frame % tileset.columns) * size
-        const y = Math.floor(frame / tileset.columns) * size
-        squareOf.set(frame, await cut(bitmap, x, y, size, size))
+    // The tileset pictures, cut into the tiles the levels use. A tileset two levels share is read and cut once.
+    const tiles: TileSprite[] = []
+    const squares = new Map<string, { bitmap: ImageBitmap; cut: Map<number, Texture> }>()
+    for (const where of levels) {
+      const level = content.levels[where.level]
+      const tileset = level?.tileset === undefined ? undefined : content.tilesets?.[level.tileset]
+      if (level === undefined || tileset === undefined) continue
+      let sheet = squares.get(tileset.id)
+      if (sheet === undefined) {
+        const bitmap = await read(tileset.image)
+        const wide = tileset.columns * tileset.tileSize
+        if (bitmap.width !== wide)
+          throw new ArtError(
+            `The tileset "${tileset.id}" says its picture is ${tileset.columns} tiles of ${tileset.tileSize} pixels wide, which is ${wide}, but ${tileset.image} is ${bitmap.width} pixels wide.`,
+          )
+        const count = tileset.columns * Math.floor(bitmap.height / tileset.tileSize)
+        const used = Math.max(-1, ...tileset.tiles.flatMap((tile) => tile.pictures.map((one) => one.frame)))
+        if (used >= count)
+          throw new ArtError(
+            `The tileset "${tileset.id}" uses picture ${used}, but its picture has only ${count} squares, 0 to ${count - 1}.`,
+          )
+        sheet = { bitmap, cut: new Map() }
+        squares.set(tileset.id, sheet)
       }
-      tiles = placed.map(({ col, row, frame }) => ({ col, row, texture: squareOf.get(frame) as Texture }))
-      const solid = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
-      ground = tileBoxes(level.tiles, (letter) => solid.has(letter))
+      // Each square the level uses, cut once.
+      const size = tileset.tileSize
+      for (const { col, row, frame } of tilePictures(level, tileset)) {
+        let square = sheet.cut.get(frame)
+        if (square === undefined) {
+          square = await cut(
+            sheet.bitmap,
+            (frame % tileset.columns) * size,
+            Math.floor(frame / tileset.columns) * size,
+            size,
+            size,
+          )
+          sheet.cut.set(frame, square)
+        }
+        tiles.push({ col: col + where.x, row: row + where.y, texture: square })
+      }
+    }
+    // The boxes the tiles are drawn over. A level alone has the boxes of its own solid tiles; a place has the parts of the
+    // boxes the sim makes (a floor that runs through a seam is one body there, drawn as each level's part).
+    let ground: TileBox[] = []
+    if (options.levels === undefined || levels.length < 2) {
+      const level = content.levels[opened]
+      const tileset = level?.tileset === undefined ? undefined : content.tilesets?.[level.tileset]
+      if (level !== undefined && tileset !== undefined) {
+        const solid = new Set(tileset.tiles.filter((tile) => tile.solid).map((tile) => tile.letter))
+        ground = tileBoxes(level.tiles, (letter) => solid.has(letter))
+      }
+    } else {
+      const tiled = new Set(
+        levels.filter((l) => content.levels[l.level]?.tileset !== undefined).map((l) => l.level),
+      )
+      ground = groundBoxes(content, levels).flatMap(({ parts }) =>
+        parts.filter((part) => tiled.has(part.level)),
+      )
     }
 
-    // Every figure a character or a backdrop's prop names, loaded once.
-    const backdropFile: BackdropFile | undefined =
-      level?.backdrop === undefined ? undefined : content.backdrops?.[level.backdrop]
+    // Every figure a character or a backdrop's prop names, loaded once; and each backdrop the levels name, in the order of
+    // the levels.
+    const backdropFiles = new Map<string, BackdropFile>()
+    for (const where of levels) {
+      const id = content.levels[where.level]?.backdrop
+      const file = id === undefined ? undefined : content.backdrops?.[id]
+      if (file !== undefined) backdropFiles.set(file.id, file)
+    }
     const figureIds = [
       ...new Set([
         ...Object.values(content.characters).flatMap((character) =>
           character.figure === undefined ? [] : [character.figure],
         ),
-        ...(backdropFile?.props.map((prop) => prop.figure) ?? []),
+        ...[...backdropFiles.values()].flatMap((file) => file.props.map((prop) => prop.figure)),
       ]),
     ].sort()
     const figures = new Map<string, FigureArt>()
@@ -234,9 +278,9 @@ export async function loadArt(options: {
       return { texture, w: texture.frame.width / figure.tile, h: texture.frame.height / figure.tile }
     }
 
-    // The backdrop's strips and the props that stand on them.
-    let backdrop: BackdropArt | undefined
-    if (backdropFile !== undefined) {
+    // Each backdrop's strips and the props that stand on them, loaded once however many levels share it.
+    const backdrops = new Map<string, BackdropArt>()
+    for (const backdropFile of backdropFiles.values()) {
       const path = paintedPath(content, 'backdrop', backdropFile.id)
       if (path === undefined)
         throw new ArtError(`The backdrop "${backdropFile.id}" has no file in this game.`)
@@ -258,7 +302,11 @@ export async function loadArt(options: {
         const layer = layers.findIndex((l) => l.id === prop.layer)
         return shown === undefined || layer < 0 ? [] : [{ ...shown, layer, x: prop.x, up: prop.up }]
       })
-      backdrop = { width: backdropFile.width, layers, props }
+      backdrops.set(backdropFile.id, { width: backdropFile.width, layers, props })
+    }
+    const backdropOf = (id: string): BackdropArt | undefined => {
+      const named = content.levels[id]?.backdrop
+      return named === undefined ? undefined : backdrops.get(named)
     }
 
     return {
@@ -268,7 +316,8 @@ export async function loadArt(options: {
       },
       tiles,
       ground,
-      backdrop,
+      backdrop: backdropOf(opened),
+      backdropOf,
       destroy,
     }
   } catch (error) {

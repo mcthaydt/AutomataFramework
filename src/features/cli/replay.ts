@@ -119,6 +119,11 @@ async function playOne(
   })
   if (ready.content.levels[level] === undefined)
     return wrong(`it was recorded on the level "${level}", which this game does not have`)
+  // Where the heroes came in, when the game was opened beside a door or at a spot (`thing:door-in`, `at:3.5,7.5`).
+  const line = replay.meta.arrive
+  const arrive = line === undefined ? undefined : framework.arriveOf(line)
+  if (line !== undefined && arrive === undefined)
+    return wrong(`its "arrive" line is "${line}", and it must be like "thing:door-in" or "at:3.5,7.5"`)
 
   let sim: Sim | undefined
   try {
@@ -129,6 +134,7 @@ async function playOne(
         seed: replay.seed,
         level,
         players: playersOf(replay.meta.players),
+        ...(arrive === undefined ? {} : { arrive }),
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)

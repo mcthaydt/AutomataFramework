@@ -6,8 +6,10 @@ import { BodyKind, body, collider, Touching, transform } from '../physics/physic
 import type { SpawnPart } from '../sim/sim.ts'
 import { colourNumber } from './colours.ts'
 import { Look, Thing } from './components.ts'
+import { In } from './entered.ts'
 import { MOVE_START } from './move-step.ts'
 import { Moves } from './moves.ts'
+import { levelAt, levelsOf } from './place.ts'
 import { Sprite } from './sprite.ts'
 import { Open, Pressed } from './switches.ts'
 import { usesMoves, usesSprites } from './uses.ts'
@@ -38,17 +40,28 @@ export function characterParts(
 }
 
 /**
- * The parts of player `number`'s hero at that player's start point in the level. `undefined` when the level, the
- * hero's character or that player's start point does not exist.
+ * The parts of player `number`'s hero at that player's start point in the level, or at `at` when it is given (where a
+ * hero comes in beside a door, or in a place: `arrivalSpots` says). `undefined` when the level, the hero's character or
+ * that player's start point does not exist.
  */
-export function heroParts(content: GameContent, levelId: string, number: number): SpawnPart[] | undefined {
+export function heroParts(
+  content: GameContent,
+  levelId: string,
+  number: number,
+  at?: { readonly x: number; readonly y: number },
+): SpawnPart[] | undefined {
   const start = content.levels[levelId]?.starts.find((s) => s.player === number)
   const hero = content.characters[content.project.hero]
   if (start === undefined || hero === undefined) return undefined
+  // In a place of two or more levels a hero knows which level it is in: the one its spot is in.
+  const levels = levelsOf(content, levelId)
+  const spot = at ?? start
+  const inLevel = levels.length > 1 ? (levelAt(levels, spot.x, spot.y) ?? levelId) : undefined
   return [
-    ...characterParts(hero, start, usesSprites(content), number),
+    ...characterParts(hero, at ?? start, usesSprites(content), number),
     [Thing, { id: `player-${number}`, character: content.project.hero }],
     [Player, { number }],
+    ...(inLevel === undefined ? [] : [[In, { level: inLevel }] as const]),
     // A hero the framework moves remembers how, and is told what it stands on and leans against.
     ...(usesMoves(content) ? [[Moves, { ...MOVE_START }] as const, Touching] : []),
   ]
