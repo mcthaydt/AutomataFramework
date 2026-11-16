@@ -1,8 +1,8 @@
 // One entity's parts, shared by the level (which spawns the heroes the game starts with) and by `join` (which spawns
 // one mid-game). One list of parts, so the hero who joins is the hero the level would have made.
 import { Player } from '../commands/commands.ts'
-import type { Character, GameContent } from '../content/content.ts'
-import { BodyKind, body, collider, Touching, transform } from '../physics/physics.ts'
+import { type Character, type GameContent, type LevelThing, withDefaults } from '../content/content.ts'
+import { BodyKind, body, collider, mass, Touching, transform } from '../physics/physics.ts'
 import type { SpawnPart } from '../sim/sim.ts'
 import { colourNumber } from './colours.ts'
 import { Look, Thing } from './components.ts'
@@ -20,7 +20,7 @@ import { usesMoves, usesSprites } from './uses.ts'
  */
 export function characterParts(
   character: Character,
-  at: { x: number; y: number },
+  at: { readonly x: number; readonly y: number; readonly values?: LevelThing['values'] },
   sprites: boolean,
   player = 0,
 ): SpawnPart[] {
@@ -36,6 +36,8 @@ export function characterParts(
     // A switch knows whether it is pressed and a gate whether it is open, only in a game that has either.
     ...(character.switch !== undefined ? [Pressed] : []),
     ...(character.opens !== undefined ? [Open] : []),
+    // A character that names a weight weighs its thing's own value, or the value's default: read once, at spawn.
+    ...(character.weight !== undefined ? [mass(withDefaults(character, at)[character.weight] as number)] : []),
   ]
 }
 

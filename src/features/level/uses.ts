@@ -74,3 +74,11 @@ export function usesSwitches(content: GameContent): boolean {
 export function usesFalls(content: GameContent): boolean {
   return content.project.lost === 'hero.fell'
 }
+
+/**
+ * Whether any character names a `weight`. It switches the `Mass` component on for the whole game, so a game whose
+ * characters name none keeps exactly the sim it had.
+ */
+export function usesWeights(content: GameContent): boolean {
+  return Object.values(content.characters).some((character) => character.weight !== undefined)
+}
