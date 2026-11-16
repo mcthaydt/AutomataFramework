@@ -116,3 +116,23 @@ test('world takes a folder and --json, and no other flag', () => {
   })
   expect(parseArgs(['help', 'world'])).toEqual({ help: 'world' })
 })
+
+test('picture reads its words as levels, and takes --folder, --what-it-is and --world', () => {
+  expect(parseArgs(['picture', 'room-1', 'room-2', '--what-it-is', '--folder', 'my-game'])).toEqual({
+    command: 'picture',
+    folder: 'room-1',
+    flags: { 'what-it-is': true, folder: 'my-game' },
+    lists: {},
+    rest: ['room-2'],
+  })
+  expect(parseArgs(['picture', '--world', '--json'])).toEqual({
+    command: 'picture',
+    flags: { world: true, json: true },
+    lists: {},
+    rest: [],
+  })
+  expect(parseArgs(['picture', '--folder'])).toEqual({
+    problem: '--folder needs a value after it, like --folder <value>.',
+  })
+  expect(parseArgs(['picture', '--check'])).toMatchObject({ problem: expect.stringContaining('--check') })
+})

@@ -15,6 +15,8 @@ import {
   markRead,
   openTile,
   type Parsed,
+  paintLevel,
+  paintWorld,
   parseContent,
   parseReadMarks,
   READ_MARKS_FILE,
@@ -35,6 +37,8 @@ type ContentApi = Pick<
   | 'loadGame'
   | 'markRead'
   | 'openTile'
+  | 'paintLevel'
+  | 'paintWorld'
   | 'parseContent'
   | 'parseReadMarks'
   | 'READ_MARKS_FILE'
@@ -53,6 +57,8 @@ const OWN_CONTENT: ContentApi = {
   loadGame,
   markRead,
   openTile,
+  paintLevel,
+  paintWorld,
   parseContent,
   parseReadMarks,
   READ_MARKS_FILE,

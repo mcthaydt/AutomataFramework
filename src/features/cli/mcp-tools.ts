@@ -1,8 +1,8 @@
-// The tools `automata mcp` offers an agent. `create`, `check`, `replay`, `art`, `words` and `world` are the commands
-// themselves, run as a child process through `Runner.command` with `--json` (audit C1: this long-lived server never loads a game's
-// code, so every answer comes from the files as they are now); `content_types`, `schema` and `skill` read what the
-// package ships; the `play_` tools run a game a few ticks at a time (`session.ts`). Every description is one sentence
-// that says when to use the tool, and every answer is one text block.
+// The tools `automata mcp` offers an agent. `create`, `check`, `replay`, `art`, `words`, `world` and `picture` are the
+// commands themselves, run as a child process through `Runner.command` with `--json` (audit C1: this long-lived server
+// never loads a game's code, so every answer comes from the files as they are now); `content_types`, `schema` and `skill`
+// read what the package ships; the `play_` tools run a game a few ticks at a time (`session.ts`). Every description is
+// one sentence that says when to use the tool, and every answer is one text block.
 import { basename, join } from 'node:path'
 import { Effect } from 'effect'
 import { z } from '../../lib/zod.ts'
@@ -147,6 +147,28 @@ export function mcpTools(sessions: Sessions): readonly McpTool[] {
       "List a game's levels, the doors between them and the levels that join on the map: use it to see how a game fits together before you change a level or the map.",
       z.object({ folder }),
       (input) => command(['world', input.folder]),
+    ),
+    tool(
+      'picture',
+      "Draw a picture of a game's levels, what their things hold, or the world map, with a list of what each number is: use it to see a level or the map when you cannot open an editor.",
+      z.object({
+        folder,
+        levels: z.array(z.string()).optional().describe('The levels to draw; leave it out for every level.'),
+        whatItIs: z
+          .boolean()
+          .optional()
+          .describe('Draw what the things hold (links, paths, reach, numbers, doors) on top of the level.'),
+        world: z.boolean().optional().describe('Draw the world map; with no level named, only the map.'),
+      }),
+      (input) =>
+        command([
+          'picture',
+          ...(input.levels ?? []),
+          '--folder',
+          input.folder,
+          ...(input.whatItIs === true ? ['--what-it-is'] : []),
+          ...(input.world === true ? ['--world'] : []),
+        ]),
     ),
     tool(
       'content_types',

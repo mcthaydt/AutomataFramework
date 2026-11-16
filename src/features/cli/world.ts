@@ -3,6 +3,8 @@
 // `check` and an editor all say the same joins. It reads and prints; it never writes a file.
 import { Effect } from 'effect'
 import {
+  type Door,
+  doorsOf,
   formatDiagnostic,
   type GameContent,
   type Join,
@@ -30,10 +32,7 @@ export interface WorldReport {
     /** Its place in the project's `levels` list, or `null` when it is not listed. */
     readonly order: number | null
   }[]
-  readonly doors: readonly {
-    readonly from: { readonly level: string; readonly thing: string }
-    readonly to: { readonly level: string; readonly thing?: string }
-  }[]
+  readonly doors: readonly Door[]
   readonly joins: readonly Join[]
   /** Every place, those of one level too: each a list of level names, places in the order of their first level. */
   readonly places: readonly (readonly string[])[]
@@ -67,25 +66,6 @@ const sizeOf = (content: GameContent, level: string): { w: number; h: number } =
   return { w: tiles[0]?.length ?? 0, h: tiles.length }
 }
 
-/** Every door a game has: a thing that holds a way into a level, by the declaration its character makes. */
-function doorsOf(content: GameContent): WorldReport['doors'] {
-  const doors: WorldReport['doors'][number][] = []
-  for (const [id, level] of Object.entries(content.levels)) {
-    for (const thing of level.things) {
-      const declared = content.characters[thing.character]?.values ?? []
-      for (const value of declared) {
-        const held = value.type === 'leads-to' ? thing.values?.[value.id] : undefined
-        if (typeof held !== 'object' || held === null || !('level' in held)) continue
-        doors.push({
-          from: { level: id, thing: thing.id },
-          to: { level: held.level, ...(held.thing === undefined ? {} : { thing: held.thing }) },
-        })
-      }
-    }
-  }
-  return doors
-}
-
 /** Every place of the game: the joined ones from the layout, and every other level alone, by their first level. */
 function placesOf(content: GameContent, layout: WorldLayout | undefined): readonly (readonly string[])[] {
   const joined: readonly (readonly PlaceLevel[])[] = Object.values(layout?.places ?? {})
@@ -106,7 +86,7 @@ function placesOf(content: GameContent, layout: WorldLayout | undefined): readon
 export function worldNotes(
   content: GameContent,
   places: readonly (readonly string[])[],
-  doors: WorldReport['doors'],
+  doors: readonly Door[],
   joins: readonly Join[],
 ): string[] {
   const notes: string[] = []

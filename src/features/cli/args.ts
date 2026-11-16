@@ -3,7 +3,16 @@
 // Ported in shape from AutomataFrameworkFailed@ed8592e8: packages/tools/src/app/cli.ts (one small file parses the
 // words; the work is in files a test runs with fakes).
 
-export type CommandName = 'create' | 'check' | 'play' | 'replay' | 'art' | 'words' | 'world' | 'mcp'
+export type CommandName =
+  | 'create'
+  | 'check'
+  | 'play'
+  | 'replay'
+  | 'art'
+  | 'words'
+  | 'world'
+  | 'picture'
+  | 'mcp'
 
 /** The commands, in the order help lists them. One row per command in `cli.ts`'s table. */
 export const COMMAND_NAMES: readonly CommandName[] = [
@@ -14,13 +23,17 @@ export const COMMAND_NAMES: readonly CommandName[] = [
   'art',
   'words',
   'world',
+  'picture',
   'mcp',
 ]
 
 /** A command and what was typed after it. */
 export interface CommandInput {
   readonly command: CommandName
-  /** The first word after the command that is not a flag: a folder, or for `create` the new game's name. */
+  /**
+   * The first word after the command that is not a flag: a folder, or for `create` the new game's name, or for `picture`
+   * the first level to draw (it takes its folder from `--folder`).
+   */
   readonly folder?: string
   readonly flags: Readonly<Record<string, string | true>>
   /** Flags that take a value and then any more words, like `--read es keeper.hello`: every word, the value first. */
@@ -53,6 +66,7 @@ const FLAGS: Readonly<Record<CommandName, Flags>> = {
   art: { switches: ['check', 'json'], values: [], lists: [] },
   words: { switches: ['json'], values: [], lists: ['read'] },
   world: { switches: ['json'], values: [], lists: [] },
+  picture: { switches: ['what-it-is', 'world', 'json'], values: ['folder'], lists: [] },
   mcp: { switches: [], values: [], lists: [] },
 }
 

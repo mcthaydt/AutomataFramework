@@ -40,6 +40,7 @@ test('tools/list has these tools, each with a description and an object schema',
     'art',
     'words',
     'world',
+    'picture',
     'content_types',
     'schema',
     'skill',
@@ -60,7 +61,7 @@ test('tools/list has these tools, each with a description and an object schema',
 test('every tool has a command of the same name, or a file or a session the table names', () => {
   const tools = mcpTools(createSessions()).map((tool) => tool.name)
   const commands = tools.filter((name) => (COMMAND_NAMES as readonly string[]).includes(name))
-  expect(commands).toEqual(['create', 'check', 'replay', 'art', 'words', 'world'])
+  expect(commands).toEqual(['create', 'check', 'replay', 'art', 'words', 'world', 'picture'])
   expect(tools.filter((name) => !commands.includes(name))).toEqual([
     'content_types',
     'schema',
@@ -73,7 +74,7 @@ test('every tool has a command of the same name, or a file or a session the tabl
   ])
 })
 
-test('create, check, replay and world hand the command their words, and the command is run in a child with --json', async () => {
+test('create, check, replay, world and picture hand the command their words, and the command is run in a child with --json', async () => {
   const asked: (readonly string[])[] = []
   const memory = gameMemory()
   const spy = Layer.succeed(Runner, {
@@ -92,6 +93,8 @@ test('create, check, replay and world hand the command their words, and the comm
     call(5, 'replay', { folder: 'game', file: 'level-1', accept: true, state: true }),
     call(6, 'replay', { folder: 'game', file: 'replays/level-1.json' }),
     call(7, 'world', { folder: 'game' }),
+    call(8, 'picture', { folder: 'game' }),
+    call(9, 'picture', { folder: 'game', levels: ['room-1', 'room-2'], whatItIs: true, world: true }),
   ])
   expect(asked).toEqual([
     ['create', 'new-game'],
@@ -101,8 +104,10 @@ test('create, check, replay and world hand the command their words, and the comm
     ['replay', join('game', 'replays', 'level-1.json'), '--accept', '--state'],
     ['replay', join('game', 'replays', 'level-1.json')],
     ['world', 'game'],
+    ['picture', '--folder', 'game'],
+    ['picture', 'room-1', 'room-2', '--folder', 'game', '--what-it-is', '--world'],
   ])
-  expect(replies.map((reply) => JSON.parse(answerOf(reply).text))).toEqual(Array(7).fill({ ok: true }))
+  expect(replies.map((reply) => JSON.parse(answerOf(reply).text))).toEqual(Array(9).fill({ ok: true }))
 })
 
 test('words hands the command its folder, the language to mark and the words, and keys need a language', async () => {

@@ -35,6 +35,10 @@ test('no picture is kept in the template, and the new game does not ignore its o
   expect(tree.gitignore).not.toMatch(/png|atlas/)
 })
 
+test("a new game's .gitignore leaves out the pictures automata picture draws, which are made to be looked at", () => {
+  expect(tree.gitignore?.split('\n')).toContain('.automata/')
+})
+
 test('the agent notes say to run automata art after a figure, and to commit the pictures', () => {
   expect(tree['AGENTS.md']).toMatch(/automata art.*after you change a figure, and commit the\s+pictures/s)
   expect(JSON.parse(tree['package.template.json'] ?? '{}').scripts.art).toBe('automata art')
