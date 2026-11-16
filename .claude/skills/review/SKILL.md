@@ -16,6 +16,8 @@ checks each fix.
   such as missing requirements, confusing screens and wrong assumptions. Use both.
 - Review against the acceptance criteria in the brief, plus exploratory checks for what the criteria missed. A gap
   against a criterion is red; an improvement is a note, kept apart from the blocking defects.
+- Before a branch goes to an audit, its pull request lists each acceptance criterion with the test that checks it, or
+  says "no test" and why. The audit starts from that list.
 
 ## Audits
 
@@ -68,5 +70,24 @@ ACCEPTED: utils slice merged, green on the first try.
 DERIVED: adapters keep keyword arguments exactly.
 LANDS IN: the plan's brief for every later slice.
 
-A lesson lands in the plan's brief, not in a worker's instructions. The next rule-edit session moves each into
-CLAUDE.md.
+A lesson lands in the plan's brief, not in a worker's instructions. The next slice retro moves each into CLAUDE.md or a
+skill, or turns it into a check.
+
+## Slice retro
+
+When a slice closes, after its design review loop in `visual-check`, the blind judge included, a fresh session runs one
+retro before the next slice starts. Whoever closes the slice starts it.
+
+- It reads, for the slice's dates: the audits in every repo's `docs/superpowers/audits/` and the project's audit
+  folder; the open items and flaky tests in every `progress.md`; and, with `gh`, the merged pull requests and failed CI
+  runs in every repo.
+- It looks for problems that came back more than once, and for findings different reviews keep making.
+- A lesson a program can catch becomes a test or check first, in its own lane.
+- A lesson no test can catch becomes one line under "Lessons" in `history.md`, or a rule edit. The retro's rule edits
+  are one pull request per repo, lane 3: its audits, then the Owner's approval before it merges.
+- It writes `docs/superpowers/audits/<date>-slice-<n>-retro.md` in AutomataFramework: each repeat problem with its
+  evidence, what became a check, what became a lesson or rule, and what was left and why. It reports to the
+  coordinator, which tells the Owner.
+- Evidence from AutomataPrivate is cited in the public record by repo and pull request number only; anything more goes
+  in a retro note in AutomataPrivate's `docs/superpowers/audits/`.
+- A slice with nothing to learn says so in one line and changes nothing.
