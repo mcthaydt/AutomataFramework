@@ -39,10 +39,11 @@ In `.claude/skills/visual-check/SKILL.md`, four edits, each paragraph rewrapped 
    device matrix in Settings." with "then the fixes, then step 3, on each device in the device matrix in Settings, and
    last, step 4 once."
 2. "The steps", the intro: name step 4 as the one exception to judging against the acceptance criteria. Replace it
-   with the following (quoted exactly as the skill wraps it):
+   with:
 
    > Steps 1 to 3 judge the screens against the brief's acceptance criteria. A gap against one is a defect; an idea that
-   > would make it better is a note. Step 4 is the one exception: the gap it names is fixed even when no criterion names it.
+   > would make it better is a note. Step 4 is the one exception: the gap it names is fixed even when no criterion names
+   > it.
 
 3. "The steps": add step 4 after step 3:
 
@@ -51,10 +52,11 @@ In `.claude/skills/visual-check/SKILL.md`, four edits, each paragraph rewrapped 
    >    purchase or sign-up. It pairs each with our screen of the same kind, at the closest size, on each device in the
    >    device matrix in Settings, and leaves out a size with no fair match. It covers product names and logos, labels
    >    the two sets A and B in a random order, and keeps which is which out of the judge's brief. A fresh session says
-   >    which set looks amateur and names the single biggest gap where ours falls short. That gap becomes one fix brief,
-   >    within the slice's scope and the tries in Settings; a gap that needs a product choice, a new dependency or spend
-   >    goes to the owner as a decision card with a recommendation instead. Step 3 then runs again on the screens the
-   >    fix changed. The blind judge does not run again, and its pick is recorded in `docs/superpowers/progress.md`.
+   >    which set looks amateur and names the single biggest gap for each set, where it falls short of the other. The
+   >    coordinator, who holds the key, takes the gap named for ours. That gap becomes one fix brief, within the slice's
+   >    scope and the tries in Settings; a gap that needs a product choice, a new dependency or spend goes to the owner
+   >    as a decision card with a recommendation instead. Step 3 then runs again on the screens the fix changed. The
+   >    blind judge does not run again, and the coordinator records its pick in `docs/superpowers/progress.md`.
 
 4. The order paragraph: replace "The order is initial reviews, then the fixes, then the final look." with "The order
    is initial reviews, then the fixes, then the final look, then at the end of a slice the blind judge."
@@ -76,10 +78,11 @@ In `docs/superpowers/history.md`, two edits:
 3. Step 4 says: end of a slice only; after step 3 passes; a fresh session; the commercial screens come from public
    screenshots with no purchase or sign-up, paired with ours by kind at the closest size on each device in the matrix,
    with unmatched sizes left out; names and logos covered, the sets labelled A and B in a random order, and which is
-   which kept out of the judge's brief; the judge names which set looks amateur and the single biggest gap where ours
-   falls short; that gap becomes one fix brief within the slice's scope and the tries in Settings, or a decision card
-   for the owner when it needs a product choice, a dependency or spend; step 3 runs again on what the fix changed; one
-   round, not repeated, with the pick recorded in `progress.md`.
+   which kept out of the judge's brief; the judge names which set looks amateur and the single biggest gap for each set,
+   and the coordinator, who holds the key, takes the one for ours; that gap becomes one fix brief within the slice's
+   scope and the tries in Settings, or a decision card for the owner when it needs a product choice, a dependency or
+   spend; step 3 runs again on what the fix changed; one round, not repeated, with the coordinator recording the pick in
+   `progress.md`.
 4. The intro to "The steps" names step 4 as the one exception to judging against the acceptance criteria.
 5. Each `history.md` records the Owner's approval with its scope and this spec, under "Rule changes", and line 3 lists
    rule changes.
