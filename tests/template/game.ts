@@ -24,6 +24,7 @@ import fallSound from '../../template/content/sounds/fall.json?raw'
 import landSound from '../../template/content/sounds/land.json?raw'
 import takeSound from '../../template/content/sounds/take.json?raw'
 import heroMoves from '../../template/content/tunings/hero-moves.json?raw'
+import recording from '../../template/replays/level-1.json?raw'
 
 /** Every content file of the template, by its path from the game's root. */
 export const templateFiles: Readonly<Record<string, string>> = {
@@ -50,6 +51,7 @@ export const templateFiles: Readonly<Record<string, string>> = {
   'content/messages/ja.json': jaWords,
   'content/messages/zh.json': zhWords,
   'content/messages/pt.json': ptWords,
+  'replays/level-1.json': recording,
 }
 
 /** A `read` over the template, as `loadGame` and the page take it. An override replaces a file. */

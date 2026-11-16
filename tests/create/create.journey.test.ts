@@ -221,6 +221,21 @@ async function pickLanguage(page: Page, flag: string): Promise<void> {
   await go.click()
 }
 
+/** The menu's first button is Play, or Continue when a game was kept: one press and the level opens, waiting for a first press. */
+async function playFromMenu(page: Page): Promise<void> {
+  const play = page.locator('#game[data-state="menu"] [data-screen="menu"] button').first()
+  await play.waitFor({ state: 'visible', timeout: 30_000 })
+  await play.click()
+  await page.locator('#game[data-state="playing"]').waitFor({ timeout: 30_000 })
+  await expect.poll(() => tickOf(page), POLL).toBeGreaterThanOrEqual(0)
+}
+
+/** From the picker to the level: a flag, Go, the splash, Play on the menu. */
+async function intoTheLevel(page: Page, flag: string): Promise<void> {
+  await pickLanguage(page, flag)
+  await playFromMenu(page)
+}
+
 for (const name of journeyEngines()) {
   test(`${name}: a new game plays by key and by touch, and a broken file is put in words`, async () => {
     const browser: Browser = await ENGINES[name].launch()
@@ -255,13 +270,11 @@ for (const name of journeyEngines()) {
           }
         }
         await page.screenshot({ path: `${shots}${name}-picker-${size.width}x${size.height}.png` })
-        await pickLanguage(page, 'en')
+        await intoTheLevel(page, 'en')
 
-        // The game is on screen, and time passes in it.
-        await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+        // The game is on screen, and it waits: a level does not start until the first press.
         expect(pictures.length, `${where}: the hero's picture was fetched`).toBeGreaterThan(0)
-        const before = await tickOf(page)
-        await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(before)
+        expect(await tickOf(page), `${where}: the level waits for the first press`).toBe(0)
 
         // The new game has a spark to take: the level lists it, and the game has put every one of its things on the screen.
         const listed = (JSON.parse(readFileSync(level, 'utf8')) as { things: { character: string }[] }).things
@@ -276,11 +289,6 @@ for (const name of journeyEngines()) {
               .entities.filter((entity) => 'thing' in entity.components).length ?? 0,
         )
         expect(placed, `${where}: the level's things are in the game`).toBeGreaterThanOrEqual(listed.length)
-
-        // The keys' hint is for a keyboard: shown at the desktop size and gone once the hero has moved, never on touch.
-        const hint = page.locator('.hint')
-        if (size.touch) expect(await hint.count(), `${where}: the hint on a touch screen`).toBe(0)
-        else await expect.poll(() => hint.isVisible(), POLL).toBe(true)
 
         // The way to the spark: holding right moves the hero right (by the arrow key, or by a thumb slid right on the
         // walking half) until the spark is taken and the game's count says so, then a jump lifts the hero off the floor
@@ -314,7 +322,6 @@ for (const name of journeyEngines()) {
           await expect.poll(() => heroX(page), POLL).toBeGreaterThan(start + 0.5)
           await expect.poll(() => sparksTaken(page), POLL).toBe(1)
           await page.keyboard.up('ArrowRight')
-          await expect.poll(() => hint.count(), POLL).toBe(0)
           await page.keyboard.down('Space')
           await expect.poll(async () => Math.abs((await heroY(page)) - floor), POLL).toBeGreaterThan(0.5)
           await page.keyboard.up('Space')
@@ -331,7 +338,7 @@ for (const name of journeyEngines()) {
           writeFileSync(level, JSON.stringify(broken, null, 2))
           try {
             await page.reload()
-            const problem = page.locator('#game[data-state="problem"] .problem')
+            const problem = page.locator('#game[data-state="problem"] [role="alert"]')
             await expect.poll(() => problem.count(), POLL).toBe(1)
             const words = (await problem.textContent()) ?? ''
             expect(words, where).toContain('content/levels/level-1.json: things[0].x: This must be a number.')
@@ -340,9 +347,9 @@ for (const name of journeyEngines()) {
             writeFileSync(level, original)
           }
           await page.reload()
-          await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+          await playFromMenu(page)
 
-          // A player whose device speaks Japanese is told the keys in Japanese, and the page says it is Japanese.
+          // A player whose device speaks Japanese is spoken to in Japanese, and the page says it is Japanese.
           const japanese = await browser.newContext({
             viewport: { width: size.width, height: size.height },
             locale: 'ja-JP',
@@ -351,8 +358,8 @@ for (const name of journeyEngines()) {
             const other = await japanese.newPage()
             await other.goto(address)
             await pickLanguage(other, 'ja')
-            const told = other.locator('.hint')
-            await expect.poll(() => told.textContent(), POLL).toContain('矢印キー')
+            const told = other.locator('[data-screen="menu"] button').first()
+            await expect.poll(() => told.textContent(), POLL).toContain('プレイ')
             expect(await other.evaluate(() => document.documentElement.lang), where).toBe('ja')
           } finally {
             await japanese.close()
@@ -392,14 +399,39 @@ for (const name of journeyEngines()) {
           .poll(() => page.locator('.automata-picker-title').textContent(), POLL)
           .toContain('한국어로 플레이')
         await go.click()
-        await expect.poll(() => page.locator('.hint').textContent(), POLL).toContain('방향키')
+        await playFromMenu(page)
         expect(await page.evaluate(() => document.documentElement.lang)).toBe('ko')
 
         await page.reload()
-        await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+        await playFromMenu(page)
         expect(await page.locator('.automata-picker').count(), 'a kept language is not asked again').toBe(0)
       } finally {
         await french.close()
+      }
+    } finally {
+      await browser.close()
+    }
+  }, 300_000)
+
+  test(`${name}: Back pauses a level and Escape pauses it too, and the page is not left`, async () => {
+    const browser: Browser = await ENGINES[name].launch()
+    try {
+      const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, locale: 'en-US' })
+      try {
+        const page = await context.newPage()
+        await page.goto(address)
+        await intoTheLevel(page, 'en')
+        await page.goBack()
+        await page.locator('#game[data-state="paused"]').waitFor({ timeout: 30_000 })
+        expect(page.url(), 'Back did not leave the page').toBe(address)
+        expect(await page.locator('[data-screen="pause"] button').count()).toBeGreaterThan(0)
+        // The first button of the pause screen is Keep playing.
+        await page.locator('[data-screen="pause"] button').first().click()
+        await page.locator('#game[data-state="playing"]').waitFor({ timeout: 30_000 })
+        await page.keyboard.press('Escape')
+        await page.locator('#game[data-state="paused"]').waitFor({ timeout: 30_000 })
+      } finally {
+        await context.close()
       }
     } finally {
       await browser.close()
@@ -429,8 +461,7 @@ for (const name of journeyEngines()) {
         const page = await context.newPage()
         await page.goto(address)
         await page.locator('.automata-picker-go').waitFor({ state: 'visible', timeout: 30_000 })
-        await pickLanguage(page, 'ja')
-        await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+        await intoTheLevel(page, 'ja')
         const start = await heroX(page)
         const floor = await heroY(page)
         await page.evaluate(() => (window as unknown as { __stick: (x: number) => void }).__stick(1))
@@ -512,7 +543,8 @@ for (const name of journeyEngines()) {
                 return (await page.locator('.automata-picker').count()) === 0
               }, POLL)
               .toBe(true)
-          await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+          await page.locator('#game:not([data-state="picking"]):not([data-state="loading"])').waitFor()
+          expect(await page.locator('.automata-picker').count(), `${way}: Go started the visit`).toBe(0)
         } finally {
           await context.close()
         }
@@ -544,8 +576,7 @@ test('chromium: a real finger walks the hero to the spark and jumps it', async (
         points: readonly { x: number; y: number; id: number }[],
       ): Promise<unknown> => session.send('Input.dispatchTouchEvent', { type, touchPoints: [...points] })
       await page.goto(address)
-      await pickLanguage(page, 'en')
-      await expect.poll(() => tickOf(page), POLL).toBeGreaterThan(0)
+      await intoTheLevel(page, 'en')
       const middleOf = async (half: string): Promise<{ x: number; y: number }> => {
         const box = await page.locator(`[data-half='${half}']`).boundingBox()
         expect(box, `the ${half} half is on the screen`).not.toBeNull()

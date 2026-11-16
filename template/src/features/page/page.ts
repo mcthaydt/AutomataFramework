@@ -32,7 +32,6 @@ const fetchBeside =
       throw new Error(`${path}: no such file`)
     return response.text()
   }
-
 const fetchPictureBeside =
   (base: URL): ReadPicture =>
   async (path) => {
