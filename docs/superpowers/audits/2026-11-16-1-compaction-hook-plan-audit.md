@@ -94,5 +94,5 @@ to match.
 7. **History placement fallback contradicts Plan 2.** "The change", 5 allows placing the entry after the slice-retro
    one if the layout sketch has not merged, but Plan 2 does not start until it has. Harmless; drop one of the two.
 8. **The audit file name.** The coordinator asked for `<date>-1-compaction-hook-plan-audit.md`; the stage table in
-   `CLAUDE.md` gives `<date>-<cycle>-plan-audit.md` and earlier audits here use `<date>-<topic>-plan-audit[-cycle-N].md`.
-   This file follows the coordinator's name.
+   `CLAUDE.md` gives `<date>-<cycle>-plan-audit.md` and earlier audits here use
+   `<date>-<topic>-plan-audit[-cycle-N].md`. This file follows the coordinator's name.
