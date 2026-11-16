@@ -28,7 +28,8 @@
     "*.ts",
     "template/src",
     "template/tests",
-    "template/vite.config.ts"
+    "template/vite.config.ts",
+    "template/vitest.play.config.ts"
   ],
   "exclude": ["tests/install"]
 }

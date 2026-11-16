@@ -42,6 +42,19 @@ It says whether the game is sound, and if it is not, which file to fix and what 
 the files in their standard form for you. If you meant to change how the game plays, `npm run check` will say the
 recording in `replays/` no longer matches; run `npm run accept` to record the new play.
 
+## Play the built game in real browsers
+
+```
+npx playwright install --with-deps chromium webkit
+npm run build
+npm run play-test
+```
+
+`npm run build` makes `dist/`, the folder that goes to players. `npm run play-test` opens it in Chromium and WebKit, on a
+phone by touch and on a desktop by keys: it checks the game opens, that the hero can reach the door, and that falling in
+the gap is a lost level you can try again. `npm test` and `npm run check` need no browser. If you redraw the first level,
+change the two numbers at the top of `tests/play/play.test.ts`. Your game's own check on GitHub runs it too.
+
 ## Where things are
 
 | What | Where |

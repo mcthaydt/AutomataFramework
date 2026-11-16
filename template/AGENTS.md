@@ -32,6 +32,8 @@ Run them as `npx --no automata <command>`, which never fetches anything. A perso
   Run it after you add or change a word. `--read <language>` marks a language's words read once a person has read
   them, and only then; `--json` prints the answer as JSON.
 - `npx --no automata play` serves the game for a browser.
+- `npm run build` makes `dist/`, the folder that goes to players. `npm run play-test` plays it in Chromium and WebKit
+  (install them once with `npx playwright install --with-deps chromium webkit`); `npm test` needs no browser.
 - `npx --no automata create <name>` makes a new game.
 
 Exit codes: 0 fine, 1 the game needs fixing, 2 the command could not do its work.
