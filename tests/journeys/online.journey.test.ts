@@ -12,6 +12,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { type Browser, type BrowserContext, chromium, firefox, type Page, webkit } from 'playwright'
 import { build, type PreviewServer, preview } from 'vite'
 import { afterAll, beforeAll, expect, test } from 'vitest'
+import { engineFor, journeyEngines } from '../fixtures/journey-engines.ts'
 import { rapierWasm } from '../../vite-rapier-wasm.ts'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
@@ -28,7 +29,7 @@ interface Spec {
 }
 
 // [player 1, player 2]
-const PAIRS: readonly (readonly [Spec, Spec])[] = [
+const ALL_PAIRS: readonly (readonly [Spec, Spec])[] = [
   [
     { engine: 'chromium', width: 1280, height: 720, touch: false },
     { engine: 'webkit', width: 390, height: 844, touch: true },
@@ -42,6 +43,14 @@ const PAIRS: readonly (readonly [Spec, Spec])[] = [
     { engine: 'chromium', width: 820, height: 1180, touch: true },
   ],
 ]
+
+// A draft plays in Chromium only: the first pair, with each player in a Chromium of their own size. Every pair, in the
+// three engines, plays on the run that gates merge.
+const PLAYING = journeyEngines()
+const PAIR_COUNT = PLAYING.length === 3 ? 3 : 1
+const played = (spec: Spec): Spec => ({ ...spec, engine: engineFor(spec.engine, PLAYING) })
+const PAIRS: (readonly [Spec, Spec])[] = []
+for (const [first, second] of ALL_PAIRS.slice(0, PAIR_COUNT)) PAIRS.push([played(first), played(second)])
 
 const processes: ChildProcess[] = []
 let roomServer = ''
@@ -320,7 +329,7 @@ test('co-op: a second player joins a game that is going, and when they go their 
   // A few seconds of play on its own, then a friend comes by the code.
   await expect.poll(async () => (await checks(one)).has(179), POLL).toBe(true)
   const two = await seatOf(
-    { engine: 'webkit', width: 390, height: 844, touch: true },
+    { engine: engineFor('webkit', PLAYING), width: 390, height: 844, touch: true },
     `&game=co-op&room=${encodeURIComponent(code)}`,
     coopServer,
   )

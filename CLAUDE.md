@@ -14,7 +14,8 @@ the Owner's decisions (`docs/decisions.md`), the roadmap (`docs/roadmap.md`), ev
 
 - **Fast CI here.** A draft runs Chromium only, and only the Node and browser tests the change reaches (the browser
   tests are the screens, so only the screens it touches); the `online` job only when the networking or its journeys
-  changed, or the pull request has the `screenshots` label; the packing and `create` jobs only when the command, the
+  changed, or the pull request has the `screenshots` label, and then in Chromium alone (`JOURNEY_ENGINES`, which
+  `online` and `create-play` read; the full run plays all three); the packing and `create` jobs only when the command, the
   template, the skills or the install checks changed. `.pnpmfile.cjs` counts as build setup. The docs-only path never
   covers the README or `docs/api/`, which tests read. The full run's 18 shards are `browsers (<engine> <n>/6)`, with
   `engines (<engine>)` checks (the gate counts six each).

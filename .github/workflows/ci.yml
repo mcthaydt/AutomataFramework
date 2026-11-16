@@ -193,22 +193,25 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: read
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         engine: ${{ fromJSON(needs.plan.outputs.engines) }}
-    env:
-      GH_TOKEN: ${{ github.token }}
-      # The shards each browser is split into: the `shard` list of the `browsers` job.
-      SHARDS: 6
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: scripts
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+      # The script asks again after a GitHub 5xx and reads each shard from the newest attempt that ran it, so a re-run
+      # of one job can pass (see `scripts/engines-gate.ts`).
       - name: Every shard of ${{ matrix.engine }} passed
-        run: |
-          set -euo pipefail
-          results="$(gh run view "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --attempt "$GITHUB_RUN_ATTEMPT" --json jobs \
-            --jq '.jobs[] | select(.name | startswith("browsers (${{ matrix.engine }} ")) | "\(.name): \(.conclusion)"')"
-          echo "$results"
-          [ "$(grep -c ': success$' <<<"$results")" -eq "$SHARDS" ]
+        run: node scripts/engines-gate.ts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ENGINE: ${{ matrix.engine }}
 
   # Proof 3 of the networking: two real browsers play one room on a server started here. It needs the built package (the
   # server is `dist/`, as a game's own server file would be), and all three browsers because every engine plays.
@@ -232,13 +235,15 @@ jobs:
         id: browser
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-all
+          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ needs.plan.outputs.full == 'true' && 'all' || 'chromium' }}
       - if: steps.browser.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium webkit firefox
+        run: pnpm exec playwright install --with-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}
       - if: steps.browser.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium webkit firefox
+        run: pnpm exec playwright install-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}
       - run: pnpm build
       - run: pnpm test:journeys
+        env:
+          JOURNEY_ENGINES: ${{ needs.plan.outputs.full != 'true' && 'chromium' || '' }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
@@ -362,11 +367,11 @@ jobs:
         id: browser
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-all
+          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ needs.plan.outputs.full == 'true' && 'all' || 'chromium' }}
       - if: steps.browser.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium webkit firefox
+        run: pnpm exec playwright install --with-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}
       - if: steps.browser.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium webkit firefox
+        run: pnpm exec playwright install-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}
       - name: Get the tarball create-pack made
         shell: bash
         run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name create-tarball --dir "$RUNNER_TEMP/tarball"
@@ -375,6 +380,7 @@ jobs:
       - run: pnpm test:create
         env:
           CREATE_TARBALL: ${{ runner.temp }}/tarball
+          JOURNEY_ENGINES: ${{ needs.plan.outputs.full != 'true' && 'chromium' || '' }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
