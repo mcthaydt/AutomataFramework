@@ -1,0 +1,90 @@
+# Implementation audit, cycle 2: a reminder after compaction, live state in a file, a fresh session per big job
+
+- Examined: AutomataFramework #208 at `364cf1a`, AutomataFrameworkEditors #104 at `bd394e0`,
+  AutomataFrameworkExamples #70 at `2ebdf1d`, AutomataFrameworkSite #53 at `08f2a3c`, AutomataPrivate #15 at
+  `1715521` and `mcthaydt-website` #68 at `6e35765`.
+- Against: the spec `docs/superpowers/specs/2026-11-16-compaction-hook-design.md` at `364cf1a`, and cycle 1
+  (`2026-11-16-1-compaction-hook-impl-audit.md`, at `9600661`). Audited at 2026-11-17T00:40Z.
+- Verdict: **0 red, 3 notes.** R1 is closed. All six pull requests meet every criterion that a program or this audit
+  can check; criterion 5 stands on criterion 3, as the spec allows (note 1). CI is green on every final head.
+
+## R1 is closed, and the spec change is only those two edits
+
+- `git show --stat 364cf1a`: one file, the spec, 4 lines added and 1 removed. The diff is exactly two hunks:
+  - section 2 gains "The folder pictures in `CLAUDE.md` that list `docs/superpowers/` add `live/` after `audits/`.";
+  - criterion 2 gains ", except table row 1 of the staged path, whose text 2 sets and which a table row cannot wrap."
+    (the old line's full stop moves to the new line).
+- Nothing else in the spec moved: its JSON block and reminder block are untouched, so the cycle-1 hashes still equal
+  them. `364cf1a` is authored and committed by McThayDT with no trailer.
+- Re-read against the diffs: in all five `CLAUDE.md`, the only added lines outside the section 2 bullets and
+  replacements are the `docs/superpowers/` folder-picture lines gaining `live/` (twice in Framework, Examples and Site,
+  once in Editors and Private), which section 2 now lists. `awk 'length > 120'` over the added lines finds only table
+  row 1 (237 columns) in each, which criterion 2 now exempts. Kit 5 A already listed `live/`.
+
+## The six pull requests, criterion by criterion
+
+The five repo heads are unchanged since cycle 1 apart from #208's spec commit, and each repo's `main` is still the
+base cycle 1 named (`9a9b625`, `5a519c8`, `ed0a5c6`, `865b46e`, `acddcd3`), so cycle 1's scripted comparisons still
+hold. Re-run here:
+
+1. **One hash.** `.claude/settings.json` `8015be8f4ed629efea7ec2744cea51aa` and `.claude/after-compaction.md`
+   `89cf60879fa01f47f24b4b1fb66dd8f3` in all five; the test `baeaa86f0d946ed7f796515daa0a4aff` in the four with CI.
+   Met.
+2. **Only the edits in 2, 120 columns.** As above. Biome on `.claude/settings.json` passes in the `check` job of all
+   four repos at these heads. Met.
+3. **The test fails without the change and passes with it.** Shown in cycle 1 on the same files; the `check` jobs at
+   these heads pass. Met.
+4. **AutomataPrivate's `jq` and `diff`.** Unchanged since cycle 1 (its note 3 stands). Met.
+5. **A real `/compact`.** Not run; criterion 3 stands in, as the criterion allows. See note 1.
+6. **One path, no `progress.md`.** No pull request touches `progress.md`; the bullet and the reminder both name
+   `docs/superpowers/live/`. Met.
+7. **Boundaries.** `git diff --name-only main...head`: the four other repos touch only `CLAUDE.md`,
+   `.claude/settings.json`, `.claude/after-compaction.md`, `docs/superpowers/history.md` and (with CI) the test;
+   Framework adds only the spec and the cycle-1 audit, which Boundaries allow. `mcthaydt-website` touches only the two
+   `body.md`, two `meta.json` and `tests/unit/kit-content.test.ts`. `git diff --check` clean in all six. Met.
+8. **Authors and bodies.** Every commit on all six heads is authored and committed by McThayDT
+   <107786093+mcthaydt@users.noreply.github.com>. Each body's last line is `Requested by **McThayDT**` (followed only by
+   newlines), and none holds a "Generated with", session or co-author line. Merging is after the Owner's approval.
+   Met up to the merge.
+9. **The website.** `main` moved since cycle 1 (see note 2). The pull request merged with today's `main` (`c8e00c1`)
+   without conflict; on that merge, in a fresh worktree (`npm ci`, `svelte-kit sync`, Node 22): `vitest run` 27 files,
+   309 tests passed; `content:check` 0 errors, 0 warnings. Met.
+10. **CI green.** Below. Met.
+
+## CI, at the final heads
+
+Read with `gh api .../commits/<head>/check-runs` at 2026-11-17T00:40Z.
+
+- **Framework `364cf1a`:** 32 passed, 1 skipped (the docs-only switch), none failed or running; `gate`, `check`, the
+  three `create`, `create-play`, `create-pack` and the three `engines` all passed. `commit-authors` passed (23:30Z).
+- **Editors `bd394e0`, Examples `2ebdf1d`, Site `08f2a3c`:** every check passed apart from the expected skips (the
+  docs-only switch; `mockups` in Editors; `quick journeys`, `live` and `deploy` in Site). `gate` and the three
+  `engines` passed in each.
+- **`commit-authors`:** in these three, an earlier run at about 23:20Z failed and a later run at about 23:24Z passed.
+  The failed run's log says the body ended with a "Generated by Claude Code" footer instead of
+  `Requested by **McThayDT**`; the bodies were reset and the check ran again by itself. That is the check catching a
+  real problem that was then fixed, not a test passing on retry. GitHub reports each pull request `mergeable_state`
+  `clean`.
+- **AutomataPrivate:** no CI; criterion 4 stands in. **`mcthaydt-website`:** Netlify's deploy preview passed; its
+  header and pages checks are neutral, as in cycle 1.
+
+## Red
+
+None.
+
+## Notes (recorded, not blocking)
+
+1. **`/compact` is still untried in a real session (criterion 5),** as cycle 1's note 1. One question to any real
+   session after a `/compact` once these merge would close it.
+2. **`mcthaydt-website` #68 is one pull request behind `main`.** #69 (`5cd7db2`) merged after cycle 1 and edits the
+   same games `body.md` and test, in other paragraphs. The merge is clean and passes, as shown in criterion 9, and the
+   games `CLAUDE.md` block grows by one line, still under 380. The Netlify preview is of the head alone, not of that
+   merge. Whoever merges should merge `main` in or merge with a merge commit as usual; no change is needed for this
+   audit.
+3. **Cycle 1's notes 2, 4 and 5** (the website test checks marker phrases, `svelte-kit sync` before `vitest`, the
+   stale website branch) still stand, outside this change.
+
+## Follow-ups outside this change
+
+- Notes 1 and 3.
+- The spec's open decision 2 (the game template's `AGENTS.md`) is still the Owner's.
