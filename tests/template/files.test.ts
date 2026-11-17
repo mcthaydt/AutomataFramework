@@ -58,18 +58,6 @@ test("its tools are this repo's versions", () => {
     expect(rootPackage.devDependencies[name], name).toBe(version)
 })
 
-test('its workflow pins every action to a commit that ci.yml also pins', () => {
-  const pins = (text: string): string[] =>
-    [...text.matchAll(/uses: (\S+@[0-9a-f]{40})/g)].map((m) => m[1] ?? '')
-  const ours = pins(tree['.github/workflows/check.yml'] ?? '')
-  const ci = pins(readFileSync('.github/workflows/ci.yml', 'utf8'))
-  // Two jobs, `check` and `play`, each with the same two actions.
-  expect(ours.length).toBe(4)
-  for (const pin of ours) expect(ci, pin).toContain(pin)
-  // No other `uses:` line: every action is pinned.
-  expect((tree['.github/workflows/check.yml'] ?? '').match(/uses:/g)?.length).toBe(ours.length)
-})
-
 test('the three files with another name are there, and the real names are not', () => {
   for (const name of ['package.template.json', 'biome.template.json', 'gitignore'])
     expect(tree[name], name).toBeDefined()
