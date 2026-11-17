@@ -4,6 +4,9 @@ Finished milestones and their decision records, setup, rule changes, standing pe
 
 ## Setup
 
+- 2026-11-17 03:58 UTC: restart. The apps kit (CLAUDE.md, skills `review`, `release`, `build`, `visual-check`, `staged-path`,
+  `owner-updates`, `this-repo`, the compaction hook) installed again from the Owner's rules text; superpowers still
+  **7.0.2**.
 - 2026-11-16: the workflow in `CLAUDE.md` and `.claude/skills/` (`review`, `release`, `visual-check`) installed
   from the Owner's rules text. Superpowers **7.0.2** (https://github.com/obra/superpowers, the version its
   `plugin.json` gives). Where its skills differ from these rules, these rules win:
