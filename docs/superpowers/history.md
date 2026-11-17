@@ -35,6 +35,11 @@ Finished milestones and their decision records, setup, rule changes, standing pe
   Approved in the project thread at 20:28 and 20:29 UTC, and on decision cards at 20:46 UTC. Scope: this change
   only, made the same in all five repos, as AutomataFramework
   `docs/superpowers/specs/2026-11-16-compaction-hook-design.md` describes. Later rule changes are lane 3 as usual.
+- 2026-11-17, the Owner: no stalls. A session never ends its turn only to wait for CI, and the coordinator or lead
+  checks on running sessions every 20 minutes, nudges a silent one, and reports one that stays silent. Asked for in the
+  project thread at 00:42 UTC ("Add the nudging too") and approved on a card at 00:47 UTC ("Approve, with the extra").
+  Scope: this change only, made the same in all five repos, as AutomataFramework
+  `docs/superpowers/specs/2026-11-17-no-stall-rule-design.md` describes. Later rule changes are lane 3 as usual.
 
 ## Standing permissions
 
