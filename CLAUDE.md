@@ -42,6 +42,25 @@ anything new, is the owner's call.
 - **Acceptance criteria come first.** Before building, write what done looks like in the brief, as criteria a program or
   a person can observe, covering at least the quality bar below. A gap against a criterion is a blocking defect; an idea
   that would make it better is a note, kept apart.
+- **Live state in a file.** A session keeps its live state in a committed file, never only in its context: its current
+  task, its last commit, its next step and its open decisions. A session that writes keeps it in its own file,
+  `docs/superpowers/live/<branch>.md` (the branch name with "/" written as "-"), so two sessions never touch the same
+  file; it updates and commits that file at each milestone, reading the commit from `git rev-parse --short HEAD` and the
+  time from `date`, never typing them. The session deletes the file in its last commit before it hands the branch to the
+  audit (or, with no audit, before the merge), so the commit the audit and the owner's approval name is the one that
+  merges and the file never reaches `main`; a fix session writes it again and deletes it the same way. The outcome goes
+  to the coordinator's report and `progress.md`, as before. A reviewer, which changes nothing but its audit file, keeps
+  the same four lines at the top of that file and removes them when the audit is done. The coordinator keeps
+  `progress.md` and needs no such file.
+- **The rules file beats the summary.** A compaction summary is a note about the rules, not the rules. Where it and
+  `CLAUDE.md` or a skill differ, `CLAUDE.md` and the skill win, and where it and the live state differ, the live state
+  wins. A hook in `.claude/settings.json` says so after every compaction and sends the session back to `CLAUDE.md` and
+  `progress.md`; a session that has been compacted without it does the same on its own.
+- **Fresh session per big job.** A big job (a spec, a plan, the build of one pull request with its fixes, an audit) runs
+  in its own fresh session, started from the committed files its prompt names. A session never goes on into the next big
+  job: when its job is done it commits, reports and ends. The coordinator is long-lived because it starts, tracks and
+  reports on jobs and does none of them. A job that outgrows its context is refreshed under Session refresh in Settings,
+  with a handoff, and that is the only reason a job spans two sessions.
 - **A check is a test that fails by itself.** Write the check first, so a program can judge it: the suite exits 0, every
   claim has a source line, the diff touches only files in the plan. The loop lives inside one piece of work: produce,
   check, correct, repeat until green.
@@ -151,11 +170,13 @@ tooling for this. The plan names any other lane 2 or 3 unit up front. The highes
   deleting a merged branch, an isolated change with coverage. Merges on green.
 - **Lane 2**, wide: `src/index.ts`, `src/headless.ts`, `src/lib/`, `schemas/`, `docs/formats/`, `docs/api/`, `template/`, `skills/`, `tests/fixtures/`, `tests/architecture/`, `package.json`, `pnpm-lock.yaml`, `.pnpmfile.cjs`, `*.config.ts`, `tsconfig*.json`, `biome.json`, `knip.json`, shared code many callers use, a schema, or config. Merges after `release`'s extra
   checks.
-- **Lane 3**, hard to undo: `tests/golden/` moves that no approved change explains, `template/replays/level-1.json` (the template's golden), `.changeset/`, `CHANGELOG.md`, `.github/workflows/release.yml`, anything published to npm, credentials,
-  money, device actions with consequential side effects, release approvals and tags, CI workflow files, deleting
-  anything git cannot restore, any migration, any write of real data, and a change to the rules that decide what needs
-  the owner (CLAUDE.md and the skills, even though they are `.md` files). Requires its lane's checks and reviews plus
-  the owner's approval or a recorded standing permission covering the exact action.
+- **Lane 3**, hard to undo: `tests/golden/` moves that no approved change explains, `template/replays/level-1.json` (the
+  template's golden), `.changeset/`, `CHANGELOG.md`, `.github/workflows/release.yml`, anything published to npm,
+  credentials, money, device actions with consequential side effects, release approvals and tags, CI workflow files,
+  deleting anything git cannot restore, any migration, any write of real data, and a change to the rules that decide
+  what needs the owner, or to the hooks sessions run (CLAUDE.md and the skills, even though they are `.md` files, and
+  `.claude/settings.json`). Requires its lane's checks and reviews plus the owner's approval or a recorded standing
+  permission covering the exact action.
 - **First-time setup.** Bootstrap from the owner's own rules text is lane 2: creating the repo, its CI and the rules
   files as the owner gave them. The owner's request is the standing permission for the setup check. Later changes to
   the rules or CI are lane 3 as usual.
@@ -194,7 +215,7 @@ The least every brief's acceptance criteria cover, where they apply:
   scripts/                   thin command-line wrappers over src/
   tests/                     mirrors src/; architecture.test.ts holds the layer rule (imports go down, no cycles)
     golden/                  pixel or snapshot goldens
-  docs/superpowers/          specs/, audits/, progress.md and history.md
+  docs/superpowers/          specs/, audits/, live/, progress.md and history.md
   ```
 
 ## The staged path
@@ -226,7 +247,7 @@ The least every brief's acceptance criteria cover, where they apply:
 
 | # | Stage | Who | Writes |
 |---|---|---|---|
-| 1 | Spec | The coordinator, with the owner (superpowers brainstorming); a plan session adds the plan when the approach is uncertain (superpowers writing-plans) | `docs/superpowers/specs/<date>-<topic>-design.md` |
+| 1 | Spec | A spec session the coordinator starts, with the owner (superpowers brainstorming); a plan session adds the plan when the approach is uncertain (superpowers writing-plans) | `docs/superpowers/specs/<date>-<topic>-design.md` |
 | 2 | Plan audit | An audit session, `review` skill (lane 3 only), on the spec's pull request | `docs/superpowers/audits/<date>-<cycle>-plan-audit.md` |
 | 3 | Execution | The implementer: one work session (superpowers executing-plans) | the code |
 | 4 | Implementation audit | A fresh audit session, `review` skill (lane 2 and 3) | `docs/superpowers/audits/<date>-<cycle>-implementation-audit.md` |
@@ -236,14 +257,14 @@ The least every brief's acceptance criteria cover, where they apply:
 - **Writing.** One writer per branch at a time: the implementer writes, then hands the branch to the reviewer by naming
   a commit; the reviewer commits only its audit file and hands the branch back by naming its own commit. The audit reads
   a named commit, never a moving branch. Independent writers use their own branches or worktrees. The coordinator is the
-  only writer of `progress.md` and `history.md` while active, including for delegated short-path work. If the
-  coordinator cannot write to the repo, the implementer writes them for it and says so in the commit. Otherwise the
-  implementer owns those records. The tracking document in the implementation prompt is the plan's own checklist,
-  written by the implementer on its branch. Worker reports do not create additional writers of the shared progress
-  record.
-- **The coordinator** is one long-lived session. It talks with the owner, writes the spec, creates `progress.md` and
-  `history.md` if missing, starts each stage's session, tracks them in `progress.md`, names each unit's lane in the
-  spec, and archives each session when its stage is done. The coordinator never counts toward the session limit.
+  only writer of `progress.md` and `history.md` while active, including for delegated short-path work; each session's
+  own live-state file in `docs/superpowers/live/` is the exception, written only by that session. If the coordinator
+  cannot write to the repo, the implementer writes them for it and says so in the commit. Otherwise the implementer owns
+  those records. The tracking document in the implementation prompt is the plan's own checklist, written by the
+  implementer on its branch. Worker reports do not create additional writers of the shared progress record.
+- **The coordinator** is one long-lived session. It talks with the owner, creates `progress.md` and `history.md` if
+  missing, starts each stage's session, tracks them in `progress.md`, names each unit's lane in the spec, and archives
+  each session when its stage is done. The coordinator never counts toward the session limit.
 - **Specialist sessions start on demand:** a plan session, an audit session or the advisor starts when its work is ready
   and is archived when it is done. Nothing waits idle.
 - **The advisor** gives a short second opinion on a big call: the risks, what is missing, a recommendation. It never
@@ -348,7 +369,7 @@ template/                     the game `automata create` writes; `template/repla
                               `template/tests/play/` plays its built page in Chromium and WebKit (`npm run play-test`)
 tests/                        mirrors src/; journeys/, create/ and install/ use real browsers or the packed package
 tests/golden/                 recorded hashes and replays
-docs/superpowers/             specs/, audits/, progress.md and history.md
+docs/superpowers/             specs/, audits/, live/, progress.md and history.md
 ```
 
 - The layer list, lowest first, is `LAYERS` in `tests/architecture/rules.ts`, which `tests/architecture.test.ts` reads.

@@ -144,6 +144,8 @@ active, including for delegated short-path work." becomes "The coordinator is th
 The **coordinator** bullet: "It talks with the owner, writes the spec, creates" becomes "It talks with the owner,
 creates", since "starts each stage's session" already covers the spec session.
 
+The folder pictures in `CLAUDE.md` that list `docs/superpowers/` add `live/` after `audits/`.
+
 ### 3. The check (Framework, Editors, Examples, Site)
 
 `tests/workflows/compaction-hook.test.ts`, written first and seen to fail before the files exist, the same text in each
@@ -202,7 +204,8 @@ paragraphs). The same change goes into both kits; their `CLAUDE.md` blocks follo
 
 1. `md5sum` over the five `.claude/settings.json` files gives one hash, and likewise over the five
    `.claude/after-compaction.md` files and the four `tests/workflows/compaction-hook.test.ts` files.
-2. Each repo's `CLAUDE.md` diff against `main` holds only the edits in 2, and no edited line is over 120 columns.
+2. Each repo's `CLAUDE.md` diff against `main` holds only the edits in 2, and no edited line is over 120 columns,
+   except table row 1 of the staged path, whose text 2 sets and which a table row cannot wrap.
    `.claude/settings.json` passes `biome check` in the four repos that run it.
 3. In each of the four repos with CI, the new test fails on `main` plus the test alone, and passes with the change.
 4. In AutomataPrivate, the pull request body shows `jq` on `.claude/settings.json` printing matcher `compact` and one
