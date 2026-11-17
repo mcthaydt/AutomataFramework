@@ -61,6 +61,12 @@ anything new, is the owner's call.
   job: when its job is done it commits, reports and ends. The coordinator is long-lived because it starts, tracks and
   reports on jobs and does none of them. A job that outgrows its context is refreshed under Session refresh in Settings,
   with a handoff, and that is the only reason a job spans two sessions.
+- **No stalls.** A session never ends its turn only to wait for CI: the wake that says CI is done can fail to arrive,
+  and the work then sits. It watches the run in the foreground (`gh pr checks <number> --watch` or `gh run watch`, with
+  a long timeout) and acts the moment it ends: on green it takes its next step, on red it fixes. While work is running,
+  the coordinator, or any session that leads others, schedules its own check-in at the check-in interval in Settings,
+  and nudges any session that has been silent that long. A session that does not answer a nudge by the next check-in is
+  reported to the owner, and its work is handed to a fresh session.
 - **A check is a test that fails by itself.** Write the check first, so a program can judge it: the suite exits 0, every
   claim has a source line, the diff touches only files in the plan. The loop lives inside one piece of work: produce,
   check, correct, repeat until green.
@@ -306,8 +312,8 @@ Implementation Requirements:
   report decisions, changes that affect this work, blockers and what they push. The coordinator keeps the owner
   informed under "Owner visibility and early steering", including decisions that need no approval. Pause and request
   an owner decision only when the brief, permissions or an unresolved choice requires it; keep independent work moving.
-- Each session's prompt names the files to read; sessions wait for CI results instead of repeatedly watching logs.
-  Waiting does not suspend the owner update interval.
+- Each session's prompt names the files to read. A session watching CI reads a log only when a check fails, and
+  waiting does not suspend the owner update interval.
 
 ## Settings
 
@@ -315,6 +321,9 @@ Change a number or a model here and nowhere else.
 
 - Owner update interval: 5 minutes during active work. Meaningful milestones and material changes are reported sooner.
   Short tasks normally need only a start update and completion. Updates do not require acknowledgement.
+
+- Check-in interval: 20 minutes while work is running. The coordinator, or any session that leads others, checks on
+  every running session that often; one silent that long is nudged.
 
 - Tries per problem: 3. After that, stop that approach and reassess: try another with a reason, or move to independent
   work. Include material setbacks in the owner update, with what was tried and what it showed. Pause for an owner

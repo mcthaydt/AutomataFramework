@@ -55,7 +55,8 @@ Choose where work runs by what it needs, not by habit.
   workflow lists those paths), with no label needed.
 - Browser tests run in the pieces set in Settings (CLAUDE.md), with browsers and installs cached. A newer push cancels
   the older run. A change to the database, fixtures, lockfile or build/test config makes even a draft run everything.
-- Wait for the result instead of watching logs. Read a log only when a check fails.
+- Watch the run in the foreground until it ends (`gh pr checks <number> --watch` or `gh run watch`, with a long
+  timeout), and never end the turn to wait for it. Act the moment it ends. Read a log only when a check fails.
 
 ## Docs only
 
