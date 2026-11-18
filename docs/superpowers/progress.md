@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-11-18 09:51 UTC (from `date`).
+Last updated: 2026-11-18 12:29 UTC (from `date`).
 
 ## Active milestone: the World slice (roadmap slice 3)
 
@@ -11,6 +11,14 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
 
 ### Current work
 
+- Merged 2026-11-18 ~10:10 UTC: the verification change in all six PRs (website #77 2c47d69, AF #214 c7655ea, Editors
+  #114 04ba096, Examples #75 3fd4b8d, Site #57 584ce72, RukenApp #197 9972343), and website #80 (two FloorFifty games-kit
+  lessons, 623c62a, Owner's yes on a decision card). Owner decision (card, ~09:59 UTC): merge the kits now; reword the
+  shared "full suite in CI" line in the 12-notes round so the games gate is a stated case.
+- Owner instruction (2026-11-18 ~10:22 UTC, coordinator thread): "man just finish this, I don't know why you needed me".
+  Standing permission, scope: this job only — the 12-notes round (audit notes N3-N8, N10-N14, N19 plus the "full suite"
+  reword) and the test cleanup that follows merge on green and their required reviews without asking the Owner again.
+  It does not lower any lane or skip any review; anything outside that scope still goes to the Owner.
 - Owner instruction (2026-11-18 09:50 UTC, coordinator thread): "merge now, then fix all 12 after; then we do the
   test cleanup". Lane 3 approval to merge the six verification pull requests at their audited heads (McThayDT-Website
   #77 5d53e78, AutomataFramework #214 3e9c42a, Editors #114 62a75b7, Examples #75 1959b32, Site #57 e379aea, RukenApp
