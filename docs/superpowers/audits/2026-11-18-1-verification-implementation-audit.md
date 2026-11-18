@@ -174,3 +174,19 @@ The fresh round on `39cf051` failed 2 of 3, as the coordinator reported. In runs
 ### Lesson for the retrospective
 
 ACCEPTED: AutomataFramework's `verify` took its first screenshot right after `goto`. A fresh run's report and this audit both saw that it did not wait. The audit marked it a note because six runs had passed, and the next round failed 2 of 3 on it. DERIVED: a step in `verify` that does not wait for what it is about to look at or press is red, however many runs it has passed. TRIGGER: an audit or fresh run of a `verify` skill, or a change to `.claude/skills/verify/SKILL.md`. LOOK FOR: a screenshot, read or press with no wait on its element just before it. LANDS IN: the brief of any plan that writes or changes a `verify` skill. The coordinator adds it under "Lessons" in `history.md` when the work is archived, unless the retrospective turns it into a check.
+
+### Editors' R6 and N15 to N18, head `62a75b7`
+
+Checked on `62a75b7` (skill md5 `546f4975f98e95af1231a9225ab82e52`, matched). `git diff 3369165 62a75b7` touches only `.claude/skills/verify/SKILL.md`:
+- `export SCRATCH=…` is now a line of its own, before `S` is made, so the screenshots `drive.js` writes go to the scratchpad. This closes N18.
+- The stop comment says the screenshots stay in `$SCRATCH`. This closes N15.
+- At 1280, List and Add sit in a left side rail. This closes N16.
+- The timing line reads 69 s and 79 s, on `3369165`. This closes N17.
+
+`verify-check` prints `ok`. `git diff --check origin/main...HEAD` is empty. The whole diff is still the 7 allowed files. The new commit is McThayDT as author and committer, with no trailers.
+
+R6: the body is rewritten for `62a75b7`. It restates criteria 2 to 5, 7, 9, 10 and 11 on that head. Its criterion 6 table gives three runs in a row, each with a start and an end from `date` (02:38:41 to 02:40:13, 02:40:25 to 02:41:22, 02:41:28 to 02:42:38 UTC), the skill's md5 and what the screenshots show at each size. It names the product follow-up, and its last line is "Requested by **McThayDT**". CI on `62a75b7` is green per the body and the coordinator (`ci` and `commit-authors`); this session did not check it. Closed.
+
+### Where it stands
+
+Closed: R1, R3, R4, R5, R6; notes N1, N15, N16, N17 and N18 fixed. Open: R2 (AutomataFramework's body) and N2, re-marked red; both wait for the fresh three-run round on `3e9c42a`. The other notes (N3 to N14) were left as notes, at the builders' choice.
