@@ -59,6 +59,7 @@ Finished milestones and their decision records, setup, rule changes, standing pe
   Later rule changes are lane 3 as usual.
 - 2026-11-18, the Owner: the shared Verification text says the full suite runs in CI where `release` sets the gate,
   so a games kit gate that runs the smoke set is a stated case. Chosen on a decision card ("Merge now, reword later").
+- 2026-11-18, the Owner: a plan's order is a claim that one unit waits on another, not a queue; independent units run side by side up to the writer limit (`staged-path`). Asked for in the coordinator thread.
 
 ## Standing permissions
 
