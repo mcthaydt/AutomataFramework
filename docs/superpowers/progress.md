@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-11-17 03:58 UTC (from `date`).
+Last updated: 2026-11-18 02:00 UTC (from `date`).
 
 ## Active milestone: the World slice (roadmap slice 3)
 
@@ -11,6 +11,11 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
 
 ### Current work
 
+- Owner instruction (2026-11-18 ~02:00 UTC, coordinator thread): the verification rule change (spec
+  `docs/superpowers/specs/2026-11-18-verification-design.md`, PR #213) runs six writers at once for this job only
+  ("yes allow 6, go"), units 2 to 6 start without waiting for the kits' merge, and one implementation audit covers
+  all six pull requests. After it merges: "We can remove the tests that no longer belong after" — a pruning pass
+  per repo under the new Prune rule, each removal named with its reason, tests in their own pull requests.
 - Restart (2026-11-17): this repo's setup pull request puts back the apps kit (CLAUDE.md, skills, compaction hook) and the
   CI, gate and commit-authors check saved in AutomataPrivate `docs/superpowers/handoffs/2026-11-17-restart/`. The
   owner's brief (2026-11-17 03:54 UTC): "all slices complete", run by the apps CLAUDE.md and the restart handoff.
