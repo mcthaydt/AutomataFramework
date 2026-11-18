@@ -29,7 +29,7 @@ grep -q 'ready in' "$SCRATCH/play.log" && curl -sf http://localhost:5199/ >/dev/
 
 `$SCRATCH` is the scratchpad directory your session names; replace the `<...>` on the first line with its full path. Run the block from the root of this repo's checkout, since the clone is of the directory it runs in. The clone holds only committed files, so commit the change first (a local commit is enough), or the run shows the old code. There is no outside service to stand in for. Where `package.json`, `tests/create/made-game.ts` or this list differ, the files win and this skill is fixed.
 
-It is ready when `$SCRATCH/play.log` says `ready in` and `curl -sf http://localhost:5199/` answers; the block prints `ready` when both hold. Last clean start, timed with `date` before and after: 29 to 43 seconds from a fresh clone to the page answering (three fresh-session runs measured 43, 29 and 29 seconds; the author's own run took 46), on commit d3f6530.
+It is ready when `$SCRATCH/play.log` says `ready in` and `curl -sf http://localhost:5199/` answers; the block prints `ready` when both hold. Last clean start, timed with `date` before and after: about 22 seconds warm and 42 seconds cold to ready (fresh-session runs), on commit 39cf051.
 
 ## Drive it
 
@@ -44,6 +44,7 @@ const { chromium } = require('playwright');
   const b = await chromium.launch();
   const p = await (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
   await p.goto('http://localhost:5199/');
+  await p.getByRole('button', { name: 'Go' }).waitFor();                    // the picker is drawn once Go shows; before that it is a loading bar
   await p.screenshot({ path: `${process.env.SCRATCH}/main.png` });          // the picker
   await p.getByRole('button', { name: 'Go' }).click();
   await p.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click();   // Play
@@ -84,5 +85,6 @@ A step that breaks or flakes is fixed in this skill first. Each known way a star
 - `automata: command not found` or a Node 22 error: `export PATH=/opt/node24/bin:$PATH` first; `engines` asks for Node 24.21 or newer.
 - `TypeError: Cannot read properties of undefined (reading 'sim')`: `window.automataGame` is set a moment after the level opens, so the picker and menu come first and then `waitForFunction(() => window.automataGame !== undefined)`.
 - `Ignored build scripts: msgpackr-extract` or `npm warn install-scripts` during install: expected and harmless; the game runs without it.
+- `main.png` shows only a loading bar: wait for the Go button before the screenshot.
 - Port 5199 already in use: a run before did not stop; run the stop commands.
 - `git clean -xfd` is refused in some containers; the clean start is a fresh clone into `$SCRATCH/repo` (the first start commands), so nothing needs cleaning.
