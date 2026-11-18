@@ -38,11 +38,11 @@ Run under Node 24 (`/opt/node24/bin`), with `SPEC` the spec at `186e3f2` and the
 | 10. Identity | 3 commits | 7 (one is a merge of `main`) | 6 | 5 | 8 | 8 |
 | 10. No trailers | none | none | none | none | none | none |
 | 10. Body ends "Requested by **McThayDT**" | yes | yes | yes | yes | yes | yes |
-| 11. CI on the named head | Netlify's three checks: success, neutral, neutral (the website has no GitHub workflow) | `ci` and `commit-authors` success on `d76655a` | not checked here | not checked here | not checked here | on the final head |
+| 11. CI on the named head | Netlify's three checks: success, neutral, neutral (the website has no GitHub workflow) | `ci` and `commit-authors` success on `d76655a` | green, per the coordinator | green, per the coordinator | green, per the coordinator | green on `3369165`, per the coordinator |
 
 Identity: every commit is McThayDT <107786093+mcthaydt@users.noreply.github.com> as author and committer; `git log --format=%B origin/main..HEAD | grep -i -E 'co-authored|claude-session|generated (with|by)'` printed nothing in all six.
 
-Not checked here: CI for Examples, Site and RukenApp. This session has git read access to those three repos but no GitHub API access, and the search API's `status:` filter is no help (it reads "pending" even for AutomataFramework#214, whose runs are green). Their bodies say green on the named heads. The coordinator confirms these three before the Owner's look.
+Not checked here: CI for Examples, Site and RukenApp. This session has git read access to those three repos but no GitHub API access, and the search API's `status:` filter is no help (it reads "pending" even for AutomataFramework#214, whose runs are green). The coordinator checked them with `gh api` (reported 02:34 UTC), and every one is green: Examples `1959b32` has 13 success and 1 skipped. Site `e379aea` has 17 success, 4 skipped and 1 cancelled; the cancelled run is an older `commit-authors` run, replaced by a later success. RukenApp `fce4668` has 8 success and 1 skipped. Editors `3369165` has 12 success and 2 skipped. This is the coordinator's evidence, not this session's.
 
 Criterion 8, read: each repo's and kit's two sections hash to the spec's blocks, so the six points, the absent property-test library, stamp and gate, and section 7's settlements are as the spec wrote them. The Risk line and `release-docs` carry the Owner's two cards word for word (criterion 4). The Owner's "yes allow 6, go" replaces the spec's "kits merge first" order for this job; the repos match the kit blocks byte for byte anyway, so nothing drifted.
 
@@ -148,7 +148,7 @@ The coordinator named `3369165` as Editors' final head (skill md5 `4bea5f4e0bb7d
 
 **Follow-up, outside this change (product, not the skill):** at 390 wide the editor's top bar drops the game's name ("Levels · Level 1", "Play", "Up to date"), and the welcome card covers the tool bar until it is closed. Both were seen by F3's runs. This is its own thread, for the Owner to weigh.
 
-CI for Editors is not checked here, for the same reason as Examples, Site and RukenApp (no API access in this session).
+CI for Editors on `3369165` is green per the coordinator's `gh api` check (12 success, 2 skipped); not checked by this session.
 
 Counts for Editors#114 at `3369165`: 1 red (R6) and 6 notes (N15 to N18, plus its parts of N10 and N14 = 6). The other five pull requests' counts above are unchanged.
 
