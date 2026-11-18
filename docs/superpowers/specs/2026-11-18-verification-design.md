@@ -8,7 +8,9 @@ through a new per-repo `verify` skill that starts and drives the app or game; pr
 (journeys, then property tests, then old-versus-new tests); fix a flaky test at its root or delete it and write down
 why; never let a change edit the check that judges it; give each lesson a trigger read from the diff; and prune stale
 tests and rules at each retrospective. Each repo gets its own `verify` skill, and a fresh session that has only that
-skill can start the app or game in a cloud container and show its main screen, three times in a row.
+skill can start the app or game in a cloud container and show its main screen, three times in a row. Superpowers'
+test-driven development stays the way code is written, read with the new section: the first failing test is the
+hardest-to-fool one the change reaches, and green tests are not the end.
 
 ## Why
 
@@ -43,6 +45,10 @@ takes up, read by this session on 2026-11-18:
     in Outcome above.
   - Declined: a property-test library (fast-check) as a new dependency; a commit verification stamp and commit gate
     hooks. Neither is in this change, and the new text says a property-test library still needs the owner's yes.
+- 2026-11-18, about 00:35 UTC, coordinator thread, word for word as the coordinator passed it on: "We also need to
+  evaluate how superpowers comes into the picture because that's tdd". Section 7 is that evaluation: how superpowers
+  7.0.2's `test-driven-development`, `verification-before-completion`, `executing-plans` and
+  `subagent-driven-development` fit the new section, with the text that settles each overlap.
 
 These cover this change only. The implementation pull requests are lane 3 and wait for the Owner's approval of the
 finished result before they merge.
@@ -57,9 +63,9 @@ merge commit each.
 
 - Repos: RukenApp, AutomataFramework, AutomataFrameworkEditors, AutomataFrameworkExamples, AutomataFrameworkSite.
 - Files, in each repo: `CLAUDE.md`; `.claude/skills/verify/SKILL.md` (new); `.claude/skills/review/SKILL.md`,
-  `.claude/skills/release/SKILL.md` and `.claude/skills/staged-path/SKILL.md` (the edits in section 4);
-  `docs/superpowers/history.md`; and the build session's own live-state file while it works. Nothing else, apart from
-  this spec and its audits in AutomataFramework.
+  `.claude/skills/release/SKILL.md` and `.claude/skills/staged-path/SKILL.md` (the edits in sections 4 and 7);
+  `docs/superpowers/history.md` (sections 6 and 7); and the build session's own live-state file while it works. Nothing
+  else, apart from this spec and its audits in AutomataFramework.
 - Not changed: `build`, `owner-updates`, `visual-check` and `this-repo` (checked in section 4: nothing in them
   contradicts the new section); CI workflows; tests; `package.json`; `template/` and `skills/` in AutomataFramework
   (they ship to a person's game, a product choice nobody asked for); AutomataPrivate; the website's kits.
@@ -68,9 +74,13 @@ merge commit each.
   product with each repo's own scripts and tools (RukenApp's Postgres 16 is already installed in the container;
   `psql` and `pg_ctlcluster` are on the path).
 - No new tools, dependencies, environments or spend. Nothing runs on the Owner's computer.
-- Expected duration (estimates): AutomataFramework 3 hours, Editors 3 hours, Examples 2 hours, Site 2 hours, RukenApp 4
-  hours (a database and two local Workers to start); about one working day from the spec's merge to the last pull
-  request ready for the Owner, most of it the fresh-session runs, audits and CI.
+- Not changed: superpowers itself (a plugin at 7.0.2, read at
+  `~/.claude/plugins/cache/superpowers-marketplace/superpowers/7.0.2/skills/`); where it differs, these rules win and
+  the difference is written down (section 7).
+- Expected duration (estimates): AutomataFramework 3¼ hours, Editors 3¼ hours, Examples 2¼ hours, Site 2¼ hours,
+  RukenApp 4¼ hours (a database and two local Workers to start), each with about 15 minutes for section 7; about one
+  working day from the spec's merge to the last pull request ready for the Owner, most of it the fresh-session runs,
+  audits and CI.
 
 ## Where the touched lines stand today
 
@@ -115,6 +125,7 @@ Checks are what let work be handed off: what a program can judge, nobody has to 
 
 - **Run it like a person.** Before a change that alters what the product does is called done, its builder runs it: starts the app or game, goes through the changed journey with real taps, clicks, keys and typing, and looks at what happens. Passing tests are not this. How to start and drive this repo is in its `verify` skill, which the builder loads before every commit that changes behavior. Every session leans on it, so it stays quick and steady: a step in it that breaks or flakes is fixed before other work, and a change to how the product starts or what its first screen shows updates it in the same pull request.
 - **The test that is hardest to fool comes first.** A unit test can pass while the feature is broken, because the test and the code share the same misunderstanding. So, in this order: 1. **Journeys**: a person's path through the running product, from the first screen to done; a failure names the step, with a screenshot; a changed journey gets a journey test. 2. **Property tests**, for the cases people and agents both miss: state something that must always hold and let many generated inputs, from a fixed seed, try to break it: round trips (save then load gives back the same thing), invariants (a count never goes below zero), repeats (doing it twice is the same as doing it once: migrations, retries, clean-ups) and twins (a fast version agrees with a plain, correct one). A property-test library is a new dependency and needs the owner's yes first. 3. **Old-versus-new tests**, for a rewrite or a move that should not change behavior: run the old and the new on the same inputs, set aside differences that do not matter (spacing, order), and treat every other difference as a bug unless it is on the change's written list of intended differences. Unit tests cover the small pieces underneath.
+- **Test first, from the outside in.** The failing test written first (Tests, and superpowers' `test-driven-development`) is the hardest-to-fool test the change reaches: a journey test when the change alters a journey, a property test when a rule must always hold. Watch it fail for the right reason; it stays red while quick red-green-refactor steps with unit tests build the pieces under it, and the change is green when it passes. A test that pins what the code does today, before a refactor or a rewrite, passes at once by design: show it can fail by breaking the code on purpose, then put the code back. In a rewrite the old code stays until the old-versus-new test passes on the new. Green tests are not the end: before a change is called done, its builder also runs it through `verify` and reports what it did and saw.
 - **Quick and steady, or it gets skipped.** A slow check gets run less, and a flaky one teaches a session to rerun instead of fix. Cheap checks first (lint, typecheck, the tests the change reaches); heavy ones (journeys, the full suite) before a push, not after. A test that fails once and passes on retry is a defect: report it with its text, record it under "Flaky tests" in `docs/superpowers/history.md`, and fix its root cause. Never rerun it until it passes, slow it with a sleep, or skip it. If the root cause is not found within the tries in Settings, delete the test, put a steady check of the same thing in its place where one can be written, and record why, and the gap it leaves, under "Flaky tests".
 - **A change never edits the check that judges it.** A pull request that changes or deletes an existing test, golden, `verify` step or CI gate names each one and why in its body, and the reviewer reads those first. CI workflow files, `CLAUDE.md` and the shared skills (`review`, `release`, `build`, `staged-path`, `owner-updates`, `visual-check`) change only in their own pull requests.
 - **Lessons carry a trigger.** Each line under "Lessons" in `docs/superpowers/history.md` names its trigger (the paths, or the kind of change, a diff shows), the check to run and the failure behind it. Before it pushes, a session reads the lessons and runs only those whose trigger its diff matches.
@@ -127,8 +138,9 @@ to match the next bullet's title; the `verify` bullet says a change to how the p
 same pull request (otherwise the skill goes stale and the next session's smoke test breaks); "Cheap checks first" names
 which checks are cheap and which heavy; the "own pull requests" sentence names the shared skills, so a repo's own
 `this-repo` and `verify` skills can still change with the code they describe (named in the body, per the same bullet);
-"Lessons carry a trigger" says the session reads the lessons before choosing; and "twins" says "a fast version", not
-"the fast version".
+"Lessons carry a trigger" says the session reads the lessons before choosing; "twins" says "a fast version", not "the
+fast version"; and the **Test first, from the outside in.** bullet is new, from the Owner's superpowers instruction
+(section 7).
 
 ### 3. `CLAUDE.md`, "Rules that never bend", two bullets
 
@@ -182,7 +194,10 @@ Each was read for wording the new section contradicts.
   + A lesson lands in the plan's brief when its trigger matches the plan's work, not in a worker's instructions. The retrospective after the slice moves into CLAUDE.md, through its rule-change pull request, only a lesson that holds for every change (one with no narrower trigger), and prunes the rest as Verification in CLAUDE.md says.
   ```
 
-- **`staged-path`**: the **Handoff.** bullet's "the plan also reads Lessons in `history.md`" becomes "the plan also
+- **`staged-path`**: the **Superpowers.** bullet gains one sentence, from section 7, after "where they differ from
+  these rules, these rules win.": "Its `test-driven-development` and `verification-before-completion` apply to every
+  build, read with Verification in CLAUDE.md, and the places they differ are listed under "Setup" in `history.md`." The
+  **Handoff.** bullet's "the plan also reads Lessons in `history.md`" becomes "the plan also
   reads the Lessons in `history.md` and carries those whose trigger its work matches". The **Retrospective.** bullet
   gains one sentence after "It turns each lesson into a test where it can, such as a PR-footer check, and proposes the
   rest as one rule-change pull request for the owner to approve.": "It also prunes, as Prune under Verification in
@@ -285,22 +300,90 @@ spec differ, the file wins and the skill says so.
 - Framework, Examples and Site have no "## Flaky tests" section, which the new rule writes to: each gets one, with
   "None yet.", just before "## Lessons", where Editors and RukenApp have theirs.
 
+### 7. Superpowers 7.0.2 and the Verification section
+
+Read on 2026-11-18 from the installed plugin, version 7.0.2, the version every repo's "Setup" records:
+`test-driven-development` (with `writing-good-tests.md`), `verification-before-completion`, `executing-plans` and
+`subagent-driven-development`. The "Setup" entry in `history.md` (2026-11-16) already lists four places superpowers
+differs from these rules (a separate plan file, subagents, deferred minor findings, a worktree and ledger); none of them
+is about tests, and none changes here.
+
+**How they fit.** Superpowers says how code gets written: the test first, seen to fail, then the least code that passes,
+then a clean-up (`test-driven-development`), and no claim without fresh evidence (`verification-before-completion`).
+The Verification section says which test, what else counts as evidence, and how the checks are kept. They mostly agree,
+and `CLAUDE.md` already says "Write the failing test first and confirm it fails for the right reason". The overlaps:
+
+| Superpowers says | Verification says | Settled by |
+|---|---|---|
+| The Iron Law: "NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST"; write one minimal test of one behavior. | The test hardest to fool comes first: journeys, then property tests, then old-versus-new. | They nest. The first failing test is the hardest-to-fool one the change reaches; unit red-green-refactor steps run under it while it stays red. New bullet **Test first, from the outside in.** |
+| "Test passes? You're testing existing behavior. Fix test." (`executing-plans`: "a test that passes before the implementation exists is a finding about the test"). | Old-versus-new tests, and tests that pin today's behavior before a refactor. | Those pass at once by design. Their red is shown the way `verification-before-completion` shows a regression test's: break the code on purpose, see it fail, put it back. Same bullet. |
+| "Test fails? Fix code, not test." "Other tests fail? Fix now." | A change never edits the check that judges it. | Agree for the code. A brand-new test of this change may be fixed before it has ever been green (it judges nothing yet). An existing test, golden or gate that is changed or deleted is named, with why, in the pull request body. No new text: the existing bullet covers it. |
+| REFACTOR: "Keep tests green. Don't add behavior." | The same, and a move that should not change behavior gets an old-versus-new test. | Agree. Refactoring code never edits its tests; tidying an existing test is a change to a check and is named in the body. No new text. |
+| "Write code before the test? Delete it. Start over." | Old-versus-new: the old code is the oracle. | Agree for code written in this session before its test. In a rewrite, the old code stays until the old-versus-new test passes on the new. Same bullet. |
+| Exceptions (throwaway prototypes, generated code, configuration files): "ask your human partner". | The owner approves results, not steps; a docs or purely visual change is verified by what fits (Tests bullet). | These rules win: the exceptions are the ones `CLAUDE.md` names, and nobody asks the owner step by step. Setup note. |
+| "Before you call the change done, run the project's test command." | Cheap checks first, heavy ones before a push; CI is the gate; done means merged to `main` and green there. | The session runs the commands in Stack and checks before a push; browsers and journeys run in CI where the repo says so; "done" keeps `CLAUDE.md`'s meaning. Setup note. |
+| `verification-before-completion`: "NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE"; "Requirements met" needs a line-by-line checklist, not passing tests. | Run it like a person; passing tests are not this. | Agree, and Verification adds a kind of evidence: a claim that the product works also needs the `verify` run (what was done, what was seen, a screenshot). Same bullet's last sentence. |
+| `executing-plans`: per task, `task-done` records the test command's result. | `verify` before every commit that changes behavior. | Agree: a task whose commit changes what a person sees or does also runs `verify` before that commit. No new text: **Run it like a person.** says so. |
+| `subagent-driven-development`: a subagent implements each task and a subagent reviewer checks it; "Do not ask a reviewer to re-run tests the implementer already ran". | Findings carry evidence; a fix is checked by a program or a second session, never the fixer's say-so. | Not used here (Limits: writers are threads, subagents only read). If the Owner ever allows it, the reviewer's word does not replace the implementation audit, which runs the checks itself. Setup note. |
+
+The coordinator's starting view, tested: (a) holds, with one refinement: the hardest-to-fool test does not replace the
+unit test as TDD's step; it wraps it (outside in), so the quick inner loop TDD needs stays quick. (b) holds, and is
+already the agreed **Run it like a person.**; the new bullet ties it to TDD's "green". (c) No conflict for a test this
+change creates; the conflict is only with existing checks, and the existing bullet settles it. The one real clash is
+"passes immediately, fix the test" against pinning and old-versus-new tests, settled above. (d) holds, as `staged-path`
+already says ("where they differ from these rules, these rules win"), and the differences are written down below.
+
+**Where the text goes.**
+
+- `CLAUDE.md`: the **Test first, from the outside in.** bullet, inside the Verification section of section 2 (so it is
+  part of the one hash in criterion 1).
+- `staged-path`, the **Superpowers.** bullet: the sentence in section 4.
+- `docs/superpowers/history.md`, "## Setup": a new entry at the top of the section (the newest comes first there), the
+  same in all five, wrapped at 120 like the entries around it:
+
+```
+- 2026-11-18: superpowers **7.0.2** read against the Verification section in `CLAUDE.md` (AutomataFramework
+  `docs/superpowers/specs/2026-11-18-verification-design.md`, section 7). Where its skills differ from these rules,
+  these rules win:
+  - `test-driven-development` writes one small test first; here the first failing test is the hardest-to-fool one the
+    change reaches (a journey or a property test where one fits), and small unit red-green-refactor steps run under it.
+  - `test-driven-development` and `executing-plans` treat a test that passes at once as a wrong test; here a test that
+    pins today's behavior before a refactor, or an old-versus-new test, passes at once by design and shows its red by
+    a deliberate break that is then put back.
+  - `test-driven-development` deletes code written before its test; here too, except that in a rewrite the old code
+    stays as the oracle until the old-versus-new test passes on the new.
+  - `test-driven-development` says "Fix code, not test"; here too, and an existing test, golden or gate that is
+    changed or deleted is named, with why, in the pull request body.
+  - `test-driven-development` asks the human partner before an exception (prototypes, generated code, configuration);
+    here the exceptions are those `CLAUDE.md` names (a docs or purely visual change, verified by what fits), and the
+    owner is not asked step by step.
+  - `test-driven-development` runs the project's whole suite before "done"; here the session runs the commands in
+    Stack and checks before a push, the browsers and journeys run in CI, and done means merged to `main` and green
+    there.
+  - `verification-before-completion` asks for evidence before any claim, as Report honestly does; a claim that the
+    product works also needs the `verify` run (what was done, what was seen, a screenshot), not only green tests.
+  - `subagent-driven-development`'s task reviewer does not re-run the implementer's tests; it is not used here (writers
+    are threads), and the implementation audit is a fresh session that runs the checks itself.
+```
+
 ## Acceptance criteria
 
 Each is checked on each pull request's head commit, and the pull request body shows the command and its output.
 
 1. **One Verification section.** In each repo, `awk '/^## Verification$/{f=1} /^## /&&!/^## Verification$/{f=0} f'
-   CLAUDE.md` prints the section; `md5sum` over the five outputs gives one hash, and that hash equals the spec's block,
-   `{ awk '/verification-section:start/{f=1;next} /verification-section:end/{f=0} f' <this spec> | sed '1d;$d'; echo;
-   } | md5sum` (the fence lines removed, plus the blank line before "## Risk"). Tried on a copy of this repo's
-   `CLAUDE.md` with the block put in: both give `00cac0b4763d83818549ee9627478811`. The section sits right after "##
-   Rules that never bend" and before "## Risk".
+   CLAUDE.md` prints the section; `md5sum` over the five outputs gives one hash, and that hash equals the spec's block:
+   `{ awk '/^<!-- verification-section:start -->$/{f=1;next} /^<!-- verification-section:end -->$/{f=0} f' <this spec>
+   | sed '1d;$d'; echo; } | md5sum` (the fence lines removed, plus the blank line before "## Risk"). Tried on a copy of
+   this repo's `CLAUDE.md` with the block put in: both give `abc9008362d9e12a0bc71a54392d8d93`. The section sits right
+   after "## Rules that never bend" and before "## Risk".
 2. **The other edited lines match.** The Skills line, the **Tests.** bullet and the **Lessons become tests first.**
    bullet are each one hash across the five `CLAUDE.md` files and equal to the `+` lines in sections 1 and 3.
 3. **Nothing left that contradicts it.** In each repo: "fails once and passes on retry" appears exactly once in
    `CLAUDE.md`, inside the Verification section; `grep -r` finds no "moves each lesson that no test can capture into
    CLAUDE.md" and no "ACCEPTED: utils slice" in `.claude/skills/`; `review/SKILL.md` has "TRIGGER:"; `staged-path`
-   has "It also prunes"; `release` has the `verify` setup-check line. `review`, `build`, `staged-path`,
+   has "It also prunes" and "apply to every build, read with Verification"; `release` has the `verify` setup-check
+   line; "## Setup" in `history.md` has the section 7 entry, the same in all five (one `md5sum` over the extracted
+   entry). `review`, `build`, `staged-path`,
    `owner-updates` and `visual-check` are one hash across the five; `release` differs between RukenApp and the others
    only in the `commit-authors` line, as before (`diff` shows that one line).
 4. **The `verify` skill has its shape.** In each repo, `.claude/skills/verify/SKILL.md` has `name: verify` in its
@@ -314,7 +397,8 @@ Each is checked on each pull request's head commit, and the pull request body sh
    skill. Each run's screenshot is attached to, or linked from, the pull request, with the run's time measured with
    `date` at start and end, and the commit. A failed run is fixed in the skill and the three runs start again.
 6. **It reads as the Owner chose.** The section holds the six points of the decision card and no property-test
-   library, no commit stamp and no commit gate (read by the plan audit and the implementation audit).
+   library, no commit stamp and no commit gate, and section 7's table is settled by the text the build puts in (read by
+   the plan audit and the implementation audit).
 7. **Clean diffs.** `git diff --check origin/main...HEAD` prints nothing in each repo. Each pull request's diff touches
    only the files in Boundaries, and the build session's live-state file is gone from its last commit.
 8. **Identity.** Every commit is authored and committed by McThayDT
@@ -333,18 +417,18 @@ Units, one per repo, each lane 3. They share no file, so they can run side by si
 | Unit | Repo | Waits on | Files it owns | Output | Acceptance check | Estimate |
 |---|---|---|---|---|---|---|
 | 0 | AutomataFramework | the plan audit | this spec and its audits | the spec on `main` | the plan audit has no reds | (this session) |
-| 1 | AutomataFramework | 0 | Boundaries | one draft pull request | criteria 1 to 9 | 3 hours |
-| 2 | AutomataFrameworkEditors | 0 | Boundaries | one draft pull request | criteria 1 to 9 | 3 hours |
-| 3 | AutomataFrameworkExamples | 0 | Boundaries | one draft pull request | criteria 1 to 9 | 2 hours |
-| 4 | AutomataFrameworkSite | 0 | Boundaries | one draft pull request | criteria 1 to 9 | 2 hours |
-| 5 | RukenApp | 0 | Boundaries | one draft pull request | criteria 1 to 9 | 4 hours |
+| 1 | AutomataFramework | 0 | Boundaries | one draft pull request | criteria 1 to 9 | 3¼ hours |
+| 2 | AutomataFrameworkEditors | 0 | Boundaries | one draft pull request | criteria 1 to 9 | 3¼ hours |
+| 3 | AutomataFrameworkExamples | 0 | Boundaries | one draft pull request | criteria 1 to 9 | 2¼ hours |
+| 4 | AutomataFrameworkSite | 0 | Boundaries | one draft pull request | criteria 1 to 9 | 2¼ hours |
+| 5 | RukenApp | 0 | Boundaries | one draft pull request | criteria 1 to 9 | 4¼ hours |
 
 1. A fresh session audits this spec (plan audit, `review`), never this session, and writes
    `docs/superpowers/audits/2026-11-18-1-verification-plan-audit.md` on this branch; this spec merges on green with it.
 2. In each repo, on its own branch from `main`: the `CLAUDE.md` edits (1 to 3), copied from this spec, never retyped;
-   the skill edits (4); the history entry and any missing "Flaky tests" section (6); then the `verify` skill (5),
-   written by starting and driving the product in the build session's own container until it works from a clean
-   start, with the time measured. Check criteria 1 to 4 and 7 to 8 with the commands above.
+   the skill edits (4 and 7); the history entries (6 and 7) and any missing "Flaky tests" section; then the `verify`
+   skill (5), written by starting and driving the product in the build session's own container until it works from a
+   clean start, with the time measured. Check criteria 1 to 4 and 7 to 8 with the commands above.
 3. Ask the coordinator for the fresh session of criterion 5; fix the skill until three runs in a row pass.
 4. One implementation audit across the five pull requests by a fresh session; fixes on the same branches by the build
    sessions.
@@ -362,7 +446,9 @@ Units, one per repo, each lane 3. They share no file, so they can run side by si
 
 ## Open decisions
 
-None. The Owner's choices on 2026-11-18 cover the repos, the ideas and the two declined ones. The reading that a repo's
+None. The Owner's choices on 2026-11-18 cover the repos, the ideas and the two declined ones. The superpowers
+evaluation (section 7) needs no choice: every overlap is settled by these rules winning, as `staged-path` already says,
+and nothing in superpowers is turned off or replaced. The reading that a repo's
 own `this-repo` and `verify` skills may change with the code they describe (named in the body), while `CLAUDE.md`, CI
 workflows and the six shared skills change only in their own pull requests, follows from "a change can't edit the check
 that judges it" and is called out for the plan audit; it does not change any lane (a skill edit is still lane 3 under
