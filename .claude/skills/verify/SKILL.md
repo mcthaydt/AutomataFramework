@@ -12,7 +12,9 @@ The runtime (`@automataframework/framework`) for 2D games. What a person ships i
 From a clean checkout in a cloud container, in order. First pick the Node version (or other runtime) that `engines` in `package.json` asks for. Then install, build, and start every stand-in for an outside service (a database, payments, mail, sign-in), never the real one.
 
 ```sh
+export SCRATCH=<the scratchpad directory your session names>     # set it first; nothing below works without it
 export PATH=/opt/node24/bin:$PATH     # Node 24; the default `node` is 22
+rm -rf "$SCRATCH/repo" && git clone -q . "$SCRATCH/repo" && cd "$SCRATCH/repo"     # the clean checkout: a fresh clone of this one, at its HEAD
 pnpm install --frozen-lockfile
 pnpm build
 pnpm pack --pack-destination "$SCRATCH/pack"
@@ -20,11 +22,13 @@ mkdir -p "$SCRATCH/made game" && cd "$SCRATCH/made game"     # a space in the na
 npx --yes --package "$SCRATCH"/pack/*.tgz automata create my-game --source en --framework "file:$(ls "$SCRATCH"/pack/*.tgz)"
 cd my-game && npm install --no-audit --no-fund
 (setsid npm run dev -- --no-open --port 5199 > "$SCRATCH/play.log" 2>&1 &)     # `npm run dev` is `automata play`
+for i in $(seq 60); do curl -sf http://localhost:5199/ >/dev/null && break; sleep 1; done     # up to 60 tries, once a second
+curl -sf http://localhost:5199/ >/dev/null && echo ready || { echo "not ready"; tail "$SCRATCH/play.log"; }
 ```
 
-`$SCRATCH` is the scratchpad directory. There is no outside service to stand in for. Where `package.json`, `tests/create/made-game.ts` or this list differ, the files win and this skill is fixed.
+`$SCRATCH` is the scratchpad directory your session names; replace the `<...>` on the first line with its full path. There is no outside service to stand in for. Where `package.json`, `tests/create/made-game.ts` or this list differ, the files win and this skill is fixed.
 
-It is ready when `curl -sf http://localhost:5199/` answers and `$SCRATCH/play.log` says `ready`. Last clean start, timed with `date` before and after: 46 seconds from a fresh clone to the page answering (clone 0 s, install 9 s, build 3 s, pack and create 14 s, game install 14 s, ready in 1 s), on commit 011c616.
+It is ready when `curl -sf http://localhost:5199/` answers and `$SCRATCH/play.log` says `ready`. Last clean start, timed with `date` before and after: 29 to 43 seconds from a fresh clone to the page answering (three fresh-session runs measured 43, 29 and 29 seconds; the author's own run took 46), on commit d3f6530.
 
 ## Drive it
 
@@ -43,6 +47,7 @@ const { chromium } = require('playwright');
   await p.getByRole('button', { name: 'Go' }).click();
   await p.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click();   // Play
   await p.locator('#game[data-state="playing"]').waitFor();
+  await p.waitForFunction(() => window.automataGame !== undefined);          // the page sets it a moment after the level opens
   const x = () => p.evaluate(() => window.automataGame.sim.describeSnapshot().entities.find((e) => 'player' in e.components).components.transform.x);
   const before = await x();
   await p.keyboard.down('ArrowRight'); await p.waitForTimeout(800); await p.keyboard.up('ArrowRight');
@@ -68,7 +73,7 @@ Stop every server it started and clear what it wrote, so the next run starts cle
 
 ```sh
 pkill -f 'automata play'; pkill -f vite
-rm -rf "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log"
+rm -rf "$SCRATCH/repo" "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log"
 ```
 
 ## When it breaks
@@ -76,6 +81,6 @@ rm -rf "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log"
 A step that breaks or flakes is fixed in this skill first. Each known way a start or a step fails, what it looks like, and the fix:
 
 - `automata: command not found` or a Node 22 error: `export PATH=/opt/node24/bin:$PATH` first; `engines` asks for Node 24.21 or newer.
-- The page answers but `window.automataGame` is undefined: the game only exists after Play is pressed; click through the picker and menu first.
+- `TypeError: Cannot read properties of undefined (reading 'sim')`: `window.automataGame` is set a moment after the level opens, so the picker and menu come first and then `waitForFunction(() => window.automataGame !== undefined)`.
 - Port 5199 already in use: a run before did not stop; run the stop commands.
-- `git clean -xfd` is refused in some containers; use a fresh clone in the scratchpad instead.
+- `git clean -xfd` is refused in some containers; the clean start is a fresh clone into `$SCRATCH/repo` (the first start commands), so nothing needs cleaning.
