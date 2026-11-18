@@ -446,10 +446,9 @@ Units, one per repo, each lane 3. They share no file, so they can run side by si
 
 ## Open decisions
 
-None. The Owner's choices on 2026-11-18 cover the repos, the ideas and the two declined ones. The superpowers
-evaluation (section 7) needs no choice: every overlap is settled by these rules winning, as `staged-path` already says,
-and nothing in superpowers is turned off or replaced. The reading that a repo's
-own `this-repo` and `verify` skills may change with the code they describe (named in the body), while `CLAUDE.md`, CI
-workflows and the six shared skills change only in their own pull requests, follows from "a change can't edit the check
-that judges it" and is called out for the plan audit; it does not change any lane (a skill edit is still lane 3 under
-Risk).
+None. The Owner's choices on 2026-11-18 cover the repos, the ideas and the two declined ones. The superpowers evaluation
+(section 7) needs no choice: every overlap is settled by these rules winning, as `staged-path` already says, and nothing
+in superpowers is turned off or replaced. The reading that a repo's own `this-repo` and `verify` skills may change with
+the code they describe (named in the body), while `CLAUDE.md`, CI workflows and the six shared skills change only in
+their own pull requests, follows from "a change can't edit the check that judges it" and is called out for the plan
+audit; it does not change any lane (a skill edit is still lane 3 under Risk).
