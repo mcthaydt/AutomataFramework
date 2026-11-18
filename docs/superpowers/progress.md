@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-11-18 02:00 UTC (from `date`).
+Last updated: 2026-11-18 09:51 UTC (from `date`).
 
 ## Active milestone: the World slice (roadmap slice 3)
 
@@ -11,6 +11,11 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
 
 ### Current work
 
+- Owner instruction (2026-11-18 09:50 UTC, coordinator thread): "merge now, then fix all 12 after; then we do the
+  test cleanup". Lane 3 approval to merge the six verification pull requests at their audited heads (McThayDT-Website
+  #77 5d53e78, AutomataFramework #214 3e9c42a, Editors #114 62a75b7, Examples #75 1959b32, Site #57 e379aea, RukenApp
+  #197 fce4668; audit `docs/superpowers/audits/2026-11-18-1-verification-implementation-audit.md` at c4c08d8). Next:
+  the 12 open audit notes (N3-N8, N10-N14, N19) in one round, then the test cleanup under the new Prune rule.
 - Owner instruction (2026-11-18 ~02:00 UTC, coordinator thread): the verification rule change (spec
   `docs/superpowers/specs/2026-11-18-verification-design.md`, PR #213) runs six writers at once for this job only
   ("yes allow 6, go"), units 2 to 6 start without waiting for the kits' merge, and one implementation audit covers
