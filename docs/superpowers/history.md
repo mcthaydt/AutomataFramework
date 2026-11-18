@@ -4,6 +4,11 @@ Finished milestones and their decision records, setup, rule changes, standing pe
 
 ## Setup
 
+- 2026-11-18: superpowers **7.0.2**'s `test-driven-development`, `verification-before-completion`, `executing-plans` and
+  `subagent-driven-development` read against the new verification rules (AutomataFramework
+  `docs/superpowers/specs/2026-11-18-verification-design.md`, section 7). Where they differ, these rules win, and the
+  differences are listed in `build` under "Superpowers' testing skills". `subagent-driven-development` is not used here
+  (writers are threads); if it ever is, its task reviewer does not replace the implementation audit.
 - 2026-11-17 03:58 UTC: restart. The apps kit (CLAUDE.md, skills `review`, `release`, `build`, `visual-check`, `staged-path`,
   `owner-updates`, `this-repo`, the compaction hook) installed again from the Owner's rules text; superpowers still
   **7.0.2**.
@@ -38,6 +43,22 @@ Finished milestones and their decision records, setup, rule changes, standing pe
   Approved in the project thread at 20:28 and 20:29 UTC, and on decision cards at 20:46 UTC. Scope: this change
   only, made the same in all five repos, as AutomataFramework
   `docs/superpowers/specs/2026-11-16-compaction-hook-design.md` describes. Later rule changes are lane 3 as usual.
+- 2026-11-18, the Owner: verification. `CLAUDE.md` gets a short Verification section in place of the Tests and Lessons
+  bullets, and `build` gets the full rules: run the change like a person through a new per-repo `verify` skill; journeys
+  first, then property tests, then old-versus-new tests; test first, from the outside in, with superpowers' testing
+  skills read under these rules; a flaky test fixed at its root in its own thread, or deleted with the reason written
+  down; a change does not quietly edit its own check; lessons carry a trigger read from the diff; each retrospective
+  prunes. A repo's own `verify` and `this-repo` skills take the lane of the code they describe. One edited alone is lane
+  1, unless it changes what needs the owner. Asked for in the project thread ("Let's rethink how we do tests", with the
+  Claude Code team's article on verification, and "We also need to evaluate how superpowers comes into the picture
+  because that's tdd") and approved on decision cards on 2026-11-18 at 00:30 UTC ("Core rewrite" only; a property-test
+  library and a commit verification stamp or gate declined) and at about 00:52 UTC ("Kits + 5 repos"; "Same lane as the
+  code") and at about 01:52 UTC ("Lane 1, with a guard"). Scope: this change only, made the same in the two kits in
+  McThayDT-Website and in RukenApp, AutomataFramework, AutomataFrameworkEditors, AutomataFrameworkExamples and
+  AutomataFrameworkSite, as AutomataFramework `docs/superpowers/specs/2026-11-18-verification-design.md` describes.
+  Later rule changes are lane 3 as usual.
+- 2026-11-18, the Owner: the shared Verification text says the full suite runs in CI where `release` sets the gate,
+  so a games kit gate that runs the smoke set is a stated case. Chosen on a decision card ("Merge now, reword later").
 
 ## Standing permissions
 
@@ -47,6 +68,10 @@ Finished milestones and their decision records, setup, rule changes, standing pe
   note.
 
 ## Approved screens
+
+None yet.
+
+## Flaky tests
 
 None yet.
 
