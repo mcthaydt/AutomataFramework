@@ -9,7 +9,6 @@ Finished milestones and their decision records, setup, rule changes, standing pe
   `docs/superpowers/specs/2026-11-18-verification-design.md`, section 7). Where they differ, these rules win, and the
   differences are listed in `build` under "Superpowers' testing skills". `subagent-driven-development` is not used here
   (writers are threads); if it ever is, its task reviewer does not replace the implementation audit.
-
 - 2026-11-17 03:58 UTC: restart. The apps kit (CLAUDE.md, skills `review`, `release`, `build`, `visual-check`, `staged-path`,
   `owner-updates`, `this-repo`, the compaction hook) installed again from the Owner's rules text; superpowers still
   **7.0.2**.
@@ -44,7 +43,6 @@ Finished milestones and their decision records, setup, rule changes, standing pe
   Approved in the project thread at 20:28 and 20:29 UTC, and on decision cards at 20:46 UTC. Scope: this change
   only, made the same in all five repos, as AutomataFramework
   `docs/superpowers/specs/2026-11-16-compaction-hook-design.md` describes. Later rule changes are lane 3 as usual.
-
 - 2026-11-18, the Owner: verification. `CLAUDE.md` gets a short Verification section in place of the Tests and Lessons
   bullets, and `build` gets the full rules: run the change like a person through a new per-repo `verify` skill; journeys
   first, then property tests, then old-versus-new tests; test first, from the outside in, with superpowers' testing
@@ -59,6 +57,8 @@ Finished milestones and their decision records, setup, rule changes, standing pe
   McThayDT-Website and in RukenApp, AutomataFramework, AutomataFrameworkEditors, AutomataFrameworkExamples and
   AutomataFrameworkSite, as AutomataFramework `docs/superpowers/specs/2026-11-18-verification-design.md` describes.
   Later rule changes are lane 3 as usual.
+- 2026-11-18, the Owner: the shared Verification text says the full suite runs in CI where `release` sets the gate,
+  so a games kit gate that runs the smoke set is a stated case. Chosen on a decision card ("Merge now, reword later").
 
 ## Standing permissions
 

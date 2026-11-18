@@ -21,7 +21,7 @@ pnpm pack --pack-destination "$SCRATCH/pack"
 mkdir -p "$SCRATCH/made game" && cd "$SCRATCH/made game"     # a space in the name, as a person's folder often has
 npx --yes --package "$SCRATCH"/pack/*.tgz automata create my-game --source en --framework "file:$(ls "$SCRATCH"/pack/*.tgz)"
 cd my-game && npm install --no-audit --no-fund
-(setsid npm run dev -- --no-open --port 5199 > "$SCRATCH/play.log" 2>&1 &)     # `npm run dev` is `automata play`
+(setsid sh -c 'echo $$ > "$SCRATCH/play.pid"; exec npm run dev -- --no-open --port 5199' > "$SCRATCH/play.log" 2>&1 &)     # `npm run dev` is `automata play`; play.pid names its own process group, so Stop ends only it
 for i in $(seq 60); do curl -sf http://localhost:5199/ >/dev/null && break; sleep 1; done     # up to 60 tries, once a second
 for i in $(seq 60); do grep -q 'ready in' "$SCRATCH/play.log" && break; sleep 1; done
 grep -q 'ready in' "$SCRATCH/play.log" && curl -sf http://localhost:5199/ >/dev/null && echo ready || { echo "not ready"; tail "$SCRATCH/play.log"; }
@@ -33,19 +33,21 @@ It is ready when `$SCRATCH/play.log` says `ready in` and `curl -sf http://localh
 
 ## Drive it
 
-Open it in a real browser: the Chromium and Playwright the container already has (`require('playwright')`, then `chromium.launch()`), at each size in the device matrix in Settings. Tap, click, type and press keys the way a person would, and find things by their label or role. Take a screenshot at deviceScaleFactor 1 for your own check, and save it in the scratchpad, never in the repo. The main screen, what it shows and how to use it:
+Open it in a real browser: the Chromium and Playwright the container already has (`require('playwright')`, then `chromium.launch()`), at each size in the device matrix in Settings; the phone, tablet and computer sizes come from `SCREENS` in `tests/fixtures/game/screens.ts`, and where they differ, that file wins. Tap, click, type and press keys the way a person would, and find things by their label or role. Take a screenshot at deviceScaleFactor 1 for your own check, and save it in `$SCRATCH/shots`, never in the repo; Stop leaves that folder alone, so the screenshots are still there to look at after it. The main screen, what it shows and how to use it:
 
 The language picker: the title "Play in English", six flags (English first, with a white ring) and a big Go button. Press Go and the menu follows, then Play, and the first level opens. At 390 wide and 820 wide it shows the same, with touch buttons.
 
 ```js
 // Save as $SCRATCH/play.cjs, then run: cd "$SCRATCH" && SCRATCH="$SCRATCH" node play.cjs   (Node 24; `require('playwright')` already works)
 const { chromium } = require('playwright');
+const shots = `${process.env.SCRATCH}/shots`;
+require('node:fs').mkdirSync(shots, { recursive: true });
 (async () => {
   const b = await chromium.launch();
   const p = await (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
   await p.goto('http://localhost:5199/');
   await p.getByRole('button', { name: 'Go' }).waitFor();                    // the picker is drawn once Go shows; before that it is a loading bar
-  await p.screenshot({ path: `${process.env.SCRATCH}/main.png` });          // the picker
+  await p.screenshot({ path: `${shots}/main.png` });                       // the picker
   await p.getByRole('button', { name: 'Go' }).click();
   await p.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click();   // Play
   await p.locator('#game[data-state="playing"]').waitFor();
@@ -54,7 +56,7 @@ const { chromium } = require('playwright');
   const before = await x();
   await p.keyboard.down('ArrowRight'); await p.waitForTimeout(800); await p.keyboard.up('ArrowRight');
   console.log(before, await x());                                           // it grew: the hero walked
-  await p.screenshot({ path: `${process.env.SCRATCH}/playing.png` });
+  await p.screenshot({ path: `${shots}/playing.png` });
   await b.close();
 })();
 ```
@@ -74,8 +76,8 @@ One line each, from a person's side: where it starts, the steps, and what they s
 Stop every server it started and clear what it wrote, so the next run starts clean.
 
 ```sh
-pkill -f 'automata play'; pkill -f vite
-rm -rf "$SCRATCH/repo" "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log" "$SCRATCH/play.cjs" "$SCRATCH/main.png" "$SCRATCH/playing.png"
+kill -- -"$(cat "$SCRATCH/play.pid")"     # only the game Start started, never another session's vite or vitest
+rm -rf "$SCRATCH/repo" "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log" "$SCRATCH/play.pid" "$SCRATCH/play.cjs"     # the screenshots in $SCRATCH/shots stay
 ```
 
 ## When it breaks
@@ -86,5 +88,5 @@ A step that breaks or flakes is fixed in this skill first. Each known way a star
 - `TypeError: Cannot read properties of undefined (reading 'sim')`: `window.automataGame` is set a moment after the level opens, so the picker and menu come first and then `waitForFunction(() => window.automataGame !== undefined)`.
 - `Ignored build scripts: msgpackr-extract` or `npm warn install-scripts` during install: expected and harmless; the game runs without it.
 - `main.png` shows only a loading bar: wait for the Go button before the screenshot.
-- Port 5199 already in use: a run before did not stop; run the stop commands.
+- Port 5199 already in use: a run before did not stop; run the stop commands. If `$SCRATCH/play.pid` is gone, `kill $(lsof -ti tcp:5199)` stops whatever holds the port.
 - `git clean -xfd` is refused in some containers; the clean start is a fresh clone into `$SCRATCH/repo` (the first start commands), so nothing needs cleaning.
