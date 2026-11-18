@@ -21,7 +21,7 @@ pnpm pack --pack-destination "$SCRATCH/pack"
 mkdir -p "$SCRATCH/made game" && cd "$SCRATCH/made game"     # a space in the name, as a person's folder often has
 npx --yes --package "$SCRATCH"/pack/*.tgz automata create my-game --source en --framework "file:$(ls "$SCRATCH"/pack/*.tgz)"
 cd my-game && npm install --no-audit --no-fund
-(setsid npm run dev -- --no-open --port 5199 > "$SCRATCH/play.log" 2>&1 &)     # `npm run dev` is `automata play`
+(setsid sh -c 'echo $$ > "$SCRATCH/play.pid"; exec npm run dev -- --no-open --port 5199' > "$SCRATCH/play.log" 2>&1 &)     # `npm run dev` is `automata play`; play.pid names its own process group, so Stop ends only it
 for i in $(seq 60); do curl -sf http://localhost:5199/ >/dev/null && break; sleep 1; done     # up to 60 tries, once a second
 for i in $(seq 60); do grep -q 'ready in' "$SCRATCH/play.log" && break; sleep 1; done
 grep -q 'ready in' "$SCRATCH/play.log" && curl -sf http://localhost:5199/ >/dev/null && echo ready || { echo "not ready"; tail "$SCRATCH/play.log"; }
@@ -76,8 +76,8 @@ One line each, from a person's side: where it starts, the steps, and what they s
 Stop every server it started and clear what it wrote, so the next run starts clean.
 
 ```sh
-pkill -f 'automata play'; pkill -f vite
-rm -rf "$SCRATCH/repo" "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log" "$SCRATCH/play.cjs"     # the screenshots in $SCRATCH/shots stay
+kill -- -"$(cat "$SCRATCH/play.pid")"     # only the game Start started, never another session's vite or vitest
+rm -rf "$SCRATCH/repo" "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log" "$SCRATCH/play.pid" "$SCRATCH/play.cjs"     # the screenshots in $SCRATCH/shots stay
 ```
 
 ## When it breaks
@@ -88,5 +88,5 @@ A step that breaks or flakes is fixed in this skill first. Each known way a star
 - `TypeError: Cannot read properties of undefined (reading 'sim')`: `window.automataGame` is set a moment after the level opens, so the picker and menu come first and then `waitForFunction(() => window.automataGame !== undefined)`.
 - `Ignored build scripts: msgpackr-extract` or `npm warn install-scripts` during install: expected and harmless; the game runs without it.
 - `main.png` shows only a loading bar: wait for the Go button before the screenshot.
-- Port 5199 already in use: a run before did not stop; run the stop commands.
+- Port 5199 already in use: a run before did not stop; run the stop commands. If `$SCRATCH/play.pid` is gone, `kill $(lsof -ti tcp:5199)` stops whatever holds the port.
 - `git clean -xfd` is refused in some containers; the clean start is a fresh clone into `$SCRATCH/repo` (the first start commands), so nothing needs cleaning.
