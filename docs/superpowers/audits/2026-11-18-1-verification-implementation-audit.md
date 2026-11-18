@@ -153,3 +153,16 @@ CI for Editors on `3369165` is green per the coordinator's `gh api` check (12 su
 Counts for Editors#114 at `3369165`: 1 red (R6) and 6 notes (N15 to N18, plus its parts of N10 and N14 = 6). The other five pull requests' counts above are unchanged.
 
 Each red is a fix on its own branch by that repo's build session, checked afterwards by this session or a program: R1 by reading the new sentence and rerunning `verify-check`; R2 to R5 by reading the edited body and its last line.
+
+## Fix checks
+
+Each fix was checked by this session, reading the commit or the body. The heads stay as named above unless a row says otherwise.
+
+| Finding | Fix | Checked | Result |
+|---|---|---|---|
+| R1 | AutomataFramework `39cf051` adds one sentence to `verify`: "The clone holds only committed files, so commit the change first (a local commit is enough), or the run shows the old code." | `git diff 9042c97 39cf051` changes that one line only; `verify-check` prints `ok` | closed |
+| R3 | Examples#75 body, head still `1959b32` | each of the three runs has a start and an end from `date` (02:16:02.84 to 02:16:24.34, 02:16:40.38 to 02:16:54.34, 02:16:55.00 to 02:17:08.25), the commit, and what the screenshots showed; last line "Requested by **McThayDT**" | closed |
+| R4 | Site#57 body, head still `e379aea` | each run has a start from `date` (02:24:35, 02:25:13, 02:25:26), the commit, and what the screenshots showed at each size. The ends are worked out as start plus measured time and marked "about", and the body says so; both parts come from measurements, and nothing is made up. Last line correct | closed |
+| R5 | RukenApp#197 body, head still `fce4668` | three runs in a row with start and end from `date` (02:21:49 to 02:22:11, 02:22:22 to 02:22:43, 02:22:51 to 02:23:12), plus a cold run whose time was not measured, said plainly; the screenshot is described, with one md5 each time; last line correct | closed |
+
+Still open: R2 (AutomataFramework's body, waiting on a fresh three-run round on `39cf051`) and R6 (Editors' body, waiting on a new head and its three-run round). The notes N15 to N18 are fixed or not at the builder's choice.
