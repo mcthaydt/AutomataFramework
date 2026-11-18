@@ -1,8 +1,130 @@
-Task: implementation audit of the six verification pull requests (lane 3), read-only except this file.
-Last commit: d76655a
-Next step: run the program-judged criteria in each repo and kit, then read the diffs and verify skills.
-Open decisions: none.
-
 # Verification, implementation audit, cycle 1
 
-In progress.
+Audit all of your work for completeness, consistency, cohesion, and harmony, both within itself and relative to the spec and relative to the codebase. Assume nothing. Verify everything. Investigate any incomplete implementations or incomplete integrations. Do your best work.
+
+Lane 3, staged path. One audit across all six pull requests, as the Owner allowed ("yes allow 6, go"). Run by a fresh session (Opus 5.5, medium) that wrote none of the six. Started 2026-11-18 02:27 UTC, written 02:32 UTC.
+
+## What was examined
+
+| Pull request | Head examined | Base (`origin/main`) |
+|---|---|---|
+| mcthaydt/McThayDT-Website#77 (the two kits) | `5d53e78` | `e3d1078` |
+| mcthaydt/AutomataFramework#214 | `d76655a` | `186e3f2` |
+| mcthaydt/AutomataFrameworkExamples#75 | `1959b32` | `ca78632` |
+| mcthaydt/AutomataFrameworkSite#57 | `e379aea` | `6fc74c6` |
+| mcthaydt/RukenApp#197 | `fce4668` | `43df79c` |
+| mcthaydt/AutomataFrameworkEditors#114 | `a0806fb`, all but the `verify` skill's clone and stop steps | `fd1f3b1` |
+
+The brief: `docs/superpowers/specs/2026-11-18-verification-design.md` on AutomataFramework `main` at `186e3f2`, with plan audits 1 to 4. Every base above equals the spec's Boundaries base, so plan step 7 (re-read a touched line that changed on `main`) did not apply. The PR bodies cite the spec at `0af7d61`; `git diff 0af7d61 186e3f2` changes only criterion 1's prose, no `blk` block.
+
+Editors' head has since moved (`fddd4e6` when fetched). Its clone and stop steps, its criterion 6 record and its CI are audited on the final head the coordinator names, as a later section of this file.
+
+## Checks a program judged
+
+Run under Node 24 (`/opt/node24/bin`), with `SPEC` the spec at `186e3f2` and the spec's own `blk` and `sect`.
+
+| Criterion | Kits (5d53e78) | AF (d76655a) | Examples (1959b32) | Site (e379aea) | RukenApp (fce4668) | Editors (a0806fb) |
+|---|---|---|---|---|---|---|
+| 1. Kit tests | test diff equals `blk kit-test` (index line aside); old kits with new test: 9 failed, 100 passed; new: 109 of 109; `--project unit` 275 passed; `--project components` 52 passed; `content:check` 0 errors, 0 warnings | – | – | – | – | – |
+| 2. `sect CLAUDE.md` / `sect build` | `ca1c58dc…` / `c540d4a4…`, both kits | same | same | same | same | same |
+| 3. Heading order | kit test | ok | ok | ok | ok | ok |
+| 4. Edited lines (all phrases, places and blocks, by program) | ok, both kits | ok | ok | ok | ok | ok |
+| 4. Shared-skill hashes | `review`, `staged-path`, `release`, `verify`, `owner-updates`, `visual-check` equal across kits | `review`, `build`, `staged-path`, `owner-updates`, `visual-check`: one hash across the five; `release` differs only in RukenApp's `commit-authors` line (`diff`: line 19); `review` and `staged-path` equal the apps kit byte for byte; `build` equals the kit; `release` equals the kit but for the `[COMMIT AUTHOR]` blank | | | | |
+| 5. `verify-check` | each kit's `verify` block equals `blk verify-kit`; note line equals `blk verify-note`; block sits before "## Hook: settings.json" in a four-backtick fence; fill-in blanks 15 (apps) and 17 (games), before and after | `ok` | `ok` | `ok` | `ok` | `ok` |
+| 7. History | – | ok | ok | ok | ok, plus `history-ruken` right under the setup entry; Setup, Rule changes, Standing permissions in order; Rule changes holds only the new entry | ok |
+| 9. `git diff --check` | empty | empty | empty | empty | empty | empty |
+| 9. Boundaries | 3 files, all allowed | 7 files, all allowed | 7, allowed | 7, allowed | 7, allowed | 7, allowed |
+| 9. Live-state file gone | yes | yes | yes | yes | yes | yes at `a0806fb` |
+| 10. Identity | 3 commits | 7 (one is a merge of `main`) | 6 | 5 | 8 | 8 |
+| 10. No trailers | none | none | none | none | none | none |
+| 10. Body ends "Requested by **McThayDT**" | yes | yes | yes | yes | yes | yes |
+| 11. CI on the named head | Netlify's three checks: success, neutral, neutral (the website has no GitHub workflow) | `ci` and `commit-authors` success on `d76655a` | not checked here | not checked here | not checked here | on the final head |
+
+Identity: every commit is McThayDT <107786093+mcthaydt@users.noreply.github.com> as author and committer; `git log --format=%B origin/main..HEAD | grep -i -E 'co-authored|claude-session|generated (with|by)'` printed nothing in all six.
+
+Not checked here: CI for Examples, Site and RukenApp. This session has git read access to those three repos but no GitHub API access, and the search API's `status:` filter is no help (it reads "pending" even for AutomataFramework#214, whose runs are green). Their bodies say green on the named heads. The coordinator confirms these three before the Owner's look.
+
+Criterion 8, read: each repo's and kit's two sections hash to the spec's blocks, so the six points, the absent property-test library, stamp and gate, and section 7's settlements are as the spec wrote them. The Risk line and `release-docs` carry the Owner's two cards word for word (criterion 4). The Owner's "yes allow 6, go" replaces the spec's "kits merge first" order for this job; the repos match the kit blocks byte for byte anyway, so nothing drifted.
+
+Criterion 6 was not rerun, as told. Its record in each body is judged below.
+
+## The five `verify` skills side by side
+
+All five keep the kit's shape: `verify-check` prints `ok`, every kit line is there in order, each gap is filled. Where they differ:
+
+| | AF | Examples | Site | RukenApp | Editors |
+|---|---|---|---|---|---|
+| Clean start | fresh clone of local HEAD in `$SCRATCH` | fresh clone of local HEAD in `${TMPDIR:-/tmp}`; "commit first" | in place; `git clean -xfd` in Stop | in place; Stop removes what it wrote | fresh clone of the pushed branch (under fix) |
+| Uncommitted change shown? | no, and not said | no, said ("commit first") | yes | yes | no, said ("commit and push first") |
+| Scratch place | `$SCRATCH`, must be set | `/tmp` here (`TMPDIR` is unset); screenshots to the scratchpad | log to `${SCRATCH:-/tmp}` | `/tmp/verify-ruken`; screenshots to `$SHOTS` | `$SCRATCH` |
+| Ready wait | bounded, 60 s, prints "not ready" | bounded, 30 s | unbounded `until` | unbounded, "past 4 minutes read the logs" | unbounded |
+| Sizes | 390×844, 820×1180, 1280×720 | same | 390×844, 820×1180, 1440×900 (`tests/journeys/sizes.ts`) | 412×915, 1024×768, 1280×720 (`playwright.config.ts`) | 390×844, 834×1210, 1280×800 (`tests/fixtures/journey.ts`, not named) |
+| Waits for the screen before the screenshot | no | yes | yes (`h1`) | yes | yes (`[data-bar]`) |
+
+Each repo's sizes come from its own tests, which the kit allows ("at each size in the device matrix"; the device matrix names profiles, not pixels). The one difference that changes what a builder sees is the clean start: AF runs the last commit without saying so (R1).
+
+## Findings
+
+### Red
+
+**R1.** UNIT: mcthaydt/AutomataFramework, `.claude/skills/verify/SKILL.md`. VERDICT: red. REQUIREMENT: `build`, Verification, **Run it like a person.** ("its builder runs it … loads [verify] before every commit that changes behavior") and the skill's own description ("before each commit that changes behavior"). REASON: the start step clones the current HEAD, so a builder who runs it before committing, as the rules say, plays the last commit and not the change, and the skill never says so. EVIDENCE: line 17, `git clone -q . "$SCRATCH/repo"`; line 30 says only "the clone is of the directory it runs in". Examples (line 33, "only the committed files are used, so commit first") and Editors (line 17, "commit and push first") say it; Site and RukenApp run in place. EXPECTED: a builder knows the run shows only what is committed, or the run includes the working tree. FIX: add to the sentence after the block, at line 30, that the clone holds only committed files, so commit the change first (a local commit is enough). Only `.claude/skills/verify/SKILL.md`. It changes the head, so the PR body says criterion 6's runs were on `d76655a` and the edit is wording only; the coordinator decides whether one fresh run on the new head is needed.
+
+**R2.** UNIT: mcthaydt/AutomataFramework#214, the pull request body. VERDICT: red. REQUIREMENT: criterion 6 ("The pull request body … lists each run's start and end times from `date` and the commit, and says what each screenshot shows"). REASON: the body gives durations, not start and end times, and does not say what the final round's screenshots show. EVIDENCE: "On the final head d76655a the run passed 3 of 3 with every step as written (47.5 s cold, then 26.8 s and 27.2 s, identical screenshots)". EXPECTED: three lines, each with start and end time (UTC, from `date`), the commit and what the screenshot shows (for example the language picker with the Go button). FIX: edit the body only, from the coordinator's report of that round; check the last line is still "Requested by **McThayDT**".
+
+**R3.** UNIT: mcthaydt/AutomataFrameworkExamples#75, the pull request body. VERDICT: red. REQUIREMENT: criterion 6, as R2. REASON: durations only, and nothing on what the screenshots show. EVIDENCE: "passed 3 of 3 runs with every step as written: 21.5 s, 14.0 s and 13.2 s". EXPECTED and FIX: as R2, for `1959b32`; body only.
+
+**R4.** UNIT: mcthaydt/AutomataFrameworkSite#57, the pull request body. VERDICT: red. REQUIREMENT: criterion 6, as R2. REASON: durations only; the screenshots are described only as matching the skill. EVIDENCE: "Round 2, on `e379aea`: 3 of 3 passed (23.1 s cold, then 11.9 s and 12.9 s)". EXPECTED and FIX: as R2, for `e379aea`; body only.
+
+**R5.** UNIT: mcthaydt/RukenApp#197, the pull request body. VERDICT: red. REQUIREMENT: criterion 6, as R2. REASON: the times are left to the coordinator's report; the criterion puts them in the body. EVIDENCE: "Run start and end times are in the coordinator's report." EXPECTED and FIX: as R2, for `fce4668` (the screenshot is already described: the "Coming soon" home page); body only.
+
+### Notes (recorded, not required here)
+
+**N1.** UNIT: AutomataFramework, `.claude/skills/verify/SKILL.md` line 32. The timing record is stale and does not hold together: "29 to 43 seconds" sits next to "the author's own run took 46", on `d3f6530`; the latest runs on `d76655a` took 47.5 s cold, then 26.8 s and 27.2 s. If R1's fix touches the file, refresh it: the newest measured times and their commit.
+
+**N2.** UNIT: AutomataFramework, `.claude/skills/verify/SKILL.md` line 47. The first screenshot (the main screen) is taken straight after `goto`, with no wait for the Go button; Examples waits (`getByRole('button', { name: 'Go' }).waitFor()`). Six runs gave identical screenshots, so no flake is shown; one `waitFor` line would close the gap.
+
+**N3.** UNIT: AutomataFramework, `docs/superpowers/history.md`. The new Setup entry is followed by a blank line, and the new Rule changes entry is preceded by one, unlike the entries around them and unlike the other four repos. The text of both blocks is exact (criterion 7 passes).
+
+**N4.** UNIT: AutomataFrameworkExamples, `.claude/skills/verify/SKILL.md` line 35. Stale timing: "measured 02:09:44 to 02:09:58 UTC … on commit 075225a", while the body reports 02:10:29 to 02:10:43 on `a8e92f3` and the final round 21.5 s cold.
+
+**N5.** UNIT: AutomataFrameworkExamples, `.claude/skills/verify/SKILL.md` lines 82 to 84. Run in the shell the start left in `$WORK/repo`, Stop deletes that folder and then runs `git status --short` in it, which fails; line 87 says to run it "in your own checkout", but the block has no `cd` back.
+
+**N6.** UNIT: AutomataFrameworkExamples, `.claude/skills/verify/SKILL.md` lines 17 to 27. `|| exit 1` ends an interactive shell. In an agent's one-command shell it only stops the block, which is what it is for; harmless here.
+
+**N7.** UNIT: AutomataFrameworkExamples, `.claude/skills/verify/SKILL.md` line 33. It says the clone is "under the scratchpad", but `WORK` is `${TMPDIR:-/tmp}/examples-verify`, and `TMPDIR` is unset in this container, so it is `/tmp`. The screenshots do go to the scratchpad. Say `/tmp`, or use the scratchpad.
+
+**N8.** UNIT: AutomataFrameworkSite, `.claude/skills/verify/SKILL.md` line 24. The record gives 11 s and 13 to 14 s on `2fc87ac`; the fresh session measured a cold first start of about 21 to 23 s on `e379aea`. Record the cold time too.
+
+**N9.** UNIT: AutomataFrameworkSite, `.claude/skills/verify/SKILL.md` line 30. Decided, no change: a one-off screenshot of the main screen is taken at all three sizes, because the kit's own text says "at each size in the device matrix in Settings", which the repos cannot change.
+
+**N10.** UNIT: AutomataFrameworkSite, RukenApp and Editors, `.claude/skills/verify/SKILL.md`, the ready wait (Site line 21, RukenApp line 37, Editors line 54). Each `until` loop has no limit, so a server that never comes up holds the session until the tool's own timeout. AutomataFramework and Examples stop after 60 and 30 seconds and say so. Site's `curl -s` also accepts any answer, not only the 200 its ready line names.
+
+**N11.** UNIT: AutomataFrameworkSite, `.claude/skills/verify/SKILL.md` lines 45 to 50. Stop runs `git clean -xfd` in the builder's own checkout, which deletes every untracked file (new files of an uncommitted change, an uncommitted live-state file) beyond what git can restore. Line 50 warns about it. AutomataFramework, Examples and Editors avoid it with a fresh clone. A fresh clone, or `git clean -xfd` limited to build output, would remove the risk.
+
+**N12.** UNIT: RukenApp, `.claude/skills/verify/SKILL.md` line 40. The warm time "about 25 seconds" reads high against the 21.3 to 21.7 s measured on `fce4668`.
+
+**N13.** UNIT: RukenApp, `.claude/skills/verify/SKILL.md`, "When it breaks". The harmless pnpm warnings "Ignored build scripts" and "Proxy environment variables" are not listed, as AutomataFramework lists its msgpackr one. A stranger may stop to chase them.
+
+**N14.** UNIT: AutomataFramework, Examples and Editors, `.claude/skills/verify/SKILL.md`, the sizes. Site and RukenApp name the file their sizes come from; these three do not (Examples' match `tests/journeys/open.ts`, Editors' match `tests/fixtures/journey.ts`). Naming it keeps "the file wins" checkable.
+
+## The drunk-grandma test
+
+The new rule text is the spec's, approved through its plan audits, and every repo carries it byte for byte. The one new line a person reads in the kits, the `verify` note ("Claude fills in the parts in angle brackets the first time it starts the app or game; you leave them as they are"), is plain and asks nothing of them. The five `verify` skills are read by Claude, not a person; their prose is short and plain, with commands where commands belong. Nothing failed the test.
+
+## Not in scope, recorded
+
+- The Owner's "We can remove the tests that no longer belong after" is a later job.
+- The spec's "Found on the way" items (`--passWithNoTests`, Editors' Firefox flaky test, the kits' `meta.json` skill counts) stay their own threads; none was touched.
+
+## Counts at the named heads
+
+| Pull request | Red | Notes |
+|---|---|---|
+| McThayDT-Website#77 | 0 | 0 |
+| AutomataFramework#214 | 2 (R1, R2) | 3 (N1, N2, N3), plus its part of N14 |
+| AutomataFrameworkExamples#75 | 1 (R3) | 4 (N4 to N7), plus its part of N14 |
+| AutomataFrameworkSite#57 | 1 (R4) | 4 (N8 to N11), N9 decided with no change |
+| RukenApp#197 | 1 (R5) | 2 (N12, N13), plus its part of N10 |
+| AutomataFrameworkEditors#114 at `a0806fb` | 0 so far | its parts of N10 and N14; the clone and stop steps, criterion 6's record and CI wait for the final head |
+
+Each red is a fix on its own branch by that repo's build session, checked afterwards by this session or a program: R1 by reading the new sentence and rerunning `verify-check`; R2 to R5 by reading the edited body and its last line.
