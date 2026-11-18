@@ -1,4 +1,0 @@
-- Task: unit 2, verification rules in AutomataFramework (spec 0af7d61)
-- Last commit: 9073d87 (main)
-- Next step: apply blk edits to CLAUDE.md, skills, history.md
-- Open decisions: none
