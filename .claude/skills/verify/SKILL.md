@@ -27,7 +27,7 @@ for i in $(seq 60); do grep -q 'ready in' "$SCRATCH/play.log" && break; sleep 1;
 grep -q 'ready in' "$SCRATCH/play.log" && curl -sf http://localhost:5199/ >/dev/null && echo ready || { echo "not ready"; tail "$SCRATCH/play.log"; }
 ```
 
-`$SCRATCH` is the scratchpad directory your session names; replace the `<...>` on the first line with its full path. Run the block from the root of this repo's checkout, since the clone is of the directory it runs in. There is no outside service to stand in for. Where `package.json`, `tests/create/made-game.ts` or this list differ, the files win and this skill is fixed.
+`$SCRATCH` is the scratchpad directory your session names; replace the `<...>` on the first line with its full path. Run the block from the root of this repo's checkout, since the clone is of the directory it runs in. The clone holds only committed files, so commit the change first (a local commit is enough), or the run shows the old code. There is no outside service to stand in for. Where `package.json`, `tests/create/made-game.ts` or this list differ, the files win and this skill is fixed.
 
 It is ready when `$SCRATCH/play.log` says `ready in` and `curl -sf http://localhost:5199/` answers; the block prints `ready` when both hold. Last clean start, timed with `date` before and after: 29 to 43 seconds from a fresh clone to the page answering (three fresh-session runs measured 43, 29 and 29 seconds; the author's own run took 46), on commit d3f6530.
 
