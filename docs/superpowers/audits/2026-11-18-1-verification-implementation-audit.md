@@ -190,3 +190,53 @@ R6: the body is rewritten for `62a75b7`. It restates criteria 2 to 5, 7, 9, 10 a
 ### Where it stands
 
 Closed: R1, R3, R4, R5, R6; notes N1, N15, N16, N17 and N18 fixed. Open: R2 (AutomataFramework's body) and N2, re-marked red; both wait for the fresh three-run round on `3e9c42a`. The other notes (N3 to N14) were left as notes, at the builders' choice.
+
+### AutomataFramework's R2 and N2, head `3e9c42a`
+
+Since `3e9c42a`, the branch has changed only this audit file (`git diff --stat 3e9c42a e32f110`). The skill's md5 is `4752864cb66a68a563d6338dbc4de19b`, matched. CI is green on `3e9c42a`: `ci` and `commit-authors` succeeded, checked by this session through the GitHub API.
+
+The body now records every criterion 6 round:
+- `d3f6530`: steps failed, so the skill was fixed.
+- `8e8a99f` and `d76655a`: passed, with durations only.
+- `39cf051`: failed 2 of 3, with times, and says why.
+- The fix in `d65db0c`.
+
+The final round on `3e9c42a` passed 3 of 3:
+
+| Run | Start (UTC) | End (UTC) | Length | Hero moved |
+|---|---|---|---|---|
+| 1, cold | 02:43:27 | 02:44:12 | 45 s | x 2.5 to 6.17 |
+| 2 | 02:44:29 | 02:44:53 | 24 s | x 2.5 to 6.59 |
+| 3 | 02:45:04 | 02:45:29 | 25 s | x 2.5 to 6.46 |
+
+Each screenshot shows the language picker ("Play in English", six flags with English first and ringed, a Go button, no loading bar), with one md5 (`5bf2e756…`). The body's last line is "Requested by **McThayDT**". R2 is closed. N2, re-marked red, is closed: the wait now holds in three fresh runs in a row.
+
+**N19.** UNIT: AutomataFramework, `.claude/skills/verify/SKILL.md`, "Stop it". The final round's runner noted it. Stop deletes `main.png` and `playing.png`, so a session that stops before it looks loses them. Editors keeps its screenshots outside what Stop deletes (its F2). Copying them out first, or not deleting them, would match it. A note, not fixed here.
+
+## Final result
+
+Every red is closed. Final heads, each examined by this session:
+
+| Pull request | Final head | Red (all closed) | Notes left open |
+|---|---|---|---|
+| McThayDT-Website#77 | `5d53e78` | 0 | 0 |
+| AutomataFramework#214 | `3e9c42a` for the work (the branch head adds only this file) | 3: R1, R2, N2 (re-marked red) | N3, N19, its part of N14 (N1 fixed) |
+| AutomataFrameworkExamples#75 | `1959b32` | 1: R3 | N4, N5, N6, N7, its part of N14 |
+| AutomataFrameworkSite#57 | `e379aea` | 1: R4 | N8, N10, N11 (N9 decided, no change) |
+| RukenApp#197 | `fce4668` | 1: R5 | N12, N13, its part of N10 |
+| AutomataFrameworkEditors#114 | `62a75b7` | 1: R6 | its parts of N10 and N14 (N15 to N18 fixed) |
+
+Totals: 7 reds, all closed. 19 notes: 6 fixed (N1 and N15 to N18) or re-marked red and closed (N2), 1 decided with no change (N9), and 12 left as notes for the builders or a later change (N3 to N8 and N10 to N14, plus N19). Outside this change: the editor's top bar at 390 wide (a product follow-up) and the lesson above, for the retrospective. The open notes do not block the Owner's look.
+
+Commits examined, by repo:
+
+| Repo | Commits |
+|---|---|
+| McThayDT-Website | `5d53e78` |
+| AutomataFramework | `d76655a`, `39cf051`, `d65db0c`, `3e9c42a` |
+| AutomataFrameworkExamples | `1959b32` |
+| AutomataFrameworkSite | `e379aea` |
+| RukenApp | `fce4668` |
+| AutomataFrameworkEditors | `a0806fb`, `3369165`, `62a75b7` |
+
+The spec was read at AutomataFramework `186e3f2`.
