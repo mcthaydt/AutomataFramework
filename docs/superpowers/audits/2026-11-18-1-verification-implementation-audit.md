@@ -38,11 +38,11 @@ Run under Node 24 (`/opt/node24/bin`), with `SPEC` the spec at `186e3f2` and the
 | 10. Identity | 3 commits | 7 (one is a merge of `main`) | 6 | 5 | 8 | 8 |
 | 10. No trailers | none | none | none | none | none | none |
 | 10. Body ends "Requested by **McThayDT**" | yes | yes | yes | yes | yes | yes |
-| 11. CI on the named head | Netlify's three checks: success, neutral, neutral (the website has no GitHub workflow) | `ci` and `commit-authors` success on `d76655a` | not checked here | not checked here | not checked here | on the final head |
+| 11. CI on the named head | Netlify's three checks: success, neutral, neutral (the website has no GitHub workflow) | `ci` and `commit-authors` success on `d76655a` | green, per the coordinator | green, per the coordinator | green, per the coordinator | green on `3369165`, per the coordinator |
 
 Identity: every commit is McThayDT <107786093+mcthaydt@users.noreply.github.com> as author and committer; `git log --format=%B origin/main..HEAD | grep -i -E 'co-authored|claude-session|generated (with|by)'` printed nothing in all six.
 
-Not checked here: CI for Examples, Site and RukenApp. This session has git read access to those three repos but no GitHub API access, and the search API's `status:` filter is no help (it reads "pending" even for AutomataFramework#214, whose runs are green). Their bodies say green on the named heads. The coordinator confirms these three before the Owner's look.
+Not checked here: CI for Examples, Site and RukenApp. This session has git read access to those three repos but no GitHub API access, and the search API's `status:` filter is no help (it reads "pending" even for AutomataFramework#214, whose runs are green). The coordinator checked them with `gh api` (reported 02:34 UTC), and every one is green: Examples `1959b32` has 13 success and 1 skipped. Site `e379aea` has 17 success, 4 skipped and 1 cancelled; the cancelled run is an older `commit-authors` run, replaced by a later success. RukenApp `fce4668` has 8 success and 1 skipped. Editors `3369165` has 12 success and 2 skipped. This is the coordinator's evidence, not this session's.
 
 Criterion 8, read: each repo's and kit's two sections hash to the spec's blocks, so the six points, the absent property-test library, stamp and gate, and section 7's settlements are as the spec wrote them. The Risk line and `release-docs` carry the Owner's two cards word for word (criterion 4). The Owner's "yes allow 6, go" replaces the spec's "kits merge first" order for this job; the repos match the kit blocks byte for byte anyway, so nothing drifted.
 
@@ -125,6 +125,44 @@ The new rule text is the spec's, approved through its plan audits, and every rep
 | AutomataFrameworkExamples#75 | 1 (R3) | 4 (N4 to N7), plus its part of N14 |
 | AutomataFrameworkSite#57 | 1 (R4) | 4 (N8 to N11), N9 decided with no change |
 | RukenApp#197 | 1 (R5) | 2 (N12, N13), plus its part of N10 |
-| AutomataFrameworkEditors#114 at `a0806fb` | 0 so far | its parts of N10 and N14; the clone and stop steps, criterion 6's record and CI wait for the final head |
+| AutomataFrameworkEditors#114 at `3369165` | 1 (R6) | 4 (N15 to N18), plus its parts of N10 and N14 |
+
+## Editors' final head, `3369165`
+
+The coordinator named `3369165` as Editors' final head (skill md5 `4bea5f4e0bb7d55f47940b5866f613bd`, matched). `git diff a0806fb 3369165` touches only `.claude/skills/verify/SKILL.md` (fixes F1 to F4) and removes the live-state file. On `3369165`: `verify-check` prints `ok`; the criterion 4 and 7 checks still pass; `git diff --check origin/main...HEAD` is empty; the diff is still the 7 allowed files; both new commits (`fddd4e6`, `3369165`) are McThayDT as author and committer, with no trailers.
+
+- F1, the clone: `R=$(git rev-parse HEAD)`, a fresh clone of `origin`, then `git checkout -q $R`. It now works on a detached checkout and on a branch. It says plainly to commit and push first, since the clone holds only what is pushed, which settles for Editors the problem R1 names for AutomataFramework. A separate fresh session ran the start and stop steps on `3369165`, once on a detached checkout and once on the branch. Both passed with every step as written (69 s and 79 s), the screenshots survived the stop step, and `$S` was gone afterwards (as the coordinator reported).
+- F2: the screenshots go to `$SCRATCH` as `verify-main-<width>.png`, so the stop step keeps them.
+- F3: says what each size shows.
+- F4: says to run "Start it" and "Drive it" as one script, or to set the variables again in each new shell.
+
+**R6.** UNIT: mcthaydt/AutomataFrameworkEditors#114, the pull request body. VERDICT: red. REQUIREMENT: criterion 6 (the body links or names the report, lists each run's start and end times and the commit, and says what each screenshot shows) and criterion 11 (CI green on the head). REASON: the body is still the one from before the runs. EVIDENCE: "Checks (on 6a0a6fe …)", "Criterion 6 (three fresh-session runs): not done yet", "Criterion 11: CI not watched yet". EXPECTED: the checks restated on `3369165`; three fresh runs in a row on the head commit, each with start and end times, the commit and what the screenshot shows; CI's result on `3369165`. The coordinator reported a targeted check of two runs on `3369165`. If no three-in-a-row round has run on this head, criterion 6 is not yet met. FIX: run what criterion 6 still lacks, then edit the body only. Check that its last line is still "Requested by **McThayDT**".
+
+**N15.** UNIT: AutomataFrameworkEditors, `.claude/skills/verify/SKILL.md`, "Stop it". The comment still says "the fresh clone, the loader and the screenshots all live in $S". Since F2, the screenshots are in `$SCRATCH`.
+
+**N16.** UNIT: AutomataFrameworkEditors, `.claude/skills/verify/SKILL.md` line 87. "At 834 and 1280 … the tool bar is at the bottom", but at 1280, List and Add sit in a left side rail, not on the bottom bar (the fresh session's note).
+
+**N17.** UNIT: AutomataFrameworkEditors, `.claude/skills/verify/SKILL.md` line 58. The time record says 52 and 58 seconds, and its commit changed from `afafe43` to `fa7e558`, which is the "first draft with times to measure", older than the skill it times. The fresh session measured 69 and 79 s on `3369165`. Record those with `3369165`.
+
+**N18.** UNIT: AutomataFrameworkEditors, `.claude/skills/verify/SKILL.md` lines 16 and 77. `drive.js` reads `process.env.SCRATCH`, but line 16 says "set SCRATCH", not export it. Set without `export`, it saves `undefined/verify-main-….png` under `$S/repo`, and the stop step deletes it. Say `export SCRATCH=…`.
+
+**Follow-up, outside this change (product, not the skill):** at 390 wide the editor's top bar drops the game's name ("Levels · Level 1", "Play", "Up to date"), and the welcome card covers the tool bar until it is closed. Both were seen by F3's runs. This is its own thread, for the Owner to weigh.
+
+CI for Editors on `3369165` is green per the coordinator's `gh api` check (12 success, 2 skipped); not checked by this session.
+
+Counts for Editors#114 at `3369165`: 1 red (R6) and 6 notes (N15 to N18, plus its parts of N10 and N14 = 6). The other five pull requests' counts above are unchanged.
 
 Each red is a fix on its own branch by that repo's build session, checked afterwards by this session or a program: R1 by reading the new sentence and rerunning `verify-check`; R2 to R5 by reading the edited body and its last line.
+
+## Fix checks
+
+Each fix was checked by this session, reading the commit or the body. The heads stay as named above unless a row says otherwise.
+
+| Finding | Fix | Checked | Result |
+|---|---|---|---|
+| R1 | AutomataFramework `39cf051` adds one sentence to `verify`: "The clone holds only committed files, so commit the change first (a local commit is enough), or the run shows the old code." | `git diff 9042c97 39cf051` changes that one line only; `verify-check` prints `ok` | closed |
+| R3 | Examples#75 body, head still `1959b32` | each of the three runs has a start and an end from `date` (02:16:02.84 to 02:16:24.34, 02:16:40.38 to 02:16:54.34, 02:16:55.00 to 02:17:08.25), the commit, and what the screenshots showed; last line "Requested by **McThayDT**" | closed |
+| R4 | Site#57 body, head still `e379aea` | each run has a start from `date` (02:24:35, 02:25:13, 02:25:26), the commit, and what the screenshots showed at each size. The ends are worked out as start plus measured time and marked "about", and the body says so; both parts come from measurements, and nothing is made up. Last line correct | closed |
+| R5 | RukenApp#197 body, head still `fce4668` | three runs in a row with start and end from `date` (02:21:49 to 02:22:11, 02:22:22 to 02:22:43, 02:22:51 to 02:23:12), plus a cold run whose time was not measured, said plainly; the screenshot is described, with one md5 each time; last line correct | closed |
+
+Still open: R2 (AutomataFramework's body, waiting on a fresh three-run round on `39cf051`) and R6 (Editors' body, waiting on a new head and its three-run round). The notes N15 to N18 are fixed or not at the builder's choice.
