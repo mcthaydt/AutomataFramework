@@ -125,6 +125,31 @@ The new rule text is the spec's, approved through its plan audits, and every rep
 | AutomataFrameworkExamples#75 | 1 (R3) | 4 (N4 to N7), plus its part of N14 |
 | AutomataFrameworkSite#57 | 1 (R4) | 4 (N8 to N11), N9 decided with no change |
 | RukenApp#197 | 1 (R5) | 2 (N12, N13), plus its part of N10 |
-| AutomataFrameworkEditors#114 at `a0806fb` | 0 so far | its parts of N10 and N14; the clone and stop steps, criterion 6's record and CI wait for the final head |
+| AutomataFrameworkEditors#114 at `3369165` | 1 (R6) | 4 (N15 to N18), plus its parts of N10 and N14 |
+
+## Editors' final head, `3369165`
+
+The coordinator named `3369165` as Editors' final head (skill md5 `4bea5f4e0bb7d55f47940b5866f613bd`, matched). `git diff a0806fb 3369165` touches only `.claude/skills/verify/SKILL.md` (fixes F1 to F4) and removes the live-state file. On `3369165`: `verify-check` prints `ok`; the criterion 4 and 7 checks still pass; `git diff --check origin/main...HEAD` is empty; the diff is still the 7 allowed files; both new commits (`fddd4e6`, `3369165`) are McThayDT as author and committer, with no trailers.
+
+- F1, the clone: `R=$(git rev-parse HEAD)`, a fresh clone of `origin`, then `git checkout -q $R`. It now works on a detached checkout and on a branch. It says plainly to commit and push first, since the clone holds only what is pushed, which settles for Editors the problem R1 names for AutomataFramework. A separate fresh session ran the start and stop steps on `3369165`, once on a detached checkout and once on the branch. Both passed with every step as written (69 s and 79 s), the screenshots survived the stop step, and `$S` was gone afterwards (as the coordinator reported).
+- F2: the screenshots go to `$SCRATCH` as `verify-main-<width>.png`, so the stop step keeps them.
+- F3: says what each size shows.
+- F4: says to run "Start it" and "Drive it" as one script, or to set the variables again in each new shell.
+
+**R6.** UNIT: mcthaydt/AutomataFrameworkEditors#114, the pull request body. VERDICT: red. REQUIREMENT: criterion 6 (the body links or names the report, lists each run's start and end times and the commit, and says what each screenshot shows) and criterion 11 (CI green on the head). REASON: the body is still the one from before the runs. EVIDENCE: "Checks (on 6a0a6fe …)", "Criterion 6 (three fresh-session runs): not done yet", "Criterion 11: CI not watched yet". EXPECTED: the checks restated on `3369165`; three fresh runs in a row on the head commit, each with start and end times, the commit and what the screenshot shows; CI's result on `3369165`. The coordinator reported a targeted check of two runs on `3369165`. If no three-in-a-row round has run on this head, criterion 6 is not yet met. FIX: run what criterion 6 still lacks, then edit the body only. Check that its last line is still "Requested by **McThayDT**".
+
+**N15.** UNIT: AutomataFrameworkEditors, `.claude/skills/verify/SKILL.md`, "Stop it". The comment still says "the fresh clone, the loader and the screenshots all live in $S". Since F2, the screenshots are in `$SCRATCH`.
+
+**N16.** UNIT: AutomataFrameworkEditors, `.claude/skills/verify/SKILL.md` line 87. "At 834 and 1280 … the tool bar is at the bottom", but at 1280, List and Add sit in a left side rail, not on the bottom bar (the fresh session's note).
+
+**N17.** UNIT: AutomataFrameworkEditors, `.claude/skills/verify/SKILL.md` line 58. The time record says 52 and 58 seconds, and its commit changed from `afafe43` to `fa7e558`, which is the "first draft with times to measure", older than the skill it times. The fresh session measured 69 and 79 s on `3369165`. Record those with `3369165`.
+
+**N18.** UNIT: AutomataFrameworkEditors, `.claude/skills/verify/SKILL.md` lines 16 and 77. `drive.js` reads `process.env.SCRATCH`, but line 16 says "set SCRATCH", not export it. Set without `export`, it saves `undefined/verify-main-….png` under `$S/repo`, and the stop step deletes it. Say `export SCRATCH=…`.
+
+**Follow-up, outside this change (product, not the skill):** at 390 wide the editor's top bar drops the game's name ("Levels · Level 1", "Play", "Up to date"), and the welcome card covers the tool bar until it is closed. Both were seen by F3's runs. This is its own thread, for the Owner to weigh.
+
+CI for Editors is not checked here, for the same reason as Examples, Site and RukenApp (no API access in this session).
+
+Counts for Editors#114 at `3369165`: 1 red (R6) and 6 notes (N15 to N18, plus its parts of N10 and N14 = 6). The other five pull requests' counts above are unchanged.
 
 Each red is a fix on its own branch by that repo's build session, checked afterwards by this session or a program: R1 by reading the new sentence and rerunning `verify-check`; R2 to R5 by reading the edited body and its last line.
