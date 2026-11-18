@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-11-18 14:08 UTC (from `date`).
+Last updated: 2026-11-18 15:09 UTC (from `date`).
 
 ## Active milestone: the World slice (roadmap slice 3)
 
@@ -11,12 +11,15 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
 
 ### Current work
 
+- In progress 2026-11-18: the Owner's rule "a plan's order is a claim that one unit waits on another, not a queue"
+  (`staged-path`, kits and five repos), asked for in the coordinator thread.
 - Done 2026-11-18 (verification change, all merged, main green unless noted): the follow-up round (12 audit notes, the
   "full suite in CI, where `release` sets the gate" reword, AF's Stop now kills only its own server) in website #81,
   AF #215, Editors #115, Examples #76, Site #58, RukenApp #198; the test cleanup: AF nothing met the bar; Examples #77
   (2 duplicates), Site #59 (3 duplicates), Editors #116 (3 Firefox-flaky tests steadied, cause of the stray blur not
   found, recorded), RukenApp #199/#200 (flake recorded, 1 duplicate) and #201 (the take-off flake's root cause fixed on
-  main; #194 will meet a one-line overlap). Product follow-ups found, not fixed: Examples' tablet DASH button over the
+  main; #194 meets a one-line overlap there, which the Owner said to settle by keeping #194's version). Main green in
+  all five repos after the last merges. Product follow-ups found, not fixed: Examples' tablet DASH button over the
   level art; Editors' top bar drops the game name at 390 px; Editors' "How heavy?" label under the welcome card at 1280.
 - Merged 2026-11-18 ~10:10 UTC: the verification change in all six PRs (website #77 2c47d69, AF #214 c7655ea, Editors
   #114 04ba096, Examples #75 3fd4b8d, Site #57 584ce72, RukenApp #197 9972343), and website #80 (two FloorFifty games-kit
@@ -44,9 +47,8 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
 - Owner instruction (2026-11-17 04:00 UTC): a Remote Control session on the Owner's computer may run
   `owner-commands.sh` once, after the setup pull requests merge: a one-off exception to "nothing runs on the Owner's
   computer" for the public repos, for that script only.
-- Installing the new workflow and its CI gate (this repo's setup pull request).
-- F5 (draw order) is in a draft pull request; then the test game's E4 in AutomataFrameworkExamples.
-- Next: F1 and F2.
+- F1/F2 (#198) and F5 (#207) are merged; the lines that said they were in progress were stale (found 2026-11-18).
+- Next for this repo: Plan Q's native speaker read (nothing read yet).
 
 ### Completed outcomes
 
