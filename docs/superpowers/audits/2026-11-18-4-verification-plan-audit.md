@@ -1,0 +1,5 @@
+- Current task: plan audit cycle 4 (narrow check) on f7b82c7..0af7d61
+- Last commit: 0af7d61
+- Next step: run the checks named in the brief
+- Open decisions: none
+- Updated: 2026-11-18T01:56:06Z
