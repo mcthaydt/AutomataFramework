@@ -15,8 +15,9 @@ they are the source; then the five repos install the same text, word for word, s
   reason written down; a change does not quietly edit its own check; lessons carry a trigger read from the diff; each
   retrospective prunes; and how superpowers' testing skills are read under these rules.
 - Risk gets one line: an edit to a repo's own `verify` or `this-repo` skill takes the lane of the code change it
-  describes, and is named in the pull request body; an edit to one alone is lane 1. `CLAUDE.md` and the shared skills
-  stay lane 3. `release` says the same where it sorts changes into lanes.
+  describes, and is named in the pull request body. One edited alone is lane 1, unless it changes what needs the
+  owner. `CLAUDE.md` and the shared skills stay lane 3; the **Lane 3** bullet says "the shared skills". `release` says
+  the same where it sorts changes into lanes.
 - A new skill, `verify`, says how to start this repo's app or game from a clean checkout and drive it like a person. The
   kits carry it with gaps in angle brackets, which Claude fills in, not the person; each repo fills them in. A fresh
   session that has only that skill starts the app or game in a cloud container and shows its main screen, three times in
@@ -65,6 +66,9 @@ takes up, read by this session on 2026-11-18:
 - 2026-11-18, about 00:52 UTC, decision card on the plan audit's R3, word for word as the coordinator passed it on. The
   Owner chose "Same lane as the code": "One line in Risk: an edit to a repo's own verify or this-repo skill takes the
   lane of the code change it describes, and is named in the PR body. The shared skills and CLAUDE.md stay lane 3."
+- 2026-11-18, about 01:52 UTC, decision card on plan audit cycle 3's R1 and R2, word for word as the coordinator passed
+  it on. Asked what an edit to a repo's own `verify` or `this-repo` skill alone should be, the Owner chose "Lane 1,
+  with a guard": "One edited alone is lane 1, unless it changes what needs the owner."
 
 These cover this change only. The implementation pull requests are lane 3 and wait for the Owner's approval of the
 finished result before they merge.
@@ -149,13 +153,20 @@ Checks let work be handed off; the owner reads the evidence. A change that alter
 
 <!-- spec:risk-line:start -->
 ```markdown
-- **A repo's own skills.** An edit to a repo's own `verify` or `this-repo` skill takes the lane of the code change it describes, and is named in the pull request body. An edit to one alone, with no code change, is lane 1. `CLAUDE.md` and the shared skills stay lane 3.
+- **A repo's own skills.** An edit to a repo's own `verify` or `this-repo` skill takes the lane of the code change it describes, and is named in the pull request body. One edited alone is lane 1, unless it changes what needs the owner. `CLAUDE.md` and the shared skills stay lane 3.
 ```
 <!-- spec:risk-line:end -->
 
-The first sentence and the last are the Owner's decision. The middle one, "An edit to one alone, with no code change, is
-lane 1", gives a lane to a fix that touches only `verify` or `this-repo`, which has no code change to take its lane
-from (cycle 2's R4, as the coordinator asked); it does not widen the Owner's line.
+The first sentence and the last are the Owner's 00:52 decision ("Same lane as the code"). The middle one is the
+Owner's 01:52 decision ("Lane 1, with a guard"), word for word. It does widen the 00:52 line: before it, an edit to
+`verify` or `this-repo` alone, with no code change to take its lane from, was lane 3 like any skill. Cycle 2 of this
+spec wrote it as the agent's own addition and said it did not widen the Owner's line, which was wrong (plan audit
+cycle 3, R1). The guard keeps an edit that changes what needs the owner (an Owner approval, a standing permission or
+an approved dependency recorded in `this-repo`) in lane 3 (cycle 3, R2).
+
+- "## Risk", the **Lane 3** bullet: "CLAUDE.md and the skills, even though they are `.md` files" becomes "CLAUDE.md
+  and the shared skills, even though they are `.md` files", so the bullet and the line after it agree (cycle 3's N3).
+  Measured: it stays at the same rows in both kits.
 
 Why the bullets move (plan audit R8, and cycle 2's R2): the Owner picked "replace the Tests bullet with a Verification
 section holding the six points". The `CLAUDE.md` section names all six, one short sentence each, and points to `build`.
@@ -237,7 +248,7 @@ changed check first and runs `verify` from `main` when a pull request edits it (
 
 <!-- spec:review-bullet:start -->
 ```markdown
-- A pull request that changes or deletes an existing test, golden or `verify` step names each one in its body. Read those first. When it edits `verify`, also run `verify` from `main` (Verification in `build`).
+- A pull request that changes or deletes an existing test, golden or `verify` step names each one and why in its body. Read those first. When it edits `verify`, also run `verify` from `main` (Verification in `build`).
 ```
 <!-- spec:review-bullet:end -->
 
@@ -272,11 +283,11 @@ for one no test can catch (R6). The retrospective keeps the narrower lessons in 
 
 - "## Docs only": in "rules files (CLAUDE.md, the skills, and anything else that decides what needs the owner)", "the
   skills" becomes "the shared skills". After "plus the owner's approval or an applicable standing permission." a space
-  and this sentence are added:
+  and these two sentences are added, the second word for word the Owner's 01:52 decision:
 
 <!-- spec:release-docs:start -->
 ```markdown
-A repo's own `verify` and `this-repo` skills are not rules files: an edit to one takes the lane of the code change it describes, and an edit to one alone is lane 1 (Risk in CLAUDE.md).
+As Risk in CLAUDE.md says, a repo's own `verify` and `this-repo` skills take the lane of the code change they describe. One edited alone is lane 1, unless it changes what needs the owner.
 ```
 <!-- spec:release-docs:end -->
 
@@ -374,10 +385,10 @@ for line in kit:
     while i < len(repo) and not pattern.match(repo[i]):
         i += 1
     assert i < len(repo), 'missing or out of order: ' + line
-    assert filled or any(repo[start:i]), 'empty: the part before ' + line
+    assert filled or any(l.strip() for l in repo[start:i]), 'empty: the part before ' + line
     filled = True
     i += 1
-assert filled or any(repo[i:]), 'empty: the last part'
+assert filled or any(l.strip() for l in repo[i:]), 'empty: the last part'
 left = [b for b in re.findall(blank, '\n'.join(kit)) if b in '\n'.join(repo)]
 assert not left, 'blanks left: ' + ', '.join(left)
 print('ok')
@@ -425,11 +436,12 @@ In all five repos, the same rule-change entry, wrapped at 120 like the entries a
   first, then property tests, then old-versus-new tests; test first, from the outside in, with superpowers' testing
   skills read under these rules; a flaky test fixed at its root in its own thread, or deleted with the reason written
   down; a change does not quietly edit its own check; lessons carry a trigger read from the diff; each retrospective
-  prunes. A repo's own `verify` and `this-repo` skills take the lane of the code they describe. Asked for in the project
-  thread ("Let's rethink how we do tests", with the Claude Code team's article on verification, and "We also need to
-  evaluate how superpowers comes into the picture because that's tdd") and approved on decision cards on 2026-11-18 at
-  00:30 UTC ("Core rewrite" only; a property-test library and a commit verification stamp or gate declined) and at about
-  00:52 UTC ("Kits + 5 repos"; "Same lane as the code"). Scope: this change only, made the same in the two kits in
+  prunes. A repo's own `verify` and `this-repo` skills take the lane of the code they describe. One edited alone is lane
+  1, unless it changes what needs the owner. Asked for in the project thread ("Let's rethink how we do tests", with the
+  Claude Code team's article on verification, and "We also need to evaluate how superpowers comes into the picture
+  because that's tdd") and approved on decision cards on 2026-11-18 at 00:30 UTC ("Core rewrite" only; a property-test
+  library and a commit verification stamp or gate declined) and at about 00:52 UTC ("Kits + 5 repos"; "Same lane as the
+  code") and at about 01:52 UTC ("Lane 1, with a guard"). Scope: this change only, made the same in the two kits in
   McThayDT-Website and in RukenApp, AutomataFramework, AutomataFrameworkEditors, AutomataFrameworkExamples and
   AutomataFrameworkSite, as AutomataFramework `docs/superpowers/specs/2026-11-18-verification-design.md` describes.
   Later rule changes are lane 3 as usual.
@@ -536,7 +548,7 @@ The audit is `docs/superpowers/audits/2026-11-18-2-verification-plan-audit.md` (
 | R1, `verify-check` passes a skill with its gaps deleted | Each gap must hold a line of text. Tried: `ok` on a filled copy; fails on a copy with the six gap-only lines deleted, on one with the last gap empty, on one missing "## Stop it", and on the unfilled kit. |
 | R2, the `CLAUDE.md` section names two of six points | It names all six, one sentence each (section 1). Rows: apps 197, games 199. |
 | R3, the reviewer's steps sit in `build` | A bullet in `review` "## Checks and reviews" (section 3), checked by criterion 4 and the kit test. Closes cycle 1's R5 and N10. |
-| R4, `release` still makes every skill lane 3 | `release` "Docs only" and "Lanes and merging" (section 4); the Risk line and `release` say an edit to a repo's own skill alone is lane 1. |
+| R4, `release` still makes every skill lane 3 | `release` "Docs only" and "Lanes and merging" (section 4); the Risk line and `release` say an edit to a repo's own skill alone is lane 1 (cycle 3 adds the Owner's guard: "unless it changes what needs the owner"). |
 | R5, nine gaps the person cannot fill in | Option (a): `<lower case>` gaps; the note line says Claude fills them in; the person's list is unchanged. |
 | R6, the order of audits and approvals | One order in "Lane and path", the same as the Plan; the estimate says it leaves out the wait for the Owner's first approval. |
 | N1, finding the rules from CI or a retrospective | `build`'s description (section 2). |
@@ -548,6 +560,19 @@ The audit is `docs/superpowers/audits/2026-11-18-2-verification-plan-audit.md` (
 | N7, a final newline and the blank line in `review` | Section 3 keeps the blank line; criterion 4 gives the command. |
 | N8, plain words | The test-first bullet split; "from `main`"; "every change". "deviceScaleFactor" stays: it is the browser tool's own setting name, which the session types. |
 | N9, a blank line with two spaces in the cycle 1 audit | Stripped in this fix round. |
+
+## What changed after plan audit cycle 3
+
+The audit is `docs/superpowers/audits/2026-11-18-3-verification-plan-audit.md` (at `2f36a5c`, audited `f7b82c7`).
+
+| Finding | How it is settled |
+|---|---|
+| R1, the lone-edit sentence treated as settled | The Owner's 01:52 card, "Lane 1, with a guard", is in Owner decisions word for word; section 1 now says the sentence widens the 00:52 line; `history-rule` credits the 01:52 card. |
+| R2, a lone `this-repo` edit could change what needs the owner | "One edited alone is lane 1, unless it changes what needs the owner." in the Risk line, `release` "Docs only", the kits and the five repos; "are not rules files" is gone. The kit test pins the sentence in `CLAUDE.md` and in `release`. |
+| N1, stale "cycle 2" in the Plan | "the last plan audit" in unit 0 and step 1. |
+| N2, the reviewer is not asked why | `review-bullet`: "names each one and why in its body". |
+| N3, the **Lane 3** bullet still says "the skills" | "CLAUDE.md and the shared skills"; criterion 4 checks it; one kit-test pin changes to match. |
+| N4, a gap holding only spaces | `verify-check` counts only lines with text. Tried: a gap of spaces now fails ("empty: the part before It is ready when ..."), and so does a last gap of spaces ("empty: the last part"); the cycle 2 program printed `ok` on both. |
 
 ## Acceptance criteria
 
@@ -561,15 +586,17 @@ sect() { awk '/^## Verification$/{f=1} /^## /&&!/^## Verification$/{f=0} f' "$1"
 ```
 
 1. **The kits change first, and their tests catch it.** In mcthaydt-website, the test edits below go in first and fail
-   on the old kits (seen: 7 failing, 102 passing), then pass on the new ones (109 of 109). `npx svelte-kit sync`, then
+   on the old kits (seen: 9 failing, 100 passing), then pass on the new ones (109 of 109). `npx svelte-kit sync`, then
    `npx vitest run --project unit` (seen: 275 passed) and `npx vitest run --project components` (52 passed) pass;
-   `npm run -s content:check` reports 0 errors. The 200-row limit and every pinned phrase in the test file are
-   unchanged; the CLAUDE.md block wraps to 197 rows (apps) and 199 (games). The test edits, exactly:
+   `npm run -s content:check` reports 0 errors. The 200-row limit is unchanged, and so is every pinned phrase but one:
+   "CLAUDE.md and the skills, even though they are `.md` files" becomes "CLAUDE.md and the shared skills, even though
+   they are `.md` files", for the **Lane 3** bullet's edit (cycle 3's N3). The CLAUDE.md block wraps to 197 rows
+   (apps) and 199 (games). The test edits, exactly:
 
 <!-- spec:kit-test:start -->
 ```diff
 diff --git a/tests/unit/kit-content.test.ts b/tests/unit/kit-content.test.ts
-index 574ca32..d55ad8b 100644
+index 574ca32..500f360 100644
 --- a/tests/unit/kit-content.test.ts
 +++ b/tests/unit/kit-content.test.ts
 @@ -8,7 +8,7 @@ const kit = (slug: string) => parseKitPrompt(read(`content/prompts/${slug}/body.
@@ -581,6 +608,15 @@ index 574ca32..d55ad8b 100644
  const flat = (t: string) => t.replace(/\s+/g, ' ');
  // Kit text has one line per paragraph or list item; the 200-line limit counts how it reads at 120 columns.
  const wrapped = (t: string) => t.split('\n').reduce((n, line) => {
+@@ -141,7 +141,7 @@ for (const slug of KITS) {
+     expect(claude()).toContain('Classify it from the paths its diff touches and what the change does');
+     expect(claude()).toContain('never build tooling for this');
+     expect(claude()).not.toContain('A program reads');
+-    expect(claude()).toContain('CLAUDE.md and the skills, even though they are `.md` files');
++    expect(claude()).toContain('CLAUDE.md and the shared skills, even though they are `.md` files');
+     expect(claude()).toContain('The highest lane wins');
+     expect(claude()).toContain('tests/golden/');
+     expect(claude()).toContain('deleting a merged branch');
 @@ -348,7 +348,7 @@ for (const slug of KITS) {
      for (const rule of ['**Retrospective.** The last stage of every slice, the first one included', 'reviews every loop the slice ran, not only design review', 'turns each lesson into a test where it can', 'one rule-change pull request for the owner to approve', 'Rule edits the retrospective proposes: batched into one rule-change pull request per slice', 'The owner\'s own rule requests keep their own pull requests', 'The next slice can start once the retrospective\'s pull request is open, or once the retrospective reports nothing to learn'])
        expect(staged, rule).toContain(rule);
@@ -601,13 +637,13 @@ index 574ca32..d55ad8b 100644
 +    expect(claude).not.toContain('- **Tests.**');
 +    expect(flat(claude)).toContain('run like a person, through the `verify` skill');
 +    expect(flat(claude)).toContain('takes the lane of the code change it describes');
-+    expect(flat(claude)).toContain('An edit to one alone, with no code change, is lane 1');
++    expect(flat(claude)).toContain('One edited alone is lane 1, unless it changes what needs the owner.');
 +    const build = flat(section(text(slug, 'Skill: build'), '## Verification'));
 +    for (const rule of ['**Run it like a person.**', '**The test that is hardest to fool comes first.**', '**Test first, from the outside in.**', '**Old code and today\'s behavior.**', '**Tests.**', '**Quick and steady, or it gets skipped.**', '**A change does not quietly edit its own check.**', '**Lessons become tests first, and carry a trigger.**', '**Prune.**', '**Superpowers\' testing skills.**', 'needs the owner\'s yes first', 'unless it blocks this change'])
 +      expect(build, rule).toContain(rule);
 +    expect(flat(text(slug, 'Skill: review'))).toContain('LOOK FOR:');
 +    expect(flat(text(slug, 'Skill: review'))).toContain('When it edits `verify`, also run `verify` from `main`');
-+    expect(flat(text(slug, 'Skill: release'))).toContain('an edit to one alone is lane 1');
++    expect(flat(text(slug, 'Skill: release'))).toContain('One edited alone is lane 1, unless it changes what needs the owner.');
 +    expect(flat(text(slug, 'Skill: release'))).toContain('The `verify` skill: `.claude/skills/verify/SKILL.md` is there');
 +    expect(flat(text(slug, 'Skill: staged-path'))).toContain('It also prunes');
 +    expect(text(slug, 'Skill: verify')).toContain('<start commands>');
@@ -644,7 +680,8 @@ index 574ca32..d55ad8b 100644
    visibility and early steering", "Rules that never bend", "Verification", "Risk", "The staged path", "Settings", in
    that order (each repo's own headings before "Stack and checks" aside). In the kits, the new kit test checks the same.
 4. **The other edited lines match.** In each repo and each kit's CLAUDE.md: the Skills line contains "`verify` for
-   running the app or game like a person"; `blk risk-line` is a line of the file, right after the **Lane 3** bullet;
+   running the app or game like a person"; the **Lane 3** bullet has "CLAUDE.md and the shared skills, even though
+   they are `.md` files"; `blk risk-line` is a line of the file, right after the **Lane 3** bullet;
    there is no line starting "- **Tests.**" or "- **Lessons become tests first.**"; "fails once and passes on retry"
    appears once in `CLAUDE.md` and once in `build`. `review` ends with `blk review-lessons`; `staged-path` has "and
    carries those whose trigger its work matches", "are read with Verification in `build`" and "It also prunes";
@@ -658,9 +695,10 @@ index 574ca32..d55ad8b 100644
 5. **The `verify` skill has the kit's shape.** `blk verify-check > check.py; blk verify-kit > kit.md; python3 -I
    check.py kit.md .claude/skills/verify/SKILL.md` prints `ok` in each repo. Tried: `ok` on a filled copy; it fails on
    the unfilled kit ("blanks left"), on a copy with the six gap-only lines deleted ("empty: the part before ## Start
-   it"), on a copy with its last gap empty, and on a copy missing "## Stop it". In the kits, each kit's verify block
-   equals `blk verify-kit`, its note line equals `blk verify-note`, and the person's fill-in list is unchanged. The
-   start time and commit in "Start it" were measured with `date` and `git rev-parse --short HEAD`.
+   it"), on a copy with its last gap empty, on a copy missing "## Stop it", and on copies whose gap holds only spaces.
+   In the kits, each kit's verify block equals `blk verify-kit`, its note line equals `blk verify-note`, and the
+   person's fill-in list is unchanged. The start time and commit in "Start it" were measured with `date` and `git
+   rev-parse --short HEAD`.
 6. **The `verify` skill works for a stranger.** For each repo, a fresh cloud session that did not write the skill,
    started with only "Load the `verify` skill and follow it to start this repo's app or game and take a screenshot of
    its main screen", on the pull request's head commit, does so three times in a row, each from a clean start (a fresh
@@ -694,7 +732,7 @@ time at most (Settings). Each is lane 3.
 
 | Unit | Repo | Waits on | Files it owns | Output | Acceptance check | Estimate |
 |---|---|---|---|---|---|---|
-| 0 | AutomataFramework | the plan audit (cycle 2) | this spec and its audits | the spec on `main` | the plan audit has no reds | (this session) |
+| 0 | AutomataFramework | the last plan audit | this spec and its audits | the spec on `main` | the plan audit has no reds | (this session) |
 | 1 | mcthaydt-website | 0 | Boundaries, the kits | one draft pull request | criteria 1 to 5 (kit parts), 8 to 11 | 2 hours |
 | 2 | AutomataFramework | 1 merged | Boundaries | one draft pull request | criteria 2 to 11 | 3¼ hours |
 | 3 | AutomataFrameworkEditors | 1 merged | Boundaries | one draft pull request | criteria 2 to 11 | 3¼ hours |
@@ -702,8 +740,9 @@ time at most (Settings). Each is lane 3.
 | 5 | AutomataFrameworkSite | 1 merged | Boundaries | one draft pull request | criteria 2 to 11 | 2¼ hours |
 | 6 | RukenApp | 1 merged | Boundaries | one draft pull request | criteria 2 to 11 | 4½ hours |
 
-1. A fresh session audits this spec again (plan audit, cycle 2), never this session, and writes
-   `docs/superpowers/audits/2026-11-18-2-verification-plan-audit.md` on this branch; this spec merges on green with it.
+1. A fresh session audits this spec (the plan audits, never this session), each written to
+   `docs/superpowers/audits/2026-11-18-<cycle>-verification-plan-audit.md` on this branch; this spec merges on green
+   with the last plan audit.
 2. Unit 1, in mcthaydt-website on its own branch from `main`: the test edits first, seen failing; then the kit edits
    (sections 1 to 5), copied with `blk`, never retyped; then criteria 1 to 5. A fresh session audits it (its own
    implementation audit), the Owner approves it, and it merges before units 2 to 6 start, so the repos copy the kit as
@@ -731,6 +770,7 @@ time at most (Settings). Each is lane 3.
 
 ## Open decisions
 
-None. The Owner's choices on 2026-11-18 cover the repos and the kits, the ideas, the two declined ones and the lane of a
-repo's own skills. The superpowers evaluation (section 7) needs no choice: every overlap is settled by these rules
-winning, as `staged-path` already says, and nothing in superpowers is turned off or replaced.
+None. The Owner's choices on 2026-11-18 cover the repos and the kits, the ideas, the two declined ones, the lane of a
+repo's own skills, and the lane of one of them edited alone (01:52, "Lane 1, with a guard"). The superpowers evaluation
+(section 7) needs no choice: every overlap is settled by these rules winning, as `staged-path` already says, and nothing
+in superpowers is turned off or replaced.
