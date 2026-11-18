@@ -588,9 +588,12 @@ sect() { awk '/^## Verification$/{f=1} /^## /&&!/^## Verification$/{f=0} f' "$1"
 1. **The kits change first, and their tests catch it.** In mcthaydt-website, the test edits below go in first and fail
    on the old kits (seen: 9 failing, 100 passing), then pass on the new ones (109 of 109). `npx svelte-kit sync`, then
    `npx vitest run --project unit` (seen: 275 passed) and `npx vitest run --project components` (52 passed) pass;
-   `npm run -s content:check` reports 0 errors. The 200-row limit is unchanged, and so is every pinned phrase but one:
+   `npm run -s content:check` reports 0 errors. The 200-row limit is unchanged, and so is every pinned phrase but two:
    "CLAUDE.md and the skills, even though they are `.md` files" becomes "CLAUDE.md and the shared skills, even though
-   they are `.md` files", for the **Lane 3** bullet's edit (cycle 3's N3). The CLAUDE.md block wraps to 197 rows
+   they are `.md` files", for the **Lane 3** bullet's edit (cycle 3's N3); and `review`'s retrospective pin, "The
+   retrospective after the slice moves each lesson that no test can capture into CLAUDE.md", becomes "moves into
+   CLAUDE.md, through its rule-change pull request, only a lesson that holds for every change", for `review-lessons`
+   (cycle 1's R7). Neither is looser: each pins the new rule text. The CLAUDE.md block wraps to 197 rows
    (apps) and 199 (games). The test edits, exactly:
 
 <!-- spec:kit-test:start -->
