@@ -33,19 +33,21 @@ It is ready when `$SCRATCH/play.log` says `ready in` and `curl -sf http://localh
 
 ## Drive it
 
-Open it in a real browser: the Chromium and Playwright the container already has (`require('playwright')`, then `chromium.launch()`), at each size in the device matrix in Settings. Tap, click, type and press keys the way a person would, and find things by their label or role. Take a screenshot at deviceScaleFactor 1 for your own check, and save it in the scratchpad, never in the repo. The main screen, what it shows and how to use it:
+Open it in a real browser: the Chromium and Playwright the container already has (`require('playwright')`, then `chromium.launch()`), at each size in the device matrix in Settings; the phone, tablet and computer sizes come from `SCREENS` in `tests/fixtures/game/screens.ts`, and where they differ, that file wins. Tap, click, type and press keys the way a person would, and find things by their label or role. Take a screenshot at deviceScaleFactor 1 for your own check, and save it in `$SCRATCH/shots`, never in the repo; Stop leaves that folder alone, so the screenshots are still there to look at after it. The main screen, what it shows and how to use it:
 
 The language picker: the title "Play in English", six flags (English first, with a white ring) and a big Go button. Press Go and the menu follows, then Play, and the first level opens. At 390 wide and 820 wide it shows the same, with touch buttons.
 
 ```js
 // Save as $SCRATCH/play.cjs, then run: cd "$SCRATCH" && SCRATCH="$SCRATCH" node play.cjs   (Node 24; `require('playwright')` already works)
 const { chromium } = require('playwright');
+const shots = `${process.env.SCRATCH}/shots`;
+require('node:fs').mkdirSync(shots, { recursive: true });
 (async () => {
   const b = await chromium.launch();
   const p = await (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
   await p.goto('http://localhost:5199/');
   await p.getByRole('button', { name: 'Go' }).waitFor();                    // the picker is drawn once Go shows; before that it is a loading bar
-  await p.screenshot({ path: `${process.env.SCRATCH}/main.png` });          // the picker
+  await p.screenshot({ path: `${shots}/main.png` });                       // the picker
   await p.getByRole('button', { name: 'Go' }).click();
   await p.locator('#game[data-state="menu"] [data-screen="menu"] button').first().click();   // Play
   await p.locator('#game[data-state="playing"]').waitFor();
@@ -54,7 +56,7 @@ const { chromium } = require('playwright');
   const before = await x();
   await p.keyboard.down('ArrowRight'); await p.waitForTimeout(800); await p.keyboard.up('ArrowRight');
   console.log(before, await x());                                           // it grew: the hero walked
-  await p.screenshot({ path: `${process.env.SCRATCH}/playing.png` });
+  await p.screenshot({ path: `${shots}/playing.png` });
   await b.close();
 })();
 ```
@@ -75,7 +77,7 @@ Stop every server it started and clear what it wrote, so the next run starts cle
 
 ```sh
 pkill -f 'automata play'; pkill -f vite
-rm -rf "$SCRATCH/repo" "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log" "$SCRATCH/play.cjs" "$SCRATCH/main.png" "$SCRATCH/playing.png"
+rm -rf "$SCRATCH/repo" "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log" "$SCRATCH/play.cjs"     # the screenshots in $SCRATCH/shots stay
 ```
 
 ## When it breaks
