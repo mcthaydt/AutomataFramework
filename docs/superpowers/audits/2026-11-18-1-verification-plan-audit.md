@@ -109,7 +109,7 @@ red finding (R3) needs the Owner to make a decision, asked as a decision card.
     lane of the code change it rides with. This needs one added line in Risk.
   - (b) Keep lane 3, and accept the staged path for those changes.
   - (c) The `verify` update goes in a follow-up pull request, and the skill is stale in between.
-  
+
   The build waits only for that answer.
 - FIX: add the decision card to "Open decisions". If (a) is chosen, add the Risk line to section 3 and to Boundaries,
   and add a matching check to criterion 2. Only the spec changes.

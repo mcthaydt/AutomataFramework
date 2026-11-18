@@ -7,19 +7,22 @@ not only by passing tests. The two kits in mcthaydt-website (`claude-md-apps` an
 they are the source; then the five repos install the same text, word for word, so they do not drift from the kit.
 
 - `CLAUDE.md` gets a short Verification section, in place of the **Tests.** and **Lessons become tests first.**
-  bullets: checks let work be handed off, a change is run like a person through the `verify` skill before it is called
-  done, a flaky test is recorded, and the full rules are in `build`.
+  bullets. It names the six points in one short sentence each (run it like a person, the hardest test first, flaky
+  tests, no quiet edit of a check, lessons with a trigger, prune) and says the full rules are in `build`.
 - `build` gets those full rules, as a "## Verification" section at its end: run it like a person; the test hardest to
   fool comes first (journeys, then property tests, then old-versus-new tests); test first, from the outside in; the
   Tests rules, kept; quick and steady checks, with a flaky test fixed at its root in its own thread or deleted with the
   reason written down; a change does not quietly edit its own check; lessons carry a trigger read from the diff; each
   retrospective prunes; and how superpowers' testing skills are read under these rules.
 - Risk gets one line: an edit to a repo's own `verify` or `this-repo` skill takes the lane of the code change it
-  describes, and is named in the pull request body. `CLAUDE.md` and the shared skills stay lane 3.
-- A new skill, `verify`, says how to start this repo's app or game from a clean checkout and drive it like a person.
-  The kits carry it with blanks; each repo fills them in. A fresh session that has only that skill starts the app or
-  game in a cloud container and shows its main screen, three times in a row.
-- `review`, `staged-path` and `release` get small edits so they agree.
+  describes, and is named in the pull request body; an edit to one alone is lane 1. `CLAUDE.md` and the shared skills
+  stay lane 3. `release` says the same where it sorts changes into lanes.
+- A new skill, `verify`, says how to start this repo's app or game from a clean checkout and drive it like a person. The
+  kits carry it with gaps in angle brackets, which Claude fills in, not the person; each repo fills them in. A fresh
+  session that has only that skill starts the app or game in a cloud container and shows its main screen, three times in
+  a row.
+- `review`, `staged-path` and `release` get small edits so they agree; `review` tells the reviewer to read a changed
+  check first, and to run `verify` from `main` when a pull request edits it.
 
 ## Why
 
@@ -68,10 +71,14 @@ finished result before they merge.
 
 ## Lane and path
 
-Lane 3 (`CLAUDE.md` and skills, the rules that decide what needs the owner), staged path: this spec and its plan audits,
-then the kits' pull request first, then one pull request per repo, one implementation audit across all six, the
-Owner's approval, then a merge commit each. In mcthaydt-website the kits are content, but they carry these rules, so
-their pull request is treated as lane 3 too.
+Lane 3 (`CLAUDE.md` and skills, the rules that decide what needs the owner), staged path, in this order:
+
+1. This spec and its plan audits; it merges on green with the last one.
+2. The kits' pull request (unit 1), its own implementation audit, and the Owner's approval; then it merges.
+3. One pull request per repo (units 2 to 6), copied from the merged kits.
+4. One implementation audit across the five repo pull requests, then the Owner's approval; then a merge commit each.
+
+In mcthaydt-website the kits are content, but they carry these rules, so their pull request is treated as lane 3 too.
 
 ## Boundaries
 
@@ -93,7 +100,8 @@ their pull request is treated as lane 3 too.
 - No new tools, dependencies, environments or spend. Nothing runs on the Owner's computer.
 - Expected duration (estimates): the kits 2 hours; AutomataFramework 3¼ hours, Editors 3¼ hours, Examples 2¼ hours,
   Site 2¼ hours, RukenApp 4½ hours (a database, four stand-ins and two local Workers to start). About one working day
-  from the spec's merge to the last pull request ready for the Owner, most of it the fresh-session runs, audits and CI.
+  of work from the spec's merge to the last pull request ready for the Owner, most of it the fresh-session runs, audits
+  and CI. That day does not count the wait for the Owner's first approval (the kits), which units 2 to 6 start after.
 
 ## Where the touched lines stand today
 
@@ -108,7 +116,8 @@ their pull request is treated as lane 3 too.
   commit-authors line (the `[COMMIT AUTHOR]` blank). Each block is "## <Label>", a note line and a fenced block, read by
   `parseKitPrompt`. `tests/unit/kit-content.test.ts` pins the kits: the CLAUDE.md block, wrapped at 120 columns, must
   stay under 200 rows (the apps kit is at 196, the games kit at 199); each skill's frontmatter and note line; the skill
-  list and order; both kits share their workflow word for word; and a list of pinned phrases. No test limit is
+  list and order; both kits share their workflow word for word; and a list of pinned phrases. The kit page lists every
+  `[UPPER CASE]` blank under "fill in" for the person (`PromptDetail.svelte`, from `kitPlaceholders`). No test limit is
   loosened here; the change fits by moving the long rules out of `CLAUDE.md` into `build`.
 - **`docs/superpowers/history.md`**. Framework, Editors, Examples and Site have "## Rule changes", and a 2026-11-16
   "Setup" entry listing four places superpowers 7.0.2 differs from these rules. RukenApp has neither: its "Setup" is
@@ -132,7 +141,7 @@ never retype it.
 ```markdown
 ## Verification
 
-Checks let work be handed off; the owner reads the evidence. A change that alters the product is run like a person, through the `verify` skill, before it is called done. A test that fails once and passes on retry is a defect: record it under "Flaky tests" in `docs/superpowers/history.md`. The rules for tests, lessons and checks are in `build`.
+Checks let work be handed off; the owner reads the evidence. A change that alters the product is run like a person, through the `verify` skill, before it is called done. The test hardest to fool comes first. A test that fails once and passes on retry is a defect: record it under "Flaky tests" in `docs/superpowers/history.md`. A change does not quietly edit its own check. Lessons carry a trigger, and each retrospective prunes. The full rules are in `build`.
 ```
 <!-- spec:claude-section:end -->
 
@@ -140,16 +149,22 @@ Checks let work be handed off; the owner reads the evidence. A change that alter
 
 <!-- spec:risk-line:start -->
 ```markdown
-- **A repo's own skills.** An edit to a repo's own `verify` or `this-repo` skill takes the lane of the code change it describes, and is named in the pull request body. `CLAUDE.md` and the shared skills stay lane 3.
+- **A repo's own skills.** An edit to a repo's own `verify` or `this-repo` skill takes the lane of the code change it describes, and is named in the pull request body. An edit to one alone, with no code change, is lane 1. `CLAUDE.md` and the shared skills stay lane 3.
 ```
 <!-- spec:risk-line:end -->
 
-Why the bullets move rather than the Tests bullet being replaced by a section in `CLAUDE.md` (plan audit R8): the Owner
-picked "replace the Tests bullet with a Verification section". The Tests bullet also holds rules that are not among the
-six points (CI is the merge gate, an unrelated failure gets its own thread, no `--pass-with-no-tests`, goldens), and
-the games kit's `CLAUDE.md` has one row to spare under its 200-row test. So `CLAUDE.md` keeps a three-row section that
-names the rule and points to `build`, and the Tests bullet, trimmed of what the Verification rules now say, sits in
-`build`'s section with them. Measured: the apps kit goes from 196 rows to 195, the games kit from 199 to 197.
+The first sentence and the last are the Owner's decision. The middle one, "An edit to one alone, with no code change, is
+lane 1", gives a lane to a fix that touches only `verify` or `this-repo`, which has no code change to take its lane
+from (cycle 2's R4, as the coordinator asked); it does not widen the Owner's line.
+
+Why the bullets move (plan audit R8, and cycle 2's R2): the Owner picked "replace the Tests bullet with a Verification
+section holding the six points". The `CLAUDE.md` section names all six, one short sentence each, and points to `build`.
+The Tests bullet also holds rules that are not among the six points (CI is the merge gate, an unrelated failure gets its
+own thread, no `--pass-with-no-tests`, goldens), and the games kit's `CLAUDE.md` was already at 199 rows of its
+under-200 test. So the full rules, the Tests bullet among them, sit in `build`. Measured with the kit test's own row
+count: the apps kit goes from 196 rows to 197, the games kit stays at 199. Cycle 2's note N2 (keep "Never loosen, skip
+or re-record a test to hide a defect" in `CLAUDE.md`) was tried and left out: with the Risk line's lane 1 clause, it
+takes the games kit to 200 rows, which the test refuses. The sentence stays in `build`'s Tests bullet.
 
 ### 2. `build`, the new Verification section (kits and repos)
 
@@ -161,15 +176,16 @@ At the end of `build`, after a blank line. It ends the file.
 
 Checks are what let work be handed off: what a program can judge, nobody has to read line by line. The owner says what done looks like and looks at the evidence; the checks do the rest, so they are built and kept like any other part of the product.
 
-- **Run it like a person.** Before a change that alters what the product does is called done, its builder runs it: starts the app or game, goes through the changed journey with real taps, clicks, keys and typing, and looks at what happens. Passing tests are not this. How to start and drive this repo is in its `verify` skill, which the builder loads before every commit that changes behavior. Every session leans on it, so it stays quick and steady: a step in it that breaks or flakes is fixed first, and a change to how the product starts or what its first screen shows updates it in the same pull request.
+- **Run it like a person.** Before a change that alters what the product does is called done, its builder runs it: starts the app or game, goes through the changed journey with real taps, clicks, keys and typing, and looks at what happens. Passing tests are not this. How to start and drive this repo is in its `verify` skill, which the builder loads before every commit that changes behavior. Every session leans on it, so it stays quick and steady: a step in it that breaks or flakes is fixed first, and a change to how the product starts or what its first screen shows updates it in the same pull request. A session starts it clean once; its later runs may reuse the app or game it already has running.
 - **The test that is hardest to fool comes first.** A unit test can pass while the feature is broken, because the test and the code share the same misunderstanding. So, in this order: 1. **Journeys**: a person's path through the running product, from the first screen to done; a failure names the step, with a screenshot; a changed journey gets a journey test. 2. **Property tests**, for the cases people and agents both miss: state something that must always hold and let many generated inputs, from a fixed seed, try to break it: round trips (save then load gives back the same thing), invariants (a count never goes below zero), repeats (doing it twice is the same as doing it once: migrations, retries, clean-ups) and twins (a fast version agrees with a plain, correct one). A property-test library is a new dependency and needs the owner's yes first. 3. **Old-versus-new tests**, for a rewrite or a move that should not change behavior: run the old and the new on the same inputs, set aside differences that do not matter (spacing, order), and treat every other difference as a bug unless it is on the change's written list of intended differences. Unit tests cover the small pieces underneath.
-- **Test first, from the outside in.** Write the failing test first and confirm it fails for the right reason. The first one is the hardest-to-fool test the change reaches: a journey test when the change alters a journey, a property test when a rule must always hold. It stays failing while small unit tests build the pieces under it, each in a quick loop: a failing test, the least code that passes it, then a tidy-up with every test still passing. A test that pins what the code does today, before a refactor or a rewrite, passes at once on purpose: show that it can fail by breaking the code on purpose, then put the code back. Code written before its test is thrown away and written again from the test, except the old code in a rewrite, which stays as the yardstick until the old-versus-new test passes on the new.
-- **Tests.** Quick targeted tests run locally whenever they help; CI is the merge gate. A failing test blocks only the change that touches it: report an unrelated failure, and give a failure on `main` its own thread. A merge still needs every required check green, unless the owner authorizes an exception named in the pull request. Never loosen, skip or re-record a test to hide a defect. No `--pass-with-no-tests` or similar flag that lets an empty suite pass in CI. Updating a golden for an approved behavior change is fine, with its before and after shown. A docs change or a purely visual change is verified by what fits (a link or build check, the approved look), and a configuration change by lint, typecheck, the build and the CI run, not by an invented unit test.
-- **Quick and steady, or it gets skipped.** A slow check gets run less, and a flaky one teaches a session to rerun instead of fix. Cheap checks first (lint, typecheck, the tests the change reaches); before a push, the journeys the change reaches; the full suite in CI. A test that fails once and passes on retry is a defect. One rerun to find out whether a failure is flaky is allowed, and both results are reported. Report the flaky test with its text and record it under "Flaky tests" in `docs/superpowers/history.md`; its root cause is fixed in its own thread, unless it blocks this change. Never rerun it until it passes, slow it with a sleep, or skip it. If the root cause is not found within the tries in Settings, delete the test, put a steady check of the same thing in its place where one can be written, and record why, and the gap it leaves, under "Flaky tests".
-- **A change does not quietly edit its own check.** If a change can edit the check that judges it, the check proves little. So CI workflow files, the repo's own root `CLAUDE.md` and the shared skills (every skill in `.claude/skills/` but `verify` and `this-repo`) change only in a pull request that changes no product code and no tests: a rule change, or the first-time setup, which may change several of them together. A code change that needs a CI workflow change lands the workflow change first, in its own pull request. A pull request that changes or deletes an existing test, golden or `verify` step names each one and why in its body. Its reviewer, where its lane has one, reads those first, and when it edits `verify` also runs the `verify` on `main`.
-- **Lessons become tests first, and carry a trigger.** A confirmed failure gets a regression test. It becomes a lesson only when no test can catch it: one line under "Lessons" in `docs/superpowers/history.md` naming its trigger (the paths, or the kind of change, a diff shows), what to look for, and the failure behind it. Before it pushes, a session reads the lessons and acts only on those whose trigger its diff matches.
+- **Test first, from the outside in.** Write the failing test first and confirm it fails for the right reason. The first one is the hardest-to-fool test the change reaches: a journey test when the change alters a journey, a property test when a rule must always hold. It stays failing while small unit tests build the pieces under it, each in a quick loop: a failing test, the least code that passes it, then a tidy-up with every test still passing.
+- **Old code and today's behavior.** A test that pins what the code does today, before a refactor or a rewrite, passes at once on purpose: show that it can fail by breaking the code on purpose, then put the code back. Code written before its test is thrown away and written again from the test, except the old code in a rewrite, which stays as the yardstick until the old-versus-new test passes on the new.
+- **Tests.** Quick targeted tests run locally whenever they help; CI is the merge gate. A failing test blocks only the change that touches it: report an unrelated failure, and give a failure on `main` its own thread. A merge still needs every required check green, unless the owner authorizes an exception named in the pull request. Never loosen, skip or re-record a test to hide a defect. No `--pass-with-no-tests` or similar flag that lets an empty suite pass in CI. Updating a golden for an approved behavior change is fine, with its before and after shown. A docs change or a purely visual change is verified by what fits (a link or build check, the approved look), a configuration change by lint, typecheck, the build and the CI run, and generated code (an API report, compiled messages, a database client) through its source and the tool that makes it, not by an invented unit test.
+- **Quick and steady, or it gets skipped.** A slow check gets run less, and a flaky one teaches a session to rerun instead of fix. Cheap checks first (lint, typecheck, the tests the change reaches); before a push, the journeys the change reaches; the full suite in CI. A test that fails once and passes on retry is a defect. One rerun to find out whether a failure is flaky is allowed, and both results are reported; that rerun does not count as the clean run lane 2 needs. Report the flaky test with its text and record it under "Flaky tests" in `docs/superpowers/history.md`; its root cause is fixed in its own thread, unless it blocks this change. Never rerun it until it passes, slow it with a sleep, or skip it. If the root cause is not found within the tries in Settings, delete the test, put a steady check of the same thing in its place where one can be written, and record why, and the gap it leaves, under "Flaky tests".
+- **A change does not quietly edit its own check.** If a change can edit the check that judges it, the check proves little. So CI workflow files, the repo's own root `CLAUDE.md` and the shared skills (every skill in `.claude/skills/` but `verify` and `this-repo`) change only in a pull request that changes no product code and no tests: a rule change, or the first-time setup, which may change several of them together. A code change that needs a CI workflow change lands the workflow change first, in its own pull request. A pull request that changes or deletes an existing test, golden or `verify` step names each one and why in its body. Its reviewer, where its lane has one, reads those first, and when it edits `verify` also runs `verify` from `main` (`review` says so too).
+- **Lessons become tests first, and carry a trigger.** A confirmed failure gets a regression test. It becomes a lesson only when no test can catch it: one line under "Lessons" in `docs/superpowers/history.md` naming its trigger (the paths, or the kind of change, a diff shows), what to look for, and the failure behind it. Before it pushes, a session reads the lessons and acts only on those whose trigger its diff matches; a plan also carries the matching ones into its brief, as `review` says.
 - **Prune.** Tests, `verify` steps, lessons and rules only grow unless someone trims them. Each retrospective removes the ones that no longer catch anything or that another check already covers, naming each one and why: rules and lessons in its rule-change pull request, tests in their own.
-- **Superpowers' testing skills.** Its `test-driven-development` and `verification-before-completion` run inside every build, and where they differ these rules win: the first failing test is the hardest-to-fool one the change reaches, not only a small unit test; a test that pins today's behavior passes at once on purpose; the old code in a rewrite stays until the old-versus-new test passes; an unrelated failing test is reported and gets its own thread, not fixed in this change; an existing test that changes is named in the pull request body; the exceptions to test-first are the ones above (docs, purely visual, configuration), not a question for the owner; before a push the session runs the cheap checks and the journeys the change reaches, and the full suite runs in CI; and passing tests are not done until the change has been run through `verify`.
+- **Superpowers' testing skills.** Its `test-driven-development` and `verification-before-completion` apply to every change, and where they differ these rules win: the first failing test is the hardest-to-fool one the change reaches, not only a small unit test; a test that pins today's behavior passes at once on purpose; the old code in a rewrite stays until the old-versus-new test passes; an unrelated failing test is reported and gets its own thread, not fixed in this change; an existing test that changes is named in the pull request body; the exceptions to test-first are the ones above (docs, purely visual, configuration), not a question for the owner; before a push the session runs the cheap checks and the journeys the change reaches, and the full suite runs in CI; and passing tests are not done until the change has been run through `verify`.
 ```
 <!-- spec:build-section:end -->
 
@@ -194,9 +210,38 @@ What changed from the coordinator's draft and from cycle 1, keeping its meaning:
   (N8).
 - The **Superpowers' testing skills.** bullet is new, from section 7, so the kits carry it too.
 
-### 3. `review`, "## Lessons" (kits and repos)
+Cycle 2 also changed:
 
-The section's body, from the line after "## Lessons" to the end of the file, becomes:
+- **Run it like a person.** says a session starts the product clean once, and its later runs may reuse it (N4).
+- **Test first, from the outside in.** is split in two; the second bullet is **Old code and today's behavior.** (N8).
+- The Tests bullet says generated code is verified through its source and the tool that makes it (N6).
+- The diagnostic rerun does not count as the clean run lane 2 needs (N3).
+- "runs `verify` from `main`", and it points to `review`, which now says the same to the reviewer (R3, N8).
+- A lesson whose trigger matches is acted on before a push, and a plan carries it into its brief: both routes apply
+  (N5).
+- "apply to every change", not "run inside every build" (N8).
+
+`build`'s description gains "or when a test fails, flakes or is pruned", so a session watching CI or running a
+retrospective finds these rules (N1). The kit test's frontmatter pin still passes:
+
+<!-- spec:build-description:start -->
+```markdown
+description: Use when writing a brief's acceptance criteria, or writing or changing code or tests, or when a test fails, flakes or is pruned.
+```
+<!-- spec:build-description:end -->
+
+### 3. `review` (kits and repos)
+
+"## Checks and reviews" gains this bullet at its end, so the reviewer, who loads `review` and not `build`, reads a
+changed check first and runs `verify` from `main` when a pull request edits it (cycle 2's R3; cycle 1's R5 and N10):
+
+<!-- spec:review-bullet:start -->
+```markdown
+- A pull request that changes or deletes an existing test, golden or `verify` step names each one in its body. Read those first. When it edits `verify`, also run `verify` from `main` (Verification in `build`).
+```
+<!-- spec:review-bullet:end -->
+
+"## Lessons" keeps its heading and the blank line under it; the rest of the section, to the end of the file, becomes:
 
 <!-- spec:review-lessons:start -->
 ```markdown
@@ -223,8 +268,22 @@ for one no test can catch (R6). The retrospective keeps the narrower lessons in 
 - The **Retrospective.** bullet: after "and proposes the rest as one rule-change pull request for the owner to
   approve." add " It also prunes, as Prune under Verification in `build` says."
 
-`release`, after the setup check's item that starts "- The compaction hook:", this item (N4: a repo with nothing to
-start yet):
+`release`, three edits (cycle 2's R4, so `release` sorts lanes the way the Owner's Risk line does):
+
+- "## Docs only": in "rules files (CLAUDE.md, the skills, and anything else that decides what needs the owner)", "the
+  skills" becomes "the shared skills". After "plus the owner's approval or an applicable standing permission." a space
+  and this sentence are added:
+
+<!-- spec:release-docs:start -->
+```markdown
+A repo's own `verify` and `this-repo` skills are not rules files: an edit to one takes the lane of the code change it describes, and an edit to one alone is lane 1 (Risk in CLAUDE.md).
+```
+<!-- spec:release-docs:end -->
+
+- "## Lanes and merging": "lane 3 (the rules files included)" becomes "lane 3 (the rules files included, as Docs only
+  names them)".
+- The setup check: after the item that starts "- The compaction hook:", this item (a repo with nothing to start yet is
+  reported as missing until its first screen exists):
 
 <!-- spec:release-line:start -->
 ```markdown
@@ -234,12 +293,21 @@ start yet):
 
 ### 5. The `verify` skill
 
-**In the kits**: a new block "## Skill: verify", the same in both kits, just before "## Hook: settings.json", with the
-note line "Save this as .claude/skills/verify/SKILL.md in your repo, and fill in its blanks the first time the app or
-game starts." and this text in a four-backtick fence. The games kit gets no separate games form: the steps are the
-same for an app and a game (start it, open it in a browser, drive it with keys and taps, look), and the words "app or
-game" cover both. The blanks are the kit's usual `[UPPER CASE]` blanks, so the kit's "Start here" and its blank list
-pick them up with no other change.
+**In the kits**: a new block "## Skill: verify", the same in both kits, just before "## Hook: settings.json", with this
+note line and the text below in a four-backtick fence:
+
+<!-- spec:verify-note:start -->
+```markdown
+Save this as .claude/skills/verify/SKILL.md in your repo. Claude fills in the parts in angle brackets the first time it starts the app or game; you leave them as they are.
+```
+<!-- spec:verify-note:end -->
+
+The games kit gets no separate games form: the steps are the same for an app and a game (start it, open it in a
+browser, drive it with keys and taps, look), and the words "app or game" cover both. Its gaps are written
+`<lower case>` in angle brackets, not as the kit's `[UPPER CASE]` blanks (cycle 2's R5, option a). The kit page lists
+every `[UPPER CASE]` blank for the person to fill in, and these are not the person's: Claude fills them in when it
+first starts the product, with times it measures. So the person's "fill in" list stays as it is (15 blanks in the apps
+kit, 17 in the games kit, measured before and after), and the new kit test checks that.
 
 <!-- spec:verify-kit:start -->
 ````markdown
@@ -250,62 +318,67 @@ description: Use when a change alters what the product does, before calling it d
 
 # Verify
 
-[WHAT IT IS]
+<the product in one line>
 
 ## Start it
 
 From a clean checkout in a cloud container, in order. First pick the Node version (or other runtime) that `engines` in `package.json` asks for. Then install, build, and start every stand-in for an outside service (a database, payments, mail, sign-in), never the real one.
 
-[START COMMANDS]
+<start commands>
 
-It is ready when [READY SIGNAL]. Last clean start, timed with `date` before and after: [START TIME], on commit [COMMIT].
+It is ready when <ready signal>. Last clean start, timed with `date` before and after: <start time>, on commit <commit>.
 
 ## Drive it
 
 Open it in a real browser: the Chromium and Playwright the container already has (`require('playwright')`, then `chromium.launch()`), at each size in the device matrix in Settings. Tap, click, type and press keys the way a person would, and find things by their label or role. Take a screenshot at deviceScaleFactor 1 for your own check, and save it in the scratchpad, never in the repo. The main screen, what it shows and how to use it:
 
-[MAIN SCREEN]
+<main screen>
 
 ## The journeys
 
 One line each, from a person's side: where it starts, the steps, and what they see at the end.
 
-[JOURNEYS]
+<journeys>
 
 ## Stop it
 
 Stop every server it started and clear what it wrote, so the next run starts clean.
 
-[STOP COMMANDS]
+<stop commands>
 
 ## When it breaks
 
 A step that breaks or flakes is fixed in this skill first. Each known way a start or a step fails, what it looks like, and the fix:
 
-[KNOWN FAILURES]
+<known failures>
 ````
 <!-- spec:verify-kit:end -->
 
 **In each repo**: `.claude/skills/verify/SKILL.md` is the kit's text with every blank filled in, and nothing else
-changed: every line of the kit's text is there, in order, and no `[UPPER CASE]` blank is left. This program checks
-that (acceptance criterion 5):
+changed: every line of the kit's text is there, in order, every gap holds at least one line of text, and no
+`<lower case>` gap from the kit is left. This program checks that (acceptance criterion 5):
 
 <!-- spec:verify-check:start -->
 ```python
 import re, sys
-kit = open(sys.argv[1]).read().split('\n')
+kit = [line for line in open(sys.argv[1]).read().split('\n') if line]
 repo = open(sys.argv[2]).read().split('\n')
-blank = r'\[[A-Z ]+\]'
+blank = r'<[a-z ]+>'
 i = 0
-for line in filter(None, kit):
+filled = True
+for line in kit:
     if re.fullmatch(blank, line):
+        start, filled = i, False
         continue
     pattern = re.compile('.+'.join(map(re.escape, re.split(blank, line))) + '$')
     while i < len(repo) and not pattern.match(repo[i]):
         i += 1
     assert i < len(repo), 'missing or out of order: ' + line
+    assert filled or any(repo[start:i]), 'empty: the part before ' + line
+    filled = True
     i += 1
-left = re.findall(blank, '\n'.join(repo))
+assert filled or any(repo[i:]), 'empty: the last part'
+left = [b for b in re.findall(blank, '\n'.join(kit)) if b in '\n'.join(repo)]
 assert not left, 'blanks left: ' + ', '.join(left)
 print('ok')
 ```
@@ -415,7 +488,7 @@ The overlaps:
 | "Other tests fail? Fix now." | Tests: an unrelated failure is reported and gets its own thread. A flaky test's root cause is fixed in its own thread unless it blocks this change. | A difference: these rules win. The unrelated failure is reported, not fixed in this change. Listed in **Superpowers' testing skills.** |
 | REFACTOR: "Keep tests green. Don't add behavior." | The same, and a move that should not change behavior gets an old-versus-new test. | Agree. |
 | "Write code before the test? Delete it. Start over." | Old-versus-new: the old code is the yardstick. | Agree for code written before its test. In a rewrite, the old code stays until the old-versus-new test passes on the new. **Test first, from the outside in.** |
-| Exceptions (throwaway prototypes, generated code, configuration files): "ask your human partner". | The owner approves results, not steps; docs, purely visual and configuration changes are verified by what fits. | A difference: these rules win; the exceptions are the ones the Tests bullet names, not a question for the owner. |
+| Exceptions (throwaway prototypes, generated code, configuration files): "ask your human partner". | The owner approves results, not steps; docs, purely visual and configuration changes are verified by what fits. | A difference: these rules win; the exceptions are the ones the Tests bullet names (docs, purely visual, configuration, and generated code through its source and its tool), not a question for the owner. |
 | "Before you call the change done, run the project's test command." | Cheap checks first; before a push, the journeys the change reaches; the full suite in CI; done means merged to `main` and green there. | A difference: before a push the session runs the cheap checks and the journeys the change reaches; the full suite runs in CI. The same words as **Quick and steady** (R1). |
 | `verification-before-completion`: "NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE". | Run it like a person; passing tests are not this. | Agree, and Verification adds a kind of evidence: a claim that the product works also needs the `verify` run. |
 | `executing-plans`: per task, `task-done` records the test command's result. | `verify` before every commit that changes behavior. | Agree: **Run it like a person.** says so. |
@@ -454,6 +527,28 @@ The audit is `docs/superpowers/audits/2026-11-18-1-verification-plan-audit.md` (
 | N10, reviewing a `verify` edit | The reviewer also runs the `verify` on `main`. |
 | N11, practices left out | None needed, as the audit says; left for a later spec if the Owner asks. |
 
+## What changed after plan audit cycle 2
+
+The audit is `docs/superpowers/audits/2026-11-18-2-verification-plan-audit.md` (at `9501b80`, audited `426f50c`).
+
+| Finding | How it is settled |
+|---|---|
+| R1, `verify-check` passes a skill with its gaps deleted | Each gap must hold a line of text. Tried: `ok` on a filled copy; fails on a copy with the six gap-only lines deleted, on one with the last gap empty, on one missing "## Stop it", and on the unfilled kit. |
+| R2, the `CLAUDE.md` section names two of six points | It names all six, one sentence each (section 1). Rows: apps 197, games 199. |
+| R3, the reviewer's steps sit in `build` | A bullet in `review` "## Checks and reviews" (section 3), checked by criterion 4 and the kit test. Closes cycle 1's R5 and N10. |
+| R4, `release` still makes every skill lane 3 | `release` "Docs only" and "Lanes and merging" (section 4); the Risk line and `release` say an edit to a repo's own skill alone is lane 1. |
+| R5, nine gaps the person cannot fill in | Option (a): `<lower case>` gaps; the note line says Claude fills them in; the person's list is unchanged. |
+| R6, the order of audits and approvals | One order in "Lane and path", the same as the Plan; the estimate says it leaves out the wait for the Owner's first approval. |
+| N1, finding the rules from CI or a retrospective | `build`'s description (section 2). |
+| N2, "Never loosen" in `CLAUDE.md` | Left out, with the reason in section 1: it takes the games kit to 200 rows. |
+| N3, the rerun against lane 2's clean run | One clause in **Quick and steady**. |
+| N4, a clean start every commit | **Run it like a person.**: clean once per session. |
+| N5, two routes for lessons | Both apply, said in `build`. |
+| N6, generated code | The Tests bullet and section 7. |
+| N7, a final newline and the blank line in `review` | Section 3 keeps the blank line; criterion 4 gives the command. |
+| N8, plain words | The test-first bullet split; "from `main`"; "every change". "deviceScaleFactor" stays: it is the browser tool's own setting name, which the session types. |
+| N9, a blank line with two spaces in the cycle 1 audit | Stripped in this fix round. |
+
 ## Acceptance criteria
 
 Each is checked on each pull request's head commit, and the pull request body shows the command and its output. Run
@@ -466,15 +561,15 @@ sect() { awk '/^## Verification$/{f=1} /^## /&&!/^## Verification$/{f=0} f' "$1"
 ```
 
 1. **The kits change first, and their tests catch it.** In mcthaydt-website, the test edits below go in first and fail
-   on the old kits (seen: 7 failing), then pass on the new ones. `npx svelte-kit sync`, then `npx vitest run --project
-   unit` (seen: 275 passed) and `npx vitest run --project components` (52 passed) pass; `npm run -s content:check`
-   reports 0 errors. The 200-row limit and every pinned phrase in the test file are unchanged; the CLAUDE.md block
-   wraps to 195 rows (apps) and 197 (games). The test edits, exactly:
+   on the old kits (seen: 7 failing, 102 passing), then pass on the new ones (109 of 109). `npx svelte-kit sync`, then
+   `npx vitest run --project unit` (seen: 275 passed) and `npx vitest run --project components` (52 passed) pass;
+   `npm run -s content:check` reports 0 errors. The 200-row limit and every pinned phrase in the test file are
+   unchanged; the CLAUDE.md block wraps to 197 rows (apps) and 199 (games). The test edits, exactly:
 
 <!-- spec:kit-test:start -->
 ```diff
 diff --git a/tests/unit/kit-content.test.ts b/tests/unit/kit-content.test.ts
-index 574ca32..a80746e 100644
+index 574ca32..d55ad8b 100644
 --- a/tests/unit/kit-content.test.ts
 +++ b/tests/unit/kit-content.test.ts
 @@ -8,7 +8,7 @@ const kit = (slug: string) => parseKitPrompt(read(`content/prompts/${slug}/body.
@@ -495,7 +590,7 @@ index 574ca32..a80746e 100644
    });
    test(`${slug}_ends_each_slice_with_a_fresh_end_to_end_walk_and_a_screens_page_before_the_retro`, () => {
      const staged = flat(text(slug, 'Skill: staged-path') + '\n' + text(slug, 'CLAUDE.md').slice(text(slug, 'CLAUDE.md').indexOf('## Settings')));
-@@ -448,6 +448,21 @@ for (const slug of KITS) {
+@@ -448,6 +448,25 @@ for (const slug of KITS) {
      expect(review).toContain('`<topic>` is the spec\'s topic, or the pull request\'s on the short path, and `<cycle>` counts rounds, so two audits never share a name');
      for (const block of kit(slug).blocks) expect(block.text, block.label).not.toContain('<date>-<cycle>-');
    });
@@ -506,18 +601,22 @@ index 574ca32..a80746e 100644
 +    expect(claude).not.toContain('- **Tests.**');
 +    expect(flat(claude)).toContain('run like a person, through the `verify` skill');
 +    expect(flat(claude)).toContain('takes the lane of the code change it describes');
++    expect(flat(claude)).toContain('An edit to one alone, with no code change, is lane 1');
 +    const build = flat(section(text(slug, 'Skill: build'), '## Verification'));
-+    for (const rule of ['**Run it like a person.**', '**The test that is hardest to fool comes first.**', '**Test first, from the outside in.**', '**Tests.**', '**Quick and steady, or it gets skipped.**', '**A change does not quietly edit its own check.**', '**Lessons become tests first, and carry a trigger.**', '**Prune.**', '**Superpowers\' testing skills.**', 'needs the owner\'s yes first', 'unless it blocks this change'])
++    for (const rule of ['**Run it like a person.**', '**The test that is hardest to fool comes first.**', '**Test first, from the outside in.**', '**Old code and today\'s behavior.**', '**Tests.**', '**Quick and steady, or it gets skipped.**', '**A change does not quietly edit its own check.**', '**Lessons become tests first, and carry a trigger.**', '**Prune.**', '**Superpowers\' testing skills.**', 'needs the owner\'s yes first', 'unless it blocks this change'])
 +      expect(build, rule).toContain(rule);
 +    expect(flat(text(slug, 'Skill: review'))).toContain('LOOK FOR:');
++    expect(flat(text(slug, 'Skill: review'))).toContain('When it edits `verify`, also run `verify` from `main`');
++    expect(flat(text(slug, 'Skill: release'))).toContain('an edit to one alone is lane 1');
 +    expect(flat(text(slug, 'Skill: release'))).toContain('The `verify` skill: `.claude/skills/verify/SKILL.md` is there');
 +    expect(flat(text(slug, 'Skill: staged-path'))).toContain('It also prunes');
-+    expect(kitPlaceholders(kit(slug).blocks)).toEqual(expect.arrayContaining(['START COMMANDS', 'MAIN SCREEN', 'JOURNEYS']));
++    expect(text(slug, 'Skill: verify')).toContain('<start commands>');
++    expect(kitPlaceholders(kit(slug).blocks), 'the person fills in none of the verify blanks').not.toContain('START COMMANDS');
 +  });
    test(`${slug}_lists_its_fill_in_blanks`, () => {
      const blanks = kitPlaceholders(kit(slug).blocks);
      for (const blank of ['PROJECT', 'WHAT IT IS FOR', 'STACK', 'INSTALL COMMAND', 'LINT COMMAND', 'TYPECHECK COMMAND', 'TEST COMMAND', 'BUILD COMMAND']) expect(blanks).toContain(blank);
-@@ -508,12 +523,13 @@ test('both_kits_share_one_workflow_word_for_word', () => {
+@@ -508,12 +527,13 @@ test('both_kits_share_one_workflow_word_for_word', () => {
      .replace(/\n- \*\*Delegation\.\*\*[\s\S]*?(?=\n\n|\n- |$)/, '')
      .replace(/\n- Use the runtime's supported sessions[\s\S]*?different label\./, '')
      .replace(/\s+/g, ' ').trim();
@@ -535,9 +634,9 @@ index 574ca32..a80746e 100644
 ```
 <!-- spec:kit-test:end -->
 
-2. **One text everywhere.** `sect CLAUDE.md | md5sum` gives `2364effa340d2680f8f35a3e22154f8f` in each of the five
+2. **One text everywhere.** `sect CLAUDE.md | md5sum` gives `ca1c58dcf739ee9150a820514f86ce05` in each of the five
    repos, the same as `{ blk claude-section; echo; } | md5sum` (the section plus the blank line before "## Risk").
-   `sect .claude/skills/build/SKILL.md | md5sum` gives `1cc3afc09f7804c5e089f84d8e41bf75` in each repo, the same as
+   `sect .claude/skills/build/SKILL.md | md5sum` gives `c540d4a49548a3289f795826f098f81f` in each repo, the same as
    `blk build-section | md5sum`. In the kits, the same two hashes come from each kit's CLAUDE.md and `build` blocks
    (saved to files first). Tried on a copy of this repo's files with the edits applied, and on the two kits: all give
    these two hashes.
@@ -549,15 +648,19 @@ index 574ca32..a80746e 100644
    there is no line starting "- **Tests.**" or "- **Lessons become tests first.**"; "fails once and passes on retry"
    appears once in `CLAUDE.md` and once in `build`. `review` ends with `blk review-lessons`; `staged-path` has "and
    carries those whose trigger its work matches", "are read with Verification in `build`" and "It also prunes";
-   `release` has `blk release-line` right after the compaction-hook item. `review`, `build`, `staged-path`,
-   `owner-updates` and `visual-check` are one hash across the five repos; `release` differs between RukenApp and the
-   others only in its `commit-authors` line (`diff` shows that one line). The repos' `review` and `staged-path` equal
-   the apps kit's blocks byte for byte (tried: they do).
+   `release` has `blk release-line` right after the compaction-hook item, `blk release-docs` in "## Docs only", "the
+   shared skills, and anything else" and "(the rules files included, as Docs only names them)". `review`'s "## Checks
+   and reviews" ends with `blk review-bullet`; `build`'s frontmatter has `blk build-description`. `review`, `build`,
+   `staged-path`, `owner-updates` and `visual-check` are one hash across the five repos; `release` differs between
+   RukenApp and the others only in its `commit-authors` line (`diff` shows that one line). The repos' `review` and
+   `staged-path` equal the apps kit's blocks byte for byte (tried: they do). A saved kit block has no final newline, so
+   compare with `{ cat block; echo; } | cmp - file`.
 5. **The `verify` skill has the kit's shape.** `blk verify-check > check.py; blk verify-kit > kit.md; python3 -I
-   check.py kit.md .claude/skills/verify/SKILL.md` prints `ok` in each repo (tried: it prints `ok` on a filled copy,
-   and fails on the unfilled kit and on a copy missing "## Stop it"). In the kits, each kit's verify block equals
-   `blk verify-kit`, and its blanks are in the kit's blank list. The start time and commit in "Start it" were measured
-   with `date` and `git rev-parse --short HEAD`.
+   check.py kit.md .claude/skills/verify/SKILL.md` prints `ok` in each repo. Tried: `ok` on a filled copy; it fails on
+   the unfilled kit ("blanks left"), on a copy with the six gap-only lines deleted ("empty: the part before ## Start
+   it"), on a copy with its last gap empty, and on a copy missing "## Stop it". In the kits, each kit's verify block
+   equals `blk verify-kit`, its note line equals `blk verify-note`, and the person's fill-in list is unchanged. The
+   start time and commit in "Start it" were measured with `date` and `git rev-parse --short HEAD`.
 6. **The `verify` skill works for a stranger.** For each repo, a fresh cloud session that did not write the skill,
    started with only "Load the `verify` skill and follow it to start this repo's app or game and take a screenshot of
    its main screen", on the pull request's head commit, does so three times in a row, each from a clean start (a fresh
@@ -602,8 +705,9 @@ time at most (Settings). Each is lane 3.
 1. A fresh session audits this spec again (plan audit, cycle 2), never this session, and writes
    `docs/superpowers/audits/2026-11-18-2-verification-plan-audit.md` on this branch; this spec merges on green with it.
 2. Unit 1, in mcthaydt-website on its own branch from `main`: the test edits first, seen failing; then the kit edits
-   (sections 1 to 5), copied with `blk`, never retyped; then criteria 1 to 5. Its implementation audit and the Owner's
-   approval come before units 2 to 6 start, so the repos copy the kit as merged.
+   (sections 1 to 5), copied with `blk`, never retyped; then criteria 1 to 5. A fresh session audits it (its own
+   implementation audit), the Owner approves it, and it merges before units 2 to 6 start, so the repos copy the kit as
+   merged.
 3. Units 2 to 6, each in its repo on its own branch from `main`: the `CLAUDE.md` and skill edits (sections 1 to 4) and
    the history entries (section 6), copied with `blk`; then the `verify` skill (section 5), the kit's text with its
    blanks filled by starting and driving the product in the build session's own container until it works from a clean
