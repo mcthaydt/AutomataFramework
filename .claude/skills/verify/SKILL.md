@@ -23,12 +23,13 @@ npx --yes --package "$SCRATCH"/pack/*.tgz automata create my-game --source en --
 cd my-game && npm install --no-audit --no-fund
 (setsid npm run dev -- --no-open --port 5199 > "$SCRATCH/play.log" 2>&1 &)     # `npm run dev` is `automata play`
 for i in $(seq 60); do curl -sf http://localhost:5199/ >/dev/null && break; sleep 1; done     # up to 60 tries, once a second
-curl -sf http://localhost:5199/ >/dev/null && echo ready || { echo "not ready"; tail "$SCRATCH/play.log"; }
+for i in $(seq 60); do grep -q 'ready in' "$SCRATCH/play.log" && break; sleep 1; done
+grep -q 'ready in' "$SCRATCH/play.log" && curl -sf http://localhost:5199/ >/dev/null && echo ready || { echo "not ready"; tail "$SCRATCH/play.log"; }
 ```
 
 `$SCRATCH` is the scratchpad directory your session names; replace the `<...>` on the first line with its full path. Run the block from the root of this repo's checkout, since the clone is of the directory it runs in. There is no outside service to stand in for. Where `package.json`, `tests/create/made-game.ts` or this list differ, the files win and this skill is fixed.
 
-It is ready when `curl -sf http://localhost:5199/` answers and `$SCRATCH/play.log` says `ready`. Last clean start, timed with `date` before and after: 29 to 43 seconds from a fresh clone to the page answering (three fresh-session runs measured 43, 29 and 29 seconds; the author's own run took 46), on commit d3f6530.
+It is ready when `$SCRATCH/play.log` says `ready in` and `curl -sf http://localhost:5199/` answers; the block prints `ready` when both hold. Last clean start, timed with `date` before and after: 29 to 43 seconds from a fresh clone to the page answering (three fresh-session runs measured 43, 29 and 29 seconds; the author's own run took 46), on commit d3f6530.
 
 ## Drive it
 
@@ -37,7 +38,7 @@ Open it in a real browser: the Chromium and Playwright the container already has
 The language picker: the title "Play in English", six flags (English first, with a white ring) and a big Go button. Press Go and the menu follows, then Play, and the first level opens. At 390 wide and 820 wide it shows the same, with touch buttons.
 
 ```js
-// $SCRATCH/play.cjs, run with `node` under Node 24 (`require('playwright')` already works)
+// Save as $SCRATCH/play.cjs, then run: cd "$SCRATCH" && SCRATCH="$SCRATCH" node play.cjs   (Node 24; `require('playwright')` already works)
 const { chromium } = require('playwright');
 (async () => {
   const b = await chromium.launch();
@@ -73,7 +74,7 @@ Stop every server it started and clear what it wrote, so the next run starts cle
 
 ```sh
 pkill -f 'automata play'; pkill -f vite
-rm -rf "$SCRATCH/repo" "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log"
+rm -rf "$SCRATCH/repo" "$SCRATCH/made game" "$SCRATCH/pack" "$SCRATCH/play.log" "$SCRATCH/play.cjs" "$SCRATCH/main.png" "$SCRATCH/playing.png"
 ```
 
 ## When it breaks
@@ -82,5 +83,6 @@ A step that breaks or flakes is fixed in this skill first. Each known way a star
 
 - `automata: command not found` or a Node 22 error: `export PATH=/opt/node24/bin:$PATH` first; `engines` asks for Node 24.21 or newer.
 - `TypeError: Cannot read properties of undefined (reading 'sim')`: `window.automataGame` is set a moment after the level opens, so the picker and menu come first and then `waitForFunction(() => window.automataGame !== undefined)`.
+- `Ignored build scripts: msgpackr-extract` or `npm warn install-scripts` during install: expected and harmless; the game runs without it.
 - Port 5199 already in use: a run before did not stop; run the stop commands.
 - `git clean -xfd` is refused in some containers; the clean start is a fresh clone into `$SCRATCH/repo` (the first start commands), so nothing needs cleaning.
