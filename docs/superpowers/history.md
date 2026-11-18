@@ -67,6 +67,10 @@ Finished milestones and their decision records, setup, rule changes, standing pe
 - 2026-11-16, the Owner: a deletion the plan called for that git can restore merges on green, with a before-and-after
   note.
 
+- 2026-11-18, the Owner ("merge now, then fix all 12 after; then we do the test cleanup", then "man just finish this"):
+  the verification change's follow-up round and the test cleanup merge on green and their required reviews without
+  asking again. Scope: that job only (done 2026-11-18). Later work asks as usual.
+
 ## Approved screens
 
 None yet.
@@ -77,7 +81,10 @@ None yet.
 
 ## Lessons
 
-None yet.
+- TRIGGER: an audit, a fresh run or a change of a `verify` skill. CHECK: every step that reads or presses something
+  waits for it first (a readiness signal, never a sleep); a step with no wait is red, however many runs it passed.
+  BEHIND IT: AutomataFramework's verify took its first screenshot before the picker drew; six runs passed, the audit
+  called it a note, and the next round failed 2 of 3 (fixed in d65db0c, 2026-11-18).
 
 ## Archive
 
