@@ -27,6 +27,7 @@ import {
   factsCommand,
   type GameSimOptions,
   heroLevels,
+  levelAt,
   skyOf,
 } from '../level/level.ts'
 import type { Locale } from '../locale/locale.ts'
@@ -115,6 +116,13 @@ export interface GameOptions extends GameSimOptions {
   readonly keepSeconds?: number
 }
 
+/** A spot in a level: the level's id, and the spot in the level's own tiles from its top left corner. */
+export interface LevelSpot {
+  readonly level: string
+  readonly x: number
+  readonly y: number
+}
+
 /** One step of the game, as `onStep` tells it: the tick the sim is at after it, and the events it raised in order. */
 export interface GameStep {
   readonly tick: number
@@ -188,6 +196,16 @@ export interface Game {
    * renderer tells a hero from a crate by the sprite, which such a game does not have.
    */
   heroes(): readonly HeroBox[]
+  /**
+   * The level under a point on the mount, and where in it: `x` and `y` in CSS pixels from the mount's top left corner
+   * (as `heroes` gives its boxes), and the answer in the level's own tiles from its top left corner, the unit a level
+   * file places a thing in. As of the last picture drawn, so it is what the player sees there: whether the camera
+   * follows the heroes or the whole level is fitted, at any pixel density, while paused, and at the mount's new size
+   * once the picture has been drawn again for it. In a place of joined levels it is whichever level is under the point.
+   * `undefined` before the first picture, after `stop`, and where no level is drawn: off the mount, on the strip kept
+   * for the touch buttons, in the bars beside a level that does not fill the mount, or in a gap between a place's levels.
+   */
+  levelAt(x: number, y: number): LevelSpot | undefined
   /** The player's setting: whether the device may buzz when a feel file says so. */
   setVibration(on: boolean): void
   /**
@@ -500,6 +518,15 @@ export async function startGame(options: GameOptions): Promise<Game> {
         return () => void brokenListeners.delete(listener)
       },
       heroes: () => renderer.heroes(),
+      levelAt(x, y) {
+        if (stopped) return undefined
+        const spot = renderer.worldAt(x, y)
+        if (spot === undefined) return undefined
+        const under = stage.simLevels.find((l) => l.level === levelAt(stage.simLevels, spot.x, spot.y))
+        return under === undefined
+          ? undefined
+          : { level: under.level, x: spot.x - under.x, y: spot.y - under.y }
+      },
       setVibration: (on) => buzzer.setOn(on),
       replay: () => ended ?? recorder.replay(),
       stop() {

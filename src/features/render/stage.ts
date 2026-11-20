@@ -54,6 +54,8 @@ export interface Stage {
    * camera's placement, with the offset rounded to whole device pixels, when there is one.
    */
   fit(shot?: Shot): Fit
+  /** The part of the canvas the level is drawn in, in CSS pixels from its top left: all of it but the strip `setInset` keeps. */
+  room(): { readonly w: number; readonly h: number }
   /**
    * Draws these views, placed by the shot (the whole level when there is none) in the current size, and the links over
    * them: a rope as a dark line two CSS pixels wide, a pin as a dark dot. Until the stage has a size they are kept and
@@ -357,6 +359,7 @@ export async function createStage(
       if (last !== undefined && box.w > 0) paint(last.views, last.links, last.shot)
     },
     fit: fitFor,
+    room,
     draw(views, links, shot) {
       if (destroyed) return
       last = { views, links, shot }

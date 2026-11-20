@@ -74,6 +74,14 @@ export interface Renderer {
    */
   heroes(): readonly HeroBox[]
   /**
+   * The spot in `world` (in tiles from its top left corner) under a point on the canvas (in CSS pixels from its top
+   * left corner, as `heroes` gives its boxes), as of the last picture drawn: where the camera was then, or the whole
+   * level fitted. It may be outside `world`, in the bars beside a level that does not fill the canvas. `undefined`
+   * before the first picture, and for a point off the canvas or on the strip kept free at the bottom (`setInset`),
+   * where no level is drawn.
+   */
+  worldAt(x: number, y: number): { readonly x: number; readonly y: number } | undefined
+  /**
    * The sky, the backdrop and the view become this level's, from the next step on. Nothing happens for a level it was not
    * given (`levels`), so a renderer of one level never changes.
    */
@@ -221,6 +229,14 @@ export async function createRenderer(options: {
           w: v.w * fit.scale,
           h: v.h * fit.scale,
         }))
+    },
+    worldAt(x, y) {
+      const room = stage.room()
+      // `!(… )` so that a point that is not a number is off the canvas too.
+      if (!started || !(x >= 0 && y >= 0 && x < room.w && y < room.h)) return undefined
+      const fit = stage.fit(shotAt(drawnAt))
+      if (!(fit.scale > 0)) return undefined
+      return { x: (x - fit.left) / fit.scale, y: (y - fit.top) / fit.scale }
     },
     enter(level) {
       const found = places.find((l) => l.level === level)
