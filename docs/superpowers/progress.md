@@ -65,6 +65,17 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
 - **F5, drawn behind, with the hero, or in front:** a thing's `draw` field; drawing only, so no hash moves.
 - Plan Q's open items: a native speaker's read of the new words in ES, KO, JA, ZH and PT (nothing read yet).
 
+### Backlog (not scheduled)
+
+- **The photo-style look in the editors.** The Owner's must-have, not scheduled yet (2026-11-19): the Godot
+  template's photo-style grading (8 filters and 12 sliders: exposure, brightness, contrast, brilliance, highlights,
+  shadows, saturation, vibrance, warmth, tint, sharpness) comes into the editors. The template has no curves, so
+  curves would be new work. Comparison: https://claude.ai/artifact/9NfqegU6JZxzbFskSmoj37
+- **3D, later.** "Modern mode": PBR; TAA, TAAU, MSAA, FXAA; HDR, exposure, bloom; camera and lens effects
+  (dreamscape, camcorder, film grain); real-time planar reflections; volumetric lighting; baked GI; parallax occlusion
+  mapping; normal and bump mapping. "Vintage mode": pure vertex lighting and vertex colors. What the two share is
+  decided later.
+
 ### Blockers
 
 None.
