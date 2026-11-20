@@ -1626,6 +1626,7 @@ interface Game {
     broken(): unknown;
     onBroken(listener: (error: unknown) => void): () => void;
     heroes(): readonly HeroBox[];
+    levelAt(x: number, y: number): LevelSpot | undefined;
     setVibration(on: boolean): void;
     replay(): Replay;
     stop(): void;
@@ -2466,6 +2467,16 @@ function levelSize(level: Level): {
 
 ```ts
 function levelsOf(content: GameContent, opened: string): readonly SimLevel[];
+```
+
+### `LevelSpot` (interface)
+
+```ts
+interface LevelSpot {
+    readonly level: string;
+    readonly x: number;
+    readonly y: number;
+}
 ```
 
 ### `LevelStart` (interface)
@@ -3752,6 +3763,10 @@ interface Renderer {
         readonly zoom: number;
     } | undefined): void;
     heroes(): readonly HeroBox[];
+    worldAt(x: number, y: number): {
+        readonly x: number;
+        readonly y: number;
+    } | undefined;
     enter(level: string): void;
     destroy(): void;
 }
