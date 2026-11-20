@@ -33,7 +33,7 @@ It is ready when `$SCRATCH/play.log` says `ready in` and `curl -sf http://localh
 
 ## Drive it
 
-Open it in a real browser: the Chromium and Playwright the container already has (`require('playwright')`, then `chromium.launch()`), at each size in the device matrix in Settings; the phone, tablet and computer sizes come from `SCREENS` in `tests/fixtures/game/screens.ts`, and where they differ, that file wins. Tap, click, type and press keys the way a person would, and find things by their label or role. Take a screenshot at deviceScaleFactor 1 for your own check, and save it in `$SCRATCH/shots`, never in the repo; Stop leaves that folder alone, so the screenshots are still there to look at after it. The main screen, what it shows and how to use it:
+Open it in a real browser: the Chromium and Playwright the container already has (`require('playwright')`, then `chromium.launch()`), at the sizes the change affects (see "Shoot what the change touches" in `visual-check`); the phone, tablet and computer sizes come from `SCREENS` in `tests/fixtures/game/screens.ts`, and where they differ, that file wins. Tap, click, type and press keys the way a person would, and find things by their label or role. Take a screenshot at deviceScaleFactor 1 for your own check, and save it in `$SCRATCH/shots`, never in the repo; Stop leaves that folder alone, so the screenshots are still there to look at after it. The main screen, what it shows and how to use it:
 
 The language picker: the title "Play in English", six flags (English first, with a white ring) and a big Go button. Press Go and the menu follows, then Play, and the first level opens. At 390 wide and 820 wide it shows the same, with touch buttons.
 
