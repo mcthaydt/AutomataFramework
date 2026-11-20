@@ -22,7 +22,7 @@ permissions:
 
 # A newer push stops the run it replaces, so no one waits on results that no longer count.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}${{ github.event_name == 'push' && format('-{0}', github.sha) || '' }}
   # Runs on main are never cancelled, so every merge gets its own result.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
