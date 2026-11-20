@@ -78,6 +78,11 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
   (dreamscape, camcorder, film grain); real-time planar reflections; volumetric lighting; baked GI; parallax occlusion
   mapping; normal and bump mapping. "Vintage mode": pure vertex lighting and vertex colors. What the two share is
   decided later.
+- **A super simple game maker for other people.** The Owner's idea (2026-11-20), not to build now: one command (for
+  example `npx create-automata-game`) asks three plain questions (the game's name, what kind of game, where it runs),
+  fills in the stack, rules and skills from https://mcthaydt.com/prompts/claude-md-games/ on its own, and sets up the
+  repo and its CI with one GitHub sign-in. The person then types an idea and gets a first slice they can play. A
+  paste-your-key screen shows only when a game needs a secret.
 
 ### Blockers
 
