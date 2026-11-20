@@ -48,7 +48,7 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
   `owner-commands.sh` once, after the setup pull requests merge: a one-off exception to "nothing runs on the Owner's
   computer" for the public repos, for that script only.
 - F1/F2 (#198) and F5 (#207) are merged; the lines that said they were in progress were stale (found 2026-11-18).
-- Next for this repo: Plan Q's native speaker read (nothing read yet).
+- Next for this repo: Plan Q's native-speaker reads, planned in `docs/superpowers/specs/2026-11-20-native-speaker-reads-design.md` (#219, merged at 0dddcaf); no reads started.
 
 ### Completed outcomes
 
@@ -63,7 +63,10 @@ plan pull request 17. Their full text is in the World editor plan, read from Aut
   `6643c2b`, "work in progress, browser tests not yet run"): merge `main` in first, run the browser tests in CI, take
   the API report, open a draft pull request.
 - **F5, drawn behind, with the hero, or in front:** a thing's `draw` field; drawing only, so no hash moves.
-- Plan Q's open items: a native speaker's read of the new words in ES, KO, JA, ZH and PT (nothing read yet).
+- Plan Q's open items: a native speaker's read of the new words in ES, KO, JA, ZH and PT. Planned in
+  `docs/superpowers/specs/2026-11-20-native-speaker-reads-design.md` (#219); no reads started. The Owner chose
+  (2026-11-20) that World closes with the reads planned, not done. Open Owner decisions for when readers exist: who
+  reads, payment, any extra scope, and which commit they read.
 
 ### Backlog (not scheduled)
 
