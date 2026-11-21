@@ -23,7 +23,7 @@ Do not move to the next slice without a design review loop on the screens comple
 
 ## Screens page
 
-The coordinator shows the screens page twice at the end of every slice: after the design review rounds before the owner's first look, and again after the round on the owner's notes, before the owner's walk. Each time it shows all of the slice's screens in one organized artifact: grouped by flow, in the order a person meets them, each screen at each size it was shot at (see "Shoot what the change touches"), labeled with its name and the commit it shows. Screens the owner already approved are included and marked as approved. Share it as one link, not as screenshots scattered across messages.
+The coordinator shows the screens page twice at the end of every slice: after the design review rounds before the owner's first look, and again after the round on the owner's notes, before the owner's walk. Each time it shows all of the slice's screens in one organized artifact: grouped by flow, in the order a person meets them, each screen at each size it was shot at (see "Shoot what the change touches"), labeled with its name and the commit it shows. Screens the owner already approved are included and marked as approved. Share it as one link, not as screenshots scattered across messages. It is for viewing, not keeping: once the owner has looked at it, its pictures are no longer needed, nothing keeps a copy of them, and the coordinator deletes the page where the runtime can (or lists it for the owner to delete). Approvals in `history.md` name each screen and the commit it shows, never a picture, and a later look shoots the screens again.
 
 ## Skip what is already approved
 

@@ -11,7 +11,8 @@
       "!docs/api",
       "!tests/fixtures/full-game/content",
       "!template/content",
-      "!template/replays"
+      "!template/replays",
+      "!.claude/hooks/rules.mjs"
     ]
   },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },

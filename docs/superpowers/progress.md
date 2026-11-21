@@ -1,97 +1,41 @@
 # Progress
 
-Last updated: 2026-11-18 15:09 UTC (from `date`).
+Last updated: 2026-11-21 09:18 UTC (from `date`).
 
-## Active milestone: the World slice (roadmap slice 3)
+The record before the 2026-11-21 restart is in git: `git show 76d2ac4^:docs/superpowers/progress.md`. The World slice's
+state at the restart is the handoff the Owner gave (2026-11-20 15:40 UTC), summed up under "Next" below.
 
-The framework's part of World (Plan W: levels joined by doors and edges, values on things, the world map) and the game
-checklist (Plan Q) are merged. The World editor (AutomataFrameworkEditors) needs four more framework tasks before its
-plan pull request 17. Their full text is in the World editor plan, read from AutomataFrameworkEditors at `8109888`:
-`docs/superpowers/plans/2026-11-16-world-editor.md`, "The framework's part".
+## Owner instructions
+
+- 2026-11-21 09:13 UTC (project thread): "Finish Automata Framework". Run the work by the fresh kit; run the setup check
+  in `release` first and list the Owner's steps as one batch of CLI commands; then keep going, asking only the Owner's
+  choices as decision cards with a recommendation.
+- 2026-11-21 09:17 UTC (decision card): "Finish" means **the 2D product, shipped**: close the World slice, build the
+  Characters, Feel, Sound, Story and Screens editors, then Releases 1 to 4. Not the real demo games or 3D. This lifts
+  the 2026-11-19 pause ("halted until the Owner finishes Ruken") for this scope (agent-selected reading, reported to
+  the Owner on 2026-11-21).
+
+## Active milestone: setup, then the World slice (roadmap slice 3)
 
 ### Current work
 
-- In progress 2026-11-18: the Owner's rule "a plan's order is a claim that one unit waits on another, not a queue"
-  (`staged-path`, kits and five repos), asked for in the coordinator thread.
-- Done 2026-11-18 (verification change, all merged, main green unless noted): the follow-up round (12 audit notes, the
-  "full suite in CI, where `release` sets the gate" reword, AF's Stop now kills only its own server) in website #81,
-  AF #215, Editors #115, Examples #76, Site #58, RukenApp #198; the test cleanup: AF nothing met the bar; Examples #77
-  (2 duplicates), Site #59 (3 duplicates), Editors #116 (3 Firefox-flaky tests steadied, cause of the stray blur not
-  found, recorded), RukenApp #199/#200 (flake recorded, 1 duplicate) and #201 (the take-off flake's root cause fixed on
-  main; #194 meets a one-line overlap there, which the Owner said to settle by keeping #194's version). Main green in
-  all five repos after the last merges. Product follow-ups found, not fixed: Examples' tablet DASH button over the
-  level art; Editors' top bar drops the game name at 390 px; Editors' "How heavy?" label under the welcome card at 1280.
-- Merged 2026-11-18 ~10:10 UTC: the verification change in all six PRs (website #77 2c47d69, AF #214 c7655ea, Editors
-  #114 04ba096, Examples #75 3fd4b8d, Site #57 584ce72, RukenApp #197 9972343), and website #80 (two FloorFifty games-kit
-  lessons, 623c62a, Owner's yes on a decision card). Owner decision (card, ~09:59 UTC): merge the kits now; reword the
-  shared "full suite in CI" line in the 12-notes round so the games gate is a stated case.
-- Owner instruction (2026-11-18 ~10:22 UTC, coordinator thread): "man just finish this, I don't know why you needed me".
-  Standing permission, scope: this job only — the 12-notes round (audit notes N3-N8, N10-N14, N19 plus the "full suite"
-  reword) and the test cleanup that follows merge on green and their required reviews without asking the Owner again.
-  It does not lower any lane or skip any review; anything outside that scope still goes to the Owner.
-- Owner instruction (2026-11-18 09:50 UTC, coordinator thread): "merge now, then fix all 12 after; then we do the
-  test cleanup". Lane 3 approval to merge the six verification pull requests at their audited heads (McThayDT-Website
-  #77 5d53e78, AutomataFramework #214 3e9c42a, Editors #114 62a75b7, Examples #75 1959b32, Site #57 e379aea, RukenApp
-  #197 fce4668; audit `docs/superpowers/audits/2026-11-18-1-verification-implementation-audit.md` at c4c08d8). Next:
-  the 12 open audit notes (N3-N8, N10-N14, N19) in one round, then the test cleanup under the new Prune rule.
-- Owner instruction (2026-11-18 ~02:00 UTC, coordinator thread): the verification rule change (spec
-  `docs/superpowers/specs/2026-11-18-verification-design.md`, PR #213) runs six writers at once for this job only
-  ("yes allow 6, go"), units 2 to 6 start without waiting for the kits' merge, and one implementation audit covers
-  all six pull requests. After it merges: "We can remove the tests that no longer belong after" — a pruning pass
-  per repo under the new Prune rule, each removal named with its reason, tests in their own pull requests.
-- Restart (2026-11-17): this repo's setup pull request puts back the apps kit (CLAUDE.md, skills, compaction hook) and the
-  CI, gate and commit-authors check saved in AutomataPrivate `docs/superpowers/handoffs/2026-11-17-restart/`. The
-  owner's brief (2026-11-17 03:54 UTC): "all slices complete", run by the apps CLAUDE.md and the restart handoff.
-- Owner decision (2026-11-17 04:00 UTC, decision card): the cloud tool's forced "Generated by Claude Code" pull request
-  footer is taken off by the `commit-authors` check itself (it may now write the pull request for that one edit).
-- Owner instruction (2026-11-17 04:00 UTC): a Remote Control session on the Owner's computer may run
-  `owner-commands.sh` once, after the setup pull requests merge: a one-off exception to "nothing runs on the Owner's
-  computer" for the public repos, for that script only.
-- F1/F2 (#198) and F5 (#207) are merged; the lines that said they were in progress were stale (found 2026-11-18).
-- Next for this repo: Plan Q's native-speaker reads, planned in `docs/superpowers/specs/2026-11-20-native-speaker-reads-design.md` (#219, merged at 0dddcaf); no reads started.
+- Setup check in all four repos (AutomataFramework, Editors, Examples, Site): restore the CI and records removed on
+  2026-11-20, install the fresh kit and its rule hooks. One setup pull request per repo, first-time setup, lane 2.
+- The Owner's batch of commands (branch protection requiring `gate`, secrets check, old branches): given in the
+  project thread on 2026-11-21, to run after the setup pull requests merge.
 
-### Completed outcomes
+### Next
 
-- Plan W: #171, #172, #173, #177, #180, #181. Plan Q: #143, #145, #148, #189, #190, #191. F3, `readGame`: #194. F4, a character's weight: #205.
+1. Close the World slice, from the handoff: fix design review round 1's reds (37, 34 distinct; the paused branch
+   Editors `claude/project-thread-c709zh` at `4f0384d3` holds group 1), round 2, the blind judge, the screens page for
+   the Owner's first look, one round on the Owner's notes, the drift check against board v17, the retrospective.
+2. Characters, Feel, Sound, Story, Screens (roadmap slices 4 to 8).
+3. Releases 1 to 4 (`docs/roadmap.md`).
 
-### Remaining
+### Material decisions (agent-selected)
 
-- **F1, one step and a slower speed.** `Game.step()` and `Game.setSpeed(rate)` (1, 0.5 or 0.25; anything else throws);
-  `createLoop` gains `rate`.
-- **F2, going back through what was just played.** `game/kept.ts` keeps snapshots; `backTo` goes back up to 30
-  seconds; the recorder gains `cutTo`. F1 and F2 are partly built on the branch `claude/f1-f2-step-back` (one commit,
-  `6643c2b`, "work in progress, browser tests not yet run"): merge `main` in first, run the browser tests in CI, take
-  the API report, open a draft pull request.
-- **F5, drawn behind, with the hero, or in front:** a thing's `draw` field; drawing only, so no hash moves.
-- Plan Q's open items: a native speaker's read of the new words in ES, KO, JA, ZH and PT. Planned in
-  `docs/superpowers/specs/2026-11-20-native-speaker-reads-design.md` (#219); no reads started. The Owner chose
-  (2026-11-20) that World closes with the reads planned, not done. Open Owner decisions for when readers exist: who
-  reads, payment, any extra scope, and which commit they read.
-
-### Backlog (not scheduled)
-
-- **The photo-style look in the editors.** The Owner's must-have, not scheduled yet (2026-11-19): the Godot
-  template's photo-style grading (8 filters and 12 sliders: exposure, brightness, contrast, brilliance, highlights,
-  shadows, saturation, vibrance, warmth, tint, sharpness) comes into the editors. The template has no curves, so
-  curves would be new work. Comparison: https://claude.ai/artifact/9NfqegU6JZxzbFskSmoj37
-- **3D, later.** "Modern mode": PBR; TAA, TAAU, MSAA, FXAA; HDR, exposure, bloom; camera and lens effects
-  (dreamscape, camcorder, film grain); real-time planar reflections; volumetric lighting; baked GI; parallax occlusion
-  mapping; normal and bump mapping. "Vintage mode": pure vertex lighting and vertex colors. What the two share is
-  decided later.
-- **A super simple game maker for other people.** The Owner's idea (2026-11-20), not to build now: one command (for
-  example `npx create-automata-game`) asks three plain questions (the game's name, what kind of game, where it runs),
-  fills in the stack, rules and skills from https://mcthaydt.com/prompts/claude-md-games/ on its own, and sets up the
-  repo and its CI with one GitHub sign-in. The person then types an idea and gets a first slice they can play. A
-  paste-your-key screen shows only when a game needs a secret.
+- 2026-11-21: the old CI is restored from git and adapted to the kit, rather than written again.
 
 ### Blockers
 
 None.
-
-### Previews
-
-- None yet: the framework's browser tests keep their pictures as each CI run's artifacts.
-
-### Material decisions
-
-- The Owner's: "How heavy" is the thing's Rapier mass (F4); draw order is kept in the level and used in play (F5).
