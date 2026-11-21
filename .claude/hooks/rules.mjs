@@ -405,8 +405,12 @@ function ghApi(cmd, config = {}) {
     if (w === '--input') { input = rest[++i]; continue; }
     if (w.startsWith('--input=')) { input = w.slice(8); continue; }
     if (['-H', '--header', '-q', '--jq', '-t', '--template', '--cache', '--hostname', '-p', '--preview'].includes(w)) { i++; continue; }
-    if (!w.startsWith('-') && path === null) path = w.replace(/^https?:\/\/api\.github\.com\//i, '').replace(/^\//, '');
+    if (!w.startsWith('-') && path === null) path = w.replace(/^https?:\/\/api\.github\.com\//i, '').replace(/^\/+/, '');
   }
+  // The path the checks judge: no query or fragment (GitHub serves `pulls?x=1` as `pulls`), no doubled
+  // slashes. A path the shell would still change is not known before the call runs.
+  const pathUnknown = path !== null && SUBST.test(path);
+  if (path) path = path.split(/[?#]/)[0].replace(/\/{2,}/g, '/').replace(/\/+$/, '');
   // gh fills {owner}/{repo} from GH_REPO or this folder's repo: judge the path as that repo's.
   if (path && /^repos\/(?:\{owner\}|:owner)\/(?:\{repo\}|:repo)(?=\/|$)/.test(path)) {
     const slug = ghParts(cmd).repo ?? repoSlug(config, cmd.cwd);
@@ -426,7 +430,7 @@ function ghApi(cmd, config = {}) {
     else unknown.add(k);
   }
   if (!method) method = Object.keys(fields).length || input ? 'POST' : 'GET';
-  return { path: path ?? '', method, fields, unknown, inputUnknown };
+  return { path: path ?? '', method, fields, unknown, inputUnknown, pathUnknown };
 }
 
 // ---------- refusals ----------
@@ -1013,6 +1017,15 @@ function checkOpenLimit(config, cwd, repo, head, deny, self = null) {
   const others = open.filter((x) => x.number !== self);
   if (others.length >= f.maxOpenPrs) deny(refusal(rule, `${others.length} are open now (${others.slice(0, 5).map((x) => `#${x.number}`).join(', ')})`, 'merge or close one first, or report to the coordinator and wait for a free place'));
 }
+// A pull request is an issue too: reopening it through the issues API counts against the limit.
+function reopenIssue(config, cwd, repo, number, deny) {
+  const it = ghJson(`repos/${repo}/issues/${number}`, cwd);
+  if (!it) { deny(refusal(FLOW_RULE, `reopening #${number}: it could not be read`, 'read it yourself, then retry')); return; }
+  if (!it.pull_request || it.state === 'open') return;
+  const pr = ghJson(`repos/${repo}/pulls/${number}`, cwd);
+  if (!pr) { deny(refusal(FLOW_RULE, `reopening pull request #${number}: it could not be read`, 'read it yourself, then retry')); return; }
+  checkOpenLimit(config, cwd, repo, pr.head?.ref, deny, pr.number);
+}
 function checkPrCreate(config, cwd, repo, body, draft, deny, head = null, bodyKnown = undefined) {
   const f = config.prFlow;
   if (!f || f.enabled === false) return;
@@ -1122,6 +1135,14 @@ function checkPrFlowBash(cmd, config, deny) {
   const p = ghParts(cmd);
   const repo = repoSlug(config, cmd.cwd, p.repo);
   if (p.sub === 'pr' && p.sub2 === 'create') { const a = p.rest.slice(1); const b = ghBody(cmd, a); checkPrCreate(config, cmd.cwd, repo, b.text, hasFlag(a, ['--draft', '-d']), deny, flagValues(a, ['--head', '-H'])[0] ?? null, b.known); return; }
+  if (p.sub === 'issue' && p.sub2 === 'reopen') {
+    const a = p.rest.slice(1);
+    const url = a.find((w) => /\/(issues|pull)\/\d+/.test(w));
+    const number = a.find((w) => /^\d+$/.test(w)) ?? (url ? url.replace(/.*\/(issues|pull)\/(\d+).*/, '$2') : null);
+    if (!repo || !number) { deny(refusal(FLOW_RULE, 'gh issue reopen: the issue could not be worked out', 'name it by number from inside the repo\'s folder, then retry')); return; }
+    reopenIssue(config, cmd.cwd, repo, number, deny);
+    return;
+  }
   if (p.sub === 'pr' && p.sub2 === 'reopen') {
     const a = p.rest.slice(1);
     const url = a.find((w) => /\/pull\/\d+/.test(w));
@@ -1143,12 +1164,13 @@ function checkPrFlowBash(cmd, config, deny) {
   }
   const api = ghApi(cmd, config);
   if (!api) return;
-  // GraphQL can open, ready, reopen and merge pull requests in ways the checks below never read.
-  if (/^graphql$/.test(api.path) && /\bmutation\b/.test(String(api.fields.query ?? '')) || (/^graphql$/.test(api.path) && api.unknown.has('query'))) { deny(refusal(FLOW_RULE, 'a GraphQL mutation (gh api graphql)', 'use gh pr or the REST routes (gh api repos/<o>/<r>/pulls ...), which these checks read')); return; }
   const created = /^repos\/([^/]+\/[^/]+)\/pulls$/.exec(api.path);
   if (created && api.method === 'POST') { checkPrCreate(config, cmd.cwd, created[1], api.inputUnknown ? null : api.fields.body, api.fields.draft === true || api.fields.draft === 'true', deny, api.fields.head ?? null, !api.unknown.has('body')); return; }
   const edited = /^repos\/([^/]+\/[^/]+)\/pulls\/(\d+)$/.exec(api.path);
   if (edited && api.method === 'PATCH' && (api.inputUnknown || api.unknown.has('state'))) { deny(refusal(FLOW_RULE, `gh api ${api.path} with fields that cannot be read before the call`, 'write the JSON to a file and pass --input <file>')); return; }
+  const issue = /^repos\/([^/]+\/[^/]+)\/issues\/(\d+)$/.exec(api.path);
+  if (issue && api.method === 'PATCH' && (api.inputUnknown || api.unknown.has('state'))) { deny(refusal(FLOW_RULE, `gh api ${api.path} with fields that cannot be read before the call`, 'write the JSON to a file and pass --input <file>')); return; }
+  if (issue && api.method === 'PATCH' && String(api.fields.state ?? '').toLowerCase() === 'open') { reopenIssue(config, cmd.cwd, issue[1], issue[2], deny); return; }
   if (edited && api.method === 'PATCH' && String(api.fields.state ?? '').toLowerCase() === 'open') {
     const pr = ghJson(`repos/${edited[1]}/pulls/${edited[2]}`, cmd.cwd);
     if (!pr) { deny(refusal(FLOW_RULE, `reopening #${edited[2]}: it could not be read`, 'read it yourself, then retry')); return; }
@@ -1177,9 +1199,9 @@ const ROUTE_RULE = 'Pull requests and pushes go only through routes the rule hoo
 function checkOtherRoutes(cmd, config, deny, ctx) {
   if (config.routes?.enabled === false) return;
   if (HTTP_TOOLS.has(cmd.prog)) {
-    const hit = cmd.args.find((w) => GITHUB_API.test(w));
-    if (!hit) return;
     const a = cmd.args;
+    const hit = a.find((w) => GITHUB_API.test(w)) ?? (httpTarget(a) ? null : '(a URL the hook cannot read)');
+    if (!hit) return;
     const method = flagValues(a, ['-X', '--request', '--method'])[0];
     const writes = (method && !/^(GET|HEAD)$/i.test(method)) || hasFlag(a, ['-d', '--data', '--data-raw', '--data-binary', '--data-urlencode', '--json', '-F', '--form', '--form-string', '-T', '--upload-file', '--post-data', '--post-file', '--body-data', '--body-file'])
       || a.some((w) => /^-[a-zA-Z]*[dFT]$/.test(w) && w.length > 2) || (cmd.prog !== 'curl' && cmd.prog !== 'wget' && cmd.prog !== 'aria2c' && a.some((w) => /^(POST|PATCH|PUT|DELETE)$/i.test(w) || /^[\w.-]+(:=|=|@)/.test(w)));
@@ -1210,6 +1232,9 @@ function checkOtherRoutes(cmd, config, deny, ctx) {
     if (p.sub === 'alias' && !['list', 'ls'].includes(p.sub2)) deny(refusal(ROUTE_RULE, `gh alias ${p.sub2 ?? ''}`.trim(), 'run the gh command itself'));
     else if ((p.sub === 'extension' || p.sub === 'extensions' || p.sub === 'ext') && !['list', 'ls', 'search', 'browse'].includes(p.sub2)) deny(refusal(ROUTE_RULE, `gh ${p.sub} ${p.sub2 ?? ''}`.trim(), 'use gh pr or gh api'));
     else if (p.sub && !GH_KNOWN.has(p.sub)) deny(refusal(ROUTE_RULE, `gh ${p.sub} (an alias or extension the hooks cannot read)`, 'run the gh command it stands for'));
+    else if (GH_OWNER_ONLY[p.sub]?.includes(p.sub2)) deny(refusal(ROUTE_RULE, `gh ${p.sub} ${p.sub2} changes what only the owner changes`, 'list it as a command for the owner'));
+    else if (p.sub === 'pr' && p.sub2 === 'update-branch') deny(refusal(ROUTE_RULE, 'gh pr update-branch writes a merge commit through the API, not by the CLAUDE.md author', 'git fetch origin main && git merge --no-edit FETCH_HEAD, then push'));
+    else if (p.sub === 'api') ghApiWrite(cmd, config, deny);
     return;
   }
   if (cmd.prog === 'git') {
@@ -1218,6 +1243,53 @@ function checkOtherRoutes(cmd, config, deny, ctx) {
     else if (g.sub === 'config' && g.rest.some((w) => /^alias\./i.test(w)) && !hasFlag(g.rest, ['--get', '--get-all', '--list', '-l', '--unset', '--unset-all', '--get-regexp'])) deny(refusal(ROUTE_RULE, 'git config alias.<name>', 'run the git command itself'));
   }
 }
+// True when every URL an HTTP tool call names can be read and none is GitHub's API: no config file
+// (-K/--config), no URL taken from a variable, a substitution or a file. Otherwise the call is judged
+// as if it went to GitHub, so a write through it is refused.
+const HTTP_VALUE_FLAGS = new Set(['-H', '--header', '-d', '--data', '--data-raw', '--data-binary', '--data-urlencode', '--json', '-F', '--form', '--form-string', '-o', '--output', '-u', '--user', '-A', '--user-agent', '-e', '--referer', '-b', '--cookie', '-c', '--cookie-jar', '-w', '--write-out', '-m', '--max-time', '--connect-timeout', '-X', '--request', '--method', '-T', '--upload-file', '--retry', '--cacert', '--cert', '--key', '-x', '--proxy', '-O', '--output-document', '--post-data', '--post-file', '--body-data', '--body-file', '--header', '-U']);
+function httpTarget(a) {
+  if (hasFlag(a, ['-K', '--config', '-i', '--input-file']) || a.some((w) => /^-K./.test(w))) return false;
+  for (let i = 0; i < a.length; i++) {
+    const w = a[i];
+    if (w === '--url') { if (SUBST.test(a[i + 1] ?? '') || /^@/.test(a[i + 1] ?? '')) return false; i++; continue; }
+    if (w.startsWith('--url=')) { if (SUBST.test(w.slice(6))) return false; continue; }
+    if (HTTP_VALUE_FLAGS.has(w)) { i++; continue; }
+    if (w.startsWith('-')) continue;
+    if (SUBST.test(w)) return false;
+  }
+  return true;
+}
+// The gh api writes the hooks read and judge, or that change nothing the rules guard (comments, reviews,
+// labels, assignees, reruns). Every other write (branch protection, repo settings, statuses and check
+// runs, commits through the API, anything not listed) is refused, so a new route is closed by default.
+const GH_WRITE_ALLOWED = [
+  /^repos\/[^/]+\/[^/]+\/pulls$/,
+  /^repos\/[^/]+\/[^/]+\/pulls\/\d+$/,
+  /^repos\/[^/]+\/[^/]+\/pulls\/\d+\/(merge|ccr\/ready_for_review|ccr\/auto_merge|requested_reviewers)$/,
+  /^repos\/[^/]+\/[^/]+\/pulls\/\d+\/reviews(\/\d+(\/(events|dismissals))?)?$/,
+  /^repos\/[^/]+\/[^/]+\/pulls\/\d+\/comments(\/\d+\/replies)?$/,
+  /^repos\/[^/]+\/[^/]+\/pulls\/comments\/\d+$/,
+  /^repos\/[^/]+\/[^/]+\/issues$/,
+  /^repos\/[^/]+\/[^/]+\/issues\/\d+$/,
+  /^repos\/[^/]+\/[^/]+\/issues\/\d+\/(comments|assignees|labels(\/[^/]+)?)$/,
+  /^repos\/[^/]+\/[^/]+\/issues\/comments\/\d+$/,
+  /^repos\/[^/]+\/[^/]+\/actions\/(runs\/\d+\/(rerun|rerun-failed-jobs|cancel)|jobs\/\d+\/rerun)$/,
+  /^graphql$/,
+];
+function ghApiWrite(cmd, config, deny) {
+  const api = ghApi(cmd, config);
+  if (!api || /^(GET|HEAD)$/.test(api.method)) return;
+  if (api.pathUnknown || !api.path) { deny(refusal(ROUTE_RULE, `gh api ${api.method} to a path the hook cannot read before the call`, 'write the path out in full (repos/<owner>/<repo>/...)')); return; }
+  if (/^graphql$/.test(api.path) && (api.unknown.has('query') || api.inputUnknown || /\bmutation\b/.test(String(api.fields.query ?? '')))) { deny(refusal(ROUTE_RULE, 'a GraphQL mutation (gh api graphql)', 'use gh pr or the REST routes (gh api repos/<o>/<r>/pulls ...), which these checks read')); return; }
+  if (GH_WRITE_ALLOWED.some((re) => re.test(api.path))) return;
+  const why = /\/(contents|git)\/|\/merges$|\/update-branch$/.test(api.path) ? `${api.path} writes a commit through the API, authored by the token's account, not the CLAUDE.md author`
+    : /\/(statuses|check-runs|check-suites)\b/.test(api.path) ? `${api.path} would set a check result by hand`
+    : /\/(branches\/[^/]+\/protection|rulesets|hooks|collaborators|actions\/permissions|keys)\b|^repos\/[^/]+\/[^/]+$/.test(api.path) ? `${api.path} changes the repo's settings or protection, which only the owner changes`
+    : `${api.method} ${api.path} is not a write the hooks judge`;
+  deny(refusal(ROUTE_RULE, why, 'use git for commits, gh pr or the judged REST routes for pull requests; settings and protection are the owner\'s (list a command for them)'));
+}
+// gh commands that change settings, protection, secrets or workflows: the owner's.
+const GH_OWNER_ONLY = { repo: ['edit', 'delete', 'archive', 'unarchive', 'rename', 'deploy-key'], ruleset: ['create', 'edit', 'delete'], secret: ['set', 'delete', 'remove'], variable: ['set', 'delete'], workflow: ['enable', 'disable'] };
 // gh's own commands; any other first word is an alias or an extension.
 const GH_KNOWN = new Set(['auth', 'browse', 'codespace', 'gist', 'issue', 'org', 'pr', 'project', 'release', 'repo', 'cache', 'run', 'workflow', 'agent-task', 'alias', 'api', 'attestation', 'completion', 'config', 'extension', 'extensions', 'ext', 'gpg-key', 'label', 'preview', 'ruleset', 'search', 'secret', 'ssh-key', 'status', 'variable', 'copilot', 'help', 'version', '--version', '--help', '-h']);
 
@@ -1280,6 +1352,7 @@ function checkMcp(name, input, config, root, deny, ctx) {
   if (isMerge || isAuto || readyCall) checkLiveState(config, root, repo, number, readyCall ? 'marking it ready' : name, deny);
   if (isMerge || isAuto || readyCall) checkReviewed(config, root, repo, number, readyCall ? 'marking it ready' : name, deny);
   if (toolMatches(name, config.mcp?.createPrTools ?? ['create_pull_request$'])) checkPrCreate(config, root, repo, typeof input.body === 'string' ? input.body : '', input.draft === true, deny, input.head ?? null, true);
+  if (/issue_write$/.test(name) && String(input.state ?? '').toLowerCase() === 'open' && (input.issue_number ?? input.issueNumber)) reopenIssue(config, root, repo, input.issue_number ?? input.issueNumber, deny);
   if (toolMatches(name, config.mcp?.updatePrTools ?? ['update_pull_request$']) && String(input.state ?? '').toLowerCase() === 'open') {
     const pr = repo && number ? ghJson(`repos/${repo}/pulls/${number}`, root) : null;
     if (!pr) deny(refusal(FLOW_RULE, `reopening #${number ?? '(unnamed)'}: it could not be read`, 'read it yourself, then retry'));

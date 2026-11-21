@@ -371,3 +371,78 @@ test('on GitHub, --github-pr sets the pr-rules status and closes a pull request 
   assert.equal(ok.status, 0, ok.stdout + ok.stderr)
   assert.ok(readFileSync(log, 'utf8').includes('state=success'))
 })
+
+test('audit 1: a query string, a variable or a config file cannot hide the route', () => {
+  const good = writeJson('b6.json', { title: 't', head: 'feature', base: 'main', draft: true, body: body() })
+  const table = baseTable(3)
+  assert.match(
+    bash(`gh api -X POST 'repos/mcthaydt/One/pulls?x=1' --input ${good}`, { table }).reason,
+    /3 at most/,
+  )
+  assert.match(
+    bash(`gh api -X PUT 'repos/mcthaydt/One/pulls/230/merge?a=1' -f merge_method=squash`).reason,
+    /squash|merge_method/,
+  )
+  assert.match(
+    bash(`gh api -X PATCH 'repos/mcthaydt/One/pulls/7?' -f state=open`, { table }).reason,
+    /3 at most/,
+  )
+  assert.match(
+    bash(`gh api -X POST '/repos//mcthaydt/One/pulls#x' --input ${good}`, { table }).reason,
+    /3 at most/,
+  )
+  assert.match(bash(`P=repos/mcthaydt/One/pulls; gh api -X POST $P --input ${good}`).reason, /cannot read/)
+  assert.match(
+    bash('U=https://api.github.com/repos/o/r/pulls; curl -X POST "$U" -d @b.json').reason,
+    /curl writes/,
+  )
+  assert.match(bash('curl -K /tmp/cfg -X POST').reason, /curl writes/)
+  assert.equal(bash('curl -s -H "Authorization: Bearer $T" https://example.com/x').denied, false)
+})
+
+test('audit 1: checks, protection, settings and API commits are refused', () => {
+  for (const c of [
+    'gh api -X POST repos/mcthaydt/One/statuses/abc -f state=success -f context=pr-rules',
+    'gh api -X POST repos/mcthaydt/One/check-runs -f name=gate',
+    'gh api -X DELETE repos/mcthaydt/One/branches/main/protection',
+    'gh api -X DELETE repos/mcthaydt/One/branches/main/protection/enforce_admins',
+    'gh api -X PATCH repos/mcthaydt/One -F allow_squash_merge=true',
+    'gh api -X PUT repos/mcthaydt/One/contents/README.md -f message=x -f content=eA== -f branch=b',
+    'gh api -X POST repos/mcthaydt/One/git/commits -f message=x',
+    'gh api -X PATCH repos/mcthaydt/One/git/refs/heads/b -f sha=abc',
+    'gh repo edit --enable-squash-merge',
+    'gh pr update-branch 7',
+  ])
+    assert.equal(bash(c).denied, true, c)
+  for (const c of [
+    'gh api -X POST repos/mcthaydt/One/issues/7/comments -f body=hi',
+    'gh api -X POST repos/mcthaydt/One/pulls/7/requested_reviewers -f "reviewers[]=x"',
+  ])
+    assert.equal(bash(c).denied, false, `${c}: ${bash(c).reason}`)
+})
+
+test('audit 1: reopening through the issues API counts against the limit', () => {
+  const table = {
+    ...baseTable(3),
+    'repos/mcthaydt/One/issues/7': { number: 7, state: 'closed', pull_request: {} },
+  }
+  assert.match(
+    bash('gh api -X PATCH repos/mcthaydt/One/issues/7 -f state=open', { table }).reason,
+    /3 at most/,
+  )
+  assert.match(bash('gh issue reopen 7', { table }).reason, /3 at most/)
+  assert.match(
+    mcp(
+      'mcp__github__issue_write',
+      { method: 'update', owner: 'mcthaydt', repo: 'One', issue_number: 7, state: 'open' },
+      { table },
+    ).reason,
+    /3 at most/,
+  )
+  assert.equal(
+    bash('gh api -X PATCH repos/mcthaydt/One/issues/7 -f state=open', {
+      table: { ...table, 'repos/mcthaydt/One/pulls': open(1) },
+    }).denied,
+    false,
+  )
+})
