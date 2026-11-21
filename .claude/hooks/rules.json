@@ -68,7 +68,7 @@
   },
   "mergeGreen": {
     "enabled": true,
-    "statuses": ["gate"]
+    "statuses": []
   },
   "ruleMix": {
     "enabled": true,
@@ -121,7 +121,16 @@
   },
   "ownerCommands": {
     "enabled": true,
-    "tools": []
+    "tools": [
+      {
+        "tool": "^mcp__hearthbot__(post_message|message_thread|message_coordinator)$",
+        "fields": ["text"]
+      },
+      {
+        "tool": "^mcp__claude-code-remote__send_message$",
+        "fields": ["message"]
+      }
+    ]
   },
   "sessionTools": {
     "enabled": true,
