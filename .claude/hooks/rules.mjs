@@ -7,8 +7,10 @@
 // Answers: a refused tool call is a PreToolUse "deny" with the reason; a problem
 // found after the fact is a PostToolUse or Stop "block" with the reason; added
 // context is hookSpecificOutput.additionalContext. Allowing prints nothing, so this
-// script never overrides the permission system. A crash never blocks: it prints a
-// warning and lets the call go ahead (the CI gate is the check that cannot be skipped).
+// script never overrides the permission system. A crash, or a rules.json that cannot be
+// read, refuses a call that could write to GitHub (git, gh, an HTTP tool, a GitHub MCP
+// tool) and lets any other call go ahead with a warning. The pr-rules workflow judges
+// the same rules on GitHub (`--github-pr`), for a session these hooks never saw.
 //
 // `node rules.mjs --check` validates rules.json and prints which checks are on.
 // `node rules.mjs --find-repo` (for sessions started one folder above the repo)
@@ -112,6 +114,7 @@ function parseShell(src) {
         body.push(h.strip ? line.replace(/^\t+/, '') : line);
       }
       h.cmd.heredoc = (h.cmd.heredoc ? h.cmd.heredoc + '\n' : '') + body.join('\n');
+      if (h.quoted) h.cmd.heredocQuoted = true; // <<'EOF' keeps its text as written
     }
   };
 
@@ -189,12 +192,12 @@ function parseShell(src) {
         let strip = false;
         if (src[i] === '-') { strip = true; i++; }
         while (src[i] === ' ' || src[i] === '\t') i++;
-        let delim = '';
+        let delim = '', quoted = false;
         while (i < src.length && !/[\s;&|()<>]/.test(src[i])) {
-          if (src[i] === "'" || src[i] === '"') { const q = src[i]; const end = src.indexOf(q, i + 1); delim += src.slice(i + 1, end === -1 ? src.length : end); i = end === -1 ? src.length : end + 1; } else { delim += src[i] === '\\' ? '' : src[i]; i++; }
+          if (src[i] === "'" || src[i] === '"') { quoted = true; const q = src[i]; const end = src.indexOf(q, i + 1); delim += src.slice(i + 1, end === -1 ? src.length : end); i = end === -1 ? src.length : end + 1; } else { if (src[i] === '\\') quoted = true; delim += src[i] === '\\' ? '' : src[i]; i++; }
         }
         cmd.heredoc = cmd.heredoc ?? '';
-        pending.push({ cmd, delim, strip });
+        pending.push({ cmd, delim, strip, quoted });
         continue;
       }
       if (ch === '<' && src[i + 1] === '<' && src[i + 2] === '<') { endWord(); i += 3; continue; } // here-string: next word is data
@@ -279,10 +282,16 @@ function simpleCommands(src, baseCwd, depth = 0) {
       if (ci !== -1 && words[ci + 1] !== undefined) { result.push(...simpleCommands(words[ci + 1], cwd, depth + 1)); continue; }
       if (c.heredoc !== null && words.length === 1) { result.push(...simpleCommands(c.heredoc, cwd, depth + 1)); continue; }
     }
+    // A shell script file is read too, so a command in it is judged like one typed here.
+    if (depth < 4) {
+      const file = (prog === 'bash' || prog === 'sh' || prog === 'zsh') ? words.slice(1).find((w) => !w.startsWith('-')) : (prog === 'source' || prog === '.') ? words[1] : /\.(sh|bash)$/.test(prog) ? words[0] : null;
+      const text = file ? readText(resolve(cwd, file.replace(/^~(?=\/)/, process.env.HOME ?? '~'))) : null;
+      if (text !== null) result.push(...simpleCommands(text, cwd, depth + 1).map((x) => ({ ...x, env: { ...env, ...x.env }, fromScript: file })));
+    }
     if (prog === 'eval' && depth < 4) { result.push(...simpleCommands(words.slice(1).join(' '), cwd, depth + 1)); continue; }
     if (prog === 'cd' && !c.nested) { const to = words[1]; if (to && !to.startsWith('-')) cwd = isAbsolute(to) ? to : resolve(cwd, to.replace(/^~(?=\/|$)/, process.env.HOME ?? '~')); continue; }
     if (prog === 'export' && !c.nested) { for (const w of words.slice(1)) if (ENV_WORD.test(w)) { const [k, ...v] = w.split('='); exported[k] = v.join('='); } continue; }
-    result.push({ prog, path: words[0], args: words.slice(1), env, cwd, heredoc: c.heredoc });
+    result.push({ prog, path: words[0], args: words.slice(1), env, cwd, heredoc: c.heredoc, heredocQuoted: c.heredocQuoted === true });
   }
   return result;
 }
@@ -373,20 +382,28 @@ function flagValues(args, names) {
   return out;
 }
 const hasFlag = (args, names) => args.some((w) => names.some((n) => w === n || (n.startsWith('--') && w.startsWith(n + '='))));
-// gh api: method, path and fields.
+// Text the shell would still change (a substitution or a variable) is not known until it runs.
+const SUBST = /\$\{?[A-Za-z_(]|`/;
+// A heredoc's text is known as written when its delimiter is quoted or it holds nothing the shell expands.
+const heredocKnown = (cmd) => cmd.heredoc !== null && cmd.heredoc !== undefined && (cmd.heredocQuoted === true || !SUBST.test(cmd.heredoc));
+// gh api: method, path and fields. `unknown` names the fields whose text cannot be read before the call runs.
 function ghApi(cmd, config = {}) {
   const { sub, rest } = ghParts(cmd);
   if (sub !== 'api') return null;
   let path = null, method = null;
   const fields = {};
+  const unknown = new Set();
   let input = null;
   for (let i = 0; i < rest.length; i++) {
     const w = rest[i];
     if (w === '-X' || w === '--method') { method = (rest[++i] ?? '').toUpperCase(); continue; }
     if (w.startsWith('--method=')) { method = w.slice(9).toUpperCase(); continue; }
     if (w.startsWith('-X') && w.length > 2) { method = w.slice(2).toUpperCase(); continue; }
-    if (['-f', '-F', '--field', '--raw-field'].includes(w)) { const kv = rest[++i] ?? ''; const k = kv.split('=')[0]; fields[k] = kv.slice(k.length + 1); continue; }
+    if (['-f', '-F', '--field', '--raw-field'].includes(w)) { const kv = rest[++i] ?? ''; const k = kv.split('=')[0].replace(/\[\]$/, ''); fields[k] = kv.slice(kv.split('=')[0].length + 1); if (SUBST.test(fields[k])) unknown.add(k); continue; }
+    if (/^-[fF][^-]/.test(w)) { const kv = w.slice(2); const k = kv.split('=')[0]; fields[k] = kv.slice(k.length + 1); if (SUBST.test(fields[k])) unknown.add(k); continue; }
+    if (w.startsWith('--field=') || w.startsWith('--raw-field=')) { const kv = w.slice(w.indexOf('=') + 1); const k = kv.split('=')[0]; fields[k] = kv.slice(k.length + 1); if (SUBST.test(fields[k])) unknown.add(k); continue; }
     if (w === '--input') { input = rest[++i]; continue; }
+    if (w.startsWith('--input=')) { input = w.slice(8); continue; }
     if (['-H', '--header', '-q', '--jq', '-t', '--template', '--cache', '--hostname', '-p', '--preview'].includes(w)) { i++; continue; }
     if (!w.startsWith('-') && path === null) path = w.replace(/^https?:\/\/api\.github\.com\//i, '').replace(/^\//, '');
   }
@@ -395,16 +412,21 @@ function ghApi(cmd, config = {}) {
     const slug = ghParts(cmd).repo ?? repoSlug(config, cmd.cwd);
     if (slug) path = path.replace(/^repos\/[^/]+\/[^/]+/, `repos/${slug}`);
   }
+  let inputUnknown = false;
   if (input) {
     const text = input === '-' ? cmd.heredoc : readText(resolve(cmd.cwd, input));
-    try { Object.assign(fields, JSON.parse(text ?? '')); } catch { /* not JSON */ }
+    let parsed = null;
+    try { parsed = JSON.parse(text ?? ''); } catch { /* not JSON */ }
+    if (parsed && typeof parsed === 'object') { Object.assign(fields, parsed); if (input === '-' && !heredocKnown(cmd)) for (const k of Object.keys(parsed)) unknown.add(k); }
+    else inputUnknown = true; // a file that is missing, piped in or not JSON: its fields cannot be read
   }
   for (const [k, v] of Object.entries(fields)) if (typeof v === 'string' && v.startsWith('@')) {
     const t = v === '@-' ? cmd.heredoc : readText(resolve(cmd.cwd, v.slice(1)));
-    if (t !== null && t !== undefined) fields[k] = t;
+    if (t !== null && t !== undefined) { fields[k] = t; if (v === '@-' ? !heredocKnown(cmd) : false) unknown.add(k); else unknown.delete(k); }
+    else unknown.add(k);
   }
   if (!method) method = Object.keys(fields).length || input ? 'POST' : 'GET';
-  return { path: path ?? '', method, fields };
+  return { path: path ?? '', method, fields, unknown, inputUnknown };
 }
 
 // ---------- refusals ----------
@@ -482,14 +504,37 @@ function agnostic(config, top) {
   for (const k of REPO_ONLY) c[k] = { ...(typeof config[k] === 'object' ? config[k] : {}), enabled: false };
   return c;
 }
+// A repo is guarded when alsoGuards names it or guardOwners names its owner.
+const guarded = (config, slug) => {
+  const s = String(slug ?? '').toLowerCase();
+  return (config.alsoGuards ?? []).some((x) => x.toLowerCase() === s) || (config.guardOwners ?? []).some((o) => s.startsWith(`${o.toLowerCase()}/`));
+};
+// A checkout of the named repo near this one (beside it, below the session's folder or below
+// the call's folder) that has its own rules.json, so a call that names another repo is judged
+// by that repo's own rules.
+function cloneFor(slug, root, cwd) {
+  const s = String(slug).toLowerCase();
+  const dirs = [dirname(root), process.env.CLAUDE_PROJECT_DIR, cwd].filter(Boolean);
+  const seen = new Set();
+  for (const r of [findRoot(cwd), ...dirs.flatMap((d) => rootsBelow(d))].filter(Boolean)) {
+    if (seen.has(r)) continue;
+    seen.add(r);
+    const c = loadConfig(r).config;
+    if (c && String(repoSlug(c, r) ?? '').toLowerCase() === s) return { root: r, config: c };
+  }
+  return null;
+}
 function scopeFor(root, config, cwd, slug) {
   const own = String(repoSlug(config, root) ?? '').toLowerCase();
-  const guards = (config.alsoGuards ?? []).map((x) => x.toLowerCase());
   if (!slug && config.detached && !repoTop(cwd)) return { root, config: repoless(config) };
   if (slug) {
     const s = slug.toLowerCase();
-    if (s === own) return { root, config };
-    return guards.includes(s) ? { root, config: agnostic(config, null) } : null;
+    if (s === own) return { root, config: config.detached ? { ...config, detached: false } : config };
+    const near = cloneFor(slug, root, cwd);
+    if (near) return near;
+    // A guarded repo with no checkout here: the repo-wide checks still hold, and a pull request
+    // write is refused (missingClone) because its own rules cannot be read.
+    return guarded(config, s) ? { root, config: { ...agnostic(config, null), missingClone: slug } } : null;
   }
   const top = repoTop(cwd);
   if (!top) return { root, config: config.detached ? repoless(config) : config };
@@ -498,7 +543,7 @@ function scopeFor(root, config, cwd, slug) {
   if (theirs) return { root: top, config: theirs };
   const s = String(repoSlug({}, top) ?? '').toLowerCase();
   if (s && s === own) return { root: top, config };
-  return s && guards.includes(s) ? { root: top, config: agnostic(config, top) } : null;
+  return s && guarded(config, s) ? { root: top, config: agnostic(config, top) } : null;
 }
 
 function checkDefaultBranchPush(cmd, config, deny) {
@@ -860,19 +905,23 @@ const PR_RULE = 'Pull request bodies end with the owner\'s "Requested by" line a
 function checkPrBodyBash(cmd, config, deny) {
   if (cmd.prog !== 'gh' || !on(config, 'prBody')) return;
   const p = ghParts(cmd);
-  let body;
+  let body, known;
   if (p.sub === 'pr' && (p.sub2 === 'create' || p.sub2 === 'edit')) {
     const a = p.rest.slice(1);
     const given = flagValues(a, ['--body', '-b', '--body-file', '-F']).length > 0;
-    if (given) body = ghBody(cmd, a);
+    if (given) ({ text: body, known } = ghBody(cmd, a));
     else if (p.sub2 === 'create') { deny(refusal(PR_RULE, hasFlag(a, ['--fill', '--fill-first', '--fill-verbose', '-f']) ? 'gh pr create --fill (the body would come from commit messages)' : 'gh pr create with no body', 'write the body to a file and pass --body-file <file>')); return; }
     else return;
   } else {
     const api = ghApi(cmd, config);
-    if (!api || !/pulls(\/\d+)?$/.test(api.path) || api.method === 'GET' || api.fields.body === undefined) return;
+    if (!api || !/^repos\/[^/]+\/[^/]+\/pulls(\/\d+)?$/.test(api.path) || api.method === 'GET') return;
+    if (api.inputUnknown) { deny(refusal(PR_RULE, `gh api ${api.path} --input that could not be read as JSON before the call`, 'write the JSON to a file in the repo and pass --input <file>')); return; }
+    if (api.fields.body === undefined) { if (/pulls$/.test(api.path)) deny(refusal(PR_RULE, `gh api ${api.path} with no body`, 'write the body to a JSON file and pass --input <file>')); return; }
     body = api.fields.body;
+    known = !api.unknown.has('body');
   }
-  if (body === null || body === undefined || /\$\{?[A-Za-z_(]|`/.test(body)) return; // cannot resolve: prBodyVerify judges the result
+  // Fail closed: a body the hook cannot read before the call is refused, never waved through.
+  if (body === null || body === undefined || !known) { deny(refusal(PR_RULE, 'the body cannot be read before the call runs (a missing file, a pipe, or text the shell would still change)', 'write the body to a file and pass --body-file <file> (or a JSON file with --input <file>)')); return; }
   const problems = judgeBody(body, config, false);
   if (problems.length) deny(refusal(PR_RULE, `the body: ${problems.join('; ')}`, `end the body with "${prLastLineOf(config)}" on its own last line`));
 }
@@ -921,36 +970,62 @@ function onlyCleanMerges(config, cwd, from, head) {
   return true;
 }
 const FLOW_RULE = 'Pull requests follow release: the body names the lane and the acceptance criteria, it opens as a draft, and a lane 2 or 3 pull request is marked ready or merged only after a passing review that names its head commit.';
-function changesBeyondDocs(config, cwd) {
-  const r = git(cwd, ['diff', '--name-only', `origin/${defaultBranch(config)}...HEAD`]);
-  if (!r.ok) return true;
-  const docs = config.ruleMix?.docPaths ?? ['docs/**', '*.md', '**/*.md', '.claude/**'];
-  return r.out.split('\n').filter(Boolean).some((f) => !matchesAny(f, docs));
+// The files a branch changes against the default branch, or null when they cannot be read.
+// `head` is the pull request's head branch (owner:branch allowed); with none, HEAD.
+function branchFiles(config, cwd, head) {
+  const def = defaultBranch(config);
+  const name = head ? String(head).replace(/^[^:]+:/, '') : null;
+  const refs = name ? [name, `origin/${name}`, `refs/remotes/origin/${name}`] : ['HEAD'];
+  for (const ref of refs) {
+    if (!git(cwd, ['rev-parse', '--verify', '-q', `${ref}^{commit}`]).ok) continue;
+    const r = git(cwd, ['diff', '--name-only', `origin/${def}...${ref}`]);
+    if (r.ok) return r.out.split('\n').filter(Boolean);
+  }
+  return null;
+}
+const docsOnly = (files, config) => files.every((f) => matchesAny(f, config.ruleMix?.docPaths ?? ['docs/**', '*.md', '**/*.md', '.claude/**']));
+// A branch whose files cannot be read counts as changing more than docs (fail closed).
+function changesBeyondDocs(config, cwd, head) {
+  const files = branchFiles(config, cwd, head);
+  return files === null || !docsOnly(files, config);
 }
 // A branch that changes only rules files and docs (the owner's rule requests keep their
-// own pull requests) is not held back by the open pull request limit.
-function onlyRulesAndDocs(config, cwd) {
-  const r = git(cwd, ['diff', '--name-only', `origin/${defaultBranch(config)}...HEAD`]);
-  if (!r.ok) return false;
-  const files = r.out.split('\n').filter(Boolean);
+// own pull requests) is not held back by the open pull request limit. The hooks, the
+// settings and CI are never exempt.
+const exemptFromLimit = (files, config) => {
   const keep = [...(config.ruleMix?.rulePaths ?? []), ...(config.ruleMix?.docPaths ?? ['docs/**', '*.md', '**/*.md'])];
   return files.length > 0 && files.every((x) => matchesAny(x, keep) && !x.startsWith('.claude/hooks/') && x !== '.claude/settings.json' && !x.startsWith('.github/'));
+};
+function onlyRulesAndDocs(config, cwd, head) {
+  const files = branchFiles(config, cwd, head);
+  return files !== null && exemptFromLimit(files, config);
 }
-function checkPrCreate(config, cwd, repo, body, draft, deny) {
+// The open pull request limit, for a pull request about to be opened or reopened. It fails closed:
+// an unknown repo or an open list that cannot be read refuses the call.
+function checkOpenLimit(config, cwd, repo, head, deny, self = null) {
+  const f = config.prFlow;
+  if (!f || f.enabled === false || !f.maxOpenPrs) return;
+  const rule = `Pull requests open: ${f.maxOpenPrs} at most (CLAUDE.md, Settings).`;
+  if (!repo) { deny(refusal(rule, 'the repo of this pull request could not be worked out', 'run from inside the repo\'s folder, or name it (gh -R owner/repo, or the API path repos/owner/repo)')); return; }
+  if (onlyRulesAndDocs(config, cwd, head)) return;
+  const open = ghJson(`repos/${repo}/pulls?state=open&per_page=100`, cwd);
+  if (!Array.isArray(open)) { deny(refusal(rule, `the open pull requests of ${repo} could not be read`, `read them yourself (GH_PAGER=cat gh api "repos/${repo}/pulls?state=open"), then retry`)); return; }
+  const others = open.filter((x) => x.number !== self);
+  if (others.length >= f.maxOpenPrs) deny(refusal(rule, `${others.length} are open now (${others.slice(0, 5).map((x) => `#${x.number}`).join(', ')})`, 'merge or close one first, or report to the coordinator and wait for a free place'));
+}
+function checkPrCreate(config, cwd, repo, body, draft, deny, head = null, bodyKnown = undefined) {
   const f = config.prFlow;
   if (!f || f.enabled === false) return;
-  const known = body !== null && body !== undefined && !/\$\{?[A-Za-z_(]|`/.test(body);
-  const lane = known ? laneOf(body) : null;
-  if (known && f.requireLane !== false && !lane) { deny(refusal(FLOW_RULE, 'the body names no lane', 'add a "## Lane" section that says "Lane 1", "Lane 2" or "Lane 3" and why')); return; }
-  if (known && f.requireCriteria !== false && !/acceptance criteria/i.test(body) && changesBeyondDocs(config, cwd)) deny(refusal(FLOW_RULE, 'the body has no acceptance criteria and the branch changes more than docs', 'add an "## Acceptance criteria" section: what done looks like, as checks a program or a person can observe (build)'));
+  const known = body !== null && body !== undefined && (bodyKnown ?? !SUBST.test(body));
+  if (!known) { deny(refusal(FLOW_RULE, 'the body cannot be read before the call runs, so its lane and criteria cannot be checked', 'write the body to a file and pass --body-file <file> (or a JSON file with --input <file>)')); return; }
+  const lane = laneOf(body);
+  if (f.requireLane !== false && !lane) { deny(refusal(FLOW_RULE, 'the body names no lane', 'add a "## Lane" section that says "Lane 1", "Lane 2" or "Lane 3" and why')); return; }
+  if (f.requireCriteria !== false && !/acceptance criteria/i.test(body) && changesBeyondDocs(config, cwd, head)) deny(refusal(FLOW_RULE, 'the body has no acceptance criteria and the branch changes more than docs', 'add an "## Acceptance criteria" section: what done looks like, as checks a program or a person can observe (build)'));
   if (f.draft !== false && !draft) {
     const info = repo ? ghJson(`repos/${repo}`, cwd) : null;
     if (!(lane === 1 && info?.private === true)) deny(refusal(FLOW_RULE, `lane ${lane ?? '(unread)'} pull request opened ready${lane === 1 ? ' on a repo that is not known to be private' : ''}`, 'open it as a draft (gh pr create --draft, or draft: true)'));
   }
-  if (f.maxOpenPrs && repo && !onlyRulesAndDocs(config, cwd)) {
-    const open = ghJson(`repos/${repo}/pulls?state=open&per_page=100`, cwd);
-    if (Array.isArray(open) && open.length >= f.maxOpenPrs) deny(refusal(`Pull requests open: ${f.maxOpenPrs} at most (CLAUDE.md, Settings).`, `${open.length} are open now (${open.slice(0, 5).map((x) => `#${x.number}`).join(', ')})`, 'merge or close one first, or report to the coordinator and wait for a free place'));
-  }
+  checkOpenLimit(config, cwd, repo, head, deny);
 }
 function checkReviewed(config, cwd, repo, number, what, deny) {
   const f = config.prFlow;
@@ -1028,20 +1103,34 @@ function checkMergeGreen(config, cwd, repo, number, deny) {
     if (!good) { deny(refusal(rule, `${s.context} on ${pr.head.sha.slice(0, 7)} is ${got ? `${got.state}: ${got.description ?? ''}` : 'missing'}${s.description ? ` (needs success with "${s.description}")` : ''}`, 'wait for it in the foreground, then merge')); return; }
   }
 }
+// The body a gh pr command sends, and whether it can be read before the call runs.
 const ghBody = (cmd, a) => {
   const direct = flagValues(a, ['--body', '-b']);
   const files = flagValues(a, ['--body-file', '-F']);
-  let body = null;
-  if (direct.length) body = direct.at(-1);
-  else if (files.length) body = files.at(-1) === '-' ? cmd.heredoc : readText(resolve(cmd.cwd, files.at(-1)));
-  const fromFile = /^\s*\$\(\s*cat\s+(['"]?)([^'"()\s]+)\1\s*\)\s*$/.exec(body ?? '');
-  return fromFile ? readText(resolve(cmd.cwd, fromFile[2])) : body;
+  let text = null, known = false;
+  if (direct.length) { text = direct.at(-1); known = !SUBST.test(text); }
+  else if (files.length) {
+    if (files.at(-1) === '-') { text = cmd.heredoc; known = heredocKnown(cmd); }
+    else { text = readText(resolve(cmd.cwd, files.at(-1))); known = text !== null; }
+  }
+  const fromFile = /^\s*\$\(\s*cat\s+(['"]?)([^'"()\s]+)\1\s*\)\s*$/.exec(text ?? '');
+  if (fromFile) { text = readText(resolve(cmd.cwd, fromFile[2])); known = text !== null; }
+  return { text, known };
 };
 function checkPrFlowBash(cmd, config, deny) {
   if (cmd.prog !== 'gh') return;
   const p = ghParts(cmd);
   const repo = repoSlug(config, cmd.cwd, p.repo);
-  if (p.sub === 'pr' && p.sub2 === 'create') { const a = p.rest.slice(1); checkPrCreate(config, cmd.cwd, repo, ghBody(cmd, a), hasFlag(a, ['--draft', '-d']), deny); return; }
+  if (p.sub === 'pr' && p.sub2 === 'create') { const a = p.rest.slice(1); const b = ghBody(cmd, a); checkPrCreate(config, cmd.cwd, repo, b.text, hasFlag(a, ['--draft', '-d']), deny, flagValues(a, ['--head', '-H'])[0] ?? null, b.known); return; }
+  if (p.sub === 'pr' && p.sub2 === 'reopen') {
+    const a = p.rest.slice(1);
+    const url = a.find((w) => /\/pull\/\d+/.test(w));
+    const number = a.find((w) => /^\d+$/.test(w)) ?? (url ? url.replace(/.*\/pull\/(\d+).*/, '$1') : null);
+    const pr = repo && number ? ghJson(`repos/${repo}/pulls/${number}`, cmd.cwd) : null;
+    if (!pr) { deny(refusal(FLOW_RULE, `gh pr reopen: pull request ${number ?? '(unnamed)'} could not be read`, 'name the pull request by number from inside the repo\'s folder, then retry')); return; }
+    checkOpenLimit(config, cmd.cwd, repo, pr.head?.ref, deny, pr.number);
+    return;
+  }
   if (p.sub === 'pr' && (p.sub2 === 'ready' || p.sub2 === 'merge')) {
     const a = p.rest.slice(1);
     if (hasFlag(a, ['--undo', '--disable-auto'])) return;
@@ -1054,6 +1143,18 @@ function checkPrFlowBash(cmd, config, deny) {
   }
   const api = ghApi(cmd, config);
   if (!api) return;
+  // GraphQL can open, ready, reopen and merge pull requests in ways the checks below never read.
+  if (/^graphql$/.test(api.path) && /\bmutation\b/.test(String(api.fields.query ?? '')) || (/^graphql$/.test(api.path) && api.unknown.has('query'))) { deny(refusal(FLOW_RULE, 'a GraphQL mutation (gh api graphql)', 'use gh pr or the REST routes (gh api repos/<o>/<r>/pulls ...), which these checks read')); return; }
+  const created = /^repos\/([^/]+\/[^/]+)\/pulls$/.exec(api.path);
+  if (created && api.method === 'POST') { checkPrCreate(config, cmd.cwd, created[1], api.inputUnknown ? null : api.fields.body, api.fields.draft === true || api.fields.draft === 'true', deny, api.fields.head ?? null, !api.unknown.has('body')); return; }
+  const edited = /^repos\/([^/]+\/[^/]+)\/pulls\/(\d+)$/.exec(api.path);
+  if (edited && api.method === 'PATCH' && (api.inputUnknown || api.unknown.has('state'))) { deny(refusal(FLOW_RULE, `gh api ${api.path} with fields that cannot be read before the call`, 'write the JSON to a file and pass --input <file>')); return; }
+  if (edited && api.method === 'PATCH' && String(api.fields.state ?? '').toLowerCase() === 'open') {
+    const pr = ghJson(`repos/${edited[1]}/pulls/${edited[2]}`, cmd.cwd);
+    if (!pr) { deny(refusal(FLOW_RULE, `reopening #${edited[2]}: it could not be read`, 'read it yourself, then retry')); return; }
+    if (pr.state !== 'open') checkOpenLimit(config, cmd.cwd, edited[1], pr.head?.ref, deny, pr.number);
+    return;
+  }
   const m = /repos\/([^/]+\/[^/]+)\/pulls\/(\d+)\/(merge|ccr\/ready_for_review|ccr\/auto_merge)$/.exec(api.path);
   if (m && api.method !== 'GET' && api.method !== 'DELETE') {
     checkLiveState(config, cmd.cwd, m[1], m[2], `gh api ${m[3]}`, deny);
@@ -1061,6 +1162,64 @@ function checkPrFlowBash(cmd, config, deny) {
     if (m[3] === 'merge') checkMergeGreen(config, cmd.cwd, m[1], m[2], deny);
   }
 }
+
+// Routes the checks above cannot read. GitHub is written only through gh pr, gh api REST paths,
+// git push and the GitHub MCP tools, which these checks judge; any other way to write to the
+// GitHub API (curl, wget, a script, a gh or git alias, a gh extension) is refused, so no session
+// can open, ready, reopen or merge a pull request around them.
+const GITHUB_API = /\b(api|uploads)\.github\.com\b|github\.com\/graphql|\bgithub\.com\/[^/\s]+\/[^/\s]+\/(pulls?|merges?)\b/i;
+const HTTP_TOOLS = new Set(['curl', 'wget', 'http', 'https', 'xh', 'xhs', 'httpie', 'aria2c']);
+const SCRIPT_TOOLS = new Set(['node', 'tsx', 'vite-node', 'bun', 'deno', 'python', 'python3', 'ts-node', 'ruby', 'perl', 'php']);
+const WRITE_WORDS = /\b(POST|PATCH|PUT|DELETE)\b|octokit|\bmutation\b|\.(post|patch|put|delete|request|urlopen)\s*\(|\.(create|merge|update)[A-Z]\w*\(|pulls\.(create|merge|update)/;
+// gh run from inside a script: a pull request command, or gh api sending fields or another method.
+const GH_IN_SCRIPT = /\bgh\s+pr\s+(create|merge|ready|reopen|edit)\b|\bgh\s+api\b[^\n]*(\s-X\s*(POST|PATCH|PUT|DELETE)|--method|\s-[fF]\s|--field|--raw-field|--input)|['"]gh['"]\s*,\s*\[\s*['"](pr['"]\s*,\s*['"](create|merge|ready|reopen|edit)|api['"][^\]]*['"](-X|--method|-f|-F|--field|--raw-field|--input)['"])/;
+const ROUTE_RULE = 'Pull requests and pushes go only through routes the rule hooks read: gh pr, gh api REST paths, git push and the GitHub MCP tools (Owner: every session follows the hooks).';
+function checkOtherRoutes(cmd, config, deny, ctx) {
+  if (config.routes?.enabled === false) return;
+  if (HTTP_TOOLS.has(cmd.prog)) {
+    const hit = cmd.args.find((w) => GITHUB_API.test(w));
+    if (!hit) return;
+    const a = cmd.args;
+    const method = flagValues(a, ['-X', '--request', '--method'])[0];
+    const writes = (method && !/^(GET|HEAD)$/i.test(method)) || hasFlag(a, ['-d', '--data', '--data-raw', '--data-binary', '--data-urlencode', '--json', '-F', '--form', '--form-string', '-T', '--upload-file', '--post-data', '--post-file', '--body-data', '--body-file'])
+      || a.some((w) => /^-[a-zA-Z]*[dFT]$/.test(w) && w.length > 2) || (cmd.prog !== 'curl' && cmd.prog !== 'wget' && cmd.prog !== 'aria2c' && a.some((w) => /^(POST|PATCH|PUT|DELETE)$/i.test(w) || /^[\w.-]+(:=|=|@)/.test(w)));
+    if (writes) deny(refusal(ROUTE_RULE, `${cmd.prog} writes to ${hit}`, 'use gh api with the REST path (the hooks judge it), or the GitHub MCP tool'));
+    return;
+  }
+  if (SCRIPT_TOOLS.has(cmd.prog) || /\.(m?[jt]s|py|rb|pl|sh|bash)$/.test(cmd.prog)) {
+    const a = cmd.args;
+    let text = '', file = null;
+    const evalFlag = a.findIndex((w) => ['-e', '--eval', '-p', '--print', '-c'].includes(w));
+    if (evalFlag !== -1) text = a[evalFlag + 1] ?? '';
+    else {
+      let i = 0;
+      while (i < a.length && a[i].startsWith('-')) { if (['-r', '--require', '--import', '--loader', '--env-file', '-m'].includes(a[i])) i++; i++; }
+      if (cmd.prog === 'deno' && ['run', 'eval'].includes(a[i])) i++;
+      file = /\.(m?[jt]s|py|rb|pl|sh|bash)$/.test(cmd.prog) ? cmd.path : a[i];
+      if (file && file !== '-') text = scriptText(resolve(cmd.cwd, file), config, ctx.root ?? cmd.cwd);
+      else if (cmd.heredoc !== null) text = cmd.heredoc;
+    }
+    if (file && /(^|\/)\.claude\/hooks\/rules(\.test)?\.mjs$/.test(resolve(cmd.cwd, file))) return; // the hook and its own test, run by hand
+    if (cmd.prog === 'node' && hasFlag(a, ['--check', '-c'])) return; // a syntax check runs nothing
+    if (text && GH_IN_SCRIPT.test(text)) { deny(refusal(ROUTE_RULE, `${cmd.prog} runs a script that calls gh to change a pull request`, 'run the gh command in Bash, where the hooks read it')); return; }
+    if (text && GITHUB_API.test(text) && WRITE_WORDS.test(text)) deny(refusal(ROUTE_RULE, `${cmd.prog} runs a script that writes to the GitHub API`, 'use gh api with the REST path (the hooks judge it), or the GitHub MCP tool'));
+    return;
+  }
+  if (cmd.prog === 'gh') {
+    const p = ghParts(cmd);
+    if (p.sub === 'alias' && !['list', 'ls'].includes(p.sub2)) deny(refusal(ROUTE_RULE, `gh alias ${p.sub2 ?? ''}`.trim(), 'run the gh command itself'));
+    else if ((p.sub === 'extension' || p.sub === 'extensions' || p.sub === 'ext') && !['list', 'ls', 'search', 'browse'].includes(p.sub2)) deny(refusal(ROUTE_RULE, `gh ${p.sub} ${p.sub2 ?? ''}`.trim(), 'use gh pr or gh api'));
+    else if (p.sub && !GH_KNOWN.has(p.sub)) deny(refusal(ROUTE_RULE, `gh ${p.sub} (an alias or extension the hooks cannot read)`, 'run the gh command it stands for'));
+    return;
+  }
+  if (cmd.prog === 'git') {
+    const g = gitParts(cmd);
+    if (g.config.some((c) => /^alias\./i.test(c))) deny(refusal(ROUTE_RULE, 'git -c alias.<name>=...', 'run the git command itself'));
+    else if (g.sub === 'config' && g.rest.some((w) => /^alias\./i.test(w)) && !hasFlag(g.rest, ['--get', '--get-all', '--list', '-l', '--unset', '--unset-all', '--get-regexp'])) deny(refusal(ROUTE_RULE, 'git config alias.<name>', 'run the git command itself'));
+  }
+}
+// gh's own commands; any other first word is an alias or an extension.
+const GH_KNOWN = new Set(['auth', 'browse', 'codespace', 'gist', 'issue', 'org', 'pr', 'project', 'release', 'repo', 'cache', 'run', 'workflow', 'agent-task', 'alias', 'api', 'attestation', 'completion', 'config', 'extension', 'extensions', 'ext', 'gpg-key', 'label', 'preview', 'ruleset', 'search', 'secret', 'ssh-key', 'status', 'variable', 'copilot', 'help', 'version', '--version', '--help', '-h']);
 
 // ---------- the checks: files written ----------
 
@@ -1120,7 +1279,12 @@ function checkMcp(name, input, config, root, deny, ctx) {
   const readyCall = toolMatches(name, config.mcp?.updatePrTools ?? ['update_pull_request$']) && input.draft === false;
   if (isMerge || isAuto || readyCall) checkLiveState(config, root, repo, number, readyCall ? 'marking it ready' : name, deny);
   if (isMerge || isAuto || readyCall) checkReviewed(config, root, repo, number, readyCall ? 'marking it ready' : name, deny);
-  if (toolMatches(name, config.mcp?.createPrTools ?? ['create_pull_request$'])) checkPrCreate(config, root, repo, typeof input.body === 'string' ? input.body : '', input.draft === true, deny);
+  if (toolMatches(name, config.mcp?.createPrTools ?? ['create_pull_request$'])) checkPrCreate(config, root, repo, typeof input.body === 'string' ? input.body : '', input.draft === true, deny, input.head ?? null, true);
+  if (toolMatches(name, config.mcp?.updatePrTools ?? ['update_pull_request$']) && String(input.state ?? '').toLowerCase() === 'open') {
+    const pr = repo && number ? ghJson(`repos/${repo}/pulls/${number}`, root) : null;
+    if (!pr) deny(refusal(FLOW_RULE, `reopening #${number ?? '(unnamed)'}: it could not be read`, 'read it yourself, then retry'));
+    else if (pr.state !== 'open') checkOpenLimit(config, root, repo, pr.head?.ref, deny, pr.number);
+  }
   if (isMerge) checkMergeGreen(config, root, repo, number, deny);
   // Pull request bodies.
   if (on(config, 'prBody') && toolMatches(name, config.mcp?.prBodyTools ?? ['create_pull_request$', 'update_pull_request$']) && typeof input.body === 'string') {
@@ -1161,6 +1325,15 @@ function checkMcp(name, input, config, root, deny, ctx) {
 }
 
 const ruleLine = (r) => (typeof r === 'object' && r ? `[${r.id}] ${r.text}` : String(r));
+
+// Calls that open, change, ready, reopen or merge a pull request.
+function ghPrWrite(cmd, config) {
+  const p = ghParts(cmd);
+  if (p.sub === 'pr') return ['create', 'edit', 'ready', 'merge', 'reopen'].includes(p.sub2);
+  const api = ghApi(cmd, config);
+  return !!api && api.method !== 'GET' && /^repos\/[^/]+\/[^/]+\/pulls(\/\d+(\/(merge|ccr\/\w+))?)?$/.test(api.path);
+}
+const mcpPrWrite = (name, config) => toolMatches(name, [...(config.mcp?.mergeTools ?? ['merge_pull_request$']), ...(config.mcp?.autoMergeTools ?? ['enable_pr_auto_merge$']), ...(config.mcp?.updatePrTools ?? ['update_pull_request$']), ...(config.mcp?.createPrTools ?? ['create_pull_request$'])]);
 
 // ---------- events ----------
 
@@ -1291,8 +1464,12 @@ function preToolUse(root, config, input, ctx) {
   const ti = input.tool_input ?? {};
   if (name === 'Bash') {
     for (const cmd of simpleCommands(String(ti.command ?? ''), input.cwd ?? root)) {
-      const scope = cmd.prog === 'git' ? scopeFor(root, config, gitParts(cmd).cwd, null) : cmd.prog === 'gh' ? scopeFor(root, config, cmd.cwd, ghParts(cmd).repo) : { root, config: base };
+      checkOtherRoutes(cmd, base, deny, { ...ctx, root });
+      if (reasons.length) break;
+      const slug = cmd.prog === 'gh' ? ghParts(cmd).repo ?? (/^repos\/([^/]+\/[^/]+)/.exec(ghApi(cmd, config)?.path ?? '') ?? [])[1] ?? null : null;
+      const scope = cmd.prog === 'git' ? scopeFor(root, config, gitParts(cmd).cwd, null) : cmd.prog === 'gh' ? scopeFor(root, config, cmd.cwd, slug) : { root, config: base };
       if (!scope) continue;
+      if (scope.config.missingClone && cmd.prog === 'gh' && ghPrWrite(cmd, scope.config)) { deny(refusal(ROUTE_RULE, `a pull request write on ${scope.config.missingClone}, which has no checkout here, so its own rules cannot be read`, `clone it (git clone https://github.com/${scope.config.missingClone}) and run the call from inside its folder`)); break; }
       for (const check of [checkIdentity, checkAttribution, checkForcePush, checkDefaultBranchPush, checkMergeMethod, checkBypassFlags, checkGpu, checkBanned, checkHostedRunnersOnPush, checkRuleMix, checkPrBodyBash, checkPrFlowBash]) {
         if (reasons.length) break;
         check(cmd, scope.config, deny, { ...ctx, root: scope.root });
@@ -1304,7 +1481,8 @@ function preToolUse(root, config, input, ctx) {
     const slug = ti.owner && ti.repo ? `${ti.owner}/${ti.repo}` : null;
     const scope = config.detached && !slug ? { root, config: base } : scopeFor(root, config, root, slug);
     const cfg = scope?.config ?? { ...config, identity: { enabled: false }, mergeMethod: { enabled: false }, prBody: { enabled: false }, liveState: { enabled: false }, mergeGreen: { enabled: false } };
-    checkMcp(name, ti, cfg, scope?.root ?? root, deny, ctx);
+    if (cfg.missingClone && mcpPrWrite(name, cfg)) deny(refusal(ROUTE_RULE, `${name} on ${cfg.missingClone}, which has no checkout here, so its own rules cannot be read`, `clone it (git clone https://github.com/${cfg.missingClone}) and call again from a session whose folder holds it`));
+    else checkMcp(name, ti, cfg, scope?.root ?? root, deny, ctx);
   }
   if (!reasons.length) return null;
   return { hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reasons.join('\n\n') } };
@@ -1336,11 +1514,15 @@ function rootForCall(input) {
   const ti = input.tool_input ?? {};
   const starts = [];
   if (ti.file_path || ti.path) starts.push(dirname(resolve(input.cwd ?? '.', ti.file_path ?? ti.path)));
-  if (input.tool_name === 'Bash') for (const c of simpleCommands(String(ti.command ?? ''), input.cwd ?? '.')) starts.push(c.prog === 'git' ? gitParts(c).cwd : c.cwd);
+  let named = ti.owner && ti.repo ? `${ti.owner}/${ti.repo}` : null;
+  if (input.tool_name === 'Bash') for (const c of simpleCommands(String(ti.command ?? ''), input.cwd ?? '.')) {
+    starts.push(c.prog === 'git' ? gitParts(c).cwd : c.cwd);
+    if (c.prog === 'gh' && !named) named = ghParts(c).repo ?? (/^repos\/([^/]+\/[^/]+)/.exec(ghApi(c)?.path ?? '') ?? [])[1] ?? null;
+  }
   if (input.cwd) starts.push(input.cwd);
   for (const s of starts) { const r = findRoot(s); if (r) return r; }
-  const slug = ti.owner && ti.repo ? `${ti.owner}/${ti.repo}`.toLowerCase() : null;
-  for (const r of rootsBelow(input.cwd ?? '.')) {
+  const slug = named ? named.toLowerCase() : null;
+  for (const r of [...rootsBelow(input.cwd ?? '.'), ...rootsBelow(process.env.CLAUDE_PROJECT_DIR ?? '.')]) {
     if (!slug) continue;
     const c = loadConfig(r).config;
     if (c && String(repoSlug(c, r) ?? '').toLowerCase() === slug) return r;
@@ -1403,8 +1585,69 @@ function installUser() {
   if (r.status !== 0) { if (!r.stderr) console.error('Rule hooks not added. Nothing was changed.'); process.exit(1); }
 }
 
+// ---------- the same rules, judged on GitHub ----------
+// `node rules.mjs --github-pr` runs in the pr-rules workflow on every pull request event and every
+// comment, from main's copy of this file, so a session that never loaded these hooks is still held
+// to them. It sets the commit status `pr-rules` on the pull request's head, which main requires,
+// and closes a pull request opened or reopened past the open limit. Env: GH_TOKEN, GITHUB_REPOSITORY,
+// PR_NUMBER, PR_ACTION (the pull_request action, if any), RUN_URL.
+const ghPaged = (path, jq, cwd) => {
+  const r = run('gh', ['api', '--paginate', path, '--jq', jq], { cwd, env: { ...process.env, GH_PAGER: 'cat' }, timeout: 60000 });
+  return r.ok ? r.out.split('\n').filter(Boolean) : null;
+};
+function judgePr(config, root, repo, pr, files, openList, filesOf) {
+  const problems = [];
+  const f = config.prFlow ?? {};
+  const body = String(pr.body ?? '');
+  if (on(config, 'prBody')) for (const p of judgeBody(body, config, config.prBody?.footerStrippedByCi === true)) problems.push(`body: ${p}`);
+  const lane = laneOf(body);
+  if (f.enabled !== false && f.requireLane !== false && !lane) problems.push('body: names no lane ("Lane 1", "Lane 2" or "Lane 3")');
+  if (f.enabled !== false && f.requireCriteria !== false && !/acceptance criteria/i.test(body) && !docsOnly(files, config)) problems.push('body: no "Acceptance criteria" section, and the change is more than docs');
+  if (config.ruleMix && config.ruleMix.enabled !== false && !config.ruleMix.firstTimeSetup) ruleMixFiles(files, config, (r) => problems.push(`rule mix: ${r.split('\n')[1].replace(/^Matched: /, '')}`));
+  let over = false;
+  if (f.enabled !== false && f.maxOpenPrs && !exemptFromLimit(files, config)) {
+    const counted = openList.filter((o) => o.number === pr.number || !exemptFromLimit(filesOf(o.number) ?? [], config)).map((o) => o.number).sort((a, b) => a - b);
+    const place = counted.indexOf(pr.number);
+    if (place >= f.maxOpenPrs) { over = true; problems.push(`open limit: ${counted.length} counted pull requests are open (${counted.map((n) => `#${n}`).join(', ')}); the limit is ${f.maxOpenPrs} and this one is past it`); }
+  }
+  if (f.enabled !== false && f.requireReview !== false && lane >= 2 && !pr.draft) {
+    let note = null;
+    checkReviewed(config, root, repo, pr.number, 'ready', (r) => { note = r.split('\n')[1].replace(/^Matched: /, ''); });
+    if (note) problems.push(`review: ${note}`);
+  }
+  return { problems, over, lane };
+}
+function githubPr() {
+  const root = resolve(SCRIPT_DIR, '..', '..');
+  const { config, error } = loadConfig(root);
+  if (error) { console.error(error); process.exit(1); }
+  const repo = process.env.GITHUB_REPOSITORY;
+  const number = Number(process.env.PR_NUMBER);
+  const pr = ghJson(`repos/${repo}/pulls/${number}`, root);
+  if (!pr) { console.error(`pull request #${number} could not be read`); process.exit(1); }
+  if (pr.state !== 'open') { console.log(`#${number} is ${pr.state}; nothing to judge.`); return; }
+  const filesOf = (n) => ghPaged(`repos/${repo}/pulls/${n}/files?per_page=100`, '.[].filename', root);
+  const files = filesOf(number);
+  const openList = ghPaged(`repos/${repo}/pulls?state=open&per_page=100`, '.[] | {number}', root)?.map((l) => JSON.parse(l));
+  const setStatus = (state, description) => run('gh', ['api', '-X', 'POST', `repos/${repo}/statuses/${pr.head.sha}`, '-f', `state=${state}`, '-f', 'context=pr-rules', '-f', `description=${description.slice(0, 140)}`, ...(process.env.RUN_URL ? ['-f', `target_url=${process.env.RUN_URL}`] : [])], { cwd: root });
+  if (!files || !openList) { setStatus('error', 'Could not read the pull request\'s files or the open list; re-run this check.'); console.error('could not read files or open list'); process.exit(1); }
+  const { problems, over, lane } = judgePr(config, root, repo, pr, files, openList, filesOf);
+  console.log(`#${number} at ${pr.head.sha.slice(0, 7)}, lane ${lane ?? 'none'}, ${files.length} files, ${openList.length} open.`);
+  for (const p of problems) console.log(`NO  ${p}`);
+  if (over && ['opened', 'reopened'].includes(process.env.PR_ACTION ?? '')) {
+    const text = `This pull request was closed by the pr-rules check: ${problems.find((p) => p.startsWith('open limit'))}. Reopen it once a place is free (CLAUDE.md, Settings).`;
+    run('gh', ['api', '-X', 'POST', `repos/${repo}/issues/${number}/comments`, '-f', `body=${text}`], { cwd: root });
+    run('gh', ['api', '-X', 'PATCH', `repos/${repo}/pulls/${number}`, '-f', 'state=closed'], { cwd: root });
+    console.log('Closed: it was opened past the open limit.');
+  }
+  if (problems.length) { setStatus('failure', `${problems.length} rule${problems.length > 1 ? 's' : ''} broken: ${problems[0]}`); process.exit(1); }
+  setStatus('success', pr.draft && lane >= 2 ? `Lane ${lane} draft: rules hold; a passing review of the head is needed before ready.` : `Lane ${lane}: every rule the hooks judge holds.`);
+  console.log('ok  every rule holds');
+}
+
 function main() {
   const argv = process.argv.slice(2);
+  if (argv.includes('--github-pr')) { githubPr(); return; }
   if (argv.includes('--install-user')) { installUser(); return; }
   if (argv.includes('--print-setup')) { process.stdout.write(SETUP_SCRIPT); return; }
   const findRepo = argv.includes('--find-repo');
@@ -1421,6 +1664,7 @@ function main() {
   let raw = '';
   try { raw = readFileSync(0, 'utf8'); } catch { raw = ''; }
   const input = JSON.parse(raw);
+  hookInput = input;
   const event = input.hook_event_name;
   if (findRepo && process.env.CLAUDE_PROJECT_DIR && existsSync(join(process.env.CLAUDE_PROJECT_DIR, '.claude', 'hooks', 'rules.mjs'))) return; // the repo's own settings run it
   let roots;
@@ -1428,7 +1672,9 @@ function main() {
   if (findRepo) {
     roots = event === 'SessionStart' ? rootsBelow(input.cwd ?? '.').concat(findRoot(input.cwd ?? '.') ?? []) : [rootForCall(input)].filter(Boolean);
     // A call that acts in no repo still meets the checks that need none, under the one config below.
-    if (!roots.length && event === 'PreToolUse') { const below = rootsBelow(input.cwd ?? '.'); if (below.length === 1) { roots = below; detached = true; } }
+    // With several repos below, the first one's config judges it: every repo's checks are the same,
+    // and a call that names a repo is judged by that repo's own rules (scopeFor).
+    if (!roots.length && event === 'PreToolUse') { const below = [...new Set([...rootsBelow(input.cwd ?? '.'), ...rootsBelow(process.env.CLAUDE_PROJECT_DIR ?? '.')])]; if (below.length) { roots = [below[0]]; detached = true; } }
   }
   else roots = [process.env.CLAUDE_PROJECT_DIR || resolve(SCRIPT_DIR, '..', '..')];
   roots = [...new Set(roots)];
@@ -1446,14 +1692,26 @@ function main() {
   const root = roots[0];
   const loaded = loadConfig(root);
   const { error } = loaded;
-  if (error) { emit({ systemMessage: `rules hook: ${error}; no rule check ran` }); return; }
+  if (error) { if (event === 'PreToolUse' && writesGithub(input)) emit(failClosed(`rules.json could not be read (${error})`)); else emit({ systemMessage: `rules hook: ${error}; no rule check ran` }); return; }
   const config = detached ? { ...loaded.config, detached: true } : loaded.config; // repo checks still guard a repo the call names
   if (event === 'PreToolUse') emit(preToolUse(root, config, input, ctx));
   else if (event === 'PostToolUse') emit(postToolUse(root, config, input));
   else if (event === 'Stop' || event === 'SubagentStop') { const reason = stop(root, config, input); if (reason) emit({ decision: 'block', reason }); }
 }
 
+// A call that could write to GitHub (git, gh, an HTTP tool, a GitHub MCP tool) is refused when
+// the checks could not run on it; every other call goes ahead with a warning.
+let hookInput = null;
+function writesGithub(input) {
+  const name = String(input?.tool_name ?? '');
+  if (/^mcp__github__/.test(name)) return !/__(get|list|search|pull_request_read|issue_read|actions_get|actions_list)/.test(name);
+  if (name !== 'Bash') return false;
+  return /\b(git|gh|curl|wget|xh|http|https)\b|api\.github\.com/.test(String(input?.tool_input?.command ?? ''));
+}
+const failClosed = (why) => ({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: refusal('The rule hooks fail closed: a call that could write to GitHub waits until its checks can run (Owner: every session follows the hooks).', why, 'fix the cause (or report it to the coordinator), then retry') } });
+
 try { main(); } catch (e) {
-  emit({ systemMessage: `rules hook crashed: ${e?.message ?? e}; this check did not run` });
+  if (hookInput?.hook_event_name === 'PreToolUse' && writesGithub(hookInput)) emit(failClosed(`the rules hook crashed: ${e?.message ?? e}`));
+  else emit({ systemMessage: `rules hook crashed: ${e?.message ?? e}; this check did not run` });
 }
 process.exitCode = 0;

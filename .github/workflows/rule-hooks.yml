@@ -1,0 +1,22 @@
+# The rule hooks' own test: it tries every route a session can open, ready, reopen or merge a pull request through
+# (gh pr, gh api, the GitHub MCP tools, curl, scripts, aliases, a folder that is no repo) and checks each is judged.
+# It runs when the hooks or this workflow change, with Node alone: nothing to install.
+name: rule-hooks
+
+on:
+  pull_request:
+    paths: ['.claude/hooks/**', '.github/workflows/rule-hooks.yml', '.github/workflows/pr-rules.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  rule-hooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.21.0
+      - run: node --test .claude/hooks/rules.test.mjs
