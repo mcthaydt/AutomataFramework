@@ -2,6 +2,7 @@
   "defaultBranch": "main",
   "repo": "mcthaydt/AutomataFramework",
   "alsoGuards": [],
+  "guardOwners": ["mcthaydt"],
   "identity": {
     "enabled": true,
     "commitTools": [
@@ -68,7 +69,7 @@
   },
   "mergeGreen": {
     "enabled": true,
-    "statuses": []
+    "statuses": [{ "context": "pr-rules" }]
   },
   "ruleMix": {
     "enabled": true,
