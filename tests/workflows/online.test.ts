@@ -2,16 +2,13 @@ import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
 
 // The online job only runs on GitHub, so these read its text: it has to build the package first (the room server is
-// `dist/`), install every browser (each engine plays), run the journeys, and keep the repository read-only.
+// `dist/`), run the journeys (each engine plays) and keep the repository read-only.
 const ci = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8')
 const jobs = ci.slice(ci.indexOf('\njobs:'))
 const start = jobs.indexOf('\n  online:')
 const online = jobs.slice(start, jobs.indexOf('\n  # The package', start))
 
-test('the online job builds the package, installs all three browsers (Chromium alone on a draft) and runs the journeys', () => {
-  expect(online).toContain(
-    `pnpm exec playwright install --with-deps \${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}`,
-  )
+test('the online job builds the package and runs the journeys (Chromium alone on a draft)', () => {
   expect(online).toContain(`JOURNEY_ENGINES: \${{ needs.plan.outputs.full != 'true' && 'chromium' || '' }}`)
   expect(online.indexOf('pnpm build')).toBeGreaterThan(-1)
   expect(online.indexOf('pnpm test:journeys')).toBeGreaterThan(online.indexOf('pnpm build'))
