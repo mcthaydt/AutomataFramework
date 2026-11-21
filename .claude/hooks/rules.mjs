@@ -241,6 +241,7 @@ function simpleCommands(src, baseCwd, depth = 0) {
   const exported = {};
   for (const c of parseShell(src)) {
     let words = [...c.words];
+    let pkg = false; // the program word names a package a runner fetches (npx, pnpm dlx), not a path
     const env = { ...exported };
     while (words.length && ENV_WORD.test(words[0])) { const [k, ...v] = words.shift().split('='); env[k] = v.join('='); }
     // Peel wrappers.
@@ -252,6 +253,8 @@ function simpleCommands(src, baseCwd, depth = 0) {
       if (w === 'script') { const ci = words.findIndex((x, k) => k > 0 && (/^-\w*c$/.test(x) || x === '--command')); const eq = words.find((x) => x.startsWith('--command=')); if (eq) { result.push(...simpleCommands(eq.slice(10), cwd, depth + 1).map((x) => ({ ...x, env: { ...env, ...x.env } }))); words.length = 0; break; } if (ci !== -1 && words[ci + 1] !== undefined) { result.push(...simpleCommands(words[ci + 1], cwd, depth + 1).map((x) => ({ ...x, env: { ...env, ...x.env } }))); words.length = 0; break; } }
       if (w === 'env') { words.shift(); while (words.length && (words[0].startsWith('-') || ENV_WORD.test(words[0]))) { const x = words.shift(); if (ENV_WORD.test(x)) { const [k, ...v] = x.split('='); env[k] = v.join('='); } } continue; }
       if (w === 'timeout') { words.shift(); while (words[0]?.startsWith('-')) words.shift(); words.shift(); continue; }
+      // find -exec/-execdir/-ok runs the command after it once per file: judge that command.
+      if (w === 'find') { const k = words.findIndex((x) => /^-(exec|execdir|ok|okdir)$/.test(x)); if (k === -1) break; const end = words.findIndex((x, j) => j > k && (x === ';' || x === '+')); words = words.slice(k + 1, end === -1 ? undefined : end); continue; }
       if (w === 'xargs') { words.shift(); while (words[0]?.startsWith('-')) { const f = words.shift(); if (/^-[IdLnPsE]$/.test(f)) words.shift(); } continue; }
       // Wrappers that run the rest of the line: a display server, priority, CPU or session.
       if (w === 'xvfb-run') { words.shift(); while (words[0]?.startsWith('-')) { const f = words.shift(); if (/^(-n|-s|-e|-f|-p|-w|--server-num|--server-args|--error-file|--auth-file|--xauth-protocol|--wait)$/.test(f)) words.shift(); } continue; }
@@ -260,12 +263,12 @@ function simpleCommands(src, baseCwd, depth = 0) {
       if (w === 'chrt') { words.shift(); while (words[0]?.startsWith('-')) words.shift(); if (/^\d+$/.test(words[0] ?? '')) words.shift(); continue; }
       if (w === 'taskset') { words.shift(); while (words[0]?.startsWith('-')) words.shift(); words.shift(); continue; } // flags, then the mask or CPU list
       if (w === 'dbus-run-session') { words.shift(); while (words[0]?.startsWith('-')) { const f = words.shift(); if (f === '--') break; if (/^--(config-file|dbus-daemon)$/.test(f)) words.shift(); } continue; }
-      if (w === 'npx' || w === 'bunx' || w === 'pnpx') { words.shift(); while (words[0]?.startsWith('-')) words.shift(); continue; }
+      if (w === 'npx' || w === 'bunx' || w === 'pnpx') { words.shift(); while (words[0]?.startsWith('-')) words.shift(); pkg = true; continue; }
       if (w === 'pnpm' || w === 'yarn' || w === 'npm' || w === 'bun') {
         const tool = words.shift();
         while (words[0]?.startsWith('-')) { const f = words.shift(); if (/^(-C|--dir|--filter|-F|--prefix|-w)$/.test(f) && f !== '-w') words.shift(); }
         const sub = words[0];
-        if (sub === 'exec' || sub === 'dlx' || (tool === 'bun' && sub === 'x')) { words.shift(); while (words[0]?.startsWith('-')) words.shift(); continue; }
+        if (sub === 'exec' || sub === 'dlx' || (tool === 'bun' && sub === 'x')) { if (sub !== 'exec') pkg = true; words.shift(); while (words[0]?.startsWith('-')) words.shift(); continue; }
         if (sub === 'run' || sub === 'run-script') { words.shift(); if (words[0]) words[0] = 'script:' + words[0]; break; }
         if (tool === 'npm') { words.unshift(tool); break; }
         if (sub && !PNPM_OWN.has(sub)) { words[0] = 'script:' + sub; break; }
@@ -275,17 +278,30 @@ function simpleCommands(src, baseCwd, depth = 0) {
       break;
     }
     if (!words.length) continue;
+    // What the hook cannot read before the call is refused (checkOtherRoutes): a program word the
+    // shell builds, a shell function or alias, a shell fed from a pipe, a script not there yet.
+    const unreadable = (why) => result.push({ prog: '#unreadable', path: words[0], args: words.slice(1), env, cwd, heredoc: null, why });
+    if (SUBST.test(words[0])) { unreadable(`the program "${words[0]}" is built by the shell`); continue; }
+    if (/^[A-Za-z_][\w.:-]*\($/.test(words[0]) || words[0] === 'function') { unreadable('a shell function definition'); continue; }
+    if (words[0] === 'alias' && words.slice(1).some((x) => x.includes('='))) { unreadable('a shell alias'); continue; }
     const prog = words[0].split('/').at(-1);
     // Nested shells are read again.
     if ((prog === 'bash' || prog === 'sh' || prog === 'zsh') && depth < 4) {
       const ci = words.indexOf('-c');
       if (ci !== -1 && words[ci + 1] !== undefined) { result.push(...simpleCommands(words[ci + 1], cwd, depth + 1)); continue; }
-      if (c.heredoc !== null && words.length === 1) { result.push(...simpleCommands(c.heredoc, cwd, depth + 1)); continue; }
+      if (c.heredoc !== null && words.slice(1).every((x) => x.startsWith('-'))) { result.push(...simpleCommands(c.heredoc, cwd, depth + 1)); continue; }
+      if (c.heredoc === null && words.slice(1).every((x) => x.startsWith('-'))) { unreadable(`${prog} reading its commands from a pipe or a process substitution`); continue; }
     }
     // A shell script file is read too, so a command in it is judged like one typed here.
     if (depth < 4) {
-      const file = (prog === 'bash' || prog === 'sh' || prog === 'zsh') ? words.slice(1).find((w) => !w.startsWith('-')) : (prog === 'source' || prog === '.') ? words[1] : /\.(sh|bash)$/.test(prog) ? words[0] : null;
+      const isShell = prog === 'bash' || prog === 'sh' || prog === 'zsh';
+      if ((prog === 'source' || prog === '.') && !words[1]) { unreadable(`${prog} reading a process substitution`); continue; }
+      const pathProg = words[0].includes('/') && !isShell && !(pkg && !/^[.~/]/.test(words[0])) ? resolve(cwd, words[0].replace(/^~(?=\/)/, process.env.HOME ?? '~')) : null;
+      if (pathProg && !existsSync(pathProg)) { unreadable(`the program ${words[0]} does not exist yet`); continue; }
+      const shebang = pathProg && /^#!.*\b(ba|z|da)?sh\b/.test((readText(pathProg, 1024 * 1024) ?? '').split('\n')[0]);
+      const file = isShell ? words.slice(1).find((w) => !w.startsWith('-')) : (prog === 'source' || prog === '.') ? words[1] : /\.(sh|bash)$/.test(prog) || shebang ? words[0] : null;
       const text = file ? readText(resolve(cwd, file.replace(/^~(?=\/)/, process.env.HOME ?? '~'))) : null;
+      if (file && text === null) { unreadable(`the script ${file} cannot be read before it runs`); continue; }
       if (text !== null) result.push(...simpleCommands(text, cwd, depth + 1).map((x) => ({ ...x, env: { ...env, ...x.env }, fromScript: file })));
     }
     if (prog === 'eval' && depth < 4) { result.push(...simpleCommands(words.slice(1).join(' '), cwd, depth + 1)); continue; }
@@ -1194,10 +1210,12 @@ const HTTP_TOOLS = new Set(['curl', 'wget', 'http', 'https', 'xh', 'xhs', 'httpi
 const SCRIPT_TOOLS = new Set(['node', 'tsx', 'vite-node', 'bun', 'deno', 'python', 'python3', 'ts-node', 'ruby', 'perl', 'php']);
 const WRITE_WORDS = /\b(POST|PATCH|PUT|DELETE)\b|octokit|\bmutation\b|\.(post|patch|put|delete|request|urlopen)\s*\(|\.(create|merge|update)[A-Z]\w*\(|pulls\.(create|merge|update)/;
 // gh run from inside a script: a pull request command, or gh api sending fields or another method.
+const GH_IN_SCRIPT_MORE = /['"]gh['"]\s*,\s*['"](api|pr|release|workflow|repo|ruleset|secret|variable)['"]|\bgh\s+(release\s+(create|edit|delete|upload)|workflow\s+run|repo\s+(edit|delete|rename|archive)|ruleset\s+(create|edit|delete)|secret\s+set)\b|\bgh\s+api\b[^\n]*\bDELETE\b/;
 const GH_IN_SCRIPT = /\bgh\s+pr\s+(create|merge|ready|reopen|edit)\b|\bgh\s+api\b[^\n]*(\s-X\s*(POST|PATCH|PUT|DELETE)|--method|\s-[fF]\s|--field|--raw-field|--input)|['"]gh['"]\s*,\s*\[\s*['"](pr['"]\s*,\s*['"](create|merge|ready|reopen|edit)|api['"][^\]]*['"](-X|--method|-f|-F|--field|--raw-field|--input)['"])/;
 const ROUTE_RULE = 'Pull requests and pushes go only through routes the rule hooks read: gh pr, gh api REST paths, git push and the GitHub MCP tools (Owner: every session follows the hooks).';
 function checkOtherRoutes(cmd, config, deny, ctx) {
   if (config.routes?.enabled === false) return;
+  if (cmd.prog === '#unreadable') { deny(refusal(ROUTE_RULE, `${cmd.why}, which the hook cannot read before it runs`, 'write the command out in full, or put it in a script file first and run that file in a later call')); return; }
   if (HTTP_TOOLS.has(cmd.prog)) {
     const a = cmd.args;
     const hit = a.find((w) => GITHUB_API.test(w)) ?? (httpTarget(a) ? null : '(a URL the hook cannot read)');
@@ -1223,7 +1241,7 @@ function checkOtherRoutes(cmd, config, deny, ctx) {
     }
     if (file && /(^|\/)\.claude\/hooks\/rules(\.test)?\.mjs$/.test(resolve(cmd.cwd, file))) return; // the hook and its own test, run by hand
     if (cmd.prog === 'node' && hasFlag(a, ['--check', '-c'])) return; // a syntax check runs nothing
-    if (text && GH_IN_SCRIPT.test(text)) { deny(refusal(ROUTE_RULE, `${cmd.prog} runs a script that calls gh to change a pull request`, 'run the gh command in Bash, where the hooks read it')); return; }
+    if (text && (GH_IN_SCRIPT.test(text) || GH_IN_SCRIPT_MORE.test(text))) { deny(refusal(ROUTE_RULE, `${cmd.prog} runs a script that calls gh to change a pull request`, 'run the gh command in Bash, where the hooks read it')); return; }
     if (text && GITHUB_API.test(text) && WRITE_WORDS.test(text)) deny(refusal(ROUTE_RULE, `${cmd.prog} runs a script that writes to the GitHub API`, 'use gh api with the REST path (the hooks judge it), or the GitHub MCP tool'));
     return;
   }
@@ -1289,7 +1307,7 @@ function ghApiWrite(cmd, config, deny) {
   deny(refusal(ROUTE_RULE, why, 'use git for commits, gh pr or the judged REST routes for pull requests; settings and protection are the owner\'s (list a command for them)'));
 }
 // gh commands that change settings, protection, secrets or workflows: the owner's.
-const GH_OWNER_ONLY = { repo: ['edit', 'delete', 'archive', 'unarchive', 'rename', 'deploy-key'], ruleset: ['create', 'edit', 'delete'], secret: ['set', 'delete', 'remove'], variable: ['set', 'delete'], workflow: ['enable', 'disable'] };
+const GH_OWNER_ONLY = { repo: ['edit', 'delete', 'archive', 'unarchive', 'rename', 'deploy-key'], ruleset: ['create', 'edit', 'delete'], secret: ['set', 'delete', 'remove'], variable: ['set', 'delete'], workflow: ['enable', 'disable', 'run'], release: ['create', 'edit', 'delete', 'upload', 'delete-asset'] };
 // gh's own commands; any other first word is an alias or an extension.
 const GH_KNOWN = new Set(['auth', 'browse', 'codespace', 'gist', 'issue', 'org', 'pr', 'project', 'release', 'repo', 'cache', 'run', 'workflow', 'agent-task', 'alias', 'api', 'attestation', 'completion', 'config', 'extension', 'extensions', 'ext', 'gpg-key', 'label', 'preview', 'ruleset', 'search', 'secret', 'ssh-key', 'status', 'variable', 'copilot', 'help', 'version', '--version', '--help', '-h']);
 
@@ -1332,6 +1350,9 @@ function checkFileWrite(input, config, root, deny) {
 
 const toolMatches = (name, patterns = []) => patterns.some((p) => new RegExp(p).test(name));
 function checkMcp(name, input, config, root, deny, ctx) {
+  // Starting a workflow (the release is one) or writing a release is the owner's, on every route.
+  if (/actions_run_trigger$/.test(name) && !/^(rerun_workflow_run|rerun_failed_jobs|cancel_workflow_run)$/.test(String(input.method ?? ''))) { deny(refusal(ROUTE_RULE, `${name} ${input.method ?? ''} starts or deletes a workflow run, which only the owner starts`, 'list it as a command for the owner; reruns of a run are allowed')); return; }
+  if (/^mcp__github__\w*release/.test(name) && !/__(get|list)_/.test(name)) { deny(refusal(ROUTE_RULE, `${name} writes a release, which only the owner does`, 'list it as a command for the owner')); return; }
   const repo = input.owner && input.repo ? `${input.owner}/${input.repo}` : repoSlug(config, root);
   if (config.agnostic && !(input.owner && input.repo)) return;
   const rel = (s) => String(s ?? '');

@@ -450,3 +450,61 @@ test('audit 1: reopening through the issues API counts against the limit', () =>
 test('audit 1: a positional parameter in the path is unknown too', () => {
   assert.match(bash('gh api -X PATCH repos/mcthaydt/$1/pulls/$2 --input x.json').reason, /cannot read/)
 })
+
+test('audit 2: gh that the shell builds, wraps or feeds in is refused', () => {
+  const del = 'gh api -X DELETE repos/mcthaydt/One/branches/main/protection'
+  writeFileSync(join(repo, 'y.sh'), `${del}\n`)
+  for (const c of [
+    'GH=gh; $GH api -X DELETE repos/mcthaydt/One/branches/main/protection',
+    '$(echo gh) api -X DELETE repos/mcthaydt/One/branches/main/protection',
+    `f(){ gh "$@"; }; f api -X DELETE repos/mcthaydt/One/branches/main/protection`,
+    `function f { gh "$@"; }; f api -X DELETE repos/mcthaydt/One/branches/main/protection`,
+    `echo '${del}' | bash`,
+    `printf '%s\\n' '${del}' | sh`,
+    `bash -s <<'EOS'\n${del}\nEOS`,
+    `bash <<'EOS'\n${del}\nEOS`,
+    `source <(echo '${del}')`,
+    `echo '${del}' > z.sh && bash z.sh`,
+    'bash y.sh',
+    `python3 -c 'import subprocess; subprocess.run(["gh","api","-X","DELETE","repos/mcthaydt/One/branches/main/protection"])'`,
+    `python3 - <<'EOS'\nimport subprocess\nsubprocess.run(["gh", "api", "-X", "DELETE", "repos/mcthaydt/One/branches/main/protection"])\nEOS`,
+    `find . -maxdepth 0 -exec gh api -X DELETE repos/mcthaydt/One/branches/main/protection ;`,
+  ])
+    assert.equal(bash(c).denied, true, c)
+})
+
+test("audit 2: workflow runs and releases are the owner's", () => {
+  for (const c of ['gh workflow run release.yml', 'gh release create v9.9.9', 'gh release delete v1.0.0'])
+    assert.equal(bash(c).denied, true, c)
+  assert.equal(
+    mcp('mcp__github__actions_run_trigger', {
+      method: 'run_workflow',
+      owner: 'mcthaydt',
+      repo: 'One',
+      workflow_id: 'release.yml',
+      ref: 'main',
+    }).denied,
+    true,
+  )
+  assert.equal(
+    mcp('mcp__github__actions_run_trigger', {
+      method: 'rerun_workflow_run',
+      owner: 'mcthaydt',
+      repo: 'One',
+      run_id: 1,
+    }).denied,
+    false,
+  )
+  for (const c of [
+    'gh run rerun 123 --failed',
+    'gh workflow list',
+    'gh release list',
+    `bash -s <<'EOS'\necho hi\nEOS`,
+    `cat <<'EOS' > notes.txt\ngh api -X DELETE x\nEOS`,
+    'find . -maxdepth 1 -name "*.md" -exec cat {} ;',
+    'echo hi | sh -c "cat"',
+    'npx -y @biomejs/biome@2.5.15 check --write x.mjs',
+    'pnpm dlx @scope/tool@1.0.0 --help',
+  ])
+    assert.equal(bash(c).denied, false, `${c}: ${bash(c).reason}`)
+})
