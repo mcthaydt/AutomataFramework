@@ -145,6 +145,13 @@ jobs:
     if: needs.plan.outputs.docs != 'true'
     name: browsers (${{ matrix.engine }} ${{ matrix.shard }}/6)
     runs-on: ubuntu-latest
+    # Playwright's own image for the version the lockfile pins: the browsers and the system libraries they need are
+    # already in it, so nothing comes from the runner's package mirror, whose slow days left `install-deps` hanging
+    # until the job's timeout. Pinned by digest; moving Playwright in the lockfile moves this tag and digest with it.
+    # The runner's own user (1001), so the checkout, the caches and Firefox's home folder all belong to it.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      options: --user 1001
     strategy:
       # On a draft the first failure stops the other shards too; the whole suite lets every shard finish.
       fail-fast: ${{ needs.plan.outputs.full != 'true' }}
@@ -163,18 +170,9 @@ jobs:
           node-version: 24.21.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # The browser is kept between runs, by Playwright's version; the system libraries it needs are put in each time.
-      - id: version
-        run: echo "playwright=$(pnpm exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        id: browser
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ matrix.engine }}
-      - if: steps.browser.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps ${{ matrix.engine }}
-      - if: steps.browser.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps ${{ matrix.engine }}
+      # The image's browsers fit only the Playwright they came with: say so plainly if the lockfile moves without it.
+      - name: The image's Playwright is the lockfile's
+        run: test "$(pnpm exec playwright --version)" = "Version 1.63.0"
       - run: pnpm test:engine ${{ matrix.engine }} --shard=${{ matrix.shard }}/6 $ONLY
       # Pictures a person looks at (the drunk-grandma check); nothing compares them.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -221,6 +219,13 @@ jobs:
     name: ${{ needs.plan.outputs.quick }}online
     if: needs.plan.outputs.docs != 'true' && needs.plan.outputs.online == 'true'
     runs-on: ubuntu-latest
+    # Playwright's own image for the version the lockfile pins: the browsers and the system libraries they need are
+    # already in it, so nothing comes from the runner's package mirror, whose slow days left `install-deps` hanging
+    # until the job's timeout. Pinned by digest; moving Playwright in the lockfile moves this tag and digest with it.
+    # The runner's own user (1001), so the checkout, the caches and Firefox's home folder all belong to it.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      options: --user 1001
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -229,18 +234,9 @@ jobs:
           node-version: 24.21.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # The browser is kept between runs, by Playwright's version; the system libraries it needs are put in each time.
-      - id: version
-        run: echo "playwright=$(pnpm exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        id: browser
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ needs.plan.outputs.full == 'true' && 'all' || 'chromium' }}
-      - if: steps.browser.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}
-      - if: steps.browser.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium' }}
+      # The image's browsers fit only the Playwright they came with: say so plainly if the lockfile moves without it.
+      - name: The image's Playwright is the lockfile's
+        run: test "$(pnpm exec playwright --version)" = "Version 1.63.0"
       - run: pnpm build
       - run: pnpm test:journeys
         env:
@@ -349,6 +345,13 @@ jobs:
     needs: [create-pack, plan]
     name: ${{ needs.plan.outputs.quick }}create-play
     runs-on: ubuntu-latest
+    # Playwright's own image for the version the lockfile pins: the browsers and the system libraries they need are
+    # already in it, so nothing comes from the runner's package mirror, whose slow days left `install-deps` hanging
+    # until the job's timeout. Pinned by digest; moving Playwright in the lockfile moves this tag and digest with it.
+    # The runner's own user (1001), so the checkout, the caches and Firefox's home folder all belong to it.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      options: --user 1001
     timeout-minutes: 60
     permissions:
       actions: read
@@ -361,24 +364,15 @@ jobs:
           node-version: 24.21.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # The browser is kept between runs, by Playwright's version; the system libraries it needs are put in each time. The
-      # made game's own play test plays in Chromium and WebKit, so a draft installs both.
-      - id: version
-        run: echo "playwright=$(pnpm exec playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        id: browser
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}-${{ needs.plan.outputs.full == 'true' && 'all' || 'chromium-webkit' }}
-      - if: steps.browser.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium webkit' }}
-      - if: steps.browser.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps ${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium webkit' }}
+      # The image's browsers fit only the Playwright they came with: say so plainly if the lockfile moves without it.
+      - name: The image's Playwright is the lockfile's
+        run: test "$(pnpm exec playwright --version)" = "Version 1.63.0"
+      # The image has no `gh`, so the tarball comes through the artifact action.
       - name: Get the tarball create-pack made
-        shell: bash
-        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name create-tarball --dir "$RUNNER_TEMP/tarball"
-        env:
-          GH_TOKEN: ${{ github.token }}
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: create-tarball
+          path: ${{ runner.temp }}/tarball
       - run: pnpm test:create
         env:
           CREATE_TARBALL: ${{ runner.temp }}/tarball
