@@ -72,7 +72,7 @@
   },
   "ruleMix": {
     "enabled": true,
-    "firstTimeSetup": true,
+    "firstTimeSetup": false,
     "rulePaths": [
       "CLAUDE.md",
       ".claude/skills/review/**",
