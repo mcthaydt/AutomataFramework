@@ -446,3 +446,7 @@ test('audit 1: reopening through the issues API counts against the limit', () =>
     false,
   )
 })
+
+test('audit 1: a positional parameter in the path is unknown too', () => {
+  assert.match(bash('gh api -X PATCH repos/mcthaydt/$1/pulls/$2 --input x.json').reason, /cannot read/)
+})

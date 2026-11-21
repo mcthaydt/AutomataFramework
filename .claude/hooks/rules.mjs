@@ -383,7 +383,7 @@ function flagValues(args, names) {
 }
 const hasFlag = (args, names) => args.some((w) => names.some((n) => w === n || (n.startsWith('--') && w.startsWith(n + '='))));
 // Text the shell would still change (a substitution or a variable) is not known until it runs.
-const SUBST = /\$\{?[A-Za-z_(]|`/;
+const SUBST = /\$(\{|\(|[A-Za-z0-9_@*#?!$-])|`/;
 // A heredoc's text is known as written when its delimiter is quoted or it holds nothing the shell expands.
 const heredocKnown = (cmd) => cmd.heredoc !== null && cmd.heredoc !== undefined && (cmd.heredocQuoted === true || !SUBST.test(cmd.heredoc));
 // gh api: method, path and fields. `unknown` names the fields whose text cannot be read before the call runs.
