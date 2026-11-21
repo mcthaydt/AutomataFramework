@@ -19,9 +19,16 @@ state at the restart is the handoff the Owner gave (2026-11-20 15:40 UTC), summe
 
 ### Current work
 
-- World fix round 1 (Editors, from the paused branch `claude/project-thread-c709zh`): its own thread, Sonnet 5.5
-  medium, brief `/mnt/project-files/briefs/fix-world-reds.md` in the project files. All reds coded; journeys being
-  rerun before its draft pull request.
+- World fixes, Editors #145 (draft, lane 2, head a4dd115): round 1's 37 reds and the code review's 2 reds fixed;
+  design review round 2 (2b49c2c) found 30 of 37 fixed and 7 reds, all fixed; full CI green on Chromium, WebKit and
+  Firefox (run 44902325846); verify passed on a4dd115. Code re-review of the commits since 2b49c2c running.
+- Blind judge (once per slice, done 2026-11-21): our set was picked as the amateur one. Gap named for ours: the level
+  canvas reads as a diagram (flat boxes, dead strip, floating labels; runner-up the room menu covering "New level").
+  Fix brief `/mnt/project-files/briefs/fix-world-blind-judge-gap.md` (editor-drawn parts only), building as a draft
+  PR stacked on #145; then step 3 again on the changed screens. Real tile art for the example games is an owner
+  decision card (recommended: keep them plain).
+- Every thread runs on the project default model (Opus 5.5); the coordinator can set a thread's model only when the
+  owner asks in their own words. Settings' per-role models are not applied until then.
 
 ### Completed outcomes
 
