@@ -34,7 +34,9 @@ test('both jobs install the packed package, never the working folder', () => {
   for (const name of ['create', 'create-play']) {
     const text = job(name)
     expect(text, name).toContain('needs: [create-pack, plan]')
-    expect(text, name).toContain('--name create-tarball')
+    // `create` downloads it with `gh`; `create-play` runs in the Playwright image, which has no `gh`, so it uses the
+    // artifact action.
+    expect(text, name).toMatch(/--name create-tarball|name: create-tarball/)
   }
   expect(job('create')).toMatch(/node tests\/install\/create-smoke\.mjs "\$\{\{ runner\.temp \}\}\/tarball"/)
   expect(job('create-play')).toMatch(/CREATE_TARBALL: \$\{\{ runner\.temp \}\}\/tarball/)
@@ -58,18 +60,12 @@ test('the pictures create-play makes are uploaded', () => {
   const play = job('create-play')
   expect(play).toContain('name: screens-create')
   expect(play).toContain('tests/create/__screenshots__/**')
-  expect(play).toContain(
-    `pnpm exec playwright install --with-deps \${{ needs.plan.outputs.full == 'true' && 'chromium webkit firefox' || 'chromium webkit' }}`,
-  )
   expect(play).toContain(`JOURNEY_ENGINES: \${{ needs.plan.outputs.full != 'true' && 'chromium' || '' }}`)
 })
 
-test("create-play has an hour, and installs both browsers the made game's own play test plays in", () => {
-  const play = job('create-play')
-  expect(play).toContain('timeout-minutes: 60')
-  // A draft plays the journeys in Chromium alone, but the play test of the game itself needs WebKit as well.
-  expect(play).toContain("'chromium-webkit'")
-  expect(play).toContain("'chromium webkit'")
+test('create-play has an hour', () => {
+  // Its browsers, all three, come in the Playwright image (`browsers-image.test.ts`).
+  expect(job('create-play')).toContain('timeout-minutes: 60')
 })
 
 test('test:journeys never runs tests/create, and test:create runs nothing else', () => {
