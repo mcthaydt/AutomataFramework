@@ -15,6 +15,7 @@ This codebase is yours to keep building on. How it is built is your call, inside
 - Tests: `pnpm test:node` (browsers: `pnpm test:engine <chromium|webkit|firefox>`; the journeys and `create` run in CI)
 - Build: `pnpm build`
 - The first session in a repo runs the setup check in `release` first, before it builds anything.
+- CI speed (the owner, 2026-11-21): a job that drives a browser runs in Playwright's own image for the locked version, pinned by digest, and installs no browser or system library (`playwright install` and `install-deps` hung on the runner's package mirror until the job's timeout). A draft runs the whole Node suite when it takes under 30 seconds in CI; picking tests by the change (`--changed`) is only for a longer suite, so a quick run never passes because it chose no test. The rest of making CI fast is in `release`.
 - Skills, saved in `.claude/skills/`: `review` for audits and fixes, `release` for pull requests and merging, `build` for acceptance criteria and code, `visual-check` for screens, `verify` for running the app or game like a person, `staged-path` for staged work and starting sessions, `owner-updates` for keeping the owner informed. A repo's own layout, CI and rules go in its `this-repo` skill, not here. Load the one that fits before starting that kind of work. Where work runs and where tests run are in `release`.
 
 ## How work goes
